@@ -39,15 +39,21 @@ class ChatBotProvider extends ChangeNotifier {
   int _dailyChatLimit = 30;
   int get dailyChatLimit => _dailyChatLimit;
 
+  /// 서버에서 실제 사용량을 아직 못 받아온 상태인지 여부.
+  bool _isUsageLoading = true;
+  bool get isUsageLoading => _isUsageLoading;
+
   /// 시트를 열 때 채팅을 보내지 않고 오늘 사용량만 조회해 배지에 반영한다.
   Future<void> fetchDailyUsage() async {
     try {
       final usage = await _sendMessageUseCase.repository.fetchUsage();
       _remainingChatsToday = usage.remainingToday;
       _dailyChatLimit = usage.dailyLimit;
-      notifyListeners();
     } catch (e) {
       debugPrint('[Chatbot][Provider] Failed to fetch daily usage error=$e');
+    } finally {
+      _isUsageLoading = false;
+      notifyListeners();
     }
   }
 
