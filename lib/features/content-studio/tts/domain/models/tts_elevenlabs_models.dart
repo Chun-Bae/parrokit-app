@@ -198,10 +198,14 @@ class TtsElevenLabsModel {
   final String name;
   final String description;
 
+  /// 이 모델 기준 1패롯이 커버하는 글자 수 (70% 마진 기준).
+  final int charsPerParrot;
+
   const TtsElevenLabsModel({
     required this.id,
     required this.name,
     required this.description,
+    required this.charsPerParrot,
   });
 }
 
@@ -210,10 +214,12 @@ const List<TtsElevenLabsModel> elevenLabsModels = [
     id: 'eleven_multilingual_v2',
     name: 'Multilingual v2',
     description: '가장 자연스럽고 감정 표현이 풍부한 고품질 모델. 생성 속도는 느린 편',
+    charsPerParrot: 20,
   ),
   TtsElevenLabsModel(
     id: 'eleven_turbo_v2_5',
     name: 'Turbo v2.5',
     description: 'v2보다 품질은 약간 낮지만 3배 빠르고 비용도 절반. 실시간 대화에 적합',
+    charsPerParrot: 40,
   ),
 ];

@@ -6,6 +6,9 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 
 import '../../data/data_sources/tts_remote_data_source.dart';
 import '../../data/repositories/tts_generation_repository_impl.dart';
+import '../../domain/models/tts_elevenlabs_models.dart';
+import '../../domain/models/tts_gemini_models.dart';
+import '../../domain/models/tts_google_models.dart';
 import '../../domain/models/tts_language.dart';
 import '../../domain/repositories/tts_generation_repository.dart';
 import '../../domain/usecases/generate_tts_usecase.dart';
@@ -253,6 +256,26 @@ class TtsProvider extends ChangeNotifier {
 
   int _calculateCoinCost(int textLength) {
     if (textLength <= 0) return 0;
-    return ((textLength + 49) ~/ 50).clamp(1, 1 << 30);
+    final charsPerParrot = _currentCharsPerParrot();
+    return ((textLength + charsPerParrot - 1) ~/ charsPerParrot)
+        .clamp(1, 1 << 30);
+  }
+
+  /// 현재 선택된 엔진/모델 기준 1패롯이 커버하는 글자 수.
+  int _currentCharsPerParrot() {
+    switch (_providerType) {
+      case TtsProviderType.google:
+        return googleTtsCharsPerParrot;
+      case TtsProviderType.elevenlabs:
+        final id = _elevenLabs.modelId ?? 'eleven_multilingual_v2';
+        return elevenLabsModels
+            .firstWhere((m) => m.id == id, orElse: () => elevenLabsModels.first)
+            .charsPerParrot;
+      case TtsProviderType.gemini:
+        final id = _gemini.modelId ?? 'gemini-2.5-flash-preview-tts';
+        return geminiModels
+            .firstWhere((m) => m.id == id, orElse: () => geminiModels.first)
+            .charsPerParrot;
+    }
   }
 }

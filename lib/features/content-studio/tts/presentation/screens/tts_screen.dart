@@ -10,6 +10,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/tts/domain/repositories/tts_generation_repository.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
@@ -460,11 +461,36 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    '예상 ${provider.estimatedCost} 패롯',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: mutedText,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.primarySubtleDark
+                              : AppColors.primarySubtle,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.bolt_rounded,
+                                size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: AppSpacing.xs),
+                            Text(
+                              '예상 ${provider.estimatedCost} 패롯',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Container(

@@ -3,10 +3,14 @@ class TtsGeminiModel {
   final String name;
   final String description;
 
+  /// 이 모델 기준 1패롯이 커버하는 글자 수 (70% 마진 기준).
+  final int charsPerParrot;
+
   const TtsGeminiModel({
     required this.id,
     required this.name,
     required this.description,
+    required this.charsPerParrot,
   });
 }
 
@@ -27,16 +31,19 @@ const List<TtsGeminiModel> geminiModels = [
     id: 'gemini-2.5-flash-preview-tts',
     name: 'Gemini 2.5 Flash TTS',
     description: '빠르고 범용적인 음성 합성에 적합',
+    charsPerParrot: 120,
   ),
   TtsGeminiModel(
     id: 'gemini-3.1-flash-tts-preview',
     name: 'Gemini 3.1 Flash TTS (프리뷰)',
     description: '최신 프리뷰 모델',
+    charsPerParrot: 60,
   ),
   TtsGeminiModel(
     id: 'gemini-2.5-pro-preview-tts',
     name: 'Gemini 2.5 Pro TTS',
     description: '최상의 품질과 복잡한 추론',
+    charsPerParrot: 60,
   ),
 ];
 

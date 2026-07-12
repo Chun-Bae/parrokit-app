@@ -14,6 +14,9 @@ class TtsGoogleModel {
   });
 }
 
+/// Standard/WaveNet 실원가(100만자당 $4) 기준 94% 마진에 맞춘 글자수.
+const int googleTtsCharsPerParrot = 100;
+
 const List<TtsGoogleModel> googleModels = [
   TtsGoogleModel(
     id: 'Standard',
