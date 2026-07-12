@@ -161,9 +161,7 @@ class AppShell extends StatelessWidget {
                             );
                             if (confirmed != true) return;
 
-                            for (final clipId in selectedClipIds) {
-                              await clipProvider.deleteClipById(clipId);
-                            }
+                            await clipProvider.deleteClipsById(selectedClipIds);
                             clipProvider.closeCollectionMenu();
                           },
                   ),

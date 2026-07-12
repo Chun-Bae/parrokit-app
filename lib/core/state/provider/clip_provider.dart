@@ -120,6 +120,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       fileSyncDatasource: fileSyncDatasource,
       itemQueryDatasource: itemQueryDatasource,
       firestoreMetadataDatasource: firestoreMetadataDatasource,
+      libraryEntitySyncCoordinator: _libraryEntitySyncCoordinator,
     );
     _clipMigrationRepository = ClipMigrationRepositoryImpl(
       db: db,
@@ -378,6 +379,103 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       notifyListeners();
     } catch (e) {
       AppLogger.w('[Clip][Storage] collections-refresh failed', error: e);
+    }
+  }
+
+  /// 클립 1개 삭제. 원격(server/gdrive) 클립은 원격 파일 삭제 네트워크
+  /// 호출이 걸려 시간이 걸릴 수 있어, 이동과 같은 오버레이로 진행 중임을
+  /// 보여준다.
+  @override
+  Future<bool> deleteClipById(int clipId) async {
+    if (_isStorageTransferRunning) return false;
+
+    startStorageTransfer(0, '클립을 지우고 있어요', title: '삭제하는 중');
+
+    try {
+      final success = await super.deleteClipById(clipId);
+      if (!success) {
+        _isStorageTransferRunning = false;
+        _storageTransferSucceeded = false;
+        _storageTransferError = '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.';
+        notifyListeners();
+        return false;
+      }
+      endStorageTransfer(message: '삭제했어요');
+      return true;
+    } catch (e, st) {
+      AppLogger.e(
+        '[Clip][Storage] delete-clip failed clipId=$clipId',
+        error: e,
+        stackTrace: st,
+      );
+      _isStorageTransferRunning = false;
+      _storageTransferSucceeded = false;
+      _storageTransferError = '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// 콜렉션 삭제(안의 클립도 함께 삭제). 콜렉션 안 클립이 원격에 있으면
+  /// 삭제에 네트워크 호출이 걸리므로 오버레이로 진행 중임을 보여준다.
+  @override
+  Future<bool> deleteCollectionById(int collectionId) async {
+    if (_isStorageTransferRunning) return false;
+
+    startStorageTransfer(0, '콜렉션을 지우고 있어요', title: '삭제하는 중');
+
+    try {
+      final success = await super.deleteCollectionById(collectionId);
+      endStorageTransfer(message: '콜렉션을 지웠어요');
+      return success;
+    } catch (e, st) {
+      AppLogger.e(
+        '[Clip][Storage] delete-collection failed collectionId=$collectionId',
+        error: e,
+        stackTrace: st,
+      );
+      _isStorageTransferRunning = false;
+      _storageTransferSucceeded = false;
+      _storageTransferError = '콜렉션을 지우지 못했어요. 잠시 후 다시 시도해 주세요.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// 선택한 여러 클립을 한 번에 삭제합니다. 개별 [deleteClipById]가 각자
+  /// 오버레이를 열고 닫으면 여러 개일 때 화면이 깜빡이므로, 여기서는
+  /// 저장소를 직접 호출해 하나의 오버레이 안에서 진행 개수를 보여줍니다.
+  Future<void> deleteClipsById(List<int> clipIds) async {
+    if (clipIds.isEmpty || _isStorageTransferRunning) return;
+
+    final total = clipIds.length;
+    startStorageTransfer(total, '$total개 클립을 지우고 있어요', title: '삭제하는 중');
+
+    try {
+      var progress = 0;
+      for (final clipId in clipIds) {
+        await _clipRepository.deleteClipById(clipId);
+        progress++;
+        updateStorageTransfer(progress, '$progress/$total개 지웠어요');
+      }
+
+      if (selectedCollectionId != null) {
+        await selectCollection(selectedCollectionId);
+      } else {
+        await refreshStorageUsage();
+      }
+      endStorageTransfer(message: '$total개 클립을 모두 지웠어요');
+      await _refreshCollectionsInBackground();
+    } catch (e, st) {
+      AppLogger.e(
+        '[Clip][Storage] bulk-delete failed',
+        error: e,
+        stackTrace: st,
+      );
+      _isStorageTransferRunning = false;
+      _storageTransferSucceeded = false;
+      _storageTransferError = '지우는 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
+      notifyListeners();
     }
   }
 
@@ -742,13 +840,32 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   }
 
   /// 그룹 삭제 후 목록 갱신. 원격에 동기화된 그룹이면 원격도 함께 삭제.
+  /// 원격 삭제는 네트워크 호출이 걸리므로 클립/콜렉션 삭제와 같은
+  /// 오버레이로 진행 중임을 보여준다.
   Future<void> deleteGroupById(int id) async {
-    await _libraryEntitySyncCoordinator.deleteGroup(id);
-    await _groupRepository.deleteGroupById(id);
-    if (selectedGroupId == id) {
-      selectedGroupId = null;
+    if (_isStorageTransferRunning) return;
+
+    startStorageTransfer(0, '그룹을 지우고 있어요', title: '삭제하는 중');
+
+    try {
+      await _libraryEntitySyncCoordinator.deleteGroup(id);
+      await _groupRepository.deleteGroupById(id);
+      if (selectedGroupId == id) {
+        selectedGroupId = null;
+      }
+      await loadGroups();
+      endStorageTransfer(message: '그룹을 지웠어요');
+    } catch (e, st) {
+      AppLogger.e(
+        '[Clip][Storage] delete-group failed groupId=$id',
+        error: e,
+        stackTrace: st,
+      );
+      _isStorageTransferRunning = false;
+      _storageTransferSucceeded = false;
+      _storageTransferError = '그룹을 지우지 못했어요. 잠시 후 다시 시도해 주세요.';
+      notifyListeners();
     }
-    await loadGroups();
   }
 
   /// 모든 컬렉션 로드 (호환성 또는 필요 시 사용).

@@ -25,6 +25,7 @@ import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_thumb
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_file_sync_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_item_query_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_firestore_metadata_datasource.dart';
+import 'package:parrokit/core/domain/collection_clip/data/datasources/library_entity_sync_coordinator.dart';
 import 'package:parrokit/core/domain/collection_clip/domain/repositories/clip_repository.dart';
 
 class ClipRepositoryImpl implements ClipRepository {
@@ -34,6 +35,7 @@ class ClipRepositoryImpl implements ClipRepository {
   final ClipFileSyncDatasource fileSyncDatasource;
   final ClipItemQueryDatasource itemQueryDatasource;
   final ClipFirestoreMetadataDatasource firestoreMetadataDatasource;
+  final LibraryEntitySyncCoordinator libraryEntitySyncCoordinator;
 
   ClipRepositoryImpl({
     required this.db,
@@ -42,6 +44,7 @@ class ClipRepositoryImpl implements ClipRepository {
     required this.fileSyncDatasource,
     required this.itemQueryDatasource,
     required this.firestoreMetadataDatasource,
+    required this.libraryEntitySyncCoordinator,
   });
 
   @override
@@ -148,9 +151,9 @@ class ClipRepositoryImpl implements ClipRepository {
         await (db.delete(db.clips)..where((c) => c.id.equals(clipId))).go();
       });
 
-      // 2. 고아 컬렉션 정리
+      // 2. 고아 컬렉션 정리 (원격 동기화된 콜렉션이면 원격 문서도 함께 정리)
       if (oldCollectionId != null) {
-        await db.collectionsDao.pruneIfEmpty(oldCollectionId);
+        await _pruneCollectionIfEmpty(oldCollectionId);
       }
 
       // 3. 파일 삭제 (절대 경로 보정 후)
@@ -320,10 +323,23 @@ class ClipRepositoryImpl implements ClipRepository {
       }
     });
 
-    // 이전 컬렉션 고아 정리 (트랜잭션 밖에서)
+    // 이전 컬렉션 고아 정리 (트랜잭션 밖에서, 원격 문서도 함께 정리)
     if (oldCollectionId != null) {
-      await db.collectionsDao.pruneIfEmpty(oldCollectionId);
+      await _pruneCollectionIfEmpty(oldCollectionId);
     }
+  }
+
+  /// 클립이 빠져나간 콜렉션에 더 이상 클립이 없으면 콜렉션을 지운다.
+  /// 원격에 동기화된 콜렉션(server/gdrive)이면 원격 문서도 함께 지워야
+  /// 다음 pull 동기화 때 빈 콜렉션이 다시 살아나지 않는다.
+  Future<void> _pruneCollectionIfEmpty(int collectionId) async {
+    final remainingClips = await (db.select(db.clips)
+          ..where((c) => c.collectionId.equals(collectionId)))
+        .get();
+    if (remainingClips.isNotEmpty) return;
+
+    await libraryEntitySyncCoordinator.deleteCollection(collectionId);
+    await db.collectionsDao.pruneIfEmpty(collectionId);
   }
 
   @override
