@@ -281,14 +281,6 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                         key: const ValueKey('elevenlabs_options'),
                         children: [
                           TtsOptionRow(
-                            icon: Icons.language_rounded,
-                            title: '언어',
-                            value: getLanguageByTtsCode(provider.language).displayName,
-                            accentColor: AppColors.secondary,
-                            onTap: () => _showLanguageSelectionSheet(context, provider),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          TtsOptionRow(
                             icon: Icons.auto_awesome_rounded,
                             title: '모델',
                             value: elevenLabsModels.firstWhere(
@@ -364,15 +356,6 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                       return Column(
                         key: const ValueKey('gemini_options'),
                         children: [
-                          TtsOptionRow(
-                            icon: Icons.language_rounded,
-                            title: '언어',
-                            value: getLanguageByTtsCode(provider.language).displayName,
-                            accentColor: const Color(0xFF9B72CB),
-                            isGemini: true,
-                            onTap: () => _showLanguageSelectionSheet(context, provider),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.auto_awesome_rounded,
                             title: '모델',
