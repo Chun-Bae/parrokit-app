@@ -113,6 +113,12 @@ class CaptioningProvider extends ChangeNotifier
   EditModeBase get mode => _mode;
   bool get isEdit => _mode is EditMode;
 
+  // 편집 데이터(영상 파일 포함) 로드 중 여부. 서버/gdrive 클립은 캐시가
+  // 없으면 원본을 새로 내려받아야 해서 시간이 걸릴 수 있어, 그동안 화면이
+  // 멈춘 것처럼 보이지 않도록 로딩 오버레이를 띄우는 데 사용한다.
+  bool _isLoadingForEdit = false;
+  bool get isLoadingForEdit => _isLoadingForEdit;
+
   // TextEditingControllers (View에서 직접 사용)
   final titleCtl = TextEditingController(); // 클립 제목
   final collectionNameCtl = TextEditingController(); // 컬렉션 이름 (선택)
@@ -165,6 +171,7 @@ class CaptioningProvider extends ChangeNotifier
 
     // 편집 모드 로드
     if (clipId != null) {
+      _isLoadingForEdit = true;
       _loadForEdit(clipId!);
     }
 
@@ -421,10 +428,11 @@ class CaptioningProvider extends ChangeNotifier
       if (form.filePath != null && form.filePath!.isNotEmpty) {
         await setExistingFile(form.filePath!);
       }
-
-      notifyListeners();
     } catch (e) {
       showToast('편집 데이터 로드 실패: $e');
+    } finally {
+      _isLoadingForEdit = false;
+      notifyListeners();
     }
   }
 

@@ -163,6 +163,29 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
                     child: const Center(child: CircularProgressIndicator()),
                   ),
                 ),
+              if (vm.isLoadingForEdit)
+                Positioned.fill(
+                  child: Container(
+                    color: Theme.of(context).colorScheme.surface,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            '클립 정보를 불러오고 있어요',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
