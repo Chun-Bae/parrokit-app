@@ -9,6 +9,7 @@ import '../../data/repositories/tts_generation_repository_impl.dart';
 import '../../domain/models/tts_language.dart';
 import '../../domain/repositories/tts_generation_repository.dart';
 import '../../domain/usecases/generate_tts_usecase.dart';
+import 'tts_provider_settings.dart';
 
 class TtsProvider extends ChangeNotifier {
   late final GenerateTtsUseCase _useCase;
@@ -21,11 +22,19 @@ class TtsProvider extends ChangeNotifier {
         );
   }
 
+  // provider별 설정. 서로 다른 필드만 갖고 있어 값이 새어 들어갈 수 없다.
+  final GoogleTtsSettings _google = GoogleTtsSettings();
+  final ElevenLabsTtsSettings _elevenLabs = ElevenLabsTtsSettings();
+  final GeminiTtsSettings _gemini = GeminiTtsSettings();
+
   String _text = '';
   String get text => _text;
 
-  String _voiceId = '';
-  String get voiceId => _voiceId;
+  String get voiceId => switch (_providerType) {
+        TtsProviderType.google => _google.voiceId,
+        TtsProviderType.elevenlabs => _elevenLabs.voiceId,
+        TtsProviderType.gemini => _gemini.voiceId,
+      };
 
   String _language = 'ko-KR';
   String get language => _language;
@@ -33,29 +42,26 @@ class TtsProvider extends ChangeNotifier {
   TtsProviderType _providerType = TtsProviderType.google;
   TtsProviderType get providerType => _providerType;
 
-  String? _modelId;
-  String? get modelId => _modelId;
+  String? get modelId => switch (_providerType) {
+        TtsProviderType.google => null,
+        TtsProviderType.elevenlabs => _elevenLabs.modelId,
+        TtsProviderType.gemini => _gemini.modelId,
+      };
 
-  double _speakingRate = 1.0;
-  double get speakingRate => _speakingRate;
+  double get speakingRate => _google.speakingRate;
 
-  double _pitch = 0.0;
-  double get pitch => _pitch;
+  double get pitch => _google.pitch;
 
   bool _isGenerating = false;
   bool get isGenerating => _isGenerating;
 
-  double _elevenLabsStability = 0.50;
-  double get elevenLabsStability => _elevenLabsStability;
+  double get elevenLabsStability => _elevenLabs.stability;
 
-  double _elevenLabsSimilarityBoost = 0.75;
-  double get elevenLabsSimilarityBoost => _elevenLabsSimilarityBoost;
+  double get elevenLabsSimilarityBoost => _elevenLabs.similarityBoost;
 
-  double _elevenLabsStyle = 0.0;
-  double get elevenLabsStyle => _elevenLabsStyle;
+  double get elevenLabsStyle => _elevenLabs.style;
 
-  bool _elevenLabsUseSpeakerBoost = true;
-  bool get elevenLabsUseSpeakerBoost => _elevenLabsUseSpeakerBoost;
+  bool get elevenLabsUseSpeakerBoost => _elevenLabs.useSpeakerBoost;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
@@ -80,7 +86,14 @@ class TtsProvider extends ChangeNotifier {
   }
 
   void updateVoiceId(String newVoiceId) {
-    _voiceId = newVoiceId;
+    switch (_providerType) {
+      case TtsProviderType.google:
+        _google.voiceId = newVoiceId;
+      case TtsProviderType.elevenlabs:
+        _elevenLabs.voiceId = newVoiceId;
+      case TtsProviderType.gemini:
+        _gemini.voiceId = newVoiceId;
+    }
     notifyListeners();
   }
 
@@ -90,60 +103,68 @@ class TtsProvider extends ChangeNotifier {
   }
 
   void updateProviderType(TtsProviderType newProviderType) {
+    if (newProviderType == _providerType) return;
     _providerType = newProviderType;
     notifyListeners();
   }
 
   void updateModelId(String? newModelId) {
-    _modelId = newModelId;
+    switch (_providerType) {
+      case TtsProviderType.google:
+        break; // Google TTS는 modelId 개념이 없음
+      case TtsProviderType.elevenlabs:
+        _elevenLabs.modelId = newModelId;
+      case TtsProviderType.gemini:
+        _gemini.modelId = newModelId;
+    }
     notifyListeners();
   }
 
   void updateSpeakingRate(double rate) {
-    _speakingRate = rate;
+    _google.speakingRate = rate;
     notifyListeners();
   }
 
   void updatePitch(double newPitch) {
-    _pitch = newPitch;
+    _google.pitch = newPitch;
     notifyListeners();
   }
 
   void updateElevenLabsStability(double value) {
-    _elevenLabsStability = value;
+    _elevenLabs.stability = value;
     notifyListeners();
   }
 
   void updateElevenLabsSimilarityBoost(double value) {
-    _elevenLabsSimilarityBoost = value;
+    _elevenLabs.similarityBoost = value;
     notifyListeners();
   }
 
   void updateElevenLabsStyle(double value) {
-    _elevenLabsStyle = value;
+    _elevenLabs.style = value;
     notifyListeners();
   }
 
   void updateElevenLabsUseSpeakerBoost(bool value) {
-    _elevenLabsUseSpeakerBoost = value;
+    _elevenLabs.useSpeakerBoost = value;
     notifyListeners();
   }
 
   Future<void> fetchAvailableVoices() async {
     if (_providerType != TtsProviderType.google) return;
-    
+
     _isLoadingVoices = true;
     notifyListeners();
 
     try {
       final voices = await _useCase.repository.listVoices(_language);
       _availableVoices = voices;
-      
+
       // 언어가 바뀌었는데 현재 선택된 voiceId가 새 언어 목록에 없다면 초기화
-      if (_voiceId.isNotEmpty) {
-        final exists = voices.any((v) => v['name'] == _voiceId);
+      if (_google.voiceId.isNotEmpty) {
+        final exists = voices.any((v) => v['name'] == _google.voiceId);
         if (!exists) {
-          _voiceId = '';
+          _google.voiceId = '';
         }
       }
     } catch (e) {
@@ -164,7 +185,8 @@ class TtsProvider extends ChangeNotifier {
       return;
     }
 
-    AppLogger.i('[TTS][Provider] Starting generateTts provider=${_providerType.name} text_length=${_text.length}');
+    AppLogger.i(
+        '[TTS][Provider] Starting generateTts provider=${_providerType.name} text_length=${_text.length}');
     _isGenerating = true;
     _errorMessage = null;
     _generatedFilePath = null;
@@ -175,20 +197,21 @@ class TtsProvider extends ChangeNotifier {
         text: _text,
         language: _language,
         provider: _providerType,
-        voiceId: _voiceId.isEmpty ? null : _voiceId,
-        modelId: _modelId,
-        speakingRate: _speakingRate,
-        pitch: _pitch,
+        voiceId: voiceId.isEmpty ? null : voiceId,
+        modelId: modelId,
+        speakingRate: _google.speakingRate,
+        pitch: _google.pitch,
         elevenLabsSettings: _providerType == TtsProviderType.elevenlabs
             ? ElevenLabsVoiceSettings(
-                stability: _elevenLabsStability,
-                similarityBoost: _elevenLabsSimilarityBoost,
-                style: _elevenLabsStyle,
-                useSpeakerBoost: _elevenLabsUseSpeakerBoost,
+                stability: _elevenLabs.stability,
+                similarityBoost: _elevenLabs.similarityBoost,
+                style: _elevenLabs.style,
+                useSpeakerBoost: _elevenLabs.useSpeakerBoost,
               )
             : null,
       );
-      AppLogger.i('[TTS][Provider] generateTts success path_length=${path.length}');
+      AppLogger.i(
+          '[TTS][Provider] generateTts success path_length=${path.length}');
       _generatedFilePath = path;
 
       if (cost > 0) {
@@ -196,13 +219,16 @@ class TtsProvider extends ChangeNotifier {
         showToast('음성 생성 완료! ($cost패롯 소모)');
       }
     } catch (e) {
-      AppLogger.e('[TTS][Provider] generateTts failed provider=${_providerType.name}', error: e);
+      AppLogger.e(
+          '[TTS][Provider] generateTts failed provider=${_providerType.name}',
+          error: e);
       _errorMessage = e.toString();
     } finally {
       _isGenerating = false;
       notifyListeners();
     }
   }
+
   void clearGeneratedAudio() {
     _generatedFilePath = null;
     notifyListeners();
@@ -219,7 +245,8 @@ class TtsProvider extends ChangeNotifier {
         voiceId: voiceId,
       );
     } catch (e) {
-      AppLogger.e('[TTS][Provider] previewGoogleVoice failed voiceId=$voiceId', error: e);
+      AppLogger.e('[TTS][Provider] previewGoogleVoice failed voiceId=$voiceId',
+          error: e);
       return null;
     }
   }

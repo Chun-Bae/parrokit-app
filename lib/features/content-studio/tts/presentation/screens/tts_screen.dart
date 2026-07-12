@@ -50,7 +50,9 @@ class _TtsScreenContent extends StatefulWidget {
 class _TtsScreenContentState extends State<_TtsScreenContent> {
   late final TextEditingController _textController;
   Timer? _debounce;
-  final _languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.5);
+  // 스크립트가 짧은 인사말/단어인 경우가 많아 기본값(0.5)에서는 'und'로
+  // 판정되는 경우가 잦았음. Google TTS 언어 자동 감지 목적이라 더 관대하게 낮춤.
+  final _languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.2);
 
   @override
   void initState() {
@@ -74,6 +76,10 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
   void _onTextChanged(String text, TtsProvider provider) {
     provider.updateText(text);
 
+    // 언어 자동 감지는 Google TTS에서만 의미가 있음 (voice 목록이 언어별로
+    // 갈리는 건 Google뿐이고, ElevenLabs/Gemini는 서버에서 language를 안 씀).
+    if (provider.providerType != TtsProviderType.google) return;
+
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (text.trim().isNotEmpty) {
@@ -81,13 +87,15 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
           AppLogger.d('[TTS][LanguageDetection] attempt text="$text"');
           final languageCode = await _languageIdentifier.identifyLanguage(text);
           AppLogger.d('[TTS][LanguageDetection] identified code=$languageCode');
-          
+
           if (languageCode != 'und') {
             final ttsLang = getLanguageByMlKitCode(languageCode);
-            AppLogger.d('[TTS][LanguageDetection] mapped ttsLang=${ttsLang?.ttsCode} displayName=${ttsLang?.displayName}');
-            
+            AppLogger.d(
+                '[TTS][LanguageDetection] mapped ttsLang=${ttsLang?.ttsCode} displayName=${ttsLang?.displayName}');
+
             if (ttsLang != null && mounted) {
-              AppLogger.d('[TTS][LanguageDetection] update provider prevLanguage=${provider.language} newLanguage=${ttsLang.ttsCode}');
+              AppLogger.d(
+                  '[TTS][LanguageDetection] update provider prevLanguage=${provider.language} newLanguage=${ttsLang.ttsCode}');
               if (provider.language != ttsLang.ttsCode) {
                 provider.updateLanguage(ttsLang.ttsCode);
                 provider.fetchAvailableVoices();
@@ -122,7 +130,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
     );
   }
 
-  void _showGeminiVoiceSelectionSheet(BuildContext context, TtsProvider provider) {
+  void _showGeminiVoiceSelectionSheet(
+      BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -131,7 +140,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
     );
   }
 
-  void _showGeminiModelSelectionSheet(BuildContext context, TtsProvider provider) {
+  void _showGeminiModelSelectionSheet(
+      BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -140,12 +150,14 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
     );
   }
 
-  void _showElevenLabsVoiceSelectionSheet(BuildContext context, TtsProvider provider) {
+  void _showElevenLabsVoiceSelectionSheet(
+      BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TtsElevenLabsVoiceSelectionSheet(provider: provider),
+      builder: (context) =>
+          TtsElevenLabsVoiceSelectionSheet(provider: provider),
     );
   }
 
@@ -163,7 +175,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
         text: newText,
         selection: TextSelection.collapsed(offset: newText.length),
       );
-      
+
       // 외부(챗봇 등)에서 텍스트가 주입된 경우 언어 감지 트리거
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -240,24 +252,30 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           TtsOptionRow(
                             icon: Icons.language_rounded,
                             title: '언어',
-                            value: getLanguageByTtsCode(provider.language).displayName,
+                            value: getLanguageByTtsCode(provider.language)
+                                .displayName,
                             accentColor: theme.colorScheme.primary,
-                            onTap: () => _showLanguageSelectionSheet(context, provider),
+                            onTap: () =>
+                                _showLanguageSelectionSheet(context, provider),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.record_voice_over_rounded,
                             title: '보이스',
-                            value: provider.isLoadingVoices 
-                                ? '목록 불러오는 중...' 
-                                : (provider.voiceId.isEmpty ? '선택 (기본값)' : provider.voiceId),
+                            value: provider.isLoadingVoices
+                                ? '목록 불러오는 중...'
+                                : (provider.voiceId.isEmpty
+                                    ? '선택 (기본값)'
+                                    : provider.voiceId),
                             accentColor: theme.colorScheme.primary,
-                            onTap: () => _showVoiceSelectionSheet(context, provider),
+                            onTap: () =>
+                                _showVoiceSelectionSheet(context, provider),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
                             label: '속도 (0.25배 ~ 4.0배)',
-                            valueText: '${provider.speakingRate.toStringAsFixed(2)}x',
+                            valueText:
+                                '${provider.speakingRate.toStringAsFixed(2)}x',
                             value: provider.speakingRate,
                             min: 0.25,
                             max: 4.0,
@@ -267,7 +285,9 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
                             label: '톤 (-20 ~ 20)',
-                            valueText: provider.pitch > 0 ? '+${provider.pitch.toStringAsFixed(1)}' : provider.pitch.toStringAsFixed(1),
+                            valueText: provider.pitch > 0
+                                ? '+${provider.pitch.toStringAsFixed(1)}'
+                                : provider.pitch.toStringAsFixed(1),
                             value: provider.pitch,
                             min: -20.0,
                             max: 20.0,
@@ -283,35 +303,52 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           TtsOptionRow(
                             icon: Icons.auto_awesome_rounded,
                             title: '모델',
-                            value: elevenLabsModels.firstWhere(
-                              (m) => m.id == (provider.modelId ?? 'eleven_multilingual_v2'),
-                              orElse: () => elevenLabsModels.first,
-                            ).name,
+                            value: elevenLabsModels
+                                .firstWhere(
+                                  (m) =>
+                                      m.id ==
+                                      (provider.modelId ??
+                                          'eleven_multilingual_v2'),
+                                  orElse: () => elevenLabsModels.first,
+                                )
+                                .name,
                             accentColor: AppColors.secondary,
                             onTap: () => showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              builder: (context) => TtsElevenLabsModelSelectionSheet(provider: provider),
+                              builder: (context) =>
+                                  TtsElevenLabsModelSelectionSheet(
+                                      provider: provider),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.record_voice_over_rounded,
                             title: '보이스',
-                            value: provider.voiceId.isEmpty 
-                                ? '선택 (기본값)' 
-                                : (TtsVoiceCache().elevenLabsVoices?.firstWhere(
-                                      (v) => v.id == provider.voiceId,
-                                      orElse: () => TtsElevenLabsVoice(id: provider.voiceId, name: provider.voiceId, category: '', language: ''),
-                                    ).name ?? provider.voiceId),
+                            value: provider.voiceId.isEmpty
+                                ? '선택 (기본값)'
+                                : (TtsVoiceCache()
+                                        .elevenLabsVoices
+                                        ?.firstWhere(
+                                          (v) => v.id == provider.voiceId,
+                                          orElse: () => TtsElevenLabsVoice(
+                                              id: provider.voiceId,
+                                              name: provider.voiceId,
+                                              category: '',
+                                              language: ''),
+                                        )
+                                        .name ??
+                                    provider.voiceId),
                             accentColor: AppColors.secondary,
-                            onTap: () => _showElevenLabsVoiceSelectionSheet(context, provider),
+                            onTap: () => _showElevenLabsVoiceSelectionSheet(
+                                context, provider),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
                             label: '안정성 (Stability)',
-                            valueText: '${(provider.elevenLabsStability * 100).toInt()}%',
+                            valueText:
+                                '${(provider.elevenLabsStability * 100).toInt()}%',
                             value: provider.elevenLabsStability,
                             activeColor: AppColors.secondary,
                             onChanged: provider.updateElevenLabsStability,
@@ -319,7 +356,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
                             label: '유사도 (Clarity)',
-                            valueText: '${(provider.elevenLabsSimilarityBoost * 100).toInt()}%',
+                            valueText:
+                                '${(provider.elevenLabsSimilarityBoost * 100).toInt()}%',
                             value: provider.elevenLabsSimilarityBoost,
                             activeColor: AppColors.secondary,
                             onChanged: provider.updateElevenLabsSimilarityBoost,
@@ -327,7 +365,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
                             label: '스타일 과장 (Style)',
-                            valueText: '${(provider.elevenLabsStyle * 100).toInt()}%',
+                            valueText:
+                                '${(provider.elevenLabsStyle * 100).toInt()}%',
                             value: provider.elevenLabsStyle,
                             activeColor: AppColors.secondary,
                             onChanged: provider.updateElevenLabsStyle,
@@ -344,9 +383,11 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                               ),
                               Switch(
                                 value: provider.elevenLabsUseSpeakerBoost,
-                                activeTrackColor: AppColors.secondary.withValues(alpha: 0.5),
+                                activeTrackColor:
+                                    AppColors.secondary.withValues(alpha: 0.5),
                                 activeThumbColor: AppColors.secondary,
-                                onChanged: provider.updateElevenLabsUseSpeakerBoost,
+                                onChanged:
+                                    provider.updateElevenLabsUseSpeakerBoost,
                               ),
                             ],
                           ),
@@ -359,25 +400,38 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           TtsOptionRow(
                             icon: Icons.auto_awesome_rounded,
                             title: '모델',
-                            value: geminiModels.firstWhere(
-                              (m) => m.id == (provider.modelId ?? 'gemini-2.5-flash-preview-tts'),
-                              orElse: () => geminiModels.first,
-                            ).name,
+                            value: geminiModels
+                                .firstWhere(
+                                  (m) =>
+                                      m.id ==
+                                      (provider.modelId ??
+                                          'gemini-2.5-flash-preview-tts'),
+                                  orElse: () => geminiModels.first,
+                                )
+                                .name,
                             accentColor: const Color(0xFF9B72CB),
                             isGemini: true,
-                            onTap: () => _showGeminiModelSelectionSheet(context, provider),
+                            onTap: () => _showGeminiModelSelectionSheet(
+                                context, provider),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.record_voice_over_rounded,
                             title: '보이스 에이전트',
-                            value: geminiVoices.firstWhere(
-                              (v) => v.id == (provider.voiceId.isEmpty ? 'Aoede' : provider.voiceId),
-                              orElse: () => geminiVoices.first,
-                            ).name,
+                            value: geminiVoices
+                                .firstWhere(
+                                  (v) =>
+                                      v.id ==
+                                      (provider.voiceId.isEmpty
+                                          ? 'Aoede'
+                                          : provider.voiceId),
+                                  orElse: () => geminiVoices.first,
+                                )
+                                .name,
                             accentColor: const Color(0xFF9B72CB),
                             isGemini: true,
-                            onTap: () => _showGeminiVoiceSelectionSheet(context, provider),
+                            onTap: () => _showGeminiVoiceSelectionSheet(
+                                context, provider),
                           ),
                         ],
                       );
@@ -395,7 +449,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                   if (provider.errorMessage != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                       child: Text(
                         provider.errorMessage!,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -417,17 +472,21 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                     height: 50,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      gradient: provider.providerType == TtsProviderType.gemini &&
-                              !(provider.isGenerating || provider.text.trim().isEmpty)
-                          ? AppColors.geminiGradient
-                          : null,
+                      gradient:
+                          provider.providerType == TtsProviderType.gemini &&
+                                  !(provider.isGenerating ||
+                                      provider.text.trim().isEmpty)
+                              ? AppColors.geminiGradient
+                              : null,
                     ),
                     child: FilledButton.icon(
-                      onPressed: provider.isGenerating || provider.text.trim().isEmpty
-                          ? null
-                          : () => provider.generateTts(),
+                      onPressed:
+                          provider.isGenerating || provider.text.trim().isEmpty
+                              ? null
+                              : () => provider.generateTts(),
                       style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.resolveWith((states) {
+                        backgroundColor:
+                            WidgetStateProperty.resolveWith((states) {
                           if (states.contains(WidgetState.disabled)) {
                             return theme.disabledColor.withValues(alpha: 0.1);
                           }
@@ -438,7 +497,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                               ? theme.colorScheme.primary
                               : AppColors.secondary;
                         }),
-                        shadowColor: provider.providerType == TtsProviderType.gemini
+                        shadowColor: provider.providerType ==
+                                TtsProviderType.gemini
                             ? const WidgetStatePropertyAll(Colors.transparent)
                             : null,
                       ),
@@ -469,7 +529,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                       child: ElevatedButton.icon(
                         onPressed: () {
                           final hubProvider = context.read<StudioHubProvider>();
-                          hubProvider.sendAudioToCaptioning(provider.generatedFilePath!);
+                          hubProvider.sendAudioToCaptioning(
+                              provider.generatedFilePath!);
                         },
                         icon: const Icon(Icons.subtitles),
                         label: const Text('자막 생성'),
@@ -481,9 +542,12 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                       child: OutlinedButton.icon(
                         onPressed: () async {
                           try {
-                            final bytes = await File(provider.generatedFilePath!).readAsBytes();
+                            final bytes =
+                                await File(provider.generatedFilePath!)
+                                    .readAsBytes();
                             await FileSaver.instance.saveFile(
-                              name: 'Parrokit_TTS_\${DateTime.now().millisecondsSinceEpoch}',
+                              name:
+                                  'Parrokit_TTS_\${DateTime.now().millisecondsSinceEpoch}',
                               bytes: bytes,
                               ext: 'mp3',
                               mimeType: MimeType.mp3,

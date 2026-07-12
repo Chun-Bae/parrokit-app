@@ -759,9 +759,17 @@ export const generateTtsFlow = ai.defineFlow(
         const targetModel = input.modelId || "gemini-2.5-flash-preview-tts";
         const targetVoice = input.voiceId || "Aoede";
 
+        // 텍스트가 짧거나 인사말처럼 보이면 모델이 답변을 생성하려 시도하는
+        // 경우가 있어, 그대로 읽으라는 지시문을 붙여서 보낸다.
+        const ttsPrompt =
+          "Read the following text aloud exactly as written. " +
+          "Do not answer, respond to, or add anything else — " +
+          "only speak it verbatim.\n\n" +
+          `Text: ${input.text}`;
+
         const response = await client.models.generateContent({
           model: targetModel,
-          contents: input.text,
+          contents: ttsPrompt,
           config: {
             responseModalities: ["AUDIO"],
             speechConfig: {
@@ -810,24 +818,38 @@ export const generateTtsFlow = ai.defineFlow(
         // language is guaranteed to exist
         const languageCode = input.language;
 
-        // If voiceId is not provided, pick a default based on language
-        let defaultVoice = "en-US-Journey-F"; // Default English
+        // If voiceId is not provided, pick a default based on language.
+        // Standard voices are used (not Journey/Neural2) because those
+        // families reject the pitch parameter entirely.
+        let defaultVoice = "en-US-Standard-A"; // Default English
         if (languageCode.startsWith("ko")) {
-          defaultVoice = "ko-KR-Neural2-A";
+          defaultVoice = "ko-KR-Standard-A";
         } else if (languageCode.startsWith("ja")) {
-          defaultVoice = "ja-JP-Neural2-B";
+          defaultVoice = "ja-JP-Standard-A";
         }
 
         const name = input.voiceId || defaultVoice;
 
+        const audioConfig: {
+          audioEncoding: "MP3";
+          speakingRate?: number;
+          pitch?: number;
+        } = {
+          audioEncoding: "MP3",
+        };
+        // 일부 보이스(Journey, Chirp3-HD, Studio 등)는 pitch/speakingRate
+        // 파라미터 자체를 거부하므로, 기본값(변화 없음)일 때는 아예 보내지 않는다.
+        if (input.speakingRate && input.speakingRate !== 1.0) {
+          audioConfig.speakingRate = input.speakingRate;
+        }
+        if (input.pitch && input.pitch !== 0.0) {
+          audioConfig.pitch = input.pitch;
+        }
+
         const request = {
           input: {text: input.text},
           voice: {languageCode, name},
-          audioConfig: {
-            audioEncoding: "MP3" as const,
-            speakingRate: input.speakingRate || 1.0,
-            pitch: input.pitch || 0.0,
-          },
+          audioConfig,
         };
 
         // 사용자 확인용 로그 추가: 구글로 어떤 모델이 넘어가는지 파이어베이스 콘솔에 출력합니다.
