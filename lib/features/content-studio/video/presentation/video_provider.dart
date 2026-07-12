@@ -52,6 +52,12 @@ class VideoProvider extends ChangeNotifier {
   String _model = veo31LiteModelId;
   String get model => _model;
 
+  String _resolution = veo31Resolution720p;
+  String get resolution => _resolution;
+
+  /// 1080p는 8초 영상만 지원하므로, 길이 선택을 8초로 고정해야 하는지 여부.
+  bool get isDurationLocked => veo31ResolutionRequiresEightSeconds(_resolution);
+
   bool _isGenerating = false;
   bool get isGenerating => _isGenerating;
 
@@ -71,9 +77,12 @@ class VideoProvider extends ChangeNotifier {
   Timer? _recentRefreshTimer;
   int _pendingCost = 0;
 
-  /// 현재 모델/길이 설정 기준 예상 소모 패롯.
-  int get estimatedCost =>
-      veo31GenerationCost(modelId: _model, durationSeconds: _duration);
+  /// 현재 모델/해상도/길이 설정 기준 예상 소모 패롯.
+  int get estimatedCost => veo31GenerationCost(
+        modelId: _model,
+        durationSeconds: _duration,
+        resolution: _resolution,
+      );
 
   @override
   void dispose() {
@@ -102,12 +111,21 @@ class VideoProvider extends ChangeNotifier {
   }
 
   void updateDuration(int newDuration) {
+    if (isDurationLocked) return;
     _duration = newDuration;
     notifyListeners();
   }
 
   void updateModel(String newModel) {
     _model = newModel;
+    notifyListeners();
+  }
+
+  void updateResolution(String newResolution) {
+    _resolution = newResolution;
+    if (veo31ResolutionRequiresEightSeconds(newResolution)) {
+      _duration = 8;
+    }
     notifyListeners();
   }
 
@@ -208,7 +226,11 @@ class VideoProvider extends ChangeNotifier {
   Future<void> generateVideo() async {
     if (_dialogue.trim().isEmpty && _scenePrompt.trim().isEmpty) return;
 
-    final cost = veo31GenerationCost(modelId: _model, durationSeconds: _duration);
+    final cost = veo31GenerationCost(
+      modelId: _model,
+      durationSeconds: _duration,
+      resolution: _resolution,
+    );
     if (userProvider.coins < cost) {
       showToast('패롯이 부족합니다. (필요 $cost / 보유 ${userProvider.coins})');
       return;
@@ -221,7 +243,7 @@ class VideoProvider extends ChangeNotifier {
     notifyListeners();
 
     AppLogger.i(
-        '[VideoProvider][Generate] start ratio=$_ratio duration=$_duration model=$_model');
+        '[VideoProvider][Generate] start ratio=$_ratio duration=$_duration model=$_model resolution=$_resolution');
 
     try {
       final operationName = await _generateUseCase.call(
@@ -230,6 +252,7 @@ class VideoProvider extends ChangeNotifier {
         ratio: _ratio,
         duration: _duration,
         model: _model,
+        resolution: _resolution,
         debug: false,
       );
 

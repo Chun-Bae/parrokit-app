@@ -8,6 +8,7 @@ abstract class VideoGenerationRepository {
     required String ratio,
     int duration = 5,
     String model = veo31LiteModelId,
+    String resolution = '720p',
     bool debug = false,
   });
 

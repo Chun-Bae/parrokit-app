@@ -300,25 +300,25 @@ class _VideoScreenState extends State<VideoScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _OptionGroup(
-                    label: '길이',
+                    label: '해상도',
+                    options: const ['720p', '1080p'],
+                    selectedIndex:
+                        provider.resolution == veo31Resolution1080p ? 1 : 0,
+                    onChanged: (index) => provider.updateResolution(
+                      index == 1 ? veo31Resolution1080p : veo31Resolution720p,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _OptionGroup(
+                    label:
+                        provider.isDurationLocked ? '길이 (1080p는 8초 고정)' : '길이',
                     options: const ['4초', '5초', '6초', '7초', '8초'],
+                    enabled: !provider.isDurationLocked,
                     selectedIndex: ![4, 5, 6, 7, 8].contains(provider.duration)
                         ? 1
                         : [4, 5, 6, 7, 8].indexOf(provider.duration),
                     onChanged: (index) =>
                         provider.updateDuration([4, 5, 6, 7, 8][index]),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  _StyleRow(
-                    icon: Icons.palette_rounded,
-                    title: '스타일',
-                    value: '교육용 모션',
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _StyleRow(
-                    icon: Icons.closed_caption_rounded,
-                    title: '자막',
-                    value: '자동 포함',
                   ),
                 ],
               ),
@@ -1190,44 +1190,52 @@ class _OptionGroup extends StatelessWidget {
     required this.options,
     required this.selectedIndex,
     this.onChanged,
+    this.enabled = true,
   });
 
   final String label;
   final List<String> options;
   final int selectedIndex;
   final ValueChanged<int>? onChanged;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            for (var i = 0; i < options.length; i++) ...[
-              Expanded(
-                child: GestureDetector(
-                  onTap: onChanged != null ? () => onChanged!(i) : null,
-                  child: _ChoiceTile(
-                    label: options[i],
-                    selected: i == selectedIndex,
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              for (var i = 0; i < options.length; i++) ...[
+                Expanded(
+                  child: GestureDetector(
+                    onTap: enabled && onChanged != null
+                        ? () => onChanged!(i)
+                        : null,
+                    child: _ChoiceTile(
+                      label: options[i],
+                      selected: i == selectedIndex,
+                    ),
                   ),
                 ),
-              ),
-              if (i != options.length - 1) const SizedBox(width: AppSpacing.sm),
+                if (i != options.length - 1)
+                  const SizedBox(width: AppSpacing.sm),
+              ],
             ],
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

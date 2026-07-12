@@ -105,11 +105,20 @@ function extractErrorMessage(error: unknown): string {
 
 /**
  * Veo 비디오 생성 길이를 허용 범위인 4~8초로 제한합니다.
+ * 1080p는 8초 영상만 지원하므로 해당 해상도에서는 8초로 고정합니다.
  *
  * @param {number | undefined} durationSeconds 요청된 길이
+ * @param {string} resolution 정규화된 해상도 ("720p" | "1080p")
  * @return {number} 보정된 길이
  */
-function clampDurationSeconds(durationSeconds?: number): number {
+function clampDurationSeconds(
+  durationSeconds: number | undefined,
+  resolution: string
+): number {
+  if (resolution === "1080p") {
+    return 8;
+  }
+
   if (typeof durationSeconds !== "number" || Number.isNaN(durationSeconds)) {
     return 5;
   }
@@ -123,6 +132,17 @@ function clampDurationSeconds(durationSeconds?: number): number {
   }
 
   return Math.round(durationSeconds);
+}
+
+/**
+ * Veo 해상도 값을 지원 범위("720p" | "1080p")로 정규화합니다.
+ * 4K 등 지원하지 않는 값은 기본값(720p)으로 대체합니다.
+ *
+ * @param {string | undefined} resolution 요청된 해상도
+ * @return {string} 정규화된 해상도
+ */
+function normalizeResolution(resolution?: string): string {
+  return resolution === "1080p" ? "1080p" : "720p";
 }
 
 /**
@@ -955,7 +975,8 @@ export const generateVideo = onCall(
         throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
       }
 
-      const {prompt, aspectRatio, duration, modelId, debug} = request.data;
+      const {prompt, aspectRatio, duration, modelId, resolution, debug} =
+        request.data;
 
       if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
         throw new HttpsError("invalid-argument", "prompt is required");
@@ -973,7 +994,11 @@ export const generateVideo = onCall(
       });
 
       const targetModel = normalizeVeoModelId(modelId);
-      const targetDurationSeconds = clampDurationSeconds(duration);
+      const targetResolution = normalizeResolution(resolution);
+      const targetDurationSeconds = clampDurationSeconds(
+        duration,
+        targetResolution
+      );
       generationId = await createVideoGenerationRecord({
         uid,
         operationName: "pending",
@@ -985,7 +1010,8 @@ export const generateVideo = onCall(
       console.log(
         "[Video] Requesting video generation. " +
         `modelId=${modelId || "default"} targetModel=${targetModel} ` +
-        `aspectRatio=${aspectRatio || "16:9"} duration=${targetDurationSeconds}`
+        `aspectRatio=${aspectRatio || "16:9"} ` +
+        `duration=${targetDurationSeconds} resolution=${targetResolution}`
       );
       console.log(`[Video] Prompt: ${prompt}`);
 
@@ -997,6 +1023,7 @@ export const generateVideo = onCall(
         config: {
           aspectRatio: aspectRatio || "16:9",
           durationSeconds: targetDurationSeconds,
+          resolution: targetResolution,
         },
       });
 

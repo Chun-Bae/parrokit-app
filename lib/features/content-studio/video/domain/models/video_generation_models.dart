@@ -1,17 +1,34 @@
+/// 지원하는 Veo 해상도. 4K는 원가가 크게 뛰고 일부 모델은 지원도 안 해
+/// 채택하지 않는다.
+const String veo31Resolution720p = '720p';
+const String veo31Resolution1080p = '1080p';
+
+/// 1080p(4K도 마찬가지)는 8초 영상만 지원한다.
+bool veo31ResolutionRequiresEightSeconds(String resolution) =>
+    resolution == veo31Resolution1080p;
+
 class VideoGenerationModel {
   const VideoGenerationModel({
     required this.id,
     required this.name,
     required this.description,
-    required this.costPerSecond,
+    required this.costPerSecond720p,
+    required this.costPerSecond1080p,
   });
 
   final String id;
   final String name;
   final String description;
 
-  /// 이 모델로 1초 분량을 생성할 때 소모되는 패롯.
-  final int costPerSecond;
+  /// 720p로 1초 분량을 생성할 때 소모되는 패롯.
+  final int costPerSecond720p;
+
+  /// 1080p로 1초 분량을 생성할 때 소모되는 패롯.
+  final int costPerSecond1080p;
+
+  int costPerSecond(String resolution) => resolution == veo31Resolution1080p
+      ? costPerSecond1080p
+      : costPerSecond720p;
 }
 
 class VideoGenerationRecord {
@@ -155,19 +172,22 @@ const List<VideoGenerationModel> veo31Models = [
     id: veo31LiteModelId,
     name: 'Veo 3.1 Lite',
     description: '가장 빠른 생성, 낮은 비용',
-    costPerSecond: 2,
+    costPerSecond720p: 11,
+    costPerSecond1080p: 17,
   ),
   VideoGenerationModel(
     id: veo31FastModelId,
     name: 'Veo 3.1 Fast',
     description: '속도와 품질의 균형',
-    costPerSecond: 3,
+    costPerSecond720p: 21,
+    costPerSecond1080p: 26,
   ),
   VideoGenerationModel(
     id: veo31StandardModelId,
     name: 'Veo 3.1 Standard',
     description: '가장 높은 품질, 세밀한 연출',
-    costPerSecond: 4,
+    costPerSecond720p: 86,
+    costPerSecond1080p: 86,
   ),
 ];
 
@@ -196,8 +216,12 @@ VideoGenerationModel veo31ModelById(String? modelId) {
   );
 }
 
-/// 모델 등급과 길이(초)에 따른 예상 소모 패롯.
-int veo31GenerationCost({required String? modelId, required int durationSeconds}) {
+/// 모델 등급, 해상도, 길이(초)에 따른 예상 소모 패롯.
+int veo31GenerationCost({
+  required String? modelId,
+  required int durationSeconds,
+  String resolution = veo31Resolution720p,
+}) {
   if (durationSeconds <= 0) return 0;
-  return veo31ModelById(modelId).costPerSecond * durationSeconds;
+  return veo31ModelById(modelId).costPerSecond(resolution) * durationSeconds;
 }

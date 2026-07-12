@@ -13,10 +13,11 @@ class VideoRemoteDataSource {
     required String ratio,
     int duration = 5,
     String model = veo31LiteModelId,
+    String resolution = '720p',
     bool debug = false,
   }) async {
     AppLogger.i(
-        '[VideoDataSource][Generate] start ratio=$ratio duration=$duration model=$model debug=$debug');
+        '[VideoDataSource][Generate] start ratio=$ratio duration=$duration model=$model resolution=$resolution debug=$debug');
     try {
       final prompt = _buildPrompt(
         dialogue: dialogue,
@@ -28,6 +29,7 @@ class VideoRemoteDataSource {
         'aspectRatio': ratio,
         'duration': duration,
         'model': model,
+        'resolution': resolution,
         'debug': debug,
       });
 

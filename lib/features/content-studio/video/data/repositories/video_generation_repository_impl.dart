@@ -15,10 +15,11 @@ class VideoGenerationRepositoryImpl implements VideoGenerationRepository {
     required String ratio,
     int duration = 5,
     String model = veo31LiteModelId,
+    String resolution = '720p',
     bool debug = false,
   }) async {
     AppLogger.i(
-        '[VideoRepository][Generate] start ratio=$ratio duration=$duration model=$model debug=$debug');
+        '[VideoRepository][Generate] start ratio=$ratio duration=$duration model=$model resolution=$resolution debug=$debug');
     try {
       final result = await remoteDataSource.generateVideo(
         dialogue: dialogue,
@@ -26,6 +27,7 @@ class VideoGenerationRepositoryImpl implements VideoGenerationRepository {
         ratio: ratio,
         duration: duration,
         model: model,
+        resolution: resolution,
         debug: debug,
       );
       AppLogger.i('[VideoRepository][Generate] success');
