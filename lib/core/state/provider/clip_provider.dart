@@ -169,23 +169,20 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   bool hasGoogleDriveLinked = false;
   bool _isCollectionMenuOpen = false;
   final Set<int> _selectedClipIds = <int>{};
-  bool _isServerUploadRunning = false;
-  int _serverUploadProgress = 0;
-  int _serverUploadTotal = 0;
-  String _serverUploadMessage = '';
-  String? _serverUploadError;
-  bool _isCloudUploadRunning = false;
-  int _cloudUploadProgress = 0;
-  int _cloudUploadTotal = 0;
-  String _cloudUploadMessage = '';
-  String? _cloudUploadError;
   bool _isGoogleDriveLinking = false;
   String _googleDriveLinkMessage = '';
   String? _googleDriveLinkError;
+
+  // 저장위치 이동 진행 상태 (단일 클립 이동 + 다중 선택 이동 공용). 진행
+  // 중에는 전체 화면 오버레이로 다른 조작을 막고, 실패 시 사용자가 직접
+  // 닫을 때까지 오류 메시지를 보여준다.
   bool _isStorageTransferRunning = false;
+  bool _storageTransferSucceeded = false;
   int _storageTransferProgress = 0;
   int _storageTransferTotal = 0;
+  String _storageTransferTitle = '';
   String _storageTransferMessage = '';
+  String? _storageTransferError;
 
   // ─────────────────────────────────────────────────────────────────
   // Methods
@@ -246,20 +243,6 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     );
   }
 
-  bool get isServerUploadRunning => _isServerUploadRunning;
-  int get serverUploadProgress => _serverUploadProgress;
-  int get serverUploadTotal => _serverUploadTotal;
-  String get serverUploadMessage => _serverUploadMessage;
-  String? get serverUploadError => _serverUploadError;
-  bool get shouldShowServerUploadBanner =>
-      _isServerUploadRunning || _serverUploadError != null;
-  bool get isCloudUploadRunning => _isCloudUploadRunning;
-  int get cloudUploadProgress => _cloudUploadProgress;
-  int get cloudUploadTotal => _cloudUploadTotal;
-  String get cloudUploadMessage => _cloudUploadMessage;
-  String? get cloudUploadError => _cloudUploadError;
-  bool get shouldShowCloudUploadBanner =>
-      _isCloudUploadRunning || _cloudUploadError != null;
   bool get isGoogleDriveLinking => _isGoogleDriveLinking;
   String get googleDriveLinkMessage => _googleDriveLinkMessage;
   String? get googleDriveLinkError => _googleDriveLinkError;
@@ -270,9 +253,26 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   Set<int> get selectedClipIds => Set.unmodifiable(_selectedClipIds);
   bool isClipSelected(int clipId) => _selectedClipIds.contains(clipId);
   bool get isStorageTransferRunning => _isStorageTransferRunning;
+  bool get storageTransferSucceeded => _storageTransferSucceeded;
   int get storageTransferProgress => _storageTransferProgress;
   int get storageTransferTotal => _storageTransferTotal;
+  String get storageTransferTitle => _storageTransferTitle;
   String get storageTransferMessage => _storageTransferMessage;
+  String? get storageTransferError => _storageTransferError;
+
+  /// 진행 중이거나(성공 직후 짧게 보여주는 동안 포함) 오류가 남아있으면
+  /// (사용자가 닫기 전까지) 전체 화면 오버레이를 계속 보여줍니다.
+  bool get shouldShowStorageTransferOverlay =>
+      _isStorageTransferRunning ||
+      _storageTransferSucceeded ||
+      _storageTransferError != null;
+
+  /// 오버레이의 오류 상태를 사용자가 직접 닫을 때 호출합니다.
+  void dismissStorageTransferError() {
+    if (_storageTransferError == null) return;
+    _storageTransferError = null;
+    notifyListeners();
+  }
 
   void selectAllVisibleClips() {
     for (final item in clipItems) {
@@ -282,106 +282,78 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   }
 
   @override
-  Future<bool> moveClipToServer(int clipId) async {
-    if (_isServerUploadRunning) return false;
-
-    _setServerUploadState(
-      isRunning: true,
-      progress: 0,
-      total: 0,
-      message: '서버에 올리는 중',
-      error: null,
-    );
-
-    try {
-      await _clipMigrationRepository.moveClipToServer(
-        clipId,
-        onProgress: (current, total, message) {
-          _setServerUploadState(
-            isRunning: true,
-            progress: current,
-            total: total,
-            message: message,
-            error: null,
-          );
-        },
+  Future<bool> moveClipToServer(int clipId) => _runSingleClipTransfer(
+        clipId: clipId,
+        title: '서버로 옮기는 중',
+        action: (onProgress) => _clipMigrationRepository.moveClipToServer(
+          clipId,
+          onProgress: onProgress,
+        ),
+        successMessage: '서버 저장을 마쳤어요',
+        failureMessage: '서버 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+        logTag: 'move-to-server',
       );
-      _setServerUploadState(
-        isRunning: false,
-        progress: _serverUploadTotal == 0 ? 0 : _serverUploadTotal,
-        total: _serverUploadTotal,
-        message: 'server 저장 완료',
-        error: null,
-      );
-      return true;
-    } catch (e, st) {
-      AppLogger.e(
-        '[Clip][Storage] move-to-server error clipId=$clipId',
-        error: e,
-        stackTrace: st,
-      );
-      _setServerUploadState(
-        isRunning: false,
-        progress: _serverUploadProgress,
-        total: _serverUploadTotal,
-        message: 'server 저장 실패',
-        error: e.toString(),
-      );
-      return false;
-    } finally {
-      notifyListeners();
-    }
-  }
 
   @override
-  Future<bool> moveClipToGoogleDrive(int clipId) async {
-    if (_isCloudUploadRunning) return false;
+  Future<bool> moveClipToGoogleDrive(int clipId) => _runSingleClipTransfer(
+        clipId: clipId,
+        title: 'Google Drive로 옮기는 중',
+        action: (onProgress) => _clipMigrationRepository.moveClipToGoogleDrive(
+          clipId,
+          onProgress: onProgress,
+        ),
+        successMessage: 'Google Drive 저장을 마쳤어요',
+        failureMessage: 'Google Drive 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+        logTag: 'move-to-gdrive',
+      );
 
-    _setCloudUploadState(
-      isRunning: true,
-      progress: 0,
-      total: 0,
-      message: 'Google Drive에 올리는 중',
-      error: null,
-    );
+  @override
+  Future<bool> moveClipToLocal(int clipId) => _runSingleClipTransfer(
+        clipId: clipId,
+        title: '내 기기로 옮기는 중',
+        action: (onProgress) => _clipMigrationRepository.moveClipToLocal(
+          clipId,
+          onProgress: onProgress,
+        ),
+        successMessage: '내 기기로 옮겼어요',
+        failureMessage: '내 기기로 옮기지 못했어요. 잠시 후 다시 시도해 주세요.',
+        logTag: 'move-to-local',
+      );
+
+  /// 클립 1개를 로컬/서버/Google Drive 사이로 옮기는 공용 처리. 진행 중에는
+  /// 전체 화면 오버레이(`shouldShowStorageTransferOverlay`)로 다른 조작을
+  /// 막고, 실패하면 사용자가 직접 닫을 때까지 오류를 보여준다.
+  Future<bool> _runSingleClipTransfer({
+    required int clipId,
+    required String title,
+    required Future<void> Function(ClipMigrationProgressCallback onProgress)
+        action,
+    required String successMessage,
+    required String failureMessage,
+    required String logTag,
+  }) async {
+    if (_isStorageTransferRunning) return false;
+
+    startStorageTransfer(0, '준비하고 있어요', title: title);
 
     try {
-      await _clipMigrationRepository.moveClipToGoogleDrive(
-        clipId,
-        onProgress: (current, total, message) {
-          _setCloudUploadState(
-            isRunning: true,
-            progress: current,
-            total: total,
-            message: message,
-            error: null,
-          );
-        },
-      );
-      _setCloudUploadState(
-        isRunning: false,
-        progress: _cloudUploadTotal == 0 ? 0 : _cloudUploadTotal,
-        total: _cloudUploadTotal,
-        message: 'Google Drive 저장 완료',
-        error: null,
-      );
+      await action((current, total, message) {
+        if (total > 0) _storageTransferTotal = total;
+        updateStorageTransfer(current, message);
+      });
+      endStorageTransfer(message: successMessage);
       return true;
     } catch (e, st) {
       AppLogger.e(
-        '[Clip][Storage] move-to-gdrive error clipId=$clipId',
+        '[Clip][Storage] $logTag failed clipId=$clipId',
         error: e,
         stackTrace: st,
       );
-      _setCloudUploadState(
-        isRunning: false,
-        progress: _cloudUploadProgress,
-        total: _cloudUploadTotal,
-        message: 'Google Drive 저장 실패',
-        error: e.toString(),
-      );
-      return false;
-    } finally {
+      _isStorageTransferRunning = false;
+      _storageTransferSucceeded = false;
+      _storageTransferError = failureMessage;
       notifyListeners();
+      return false;
     }
   }
 
@@ -493,19 +465,12 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     _isCollectionMenuOpen = false;
     _selectedClipIds.clear();
     _isStorageTransferRunning = false;
+    _storageTransferSucceeded = false;
     _storageTransferProgress = 0;
     _storageTransferTotal = 0;
+    _storageTransferTitle = '';
     _storageTransferMessage = '';
-    _isServerUploadRunning = false;
-    _serverUploadProgress = 0;
-    _serverUploadTotal = 0;
-    _serverUploadMessage = '';
-    _serverUploadError = null;
-    _isCloudUploadRunning = false;
-    _cloudUploadProgress = 0;
-    _cloudUploadTotal = 0;
-    _cloudUploadMessage = '';
-    _cloudUploadError = null;
+    _storageTransferError = null;
     _isGoogleDriveLinking = false;
     _googleDriveLinkMessage = '';
     _googleDriveLinkError = null;
@@ -527,11 +492,18 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     notifyListeners();
   }
 
-  void startStorageTransfer(int total, String message) {
+  void startStorageTransfer(
+    int total,
+    String message, {
+    String title = '클립을 옮기는 중',
+  }) {
     _isStorageTransferRunning = true;
+    _storageTransferSucceeded = false;
     _storageTransferProgress = 0;
     _storageTransferTotal = total;
+    _storageTransferTitle = title;
     _storageTransferMessage = message;
+    _storageTransferError = null;
     notifyListeners();
   }
 
@@ -544,38 +516,60 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     notifyListeners();
   }
 
-  void endStorageTransfer() {
+  /// 성공적으로 끝난 뒤, 사용자가 결과를 인지할 수 있도록 잠깐 완료 상태를
+  /// 보여준 다음 오버레이를 닫습니다.
+  void endStorageTransfer({String message = '전환을 마쳤어요'}) {
     _isStorageTransferRunning = false;
+    _storageTransferSucceeded = true;
     _storageTransferProgress = _storageTransferTotal;
-    _storageTransferMessage = '전환 완료';
+    _storageTransferMessage = message;
     notifyListeners();
+    unawaited(
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (_storageTransferSucceeded) {
+          _storageTransferSucceeded = false;
+          notifyListeners();
+        }
+      }),
+    );
   }
 
+  /// 선택한 여러 클립을 한 번에 다른 저장위치로 옮깁니다. 클립 1개짜리
+  /// 이동(moveClipToServer 등)과 같은 오버레이 상태를 공유하므로, 그
+  /// 메서드들이 각자 오버레이를 열고 닫지 않도록 여기서는 저장소를 직접
+  /// 호출합니다.
   Future<void> moveClipsToStorage(
     List<int> clipIds,
     String target,
   ) async {
     if (clipIds.isEmpty || _isStorageTransferRunning) return;
 
-    startStorageTransfer(clipIds.length, '클립 전환 중');
+    final title = switch (target) {
+      ClipStorageConstants.storageModeLocal => '내 기기로 옮기는 중',
+      ClipStorageConstants.storageModeServer => '서버로 옮기는 중',
+      ClipStorageConstants.storageModeGoogleDrive => 'Google Drive로 옮기는 중',
+      _ => '클립을 옮기는 중',
+    };
+
+    startStorageTransfer(clipIds.length, '클립을 옮기고 있어요', title: title);
 
     try {
       var progress = 0;
       for (final clipId in clipIds) {
         switch (target) {
           case ClipStorageConstants.storageModeLocal:
-            await moveClipToLocal(clipId);
+            await _clipMigrationRepository.moveClipToLocal(clipId);
             break;
           case ClipStorageConstants.storageModeServer:
-            await moveClipToServer(clipId);
+            await _clipMigrationRepository.moveClipToServer(clipId);
             break;
           case ClipStorageConstants.storageModeGoogleDrive:
-            await moveClipToGoogleDrive(clipId);
+            await _clipMigrationRepository.moveClipToGoogleDrive(clipId);
             break;
         }
 
         progress++;
-        updateStorageTransfer(progress, '클립 전환 중');
+        updateStorageTransfer(progress, '클립을 옮기고 있어요');
       }
 
       if (selectedCollectionId != null) {
@@ -583,8 +577,18 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       } else {
         await refreshStorageUsage();
       }
+      endStorageTransfer(message: '선택한 클립을 모두 옮겼어요');
+    } catch (e, st) {
+      AppLogger.e(
+        '[Clip][Storage] bulk-transfer failed target=$target',
+        error: e,
+        stackTrace: st,
+      );
+      _isStorageTransferRunning = false;
+      _storageTransferSucceeded = false;
+      _storageTransferError = '옮기는 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
+      notifyListeners();
     } finally {
-      endStorageTransfer();
       closeCollectionMenu();
     }
   }
@@ -730,7 +734,9 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     _refreshStorageUsageInBackground();
   }
 
-  /// 컬렉션 선택 (null이면 컬렉션 없는 클립 표시).
+  /// 컬렉션 선택 (null이면 컬렉션 없는 클립 표시, -1이면 현재 스코프의
+  /// "모든 클립" 가상 뷰: 그룹 루트(-1)에서는 저장위치 전체 클립, 실제
+  /// 그룹 안에서는 그 그룹에 속한 콜렉션들의 클립을 합쳐서 보여줍니다).
   @override
   Future<void> selectCollection(int? id) async {
     selectedCollectionId = id;
@@ -740,6 +746,13 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
 
     if (id == null) {
       clips = await _clipRepository.getVisibleClipsForCollection(null);
+    } else if (id == -1) {
+      clips = (selectedGroupId == null || selectedGroupId == -1)
+          ? await _clipRepository
+              .getVisibleClipsForStorageMode(_activeStorageMode)
+          : await _clipRepository.getVisibleClipsForCollections(
+              collections.map((c) => c.id).toList(),
+            );
     } else {
       clips = await _clipRepository.getVisibleClipsForCollection(id);
     }
@@ -815,64 +828,6 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     clipItems = [];
     tagsByClip = {};
     loadGroups();
-  }
-
-  void _setServerUploadState({
-    required bool isRunning,
-    required int progress,
-    required int total,
-    required String message,
-    required String? error,
-  }) {
-    final wasRunning = _isServerUploadRunning;
-    _isServerUploadRunning = isRunning;
-    _serverUploadProgress = progress;
-    _serverUploadTotal = total;
-    _serverUploadMessage = message;
-    _serverUploadError = error;
-    if (isRunning && !wasRunning) {
-      AppLogger.d(
-        '[Clip][Storage] state=loading progress=$progress total=$total message=$message',
-      );
-    } else if (!isRunning && error == null) {
-      AppLogger.d(
-        '[Clip][Storage] state=success progress=$progress total=$total message=$message',
-      );
-    } else if (!isRunning && error != null) {
-      AppLogger.w(
-        '[Clip][Storage] state=failed progress=$progress total=$total message=$message error=$error',
-      );
-    }
-    notifyListeners();
-  }
-
-  void _setCloudUploadState({
-    required bool isRunning,
-    required int progress,
-    required int total,
-    required String message,
-    required String? error,
-  }) {
-    final wasRunning = _isCloudUploadRunning;
-    _isCloudUploadRunning = isRunning;
-    _cloudUploadProgress = progress;
-    _cloudUploadTotal = total;
-    _cloudUploadMessage = message;
-    _cloudUploadError = error;
-    if (isRunning && !wasRunning) {
-      AppLogger.d(
-        '[Clip][Cloud] state=loading progress=$progress total=$total message=$message',
-      );
-    } else if (!isRunning && error == null) {
-      AppLogger.d(
-        '[Clip][Cloud] state=success progress=$progress total=$total message=$message',
-      );
-    } else if (!isRunning && error != null) {
-      AppLogger.w(
-        '[Clip][Cloud] state=failed progress=$progress total=$total message=$message error=$error',
-      );
-    }
-    notifyListeners();
   }
 
   void _setGoogleDriveLinkState({

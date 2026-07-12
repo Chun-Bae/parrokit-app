@@ -41,6 +41,13 @@ mixin ClipActionMixin on ChangeNotifier {
     if (!success) return false;
 
     // Refresh current view
+    if (selectedCollectionId == -1) {
+      // "모든 클립"/"그룹 내 모든 클립" 가상 뷰: 실제 콜렉션이 아니므로
+      // 존재 여부를 조회할 필요 없이 같은 가상 뷰를 다시 불러온다.
+      await selectCollection(-1);
+      return true;
+    }
+
     if (selectedCollectionId != null) {
       final exists = await (db.select(db.collections)
             ..where((c) => c.id.equals(selectedCollectionId!))

@@ -764,6 +764,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
   Future<void> _showClipFabMenu(
     BuildContext context, {
     required String? selectedCollectionName,
+    required bool canAddClip,
   }) async {
     final clipProvider = context.read<ClipProvider>();
     final router = GoRouter.of(context);
@@ -784,17 +785,20 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             const SizedBox(height: 6),
             Text(
-              '클립을 추가하거나 선택 모드로 바꿀 수 있어요.',
+              canAddClip
+                  ? '클립을 추가하거나 선택 모드로 바꿀 수 있어요.'
+                  : '클립을 선택 모드로 바꿀 수 있어요.',
               style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.add_rounded),
-              title: const Text('클립 추가'),
-              onTap: () => Navigator.pop(ctx, 'add'),
-            ),
+            if (canAddClip)
+              ListTile(
+                leading: const Icon(Icons.add_rounded),
+                title: const Text('클립 추가'),
+                onTap: () => Navigator.pop(ctx, 'add'),
+              ),
             ListTile(
               leading: const Icon(Icons.checklist_rounded),
               title: const Text('선택 모드'),
@@ -856,19 +860,25 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     }
 
     if (clipProvider.selectedCollectionId != null) {
-      final col = clipProvider.collections.cast<dynamic>().firstWhere(
-            (c) => (c.id as int) == clipProvider.selectedCollectionId,
-            orElse: () => null,
-          );
-      if (col != null) {
-        selectedCollectionName = col.name as String;
+      if (clipProvider.selectedCollectionId == -1) {
+        selectedCollectionName =
+            clipProvider.selectedGroupId == -1 ? '모든 클립' : '그룹 내 모든 클립';
         crumbs.add(selectedCollectionName);
       } else {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (context.mounted) {
-            context.read<ClipProvider>().backToCollections();
-          }
-        });
+        final col = clipProvider.collections.cast<dynamic>().firstWhere(
+              (c) => (c.id as int) == clipProvider.selectedCollectionId,
+              orElse: () => null,
+            );
+        if (col != null) {
+          selectedCollectionName = col.name as String;
+          crumbs.add(selectedCollectionName);
+        } else {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              context.read<ClipProvider>().backToCollections();
+            }
+          });
+        }
       }
     }
 
@@ -901,7 +911,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                 },
               ),
 
-              _buildActiveStorageSummary(context, clipProvider.activeStorageMode),
+              _buildActiveStorageSummary(
+                  context, clipProvider.activeStorageMode),
 
               // 삭제 모드 배너
               if (_deleteMode && !isAtClipList)
@@ -980,17 +991,30 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
 
                     // 2) Collections
                     if (isAtCollectionList) {
+                      final allClipsLabel = clipProvider.selectedGroupId == -1
+                          ? '모든 클립'
+                          : '그룹 내 모든 클립';
+                      final gridItems = [
+                        allClipsLabel,
+                        ...clipProvider.collections
+                            .map((c) => (c as dynamic).name as String)
+                      ];
                       return FolderGrid(
                         sectionTitle: '컬렉션',
-                        items: clipProvider.collections
-                            .map((c) => (c as dynamic).name as String)
-                            .toList(),
+                        items: gridItems,
                         deleteMode: _deleteMode,
                         isGridView: _isGridView,
                         onToggleView: _toggleViewMode,
                         onAdd: () => _showCreateCollectionDialog(context),
                         onTap: (idx) {
-                          final col = clipProvider.collections[idx];
+                          if (idx == 0) {
+                            if (!_deleteMode) {
+                              clipProvider.selectCollection(-1);
+                            }
+                            return;
+                          }
+
+                          final col = clipProvider.collections[idx - 1];
                           if (_deleteMode) {
                             _showDeleteCollectionDialog(
                                 context, col.id, col.name);
@@ -999,8 +1023,10 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                           }
                         },
                         onLongPress: (idx) {
-                          final col = clipProvider.collections[idx];
-                          _showRenameCollectionDialog(context, col.id, col.name);
+                          if (idx == 0) return;
+                          final col = clipProvider.collections[idx - 1];
+                          _showRenameCollectionDialog(
+                              context, col.id, col.name);
                         },
                       );
                     }
@@ -1046,6 +1072,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                       ? () => _showClipFabMenu(
                             fabCtx,
                             selectedCollectionName: selectedCollectionName,
+                            canAddClip: clipProvider.selectedCollectionId != -1,
                           )
                       : () => _showFabMenu(fabCtx, isAtGroupRoot),
                   backgroundColor: colorScheme.surface,

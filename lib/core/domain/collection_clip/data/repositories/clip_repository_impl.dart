@@ -56,6 +56,28 @@ class ClipRepositoryImpl implements ClipRepository {
   }
 
   @override
+  Future<List<Clip>> getVisibleClipsForCollections(
+    List<int> collectionIds,
+  ) async {
+    final idSet = collectionIds.toSet();
+    final rows = await sourceRefDatasource.visibleClips();
+    final filtered = rows
+        .where((clip) =>
+            clip.collectionId != null && idSet.contains(clip.collectionId))
+        .toList();
+    filtered.sort((a, b) => a.id.compareTo(b.id));
+    return filtered;
+  }
+
+  @override
+  Future<List<Clip>> getVisibleClipsForStorageMode(String storageMode) async {
+    final rows =
+        await sourceRefDatasource.visibleClipsByStorageMode(storageMode);
+    final sorted = [...rows]..sort((a, b) => a.id.compareTo(b.id));
+    return sorted;
+  }
+
+  @override
   Future<int> countVisibleClipsInCollection(int collectionId) async {
     final clips = await getVisibleClipsForCollection(collectionId);
     return clips.length;
@@ -96,7 +118,8 @@ class ClipRepositoryImpl implements ClipRepository {
 
       final oldCollectionId = target.collectionId;
 
-      final sourceRef = await sourceRefDatasource.getCurrentClipSourceRef(target);
+      final sourceRef =
+          await sourceRefDatasource.getCurrentClipSourceRef(target);
       if (sourceRef != null) {
         await sourceRefDatasource.deleteRemoteLinkSource(sourceRef);
         if (sourceRef.provider == ClipStorageConstants.providerServer &&

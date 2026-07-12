@@ -50,6 +50,14 @@ abstract class ClipRepository {
   /// 컬렉션 미지정 클립을 반환합니다.
   Future<List<Clip>> getVisibleClipsForCollection(int? collectionId);
 
+  /// 주어진 콜렉션들(collectionIds)에 속한 클립을 모두 합쳐서 반환합니다.
+  /// "그룹 내 모든 클립" 가상 뷰에서 사용합니다.
+  Future<List<Clip>> getVisibleClipsForCollections(List<int> collectionIds);
+
+  /// 특정 저장위치의 모든 클립(콜렉션 소속 여부 무관)을 반환합니다.
+  /// "모든 클립" 가상 뷰에서 사용합니다.
+  Future<List<Clip>> getVisibleClipsForStorageMode(String storageMode);
+
   Future<int> countVisibleClipsInCollection(int collectionId);
 
   Future<List<ClipItem>> fetchClipItemsByStorageMode(String storageMode);

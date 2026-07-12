@@ -33,7 +33,10 @@ abstract class ClipMigrationRepository {
   });
 
   /// 원격 저장된 클립을 로컬 저장으로 전환합니다.
-  Future<void> moveClipToLocal(int clipId);
+  Future<void> moveClipToLocal(
+    int clipId, {
+    ClipMigrationProgressCallback? onProgress,
+  });
 
   Future<bool> clearRemoteClipCache(int clipId);
 

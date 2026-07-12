@@ -45,7 +45,9 @@ class FolderGrid extends StatelessWidget {
                 if (onToggleView != null)
                   IconButton(
                     onPressed: onToggleView,
-                    icon: Icon(isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
+                    icon: Icon(isGridView
+                        ? Icons.view_list_rounded
+                        : Icons.grid_view_rounded),
                     visualDensity: VisualDensity.compact,
                   ),
               ],
@@ -61,7 +63,8 @@ class FolderGrid extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             sliver: isGridView
                 ? SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
@@ -99,12 +102,13 @@ class FolderGrid extends StatelessWidget {
         isAddCard: true,
       );
     }
-    
-    final isSpecial = sectionTitle == '그룹' && i == 0;
+
+    final isSpecial = i == 0 && (sectionTitle == '그룹' || sectionTitle == '컬렉션');
     return FolderCard(
       name: items[i],
       onTap: () => onTap(i),
-      onLongPress: (onLongPress == null || isSpecial) ? null : () => onLongPress!(i),
+      onLongPress:
+          (onLongPress == null || isSpecial) ? null : () => onLongPress!(i),
       deleteMode: deleteMode && !isSpecial,
       isGridView: isGridView,
       isSpecial: isSpecial,

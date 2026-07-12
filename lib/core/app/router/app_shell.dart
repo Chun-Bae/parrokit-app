@@ -44,7 +44,6 @@ class AppShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _indexFromLocation(location);
     final clipProvider = context.watch<ClipProvider>();
-    final colorScheme = Theme.of(context).colorScheme;
 
     // 네비바 숨김 조건
     final hideNav = location.startsWith('/clips/') ||
@@ -58,55 +57,10 @@ class AppShell extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      body: Stack(
-        children: [
-          child,
-          if (clipProvider.isStorageTransferRunning)
-            Positioned.fill(
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.35),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 18),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          clipProvider.storageTransferMessage,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          clipProvider.storageTransferTotal == 0
-                              ? '잠시만 기다려주세요'
-                              : '${clipProvider.storageTransferProgress} / ${clipProvider.storageTransferTotal}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+      // 저장위치 이동 중 전체 화면 차단 오버레이는 app.dart에서 전역으로
+      // 그려진다 (바텀 네비게이션 바까지 함께 막기 위해 Scaffold 바깥
+      // 레벨에 위치).
+      body: child,
       bottomNavigationBar: hideNav
           ? null
           : showCollectionSelectionBar

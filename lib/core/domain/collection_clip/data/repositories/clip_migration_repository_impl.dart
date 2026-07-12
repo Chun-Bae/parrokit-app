@@ -112,7 +112,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
     final normalizedExtension = extension.isEmpty ? '.mp4' : extension;
     final contentType = lookupMimeType(absPath) ?? 'application/octet-stream';
     final fileSize = await file.length();
-    onProgress?.call(0, fileSize, 'server 업로드 준비 중');
+    onProgress?.call(0, fileSize, '영상 파일을 확인하고 있어요');
     final storagePath =
         'users/${user.uid}/clips/$remoteDocId/video$normalizedExtension';
     final thumbnailPath = await thumbnailDatasource.ensureThumbnailFile(
@@ -185,7 +185,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         );
         return runTask(
           storageRef.putData(bytes, metadata),
-          progressMessage: '$progressMessage 재시도',
+          progressMessage: '$progressMessage (다시 시도하는 중)',
         );
       }
     }
@@ -197,14 +197,14 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         storagePath,
         uploadFile: file,
         uploadContentType: contentType,
-        progressMessage: 'server 업로드 중',
+        progressMessage: '서버에 영상을 올리고 있어요',
       );
       if (thumbnailFile != null && await thumbnailFile.exists()) {
         thumbnailUploadResult = await uploadToPath(
           thumbnailStoragePath,
           uploadFile: thumbnailFile,
           uploadContentType: 'image/jpeg',
-          progressMessage: 'server 썸네일 업로드 중',
+          progressMessage: '미리보기 이미지를 올리고 있어요',
         );
       }
 
@@ -388,7 +388,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         previousSourceRef?.remoteDocId ?? remoteDocIdResolver.newClipDocId();
     final extension = p.extension(absPath);
     final normalizedExtension = extension.isEmpty ? '.mp4' : extension;
-    onProgress?.call(0, 0, 'Google Drive 연결 확인 중');
+    onProgress?.call(0, 0, 'Google Drive 연결을 확인하고 있어요');
     final fileName = ClipPathUtils.buildDriveFileName(absPath);
     final cloudStoragePath = 'clips/$remoteDocId/video$normalizedExtension';
     final thumbnailPath = await thumbnailDatasource.ensureThumbnailFile(
@@ -430,7 +430,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       );
     }
 
-    onProgress?.call(fileSize, fileSize, 'Google Drive 메타데이터 저장 중');
+    onProgress?.call(fileSize, fileSize, '저장 정보를 정리하고 있어요');
     final metadata = await cloudMetadataDatasource.buildCloudClipMetadata(
       clip: target,
       remoteDocId: remoteDocId,
@@ -525,7 +525,10 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
   }
 
   @override
-  Future<void> moveClipToLocal(int clipId) async {
+  Future<void> moveClipToLocal(
+    int clipId, {
+    ClipMigrationProgressCallback? onProgress,
+  }) async {
     AppLogger.i('[Clip][Storage] move-to-local start clipId=$clipId');
 
     final target = await (db.select(db.clips)
@@ -552,10 +555,12 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       throw StateError('현재 계정의 원격 원본 정보를 찾을 수 없습니다.');
     }
 
+    onProgress?.call(0, 0, '원본 영상을 내려받고 있어요');
     final sourcePath = await fileSyncDatasource.ensureLocalSourcePath(
       target: target,
       sourceRef: sourceRef,
     );
+    onProgress?.call(0, 0, '내 기기에 정리하고 있어요');
     final thumbnailPath = await thumbnailDatasource.ensureThumbnailFile(
       clipId: clipId,
       videoPath: sourcePath,
