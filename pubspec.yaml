@@ -3,7 +3,7 @@ description: "Parrokit: 애니메이션 클립으로 즐기는 언어 학습 앱
 # Private Project - Do not publish to pub.dev
 publish_to: 'none'
 
-version: 1.0.5+92
+version: 1.0.5+94
 
 environment:
   sdk: ^3.6.1
