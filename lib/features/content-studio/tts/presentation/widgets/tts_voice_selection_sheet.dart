@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/content-studio/tts/domain/models/tts_google_models.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
 
-class VoiceModelOption {
-  final String originalName;
-  final String engine;
-  final String variant;
-  final Map<String, dynamic> rawData;
+/// 커스텀 큐레이션 대상 등급(Standard/WaveNet)에 속하는 구글 보이스 1개.
+class _GoogleVoiceEntry {
+  const _GoogleVoiceEntry({
+    required this.voiceId,
+    required this.tier,
+    required this.gender,
+  });
 
-  VoiceModelOption(this.originalName, this.engine, this.variant, this.rawData);
+  final String voiceId;
+  final String tier;
+  final String gender;
 }
 
 class TtsVoiceSelectionSheet extends StatefulWidget {
@@ -23,12 +31,24 @@ class TtsVoiceSelectionSheet extends StatefulWidget {
 }
 
 class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
-  final Map<String, List<VoiceModelOption>> _engineToVariants = {};
-  String? _selectedEngine;
+  List<_GoogleVoiceEntry> _entries = [];
+  String? _selectedTier;
+  String? _selectedGender;
+
+  late final AudioPlayer _previewPlayer;
+  String? _previewLoadingVoiceId;
+  String? _previewPlayingVoiceId;
 
   @override
   void initState() {
     super.initState();
+    _previewPlayer = AudioPlayer();
+    _previewPlayer.playerStateStream.listen((state) {
+      if (!mounted) return;
+      if (state.processingState == ProcessingState.completed) {
+        setState(() => _previewPlayingVoiceId = null);
+      }
+    });
     _parseVoices();
     _initSelection();
   }
@@ -42,55 +62,112 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     }
   }
 
+  @override
+  void dispose() {
+    _previewPlayer.dispose();
+    super.dispose();
+  }
+
   void _parseVoices() {
-    _engineToVariants.clear();
-    for (final v in widget.provider.availableVoices) {
-      final name = (v['name'] ?? '').toString();
-      final parts = name.split('-');
-      if (parts.length >= 2) {
-        final variant = parts.last;
-        final engine = parts[parts.length - 2];
-        
-        _engineToVariants.putIfAbsent(engine, () => []).add(
-          VoiceModelOption(name, engine, variant, v)
-        );
-      } else {
-        _engineToVariants.putIfAbsent('기타', () => []).add(
-          VoiceModelOption(name, '기타', name, v)
-        );
-      }
-    }
-    
-    // 알파벳 순으로 변형(Variant) 정렬
-    for (final engine in _engineToVariants.keys) {
-      _engineToVariants[engine]!.sort((a, b) => a.variant.compareTo(b.variant));
-    }
+    final curatedTierIds = googleModels.map((m) => m.id).toSet();
+    _entries = widget.provider.availableVoices
+        .map((v) {
+          final name = (v['name'] ?? '').toString();
+          final parts = name.split('-');
+          if (parts.length < 2) return null;
+          final tier = parts[parts.length - 2];
+          if (!curatedTierIds.contains(tier)) return null;
+          return _GoogleVoiceEntry(
+            voiceId: name,
+            tier: tier,
+            gender: (v['ssmlGender'] ?? '').toString(),
+          );
+        })
+        .whereType<_GoogleVoiceEntry>()
+        .toList()
+      ..sort((a, b) => a.voiceId.compareTo(b.voiceId));
+  }
+
+  List<String> _tiersInOrder() {
+    final available = _entries.map((e) => e.tier).toSet();
+    return googleModels.map((m) => m.id).where(available.contains).toList();
+  }
+
+  List<String> _gendersFor(String tier) {
+    final genders = _entries
+        .where((e) => e.tier == tier)
+        .map((e) => e.gender)
+        .toSet()
+        .toList();
+    genders.sort();
+    return genders;
+  }
+
+  List<_GoogleVoiceEntry> _candidatesFor(String tier, String gender) {
+    return _entries.where((e) => e.tier == tier && e.gender == gender).toList();
   }
 
   void _initSelection() {
+    final tiers = _tiersInOrder();
+    if (tiers.isEmpty) {
+      _selectedTier = null;
+      _selectedGender = null;
+      return;
+    }
+
     final currentVoice = widget.provider.voiceId;
-    if (currentVoice.isNotEmpty) {
-      final parts = currentVoice.split('-');
-      if (parts.length >= 2) {
-        final engine = parts[parts.length - 2];
-        if (_engineToVariants.containsKey(engine)) {
-          _selectedEngine = engine;
-        }
-      }
+    final currentEntry = _entries.where((e) => e.voiceId == currentVoice).firstOrNull;
+
+    _selectedTier = currentEntry?.tier ?? tiers.first;
+    final genders = _gendersFor(_selectedTier!);
+    _selectedGender = currentEntry?.gender ?? (genders.isNotEmpty ? genders.first : null);
+  }
+
+  void _selectTier(String tier) {
+    setState(() {
+      _selectedTier = tier;
+      final genders = _gendersFor(tier);
+      _selectedGender = genders.isNotEmpty ? genders.first : null;
+    });
+  }
+
+  void _selectGender(String gender) {
+    setState(() => _selectedGender = gender);
+  }
+
+  Future<void> _onPreviewTap(String voiceId) async {
+    if (_previewPlayingVoiceId == voiceId) {
+      await _previewPlayer.pause();
+      if (mounted) setState(() => _previewPlayingVoiceId = null);
+      return;
     }
-    
-    if (_selectedEngine == null || !_engineToVariants.containsKey(_selectedEngine)) {
-      if (_engineToVariants.isNotEmpty) {
-        // 기본적으로 가장 항목이 많은 엔진을 선택하거나 첫 번째 선택
-        _selectedEngine = _engineToVariants.keys.first;
-      }
+
+    setState(() => _previewLoadingVoiceId = voiceId);
+    final path = await widget.provider.previewGoogleVoice(voiceId);
+    if (!mounted) return;
+    setState(() => _previewLoadingVoiceId = null);
+
+    if (path == null) {
+      showToast('미리듣기를 재생할 수 없습니다.');
+      return;
     }
+
+    await _previewPlayer.setFilePath(path);
+    await _previewPlayer.play();
+    if (mounted) setState(() => _previewPlayingVoiceId = voiceId);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final mutedText = isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+
+    final tiers = _tiersInOrder();
+    final genders = _selectedTier == null ? <String>[] : _gendersFor(_selectedTier!);
+    final candidates = (_selectedTier == null || _selectedGender == null)
+        ? <_GoogleVoiceEntry>[]
+        : _candidatesFor(_selectedTier!, _selectedGender!);
 
     return Container(
       constraints: BoxConstraints(
@@ -118,57 +195,57 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              '보이스 모델 선택',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              '보이스 선택',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           if (widget.provider.isLoadingVoices)
             const Expanded(child: Center(child: CircularProgressIndicator()))
-          else if (_engineToVariants.isEmpty)
+          else if (tiers.isEmpty)
             Expanded(
               child: Center(
                 child: Text(
                   '선택할 수 있는 보이스가 없습니다.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: mutedText),
                 ),
               ),
             )
           else ...[
-            // 엔진 선택 영역
+            _SectionLabel(text: '모델 (Model)', mutedColor: mutedText),
+            const SizedBox(height: AppSpacing.sm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text(
-                '엔진 (Engine)',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: tiers.map((tier) {
+                  final model = googleModels.firstWhere((m) => m.id == tier);
+                  final isSelected = _selectedTier == tier;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: _ModelChoiceTile(
+                      name: model.name,
+                      description: model.description,
+                      isSelected: isSelected,
+                      onTap: () => _selectTier(tier),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
+            _SectionLabel(text: '성별 (Gender)', mutedColor: mutedText),
             const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                itemCount: _engineToVariants.keys.length,
-                separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final engine = _engineToVariants.keys.elementAt(index);
-                  final isSelected = _selectedEngine == engine;
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                children: genders.map((gender) {
+                  final isSelected = _selectedGender == gender;
                   return ChoiceChip(
-                    label: Text(engine),
+                    label: Text(googleGenderLabel(gender)),
                     selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => _selectedEngine = engine);
-                      }
-                    },
+                    onSelected: (_) => _selectGender(gender),
                     selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
                     labelStyle: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -176,58 +253,58 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
                     ),
                     side: isSelected ? BorderSide(color: theme.colorScheme.primary) : null,
                   );
-                },
+                }).toList(),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            // 변형(Variant) 선택 영역
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text(
-                '모델 (Variant)',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                ),
-              ),
-            ),
+            _SectionLabel(text: '보이스', mutedColor: mutedText),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              child: _selectedEngine == null
-                  ? const SizedBox.shrink()
+              child: candidates.isEmpty
+                  ? Center(
+                      child: Text(
+                        '해당 조합의 보이스가 없습니다.',
+                        style: theme.textTheme.bodyMedium?.copyWith(color: mutedText),
+                      ),
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      itemCount: _engineToVariants[_selectedEngine!]!.length,
+                      itemCount: candidates.length,
                       itemBuilder: (context, index) {
-                        final option = _engineToVariants[_selectedEngine!]![index];
-                        final isSelected = widget.provider.voiceId == option.originalName;
-                        
-                        // 성별이나 샘플링 레이트 등 추가 정보
-                        final gender = option.rawData['ssmlGender'] ?? '';
-                        final hz = option.rawData['naturalSampleRateHertz'] ?? '';
-                        
+                        final entry = candidates[index];
+                        final isSelected = widget.provider.voiceId == entry.voiceId;
+                        final isLoading = _previewLoadingVoiceId == entry.voiceId;
+                        final isPlaying = _previewPlayingVoiceId == entry.voiceId;
+
                         return ListTile(
                           title: Text(
-                            'Variant ${option.variant}',
+                            '보이스 ${index + 1}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: isSelected ? theme.colorScheme.primary : null,
                             ),
                           ),
-                          subtitle: Text(
-                            '$gender ${hz != '' ? '• ${hz}Hz' : ''}',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                            ),
+                          leading: IconButton(
+                            onPressed: isLoading ? null : () => _onPreviewTap(entry.voiceId),
+                            icon: isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Icon(
+                                    isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                                  ),
+                            color: theme.colorScheme.primary,
                           ),
-                          trailing: isSelected 
-                            ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary) 
-                            : null,
+                          trailing: isSelected
+                              ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary)
+                              : null,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           onTap: () {
-                            widget.provider.updateVoiceId(option.originalName);
+                            widget.provider.updateVoiceId(entry.voiceId);
                             Navigator.pop(context);
                           },
                         );
@@ -240,4 +317,94 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
       ),
     );
   }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.text, required this.mutedColor});
+
+  final String text;
+  final Color mutedColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: mutedColor,
+            ),
+      ),
+    );
+  }
+}
+
+class _ModelChoiceTile extends StatelessWidget {
+  const _ModelChoiceTile({
+    required this.name,
+    required this.description,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String name;
+  final String description;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+              : (isDark ? AppColors.surfaceContainerHighDark : AppColors.surfaceContainer),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? theme.colorScheme.primary : null,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

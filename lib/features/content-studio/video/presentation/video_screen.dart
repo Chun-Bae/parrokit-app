@@ -333,7 +333,7 @@ class _VideoScreenState extends State<VideoScreen> {
                     children: [
                       _InfoPill(
                         icon: Icons.bolt_rounded,
-                        text: '예상 8 코인',
+                        text: '예상 ${provider.estimatedCost} 패롯',
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       _InfoPill(

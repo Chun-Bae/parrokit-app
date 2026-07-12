@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+
 import 'package:parrokit/core/shared/utils/app_logger.dart';
-import '../../domain/usecases/generate_tts_usecase.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
+
 import '../../data/data_sources/tts_remote_data_source.dart';
 import '../../data/repositories/tts_generation_repository_impl.dart';
+import '../../domain/models/tts_language.dart';
 import '../../domain/repositories/tts_generation_repository.dart';
+import '../../domain/usecases/generate_tts_usecase.dart';
 
 class TtsProvider extends ChangeNotifier {
   late final GenerateTtsUseCase _useCase;
+  final UserProvider userProvider;
 
-  TtsProvider({GenerateTtsUseCase? useCase}) {
+  TtsProvider({required this.userProvider, GenerateTtsUseCase? useCase}) {
     _useCase = useCase ??
         GenerateTtsUseCase(
           TtsGenerationRepositoryImpl(TtsRemoteDataSource()),
@@ -62,6 +68,9 @@ class TtsProvider extends ChangeNotifier {
 
   bool _isLoadingVoices = false;
   bool get isLoadingVoices => _isLoadingVoices;
+
+  /// 현재 스크립트 기준 예상 소모 패롯.
+  int get estimatedCost => _calculateCoinCost(_text.length);
 
   void updateText(String newText) {
     if (newText.length <= 240) {
@@ -149,6 +158,12 @@ class TtsProvider extends ChangeNotifier {
   Future<void> generateTts() async {
     if (_text.trim().isEmpty) return;
 
+    final cost = _calculateCoinCost(_text.length);
+    if (userProvider.coins < cost) {
+      showToast('패롯이 부족합니다. (필요 $cost / 보유 ${userProvider.coins})');
+      return;
+    }
+
     AppLogger.i('[TTS][Provider] Starting generateTts provider=${_providerType.name} text_length=${_text.length}');
     _isGenerating = true;
     _errorMessage = null;
@@ -164,7 +179,7 @@ class TtsProvider extends ChangeNotifier {
         modelId: _modelId,
         speakingRate: _speakingRate,
         pitch: _pitch,
-        elevenLabsSettings: _providerType == TtsProviderType.elevenlabs 
+        elevenLabsSettings: _providerType == TtsProviderType.elevenlabs
             ? ElevenLabsVoiceSettings(
                 stability: _elevenLabsStability,
                 similarityBoost: _elevenLabsSimilarityBoost,
@@ -175,6 +190,11 @@ class TtsProvider extends ChangeNotifier {
       );
       AppLogger.i('[TTS][Provider] generateTts success path_length=${path.length}');
       _generatedFilePath = path;
+
+      if (cost > 0) {
+        userProvider.addCoins(-cost);
+        showToast('음성 생성 완료! ($cost패롯 소모)');
+      }
     } catch (e) {
       AppLogger.e('[TTS][Provider] generateTts failed provider=${_providerType.name}', error: e);
       _errorMessage = e.toString();
@@ -186,5 +206,26 @@ class TtsProvider extends ChangeNotifier {
   void clearGeneratedAudio() {
     _generatedFilePath = null;
     notifyListeners();
+  }
+
+  /// 보이스 선택 화면에서 짧은 예문으로 미리듣기 오디오를 생성합니다.
+  /// 실패 시 null을 반환하며, 메인 생성 상태(`generatedFilePath` 등)는 건드리지 않습니다.
+  Future<String?> previewGoogleVoice(String voiceId) async {
+    try {
+      return await _useCase.repository.generateTts(
+        text: getLanguageByTtsCode(_language).previewText,
+        language: _language,
+        provider: TtsProviderType.google,
+        voiceId: voiceId,
+      );
+    } catch (e) {
+      AppLogger.e('[TTS][Provider] previewGoogleVoice failed voiceId=$voiceId', error: e);
+      return null;
+    }
+  }
+
+  int _calculateCoinCost(int textLength) {
+    if (textLength <= 0) return 0;
+    return ((textLength + 49) ~/ 50).clamp(1, 1 << 30);
   }
 }

@@ -421,7 +421,14 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '예상 ${provider.estimatedCost} 패롯',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: mutedText,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Container(
                     width: double.infinity,
                     height: 50,

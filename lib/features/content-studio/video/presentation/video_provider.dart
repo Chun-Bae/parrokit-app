@@ -1,15 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
-import '../domain/usecases/generate_video_usecase.dart';
-import '../domain/usecases/check_video_operation_usecase.dart';
-import '../domain/usecases/list_recent_video_generations_usecase.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
+
 import '../data/data_sources/video_remote_data_source.dart';
 import '../data/repositories/video_generation_repository_impl.dart';
 import '../domain/models/video_generation_models.dart';
-import 'package:parrokit/core/shared/utils/app_logger.dart';
+import '../domain/usecases/check_video_operation_usecase.dart';
+import '../domain/usecases/generate_video_usecase.dart';
+import '../domain/usecases/list_recent_video_generations_usecase.dart';
 
 class VideoProvider extends ChangeNotifier {
   static const int dialogueMaxLength = 100;
@@ -17,8 +21,10 @@ class VideoProvider extends ChangeNotifier {
   late final GenerateVideoUseCase _generateUseCase;
   late final CheckVideoOperationUseCase _checkOperationUseCase;
   late final ListRecentVideoGenerationsUseCase _listRecentUseCase;
+  final UserProvider userProvider;
 
   VideoProvider({
+    required this.userProvider,
     GenerateVideoUseCase? generateUseCase,
     CheckVideoOperationUseCase? checkOperationUseCase,
     ListRecentVideoGenerationsUseCase? listRecentUseCase,
@@ -63,6 +69,11 @@ class VideoProvider extends ChangeNotifier {
 
   Timer? _pollingTimer;
   Timer? _recentRefreshTimer;
+  int _pendingCost = 0;
+
+  /// 현재 모델/길이 설정 기준 예상 소모 패롯.
+  int get estimatedCost =>
+      veo31GenerationCost(modelId: _model, durationSeconds: _duration);
 
   @override
   void dispose() {
@@ -197,6 +208,13 @@ class VideoProvider extends ChangeNotifier {
   Future<void> generateVideo() async {
     if (_dialogue.trim().isEmpty && _scenePrompt.trim().isEmpty) return;
 
+    final cost = veo31GenerationCost(modelId: _model, durationSeconds: _duration);
+    if (userProvider.coins < cost) {
+      showToast('패롯이 부족합니다. (필요 $cost / 보유 ${userProvider.coins})');
+      return;
+    }
+    _pendingCost = cost;
+
     _isGenerating = true;
     _errorMessage = null;
     _generatedFilePath = null;
@@ -223,6 +241,7 @@ class VideoProvider extends ChangeNotifier {
           error: e, stackTrace: stack);
       _errorMessage = e.toString();
       _isGenerating = false;
+      _pendingCost = 0;
       notifyListeners();
     }
   }
@@ -241,10 +260,16 @@ class VideoProvider extends ChangeNotifier {
             AppLogger.e(
                 '[VideoProvider][Polling] error reason=${result['error']}');
             _errorMessage = result['error'].toString();
+            _pendingCost = 0;
           } else {
             AppLogger.i(
                 '[VideoProvider][Polling] success videoUri=${result['videoUri']}');
             _generatedFilePath = result['videoUri'];
+            if (_pendingCost > 0) {
+              userProvider.addCoins(-_pendingCost);
+              showToast('영상 생성 완료! ($_pendingCost패롯 소모)');
+            }
+            _pendingCost = 0;
             await loadRecentVideos();
           }
           _isGenerating = false;
@@ -256,6 +281,7 @@ class VideoProvider extends ChangeNotifier {
         timer.cancel();
         _errorMessage = 'Polling failed: $e';
         _isGenerating = false;
+        _pendingCost = 0;
         notifyListeners();
       }
     });

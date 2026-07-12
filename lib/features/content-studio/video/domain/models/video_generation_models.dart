@@ -3,11 +3,15 @@ class VideoGenerationModel {
     required this.id,
     required this.name,
     required this.description,
+    required this.costPerSecond,
   });
 
   final String id;
   final String name;
   final String description;
+
+  /// 이 모델로 1초 분량을 생성할 때 소모되는 패롯.
+  final int costPerSecond;
 }
 
 class VideoGenerationRecord {
@@ -151,16 +155,19 @@ const List<VideoGenerationModel> veo31Models = [
     id: veo31LiteModelId,
     name: 'Veo 3.1 Lite',
     description: '가장 빠른 생성, 낮은 비용',
+    costPerSecond: 2,
   ),
   VideoGenerationModel(
     id: veo31FastModelId,
     name: 'Veo 3.1 Fast',
     description: '속도와 품질의 균형',
+    costPerSecond: 3,
   ),
   VideoGenerationModel(
     id: veo31StandardModelId,
     name: 'Veo 3.1 Standard',
     description: '가장 높은 품질, 세밀한 연출',
+    costPerSecond: 4,
   ),
 ];
 
@@ -187,4 +194,10 @@ VideoGenerationModel veo31ModelById(String? modelId) {
     (model) => model.id == normalizedId,
     orElse: () => veo31Models.first,
   );
+}
+
+/// 모델 등급과 길이(초)에 따른 예상 소모 패롯.
+int veo31GenerationCost({required String? modelId, required int durationSeconds}) {
+  if (durationSeconds <= 0) return 0;
+  return veo31ModelById(modelId).costPerSecond * durationSeconds;
 }

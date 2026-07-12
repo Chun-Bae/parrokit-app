@@ -17,7 +17,6 @@ class GenerateTtsUseCase {
     ElevenLabsVoiceSettings? elevenLabsSettings,
   }) async {
     TtsValidator.validateText(text);
-    // TODO: 패롯(재화) 잔액 검증 로직 추가 (NFR-TTS-03)
     return repository.generateTts(
       text: text, 
       language: language,

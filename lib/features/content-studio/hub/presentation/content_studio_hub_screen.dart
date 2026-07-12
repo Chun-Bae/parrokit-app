@@ -90,8 +90,14 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => StudioHubProvider()),
-        ChangeNotifierProvider(create: (_) => TtsProvider()),
-        ChangeNotifierProvider(create: (_) => VideoProvider()),
+        ChangeNotifierProvider(
+          create: (context) =>
+              TtsProvider(userProvider: context.read<UserProvider>()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              VideoProvider(userProvider: context.read<UserProvider>()),
+        ),
         ChangeNotifierProvider(create: (_) => ChatBotProvider()),
       ],
       child: Builder(
