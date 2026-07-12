@@ -72,7 +72,7 @@ class AdService {
   // 보상형 광고 (Rewarded) — 시청 시 코인 지급
   // ─────────────────────────────────────────────────────────────────
 
-  static const int rewardCoins = 5; // 광고 1회당 지급 코인
+  static const int rewardCoins = 3; // 광고 1회당 지급 코인
 
   RewardedAd? _rewardedAd;
   bool _isRewardedLoading = false;
