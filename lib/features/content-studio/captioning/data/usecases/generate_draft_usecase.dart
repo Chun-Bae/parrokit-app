@@ -4,15 +4,15 @@
 //
 // [역할]
 // STT 및 LLM을 사용하여 세그먼트 초안을 생성하는 UseCase.
-// 실제 로직은 DraftGenerationService에 위임.
+// 실제 로직은 주입된 CaptionDraftGenerator(RemoteCaptionDraftService)에 위임.
 //
 // [레이어]
 // Data Layer > UseCases
 // ============================================================================
 
-import '../services/draft_generation_service.dart';
+import '../ports/caption_draft_port.dart';
 
-export '../services/draft_generation_service.dart' show DraftResult;
+export '../ports/caption_draft_port.dart' show DraftResult;
 
 /// STT + LLM 초안 생성 UseCase.
 class GenerateDraftUseCase {

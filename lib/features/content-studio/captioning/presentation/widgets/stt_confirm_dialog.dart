@@ -109,7 +109,7 @@ Future<void> showSttConfirmDialog(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                '30초당 1패롯 소모',
+                                '10초당 1패롯 소모',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,

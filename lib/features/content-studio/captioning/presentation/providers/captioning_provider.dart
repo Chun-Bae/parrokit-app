@@ -306,7 +306,7 @@ class CaptioningProvider extends ChangeNotifier
   int _calculateCoinCost(int durationMs) {
     final seconds = (durationMs / 1000).ceil();
     if (seconds <= 0) return 0;
-    return ((seconds + 29) ~/ 30);
+    return ((seconds + 9) ~/ 10);
   }
 
   // ─────────────────────────────────────────────────────────────────

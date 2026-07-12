@@ -23,7 +23,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/models/clip_form_data.dart';
 import '../adapters/asr_engine.dart';
-import 'draft_generation_service.dart';
+import '../ports/caption_draft_port.dart';
 
 /// 서버 기반 자동 자막 생성 실패.
 class RemoteCaptionDraftException implements Exception {
@@ -177,6 +177,6 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
   int _calculateCoinCost(int durationMs) {
     final seconds = (durationMs / 1000).ceil();
     if (seconds <= 0) return 0;
-    return ((seconds + 29) ~/ 30);
+    return ((seconds + 9) ~/ 10);
   }
 }
