@@ -24,4 +24,8 @@ class ClipStorageConstants {
   static const String storageModeLocal = 'local';
   static const String storageModeServer = 'server';
   static const String storageModeGoogleDrive = 'gdrive';
+
+  /// 서버 스토리지 유료화 준비 중 — 결제 연동 전까지 UI에서 잠가둔다.
+  /// 결제가 붙으면 이 값을 false로 바꾼다.
+  static const bool isServerStorageLocked = true;
 }

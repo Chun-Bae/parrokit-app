@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'bookmark_tab.dart';
 
 /// [역할]
@@ -82,7 +83,16 @@ class StorageScopeTabs extends StatelessWidget {
                       icon: item.icon,
                       label: item.label,
                       active: item.mode == value,
-                      onTap: () => onChanged(item.mode),
+                      locked: item.mode == ClipStorageConstants.storageModeServer &&
+                          ClipStorageConstants.isServerStorageLocked,
+                      onTap: () {
+                        if (item.mode == ClipStorageConstants.storageModeServer &&
+                            ClipStorageConstants.isServerStorageLocked) {
+                          showToast('서버 저장은 준비 중이에요. 출시 후 이용할 수 있어요.');
+                          return;
+                        }
+                        onChanged(item.mode);
+                      },
                     ),
                   ),
                   if (item != _items.last) const SizedBox(width: 8),
