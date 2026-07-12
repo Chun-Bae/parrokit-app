@@ -127,11 +127,17 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
     final thumbnailStoragePath =
         'users/${user.uid}/clips/$remoteDocId/thumbnail.jpg';
 
+    // 영상과 썸네일을 각각 0%부터 올리면 진행률이 두 번 리셋되는 것처럼
+    // 보인다. 두 파일 크기를 합친 하나의 진행률로 통일한다.
+    final hasThumbnail = thumbnailFile != null && await thumbnailFile.exists();
+    final thumbnailFileSize = hasThumbnail ? await thumbnailFile.length() : 0;
+    final combinedUploadTotal = fileSize + thumbnailFileSize;
+
     Future<({String storagePath, String downloadUrl})> uploadToPath(
       String storagePath, {
       required File uploadFile,
       required String uploadContentType,
-      required String progressMessage,
+      required int baseBytes,
     }) async {
       final storageRef = FirebaseStorage.instance.ref(storagePath);
       final metadata = SettableMetadata(contentType: uploadContentType);
@@ -142,23 +148,23 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
 
       Future<({String storagePath, String downloadUrl})> runTask(
         UploadTask uploadTask, {
-        required String progressMessage,
+        required bool isRetry,
       }) async {
         late final StreamSubscription<TaskSnapshot> subscription;
         try {
           subscription = uploadTask.snapshotEvents.listen((snapshot) {
-            final total =
-                snapshot.totalBytes > 0 ? snapshot.totalBytes : uploadFileSize;
             onProgress?.call(
-              snapshot.bytesTransferred,
-              total,
-              progressMessage,
+              baseBytes + snapshot.bytesTransferred,
+              combinedUploadTotal,
+              isRetry
+                  ? '서버에 업로드하고 있어요 (다시 시도하는 중)'
+                  : '서버에 업로드하고 있어요',
             );
           });
 
           final taskSnapshot = await uploadTask;
           AppLogger.d(
-            '[Clip][Storage] server-upload-finished clipId=$clipId path=$storagePath mode=$progressMessage',
+            '[Clip][Storage] server-upload-finished clipId=$clipId path=$storagePath',
           );
           final downloadUrl = await taskSnapshot.ref.getDownloadURL();
           return (storagePath: storagePath, downloadUrl: downloadUrl);
@@ -170,7 +176,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       try {
         return await runTask(
           storageRef.putFile(uploadFile, metadata),
-          progressMessage: progressMessage,
+          isRetry: false,
         );
       } on fb.FirebaseException catch (e, st) {
         AppLogger.w(
@@ -185,7 +191,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         );
         return runTask(
           storageRef.putData(bytes, metadata),
-          progressMessage: '$progressMessage (다시 시도하는 중)',
+          isRetry: true,
         );
       }
     }
@@ -197,14 +203,14 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         storagePath,
         uploadFile: file,
         uploadContentType: contentType,
-        progressMessage: '서버에 영상을 올리고 있어요',
+        baseBytes: 0,
       );
-      if (thumbnailFile != null && await thumbnailFile.exists()) {
+      if (hasThumbnail) {
         thumbnailUploadResult = await uploadToPath(
           thumbnailStoragePath,
           uploadFile: thumbnailFile,
           uploadContentType: 'image/jpeg',
-          progressMessage: '미리보기 이미지를 올리고 있어요',
+          baseBytes: fileSize,
         );
       }
 
@@ -402,6 +408,14 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         : File(await ClipPathUtils.absolutePathFor(thumbnailPath));
     final thumbnailStoragePath = 'clips/$remoteDocId/thumbnail.jpg';
     final metadataPath = 'clips/$remoteDocId/metadata.json';
+
+    // 영상과 썸네일을 각각 0%부터 올리면 진행률이 두 번 리셋되는 것처럼
+    // 보인다. 두 파일 크기를 합친 하나의 진행률로 통일한다. 내부 서비스가
+    // 완료 시 보내는 (1, 1) 같은 가짜 총량 신호는 걸러낸다.
+    final hasThumbnail = thumbnailFile != null && await thumbnailFile.exists();
+    final thumbnailFileSize = hasThumbnail ? await thumbnailFile.length() : 0;
+    final combinedUploadTotal = fileSize + thumbnailFileSize;
+
     final result = await googleDriveStorageService.uploadClipFile(
       file: file,
       fileName: fileName,
@@ -412,25 +426,35 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       durationMs: target.durationMs,
       remoteDocId: remoteDocId,
       ownerScope: ClipStorageConstants.ownerScopeCloudAccount,
-      onProgress: onProgress,
+      onProgress: (current, total, message) {
+        if (total <= 1) return;
+        onProgress?.call(current, combinedUploadTotal, message);
+      },
     );
     GoogleDriveUploadResult? thumbnailResult;
-    if (thumbnailFile != null && await thumbnailFile.exists()) {
+    if (hasThumbnail) {
       thumbnailResult = await googleDriveStorageService.uploadClipFile(
         file: thumbnailFile,
         fileName: 'thumbnail.jpg',
         clipId: target.id.toString(),
         storagePath: thumbnailStoragePath,
         title: target.title,
-        storageBytes: await thumbnailFile.length(),
+        storageBytes: thumbnailFileSize,
         durationMs: target.durationMs,
         remoteDocId: remoteDocId,
         ownerScope: ClipStorageConstants.ownerScopeCloudAccount,
-        onProgress: onProgress,
+        onProgress: (current, total, message) {
+          if (total <= 1) return;
+          onProgress?.call(fileSize + current, combinedUploadTotal, message);
+        },
       );
     }
 
-    onProgress?.call(fileSize, fileSize, '저장 정보를 정리하고 있어요');
+    onProgress?.call(
+      combinedUploadTotal,
+      combinedUploadTotal,
+      '저장 정보를 정리하고 있어요',
+    );
     final metadata = await cloudMetadataDatasource.buildCloudClipMetadata(
       clip: target,
       remoteDocId: remoteDocId,

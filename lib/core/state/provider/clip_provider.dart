@@ -557,7 +557,8 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       _ => '클립을 옮기는 중',
     };
 
-    startStorageTransfer(clipIds.length, '클립을 옮기고 있어요', title: title);
+    final total = clipIds.length;
+    startStorageTransfer(total, '$total개 클립을 옮길 준비를 하고 있어요', title: title);
 
     try {
       var progress = 0;
@@ -575,7 +576,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
         }
 
         progress++;
-        updateStorageTransfer(progress, '클립을 옮기고 있어요');
+        updateStorageTransfer(progress, '$progress/$total개 클립을 옮겼어요');
       }
 
       if (selectedCollectionId != null) {
@@ -583,7 +584,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       } else {
         await refreshStorageUsage();
       }
-      endStorageTransfer(message: '선택한 클립을 모두 옮겼어요');
+      endStorageTransfer(message: '$total개 클립을 모두 옮겼어요');
     } catch (e, st) {
       AppLogger.e(
         '[Clip][Storage] bulk-transfer failed target=$target',
