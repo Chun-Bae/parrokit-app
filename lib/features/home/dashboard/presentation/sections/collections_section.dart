@@ -90,11 +90,12 @@ class CollectionsSection extends StatelessWidget {
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: col.map((item) {
-              final (id, name, _, clipCount) = item;
+              final (id, name, storageMode, clipCount) = item;
               return CollectionCard(
                 titleId: id,
                 nameKo: name,
                 clipCount: clipCount,
+                storageMode: storageMode,
                 cardBg: cardBg,
                 subtle: subtle,
                 textPrimary: textPrimary,

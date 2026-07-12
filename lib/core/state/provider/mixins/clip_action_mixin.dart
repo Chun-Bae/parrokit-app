@@ -73,6 +73,11 @@ mixin ClipActionMixin on ChangeNotifier {
     }
 
     await libraryEntitySyncCoordinator.deleteCollection(collectionId);
+    // group_collections가 이 콜렉션을 참조하는 채로 두면 FK 제약(ON DELETE
+    // 지정 없음) 때문에 아래 delete가 예외를 던진다.
+    await (db.delete(db.groupCollections)
+          ..where((gc) => gc.collectionId.equals(collectionId)))
+        .go();
     await (db.delete(db.collections)..where((c) => c.id.equals(collectionId)))
         .go();
 

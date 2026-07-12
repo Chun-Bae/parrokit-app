@@ -318,7 +318,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         ),
       );
       if (oldCollectionId != null && oldCollectionId != newCollectionId) {
-        await db.collectionsDao.pruneIfEmpty(oldCollectionId);
+        await _pruneCollectionIfEmpty(oldCollectionId);
       }
 
       await _cleanupPreviousRemoteSource(
@@ -525,7 +525,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       ),
     );
     if (oldCollectionId != null && oldCollectionId != newCollectionId) {
-      await db.collectionsDao.pruneIfEmpty(oldCollectionId);
+      await _pruneCollectionIfEmpty(oldCollectionId);
     }
 
     await _cleanupPreviousRemoteSource(
@@ -624,12 +624,25 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       );
     });
     if (oldCollectionId != null && oldCollectionId != newCollectionId) {
-      await db.collectionsDao.pruneIfEmpty(oldCollectionId);
+      await _pruneCollectionIfEmpty(oldCollectionId);
     }
 
     AppLogger.i(
       '[Clip][Storage] move-to-local success clipId=$clipId remoteId=${sourceRef.remoteDocId}',
     );
+  }
+
+  /// 클립이 빠져나간 콜렉션에 더 이상 클립이 없으면 콜렉션을 지운다.
+  /// 원격에 동기화된 콜렉션(server/gdrive)이면 원격 문서도 함께 지워야
+  /// 다음 pull 동기화 때 빈 콜렉션이 다시 살아나지 않는다.
+  Future<void> _pruneCollectionIfEmpty(int collectionId) async {
+    final remainingClips = await (db.select(db.clips)
+          ..where((c) => c.collectionId.equals(collectionId)))
+        .get();
+    if (remainingClips.isNotEmpty) return;
+
+    await libraryEntitySyncCoordinator.deleteCollection(collectionId);
+    await db.collectionsDao.pruneIfEmpty(collectionId);
   }
 
   @override

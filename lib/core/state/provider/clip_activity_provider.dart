@@ -40,7 +40,7 @@ class ClipActivityProvider extends ChangeNotifier {
   /// 이어보기 (clipId, thumbnail, clipTitle, collectionName)
   List<(int, Uint8List?, String?, String?)> recent6 = const [];
 
-  /// 콜렉션 (collectionId, name, clipCount)  — third field kept as String? for compat
+  /// 콜렉션 (collectionId, name, storageMode, clipCount)
   List<(int, String, String?, int)> collections = const [];
 
   /// 헤더 카운트
@@ -138,9 +138,10 @@ class ClipActivityProvider extends ChangeNotifier {
     _collectionsSub = db
         .customSelect(r'''
 SELECT
-  col.id          AS cid,
-  col.name        AS colName,
-  COUNT(c.id)     AS clipCount
+  col.id            AS cid,
+  col.name          AS colName,
+  col.storage_mode  AS storageMode,
+  COUNT(c.id)       AS clipCount
 FROM collections col
 LEFT JOIN clips c ON c.collection_id = col.id
 GROUP BY col.id
@@ -152,7 +153,7 @@ ORDER BY col.name;
               .map<(int, String, String?, int)>((row) => (
                     row.data['cid'] as int,
                     (row.data['colName'] as String?) ?? '',
-                    null,
+                    row.data['storageMode'] as String?,
                     (row.data['clipCount'] as int?) ?? 0,
                   ))
               .toList();

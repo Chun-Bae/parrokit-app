@@ -348,6 +348,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
         updateStorageTransfer(current, message);
       });
       endStorageTransfer(message: successMessage);
+      await _refreshCollectionsInBackground();
       return true;
     } catch (e, st) {
       AppLogger.e(
@@ -360,6 +361,23 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       _storageTransferError = failureMessage;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// 클립 이동으로 이전 콜렉션이 비어 자동 삭제됐을 수 있어, 현재 그룹의
+  /// 콜렉션 목록을 조용히 다시 불러온다. selectedCollectionId 등 클립 목록
+  /// 상태는 건드리지 않아, 클립 목록을 보고 있던 화면이 그룹 목록으로
+  /// 튕기지 않는다.
+  Future<void> _refreshCollectionsInBackground() async {
+    if (selectedGroupId == null) return;
+    try {
+      collections = await _collectionRepository.getVisibleCollectionsForGroup(
+        selectedGroupId,
+        _activeStorageMode,
+      );
+      notifyListeners();
+    } catch (e) {
+      AppLogger.w('[Clip][Storage] collections-refresh failed', error: e);
     }
   }
 
@@ -585,6 +603,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
         await refreshStorageUsage();
       }
       endStorageTransfer(message: '$total개 클립을 모두 옮겼어요');
+      await _refreshCollectionsInBackground();
     } catch (e, st) {
       AppLogger.e(
         '[Clip][Storage] bulk-transfer failed target=$target',

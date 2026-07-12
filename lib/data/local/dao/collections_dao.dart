@@ -81,6 +81,13 @@ class CollectionsDao extends DatabaseAccessor<AppDatabase>
           ..where((c) => c.collectionId.equals(collectionId)))
         .get();
     if (clips.isEmpty) {
+      // group_collections가 이 콜렉션을 참조하는 채로 두면 FK 제약(REFERENCES
+      // collections (id), ON DELETE 지정 없음) 때문에 아래 delete가 그대로
+      // 예외를 던진다 — 그룹에 속한 콜렉션이 클립 이동으로 비어도 삭제되지
+      // 않던 원인이 이것이었다.
+      await (delete(db.groupCollections)
+            ..where((gc) => gc.collectionId.equals(collectionId)))
+          .go();
       await (delete(collections)..where((c) => c.id.equals(collectionId))).go();
     }
   }
