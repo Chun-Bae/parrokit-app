@@ -72,4 +72,12 @@ class AiChatRemoteDataSource {
       'dailyLimit': data['dailyLimit'] as num?,
     };
   }
+
+  /// 채팅을 보내지 않고 오늘 사용량만 조회합니다.
+  Future<Map<String, dynamic>> fetchUsage() async {
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('getChatbotUsage');
+    final response = await callable.call();
+    return Map<String, dynamic>.from(response.data as Map);
+  }
 }

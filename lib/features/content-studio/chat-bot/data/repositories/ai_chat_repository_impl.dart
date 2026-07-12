@@ -40,4 +40,15 @@ class AiChatRepositoryImpl implements AiChatRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<({int usedToday, int dailyLimit, int remainingToday})>
+      fetchUsage() async {
+    final response = await remoteDataSource.fetchUsage();
+    return (
+      usedToday: (response['usedToday'] as num?)?.toInt() ?? 0,
+      dailyLimit: (response['dailyLimit'] as num?)?.toInt() ?? 30,
+      remainingToday: (response['remainingToday'] as num?)?.toInt() ?? 30,
+    );
+  }
 }

@@ -65,6 +65,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
   void initState() {
     super.initState();
     _textController.addListener(_onTextChanged);
+    context.read<ChatBotProvider>().fetchDailyUsage();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final initialMessage = widget.initialMessage?.trim();
       if (!mounted || initialMessage == null || initialMessage.isEmpty) {
@@ -159,7 +160,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
     final statusBarHeight = widget.statusBarHeight;
 
     final maxSheetHeight = screenHeight - keyboardHeight - statusBarHeight - 16;
-    final defaultSheetHeight = screenHeight * 0.7;
+    final defaultSheetHeight = screenHeight * 0.88;
     final sheetHeight = defaultSheetHeight > maxSheetHeight
         ? (maxSheetHeight > 0 ? maxSheetHeight : 0.0)
         : defaultSheetHeight;
@@ -170,6 +171,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
       ),
       child: Container(
         height: sheetHeight,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: bg,
           borderRadius: const BorderRadius.vertical(
@@ -185,6 +187,37 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
         ),
         child: Column(
           children: [
+            // 하루 사용 제한량 (항상 표시)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              color: isDark
+                  ? AppColors.surfaceContainerHighDark
+                  : AppColors.surfaceContainerHigh,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.bolt_rounded,
+                    size: 14,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '오늘 사용량 ${provider.remainingChatsToday}/${provider.dailyChatLimit}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Header
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -234,16 +267,11 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                [
-                                  provider.chatbotMode == 'tts'
-                                      ? '음성 스튜디오 튜닝 중'
-                                      : provider.chatbotMode == 'video'
-                                          ? '비디오 씬 기획 중'
-                                          : '도움 준비 완료',
-                                  if (provider.remainingChatsToday != null &&
-                                      provider.dailyChatLimit != null)
-                                    '오늘 ${provider.remainingChatsToday}/${provider.dailyChatLimit}',
-                                ].join(' · '),
+                                provider.chatbotMode == 'tts'
+                                    ? '음성 스튜디오 튜닝 중'
+                                    : provider.chatbotMode == 'video'
+                                        ? '비디오 씬 기획 중'
+                                        : '도움 준비 완료',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: isDark
                                       ? AppColors.textTertiaryDark

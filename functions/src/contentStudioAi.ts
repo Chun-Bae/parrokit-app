@@ -19,7 +19,6 @@ const VIDEO_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
 const CHATBOT_DAILY_LIMIT = 30;
 const CHATBOT_USAGE_COLLECTION = "chatbot-usage";
 const OPERATOR_UIDS = new Set([
-  "4PlLHHXdrmX1xVTkgAuRKsb5nA22",
   "dDsWhAQWQxfCWI4xHIayCkjLD662",
   "naver:iDj5CROn8PODq_1sTN1Yjt2tvaaKiJUppIfKR5-IXmA",
 ]);
@@ -653,6 +652,35 @@ interface ChatbotUsageResult {
 }
 
 /**
+ * 챗봇 일일 사용량을 증가 없이 조회합니다. 운영자 계정은 항상 한도 전체가
+ * 남은 것으로 반환됩니다.
+ *
+ * @param {string} uid 사용자 ID
+ * @return {Promise<ChatbotUsageResult>} 오늘 사용/잔여 횟수
+ */
+async function getChatbotUsageStatus(uid: string): Promise<ChatbotUsageResult> {
+  if (isOperatorUid(uid)) {
+    return {usedToday: 0, remainingToday: CHATBOT_DAILY_LIMIT};
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const snapshot = await admin
+    .firestore()
+    .collection(CHATBOT_USAGE_COLLECTION)
+    .doc(`${uid}_${today}`)
+    .get();
+
+  const usedToday = snapshot.exists ?
+    (snapshot.data()?.count as number | undefined) || 0 :
+    0;
+
+  return {
+    usedToday,
+    remainingToday: Math.max(CHATBOT_DAILY_LIMIT - usedToday, 0),
+  };
+}
+
+/**
  * 챗봇 일일 사용량을 확인하고 1 증가시킵니다. 한도를 초과하면 예외를 던집니다.
  * 운영자 계정은 한도에서 제외됩니다.
  *
@@ -994,6 +1022,23 @@ export const generateChatbotResponse = onCall(
     }
   }
 );
+
+// 챗봇을 실제로 호출하지 않고, 오늘 사용량만 조회하기 위한 엔드포인트.
+// 시트를 열 때 이걸 먼저 호출해서 "오늘 X/30"을 정확히 표시한다.
+export const getChatbotUsage = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+  }
+
+  const usage = await getChatbotUsageStatus(uid);
+
+  return {
+    dailyLimit: CHATBOT_DAILY_LIMIT,
+    usedToday: usage.usedToday,
+    remainingToday: usage.remainingToday,
+  };
+});
 
 export const generateTts = onCall(
   {secrets: [elevenLabsApiKey, geminiApiKey]},

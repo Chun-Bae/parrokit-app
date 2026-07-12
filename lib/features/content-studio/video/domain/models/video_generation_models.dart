@@ -154,7 +154,6 @@ class VideoGenerationRecord {
 }
 
 const Set<String> operatorUids = {
-  '4PlLHHXdrmX1xVTkgAuRKsb5nA22',
   'dDsWhAQWQxfCWI4xHIayCkjLD662',
   'naver:iDj5CROn8PODq_1sTN1Yjt2tvaaKiJUppIfKR5-IXmA',
 };

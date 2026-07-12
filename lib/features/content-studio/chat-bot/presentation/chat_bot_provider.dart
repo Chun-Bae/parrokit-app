@@ -32,12 +32,24 @@ class ChatBotProvider extends ChangeNotifier {
   bool _isTyping = false;
   bool get isTyping => _isTyping;
 
-  /// 오늘 남은/전체 채팅 횟수. 첫 응답을 받기 전에는 알 수 없어 null.
-  int? _remainingChatsToday;
-  int? get remainingChatsToday => _remainingChatsToday;
+  /// 오늘 남은/전체 채팅 횟수. 첫 응답을 받기 전에는 서버 기본 한도(30)로 표시한다.
+  int _remainingChatsToday = 30;
+  int get remainingChatsToday => _remainingChatsToday;
 
-  int? _dailyChatLimit;
-  int? get dailyChatLimit => _dailyChatLimit;
+  int _dailyChatLimit = 30;
+  int get dailyChatLimit => _dailyChatLimit;
+
+  /// 시트를 열 때 채팅을 보내지 않고 오늘 사용량만 조회해 배지에 반영한다.
+  Future<void> fetchDailyUsage() async {
+    try {
+      final usage = await _sendMessageUseCase.repository.fetchUsage();
+      _remainingChatsToday = usage.remainingToday;
+      _dailyChatLimit = usage.dailyLimit;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[Chatbot][Provider] Failed to fetch daily usage error=$e');
+    }
+  }
 
   void updateSelectedModel(String model) {
     if (_selectedModel != model) {
