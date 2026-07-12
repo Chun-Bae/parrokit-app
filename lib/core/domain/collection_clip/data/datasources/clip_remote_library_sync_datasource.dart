@@ -24,18 +24,21 @@ import 'package:parrokit/core/domain/collection_clip/data/utils/clip_path_utils.
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
 import 'clip_firestore_metadata_datasource.dart';
 import 'clip_source_ref_datasource.dart';
+import 'library_entity_sync_coordinator.dart';
 
 class ClipRemoteLibrarySyncDatasource {
   final AppDatabase db;
   final ClipFirestoreMetadataDatasource firestoreMetadataDatasource;
   final ClipSourceRefDatasource sourceRefDatasource;
   final GoogleDriveStorageService googleDriveStorageService;
+  final LibraryEntitySyncCoordinator libraryEntitySyncCoordinator;
 
   ClipRemoteLibrarySyncDatasource(
     this.db,
     this.firestoreMetadataDatasource,
     this.sourceRefDatasource,
     this.googleDriveStorageService,
+    this.libraryEntitySyncCoordinator,
   );
 
   /// [uid] 계정의 서버 클립 중 이 기기에 없는 것을 로컬로 받아옵니다.
@@ -237,7 +240,7 @@ class ClipRemoteLibrarySyncDatasource {
     });
 
     if (oldCollectionId != null) {
-      await db.collectionsDao.pruneIfEmpty(oldCollectionId);
+      await _pruneCollectionIfEmpty(oldCollectionId);
     }
 
     for (final cacheEntry in cacheEntries) {
@@ -249,6 +252,19 @@ class ClipRemoteLibrarySyncDatasource {
     }
 
     return true;
+  }
+
+  /// 클립이 빠져나간 콜렉션에 더 이상 클립이 없으면 콜렉션을 지운다.
+  /// 원격에 동기화된 콜렉션(server/gdrive)이면 원격 문서도 함께 지워야
+  /// 다음 pull 동기화 때 빈 콜렉션이 다시 살아나지 않는다.
+  Future<void> _pruneCollectionIfEmpty(int collectionId) async {
+    final remainingClips = await (db.select(db.clips)
+          ..where((c) => c.collectionId.equals(collectionId)))
+        .get();
+    if (remainingClips.isNotEmpty) return;
+
+    await libraryEntitySyncCoordinator.deleteCollection(collectionId);
+    await db.collectionsDao.pruneIfEmpty(collectionId);
   }
 
   /// 이 기기에 이미 있는 클립이면 그 clipId를, 없으면 null을 반환합니다.

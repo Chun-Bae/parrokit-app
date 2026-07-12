@@ -1001,8 +1001,19 @@ export const generateChatbotResponse = onCall(
         throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
       }
 
-      const usage = await checkAndIncrementChatbotUsage(uid);
+      // 실패한 요청까지 하루 횟수에서 차감되지 않도록, 한도 초과 여부만
+      // 먼저 증가 없이 확인하고(운영자는 항상 통과), 실제 사용량 차감은
+      // chatbotFlow가 성공한 뒤에만 한다.
+      const preCheck = await getChatbotUsageStatus(uid);
+      if (preCheck.remainingToday <= 0) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "오늘의 채팅 횟수를 모두 사용했어요. 내일 다시 시도해 주세요."
+        );
+      }
+
       const result = await chatbotFlow(request.data);
+      const usage = await checkAndIncrementChatbotUsage(uid);
 
       return {
         ...result,

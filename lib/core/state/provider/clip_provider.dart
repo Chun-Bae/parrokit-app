@@ -89,12 +89,6 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     final remoteDocIdResolver = RemoteDocIdResolver();
     final detailQueryDatasource = ClipDetailQueryDatasource(db);
     final firestoreMetadataDatasource = ClipFirestoreMetadataDatasource(db);
-    final remoteLibrarySyncDatasource = ClipRemoteLibrarySyncDatasource(
-      db,
-      firestoreMetadataDatasource,
-      sourceRefDatasource,
-      googleDriveStorageService,
-    );
     final cloudMetadataDatasource = ClipCloudMetadataDatasource(
       db,
       detailQueryDatasource,
@@ -110,6 +104,13 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     );
     final collectionGroupMirrorDatasource = CollectionGroupMirrorDatasource(
       db,
+      _libraryEntitySyncCoordinator,
+    );
+    final remoteLibrarySyncDatasource = ClipRemoteLibrarySyncDatasource(
+      db,
+      firestoreMetadataDatasource,
+      sourceRefDatasource,
+      googleDriveStorageService,
       _libraryEntitySyncCoordinator,
     );
 
