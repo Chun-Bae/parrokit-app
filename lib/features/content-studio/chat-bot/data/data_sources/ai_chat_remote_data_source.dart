@@ -68,6 +68,8 @@ class AiChatRemoteDataSource {
       'recommendedPrompt': recommendedPrompt,
       'actionType': actionType,
       'actionData': actionData,
+      'remainingToday': data['remainingToday'] as num?,
+      'dailyLimit': data['dailyLimit'] as num?,
     };
   }
 }

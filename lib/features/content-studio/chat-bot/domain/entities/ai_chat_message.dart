@@ -6,6 +6,10 @@ class AiChatMessage {
   final Map<String, dynamic>? actionData;
   final String? chatbotMode; // 메시지 생성 당시의 에이전트 모드
 
+  /// 이 응답 시점 기준 오늘 남은/전체 채팅 횟수. AI 응답에만 채워짐.
+  final int? remainingToday;
+  final int? dailyLimit;
+
   const AiChatMessage({
     required this.text,
     required this.isUser,
@@ -13,6 +17,8 @@ class AiChatMessage {
     this.actionType,
     this.actionData,
     this.chatbotMode,
+    this.remainingToday,
+    this.dailyLimit,
   });
 
   AiChatMessage copyWith({
@@ -22,6 +28,8 @@ class AiChatMessage {
     String? actionType,
     Map<String, dynamic>? actionData,
     String? chatbotMode,
+    int? remainingToday,
+    int? dailyLimit,
   }) {
     return AiChatMessage(
       text: text ?? this.text,
@@ -30,6 +38,8 @@ class AiChatMessage {
       actionType: actionType ?? this.actionType,
       actionData: actionData ?? this.actionData,
       chatbotMode: chatbotMode ?? this.chatbotMode,
+      remainingToday: remainingToday ?? this.remainingToday,
+      dailyLimit: dailyLimit ?? this.dailyLimit,
     );
   }
 }

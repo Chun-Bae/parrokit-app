@@ -81,7 +81,6 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       sourceRefDatasource,
       googleDriveStorageService,
     );
-    final collectionGroupMirrorDatasource = CollectionGroupMirrorDatasource(db);
     final itemQueryDatasource = ClipItemQueryDatasource(
       db,
       sourceRefDatasource,
@@ -108,6 +107,10 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       db,
       libraryEntityRemoteSyncDatasource,
       remoteDocIdResolver,
+    );
+    final collectionGroupMirrorDatasource = CollectionGroupMirrorDatasource(
+      db,
+      _libraryEntitySyncCoordinator,
     );
 
     _clipRepository = ClipRepositoryImpl(
@@ -208,13 +211,18 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
 
   @override
   Future<void> refreshStorageUsage() async {
-    serverStorageUsedBytes = await _clipMigrationRepository.getServerStorageUsedBytes();
-    localStorageUsedBytes = await _clipMigrationRepository.getLocalStorageUsedBytes();
-    cloudStorageUsedBytes = await _clipMigrationRepository.getCloudStorageUsedBytes();
+    serverStorageUsedBytes =
+        await _clipMigrationRepository.getServerStorageUsedBytes();
+    localStorageUsedBytes =
+        await _clipMigrationRepository.getLocalStorageUsedBytes();
+    cloudStorageUsedBytes =
+        await _clipMigrationRepository.getCloudStorageUsedBytes();
     cachedRemoteStorageUsedBytes =
         await _clipMigrationRepository.getCachedRemoteStorageUsedBytes();
-    cachedRemoteClipCount = await _clipMigrationRepository.getCachedRemoteClipCount();
-    hasGoogleDriveLinked = await _clipMigrationRepository.hasGoogleDriveLinked();
+    cachedRemoteClipCount =
+        await _clipMigrationRepository.getCachedRemoteClipCount();
+    hasGoogleDriveLinked =
+        await _clipMigrationRepository.hasGoogleDriveLinked();
 
     try {
       final quota = await _clipMigrationRepository.getGoogleDriveStorageQuota();
@@ -716,8 +724,8 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   /// 모든 컬렉션 로드 (호환성 또는 필요 시 사용).
   @override
   Future<void> loadCollections() async {
-    collections =
-        await _collectionRepository.getAllVisibleCollections(_activeStorageMode);
+    collections = await _collectionRepository
+        .getAllVisibleCollections(_activeStorageMode);
     notifyListeners();
     _refreshStorageUsageInBackground();
   }

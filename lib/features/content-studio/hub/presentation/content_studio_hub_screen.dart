@@ -305,7 +305,10 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                                       icon: Icons.storefront_rounded,
                                       label: '패롯 충전',
                                       iconColor: Colors.amber,
-                                      onTap: () {},
+                                      onTap: () {
+                                        context.pushReplacement(
+                                            AppRoutes.morePath);
+                                      },
                                     ),
                                   ),
                                   SizedBox(

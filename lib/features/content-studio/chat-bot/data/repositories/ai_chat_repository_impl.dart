@@ -9,11 +9,14 @@ class AiChatRepositoryImpl implements AiChatRepository {
   const AiChatRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<AiChatMessage> sendMessage(String text, List<AiChatMessage> history, String model, String chatbotMode) async {
+  Future<AiChatMessage> sendMessage(String text, List<AiChatMessage> history,
+      String model, String chatbotMode) async {
     try {
-      debugPrint('[Chatbot][Repository] Sending message chatbotMode=$chatbotMode model=$model');
-      final response = await remoteDataSource.sendMessage(text, history, model, chatbotMode);
-      
+      debugPrint(
+          '[Chatbot][Repository] Sending message chatbotMode=$chatbotMode model=$model');
+      final response =
+          await remoteDataSource.sendMessage(text, history, model, chatbotMode);
+
       final actionDataRaw = response['actionData'];
       final Map<String, dynamic>? actionData = actionDataRaw != null
           ? Map<String, dynamic>.from(actionDataRaw as Map)
@@ -25,9 +28,12 @@ class AiChatRepositoryImpl implements AiChatRepository {
         recommendedPrompt: response['recommendedPrompt'] as String?,
         actionType: response['actionType'] as String?,
         actionData: actionData,
+        remainingToday: (response['remainingToday'] as num?)?.toInt(),
+        dailyLimit: (response['dailyLimit'] as num?)?.toInt(),
       );
-      
-      debugPrint('[Chatbot][Repository] Message sent success actionType=${message.actionType}');
+
+      debugPrint(
+          '[Chatbot][Repository] Message sent success actionType=${message.actionType}');
       return message;
     } catch (e) {
       debugPrint('[Chatbot][Repository] Failed to send message error=$e');

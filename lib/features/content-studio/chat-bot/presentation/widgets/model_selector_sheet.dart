@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../chat_bot_provider.dart';
 
-void showModelSelectorBottomSheet(BuildContext context, ChatBotProvider provider) {
+void showModelSelectorBottomSheet(
+    BuildContext context, ChatBotProvider provider) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
   final bg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
@@ -57,7 +59,7 @@ void showModelSelectorBottomSheet(BuildContext context, ChatBotProvider provider
             ),
             const SizedBox(height: 12),
 
-            // 모델 2: Gemini 2.5 Pro
+            // 모델 2: Gemini 2.5 Pro (유료 플랜 전용, 현재는 잠금)
             ModelOptionCard(
               title: 'Gemini 2.5 Pro',
               description:
@@ -66,9 +68,9 @@ void showModelSelectorBottomSheet(BuildContext context, ChatBotProvider provider
               costText: '보통',
               isSelected: provider.selectedModel == 'gemini-2.5-pro',
               accentColor: AppColors.secondary,
+              locked: true,
               onTap: () {
-                provider.updateSelectedModel('gemini-2.5-pro');
-                Navigator.pop(context);
+                showToast('Gemini 2.5 Pro는 유료 플랜 전용이에요. 출시 후 이용할 수 있어요.');
               },
             ),
             const SizedBox(height: 16),
@@ -89,6 +91,7 @@ class ModelOptionCard extends StatelessWidget {
     required this.isSelected,
     required this.accentColor,
     required this.onTap,
+    this.locked = false,
   });
 
   final String title;
@@ -98,6 +101,9 @@ class ModelOptionCard extends StatelessWidget {
   final bool isSelected;
   final Color accentColor;
   final VoidCallback onTap;
+
+  /// 유료 플랜 전용 등 아직 이용할 수 없는 모델인지 여부.
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -116,83 +122,98 @@ class ModelOptionCard extends StatelessWidget {
         ? accentColor
         : (isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: borderColor,
-            width: isSelected ? 2.0 : 1.0,
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: isSelected
-                              ? (isDark ? Colors.white : accentColor)
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // 특성 칩
-                      FeatureChip(label: speedText, isDark: isDark),
-                      const SizedBox(width: 4),
-                      FeatureChip(label: costText, isDark: isDark),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
+    return Opacity(
+      opacity: locked ? 0.5 : 1.0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? 2.0 : 1.0,
             ),
-            const SizedBox(width: 12),
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? accentColor : Colors.transparent,
-                border: Border.all(
-                  color: isSelected
-                      ? accentColor
-                      : (isDark
-                          ? AppColors.textDisabledDark
-                          : AppColors.textDisabled),
-                  width: 2,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: isSelected
+                                ? (isDark ? Colors.white : accentColor)
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 특성 칩
+                        if (locked)
+                          FeatureChip(label: '유료 플랜 전용', isDark: isDark)
+                        else ...[
+                          FeatureChip(label: speedText, isDark: isDark),
+                          const SizedBox(width: 4),
+                          FeatureChip(label: costText, isDark: isDark),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: isSelected
-                  ? const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 12,
+              const SizedBox(width: 12),
+              locked
+                  ? Icon(
+                      Icons.lock_rounded,
+                      size: 20,
+                      color: isDark
+                          ? AppColors.textDisabledDark
+                          : AppColors.textDisabled,
                     )
-                  : null,
-            ),
-          ],
+                  : Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected ? accentColor : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected
+                              ? accentColor
+                              : (isDark
+                                  ? AppColors.textDisabledDark
+                                  : AppColors.textDisabled),
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 12,
+                            )
+                          : null,
+                    ),
+            ],
+          ),
         ),
       ),
     );

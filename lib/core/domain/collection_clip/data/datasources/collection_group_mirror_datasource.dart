@@ -14,11 +14,13 @@
 // ============================================================================
 
 import 'package:parrokit/data/local/app_database.dart';
+import 'library_entity_sync_coordinator.dart';
 
 class CollectionGroupMirrorDatasource {
   final AppDatabase db;
+  final LibraryEntitySyncCoordinator libraryEntitySyncCoordinator;
 
-  CollectionGroupMirrorDatasource(this.db);
+  CollectionGroupMirrorDatasource(this.db, this.libraryEntitySyncCoordinator);
 
   /// 클립의 현재 collectionId와 목적지 storageMode를 받아, 목적지에서
   /// 클립이 속해야 할 collectionId를 반환합니다. currentCollectionId가
@@ -34,9 +36,21 @@ class CollectionGroupMirrorDatasource {
           ..limit(1))
         .getSingleOrNull();
     if (source == null) return null;
-    if (source.storageMode == destinationStorageMode) return currentCollectionId;
+    if (source.storageMode == destinationStorageMode) {
+      return currentCollectionId;
+    }
 
-    final destCollection = await db.collectionsDao.findOrCreate(
+    final existing = await db.collectionsDao.findByNameAndStorageMode(
+      source.name,
+      destinationStorageMode,
+    );
+    if (existing != null) return existing.id;
+
+    // 목적지에 같은 이름의 콜렉션이 없으면 새로 만든다. 서버/클라우드
+    // 저장위치는 원격 문서가 있어야 하므로, 로컬 DAO를 직접 건드리지 않고
+    // coordinator를 거쳐 remoteId 발급 + 원격 업로드까지 함께 처리한다
+    // (library_entity_sync_coordinator.dart의 createCollection 참고).
+    final destCollection = await libraryEntitySyncCoordinator.createCollection(
       source.name,
       destinationStorageMode,
     );

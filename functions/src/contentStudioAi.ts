@@ -16,6 +16,8 @@ const elevenLabsApiKey = defineSecret("ELEVENLABS_API_KEY");
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 const VIDEO_COLLECTION = "content-studio-videos";
 const VIDEO_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const CHATBOT_DAILY_LIMIT = 30;
+const CHATBOT_USAGE_COLLECTION = "chatbot-usage";
 const OPERATOR_UIDS = new Set([
   "4PlLHHXdrmX1xVTkgAuRKsb5nA22",
   "dDsWhAQWQxfCWI4xHIayCkjLD662",
@@ -642,6 +644,66 @@ function pruneNullishValues<T>(value: T): T {
   return value;
 }
 
+/**
+ * 챗봇 일일 사용량 확인/증가 결과.
+ */
+interface ChatbotUsageResult {
+  usedToday: number;
+  remainingToday: number;
+}
+
+/**
+ * 챗봇 일일 사용량을 확인하고 1 증가시킵니다. 한도를 초과하면 예외를 던집니다.
+ * 운영자 계정은 한도에서 제외됩니다.
+ *
+ * @param {string} uid 사용자 ID
+ * @return {Promise<ChatbotUsageResult>} 오늘 사용/잔여 횟수
+ */
+async function checkAndIncrementChatbotUsage(
+  uid: string
+): Promise<ChatbotUsageResult> {
+  if (isOperatorUid(uid)) {
+    return {usedToday: 0, remainingToday: CHATBOT_DAILY_LIMIT};
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const ref = admin
+    .firestore()
+    .collection(CHATBOT_USAGE_COLLECTION)
+    .doc(`${uid}_${today}`);
+
+  return await admin.firestore().runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    const currentCount = snapshot.exists ?
+      (snapshot.data()?.count as number | undefined) || 0 :
+      0;
+
+    if (currentCount >= CHATBOT_DAILY_LIMIT) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "오늘의 채팅 횟수를 모두 사용했어요. 내일 다시 시도해 주세요."
+      );
+    }
+
+    const newCount = currentCount + 1;
+    transaction.set(
+      ref,
+      {
+        uid,
+        date: today,
+        count: newCount,
+        updatedAt: admin.firestore.Timestamp.now(),
+      },
+      {merge: true}
+    );
+
+    return {
+      usedToday: newCount,
+      remainingToday: CHATBOT_DAILY_LIMIT - newCount,
+    };
+  });
+}
+
 // 3. 각각의 Dotprompt 파일을 불러와서 Flow 정의
 export const chatbotFlow = ai.defineFlow(
   {
@@ -661,9 +723,9 @@ export const chatbotFlow = ai.defineFlow(
     const MAX_HISTORY = 6;
     const recentHistory = (input.history || []).slice(-MAX_HISTORY);
 
-    const targetModel = input.model ?
-      `vertexai/${input.model}` :
-      "vertexai/gemini-2.5-flash";
+    // Pro는 유료 플랜 전용으로 잠가둔 상태라, 결제 시스템이 붙기 전까지는
+    // 클라이언트가 어떤 모델을 요청하든 무조건 Flash만 사용한다.
+    const targetModel = "vertexai/gemini-2.5-flash";
     console.log(
       `[Chatbot][Flow] Mode parameter inputMode=${input.model} ` +
         `targetModel=${targetModel} chatbotMode=${input.chatbotMode}`
@@ -906,8 +968,24 @@ export const generateChatbotResponse = onCall(
   },
   async (request) => {
     try {
-      return await chatbotFlow(request.data);
+      const uid = request.auth?.uid;
+      if (!uid) {
+        throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+      }
+
+      const usage = await checkAndIncrementChatbotUsage(uid);
+      const result = await chatbotFlow(request.data);
+
+      return {
+        ...result,
+        dailyLimit: CHATBOT_DAILY_LIMIT,
+        usedToday: usage.usedToday,
+        remainingToday: usage.remainingToday,
+      };
     } catch (error: any) {
+      if (error instanceof HttpsError) {
+        throw error;
+      }
       console.error("Chatbot Wrapper Error:", error);
       throw new HttpsError(
         "aborted",

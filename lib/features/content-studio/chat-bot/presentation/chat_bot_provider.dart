@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import '../domain/entities/ai_chat_message.dart';
 import '../domain/usecases/send_chat_message_usecase.dart';
@@ -30,6 +31,13 @@ class ChatBotProvider extends ChangeNotifier {
 
   bool _isTyping = false;
   bool get isTyping => _isTyping;
+
+  /// 오늘 남은/전체 채팅 횟수. 첫 응답을 받기 전에는 알 수 없어 null.
+  int? _remainingChatsToday;
+  int? get remainingChatsToday => _remainingChatsToday;
+
+  int? _dailyChatLimit;
+  int? get dailyChatLimit => _dailyChatLimit;
 
   void updateSelectedModel(String model) {
     if (_selectedModel != model) {
@@ -158,13 +166,20 @@ class ChatBotProvider extends ChangeNotifier {
 
       debugPrint(
           '[Chatbot][Provider] Send message success replyLength=${aiResponse.text.length} actionType=${aiResponse.actionType}');
+      _remainingChatsToday = aiResponse.remainingToday ?? _remainingChatsToday;
+      _dailyChatLimit = aiResponse.dailyLimit ?? _dailyChatLimit;
       _messages.insert(0, aiResponse.copyWith(chatbotMode: _chatbotMode));
     } catch (e) {
       debugPrint('[Chatbot][Provider] Send message failed error=$e');
+      final message = e is FirebaseFunctionsException &&
+              e.message != null &&
+              e.message!.trim().isNotEmpty
+          ? e.message!
+          : '오류가 발생했습니다. 다시 시도해 주세요.';
       _messages.insert(
         0,
         AiChatMessage(
-          text: '오류가 발생했습니다. 다시 시도해 주세요.',
+          text: message,
           isUser: false,
           chatbotMode: _chatbotMode,
         ),

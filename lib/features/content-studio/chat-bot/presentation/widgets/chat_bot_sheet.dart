@@ -234,11 +234,16 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                provider.chatbotMode == 'tts'
-                                    ? '음성 스튜디오 튜닝 중'
-                                    : provider.chatbotMode == 'video'
-                                        ? '비디오 씬 기획 중'
-                                        : '도움 준비 완료',
+                                [
+                                  provider.chatbotMode == 'tts'
+                                      ? '음성 스튜디오 튜닝 중'
+                                      : provider.chatbotMode == 'video'
+                                          ? '비디오 씬 기획 중'
+                                          : '도움 준비 완료',
+                                  if (provider.remainingChatsToday != null &&
+                                      provider.dailyChatLimit != null)
+                                    '오늘 ${provider.remainingChatsToday}/${provider.dailyChatLimit}',
+                                ].join(' · '),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: isDark
                                       ? AppColors.textTertiaryDark
