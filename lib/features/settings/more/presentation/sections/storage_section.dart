@@ -23,6 +23,16 @@ class StorageSection extends StatefulWidget {
 
 class _StorageSectionState extends State<StorageSection> {
   @override
+  void initState() {
+    super.initState();
+    // 캐시 관리 화면을 한 번 열어야만 숫자가 최신으로 보이던 문제 — 이
+    // 섹션이 보이는 시점에 바로 최신 값을 받아오도록 한다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<ClipProvider>().refreshStorageUsage();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 

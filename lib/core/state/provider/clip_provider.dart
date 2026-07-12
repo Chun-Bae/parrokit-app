@@ -229,6 +229,12 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       googleDriveUsedBytes = 0;
       cloudStorageQuotaBytes = null;
     }
+
+    // 일부 호출부(캐시 관리 화면, 로그아웃 등)가 이 메서드만 부르고 별도로
+    // notifyListeners를 호출하지 않아, 값은 갱신됐는데 다른 화면(더보기의
+    // 저장 공간 섹션 등)이 즉시 반영되지 않는 문제가 있었다. 이 메서드
+    // 자체에서 항상 알려주도록 통일한다.
+    notifyListeners();
   }
 
   /// [refreshStorageUsage]는 Google Drive 연동 여부/용량 조회 등 네트워크
