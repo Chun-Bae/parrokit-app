@@ -1,6 +1,0 @@
-framework module restart_app {
-  umbrella header "restart_app-umbrella.h"
-
-  export *
-  module * { export * }
-}

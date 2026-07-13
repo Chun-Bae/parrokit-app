@@ -3,6 +3,8 @@ description: "Parrokit: 애니메이션 클립으로 즐기는 언어 학습 앱
 # Private Project - Do not publish to pub.dev
 publish_to: 'none'
 
+# iOS 빌드 번호 업데이트
+# flutter build ios --config-only
 version: 1.0.5+96
 
 environment:
@@ -115,6 +117,7 @@ dependencies:
   shimmer: ^3.0.0
   google_mlkit_language_id: ^0.13.1
   google_mlkit_commons: ^0.11.1
+  package_info_plus: ^8.1.2   # 앱 버전/빌드번호 런타임 조회
 
 # -----------------------------------------------------------
 # Dependency Overrides

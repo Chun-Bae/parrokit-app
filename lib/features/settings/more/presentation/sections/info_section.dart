@@ -7,6 +7,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
 
 import '../widgets/card_container.dart';
@@ -16,8 +17,24 @@ import '../widgets/section_title.dart';
 import '../web_document_screen.dart';
 
 /// 정보 섹션.
-class InfoSection extends StatelessWidget {
+class InfoSection extends StatefulWidget {
   const InfoSection({super.key});
+
+  @override
+  State<InfoSection> createState() => _InfoSectionState();
+}
+
+class _InfoSectionState extends State<InfoSection> {
+  String _versionLabel = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (!mounted) return;
+      setState(() => _versionLabel = '버전 ${info.version} (${info.buildNumber})');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +49,7 @@ class InfoSection extends StatelessWidget {
               NavTile(
                 icon: Icons.info_outline,
                 title: '앱 정보',
-                subtitle: '버전 1.0.1',
+                subtitle: _versionLabel,
                 onTap: () {},
                 showArrow: false,
               ),
