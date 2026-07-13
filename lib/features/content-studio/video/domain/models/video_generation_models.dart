@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/operator_access.dart';
+
 /// 지원하는 Veo 해상도. 4K는 원가가 크게 뛰고 일부 모델은 지원도 안 해
 /// 채택하지 않는다.
 const String veo31Resolution720p = '720p';
@@ -151,15 +153,6 @@ class VideoGenerationRecord {
 
     return '$seconds초';
   }
-}
-
-const Set<String> operatorUids = {
-  'dDsWhAQWQxfCWI4xHIayCkjLD662',
-  'naver:iDj5CROn8PODq_1sTN1Yjt2tvaaKiJUppIfKR5-IXmA',
-};
-
-bool isOperatorUid(String? uid) {
-  return uid != null && operatorUids.contains(uid);
 }
 
 const String veo31LiteModelId = 'veo-3.1-lite-generate-preview';

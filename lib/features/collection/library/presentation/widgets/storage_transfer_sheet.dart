@@ -16,6 +16,8 @@ Future<String?> showStorageTransferSheet(
       selectedMode == ClipStorageConstants.storageModeGoogleDrive) {
     selectedMode = ClipStorageConstants.storageModeServer;
   }
+  final isServerLocked =
+      ClipStorageConstants.isServerStorageLockedForCurrentUser();
 
   return showModalBottomSheet<String>(
     context: context,
@@ -59,14 +61,14 @@ Future<String?> showStorageTransferSheet(
               ),
               _StoragePickTile(
                 title: '서버',
-                subtitle: ClipStorageConstants.isServerStorageLocked
+                subtitle: isServerLocked
                     ? '유료 기능 준비 중이에요.'
                     : '서버 저장으로 옮깁니다.',
                 icon: Icons.cloud_queue_rounded,
                 selected:
                     selectedMode == ClipStorageConstants.storageModeServer,
-                locked: ClipStorageConstants.isServerStorageLocked,
-                onTap: ClipStorageConstants.isServerStorageLocked
+                locked: isServerLocked,
+                onTap: isServerLocked
                     ? () => showToast('서버 저장은 준비 중이에요. 출시 후 이용할 수 있어요.')
                     : () => setSheetState(() =>
                         selectedMode = ClipStorageConstants.storageModeServer),

@@ -90,8 +90,47 @@ class ClipRemoteLibrarySyncDatasource {
       pulledCount++;
     }
 
+    // 서버가 source of truth. 이번에 조회한 문서 목록에 없는 로컬 서버
+    // 클립은 서버에서 직접(콘솔 등 앱 밖에서) 지워진 것이므로 그대로
+    // 정리한다. (gdrive 쪽은 이미 _pruneLocalClipsGoneFromCloud로 하고
+    // 있었는데 서버 쪽엔 대응되는 정리가 빠져있었다.)
+    final remoteDocIds = snapshot.docs
+        .map((doc) => (doc.data()['remoteDocId'] as String?) ?? doc.id)
+        .toSet();
+    pulledCount += await _pruneLocalClipsGoneFromServer(
+      uid: uid,
+      remoteDocIds: remoteDocIds,
+    );
+
     AppLogger.i('[Clip][RemoteSync] server-pull done pulled=$pulledCount');
     return pulledCount;
+  }
+
+  /// [uid] 소유의 서버 클립 중, 이번에 조회한 원격 문서 목록에 더 이상
+  /// 없는 것을 찾아 로컬에서 정리합니다(캐시 파일 포함). 정리한 클립
+  /// 개수를 반환합니다.
+  Future<int> _pruneLocalClipsGoneFromServer({
+    required String uid,
+    required Set<String> remoteDocIds,
+  }) async {
+    final localRefs = await (db.select(db.clipSourceRefs)
+          ..where(
+            (r) =>
+                r.provider.equals(ClipStorageConstants.providerServer) &
+                r.ownerKey.equals(uid),
+          ))
+        .get();
+
+    var removedCount = 0;
+    for (final ref in localRefs) {
+      if (remoteDocIds.contains(ref.remoteDocId)) continue;
+      AppLogger.i(
+        '[Clip][RemoteSync] server-pull remote-gone clipId=${ref.clipId} remoteDocId=${ref.remoteDocId}',
+      );
+      final removed = await _deleteLocalClip(ref.clipId);
+      if (removed) removedCount++;
+    }
+    return removedCount;
   }
 
   /// [accountKey](gdrive 계정) 소유 클립 중 이 기기에 없는 것을 로컬로

@@ -71,9 +71,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _storageMode = _validStorageModes.contains(widget.initialStorageMode)
         ? widget.initialStorageMode!
         : ClipStorageConstants.storageModeLocal;
-    // 딥링크 등으로 곧장 서버 탭이 지정돼도 잠금 중에는 로컬로 대체한다.
+    // 딥링크 등으로 곧장 서버 탭이 지정돼도 잠금 중(운영자 제외)에는
+    // 로컬로 대체한다.
     if (_storageMode == ClipStorageConstants.storageModeServer &&
-        ClipStorageConstants.isServerStorageLocked) {
+        ClipStorageConstants.isServerStorageLockedForCurrentUser()) {
       _storageMode = ClipStorageConstants.storageModeLocal;
     }
 

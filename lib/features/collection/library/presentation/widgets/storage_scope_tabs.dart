@@ -40,6 +40,8 @@ class StorageScopeTabs extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final activeIndex = _items.indexWhere((item) => item.mode == value);
     final alignX = activeIndex <= 0 ? -1.0 : (activeIndex >= 2 ? 1.0 : 0.0);
+    final isServerLocked =
+        ClipStorageConstants.isServerStorageLockedForCurrentUser();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -84,10 +86,10 @@ class StorageScopeTabs extends StatelessWidget {
                       label: item.label,
                       active: item.mode == value,
                       locked: item.mode == ClipStorageConstants.storageModeServer &&
-                          ClipStorageConstants.isServerStorageLocked,
+                          isServerLocked,
                       onTap: () {
                         if (item.mode == ClipStorageConstants.storageModeServer &&
-                            ClipStorageConstants.isServerStorageLocked) {
+                            isServerLocked) {
                           showToast('서버 저장은 준비 중이에요. 출시 후 이용할 수 있어요.');
                           return;
                         }
