@@ -13,6 +13,7 @@ class FolderCard extends StatelessWidget {
     this.isGridView = true,
     this.isAddCard = false,
     this.isSpecial = false,
+    this.isGroup = false,
   });
 
   final String name;
@@ -22,6 +23,10 @@ class FolderCard extends StatelessWidget {
   final bool isGridView;
   final bool isAddCard;
   final bool isSpecial;
+
+  /// 그룹 카드인지 여부. 콜렉션(폴더)과 시각적으로 구분되도록 다른
+  /// 아이콘(workspaces)을 쓴다.
+  final bool isGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +48,11 @@ class FolderCard extends StatelessWidget {
         : (isAddCard ? cs.primaryContainer.withValues(alpha: 0.1) : cs.surface);
     final IconData iconData = isAddCard
         ? Icons.add_rounded
-        : (deleteMode ? Icons.delete_outline_rounded : (isSpecial ? Icons.auto_awesome_mosaic_rounded : Icons.folder_rounded));
+        : (deleteMode
+            ? Icons.delete_outline_rounded
+            : (isSpecial
+                ? Icons.auto_awesome_mosaic_rounded
+                : (isGroup ? Icons.workspaces_rounded : Icons.folder_rounded)));
 
     Widget iconWidget = Icon(
       iconData,

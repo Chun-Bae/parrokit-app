@@ -115,6 +115,7 @@ class FolderGrid extends StatelessWidget {
       deleteMode: deleteMode && !isSpecial,
       isGridView: isGridView,
       isSpecial: isSpecial,
+      isGroup: sectionTitle == '그룹',
     );
   }
 }
