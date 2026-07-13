@@ -51,7 +51,8 @@ class _AdRewardSectionState extends State<AdRewardSection> {
   void _startTimer(Duration initial) {
     _timerSub?.cancel();
     setState(() => _remaining = initial);
-    _timerSub = Stream.periodic(const Duration(seconds: 1), (i) => i).listen((_) {
+    _timerSub =
+        Stream.periodic(const Duration(seconds: 1), (i) => i).listen((_) {
       if (!mounted) return;
       final next = _remaining! - const Duration(seconds: 1);
       if (next <= Duration.zero) {
@@ -99,13 +100,14 @@ class _AdRewardSectionState extends State<AdRewardSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '코인 받기',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          '패롯 받기',
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
-          '광고를 시청하면 코인 ${AdService.rewardCoins}개를 받을 수 있어요. '
-          '코인이 있으면 하루 제한 없이 자막 생성을 사용할 수 있어요.',
+          '광고를 시청하면 패롯 ${AdService.rewardCoins}개를 받을 수 있어요. '
+          '패롯이 있으면 자막 생성을 이용할 수 있어요.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: cs.onSurface.withValues(alpha: 0.7),
           ),
@@ -116,13 +118,15 @@ class _AdRewardSectionState extends State<AdRewardSection> {
           child: OutlinedButton.icon(
             onPressed: isCooldown ? null : _onWatchAd,
             icon: Icon(
-              isCooldown ? Icons.timer_outlined : Icons.play_circle_outline_rounded,
+              isCooldown
+                  ? Icons.timer_outlined
+                  : Icons.play_circle_outline_rounded,
               size: 18,
             ),
             label: Text(
               isCooldown
                   ? _formatRemaining(_remaining!)
-                  : '광고 보고 코인 ${AdService.rewardCoins}개 받기',
+                  : '광고 보고 패롯 ${AdService.rewardCoins}개 받기',
             ),
           ),
         ),
