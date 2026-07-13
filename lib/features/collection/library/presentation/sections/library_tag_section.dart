@@ -60,256 +60,259 @@ class LibraryTagSection extends StatelessWidget {
     TextEditingController? acCtrl;
     FocusNode? acFocus;
 
-    return Column(
-      children: [
+    return CustomScrollView(
+      slivers: [
         // 🔎 자동완성 검색 + 전체해제 버튼
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Autocomplete<Tag>(
-                  displayStringForOption: (t) => t.name,
-                  optionsBuilder: (text) => _optionsFor(text.text),
-                  fieldViewBuilder:
-                      (context, controller, focusNode, onUnfocus) {
-                    acCtrl = controller;
-                    acFocus = focusNode;
-                    return TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      textInputAction: TextInputAction.search,
-                      decoration: InputDecoration(
-                        hintText: '태그 검색',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: (controller.text.isEmpty)
-                            ? null
-                            : IconButton(
-                                icon: const Icon(Icons.clear),
-                                tooltip: '검색어 지우기',
-                                onPressed: () {
-                                  controller.clear();
-                                  focusNode.requestFocus();
-                                },
-                              ),
-                        filled: true,
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Autocomplete<Tag>(
+                    displayStringForOption: (t) => t.name,
+                    optionsBuilder: (text) => _optionsFor(text.text),
+                    fieldViewBuilder:
+                        (context, controller, focusNode, onUnfocus) {
+                      acCtrl = controller;
+                      acFocus = focusNode;
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        textInputAction: TextInputAction.search,
+                        decoration: InputDecoration(
+                          hintText: '태그 검색',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: (controller.text.isEmpty)
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  tooltip: '검색어 지우기',
+                                  onPressed: () {
+                                    controller.clear();
+                                    focusNode.requestFocus();
+                                  },
+                                ),
+                          filled: true,
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing
+                                .sm, // 12, 8? original was 12, 8 at line 99?
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing
-                              .sm, // 12, 8? original was 12, 8 at line 99?
-                        ),
-                      ),
-                      // suffixIcon 갱신을 위해 setState 필요할 수 있으나,
-                      // 여기서는 controller listener가 없으므로 타이핑 시 아이콘 갱신이 즉시 안 될 수 있음.
-                      // Stateless에서는 한계가 있으나, TextField 자체 rebuild가 일어나면 갱신됨.
-                    );
-                  },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(10),
-                        child: SizedBox(
-                          width: 410,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                                maxHeight: 280, minWidth: 240),
-                            child: ListView.separated(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpacing.sm),
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              separatorBuilder: (_, __) =>
-                                  const Divider(height: 1, thickness: 0.5),
-                              itemBuilder: (context, index) {
-                                final t = options.elementAt(index);
-                                return InkWell(
-                                  onTap: () => onSelected(t),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: AppSpacing.md,
-                                        vertical: AppSpacing.md),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.auto_awesome,
-                                            size: 18),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            t.name,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              fontFamily: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.fontFamily,
+                        // suffixIcon 갱신을 위해 setState 필요할 수 있으나,
+                        // 여기서는 controller listener가 없으므로 타이핑 시 아이콘 갱신이 즉시 안 될 수 있음.
+                        // Stateless에서는 한계가 있으나, TextField 자체 rebuild가 일어나면 갱신됨.
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(10),
+                          child: SizedBox(
+                            width: 410,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                  maxHeight: 280, minWidth: 240),
+                              child: ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: AppSpacing.sm),
+                                shrinkWrap: true,
+                                itemCount: options.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1, thickness: 0.5),
+                                itemBuilder: (context, index) {
+                                  final t = options.elementAt(index);
+                                  return InkWell(
+                                    onTap: () => onSelected(t),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.md,
+                                          vertical: AppSpacing.md),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.auto_awesome,
+                                              size: 18),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              t.name,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                fontFamily: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.fontFamily,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),
+                      );
+                    },
+                    onSelected: (t) {
+                      onTagSelected(t);
+                      acCtrl?.clear();
+                      acFocus?.unfocus();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 전체 선택 (All)
+                SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: OutlinedButton(
+                    onPressed: onSelectAll,
+                    style: OutlinedButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                    );
-                  },
-                  onSelected: (t) {
-                    onTagSelected(t);
-                    acCtrl?.clear();
-                    acFocus?.unfocus();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 전체 선택 (All)
-              SizedBox(
-                height: 48,
-                width: 48,
-                child: OutlinedButton(
-                  onPressed: onSelectAll,
-                  style: OutlinedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                  ),
-                  child: Text(
-                    'All',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      'All',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              // 선택 해제 (Cleaner)
-              SizedBox(
-                height: 48,
-                width: 48,
-                child: OutlinedButton(
-                  onPressed: selectedTags.isEmpty ? null : onClearResult,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                const SizedBox(width: 8),
+                // 선택 해제 (Cleaner)
+                SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: OutlinedButton(
+                    onPressed: selectedTags.isEmpty ? null : onClearResult,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Icon(Icons.cleaning_services, size: 20),
                   ),
-                  child: const Icon(Icons.cleaning_services, size: 20),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
         // ⬇️ 선택된 태그들: 횡스크롤 한 줄
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          child: SizedBox(
-            height: 40,
-            width: double.infinity,
-            child: selectedTags.isEmpty
-                ? Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.5),
-                          ),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        for (final name in names) ...[
-                          FilterChip(
-                            label: Text(
-                              name,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontFamily: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.fontFamily,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: SizedBox(
+              height: 40,
+              width: double.infinity,
+              child: selectedTags.isEmpty
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          for (final name in names) ...[
+                            FilterChip(
+                              label: Text(
+                                name,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.fontFamily,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
+                              selected: true,
+                              onSelected: (_) {},
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              selectedColor:
+                                  Theme.of(context).colorScheme.primary,
+                              checkmarkColor: Colors.white,
+                              showCheckmark: false,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                    color: AppColors.primary, width: 1),
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: const VisualDensity(
+                                  horizontal: -2, vertical: -2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm),
+                              deleteIcon: const Icon(Icons.close,
+                                  size: 16, color: Colors.white),
+                              onDeleted: () => onTagDeleted(name),
                             ),
-                            selected: true,
-                            onSelected: (_) {},
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                            selectedColor:
-                                Theme.of(context).colorScheme.primary,
-                            checkmarkColor: Colors.white,
-                            showCheckmark: false,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(
-                                  color: AppColors.primary, width: 1),
-                            ),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: const VisualDensity(
-                                horizontal: -2, vertical: -2),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.sm),
-                            deleteIcon: const Icon(Icons.close,
-                                size: 16, color: Colors.white),
-                            onDeleted: () => onTagDeleted(name),
-                          ),
-                          const SizedBox(width: 8),
+                            const SizedBox(width: 8),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
+            ),
           ),
         ),
 
         // ⬇️ 결과 리스트
-        Expanded(
-          child: Selector<TagFilterProvider, List<ClipItem>>(
-            selector: (_, p) => p.items,
-            shouldRebuild: (prev, next) {
-              if (prev.length != next.length) return true;
-              for (var i = 0; i < prev.length; i++) {
-                if (prev[i].clip.id != next[i].clip.id) return true;
-              }
-              return false;
-            },
-            builder: (_, items, __) {
-              return ClipListView(
-                key: const PageStorageKey('tag_results_list'),
+        Selector<TagFilterProvider, List<ClipItem>>(
+          selector: (_, p) => p.items,
+          shouldRebuild: (prev, next) {
+            if (prev.length != next.length) return true;
+            for (var i = 0; i < prev.length; i++) {
+              if (prev[i].clip.id != next[i].clip.id) return true;
+            }
+            return false;
+          },
+          builder: (context, items, __) {
+            return SliverMainAxisGroup(
+              slivers: ClipListView(
                 items: items,
                 onOpen: (ci) {
                   context.push(
                     '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}?clipId=${ci.clip.id}',
                   );
                 },
-              );
-            },
-          ),
+              ).buildSlivers(context),
+            );
+          },
         ),
       ],
     );

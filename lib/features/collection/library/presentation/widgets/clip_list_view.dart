@@ -270,186 +270,187 @@ class ClipListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return CustomScrollView(slivers: buildSlivers(context));
+  }
+
+  /// 다른 스크롤 영역(예: 상위 화면의 [CustomScrollView])에 이어붙일 수
+  /// 있도록 슬리버 목록만 뽑아낸 것. [build]도 이 목록을 그대로 사용한다.
+  List<Widget> buildSlivers(BuildContext context) {
     // Remove unused cs
     final tick =
         context.select<TagFilterProvider, int>((p) => p.resultsVersion);
     final loading = context.select<TagFilterProvider, bool>((p) => p.isLoading);
 
-    return CustomScrollView(
-      slivers: [
-        // ✅ 헤더는 고정 (애니메이션 X)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: Text(
-              '클립',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
+    return [
+      // ✅ 헤더는 고정 (애니메이션 X)
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          child: Text(
+            '클립',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ),
+      ),
 
-        // ✅ 로딩 시엔 스켈레톤만
-        if (loading)
-          const _SkeletonSliver()
-        else if (items.isEmpty)
-          const SliverFillRemaining(
-            child: Center(child: Text('아직 등록된 클립이 없어요.')),
-          )
-        else
-          // ✅ 데이터일 때만 리스트 렌더
-          SliverList.separated(
-            itemCount: items.length,
-            itemBuilder: (ctx, i) {
-              final item = items[i];
-              final clip = item.clip;
-              final dur = _fmtMs(clip.durationMs);
-              final swipeKey = GlobalKey<SwipeActionTileState>();
+      // ✅ 로딩 시엔 스켈레톤만
+      if (loading)
+        const _SkeletonSliver()
+      else if (items.isEmpty)
+        const SliverFillRemaining(
+          child: Center(child: Text('아직 등록된 클립이 없어요.')),
+        )
+      else
+        // ✅ 데이터일 때만 리스트 렌더
+        SliverList.separated(
+          itemCount: items.length,
+          itemBuilder: (ctx, i) {
+            final item = items[i];
+            final clip = item.clip;
+            final dur = _fmtMs(clip.durationMs);
+            final swipeKey = GlobalKey<SwipeActionTileState>();
 
-              ImageProvider? thumbProvider;
-              if (item.thumbnail != null) {
-                thumbProvider = MemoryImage(item.thumbnail!);
-              } else if (resolveThumb != null) {
-                thumbProvider = resolveThumb!(item);
-              }
-              final storageChip = _buildStorageChip(ctx, clip.storageMode);
+            ImageProvider? thumbProvider;
+            if (item.thumbnail != null) {
+              thumbProvider = MemoryImage(item.thumbnail!);
+            } else if (resolveThumb != null) {
+              thumbProvider = resolveThumb!(item);
+            }
+            final storageChip = _buildStorageChip(ctx, clip.storageMode);
 
-              // ⬇️ 여기서 아이템만 애니메이션 적용
-              return _FadeSlideIn(
-                index: i,
-                version: tick, // 태그 결과 바뀔 때만 애니 시작
-                child: selectionMode
-                    ? _SelectableClipTile(
-                        imageProvider: thumbProvider,
-                        duration: dur,
-                        title: clip.title,
-                        storageChip: storageChip,
-                        tags: item.tags,
-                        selected: selectedClipIds.contains(clip.id),
-                        onTap: onToggleSelection == null
-                            ? null
-                            : () => onToggleSelection!(item),
-                      )
-                    : SwipeActionTile(
-                        key: swipeKey,
-                        actionWidth: 300,
-                        actions: [
-                          _buildSwipeAction(
-                            color: AppColors.info,
-                            icon: Icons.edit_rounded,
-                            label: '편집',
-                            onTap: () async {
-                              final clipProvider = context.read<ClipProvider>();
-                              final currentCollection =
-                                  clipProvider.selectedCollectionId == null
-                                      ? null
-                                      : clipProvider.collections
-                                          .cast<dynamic>()
-                                          .firstWhere(
-                                            (c) =>
-                                                (c.id as int) ==
-                                                clipProvider
-                                                    .selectedCollectionId,
-                                            orElse: () => null,
-                                          );
-                              final collectionName =
-                                  currentCollection?.name as String?;
-                              final ok = await context.push<bool>(
-                                '${AppRoutes.clipsPath}/${AppRoutes.clipsEditPath}?clipId=${clip.id}'
-                                '${collectionName != null ? '&collectionName=${Uri.encodeComponent(collectionName)}' : ''}',
-                              );
-                              if (ok == true && context.mounted) {
-                                clipProvider.backToCollections();
-                                clipProvider.loadCollections();
-                              }
-                            },
+            // ⬇️ 여기서 아이템만 애니메이션 적용
+            return _FadeSlideIn(
+              index: i,
+              version: tick, // 태그 결과 바뀔 때만 애니 시작
+              child: selectionMode
+                  ? _SelectableClipTile(
+                      imageProvider: thumbProvider,
+                      duration: dur,
+                      title: clip.title,
+                      storageChip: storageChip,
+                      tags: item.tags,
+                      selected: selectedClipIds.contains(clip.id),
+                      onTap: onToggleSelection == null
+                          ? null
+                          : () => onToggleSelection!(item),
+                    )
+                  : SwipeActionTile(
+                      key: swipeKey,
+                      actionWidth: 300,
+                      actions: [
+                        _buildSwipeAction(
+                          color: AppColors.info,
+                          icon: Icons.edit_rounded,
+                          label: '편집',
+                          onTap: () async {
+                            final clipProvider = context.read<ClipProvider>();
+                            final currentCollection =
+                                clipProvider.selectedCollectionId == null
+                                    ? null
+                                    : clipProvider.collections
+                                        .cast<dynamic>()
+                                        .firstWhere(
+                                          (c) =>
+                                              (c.id as int) ==
+                                              clipProvider.selectedCollectionId,
+                                          orElse: () => null,
+                                        );
+                            final collectionName =
+                                currentCollection?.name as String?;
+                            final ok = await context.push<bool>(
+                              '${AppRoutes.clipsPath}/${AppRoutes.clipsEditPath}?clipId=${clip.id}'
+                              '${collectionName != null ? '&collectionName=${Uri.encodeComponent(collectionName)}' : ''}',
+                            );
+                            if (ok == true && context.mounted) {
+                              clipProvider.backToCollections();
+                              clipProvider.loadCollections();
+                            }
+                          },
+                        ),
+                        _buildSwipeAction(
+                          color: AppColors.warning,
+                          icon: Icons.swap_horiz_rounded,
+                          label: '전환',
+                          onTap: () => _showStorageModeSheet(
+                            context,
+                            item,
+                            onApplied: () => swipeKey.currentState?.close(),
                           ),
-                          _buildSwipeAction(
-                            color: AppColors.warning,
-                            icon: Icons.swap_horiz_rounded,
-                            label: '전환',
-                            onTap: () => _showStorageModeSheet(
-                              context,
-                              item,
-                              onApplied: () => swipeKey.currentState?.close(),
-                            ),
-                          ),
-                          _buildSwipeAction(
-                            color: AppColors.danger,
-                            icon: Icons.delete_rounded,
-                            label: '삭제',
-                            onTap: () => _confirmDeleteClip(context, item),
-                          ),
-                        ],
-                        child: InkWell(
-                          onTap: () => onOpen(item),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                EpisodeThumbnail(
-                                    imageProvider: thumbProvider,
-                                    duration: dur),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        clip.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(ctx)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.w800),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Wrap(
-                                        spacing: 6,
-                                        runSpacing: 4,
-                                        children: [
-                                          if (storageChip != null) storageChip,
-                                          for (final t in item.tags.take(4))
-                                            MiniChip(label: t.name),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                        ),
+                        _buildSwipeAction(
+                          color: AppColors.danger,
+                          icon: Icons.delete_rounded,
+                          label: '삭제',
+                          onTap: () => _confirmDeleteClip(context, item),
+                        ),
+                      ],
+                      child: InkWell(
+                        onTap: () => onOpen(item),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              EpisodeThumbnail(
+                                  imageProvider: thumbProvider, duration: dur),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      clip.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(ctx)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w800),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        if (storageChip != null) storageChip,
+                                        for (final t in item.tags.take(4))
+                                          MiniChip(label: t.name),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: Theme.of(ctx)
-                                      .colorScheme
-                                      .onSurface
-                                      .withValues(alpha: 0.4),
-                                ),
-                              ],
-                            ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: Theme.of(ctx)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-              );
-            },
-            separatorBuilder: selectionMode
-                ? (_, __) => const SizedBox.shrink()
-                : (ctx, __) => Divider(
-                      height: 1,
-                      color: Theme.of(ctx)
-                          .colorScheme
-                          .outlineVariant
-                          .withValues(alpha: 0.6),
                     ),
-          ),
+            );
+          },
+          separatorBuilder: selectionMode
+              ? (_, __) => const SizedBox.shrink()
+              : (ctx, __) => Divider(
+                    height: 1,
+                    color: Theme.of(ctx)
+                        .colorScheme
+                        .outlineVariant
+                        .withValues(alpha: 0.6),
+                  ),
+        ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ],
-    );
+      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+    ];
   }
 }
 

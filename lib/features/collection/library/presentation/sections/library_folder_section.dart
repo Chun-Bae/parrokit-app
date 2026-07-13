@@ -42,9 +42,12 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
   bool _deleteMode = false;
   bool _isGridView = true;
   bool _isFabExtended = true;
+  bool _isStorageSummaryExpanded = false;
 
   void _toggleDeleteMode() => setState(() => _deleteMode = !_deleteMode);
   void _toggleViewMode() => setState(() => _isGridView = !_isGridView);
+  void _toggleStorageSummary() =>
+      setState(() => _isStorageSummaryExpanded = !_isStorageSummaryExpanded);
 
   String _formatBytes(int bytes) {
     if (bytes <= 0) return '0 B';
@@ -143,6 +146,63 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         _buildCloudStorageSummary(context),
       _ => _buildLocalStorageSummary(context),
     };
+  }
+
+  /// 저장 공간 사용량 카드를 접었다 펼 수 있게 감싼 섹션. 기본은 접힌
+  /// 상태라 라이브러리 화면에 들어오자마자 목록을 가리지 않는다.
+  Widget _buildStorageSummarySection(BuildContext context, String storageMode) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _toggleStorageSummary,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.storage_rounded,
+                    size: 16,
+                    color: cs.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '저장 공간',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurfaceVariant,
+                        ),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _isStorageSummaryExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: _buildActiveStorageSummary(context, storageMode),
+            crossFadeState: _isStorageSummaryExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildUsageCard(
@@ -895,161 +955,161 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
 
     return Stack(
       children: [
-        Column(
-          children: [
-            if (!isSelectionMode) ...[
-              BreadcrumbBar(
-                path: crumbs,
-                onTapCrumb: (i) {
-                  if (i == 0) {
-                    setState(() => _deleteMode = false);
-                    clipProvider.backToGroups();
-                  } else if (i == 1 && crumbs.length > 2) {
-                    setState(() => _deleteMode = false);
-                    clipProvider.backToCollections();
-                  }
-                },
-              ),
-
-              _buildActiveStorageSummary(
-                  context, clipProvider.activeStorageMode),
-
-              // 삭제 모드 배너
-              if (_deleteMode && !isAtClipList)
-                Container(
-                  color: cs.errorContainer,
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline_rounded,
-                          size: 16, color: cs.onErrorContainer),
-                      const SizedBox(width: 8),
-                      Text('삭제 모드 — 컬렉션을 눌러 삭제',
-                          style: TextStyle(
-                              color: cs.onErrorContainer, fontSize: 13)),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: _toggleDeleteMode,
-                        child: Text('완료',
-                            style: TextStyle(color: cs.onErrorContainer)),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-            const SizedBox(height: 10),
-            Expanded(
-              child: NotificationListener<UserScrollNotification>(
-                onNotification: (notification) {
-                  if (notification.direction == ScrollDirection.reverse) {
-                    if (_isFabExtended) setState(() => _isFabExtended = false);
-                  } else if (notification.direction ==
-                      ScrollDirection.forward) {
-                    if (!_isFabExtended) setState(() => _isFabExtended = true);
-                  }
-                  return false;
-                },
-                child: Builder(
-                  builder: (_) {
-                    if (isAtGroupRoot) {
-                      final gridItems = [
-                        '모든 콜렉션',
-                        ...clipProvider.groups
-                            .map((g) => (g as dynamic).name as String)
-                      ];
-                      return FolderGrid(
-                        sectionTitle: '그룹',
-                        items: gridItems,
-                        deleteMode: _deleteMode,
-                        isGridView: _isGridView,
-                        onToggleView: _toggleViewMode,
-                        onAdd: () => _showCreateGroupDialog(context),
-                        onTap: (idx) {
-                          if (idx == 0) {
-                            if (!_deleteMode) {
-                              clipProvider.selectGroup(-1);
-                            }
-                            return;
-                          }
-
-                          final grp = clipProvider.groups[idx - 1];
-                          if (_deleteMode) {
-                            _showDeleteGroupDialog(context, grp.id, grp.name);
-                          } else {
-                            clipProvider.selectGroup(grp.id);
-                          }
-                        },
-                        onLongPress: (idx) {
-                          if (idx == 0) return;
-                          final grp = clipProvider.groups[idx - 1];
-                          _showRenameGroupDialog(context, grp.id, grp.name);
-                        },
-                      );
+        NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            if (notification.direction == ScrollDirection.reverse) {
+              if (_isFabExtended) setState(() => _isFabExtended = false);
+            } else if (notification.direction == ScrollDirection.forward) {
+              if (!_isFabExtended) setState(() => _isFabExtended = true);
+            }
+            return false;
+          },
+          child: Builder(
+            builder: (context) {
+              final List<Widget> contentSlivers;
+              if (isAtGroupRoot) {
+                final gridItems = [
+                  '모든 콜렉션',
+                  ...clipProvider.groups
+                      .map((g) => (g as dynamic).name as String)
+                ];
+                contentSlivers = FolderGrid(
+                  sectionTitle: '그룹',
+                  items: gridItems,
+                  deleteMode: _deleteMode,
+                  isGridView: _isGridView,
+                  onToggleView: _toggleViewMode,
+                  onAdd: () => _showCreateGroupDialog(context),
+                  onTap: (idx) {
+                    if (idx == 0) {
+                      if (!_deleteMode) {
+                        clipProvider.selectGroup(-1);
+                      }
+                      return;
                     }
 
-                    // 2) Collections
-                    if (isAtCollectionList) {
-                      final allClipsLabel = clipProvider.selectedGroupId == -1
-                          ? '모든 클립'
-                          : '그룹 내 모든 클립';
-                      final gridItems = [
-                        allClipsLabel,
-                        ...clipProvider.collections
-                            .map((c) => (c as dynamic).name as String)
-                      ];
-                      return FolderGrid(
-                        sectionTitle: '컬렉션',
-                        items: gridItems,
-                        deleteMode: _deleteMode,
-                        isGridView: _isGridView,
-                        onToggleView: _toggleViewMode,
-                        onAdd: () => _showCreateCollectionDialog(context),
-                        onTap: (idx) {
-                          if (idx == 0) {
-                            if (!_deleteMode) {
-                              clipProvider.selectCollection(-1);
-                            }
-                            return;
-                          }
-
-                          final col = clipProvider.collections[idx - 1];
-                          if (_deleteMode) {
-                            _showDeleteCollectionDialog(
-                                context, col.id, col.name);
-                          } else {
-                            clipProvider.selectCollection(col.id);
-                          }
-                        },
-                        onLongPress: (idx) {
-                          if (idx == 0) return;
-                          final col = clipProvider.collections[idx - 1];
-                          _showRenameCollectionDialog(
-                              context, col.id, col.name);
-                        },
-                      );
+                    final grp = clipProvider.groups[idx - 1];
+                    if (_deleteMode) {
+                      _showDeleteGroupDialog(context, grp.id, grp.name);
+                    } else {
+                      clipProvider.selectGroup(grp.id);
+                    }
+                  },
+                  onLongPress: (idx) {
+                    if (idx == 0) return;
+                    final grp = clipProvider.groups[idx - 1];
+                    _showRenameGroupDialog(context, grp.id, grp.name);
+                  },
+                ).buildSlivers(context);
+              } else if (isAtCollectionList) {
+                final allClipsLabel =
+                    clipProvider.selectedGroupId == -1 ? '모든 클립' : '그룹 내 모든 클립';
+                final gridItems = [
+                  allClipsLabel,
+                  ...clipProvider.collections
+                      .map((c) => (c as dynamic).name as String)
+                ];
+                contentSlivers = FolderGrid(
+                  sectionTitle: '컬렉션',
+                  items: gridItems,
+                  deleteMode: _deleteMode,
+                  isGridView: _isGridView,
+                  onToggleView: _toggleViewMode,
+                  onAdd: () => _showCreateCollectionDialog(context),
+                  onTap: (idx) {
+                    if (idx == 0) {
+                      if (!_deleteMode) {
+                        clipProvider.selectCollection(-1);
+                      }
+                      return;
                     }
 
-                    // 3) Clips
-                    return ClipListView(
-                      items: clipProvider.clipItems,
-                      selectionMode: isSelectionMode,
-                      selectedClipIds: clipProvider.selectedClipIds,
-                      onToggleSelection: (item) {
-                        clipProvider.toggleClipSelection(item.clip.id);
-                      },
-                      onOpen: (ci) {
-                        context.push(
-                          '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}?clipId=${ci.clip.id}',
-                        );
-                      },
+                    final col = clipProvider.collections[idx - 1];
+                    if (_deleteMode) {
+                      _showDeleteCollectionDialog(context, col.id, col.name);
+                    } else {
+                      clipProvider.selectCollection(col.id);
+                    }
+                  },
+                  onLongPress: (idx) {
+                    if (idx == 0) return;
+                    final col = clipProvider.collections[idx - 1];
+                    _showRenameCollectionDialog(context, col.id, col.name);
+                  },
+                ).buildSlivers(context);
+              } else {
+                // 3) Clips
+                contentSlivers = ClipListView(
+                  items: clipProvider.clipItems,
+                  selectionMode: isSelectionMode,
+                  selectedClipIds: clipProvider.selectedClipIds,
+                  onToggleSelection: (item) {
+                    clipProvider.toggleClipSelection(item.clip.id);
+                  },
+                  onOpen: (ci) {
+                    context.push(
+                      '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}?clipId=${ci.clip.id}',
                     );
                   },
-                ),
-              ),
-            ),
-          ],
+                ).buildSlivers(context);
+              }
+
+              return CustomScrollView(
+                slivers: [
+                  if (!isSelectionMode) ...[
+                    SliverToBoxAdapter(
+                      child: BreadcrumbBar(
+                        path: crumbs,
+                        onTapCrumb: (i) {
+                          if (i == 0) {
+                            setState(() => _deleteMode = false);
+                            clipProvider.backToGroups();
+                          } else if (i == 1 && crumbs.length > 2) {
+                            setState(() => _deleteMode = false);
+                            clipProvider.backToCollections();
+                          }
+                        },
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildStorageSummarySection(
+                          context, clipProvider.activeStorageMode),
+                    ),
+                    // 삭제 모드 배너
+                    if (_deleteMode && !isAtClipList)
+                      SliverToBoxAdapter(
+                        child: Container(
+                          color: cs.errorContainer,
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded,
+                                  size: 16, color: cs.onErrorContainer),
+                              const SizedBox(width: 8),
+                              Text('삭제 모드 — 컬렉션을 눌러 삭제',
+                                  style: TextStyle(
+                                      color: cs.onErrorContainer,
+                                      fontSize: 13)),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _toggleDeleteMode,
+                                child: Text('완료',
+                                    style:
+                                        TextStyle(color: cs.onErrorContainer)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                  ...contentSlivers,
+                ],
+              );
+            },
+          ),
         ),
 
         // FAB
