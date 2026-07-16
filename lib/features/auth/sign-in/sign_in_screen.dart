@@ -265,9 +265,9 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget _buildFormFields() {
-    final MaterialStateColor iconColor =
-        MaterialStateColor.resolveWith((states) {
-      if (states.contains(MaterialState.focused)) {
+    final WidgetStateColor iconColor =
+        WidgetStateColor.resolveWith((states) {
+      if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
       return Colors.grey.shade500;
@@ -369,7 +369,7 @@ class _SignInScreenState extends State<SignInScreen> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

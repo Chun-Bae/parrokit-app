@@ -15,9 +15,11 @@ class CommunityRepository
         CommunityRepositoryUserAction,
         CommunityRepositoryQuestion,
         CommunityRepositoryVote {
+  @override
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final Map<String, String> _authorNicknameCache = {};
 
+  @override
   Future<Map<String, String>> _getAuthorNicknames(Set<String> authorIds) async {
     final nicknames = <String, String>{};
     if (authorIds.isEmpty) return nicknames;

@@ -72,9 +72,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final MaterialStateColor iconColor =
-        MaterialStateColor.resolveWith((states) {
-      if (states.contains(MaterialState.focused)) {
+    final WidgetStateColor iconColor =
+        WidgetStateColor.resolveWith((states) {
+      if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
       return Colors.grey.shade500;

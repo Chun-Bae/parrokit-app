@@ -12,7 +12,6 @@
 // ============================================================================
 
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:drift/drift.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';

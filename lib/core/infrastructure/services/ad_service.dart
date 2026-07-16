@@ -90,8 +90,9 @@ class AdService {
 
   /// 보상형 광고를 미리 로드합니다.
   void loadRewardedAd() {
-    if (_isRewardedLoading || _rewardedAd != null || _rewardedAdUnitId.isEmpty)
+    if (_isRewardedLoading || _rewardedAd != null || _rewardedAdUnitId.isEmpty) {
       return;
+    }
     _isRewardedLoading = true;
 
     RewardedAd.load(

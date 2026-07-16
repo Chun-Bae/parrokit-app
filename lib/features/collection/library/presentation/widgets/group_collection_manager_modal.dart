@@ -154,7 +154,7 @@ class _GroupCollectionManagerModalState
               labelText: '대상 그룹 선택',
               border: OutlineInputBorder(),
             ),
-            value: _selectedGroupIdForTabA,
+            initialValue: _selectedGroupIdForTabA,
             items: _allGroups
                 .map((g) => DropdownMenuItem(
                       value: g.id,
@@ -215,7 +215,7 @@ class _GroupCollectionManagerModalState
               labelText: '대상 콜렉션 선택',
               border: OutlineInputBorder(),
             ),
-            value: _selectedCollectionIdForTabB,
+            initialValue: _selectedCollectionIdForTabB,
             items: _allCollections
                 .map((c) => DropdownMenuItem(
                       value: c.id,

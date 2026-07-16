@@ -73,6 +73,7 @@ dependencies:
   flutter_dotenv: ^6.0.0      # 환경 변수 (.env) 관리
   url_launcher: ^6.3.2        # URL 열기 (브라우저 등)
   flutter_inappwebview: ^6.1.5    # 인앱 브라우저
+  webview_flutter: ^4.13.1       # 웹뷰 (약관/방침 문서 표시)
   web_socket_channel: ^3.0.1  # 웹소켓 통신 (필요 시)
   flutter_email_sender: ^7.0.0 # 이메일 앱 호출
  
@@ -149,7 +150,6 @@ flutter:
     - assets/logos/pa_logo.png
     - assets/icons/
     - assets/intros/
-    - assets/prompts/
 
   # Custom Fonts (IBM Plex Sans KR)
   fonts:

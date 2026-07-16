@@ -152,9 +152,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _buildFormFields() {
-    final MaterialStateColor iconColor =
-        MaterialStateColor.resolveWith((states) {
-      if (states.contains(MaterialState.focused)) {
+    final WidgetStateColor iconColor =
+        WidgetStateColor.resolveWith((states) {
+      if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
       return Colors.grey.shade500;

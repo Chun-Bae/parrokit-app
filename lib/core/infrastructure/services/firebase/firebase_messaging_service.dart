@@ -1,3 +1,9 @@
+// unreachable_from_main 오탐: firebaseMessagingBackgroundHandler의
+// @pragma('vm:entry-point') 때문에 이 파일이 "executable library"로
+// 분류되어, 실제로는 bootstrap.dart/providers.dart에서 쓰이는
+// FirebaseMessagingService 멤버들이 파일 내부 기준으로만 도달 불가 판정됨.
+// ignore_for_file: unreachable_from_main
+
 import 'dart:async';
 import 'dart:io';
 
