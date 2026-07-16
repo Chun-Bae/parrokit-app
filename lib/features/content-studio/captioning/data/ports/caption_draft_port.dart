@@ -29,7 +29,6 @@ abstract class CaptionDraftGenerator {
   Future<DraftResult> generate({
     required String filePath,
     required int durationMs,
-    String language = 'ja',
     void Function(int current, int total, String message)? onProgress,
   });
 }

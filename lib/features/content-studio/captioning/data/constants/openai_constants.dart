@@ -24,5 +24,4 @@ class OpenAIConstants {
   // Audio Transcriptions API (ASR/STT)
   // ─────────────────────────────────────────────────────────────────
   static const asrEndpoint = 'https://api.openai.com/v1/audio/transcriptions';
-  static const asrDefaultModel = 'gpt-4o-transcribe-diarize';
 }

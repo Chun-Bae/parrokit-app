@@ -58,7 +58,6 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
   Future<DraftResult> generate({
     required String filePath,
     required int durationMs,
-    String language = 'ja',
     void Function(int current, int total, String message)? onProgress,
   }) async {
     if (durationMs <= 0 || durationMs > maxCaptionDurationMs) {
@@ -97,8 +96,7 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
       );
       final result = await callable.call<Map<String, dynamic>>({
         'storagePath': storagePath,
-        'engine': engine == AsrEngine.diarize ? 'diarize' : 'whisper',
-        'language': language,
+        'engine': 'whisper',
         'durationMs': durationMs,
       });
 

@@ -158,9 +158,6 @@ class CaptioningProvider extends ChangeNotifier
     );
 
     _generateDraftByEngine = {
-      AsrEngine.diarize: GenerateDraftUseCase(
-        service: RemoteCaptionDraftService(engine: AsrEngine.diarize),
-      ),
       AsrEngine.whisper: GenerateDraftUseCase(
         service: RemoteCaptionDraftService(engine: AsrEngine.whisper),
       ),
@@ -224,7 +221,6 @@ class CaptioningProvider extends ChangeNotifier
       final result = await generateDraft(
         filePath: path,
         durationMs: durationMs,
-        language: 'ja',
         onProgress: (current, total, message) {
           _sttProgress = current;
           _sttTotal = total;

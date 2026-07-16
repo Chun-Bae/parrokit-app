@@ -24,12 +24,11 @@ const CAPTION_PROMPT_PATH = join(
 
 let captionDraftSystemPromptCache: string | undefined;
 
-type CaptionEngine = "diarize" | "whisper";
+type CaptionEngine = "whisper";
 
 interface CaptionRequest {
   storagePath: string;
   engine: CaptionEngine;
-  language?: string;
   durationMs: number;
 }
 
@@ -99,15 +98,22 @@ export const generateCaptions = onCall(
         filePath: tempPath,
         filename: basename(input.storagePath),
         contentType: metadata.contentType || contentTypeFor(input.storagePath),
-        engine: input.engine,
-        language: input.language || "ja",
       });
+
+      console.log(
+        "[Captioning][DEBUG] raw ASR segments",
+        JSON.stringify(asrSegments)
+      );
 
       if (asrSegments.length === 0) {
         return {segments: []};
       }
 
       const segments = await buildCaptionSegments(apiKey, asrSegments);
+      console.log(
+        "[Captioning][DEBUG] final segments",
+        JSON.stringify(segments)
+      );
       return {segments};
     } catch (error) {
       if (error instanceof HttpsError) {
@@ -134,17 +140,13 @@ function parseCaptionRequest(data: unknown): CaptionRequest {
   const source = data as Record<string, unknown>;
   const storagePath = readRequiredString(source.storagePath, "storagePath");
   const engine = readRequiredString(source.engine, "engine") as CaptionEngine;
-  const language =
-    typeof source.language === "string" && source.language.trim().length > 0 ?
-      source.language.trim() :
-      "ja";
   const durationMs = Number(source.durationMs);
 
-  return {storagePath, engine, language, durationMs};
+  return {storagePath, engine, durationMs};
 }
 
 function validateCaptionRequest(uid: string, input: CaptionRequest): void {
-  if (input.engine !== "diarize" && input.engine !== "whisper") {
+  if (input.engine !== "whisper") {
     throw new HttpsError("invalid-argument", "지원하지 않는 자막 엔진입니다.");
   }
 
@@ -181,38 +183,19 @@ async function transcribeWithOpenAi({
   filePath,
   filename,
   contentType,
-  engine,
-  language,
 }: {
   apiKey: string;
   filePath: string;
   filename: string;
   contentType: string;
-  engine: CaptionEngine;
-  language: string;
 }): Promise<AsrSegment[]> {
-  const model = engine === "diarize" ?
-    "gpt-4o-transcribe-diarize" :
-    "whisper-1";
-  const responseFormat = engine === "diarize" ?
-    "diarized_json" :
-    "verbose_json";
   const form = new FormData();
   const fileBytes = await fs.readFile(filePath);
 
-  form.append("model", model);
+  form.append("model", "whisper-1");
   form.append("temperature", "0");
-  form.append("response_format", responseFormat);
-  form.append("language", language);
-  if (engine === "diarize") {
-    form.append(
-      "chunking_strategy",
-      "{\"type\":\"server_vad\",\"prefix_padding_ms\":300," +
-        "\"silence_duration_ms\":500,\"threshold\":0.5}"
-    );
-  } else {
-    form.append("timestamp_granularities[]", "segment");
-  }
+  form.append("response_format", "verbose_json");
+  form.append("timestamp_granularities[]", "segment");
   form.append(
     "file",
     new Blob([new Uint8Array(fileBytes)], {type: contentType}),
@@ -336,6 +319,11 @@ async function completeCaptionBatch(
   const first = choices[0] as Record<string, unknown> | undefined;
   const message = first?.message as Record<string, unknown> | undefined;
   const content = typeof message?.content === "string" ? message.content : "";
+
+  console.log(
+    "[Captioning][DEBUG] gpt-4o-mini raw content",
+    content
+  );
 
   try {
     const parsed = JSON.parse(content) as Record<string, unknown>;

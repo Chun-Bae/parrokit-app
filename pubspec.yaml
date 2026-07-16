@@ -5,7 +5,7 @@ publish_to: 'none'
 
 # iOS 빌드 번호 업데이트
 # flutter build ios --config-only
-version: 1.0.5+96
+version: 1.0.6+98
 
 environment:
   sdk: ^3.6.1

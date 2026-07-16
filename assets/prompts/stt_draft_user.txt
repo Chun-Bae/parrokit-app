@@ -1,4 +1,0 @@
-아래 asr_segments와 동일 개수·동일 순서의 segments 배열을 생성하세요.
-출력은 {"segments":[...]} 하나의 JSON만 허용됩니다.
-
-asr_segments = 
