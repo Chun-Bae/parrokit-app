@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/theme_provider.dart';
 import 'package:parrokit/core/shared/theme/app_theme.dart';
 
-class NoInternetScreen extends StatelessWidget {
-  const NoInternetScreen({super.key});
+class OfflineScreen extends StatelessWidget {
+  const OfflineScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -68,7 +68,7 @@ class _AdRewardSectionState extends State<AdRewardSection> {
     AdService().showRewardedAd(
       onRewarded: (coins) async {
         if (!mounted) return;
-        if (coins < 0) {
+        if (coins == null) {
           showToast('광고가 아직 준비 중이에요. 잠시 후 다시 시도해 주세요.');
           return;
         }
@@ -115,19 +115,29 @@ class _AdRewardSectionState extends State<AdRewardSection> {
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: isCooldown ? null : _onWatchAd,
-            icon: Icon(
-              isCooldown
-                  ? Icons.timer_outlined
-                  : Icons.play_circle_outline_rounded,
-              size: 18,
-            ),
-            label: Text(
-              isCooldown
-                  ? _formatRemaining(_remaining!)
-                  : '광고 보고 패롯 ${AdService.rewardCoins}개 받기',
-            ),
+          child: ValueListenableBuilder<bool>(
+            valueListenable: AdService().isRewardedAdReadyListenable,
+            builder: (context, isAdReady, _) {
+              return OutlinedButton.icon(
+                onPressed: (isCooldown || !isAdReady) ? null : _onWatchAd,
+                icon: isCooldown
+                    ? const Icon(Icons.timer_outlined, size: 18)
+                    : !isAdReady
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.play_circle_outline_rounded, size: 18),
+                label: Text(
+                  isCooldown
+                      ? _formatRemaining(_remaining!)
+                      : !isAdReady
+                          ? '광고 준비 중...'
+                          : '광고 보고 패롯 ${AdService.rewardCoins}개 받기',
+                ),
+              );
+            },
           ),
         ),
       ],

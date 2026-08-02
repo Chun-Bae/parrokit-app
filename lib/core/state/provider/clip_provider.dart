@@ -186,6 +186,10 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   String _storageTransferMessage = '';
   String? _storageTransferError;
 
+  // 로그인(계정 전환 포함) 직후 원격 클립 pull을 1회만 트리거하기 위한
+  // 마지막 동기화 대상 uid.
+  String? _remoteClipsSyncedUid;
+
   // ─────────────────────────────────────────────────────────────────
   // Methods
   // ─────────────────────────────────────────────────────────────────
@@ -763,6 +767,22 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
         },
         matchingStorageMode: ClipStorageConstants.storageModeGoogleDrive,
       );
+
+  /// 로그인(계정 전환 포함) 직후 1회, 서버/클라우드로 옮겨진 클립 중 이
+  /// 기기에 없는 것을 받아옵니다. 같은 uid로 이미 동기화했다면 다시
+  /// 부르지 않습니다. 로그아웃 상태(uid null)면 다음 로그인 때 다시
+  /// 동기화하도록 기록을 초기화합니다.
+  void syncRemoteClipsOnLogin(String? uid) {
+    if (uid == null) {
+      _remoteClipsSyncedUid = null;
+      return;
+    }
+    if (_remoteClipsSyncedUid == uid) return;
+    _remoteClipsSyncedUid = uid;
+
+    pullRemoteServerClips();
+    pullRemoteCloudClips();
+  }
 
   /// 로그인 직후 자동 pull과 사용자의 수동 pull-to-refresh가 겹치면, 서로
   /// 모르는 채로 같은 remoteDocId를 동시에 로컬에 두 번 만들 수 있습니다.

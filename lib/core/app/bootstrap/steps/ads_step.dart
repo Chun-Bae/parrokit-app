@@ -17,7 +17,8 @@ Future<void> initAds() async {
     );
 
     await MobileAds.instance.updateRequestConfiguration(configuration);
-    AdService().loadAd();
+    AdService().loadInterstitialAd();
+    /// 보상형 광고는 더보기 페이지에 들어갈 때 로드 된다.
     AppLogger.i('[Bootstrap][Ads] success');
   } catch (e) {
     AppLogger.e('[Bootstrap][Ads] failed', error: e);

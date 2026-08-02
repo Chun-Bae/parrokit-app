@@ -85,7 +85,7 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
 
     if (shouldShow) {
       _pauseSignal.value = true;
-      AdService().showAd(); // premium이면 incrementBy가 false를 반환 → 여기 안 옴
+      AdService().showInterstitialAd(); // premium이면 incrementBy가 false를 반환 → 여기 안 옴
       ad.recordAdShown();
       _pauseSignal.value = false;
     }
