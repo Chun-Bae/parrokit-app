@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
@@ -55,12 +56,12 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+      showToast('로그인이 필요합니다.');
       return;
     }
 
     if (user.crackers < _rewardCrackers) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('크래커가 부족합니다. (보유: ${user.crackers} 🍪)')));
+      showToast('크래커가 부족합니다. (보유: ${user.crackers} 🍪)');
       return;
     }
 
@@ -86,9 +87,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
       userProvider.updateUser(user.addCrackers(-_rewardCrackers));
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(commProvider.errorMessage ?? '질문 등록에 실패했습니다.')),
-      );
+      showToast(commProvider.errorMessage ?? '질문 등록에 실패했습니다.');
     }
   }
 

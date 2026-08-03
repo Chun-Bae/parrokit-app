@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
@@ -104,9 +105,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
 
     final user = context.read<UserProvider>().currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      showToast('로그인이 필요합니다.');
       return;
     }
 
@@ -127,9 +126,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
       _scrollToBottom();
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.errorMessage ?? '댓글 등록 실패')),
-        );
+        showToast(provider.errorMessage ?? '댓글 등록 실패');
       }
     }
   }
@@ -201,18 +198,14 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       isPostScrapped: provider.isCurrentPostScrapped,
                       onTogglePostLike: () {
                         if (currentUser == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('로그인이 필요합니다.')),
-                          );
+                          showToast('로그인이 필요합니다.');
                           return;
                         }
                         provider.toggleLike(voteItem.id, currentUser.id);
                       },
                       onTogglePostScrap: () {
                         if (currentUser == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('로그인이 필요합니다.')),
-                          );
+                          showToast('로그인이 필요합니다.');
                           return;
                         }
                         provider.toggleScrap(voteItem.id, currentUser.id);
@@ -511,9 +504,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             onTap: () async {
               final deleted = await context.read<CommunityProvider>().deleteComment(widget.voteId, comment.id);
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.')),
-              );
+              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },
           ),
         if (!isMyComment)
@@ -527,9 +518,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],
@@ -566,14 +555,10 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
               final deleted = await context.read<CommunityProvider>().deletePost(vote.id);
               if (!mounted) return;
               if (deleted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('투표가 삭제되었습니다.')),
-                );
+                showToast('투표가 삭제되었습니다.');
                 Navigator.maybePop(context);
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('삭제에 실패했습니다.')),
-                );
+                showToast('삭제에 실패했습니다.');
               }
             },
           ),
@@ -588,9 +573,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],

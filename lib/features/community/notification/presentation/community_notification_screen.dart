@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/notification/presentation/providers/community_notification_provider.dart';
 import 'package:parrokit/features/community/notification/presentation/sections/community_notification_list_section.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
@@ -128,9 +129,7 @@ class _CommunityNotificationScreenState extends State<CommunityNotificationScree
                   await provider.deleteAllNotifications();
                   if (!context.mounted) return;
                   if (provider.errorMessage == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('알림을 모두 삭제했습니다.')),
-                    );
+                    showToast('알림을 모두 삭제했습니다.');
                   }
                 }
               : () async {},

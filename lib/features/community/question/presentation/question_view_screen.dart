@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -79,9 +80,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      showToast('로그인이 필요합니다.');
       return;
     }
 
@@ -100,9 +99,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     if (success) {
       _scrollToBottom();
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? '답글 등록에 실패했습니다.')),
-      );
+      showToast(provider.errorMessage ?? '답글 등록에 실패했습니다.');
     }
   }
 
@@ -111,13 +108,11 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     if (currentUser == null) return;
 
     if (question.questionStatus == 'resolved') {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('이미 채택된 질문입니다.')));
+      showToast('이미 채택된 질문입니다.');
       return;
     }
     if (question.questionStatus == 'expired') {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('마감 기한이 지난 질문입니다.')));
+      showToast('마감 기한이 지난 질문입니다.');
       return;
     }
 
@@ -159,13 +154,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     setState(() => _isAccepting = false);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('채택이 완료되었습니다! 🍪')),
-      );
+      showToast('채택이 완료되었습니다! 🍪');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? '채택 처리에 실패했습니다.')),
-      );
+      showToast(provider.errorMessage ?? '채택 처리에 실패했습니다.');
     }
   }
 
@@ -199,14 +190,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               final deleted = await context.read<CommunityProvider>().deletePost(question.id);
               if (!mounted) return;
               if (deleted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('질문이 삭제되었습니다.')),
-                );
+                showToast('질문이 삭제되었습니다.');
                 Navigator.maybePop(context);
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('삭제에 실패했습니다.')),
-                );
+                showToast('삭제에 실패했습니다.');
               }
             },
           ),
@@ -221,9 +208,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],
@@ -246,9 +231,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             onTap: () async {
               final deleted = await context.read<CommunityProvider>().deleteComment(question.id, answer.id);
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.')),
-              );
+              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },
           ),
         if (!isMyComment)
@@ -262,9 +245,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],
@@ -724,9 +705,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                   provider.toggleCommentLike(
                                       question.id, answer.id, currentUser.id);
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text('로그인이 필요합니다.')));
+                                  showToast('로그인이 필요합니다.');
                                 }
                               },
                               padding: EdgeInsets.zero,

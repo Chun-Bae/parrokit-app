@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/data/models/post.dart';
@@ -169,7 +170,7 @@ class QuestionRepliesSection extends StatelessWidget {
                               if (currentUser != null) {
                                 provider.toggleCommentLike(question.id, answer.id, currentUser.id);
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
+                                showToast('로그인이 필요합니다.');
                               }
                             },
                             padding: EdgeInsets.zero,
@@ -224,9 +225,7 @@ class QuestionRepliesSection extends StatelessWidget {
             onTap: () async {
               final deleted = await context.read<CommunityProvider>().deleteComment(question.id, answer.id);
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.')),
-              );
+              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },
           ),
         if (!isMyComment)
@@ -240,9 +239,7 @@ class QuestionRepliesSection extends StatelessWidget {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],

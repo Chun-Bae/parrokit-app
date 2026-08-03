@@ -1,9 +1,11 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kReleaseMode, ValueNotifier, ValueListenable;
+import 'package:flutter/foundation.dart'
+    show kReleaseMode, ValueNotifier, ValueListenable;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
+/// 환경에 따라 광고 ID를 반환한다.
 String _resolveAdUnitId({
   required String androidProd,
   required String iosProd,
@@ -21,6 +23,7 @@ String _resolveAdUnitId({
   }
 }
 
+/// 광고 서비스
 class AdService {
   AdService._internal();
   static final AdService _instance = AdService._internal();
@@ -46,12 +49,11 @@ class AdService {
       _rewarded.show(onRewarded: onRewarded);
 
   /// 보상형 광고가 시청 가능한 상태인지 여부. 준비 중일 때 로딩 UI를 보여줄 때 구독한다.
-  ValueListenable<bool> get isRewardedAdReadyListenable => _rewarded.readyNotifier;
+  ValueListenable<bool> get isRewardedAdReadyListenable =>
+      _rewarded.readyNotifier;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// 전면 광고 (Interstitial)
-// ─────────────────────────────────────────────────────────────────
+/// 전면 광고 (Interstitial)
 class _InterstitialAdController {
   InterstitialAd? _ad;
   bool _isLoading = false;
@@ -108,11 +110,9 @@ class _InterstitialAdController {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// 보상형 광고 (Rewarded)
-// ─────────────────────────────────────────────────────────────────
+/// 보상형 광고 (Rewarded)
 class _RewardedAdController {
-  /// 광고 보기 버튼 비활성화용
+  /// 광고 상태 감지용: 초기 진입시 UI 버튼을 비활성한다.
   final ValueNotifier<bool> readyNotifier = ValueNotifier(false);
 
   RewardedAd? __ad;

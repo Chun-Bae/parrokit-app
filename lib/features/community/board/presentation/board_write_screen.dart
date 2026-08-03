@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
@@ -133,9 +134,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     final currentUser = userProvider.currentUser;
 
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      showToast('로그인이 필요합니다.');
       return;
     }
 
@@ -224,9 +223,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     if (success && mounted) {
       Navigator.maybePop(context); // 글쓰기 화면 닫고 메인으로 돌아가기
     } else if (mounted && provider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage!)),
-      );
+      showToast(provider.errorMessage!);
     }
   }
 
@@ -522,17 +519,11 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                         final text = val.trim();
                         if (text.isNotEmpty && !_tags.contains(text)) {
                           if (text.length > PostValidator.maxTagLength) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.')),
-                            );
+                            showToast('태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.');
                             return;
                           }
                           if (_tags.length >= PostValidator.maxTags) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('태그는 최대 20개까지만 등록할 수 있습니다.')),
-                            );
+                            showToast('태그는 최대 20개까지만 등록할 수 있습니다.');
                             return;
                           }
 
@@ -626,11 +617,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 final int currentCount = _existingImageUrls.length + _selectedImages.length;
                                 final int remainingSlot = 5 - currentCount;
                                 if (remainingSlot <= 0) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('사진은 최대 5장까지만 첨부할 수 있습니다.')),
-                                  );
+                                  showToast('사진은 최대 5장까지만 첨부할 수 있습니다.');
                                   return;
                                 }
 
@@ -643,11 +630,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                   );
                                 } catch (e) {
                                   if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            '지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.')),
-                                  );
+                                  showToast('지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.');
                                   return;
                                 }
                                 if (images.isEmpty) return;

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
 import 'package:parrokit/features/community/board/presentation/widgets/board_action_tile.dart';
@@ -79,9 +80,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      showToast('로그인이 필요합니다.');
       return;
     }
 
@@ -100,9 +99,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     if (success) {
       _scrollToBottom();
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? '댓글 등록에 실패했습니다.')),
-      );
+      showToast(provider.errorMessage ?? '댓글 등록에 실패했습니다.');
     }
   }
 
@@ -316,9 +313,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             final user =
                                 context.read<UserProvider>().currentUser;
                             if (user == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('로그인이 필요합니다.')),
-                              );
+                              showToast('로그인이 필요합니다.');
                               return;
                             }
                             provider.toggleLike(widget.postId, user.id);
@@ -336,9 +331,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             final user =
                                 context.read<UserProvider>().currentUser;
                             if (user == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('로그인이 필요합니다.')),
-                              );
+                              showToast('로그인이 필요합니다.');
                               return;
                             }
                             provider.toggleScrap(widget.postId, user.id);

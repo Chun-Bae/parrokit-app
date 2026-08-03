@@ -13,15 +13,11 @@
 
 import 'package:flutter/material.dart';
 
-/// 앱 하단 네비게이션 바.
-///
-/// [currentIndex]: 현재 선택된 탭 인덱스
-/// [onTap]: 탭 선택 콜백
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
     super.key,
-    required this.currentIndex,
-    required this.onTap,
+    required this.currentIndex, // 현재 선택된 탭 인덱스
+    required this.onTap, // 탭 선택 콜백
   });
 
   final int currentIndex;

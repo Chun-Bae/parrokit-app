@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/card_container.dart';
@@ -136,13 +137,9 @@ class _StorageCacheManagementScreenState
     if (success) {
       await _load(showSpinner: false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('기기 보관분을 삭제했어요.')),
-      );
+      showToast('기기 보관분을 삭제했어요.');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('삭제하지 못했어요.')),
-      );
+      showToast('삭제하지 못했어요.');
     }
   }
 

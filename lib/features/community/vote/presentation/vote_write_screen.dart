@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/vote_option.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
@@ -70,12 +71,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
 
   void _addOption() {
     if (_optionControllers.length >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('투표 항목은 최대 5개까지만 추가할 수 있습니다.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      showToast('투표 항목은 최대 5개까지만 추가할 수 있습니다.');
       return;
     }
 
@@ -170,9 +166,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final user = userProvider.currentUser;
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      showToast('로그인이 필요합니다.');
       return;
     }
 
@@ -210,9 +204,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     if (success && mounted) {
       Navigator.pop(context);
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(communityProvider.errorMessage ?? '투표 업로드에 실패했습니다.')),
-      );
+      showToast(communityProvider.errorMessage ?? '투표 업로드에 실패했습니다.');
     }
   }
 

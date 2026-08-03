@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/notification/domain/entities/community_notification_item.dart';
 import 'package:parrokit/features/community/notification/presentation/providers/community_notification_provider.dart';
 import 'package:parrokit/features/community/notification/presentation/widgets/community_notification_empty_state.dart';
@@ -51,9 +52,7 @@ class CommunityNotificationListSection extends StatelessWidget {
               await provider.deleteNotification(item.id);
               if (!context.mounted) return;
               if (provider.errorMessage == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('알림을 삭제했습니다.')),
-                );
+                showToast('알림을 삭제했습니다.');
               }
             },
             child: CommunityNotificationTile(

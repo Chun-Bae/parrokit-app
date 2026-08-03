@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/infrastructure/services/cache_service.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../widgets/card_container.dart';
 import '../widgets/nav_tile.dart';
 import '../widgets/section_title.dart';
@@ -83,9 +84,7 @@ class _CacheSectionState extends State<CacheSection> {
 
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('임시 보관 파일이 삭제되었습니다.')),
-        );
+        showToast('임시 보관 파일이 삭제되었습니다.');
       }
     }
   }

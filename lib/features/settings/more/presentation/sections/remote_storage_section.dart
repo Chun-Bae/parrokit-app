@@ -11,6 +11,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import '../widgets/card_container.dart';
 import '../widgets/section_title.dart';
@@ -261,7 +262,6 @@ class _RemoteStorageSectionState extends State<RemoteStorageSection> {
                     ? null
                     : () async {
                         final provider = context.read<ClipProvider>();
-                        final messenger = ScaffoldMessenger.of(context);
                         if (provider.hasGoogleDriveLinked) {
                           final confirmed = await showDialog<bool>(
                             context: context,
@@ -289,26 +289,18 @@ class _RemoteStorageSectionState extends State<RemoteStorageSection> {
                           final success =
                               await provider.disconnectGoogleDrive();
                           if (!context.mounted) return;
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success
-                                    ? 'Google Drive 연동을 해제했어요.'
-                                    : 'Google Drive 연동 해제에 실패했어요.',
-                              ),
-                            ),
+                          showToast(
+                            success
+                                ? 'Google Drive 연동을 해제했어요.'
+                                : 'Google Drive 연동 해제에 실패했어요.',
                           );
                         } else {
                           final success = await provider.connectGoogleDrive();
                           if (!context.mounted) return;
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success
-                                    ? 'Google Drive 연동을 완료했어요.'
-                                    : 'Google Drive 연동에 실패했어요.',
-                              ),
-                            ),
+                          showToast(
+                            success
+                                ? 'Google Drive 연동을 완료했어요.'
+                                : 'Google Drive 연동에 실패했어요.',
                           );
                         }
                       },

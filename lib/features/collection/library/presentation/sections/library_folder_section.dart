@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/widgets/expandable_action_fab.dart';
 import '../widgets/breadcrumb_bar.dart';
 import '../widgets/folder_grid.dart';
@@ -358,7 +359,6 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                       ? null
                       : () async {
                           final provider = context.read<ClipProvider>();
-                          final messenger = ScaffoldMessenger.of(context);
                           if (provider.hasGoogleDriveLinked) {
                             final confirmed = await showDialog<bool>(
                               context: context,
@@ -386,26 +386,18 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                             final success =
                                 await provider.disconnectGoogleDrive();
                             if (!context.mounted) return;
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  success
-                                      ? 'Google Drive 연동을 해제했어요.'
-                                      : 'Google Drive 연동 해제에 실패했어요.',
-                                ),
-                              ),
+                            showToast(
+                              success
+                                  ? 'Google Drive 연동을 해제했어요.'
+                                  : 'Google Drive 연동 해제에 실패했어요.',
                             );
                           } else {
                             final success = await provider.connectGoogleDrive();
                             if (!context.mounted) return;
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  success
-                                      ? 'Google Drive 연동을 완료했어요.'
-                                      : 'Google Drive 연동에 실패했어요.',
-                                ),
-                              ),
+                            showToast(
+                              success
+                                  ? 'Google Drive 연동을 완료했어요.'
+                                  : 'Google Drive 연동에 실패했어요.',
                             );
                           }
                         },
@@ -720,11 +712,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             }
             final exists = await clipProvider.isNameExists(name);
             if (exists) {
-              if (ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('이미 같은 이름의 그룹이나 컬렉션이 존재합니다.')),
-                );
-              }
+              showToast('이미 같은 이름의 그룹이나 컬렉션이 존재합니다.');
               return;
             }
             setState(() => submitting = true);
@@ -734,10 +722,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             } catch (_) {
               if (ctx.mounted) {
                 setState(() => submitting = false);
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('처리 중 오류가 발생했습니다. 다시 시도해주세요.')),
-                );
               }
+              showToast('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
             }
           }
 

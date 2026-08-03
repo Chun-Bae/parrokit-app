@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
@@ -23,9 +24,7 @@ class BoardOptionsHandler {
             onTap: () async {
               final deleted = await onDelete();
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.')),
-              );
+              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },
           ),
         if (!isMyComment)
@@ -39,9 +38,7 @@ class BoardOptionsHandler {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],
@@ -76,14 +73,10 @@ class BoardOptionsHandler {
               final deleted = await onDelete();
               if (!context.mounted) return;
               if (deleted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('게시글이 삭제되었습니다.')),
-                );
+                showToast('게시글이 삭제되었습니다.');
                 Navigator.maybePop(context);
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('삭제에 실패했습니다.')),
-                );
+                showToast('삭제에 실패했습니다.');
               }
             },
           ),
@@ -98,9 +91,7 @@ class BoardOptionsHandler {
             label: '신고',
             icon: Icons.report_outlined,
             onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('신고가 접수되었습니다.')),
-              );
+              showToast('신고가 접수되었습니다.');
             },
           ),
       ],

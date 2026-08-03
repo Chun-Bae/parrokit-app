@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import 'gradient_helper.dart';
 
@@ -192,18 +193,13 @@ class ChatBubble extends StatelessWidget {
                                 }
                                 Navigator.of(context).pop();
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      message.actionType == 'video_trigger'
-                                          ? '비디오 생성 화면으로 이동합니다'
-                                          : message.actionType ==
-                                                  'video_prompt_recommendation'
-                                              ? '비디오 프롬프트 추천을 적용합니다'
-                                              : 'TTS 생성 화면으로 이동합니다',
-                                    ),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
+                                showToast(
+                                  message.actionType == 'video_trigger'
+                                      ? '비디오 생성 화면으로 이동합니다'
+                                      : message.actionType ==
+                                              'video_prompt_recommendation'
+                                          ? '비디오 프롬프트 추천을 적용합니다'
+                                          : 'TTS 생성 화면으로 이동합니다',
                                 );
                               }
                             },
@@ -356,13 +352,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                 borderRadius: BorderRadius.circular(20),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: codeText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('추천 프롬프트가 복사되었습니다'),
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
+                  showToast('추천 프롬프트가 복사되었습니다');
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),

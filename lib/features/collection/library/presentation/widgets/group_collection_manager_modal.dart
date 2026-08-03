@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/local/app_database.dart';
 
@@ -88,9 +89,7 @@ class _GroupCollectionManagerModalState
     await clipProvider.updateCollectionsForGroup(
         _selectedGroupIdForTabA!, _checkedCollectionIdsForTabA.toList());
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('그룹 매핑이 저장되었습니다.')),
-      );
+      showToast('그룹 매핑이 저장되었습니다.');
       Navigator.of(context).pop();
     }
   }
@@ -101,9 +100,7 @@ class _GroupCollectionManagerModalState
     await clipProvider.updateGroupsForCollection(
         _selectedCollectionIdForTabB!, _checkedGroupIdsForTabB.toList());
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('콜렉션 매핑이 저장되었습니다.')),
-      );
+      showToast('콜렉션 매핑이 저장되었습니다.');
     }
   }
 
