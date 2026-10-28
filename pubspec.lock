@@ -477,10 +477,10 @@ packages:
     dependency: "direct main"
     description:
       name: ffmpeg_kit_flutter_new
-      sha256: d127635f27e93a7f21f0a14ce0a1a148e80919c402dac4a2118d73bfb17ce841
+      sha256: "5e9ebe153293b631ae8d09eafd55d1c6ef91a7c709b4ae4816e134505e38efc7"
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.0"
+    version: "4.6.7"
   ffmpeg_kit_flutter_platform_interface:
     dependency: transitive
     description:
@@ -827,6 +827,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_tts:
+    dependency: "direct main"
+    description:
+      name: flutter_tts
+      sha256: ce5eb209b40e95f2f4a1397116c87ab2fcdff32257d04ed7a764e75894c03775
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2.5"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -864,22 +872,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.3+1"
-  google_mlkit_commons:
-    dependency: "direct main"
-    description:
-      name: google_mlkit_commons
-      sha256: "3e69fea4211727732cc385104e675ad1e40b29f12edd492ee52fa108423a6124"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.11.1"
-  google_mlkit_language_id:
-    dependency: "direct main"
-    description:
-      name: google_mlkit_language_id
-      sha256: "30fda2b81ae207c89639361f8a14f754c2877f9fda66a1114255e239235895d3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.13.1"
   google_mobile_ads:
     dependency: "direct main"
     description:
@@ -1320,6 +1312,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.7.0"
+  native_glass_navbar:
+    dependency: "direct main"
+    description:
+      name: native_glass_navbar
+      sha256: "073e5772314725b5cc053063f05c87eb673f3aaa2b920c9a1eec5afcfe95e4c3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   native_toolchain_c:
     dependency: transitive
     description:
@@ -1536,6 +1536,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.7.3"
+  rive:
+    dependency: "direct main"
+    description:
+      name: rive
+      sha256: "2551a44fa766a7ed3f52aa2b94feda6d18d00edc25dee5f66e72e9b365bb6d6c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.13.20"
+  rive_common:
+    dependency: transitive
+    description:
+      name: rive_common
+      sha256: "2ba42f80d37a4efd0696fb715787c4785f8a13361e8aea9227c50f1e78cf763a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.15"
   rx:
     dependency: transitive
     description:

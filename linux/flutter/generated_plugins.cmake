@@ -3,9 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  ffmpeg_kit_flutter_new
   file_saver
   file_selector_linux
   restart_app
+  rive_common
   sqlite3_flutter_libs
   url_launcher_linux
 )

@@ -1,0 +1,10 @@
+Built-in image_gen tool. Style reference: user-provided screenshot.
+Eight frames, 4 columns × 2 rows. Transparent background. GIF durations in ms: 1400, 300, 400, 80, 100, 80, 400, 1200.
+
+Use case: illustration-story.
+Create ONE transparent sprite sheet for an 8-frame idle loop. Strict 4 columns x 2 rows equal square cells, landscape 2:1 canvas.
+Reference image role: STYLE AND PALETTE ONLY. Do NOT preserve the reference bird anatomy: it incorrectly looks like a chick. No nest or background from reference.
+Subject is unmistakably a small cute PARROT in a slight right-facing three-quarter view: LARGE curved downward-hooked gray-green beak visibly protruding from face, ivory cheek/eye patch, dark friendly eye, folded teal wing with just 2 simple feather shapes, long tapered teal tail extending down-left, two little gripping feet. Rounded mint/sage-green head and body, pale yellow-green belly. NO chicken crest, NO triangular yellow beak.
+Art direction: extremely simple flat 2D vector-like illustration, large smooth solid-color shapes, matte pastel fills, no outlines, no feather texture, no realism, no gradients, no 3D shading. Similar simplicity and muted mint/teal palette to reference. Recognizable parrot silhouette, sweet cozy pomodoro-app companion. Full body including long tail, no props.
+Eight cells depict EXACT SAME individual at EXACT SAME scale/position. Feet fixed at same local coordinate. Whole body fully inside each square with generous transparent margins. No labels, numbers, borders, background or shadows. Real alpha transparency.
+Read order left-right top-bottom: 1 resting eye open; 2 chest subtly rising; 3 chest subtly raised; 4 half-shut eyelid; 5 fully shut eyelid; 6 half-open eyelid chest lowering; 7 open eye relaxed; 8 exactly same as1. Body and beak proportions fixed, only small eyelid/breath differences. This is a coherent animation sheet, NOT eight different character designs.

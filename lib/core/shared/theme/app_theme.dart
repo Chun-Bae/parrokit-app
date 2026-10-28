@@ -36,6 +36,18 @@ import 'components/feedback/app_snackbar_theme.dart';
 import 'components/feedback/app_progress_theme.dart';
 
 class AppTheme {
+  static const bottomNavHeight = 72.0;
+  static const bottomNavMargin = EdgeInsets.fromLTRB(12, 0, 12, 8);
+  static const bottomNavPadding = EdgeInsets.all(6);
+  static const bottomNavRadius = 36.0;
+  static const bottomNavBlur = 20.0;
+  static const bottomNavSurfaceOpacity = 0.72;
+  static const bottomNavBorderOpacity = 0.35;
+  static const bottomNavSelectionOpacity = 0.14;
+  static const bottomNavAnimation = Duration(milliseconds: 220);
+  static const bottomNavIconSize = 24.0;
+  static const bottomNavLabelGap = 4.0;
+
   static ThemeData light = _buildTheme(Brightness.light);
   static ThemeData dark = _buildTheme(Brightness.dark);
 

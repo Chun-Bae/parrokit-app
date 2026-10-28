@@ -1,14 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:async';
-import 'dart:io';
 import 'package:file_saver/file_saver.dart';
-import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 
 import 'package:parrokit/features/content-studio/hub/presentation/studio_hub_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 
-import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
@@ -50,10 +48,6 @@ class _TtsScreenContent extends StatefulWidget {
 
 class _TtsScreenContentState extends State<_TtsScreenContent> {
   late final TextEditingController _textController;
-  Timer? _debounce;
-  // 스크립트가 짧은 인사말/단어인 경우가 많아 기본값(0.5)에서는 'und'로
-  // 판정되는 경우가 잦았음. Google TTS 언어 자동 감지 목적이라 더 관대하게 낮춤.
-  final _languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.2);
 
   @override
   void initState() {
@@ -68,46 +62,13 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
 
   @override
   void dispose() {
-    _debounce?.cancel();
-    _languageIdentifier.close();
     _textController.dispose();
     super.dispose();
   }
 
   void _onTextChanged(String text, TtsProvider provider) {
+    // ML Kit를 다시 연결할 때까지 사용자가 선택한 TTS 언어를 유지한다.
     provider.updateText(text);
-
-    // 언어 자동 감지는 Google TTS에서만 의미가 있음 (voice 목록이 언어별로
-    // 갈리는 건 Google뿐이고, ElevenLabs/Gemini는 서버에서 language를 안 씀).
-    if (provider.providerType != TtsProviderType.google) return;
-
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      if (text.trim().isNotEmpty) {
-        try {
-          AppLogger.d('[TTS][LanguageDetection] attempt text="$text"');
-          final languageCode = await _languageIdentifier.identifyLanguage(text);
-          AppLogger.d('[TTS][LanguageDetection] identified code=$languageCode');
-
-          if (languageCode != 'und') {
-            final ttsLang = getLanguageByMlKitCode(languageCode);
-            AppLogger.d(
-                '[TTS][LanguageDetection] mapped ttsLang=${ttsLang?.ttsCode} displayName=${ttsLang?.displayName}');
-
-            if (ttsLang != null && mounted) {
-              AppLogger.d(
-                  '[TTS][LanguageDetection] update provider prevLanguage=${provider.language} newLanguage=${ttsLang.ttsCode}');
-              if (provider.language != ttsLang.ttsCode) {
-                provider.updateLanguage(ttsLang.ttsCode);
-                provider.fetchAvailableVoices();
-              }
-            }
-          }
-        } catch (e) {
-          AppLogger.e('[TTS][LanguageDetection] failed', error: e);
-        }
-      }
-    });
   }
 
   void _showLanguageSelectionSheet(BuildContext context, TtsProvider provider) {
@@ -176,13 +137,6 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
         text: newText,
         selection: TextSelection.collapsed(offset: newText.length),
       );
-
-      // 외부(챗봇 등)에서 텍스트가 주입된 경우 언어 감지 트리거
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _onTextChanged(newText, context.read<TtsProvider>());
-        }
-      });
     }
 
     return Scaffold(

@@ -61,6 +61,9 @@ abstract class AppRoutes {
   // ─────────────────────────────────────────────────────────────────
 
   static const dashboardPath = '/dashboard';
+  static const stagePreviewPath = '/dashboard/stage-preview';
+  static const learningHubPath = '/dashboard/learn';
+  static const classicDashboardPath = '/dashboard/classic';
   static const communityPath = '/community';
   static const communityBoardViewPath = '/community/board/:postId';
   static const communityBoardWritePath = '/community/board/write';
