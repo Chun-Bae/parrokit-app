@@ -126,16 +126,10 @@
 @import flutter_naver_login;
 #endif
 
-#if __has_include(<google_mlkit_commons/GoogleMlKitCommonsPlugin.h>)
-#import <google_mlkit_commons/GoogleMlKitCommonsPlugin.h>
+#if __has_include(<flutter_tts/FlutterTtsPlugin.h>)
+#import <flutter_tts/FlutterTtsPlugin.h>
 #else
-@import google_mlkit_commons;
-#endif
-
-#if __has_include(<google_mlkit_language_id/GoogleMlKitLanguageIdPlugin.h>)
-#import <google_mlkit_language_id/GoogleMlKitLanguageIdPlugin.h>
-#else
-@import google_mlkit_language_id;
+@import flutter_tts;
 #endif
 
 #if __has_include(<google_mobile_ads/FLTGoogleMobileAdsPlugin.h>)
@@ -180,6 +174,12 @@
 @import kakao_flutter_sdk_common;
 #endif
 
+#if __has_include(<native_glass_navbar/NativeLiquidTabBarPlugin.h>)
+#import <native_glass_navbar/NativeLiquidTabBarPlugin.h>
+#else
+@import native_glass_navbar;
+#endif
+
 #if __has_include(<package_info_plus/FPPPackageInfoPlusPlugin.h>)
 #import <package_info_plus/FPPPackageInfoPlusPlugin.h>
 #else
@@ -208,6 +208,12 @@
 #import <restart_app/RestartAppPlugin.h>
 #else
 @import restart_app;
+#endif
+
+#if __has_include(<rive_common/RivePlugin.h>)
+#import <rive_common/RivePlugin.h>
+#else
+@import rive_common;
 #endif
 
 #if __has_include(<share_plus/FPPSharePlusPlugin.h>)
@@ -287,8 +293,7 @@
   [InAppWebViewFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"InAppWebViewFlutterPlugin"]];
   [FlutterNativeSplashPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterNativeSplashPlugin"]];
   [FlutterNaverLoginPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterNaverLoginPlugin"]];
-  [GoogleMlKitCommonsPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitCommonsPlugin"]];
-  [GoogleMlKitLanguageIdPlugin registerWithRegistrar:[registry registrarForPlugin:@"GoogleMlKitLanguageIdPlugin"]];
+  [FlutterTtsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterTtsPlugin"]];
   [FLTGoogleMobileAdsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTGoogleMobileAdsPlugin"]];
   [FLTGoogleSignInPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTGoogleSignInPlugin"]];
   [FLTImagePickerPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTImagePickerPlugin"]];
@@ -296,11 +301,13 @@
   [JustAudioPlugin registerWithRegistrar:[registry registrarForPlugin:@"JustAudioPlugin"]];
   [KakaoFlutterSdkAuthPlugin registerWithRegistrar:[registry registrarForPlugin:@"KakaoFlutterSdkAuthPlugin"]];
   [KakaoFlutterSdkCommonPlugin registerWithRegistrar:[registry registrarForPlugin:@"KakaoFlutterSdkCommonPlugin"]];
+  [NativeLiquidTabBarPlugin registerWithRegistrar:[registry registrarForPlugin:@"NativeLiquidTabBarPlugin"]];
   [FPPPackageInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPPackageInfoPlusPlugin"]];
   [PathProviderPlugin registerWithRegistrar:[registry registrarForPlugin:@"PathProviderPlugin"]];
   [PurchasesFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"PurchasesFlutterPlugin"]];
   [PurchasesUiFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"PurchasesUiFlutterPlugin"]];
   [RestartAppPlugin registerWithRegistrar:[registry registrarForPlugin:@"RestartAppPlugin"]];
+  [RivePlugin registerWithRegistrar:[registry registrarForPlugin:@"RivePlugin"]];
   [FPPSharePlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPSharePlusPlugin"]];
   [SharedPreferencesPlugin registerWithRegistrar:[registry registrarForPlugin:@"SharedPreferencesPlugin"]];
   [SignInWithApplePlugin registerWithRegistrar:[registry registrarForPlugin:@"SignInWithApplePlugin"]];

@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
-import 'package:parrokit/data/local/app_database.dart'; // Tag definition
+import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/library/domain/library_mode.dart';
 import 'package:parrokit/features/collection/library/presentation/providers/tag_filter_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/sections/library_folder_section.dart';
 import 'package:parrokit/features/collection/library/presentation/sections/library_tag_section.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/bookmark_tabs.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/storage_scope_tabs.dart';
-import 'widgets/collection_header_delegate.dart';
 
-/// 콜렉션 메인 탭바 쉘 화면
-///
-/// 커뮤니티 화면과 동일하게, 바깥 앱바부터 그 아래 탭들(저장위치/유형별·
-/// 태그별 보기)까지 하나의 [NestedScrollView] 헤더로 묶어 스크롤에 따라
-/// 차근차근 접히도록 한다.
-///
-/// [LibraryScreen]은 딥링크 전용 라우트(`collectionClipPath`)에서 여전히
-/// 단독으로 쓰이므로 건드리지 않고, 이 화면이 그 상태(저장위치/폴더-태그
-/// 탭)를 직접 소유해 [LibraryFolderSection]/[LibraryTagSection]을 바로
-/// 조립한다.
+import 'widgets/sentence_collection_preview.dart';
+import 'widgets/word_collection_preview.dart';
+
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
 
@@ -30,51 +23,40 @@ class CollectionShellScreen extends StatefulWidget {
 
 class _CollectionShellScreenState extends State<CollectionShellScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final ScrollController _outerScrollController = ScrollController();
+  late final TabController _tabController;
 
-  LibraryTab _tab = LibraryTab.folder;
+  LibraryTab _clipView = LibraryTab.folder;
   String _storageMode = ClipStorageConstants.storageModeLocal;
-  bool _headerVisible = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChanged);
-    _outerScrollController.addListener(_checkHeaderVisibility);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final clipProvider = context.read<ClipProvider>();
-      final tagProv = context.read<TagFilterProvider>();
+      final tagProvider = context.read<TagFilterProvider>();
 
-      await tagProv.startWatching();
+      await tagProvider.startWatching();
+      if (!mounted) return;
       clipProvider.startWatchingDistinctTags();
       await clipProvider.setActiveStorageMode(_storageMode);
     });
   }
 
   void _handleTabChanged() {
-    if (!mounted) return;
+    if (_tabController.indexIsChanging || !mounted) return;
     setState(() {});
-
-    if (_tabController.index != 0) {
+    if (_tabController.index != 1) {
       context.read<ClipProvider>().closeCollectionMenu();
     }
-  }
-
-  void _checkHeaderVisibility() {
-    final fullyVisible = _outerScrollController.offset <= 1.0;
-    if (_headerVisible == fullyVisible) return;
-    setState(() => _headerVisible = fullyVisible);
   }
 
   @override
   void dispose() {
     _tabController.removeListener(_handleTabChanged);
-    _outerScrollController.removeListener(_checkHeaderVisibility);
-    _outerScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -85,8 +67,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     context.read<ClipProvider>().setActiveStorageMode(mode);
   }
 
-  void _onTagSelected(Tag t) =>
-      context.read<TagFilterProvider>().addTag(t.name);
+  void _onTagSelected(Tag tag) =>
+      context.read<TagFilterProvider>().addTag(tag.name);
 
   void _onTagDeleted(String name) =>
       context.read<TagFilterProvider>().removeTag(name);
@@ -94,16 +76,13 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   void _onSelectAllTags() {
     final clipProvider = context.read<ClipProvider>();
     if (clipProvider.distinctTags.isEmpty) return;
-
     context.read<TagFilterProvider>().setTags(
-          clipProvider.distinctTags.map((t) => t.name),
+          clipProvider.distinctTags.map((tag) => tag.name),
         );
   }
 
   void _onClearResult() => context.read<TagFilterProvider>().clearTags();
 
-  /// 현재 저장위치 탭에 맞는 pull sync를 실행합니다. 로컬 탭은 당길 게
-  /// 없으므로 build()에서 애초에 RefreshIndicator를 안 붙입니다.
   Future<void> _onRefreshRemoteClips() async {
     final clipProvider = context.read<ClipProvider>();
     if (_storageMode == ClipStorageConstants.storageModeServer) {
@@ -115,99 +94,81 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = Theme.of(context).colorScheme;
     final clipProvider = context.watch<ClipProvider>();
-    final tagProv = context.watch<TagFilterProvider>();
-
-    final isClipTab = _tabController.index == 0;
-    // 바깥 탭(클립/문장/단어)과 전체선택 액션을 가리는 조건 — 기존 AppBar의
-    // bottom: isSelectionMode ? null : TabBar 조건과 동일.
-    final isShellSelectionMode = clipProvider.isCollectionMenuOpen && isClipTab;
-    // 저장위치·폴더/태그 탭(zone2)을 가리는 조건 — 기존 LibraryScreen의
-    // isSelectionMode 조건과 동일 (콜렉션 내부에서 클립을 다중 선택 중일 때).
-    final isCollectionSelectionMode = clipProvider.isCollectionMenuOpen &&
-        clipProvider.selectedCollectionId != null;
-
-    final visibleClipIds =
-        clipProvider.clipItems.map((item) => item.clip.id).toSet();
-    final selectedClipIds = clipProvider.selectedClipIds;
-    final isAllSelected = visibleClipIds.isNotEmpty &&
-        visibleClipIds.length == selectedClipIds.length;
+    final tagProvider = context.watch<TagFilterProvider>();
+    final isClipTab = _tabController.index == 1;
+    final isClipSelectionMode = isClipTab && clipProvider.isCollectionMenuOpen;
+    final isCollectionSelectionMode =
+        isClipSelectionMode && clipProvider.selectedCollectionId != null;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colors.surface,
       body: SafeArea(
-        child: NestedScrollView(
-          controller: _outerScrollController,
-          floatHeaderSlivers: true,
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverPersistentHeader(
-                floating: true,
-                delegate: CollectionHeaderDelegate(
-                  titleWidget: _buildTitleBar(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildTopBar(
+              context,
+              clipProvider,
+              isSelectionMode: isClipSelectionMode,
+            ),
+            if (!isClipSelectionMode) ...[
+              _buildOverview(context, clipProvider.clipItems.length),
+              const SizedBox(height: 14),
+              _buildCollectionTabs(context),
+              const SizedBox(height: 8),
+            ],
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  const SentenceCollectionPreview(),
+                  _buildClipPage(
                     context,
                     clipProvider,
-                    isShellSelectionMode,
-                    visibleClipIds: visibleClipIds,
-                    isAllSelected: isAllSelected,
+                    tagProvider,
+                    hideControls: isCollectionSelectionMode,
                   ),
-                  zone1Widget: _buildTabBar(context),
-                  zone2Widget: _buildStorageAndBookmarkTabs(context),
-                  zone1Height: isShellSelectionMode ? 0 : 48,
-                  // 8(gap) + 59.6(StorageScopeTabs) + 8(gap) + 59.6(BookmarkTabs) + 10(gap) = 145.2.
-                  // 59.6 = 42(내부 콘텐츠) + 8*2(AppSpacing.sm 패딩) + 0.8*2(Border.all
-                  // 두께 — Container가 decoration의 border를 padding에 합산해서 추가함).
-                  zone2Height:
-                      (isClipTab && !isCollectionSelectionMode) ? 146 : 0,
-                ),
+                  const WordCollectionPreview(),
+                ],
               ),
-            ];
-          },
-          body: TabBarView(
-            controller: _tabController,
-            physics: _headerVisible
-                ? const AlwaysScrollableScrollPhysics()
-                : const NeverScrollableScrollPhysics(),
-            children: [
-              _buildClipTabContent(context, clipProvider, tagProv),
-              Center(
-                child: Text(
-                  '문장 노트 준비 중',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              ),
-              Center(
-                child: Text(
-                  '나만의 단어장 준비 중',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTitleBar(
+  Widget _buildTopBar(
     BuildContext context,
-    ClipProvider clipProvider,
-    bool isSelectionMode, {
-    required Set<int> visibleClipIds,
-    required bool isAllSelected,
+    ClipProvider clipProvider, {
+    required bool isSelectionMode,
   }) {
+    final selectedCount = clipProvider.selectedClipIds.length;
+    final visibleClipIds =
+        clipProvider.clipItems.map((item) => item.clip.id).toSet();
+    final isAllSelected =
+        visibleClipIds.isNotEmpty && visibleClipIds.length == selectedCount;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+      padding: const EdgeInsets.fromLTRB(18, 8, 10, 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '콜렉션',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+          if (isSelectionMode)
+            IconButton(
+              tooltip: '선택 닫기',
+              onPressed: clipProvider.closeCollectionMenu,
+              icon: const Icon(Icons.close_rounded),
+            ),
+          Expanded(
+            child: Text(
+              isSelectionMode ? '$selectedCount개 선택' : '콜렉션',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.7,
+                  ),
+            ),
           ),
           if (isSelectionMode)
             TextButton(
@@ -221,64 +182,180 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                       }
                     },
               child: Text(isAllSelected ? '전체 해제' : '전체 선택'),
+            )
+          else ...[
+            IconButton.filledTonal(
+              tooltip: '콜렉션 검색',
+              onPressed: () => _showSearchSheet(context),
+              icon: const Icon(Icons.search_rounded),
             ),
+            const SizedBox(width: 6),
+            IconButton.filled(
+              tooltip: '새 항목 추가',
+              onPressed: () => _showAddSheet(context),
+              icon: const Icon(Icons.add_rounded),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildTabBar(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildOverview(BuildContext context, int clipCount) {
+    final colors = Theme.of(context).colorScheme;
+    final pages = [
+      (
+        icon: Icons.format_quote_rounded,
+        title: '모아둔 문장을 바로 연습해요',
+        detail: '공식 문장팩과 사람들이 공유한 표현을 둘러보세요',
+        color: const Color(0xFFDDEFEA),
+      ),
+      (
+        icon: Icons.video_library_rounded,
+        title: '클립 $clipCount개를 보관 중이에요',
+        detail: '영상의 장면과 문장을 함께 기억할 수 있어요',
+        color: const Color(0xFFDCE9F8),
+      ),
+      (
+        icon: Icons.spellcheck_rounded,
+        title: '문장에서 만난 단어를 모아요',
+        detail: '따로 외우기보다 실제 표현과 함께 복습해요',
+        color: const Color(0xFFFFE8C7),
+      ),
+    ];
+    final page = pages[_tabController.index];
 
-    return TabBar(
-      controller: _tabController,
-      isScrollable: true,
-      tabAlignment: TabAlignment.start,
-      labelColor: colorScheme.onSurface,
-      labelStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      unselectedLabelColor: colorScheme.onSurfaceVariant,
-      unselectedLabelStyle:
-          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      indicatorColor: colorScheme.onSurface,
-      indicatorSize: TabBarIndicatorSize.label,
-      dividerColor: Colors.transparent,
-      padding: EdgeInsets.zero,
-      labelPadding: const EdgeInsets.symmetric(horizontal: 16.0),
-      tabs: const [
-        Tab(text: '클립'),
-        Tab(text: '문장'),
-        Tab(text: '단어'),
-      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: Container(
+          key: ValueKey(_tabController.index),
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 17, 16, 17),
+          decoration: BoxDecoration(
+            color: page.color,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: colors.surface.withValues(alpha: 0.82),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(page.icon, color: const Color(0xFF42636A)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      page.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      page.detail,
+                      style: TextStyle(
+                        color: colors.onSurface.withValues(alpha: 0.66),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildStorageAndBookmarkTabs(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        StorageScopeTabs(
-          value: _storageMode,
-          onChanged: _onStorageModeChanged,
+  Widget _buildCollectionTabs(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        height: 62,
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHighest.withValues(alpha: 0.65),
+          borderRadius: BorderRadius.circular(20),
         ),
-        const SizedBox(height: 8),
-        BookmarkTabs(
-          value: _tab,
-          onChanged: (v) => setState(() => _tab = v),
+        child: TabBar(
+          controller: _tabController,
+          dividerColor: Colors.transparent,
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicator: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          labelColor: colors.onSurface,
+          unselectedLabelColor: colors.onSurfaceVariant,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w900),
+          tabs: const [
+            Tab(icon: Icon(Icons.format_quote_rounded, size: 18), text: '문장'),
+            Tab(icon: Icon(Icons.smart_display_rounded, size: 18), text: '클립'),
+            Tab(icon: Icon(Icons.spellcheck_rounded, size: 18), text: '단어'),
+          ],
         ),
-        const SizedBox(height: 10),
-      ],
+      ),
     );
   }
 
-  Widget _buildClipTabContent(
+  Widget _buildClipPage(
     BuildContext context,
     ClipProvider clipProvider,
-    TagFilterProvider tagProv,
+    TagFilterProvider tagProvider, {
+    required bool hideControls,
+  }) {
+    return Column(
+      children: [
+        if (!hideControls) ...[
+          const SizedBox(height: 8),
+          StorageScopeTabs(
+            value: _storageMode,
+            onChanged: _onStorageModeChanged,
+          ),
+          const SizedBox(height: 8),
+          BookmarkTabs(
+            value: _clipView,
+            onChanged: (value) => setState(() => _clipView = value),
+          ),
+          const SizedBox(height: 4),
+        ],
+        Expanded(
+          child: _buildClipContent(context, clipProvider, tagProvider),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClipContent(
+    BuildContext context,
+    ClipProvider clipProvider,
+    TagFilterProvider tagProvider,
   ) {
-    if (_tab == LibraryTab.tag) {
+    if (_clipView == LibraryTab.tag) {
       return LibraryTagSection(
         allTags: clipProvider.distinctTags,
-        selectedTags: tagProv.activeTagNames.toSet(),
+        selectedTags: tagProvider.activeTagNames.toSet(),
         onTagSelected: _onTagSelected,
         onTagDeleted: _onTagDeleted,
         onSelectAll: _onSelectAllTags,
@@ -293,6 +370,138 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     return RefreshIndicator(
       onRefresh: _onRefreshRemoteClips,
       child: const LibraryFolderSection(),
+    );
+  }
+
+  Future<void> _showSearchSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          14,
+          20,
+          MediaQuery.viewInsetsOf(sheetContext).bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(sheetContext).colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '콜렉션 검색',
+              style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            const TextField(
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: '문장, 단어, 클립 검색',
+                prefixIcon: Icon(Icons.search_rounded),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAddSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+                child: Text(
+                  '새 학습 재료',
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+              ),
+              _AddMaterialTile(
+                icon: Icons.format_quote_rounded,
+                title: '문장 추가',
+                subtitle: '직접 쓰거나 문장팩에서 골라요',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _tabController.animateTo(0);
+                },
+              ),
+              _AddMaterialTile(
+                icon: Icons.smart_display_rounded,
+                title: '클립 추가',
+                subtitle: '영상과 자막을 함께 보관해요',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _tabController.animateTo(1);
+                },
+              ),
+              _AddMaterialTile(
+                icon: Icons.spellcheck_rounded,
+                title: '단어 추가',
+                subtitle: '문장 속 표현을 따로 표시해요',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _tabController.animateTo(2);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddMaterialTile extends StatelessWidget {
+  const _AddMaterialTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      leading: CircleAvatar(
+        backgroundColor: colors.primaryContainer,
+        foregroundColor: colors.onPrimaryContainer,
+        child: Icon(icon),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right_rounded),
     );
   }
 }

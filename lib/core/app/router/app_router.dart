@@ -20,6 +20,9 @@ import 'package:parrokit/features/auth/sign-up/sign_up_screen.dart';
 import 'package:parrokit/features/auth/find-pw/find_pw_screen.dart';
 import 'package:parrokit/features/auth/onboarding/onboarding_screen.dart';
 import 'package:parrokit/features/home/dashboard/presentation/dashboard_screen.dart';
+import 'package:parrokit/features/home/dashboard/presentation/character_dashboard_screen.dart';
+import 'package:parrokit/features/home/dashboard/presentation/learning_hub_screen.dart';
+import 'package:parrokit/features/home/dashboard/presentation/stage_preview_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/community_shell_screen.dart';
 import 'package:parrokit/features/community/board/presentation/board_view_screen.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
@@ -287,6 +290,26 @@ ShellRoute get _shellRoute => ShellRoute(
           name: AppRoutes.dashboard,
           pageBuilder: (context, state) => NoTransitionPage(
             name: AppRoutes.dashboard,
+            child: CharacterDashboardScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.stagePreviewPath,
+          builder: (context, state) {
+            final user = context.watch<UserProvider>().currentUser;
+            return StagePreviewScreen(
+                key: ValueKey(user?.id ?? 'guest'),
+                nickname: user?.displayName ?? '나',
+                accountId: user?.id ?? 'guest');
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.learningHubPath,
+          builder: (context, state) => const LearningHubScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.classicDashboardPath,
+          pageBuilder: (context, state) => const NoTransitionPage(
             child: DashboardScreen(),
           ),
         ),

@@ -33,10 +33,10 @@ class AppShell extends StatelessWidget {
   /// 현재 경로에서 탭 인덱스 계산
   int _indexFromLocation(String location) {
     if (location.startsWith(AppRoutes.communityPath)) return 1;
-    if (location.startsWith(AppRoutes.explorePath)) return 2;
+    if (location.startsWith(AppRoutes.explorePath)) return 0;
     if (location.startsWith(AppRoutes.collectionPath)) return 3;
     if (location.startsWith(AppRoutes.morePath)) return 4;
-    return 0; // dashboard
+    return 2; // dashboard
   }
 
   @override
@@ -183,13 +183,13 @@ class AppShell extends StatelessWidget {
   void _onTabTap(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.go(AppRoutes.dashboardPath);
+        context.go(AppRoutes.explorePath);
         break;
       case 1:
         context.go(AppRoutes.communityPath);
         break;
       case 2:
-        context.go(AppRoutes.explorePath);
+        context.go(AppRoutes.dashboardPath);
         break;
       case 3:
         context.go(AppRoutes.collectionPath);
