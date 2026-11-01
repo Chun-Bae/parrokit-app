@@ -59,8 +59,15 @@ jobs:
 
       - run: flutter pub get
 
-      - name: iOS 빌드 (서명 없이)
-        run: flutter build ios --release --no-codesign
+      # Xcode 빌드 단계가 `flutterfire upload-crashlytics-symbols`를 호출하므로 CLI 필요
+      - name: FlutterFire CLI 설치
+        run: |
+          dart pub global activate flutterfire_cli
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      # 컴파일은 아래 Archive 단계에서 한 번만 한다 (설정 생성 + pod install만 수행)
+      - name: iOS 설정 생성 및 pod install
+        run: flutter build ios --release --no-codesign --config-only
 
       - name: Archive
         run: |
