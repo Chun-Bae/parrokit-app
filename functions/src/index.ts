@@ -15,3 +15,4 @@ export * from "./naverAuth";
 export * from "./communityNotifications";
 export * from "./contentStudioAi";
 export * from "./captioningAi";
+export * from "./sentenceAssist";

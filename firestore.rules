@@ -29,6 +29,11 @@ service cloud.firestore {
         allow read, write: if true;
       }
 
+      // 둘러보기 문장에 내가 누른 좋아요
+      match /sentence_likes/{sharedId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
       match /notifications/{notificationId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
@@ -67,6 +72,25 @@ service cloud.firestore {
       match /clips/{clipId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    // 둘러보기에 공개된 문장. 문서 id는 "작성자uid:내문장id" 형태다.
+    match /shared_sentences/{sharedId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && sharedId.matches(request.auth.uid + ':.*')
+        && request.resource.data.likeCount == 0;
+      // 작성자는 내용만, 다른 사람은 좋아요 수를 1씩만 바꿀 수 있다.
+      allow update: if request.auth != null && (
+        (request.auth.uid == resource.data.authorId
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['language', 'text', 'translation', 'pronunciation', 'topic', 'authorName']))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+          && (request.resource.data.likeCount - resource.data.likeCount == 1
+              || resource.data.likeCount - request.resource.data.likeCount == 1))
+      );
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
 
     // 디바이스 토큰 관리
