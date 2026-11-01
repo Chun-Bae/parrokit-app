@@ -110,11 +110,18 @@ jobs:
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
+      # wzieba 액션은 Docker 컨테이너 액션이라 macOS 러너에서 실행되지 않는다.
+      # firebase-tools CLI로 직접 업로드한다.
       - name: Firebase App Distribution 업로드
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
-        with:
-          appId: 1:392832464036:ios:71b3e2d9c65fa1922e6231
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          groups: ${{ inputs.groups }}
-          releaseNotes: ${{ inputs.notes }}
-          file: ${{ runner.temp }}/export/Runner.ipa
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          GROUPS_INPUT: ${{ inputs.groups }}
+          NOTES_INPUT: ${{ inputs.notes }}
+        run: |
+          printf '%s' "$FIREBASE_SA" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          npx -y firebase-tools@latest appdistribution:distribute "$RUNNER_TEMP/export/Runner.ipa" \
+            --app 1:392832464036:ios:71b3e2d9c65fa1922e6231 \
+            --groups "$GROUPS_INPUT" \
+            --release-notes "$NOTES_INPUT"
+          rm -f "$RUNNER_TEMP/firebase-sa.json"
