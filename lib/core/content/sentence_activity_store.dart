@@ -7,28 +7,50 @@ class SentenceActivity {
   const SentenceActivity({
     this.parrotSpeakCount = 0,
     this.practiceCount = 0,
+    this.listenCount = 0,
+    this.lastPracticedAt,
     this.routineEnabled = true,
+    this.liked = false,
   });
 
   final int parrotSpeakCount;
   final int practiceCount;
+
+  /// 듣기 모드에서 앵무새 음성을 끝까지 들은 횟수.
+  final int listenCount;
+
+  /// 따라 말하기를 마지막으로 완료한 시각. 한 번도 안 했으면 null.
+  final DateTime? lastPracticedAt;
   final bool routineEnabled;
+
+  /// 이 문장에 좋아요를 눌렀는지. 서버가 없어서 이 기기에만 저장한다.
+  final bool liked;
 
   SentenceActivity copyWith({
     int? parrotSpeakCount,
     int? practiceCount,
+    int? listenCount,
+    DateTime? lastPracticedAt,
     bool? routineEnabled,
+    bool? liked,
   }) =>
       SentenceActivity(
         parrotSpeakCount: parrotSpeakCount ?? this.parrotSpeakCount,
         practiceCount: practiceCount ?? this.practiceCount,
+        listenCount: listenCount ?? this.listenCount,
+        lastPracticedAt: lastPracticedAt ?? this.lastPracticedAt,
         routineEnabled: routineEnabled ?? this.routineEnabled,
+        liked: liked ?? this.liked,
       );
 
   Map<String, Object> toJson() => {
+        if (lastPracticedAt != null)
+          'lastPracticedAt': lastPracticedAt!.millisecondsSinceEpoch,
         'parrotSpeakCount': parrotSpeakCount,
         'practiceCount': practiceCount,
+        'listenCount': listenCount,
         'routineEnabled': routineEnabled,
+        if (liked) 'liked': true,
       };
 
   factory SentenceActivity.fromJson(Object? value) {
@@ -38,7 +60,14 @@ class SentenceActivity {
           (value['parrotSpeakCount'] as num?)?.clamp(0, 1 << 31).toInt() ?? 0,
       practiceCount:
           (value['practiceCount'] as num?)?.clamp(0, 1 << 31).toInt() ?? 0,
+      listenCount:
+          (value['listenCount'] as num?)?.clamp(0, 1 << 31).toInt() ?? 0,
+      lastPracticedAt: switch (value['lastPracticedAt']) {
+        final num ms => DateTime.fromMillisecondsSinceEpoch(ms.toInt()),
+        _ => null,
+      },
       routineEnabled: value['routineEnabled'] as bool? ?? true,
+      liked: value['liked'] as bool? ?? false,
     );
   }
 }
@@ -47,6 +76,9 @@ class SentenceActivityStore {
   SentenceActivityStore._();
 
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
+  /// 듣기·말하기·연습 횟수가 바뀔 때마다 오른다. 기록 화면이 실시간으로 갱신하는 데 쓴다.
+  static final ValueNotifier<int> activityRevision = ValueNotifier<int>(0);
 
   static String _key(String accountId) =>
       'parrokit.sentence_activity.v1.$accountId';
@@ -96,6 +128,19 @@ class SentenceActivityStore {
         sentenceId,
         (activity) => activity.copyWith(
           practiceCount: activity.practiceCount + 1,
+          lastPracticedAt: DateTime.now(),
+        ),
+      );
+
+  static Future<void> incrementListen(
+    String accountId,
+    String sentenceId,
+  ) =>
+      _update(
+        accountId,
+        sentenceId,
+        (activity) => activity.copyWith(
+          listenCount: activity.listenCount + 1,
         ),
       );
 
@@ -109,6 +154,17 @@ class SentenceActivityStore {
         sentenceId,
         (activity) => activity.copyWith(routineEnabled: enabled),
         notifyRoutine: true,
+      );
+
+  static Future<void> setLiked(
+    String accountId,
+    String sentenceId,
+    bool liked,
+  ) =>
+      _update(
+        accountId,
+        sentenceId,
+        (activity) => activity.copyWith(liked: liked),
       );
 
   static Future<void> _update(
@@ -127,6 +183,7 @@ class SentenceActivityStore {
         for (final entry in all.entries) entry.key: entry.value.toJson(),
       }),
     );
+    activityRevision.value++;
     if (notifyRoutine) revision.value++;
   }
 }

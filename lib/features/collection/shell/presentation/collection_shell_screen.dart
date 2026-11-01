@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/library/domain/library_mode.dart';
 import 'package:parrokit/features/collection/library/presentation/providers/tag_filter_provider.dart';
@@ -420,6 +422,27 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     );
   }
 
+  /// 문장 탭의 + 버튼과 같은 문장 추가 화면을 연다.
+  Future<void> _addSentence(BuildContext context) async {
+    final accountId =
+        context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await addSentenceFlow(
+        context,
+        accountId: accountId,
+        language: '영어',
+      );
+      if (result == null) return;
+      messenger.showSnackBar(SnackBar(
+          content: Text(
+              result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.')));
+    } catch (_) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('문장을 저장하지 못했어요. 다시 시도해주세요.')));
+    }
+  }
+
   Future<void> _showAddSheet(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -443,10 +466,11 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               _AddMaterialTile(
                 icon: Icons.format_quote_rounded,
                 title: '문장 추가',
-                subtitle: '직접 쓰거나 문장팩에서 골라요',
+                subtitle: '원문과 뜻을 직접 적어요',
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _tabController.animateTo(0);
+                  _addSentence(context);
                 },
               ),
               _AddMaterialTile(

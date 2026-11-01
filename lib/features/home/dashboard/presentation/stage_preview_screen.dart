@@ -6,11 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/learning_languages.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
+import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
+import 'package:parrokit/core/speech/phrase_recognizer.dart';
+import 'package:parrokit/core/speech/speech_match.dart';
+import 'add_sentence_screen.dart';
 import 'nest_preview.dart';
 
 enum _SpeakingMode { automatic, repeat }
@@ -24,12 +29,16 @@ class StagePreviewScreen extends StatefulWidget {
       this.language = '영어',
       this.nickname = '나',
       this.accountId = 'guest',
+      this.recognizer,
       this.onPracticeCompleted});
   final String nickname;
   final String accountId;
   final bool embedded;
   final String language;
   final Future<void> Function()? onPracticeCompleted;
+
+  /// 따라 말하기 음성 인식. 비우면 기기 음성 인식을 쓴다.
+  final PhraseRecognizer? recognizer;
   @override
   State<StagePreviewScreen> createState() => _StagePreviewScreenState();
 }
@@ -56,13 +65,30 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   /// 하단 "반복 듣기" 아이콘이 켜져 있을 때만 앵무새가 소리 내어 말한다.
   bool listenMode = false;
   final FlutterTts tts = FlutterTts();
+  late final PhraseRecognizer recognizer =
+      widget.recognizer ?? SpeechToTextRecognizer();
+  static const _speechLocales = {'영어': 'en_US', '일본어': 'ja_JP', '중국어': 'zh_CN'};
   bool ttsReady = false;
   bool ttsSpeaking = false;
   bool pendingAdvance = false;
 
+  /// 음성이 끝난 뒤 다음 문장으로 넘어가기 전에 쉬는 간격. 설정에서 바꾼다.
+  static const _defaultGapSeconds = 1.5;
+  double gapSeconds = _defaultGapSeconds;
+
+  /// 끄면 앵무새 음성을 끝까지 들어도 들은 횟수를 올리지 않는다.
+  bool countListen = true;
+  Duration get _phraseGap =>
+      Duration(milliseconds: (gapSeconds * 1000).round());
+  Timer? gapTimer;
+  bool gapWaiting = false;
+
   /// 음성 진행(읽은 위치)에 맞춰 말풍선 글자를 보여주는 상태.
   /// 단어 단위로 오는 진행 값을 짧게 보간해 한 글자씩 나오는 것처럼 보이게 한다.
   bool voiceTyping = false;
+
+  /// 지금 음성으로 읽고 있는 문장 id. 끝까지 들으면 청취 횟수를 올린다.
+  String? speakingSentenceId;
   double typedFrom = 0;
   double typedTo = 0;
   late final typing = AnimationController(
@@ -76,6 +102,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   Set<String>? enabledRoutineIds;
   List<DefaultConversationSentence> mySentences = [];
   String get xpKey => 'parrokit.speaking.xp.v1.${widget.accountId}';
+  String get countListenKey =>
+      'parrokit.speaking.count_listen.v1.${widget.accountId}';
+  String get gapKey => 'parrokit.speaking.gap_seconds.v1.${widget.accountId}';
   String get phrasesKey =>
       'parrokit.speaking.phrases.v1.${widget.accountId}.${widget.language}';
   int get level => totalXp ~/ 10 + 1;
@@ -86,11 +115,32 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       if (!mounted) return;
       setState(() {
         totalXp = math.max(0, prefs.getInt(xpKey) ?? 0);
+        gapSeconds = (prefs.getDouble(gapKey) ?? _defaultGapSeconds).clamp(
+            _SpeakingSettingsDialog.minGap, _SpeakingSettingsDialog.maxGap);
+        countListen = prefs.getBool(countListenKey) ?? true;
         xpReady = true;
       });
     } catch (_) {
       if (mounted) setState(() => xpReady = true);
     }
+  }
+
+  Future<void> showSpeakingSettings() async {
+    final next = await showDialog<({double gap, bool countListen})>(
+      context: context,
+      builder: (context) => _SpeakingSettingsDialog(
+          initialGap: gapSeconds, initialCountListen: countListen),
+    );
+    if (!mounted || next == null) return;
+    setState(() {
+      gapSeconds = next.gap;
+      countListen = next.countListen;
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(gapKey, next.gap);
+      await prefs.setBool(countListenKey, next.countListen);
+    } catch (_) {/* 저장하지 못해도 이번 실행에서는 바뀐 설정을 쓴다. */}
   }
 
   Future<bool> awardXp() async {
@@ -210,7 +260,20 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       tts.setCompletionHandler(handleTtsDone);
       tts.setCancelHandler(() => ttsSpeaking = false);
       tts.setProgressHandler(handleTtsProgress);
-      tts.setErrorHandler((_) => handleTtsDone());
+      tts.setErrorHandler((_) {
+        speakingSentenceId = null;
+        handleTtsDone();
+      });
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        // 음성 인식이 마이크를 쓸 수 있도록 TTS 오디오 세션이 녹음을 막지 않게 한다.
+        await tts
+            .setIosAudioCategory(IosTextToSpeechAudioCategory.playAndRecord, [
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+        ]);
+      }
       await tts.setSpeechRate(0.45);
       ttsReady = true;
       if (mounted) syncPlayback();
@@ -231,13 +294,32 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   /// 음성이 끝나면, 말풍선 시간이 이미 지나 대기 중이던 다음 문장으로 넘긴다.
   void handleTtsDone() {
     ttsSpeaking = false;
+    final listened = speakingSentenceId;
+    speakingSentenceId = null;
+    if (listened != null && countListen) {
+      unawaited(SentenceActivityStore.incrementListen(
+        widget.accountId,
+        listened,
+      ).catchError((Object _) {/* 기록 실패는 재생 흐름에 영향 주지 않는다. */}));
+    }
     if (voiceTyping) {
       typedFrom = typedTo = 1;
       typing.value = 1;
     }
     if (!mounted || !pendingAdvance) return;
     pendingAdvance = false;
-    finishPhrase();
+    advanceAfterGap();
+  }
+
+  /// 모드와 상관없이 문장이 끝나면 설정한 간격만큼 쉬고 넘어간다.
+  void advanceAfterGap() {
+    gapTimer?.cancel();
+    gapWaiting = true;
+    if (mounted) setState(() {});
+    gapTimer = Timer(_phraseGap, () {
+      gapWaiting = false;
+      finishPhrase();
+    });
   }
 
   bool get hasSpeakablePhrase =>
@@ -255,6 +337,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       await tts.stop();
       await tts.setLanguage(locale);
       ttsSpeaking = true;
+      speakingSentenceId = sentenceForPhrase(text)?.id;
       typedFrom = typedTo = 0;
       typing.value = 0;
       voiceTyping = true;
@@ -267,6 +350,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   void stopTts() {
+    speakingSentenceId = null;
+    gapTimer?.cancel();
+    gapWaiting = false;
     ttsSpeaking = false;
     voiceTyping = false;
     if (ttsReady) unawaited(tts.stop());
@@ -288,11 +374,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       if (animation.isAnimating && !awaitingResponse) unawaited(speakPhrase());
       return;
     }
+    final waiting = pendingAdvance || gapWaiting;
     stopTts();
-    if (pendingAdvance) {
-      pendingAdvance = false;
-      finishPhrase();
-    }
+    pendingAdvance = false;
+    if (waiting) finishPhrase();
   }
 
   Future<void> loadSprite() async {
@@ -359,7 +444,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     } else if (!birdAnimation.isAnimating) {
       birdAnimation.repeat();
     }
-    if (awaitingResponse || pendingAdvance) {
+    if (awaitingResponse || pendingAdvance || gapWaiting) {
       animation.stop();
     } else if (!animation.isAnimating) {
       animation.forward(from: animation.isCompleted ? 0 : animation.value);
@@ -374,11 +459,12 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       pendingAdvance = true;
       return;
     }
-    finishPhrase();
+    advanceAfterGap();
   }
 
   void finishPhrase() {
     if (!mounted) return;
+    gapWaiting = false;
     voiceTyping = false;
     final spokenSentence = sentenceForPhrase(phrase);
     if (spokenSentence != null) {
@@ -410,6 +496,24 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     syncPlayback();
   }
 
+  /// 따라 말하기 시도 하나를 학습 기록에 남긴다.
+  void recordAttempt(PracticeAttemptResult result) {
+    final sentence = sentenceForPhrase(phrase);
+    if (sentence == null) return;
+    unawaited(PracticeLogStore.add(
+      widget.accountId,
+      PracticeAttempt(
+        at: DateTime.now(),
+        sentenceId: sentence.id,
+        score: result.score,
+        heard: result.heard,
+        success: result.success,
+        manual: result.manual,
+        durationMs: result.duration.inMilliseconds,
+      ),
+    ).catchError((Object _) {/* 기록 실패는 연습 흐름에 영향 주지 않는다. */}));
+  }
+
   Future<void> completeRepeat() async {
     if (!awaitingResponse || completingResponse) return;
     setState(() => completingResponse = true);
@@ -439,18 +543,14 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   Future<void> addPhrase() async {
-    final added = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => const _AddPhraseDialog(),
-    );
-    if (!mounted || added == null) return;
+    ({AddedSentence sentence, bool added})? result;
     try {
-      await MySentenceStore.add(
-        widget.accountId,
+      result = await addSentenceFlow(
+        context,
+        accountId: widget.accountId,
         language: widget.language,
-        text: added,
       );
-      await loadRoutineSettings();
+      if (result != null) await loadRoutineSettings();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -458,8 +558,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       }
       return;
     }
-    if (!mounted) return;
-    final index = phrases.indexOf(added);
+    if (!mounted || result == null) return;
+    // 다른 언어로 추가했으면 지금 보는 문장은 그대로 둔다.
+    if (result.sentence.language != widget.language) return;
+    final index = phrases.indexOf(result.sentence.text);
     setState(() {
       if (index >= 0) phraseIndex = index;
       awaitingResponse = false;
@@ -558,7 +660,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                         builder: (context, _) {
                           final moving = !reduceMotion && !paused;
                           // 음성이 이어지는 동안은 말풍선 시간이 끝나도 사라지지 않게 붙잡는다.
-                          final holdBubble = voiceTyping && ttsSpeaking;
+                          final holdBubble =
+                              voiceTyping && (ttsSpeaking || gapWaiting);
                           final phase = awaitingResponse
                               ? 0.6
                               : holdBubble
@@ -632,7 +735,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                   _GameMenuButton(
                       label: '설정',
                       icon: Icons.settings_rounded,
-                      onTap: previewFeature),
+                      onTap: showSpeakingSettings),
                 ])),
             Positioned(
                 left: 8,
@@ -693,8 +796,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
             child: _SpeechWavePreview(
                 key: ValueKey('${widget.language}-$phraseIndex'),
                 phrase: phrase,
+                localeId: _speechLocales[widget.language] ?? 'en_US',
+                recognizer: recognizer,
                 enabled: !completingResponse && !paused,
                 reduceMotion: reduceMotion,
+                onAttempt: recordAttempt,
                 onComplete: completeRepeat)),
       const SizedBox(height: 16),
       const SizedBox(height: 16),
@@ -718,173 +824,303 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 }
 
-class _AddPhraseDialog extends StatefulWidget {
-  const _AddPhraseDialog();
+/// 위젯이 시도 하나가 끝났을 때 넘겨주는 결과.
+class PracticeAttemptResult {
+  const PracticeAttemptResult({
+    required this.score,
+    required this.heard,
+    required this.success,
+    required this.manual,
+    required this.duration,
+  });
 
-  @override
-  State<_AddPhraseDialog> createState() => _AddPhraseDialogState();
+  final double? score;
+  final String heard;
+  final bool success;
+  final bool manual;
+  final Duration duration;
 }
 
-class _AddPhraseDialogState extends State<_AddPhraseDialog> {
-  late final TextEditingController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = TextEditingController();
-  }
-
-  void submit() {
-    final phrase = controller.text.trim();
-    if (phrase.isNotEmpty) Navigator.pop(context, phrase);
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('문장 추가'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 80,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(hintText: '연습할 문장을 입력하세요'),
-          onSubmitted: (_) => submit(),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('취소')),
-          FilledButton(onPressed: submit, child: const Text('추가')),
-        ],
-      );
-}
-
-/// 음성 인식 연결 전, 마이크를 눌러 색이 채워지는 모습을 확인하는 시안.
+/// 마이크를 눌러 말하면 인식된 만큼 문장 색이 채워지고, 충분히 비슷하면 완료한다.
 class _SpeechWavePreview extends StatefulWidget {
   const _SpeechWavePreview(
       {super.key,
       required this.phrase,
+      required this.localeId,
+      required this.recognizer,
       required this.enabled,
       required this.reduceMotion,
+      required this.onAttempt,
       required this.onComplete});
   final String phrase;
+  final String localeId;
+  final PhraseRecognizer recognizer;
   final bool enabled;
   final bool reduceMotion;
   final VoidCallback onComplete;
+
+  /// 시도가 끝날 때마다 알린다. 점수는 인식 없이 직접 넘긴 경우 null.
+  final void Function(PracticeAttemptResult result) onAttempt;
   @override
   State<_SpeechWavePreview> createState() => _SpeechWavePreviewState();
 }
 
-class _SpeechWavePreviewState extends State<_SpeechWavePreview>
-    with SingleTickerProviderStateMixin {
-  late final preview =
-      AnimationController(vsync: this, duration: const Duration(seconds: 4));
+class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
+  bool listening = false;
+  double score = 0;
+
+  /// 지금 마이크로 들어오는 목소리 크기(0~1).
+  double level = 0;
+
+  /// 이 크기를 넘어야 소리가 난다고 보고 음파를 켠다.
+  static const _voiceThreshold = 0.25;
+  String? message;
+
+  /// 마이크를 켠 시각과 그동안 인식된 말. 시도가 끝나면 기록으로 넘긴다.
+  DateTime? attemptStart;
+  String heard = '';
+
   @override
   void didUpdateWidget(covariant _SpeechWavePreview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.enabled) preview.stop();
-    if (widget.reduceMotion && preview.isAnimating) {
-      preview.stop();
-      preview.value = 1;
+    if (!widget.enabled && listening) unawaited(stopListening());
+  }
+
+  Future<void> toggleListening() async {
+    if (!widget.enabled) return;
+    if (listening) return stopListening();
+    setState(() {
+      score = 0;
+      message = null;
+    });
+    heard = '';
+    var started = false;
+    try {
+      started = await widget.recognizer.start(
+        localeId: widget.localeId,
+        onResult: handleResult,
+        onDone: handleDone,
+        onLevel: handleLevel,
+      );
+    } catch (_) {/* 플러그인이 없거나 권한이 막힌 경우로 본다. */}
+    if (!mounted) return;
+    if (!started) {
+      setState(
+          () => message = '음성 인식을 쓸 수 없어요. 마이크와 음성 인식 권한을 확인하거나 체크로 넘어가세요.');
+      return;
+    }
+    attemptStart = DateTime.now();
+    setState(() => listening = true);
+  }
+
+  /// 진행 중인 시도를 기록으로 넘긴다. 이미 넘겼으면 아무것도 하지 않는다.
+  void finishAttempt({required bool success, bool manual = false}) {
+    final start = attemptStart;
+    if (start == null && !manual) return;
+    attemptStart = null;
+    widget.onAttempt(PracticeAttemptResult(
+      score: manual ? null : score,
+      heard: heard,
+      success: success,
+      manual: manual,
+      duration:
+          start == null ? Duration.zero : DateTime.now().difference(start),
+    ));
+  }
+
+  void handleResult(String text) {
+    if (!mounted || !listening) return;
+    heard = text;
+    final next = speechMatchScore(widget.phrase, text);
+    setState(() => score = math.max(score, next));
+    if (score >= speechPassScore) {
+      finishAttempt(success: true);
+      unawaited(stopListening());
+      widget.onComplete();
     }
   }
 
-  void playPreview() {
-    if (!widget.enabled) return;
-    if (widget.reduceMotion) {
-      preview.value = 1;
-    } else {
-      preview.forward(from: 0);
+  /// 실제 입력 크기를 받아 막대에 반영한다. 급하게 튀지 않게 조금씩 따라가게 한다.
+  void handleLevel(double next) {
+    if (!mounted || !listening) return;
+    setState(() => level = level + (next - level) * 0.5);
+  }
+
+  void handleDone(String? error) {
+    if (!mounted || !listening) return;
+    finishAttempt(success: score >= speechPassScore);
+    setState(() {
+      listening = false;
+      level = 0;
+      if (score < speechPassScore) message = '다시 한번 말해볼까요?';
+    });
+  }
+
+  Future<void> stopListening() async {
+    finishAttempt(success: false);
+    if (mounted) {
+      setState(() {
+        listening = false;
+        level = 0;
+      });
     }
+    try {
+      await widget.recognizer.stop();
+    } catch (_) {/* 이미 멈춘 인식은 무시한다. */}
   }
 
   @override
   void dispose() {
-    preview.dispose();
+    unawaited(widget.recognizer.stop().catchError((Object _) {}));
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-      animation: preview,
-      builder: (context, _) {
-        const active = Color(0xFF6D9890);
-        final letters = widget.phrase.characters.toList();
-        final highlighted = (preview.value * letters.length).floor();
-        return Column(children: [
-          Text.rich(
-              TextSpan(children: [
-                TextSpan(
-                    text: letters.take(highlighted).join(),
-                    style: const TextStyle(color: active)),
-                TextSpan(
-                    text: letters.skip(highlighted).join(),
-                    style: const TextStyle(color: Color(0xFF607482))),
-              ]),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 21, fontWeight: FontWeight.w600, height: 1.5)),
-          const SizedBox(height: 16),
-          Row(children: [
-            Semantics(
-                label: '음파 효과 미리보기. 실제 음성 인식은 아직 연결되지 않았어요.',
-                button: true,
-                child: IconButton.filledTonal(
-                    key: const ValueKey('preview-microphone'),
-                    tooltip: '음파 효과 미리보기',
-                    onPressed: widget.enabled ? playPreview : null,
-                    style: IconButton.styleFrom(
-                        backgroundColor: preview.isAnimating
-                            ? active
-                            : const Color(0xFFE1EBE8),
-                        foregroundColor:
-                            preview.isAnimating ? Colors.white : active),
-                    icon: const Icon(Icons.mic_rounded))),
-            const SizedBox(width: 12),
-            Expanded(
-                child: SizedBox(
-                    height: 48,
-                    child: LayoutBuilder(builder: (context, constraints) {
-                      final count =
-                          math.max(1, (constraints.maxWidth / 7).floor());
-                      return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(count, (i) {
-                            final colored = i < preview.value * count;
-                            final base = 8 + (math.sin(i * 1.7).abs() * 23);
-                            final pulse = preview.isAnimating
-                                ? 0.6 +
-                                    math
-                                            .sin(preview.value * math.pi * 12 +
-                                                i)
-                                            .abs() *
-                                        0.4
-                                : 1.0;
-                            return Container(
-                                width: 3,
-                                height: base * pulse,
-                                decoration: BoxDecoration(
-                                    color: colored
-                                        ? active
-                                        : const Color(0xFFDDE6EB),
-                                    borderRadius: BorderRadius.circular(2)));
-                          }));
-                    }))),
-            const SizedBox(width: 12),
-            IconButton(
-                key: const ValueKey('complete-repeat'),
-                tooltip: '따라 말하기 완료',
-                onPressed: widget.enabled ? widget.onComplete : null,
-                icon: const Icon(Icons.check_circle_rounded,
-                    color: active, size: 30)),
+  Widget build(BuildContext context) {
+    const active = Color(0xFF6D9890);
+    final letters = widget.phrase.characters.toList();
+    final highlighted = (score * letters.length).floor();
+    return Column(children: [
+      Text.rich(
+          TextSpan(children: [
+            TextSpan(
+                text: letters.take(highlighted).join(),
+                style: const TextStyle(color: active)),
+            TextSpan(
+                text: letters.skip(highlighted).join(),
+                style: const TextStyle(color: Color(0xFF607482))),
           ]),
-        ]);
-      });
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+              fontSize: 21, fontWeight: FontWeight.w600, height: 1.5)),
+      const SizedBox(height: 16),
+      Row(children: [
+        Semantics(
+            label: listening ? '음성 인식 중지' : '마이크를 누르고 따라 말하기',
+            button: true,
+            child: IconButton.filledTonal(
+                key: const ValueKey('preview-microphone'),
+                tooltip: listening ? '음성 인식 중지' : '따라 말하기 시작',
+                onPressed: widget.enabled ? toggleListening : null,
+                style: IconButton.styleFrom(
+                    backgroundColor:
+                        listening ? active : const Color(0xFFE1EBE8),
+                    foregroundColor: listening ? Colors.white : active),
+                icon:
+                    Icon(listening ? Icons.stop_rounded : Icons.mic_rounded))),
+        const SizedBox(width: 12),
+        Expanded(
+            child: SizedBox(
+                height: 48,
+                child: LayoutBuilder(builder: (context, constraints) {
+                  final count = math.max(1, (constraints.maxWidth / 7).floor());
+                  return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(count, (i) {
+                        final base = 8 + (math.sin(i * 1.7).abs() * 23);
+                        // 소리가 날 때만 막대가 색을 띠고 크기에 맞춰 커진다. 조용하면 낮게 멈춘다.
+                        final voiced = listening && level > _voiceThreshold;
+                        final strength = voiced
+                            ? (level - _voiceThreshold) / (1 - _voiceThreshold)
+                            : 0.0;
+                        final wave = 0.2 + strength * 0.8;
+                        return Container(
+                            key: ValueKey('wave-bar-$i'),
+                            width: 3,
+                            height: base * wave,
+                            decoration: BoxDecoration(
+                                color:
+                                    voiced ? active : const Color(0xFFDDE6EB),
+                                borderRadius: BorderRadius.circular(2)));
+                      }));
+                }))),
+        const SizedBox(width: 12),
+        IconButton(
+            key: const ValueKey('complete-repeat'),
+            tooltip: '따라 말하기 완료',
+            onPressed: widget.enabled
+                ? () {
+                    finishAttempt(success: true, manual: true);
+                    widget.onComplete();
+                  }
+                : null,
+            icon: const Icon(Icons.check_circle_rounded,
+                color: active, size: 30)),
+      ]),
+      if (message != null)
+        Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(message!,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(color: Color(0xFF607482), fontSize: 12))),
+    ]);
+  }
+}
+
+/// 앵무새가 한 문장을 말하고 다음 문장으로 넘어가기 전 쉬는 시간을 정한다.
+class _SpeakingSettingsDialog extends StatefulWidget {
+  const _SpeakingSettingsDialog(
+      {required this.initialGap, required this.initialCountListen});
+  final double initialGap;
+  final bool initialCountListen;
+
+  static const minGap = 0.5;
+  static const maxGap = 10.0;
+
+  @override
+  State<_SpeakingSettingsDialog> createState() =>
+      _SpeakingSettingsDialogState();
+}
+
+class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
+  late double gap = widget.initialGap;
+  late bool countListen = widget.initialCountListen;
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('설정'),
+        content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const Expanded(
+                    child: Text('말하기 간격',
+                        style: TextStyle(fontWeight: FontWeight.w700))),
+                Text('${gap.toStringAsFixed(1)}초',
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
+              ]),
+              Slider(
+                  key: const ValueKey('gap-slider'),
+                  value: gap,
+                  min: _SpeakingSettingsDialog.minGap,
+                  max: _SpeakingSettingsDialog.maxGap,
+                  divisions: 19,
+                  label: '${gap.toStringAsFixed(1)}초',
+                  onChanged: (value) => setState(() => gap = value)),
+              const Text('문장을 다 말한 뒤 다음 문장으로 넘어가기 전에 쉬는 시간이에요.',
+                  style: TextStyle(color: Color(0xFF61758D), fontSize: 12)),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                  key: const ValueKey('count-listen-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('들은 횟수 기록',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: const Text('끄면 앵무새 말을 끝까지 들어도 들은 횟수가 오르지 않아요.',
+                      style: TextStyle(fontSize: 12)),
+                  value: countListen,
+                  onChanged: (value) => setState(() => countListen = value)),
+            ]),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          FilledButton(
+              onPressed: () =>
+                  Navigator.pop(context, (gap: gap, countListen: countListen)),
+              child: const Text('저장')),
+        ],
+      );
 }
 
 class _PhraseSettingsDialog extends StatefulWidget {

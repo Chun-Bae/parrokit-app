@@ -13,6 +13,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 
 import 'widgets/study_garden_preview.dart';
+import 'widgets/sentence_history_dashboard.dart';
 import 'widgets/today_practice_summary.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
@@ -181,7 +182,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     final user = context.watch<UserProvider?>()?.currentUser;
     final accountId = user?.id ?? 'guest';
     ensureStatsLoaded(accountId);
-    final todayCompleted = practiceCounts[dateKey(DateTime.now())] ?? 0;
     const background = Color(0xFFF3F8FD);
     const surface = Color(0xFFFFFFFF);
     const ink = Color(0xFF24364F);
@@ -239,11 +239,11 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                             fontWeight: FontWeight.w700)),
                   ]),
                   const SizedBox(height: 16),
-                  TodayPracticeSummary(
-                    completed: todayCompleted,
-                    goal: dailyGoal,
-                    total: totalPracticed,
-                    onEditGoal: editDailyGoal,
+                  SentenceHistoryDashboard(
+                    accountId: accountId,
+                    language: language,
+                    refreshToken: totalPracticed,
+                    onViewAll: () => context.go(AppRoutes.collectionPath),
                   ),
                   const SizedBox(height: 14),
                   FilledButton.icon(

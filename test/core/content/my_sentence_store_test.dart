@@ -8,7 +8,8 @@ void main() {
 
   test('adds, dedupes, filters by language and removes', () async {
     expect(
-      await MySentenceStore.add('a', language: '영어', text: ' Nice to meet you '),
+      await MySentenceStore.add('a',
+          language: '영어', text: ' Nice to meet you '),
       isTrue,
     );
     expect(
@@ -19,6 +20,7 @@ void main() {
 
     final english = await MySentenceStore.loadFor('a', '영어');
     expect(english.map((s) => s.text), ['Nice to meet you']);
+    expect(english.single.addedAt, isNotNull);
     expect(await MySentenceStore.load('b'), isEmpty);
 
     await MySentenceStore.remove('a', english.single.id);
@@ -36,5 +38,14 @@ void main() {
     SharedPreferences.setMockInitialValues(
         {'parrokit.my_sentences.v1.a': 'not json'});
     expect(await MySentenceStore.load('a'), isEmpty);
+  });
+
+  test('닉네임을 함께 저장하고 없으면 빈 값이다', () async {
+    await MySentenceStore.add('a',
+        language: '영어', text: 'With author', author: ' 앵무 ');
+    await MySentenceStore.add('a', language: '영어', text: 'No author');
+    final all = await MySentenceStore.loadFor('a', '영어');
+    expect(all.firstWhere((s) => s.text == 'With author').author, '앵무');
+    expect(all.firstWhere((s) => s.text == 'No author').author, isEmpty);
   });
 }

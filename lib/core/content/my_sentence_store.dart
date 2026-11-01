@@ -51,6 +51,7 @@ class MySentenceStore {
     String translation = '',
     String pronunciation = '',
     String topic = '내 문장',
+    String author = '',
   }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return false;
@@ -64,6 +65,8 @@ class MySentenceStore {
       translation: translation.trim(),
       pronunciation: pronunciation.trim(),
       topic: topic,
+      author: author.trim(),
+      addedAt: DateTime.now(),
     ));
     await _save(accountId, all);
     return true;
@@ -95,13 +98,15 @@ class MySentenceStore {
       json['text'] is String &&
       (json['text'] as String).trim().isNotEmpty;
 
-  static Map<String, String> _toJson(DefaultConversationSentence s) => {
+  static Map<String, Object> _toJson(DefaultConversationSentence s) => {
+        if (s.addedAt != null) 'addedAt': s.addedAt!.millisecondsSinceEpoch,
         'id': s.id,
         'language': s.language,
         'text': s.text,
         'translation': s.translation,
         'pronunciation': s.pronunciation,
         'topic': s.topic,
+        if (s.author.isNotEmpty) 'author': s.author,
       };
 
   static DefaultConversationSentence _fromJson(Map<String, dynamic> json) =>
@@ -112,5 +117,10 @@ class MySentenceStore {
         translation: json['translation'] as String? ?? '',
         pronunciation: json['pronunciation'] as String? ?? '',
         topic: json['topic'] as String? ?? '내 문장',
+        author: json['author'] as String? ?? '',
+        addedAt: switch (json['addedAt']) {
+          final num ms => DateTime.fromMillisecondsSinceEpoch(ms.toInt()),
+          _ => null,
+        },
       );
 }

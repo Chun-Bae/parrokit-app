@@ -113,6 +113,11 @@
             <action android:name="com.google.android.gms.ads.service.START" />
         </intent>
 
+        <!-- 따라 말하기 음성 인식(speech_to_text) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+
         <!-- Google Play (결제) 패키지 가시성 -->
         <package android:name="com.android.vending" />
     </queries>

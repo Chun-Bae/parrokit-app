@@ -12,6 +12,9 @@ void main() {
     await SentenceActivityStore.incrementParrotSpeak(accountId, sentenceId);
     await SentenceActivityStore.incrementParrotSpeak(accountId, sentenceId);
     await SentenceActivityStore.incrementPractice(accountId, sentenceId);
+    await SentenceActivityStore.incrementListen(accountId, sentenceId);
+    await SentenceActivityStore.incrementListen(accountId, sentenceId);
+    await SentenceActivityStore.incrementListen(accountId, sentenceId);
     await SentenceActivityStore.setRoutineEnabled(
       accountId,
       sentenceId,
@@ -21,6 +24,16 @@ void main() {
     final activity = await SentenceActivityStore.load(accountId, sentenceId);
     expect(activity.parrotSpeakCount, 2);
     expect(activity.practiceCount, 1);
+    expect(activity.listenCount, 3);
+    expect(activity.lastPracticedAt, isNotNull);
     expect(activity.routineEnabled, isFalse);
+  });
+
+  test('좋아요를 저장하고 취소할 수 있다', () async {
+    expect((await SentenceActivityStore.load('a', 's1')).liked, isFalse);
+    await SentenceActivityStore.setLiked('a', 's1', true);
+    expect((await SentenceActivityStore.load('a', 's1')).liked, isTrue);
+    await SentenceActivityStore.setLiked('a', 's1', false);
+    expect((await SentenceActivityStore.load('a', 's1')).liked, isFalse);
   });
 }
