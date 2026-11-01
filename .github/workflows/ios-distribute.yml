@@ -52,6 +52,11 @@ jobs:
           cp "$RUNNER_TEMP/profile.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
           echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
 
+      # 프로젝트는 CocoaPods 기반(Podfile.lock에 wkwebview 포함). 최신 Flutter의
+      # 기본값인 SwiftPM이 켜져 있으면 plugin이 Pod 목록에서 빠져 pod install이 실패한다.
+      - name: SwiftPM 비활성화 (CocoaPods 사용)
+        run: flutter config --no-enable-swift-package-manager
+
       - run: flutter pub get
 
       - name: iOS 빌드 (서명 없이)
