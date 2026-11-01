@@ -1,31 +1,8 @@
----
-trigger: manual
----
+# Naming and Style Guide
 
-# Naming and Style Rules
+이 문서는 선택적인 참고 지침이다. 이해하기 쉬운 이름과 읽기 쉬운 코드를 우선한다.
 
-## 네이밍
-
-| 타입 | 패턴 | 예시 |
-|---|---|---|
-| Screen | `{Feature}Screen` | `AuthScreen` |
-| Section | `{Name}Section` | `AuthFormSection` |
-| Widget | `{Name}{Suffix}` | `ProfileCard` |
-| Provider | `{Feature}Provider` | `UserProvider` |
-| UseCase | `{Action}{Target}UseCase` | `SaveClipUseCase` |
-| Service | `{Name}Service` | `ClipSaveService` |
-| Enum | `{Name}Mode/Type/State` | `AuthMode` |
-| Model | `{Name}Model` | `UserModel` |
-| Entity | `{Name}` | `User` |
-
-## 금지
-
-- 축약어를 사용하지 않는다.
-- 의미 없는 단독 이름을 사용하지 않는다.
-- 파일명 오타와 혼합 표기를 사용하지 않는다.
-
-## 스타일
-
-- `async` 이후 UI 접근 전 `mounted`를 확인한다.
-- import 순서는 `dart:*`, `package:*`, 상대 경로 순서로 유지한다.
-- 클래스가 커지면 섹션 주석 또는 파일로 분리한다.
+- 클래스 접미사, 파일명, import 순서, 주석 형식을 강제하지 않는다.
+- 작은 기능은 한 파일에 작성해도 된다. 파일 길이만으로 분리하지 않는다.
+- 기존 코드 스타일은 도움이 될 때 참고하며, 스타일 통일을 위한 무관한 수정은 하지 않는다.
+- 비동기 UI 접근, 자원 해제, 오류 처리 등 실제 동작의 정확성은 유지한다.

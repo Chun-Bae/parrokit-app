@@ -44,3 +44,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Signing / deploy credentials (CI uses secrets instead)
+*.p12
+*.p8
+*.mobileprovision
+*.cer
+service-account*.json
