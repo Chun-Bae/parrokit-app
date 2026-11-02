@@ -2,24 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 
-Future<void> publish(
-  FirestoreSharedSentenceRepository repo, {
-  String author = 'u1',
-  String local = 'my-1',
-  String text = 'Hello there',
-  String language = '영어',
-  String name = '앵무',
-}) =>
-    repo.publish(
-      localSentenceId: local,
-      authorId: author,
-      authorName: name,
-      language: language,
-      text: text,
-      translation: '안녕',
-      pronunciation: '',
-      topic: '내 문장',
-    );
+import '../../support/sentence_seed.dart';
 
 void main() {
   late FakeFirebaseFirestore firestore;
@@ -30,11 +13,14 @@ void main() {
     repo = FirestoreSharedSentenceRepository(firestore: firestore);
   });
 
-  test('공유하면 작성자와 함께 목록에 나오고 언어별로 나뉜다', () async {
-    await publish(repo);
-    await publish(repo, local: 'my-2', text: 'ありがとう', language: '일본어');
+  test('공개된 문장만 작성자와 함께 목록에 나오고 언어별로 나뉜다', () async {
+    await seedSentence(firestore, 'my-1', visibility: 'public');
+    await seedSentence(firestore, 'my-2',
+        text: 'ありがとう', language: '일본어', visibility: 'public');
+    await seedSentence(firestore, 'my-3', text: 'Only me');
     final english = await repo.list(language: '영어', viewerId: 'v');
     expect(english, hasLength(1));
+    expect(english.single.id, 'my-1');
     expect(english.single.text, 'Hello there');
     expect(english.single.authorId, 'u1');
     expect(english.single.authorName, '앵무');
@@ -42,40 +28,42 @@ void main() {
     expect(english.single.liked, isFalse);
   });
 
-  test('같은 문장을 다시 공유하면 한 개만 있고 좋아요는 유지된다', () async {
-    await publish(repo);
-    final id = FirestoreSharedSentenceRepository.idFor('u1', 'my-1');
-    await repo.setLiked(sharedId: id, viewerId: 'v', liked: true);
-    await publish(repo, name: '새 닉네임');
-    final list = await repo.list(language: '영어', viewerId: 'v');
-    expect(list, hasLength(1));
-    expect(list.single.likeCount, 1);
-    expect(list.single.authorName, '새 닉네임');
-  });
-
-  test('공유 취소하면 목록에서 사라지고 공개 여부가 바뀐다', () async {
-    await publish(repo);
-    expect(await repo.isPublished(authorId: 'u1', localSentenceId: 'my-1'),
-        isTrue);
-    await repo.unpublish(authorId: 'u1', localSentenceId: 'my-1');
-    expect(await repo.isPublished(authorId: 'u1', localSentenceId: 'my-1'),
-        isFalse);
+  test('공개하면 같은 문서가 둘러보기에 나오고 좋아요와 공개 취소 뒤에도 유지된다', () async {
+    await seedSentence(firestore, 'my-1');
+    expect(await repo.isPublished(sentenceId: 'my-1'), isFalse);
     expect(await repo.list(language: '영어', viewerId: 'v'), isEmpty);
+
+    await repo.publish(sentenceId: 'my-1', authorName: '새 닉네임');
+    expect(await repo.isPublished(sentenceId: 'my-1'), isTrue);
+    await repo.setLiked(sharedId: 'my-1', viewerId: 'v', liked: true);
+    var list = await repo.list(language: '영어', viewerId: 'v');
+    expect(list, hasLength(1));
+    expect(list.single.authorName, '새 닉네임');
+    expect(list.single.likeCount, 1);
+
+    // 공개를 취소해도 문서와 좋아요 수는 남고, 다시 공개하면 그대로 이어진다.
+    await repo.unpublish(sentenceId: 'my-1');
+    expect(await repo.isPublished(sentenceId: 'my-1'), isFalse);
+    expect(await repo.list(language: '영어', viewerId: 'v'), isEmpty);
+    expect((await firestore.collection('sentences').doc('my-1').get()).exists,
+        isTrue);
+    await repo.publish(sentenceId: 'my-1', authorName: '새 닉네임');
+    list = await repo.list(language: '영어', viewerId: 'v');
+    expect(list.single.likeCount, 1);
   });
 
   test('좋아요는 사람마다 한 번만 올라가고 취소하면 내려간다', () async {
-    await publish(repo);
-    final id = FirestoreSharedSentenceRepository.idFor('u1', 'my-1');
-    await repo.setLiked(sharedId: id, viewerId: 'a', liked: true);
-    await repo.setLiked(sharedId: id, viewerId: 'a', liked: true);
-    await repo.setLiked(sharedId: id, viewerId: 'b', liked: true);
+    await seedSentence(firestore, 'my-1', visibility: 'public');
+    await repo.setLiked(sharedId: 'my-1', viewerId: 'a', liked: true);
+    await repo.setLiked(sharedId: 'my-1', viewerId: 'a', liked: true);
+    await repo.setLiked(sharedId: 'my-1', viewerId: 'b', liked: true);
     var list = await repo.list(language: '영어', viewerId: 'a');
     expect(list.single.likeCount, 2);
     expect(list.single.liked, isTrue);
     expect((await repo.list(language: '영어', viewerId: 'c')).single.liked,
         isFalse);
-    await repo.setLiked(sharedId: id, viewerId: 'a', liked: false);
-    await repo.setLiked(sharedId: id, viewerId: 'a', liked: false);
+    await repo.setLiked(sharedId: 'my-1', viewerId: 'a', liked: false);
+    await repo.setLiked(sharedId: 'my-1', viewerId: 'a', liked: false);
     list = await repo.list(language: '영어', viewerId: 'a');
     expect(list.single.likeCount, 1);
     expect(list.single.liked, isFalse);

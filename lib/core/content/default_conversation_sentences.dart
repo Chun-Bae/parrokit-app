@@ -7,6 +7,8 @@ class DefaultConversationSentence {
     required this.pronunciation,
     required this.topic,
     this.author = '',
+    this.authorId = '',
+    this.sourceSharedId = '',
     this.addedAt,
   });
 
@@ -19,6 +21,13 @@ class DefaultConversationSentence {
 
   /// 문장을 만든(저장한) 사람의 닉네임. 기본 문장이나 오래된 문장은 빈 값.
   final String author;
+
+  /// 문장을 만든 사람의 uid. 내가 만든 문장이면 내 uid, 남의 문장을 저장한 것이면 원작자 uid.
+  /// 기본 문장이나 서버에 올리지 않은 오래된 문장은 빈 값.
+  final String authorId;
+
+  /// 남의 공개 문장을 저장해 만든 사본이면 원본 문서 id. 내가 만든 문장은 빈 값.
+  final String sourceSharedId;
 
   /// 내 문장으로 저장·추가한 시각. 기본 문장은 null.
   final DateTime? addedAt;

@@ -167,11 +167,29 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  String communityId(SharedSentence sentence) =>
-      MySentenceStore.idFor(sentence.language, sentence.text);
+  /// 이 공개 문장과 같은 내 문장. 내가 올린 문장(같은 문서)이거나, 저장한 사본이거나,
+  /// 같은 언어에 같은 문장이면 저장한 것으로 본다. 없으면 null.
+  DefaultConversationSentence? savedCopyOf(SharedSentence sentence) {
+    for (final item in mine) {
+      if (item.id == sentence.id ||
+          item.sourceSharedId == sentence.id ||
+          (item.language == sentence.language &&
+              item.text.trim() == sentence.text.trim())) {
+        return item;
+      }
+    }
+    return null;
+  }
 
-  bool isSaved(SharedSentence sentence) =>
-      mine.any((item) => item.id == communityId(sentence));
+  /// 루틴·횟수 기록에 쓰는 문장 id. 저장했으면 내 문장의 id, 아니면 공개 문장의 id.
+  String communityId(SharedSentence sentence) =>
+      savedCopyOf(sentence)?.id ?? sentence.id;
+
+  bool isSaved(SharedSentence sentence) => savedCopyOf(sentence) != null;
+
+  /// 내가 올린 공개 문장. 공개 문장과 내 문장이 같은 문서라서 저장 해제로 지우지 않는다.
+  bool isMine(SharedSentence sentence) =>
+      accountId != 'guest' && sentence.authorId == accountId;
 
   bool isParrotActive(SharedSentence sentence) =>
       isSaved(sentence) &&
@@ -180,6 +198,10 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   Future<void> toggleSave(SharedSentence sentence) async {
     try {
       if (isSaved(sentence)) {
+        if (isMine(sentence)) {
+          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해주세요.');
+          return;
+        }
         await MySentenceStore.remove(accountId, communityId(sentence));
         if (mounted) toast('내 문장에서 뺐어요.');
       } else {
@@ -190,6 +212,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           translation: sentence.translation,
           topic: sentence.topic,
           author: sentence.authorName,
+          authorId: sentence.authorId,
+          sourceSharedId: sentence.id,
         );
         if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
       }
@@ -216,12 +240,12 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           pronunciation: sentence.pronunciation,
           topic: sentence.topic,
           author: sentence.authorName,
+          authorId: sentence.authorId,
         ),
       );
 
   Future<void> toggleParrot(SharedSentence sentence) async {
     try {
-      final id = communityId(sentence);
       if (!isSaved(sentence)) {
         await MySentenceStore.add(
           accountId,
@@ -231,13 +255,22 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           pronunciation: sentence.pronunciation,
           topic: sentence.topic,
           author: sentence.authorName,
+          authorId: sentence.authorId,
+          sourceSharedId: sentence.id,
         );
-        await SentenceActivityStore.setRoutineEnabled(accountId, id, true);
+        // 저장하면 내 문장에 새 id가 생기니, 그 id로 루틴을 켠다.
+        final saved = await MySentenceStore.findByText(
+            accountId, sentence.language, sentence.text);
+        if (saved != null) {
+          await SentenceActivityStore.setRoutineEnabled(
+              accountId, saved.id, true);
+        }
         if (mounted) toast('앵무새에게 보냈어요.');
         return;
       }
       final next = !isParrotActive(sentence);
-      await SentenceActivityStore.setRoutineEnabled(accountId, id, next);
+      await SentenceActivityStore.setRoutineEnabled(
+          accountId, communityId(sentence), next);
       if (mounted) toast(next ? '앵무새가 다시 말해줘요.' : '앵무새 루틴에서 뺐어요.');
     } catch (_) {
       if (mounted) toast('설정을 저장하지 못했어요. 다시 시도해주세요.');
@@ -778,8 +811,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     if (!widget.sentence.id.startsWith('my-')) {
       return '기본 문장은 공유할 수 없어요. 내가 등록한 문장만 공유할 수 있어요.';
     }
-    if (widget.sentence.author.isNotEmpty &&
-        widget.sentence.author != widget.authorName) {
+    if (widget.sentence.authorId.isNotEmpty &&
+        widget.sentence.authorId != widget.accountId) {
       return '다른 사람이 만든 문장은 공유할 수 없어요.';
     }
     return null;
@@ -789,10 +822,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     final repo = widget.repository;
     if (!canPublish || repo == null || widget.accountId == 'guest') return;
     try {
-      final value = await repo.isPublished(
-        authorId: widget.accountId,
-        localSentenceId: widget.sentence.id,
-      );
+      final value = await repo.isPublished(sentenceId: widget.sentence.id);
       if (mounted) setState(() => published = value);
     } catch (_) {/* 공개 여부를 모르면 버튼은 공유하기로 둔다. */}
   }
@@ -833,20 +863,11 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     setState(() => publishing = true);
     try {
       if (published == true) {
-        await repo.unpublish(
-          authorId: widget.accountId,
-          localSentenceId: widget.sentence.id,
-        );
+        await repo.unpublish(sentenceId: widget.sentence.id);
       } else {
         await repo.publish(
-          localSentenceId: widget.sentence.id,
-          authorId: widget.accountId,
+          sentenceId: widget.sentence.id,
           authorName: widget.authorName,
-          language: widget.sentence.language,
-          text: widget.sentence.text,
-          translation: widget.sentence.translation,
-          pronunciation: widget.sentence.pronunciation,
-          topic: widget.sentence.topic,
         );
       }
       final next = published != true;

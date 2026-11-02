@@ -4,13 +4,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'default_conversation_sentences.dart';
 import 'sentence_activity_store.dart';
+import 'sentence_cloud_store.dart';
 
 /// 사용자가 저장하거나 직접 추가한 "내 문장"을 계정별로 보관한다.
 ///
+/// 로그인한 사용자는 [cloud](Firestore)에, 로그인하지 않은 게스트(`guest`)는 이 기기에 저장한다.
 /// 앵무새는 기본 문장과 이 저장소의 문장 중 루틴이 켜진 것만 말한다.
 /// 루틴 on/off와 말하기·연습 횟수는 [SentenceActivityStore]가 같은 id로 관리한다.
 class MySentenceStore {
   MySentenceStore._();
+
+  /// 로그인한 사용자의 문장을 보관하는 서버 저장소. 앱을 시작할 때 연결한다.
+  /// 비어 있으면 모든 계정이 이 기기에 저장한다.
+  static SentenceCloudStore? cloud;
+
+  static bool _useCloud(String accountId) =>
+      cloud != null && accountId.isNotEmpty && accountId != 'guest';
 
   static String _key(String accountId) => 'parrokit.my_sentences.v1.$accountId';
 
@@ -20,6 +29,7 @@ class MySentenceStore {
   static Future<List<DefaultConversationSentence>> load(
     String accountId,
   ) async {
+    if (_useCloud(accountId)) return cloud!.load(accountId);
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key(accountId));
     if (raw == null) return [];
@@ -43,6 +53,19 @@ class MySentenceStore {
     return all.where((s) => s.language == language).toList(growable: false);
   }
 
+  /// 같은 언어의 같은 문장을 찾는다. 없으면 null.
+  static Future<DefaultConversationSentence?> findByText(
+    String accountId,
+    String language,
+    String text,
+  ) async {
+    final trimmed = text.trim();
+    for (final item in await loadFor(accountId, language)) {
+      if (item.text.trim() == trimmed) return item;
+    }
+    return null;
+  }
+
   /// 같은 언어에 같은 문장이 이미 있으면 추가하지 않고 false를 돌려준다.
   static Future<bool> add(
     String accountId, {
@@ -52,9 +75,26 @@ class MySentenceStore {
     String pronunciation = '',
     String topic = '내 문장',
     String author = '',
+    String authorId = '',
+    String sourceSharedId = '',
   }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return false;
+    if (_useCloud(accountId)) {
+      final added = await cloud!.add(
+        accountId,
+        language: language,
+        text: trimmed,
+        translation: translation,
+        pronunciation: pronunciation,
+        topic: topic,
+        author: author,
+        authorId: authorId,
+        sourceSharedId: sourceSharedId,
+      );
+      if (added) SentenceActivityStore.revision.value++;
+      return added;
+    }
     final id = idFor(language, trimmed);
     final all = await load(accountId);
     if (all.any((s) => s.id == id)) return false;
@@ -73,6 +113,11 @@ class MySentenceStore {
   }
 
   static Future<void> remove(String accountId, String id) async {
+    if (_useCloud(accountId)) {
+      await cloud!.remove(id);
+      SentenceActivityStore.revision.value++;
+      return;
+    }
     final all = await load(accountId);
     final next = all.where((s) => s.id != id).toList();
     if (next.length == all.length) return;

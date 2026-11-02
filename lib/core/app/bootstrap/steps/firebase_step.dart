@@ -5,6 +5,8 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/app/config/firebase_options.dart';
+import 'package:parrokit/core/content/my_sentence_store.dart';
+import 'package:parrokit/core/content/sentence_cloud_store.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 // Firebase 앱 인스턴스를 초기화한다.
@@ -14,6 +16,8 @@ Future<void> initFirebase() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 8));
+    // 로그인한 사용자의 내 문장은 Firestore에 보관한다.
+    MySentenceStore.cloud = SentenceCloudStore();
     AppLogger.i('[Bootstrap][Firebase] success');
   } catch (e) {
     AppLogger.e('[Bootstrap][Firebase] failed', error: e);

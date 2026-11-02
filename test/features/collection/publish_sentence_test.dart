@@ -6,6 +6,8 @@ import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/sentence_seed.dart';
+
 const mine = DefaultConversationSentence(
   id: 'my-영어-1',
   language: '영어',
@@ -15,6 +17,7 @@ const mine = DefaultConversationSentence(
   topic: '내 문장',
 );
 
+late FakeFirebaseFirestore firestore;
 late FirestoreSharedSentenceRepository repo;
 
 Future<void> openSheet(
@@ -44,10 +47,13 @@ Future<void> openSheet(
 }
 
 void main() {
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    repo =
-        FirestoreSharedSentenceRepository(firestore: FakeFirebaseFirestore());
+    firestore = FakeFirebaseFirestore();
+    repo = FirestoreSharedSentenceRepository(firestore: firestore);
+    // 내 문장은 서버에 있고 처음에는 나만 본다.
+    await seedSentence(firestore, mine.id,
+        text: mine.text, translation: mine.translation);
   });
 
   testWidgets('확인 후 공유하면 작성자와 함께 올라가고 다시 누르면 취소된다', (tester) async {
@@ -85,16 +91,7 @@ void main() {
   });
 
   testWidgets('이미 공유된 문장은 공유 취소로 시작한다', (tester) async {
-    await repo.publish(
-      localSentenceId: mine.id,
-      authorId: 'u1',
-      authorName: '앵무',
-      language: '영어',
-      text: mine.text,
-      translation: mine.translation,
-      pronunciation: '',
-      topic: '내 문장',
-    );
+    await repo.publish(sentenceId: mine.id, authorName: '앵무');
     await openSheet(tester);
     expect(find.text('둘러보기 공유 취소'), findsOneWidget);
   });
@@ -127,6 +124,8 @@ void main() {
         pronunciation: '',
         topic: '카페',
         author: 'Mina',
+        authorId: 'mina',
+        sourceSharedId: 'my-원본',
       ),
     );
     expect(find.byKey(const ValueKey('publish-sentence')), findsNothing);
@@ -139,7 +138,7 @@ void main() {
     final calls = <bool>[];
     var fail = false;
     const shared = SharedSentence(
-      id: 'mina:my-1',
+      id: 'my-원본',
       language: '영어',
       text: 'Shared one',
       translation: '공유',
