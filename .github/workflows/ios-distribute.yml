@@ -120,7 +120,10 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SA" > "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          npx -y firebase-tools@latest appdistribution:distribute "$RUNNER_TEMP/export/Runner.ipa" \
+          ls -la "$RUNNER_TEMP/export"
+          IPA_PATH=$(ls "$RUNNER_TEMP"/export/*.ipa | head -n 1)
+          echo "업로드할 IPA: $IPA_PATH"
+          npx -y firebase-tools@latest appdistribution:distribute "$IPA_PATH" \
             --app 1:392832464036:ios:71b3e2d9c65fa1922e6231 \
             --groups "$GROUPS_INPUT" \
             --release-notes "$NOTES_INPUT"
