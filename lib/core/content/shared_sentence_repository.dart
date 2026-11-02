@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// 둘러보기에 공개된 문장. 내가 등록한 문장을 공유하면 서버에 이 모양으로 올라간다.
+import 'sentence_cloud_store.dart';
+
+/// 둘러보기에 공개된 문장. 내 문장(`sentences` 문서)의 `visibility`가 `public`이면 이 모양으로 보인다.
 class SharedSentence {
   const SharedSentence({
     required this.id,
@@ -56,28 +58,17 @@ abstract class SharedSentenceRepository {
     int limit = 30,
   });
 
-  /// 내 문장을 공개한다. 이미 공개돼 있으면 내용만 갱신하고 좋아요는 유지한다.
+  /// 내 문장을 둘러보기에 공개한다. 이미 공개돼 있으면 작성자 닉네임만 갱신한다.
+  /// [sentenceId]는 내 문장 문서의 id이고, 남의 문장을 저장한 사본은 공개할 수 없다.
   Future<void> publish({
-    required String localSentenceId,
-    required String authorId,
+    required String sentenceId,
     required String authorName,
-    required String language,
-    required String text,
-    required String translation,
-    required String pronunciation,
-    required String topic,
   });
 
-  /// 공개를 취소한다. 공개돼 있지 않으면 아무것도 하지 않는다.
-  Future<void> unpublish({
-    required String authorId,
-    required String localSentenceId,
-  });
+  /// 공개를 취소한다(문장은 내 문장함에 남는다). 공개돼 있지 않으면 아무것도 하지 않는다.
+  Future<void> unpublish({required String sentenceId});
 
-  Future<bool> isPublished({
-    required String authorId,
-    required String localSentenceId,
-  });
+  Future<bool> isPublished({required String sentenceId});
 
   /// 좋아요를 켜거나 끈다. 이미 그 상태면 개수를 바꾸지 않는다.
   Future<void> setLiked({
@@ -94,12 +85,8 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
   final FirebaseFirestore _firestore;
   static const _fetchLimit = 200;
 
-  /// 같은 사람이 같은 문장을 다시 공유해도 문서가 하나만 생기게 id를 정한다.
-  static String idFor(String authorId, String localSentenceId) =>
-      '$authorId:$localSentenceId';
-
   CollectionReference<Map<String, dynamic>> get _shared =>
-      _firestore.collection('shared_sentences');
+      _firestore.collection(SentenceCloudStore.collection);
 
   DocumentReference<Map<String, dynamic>> _like(
     String viewerId,
@@ -117,9 +104,10 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
     required String viewerId,
     int limit = 30,
   }) async {
-    // 언어 하나만 조건으로 걸어 별도 복합 인덱스 없이 읽고, 최신순 정렬은 앱에서 한다.
+    // 공개 여부와 언어를 같음 조건으로만 걸어 별도 복합 인덱스 없이 읽고, 최신순 정렬은 앱에서 한다.
     // 공유 문장이 아주 많아지면 createdAt 인덱스를 만들어 서버에서 정렬하는 쪽으로 바꾼다.
     final snapshot = await _shared
+        .where('visibility', isEqualTo: SentenceCloudStore.public)
         .where('language', isEqualTo: language)
         .limit(_fetchLimit)
         .get();
@@ -169,50 +157,23 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
 
   @override
   Future<void> publish({
-    required String localSentenceId,
-    required String authorId,
+    required String sentenceId,
     required String authorName,
-    required String language,
-    required String text,
-    required String translation,
-    required String pronunciation,
-    required String topic,
-  }) async {
-    final doc = _shared.doc(idFor(authorId, localSentenceId));
-    final existing = await doc.get();
-    final content = {
-      'language': language,
-      'text': text,
-      'translation': translation,
-      'pronunciation': pronunciation,
-      'topic': topic,
-      'authorId': authorId,
-      'authorName': authorName,
-    };
-    if (existing.exists) {
-      await doc.update(content);
-    } else {
-      await doc.set({
-        ...content,
-        'likeCount': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-  @override
-  Future<void> unpublish({
-    required String authorId,
-    required String localSentenceId,
   }) =>
-      _shared.doc(idFor(authorId, localSentenceId)).delete();
+      _shared.doc(sentenceId).update({
+        'visibility': SentenceCloudStore.public,
+        'authorName': authorName,
+      });
 
   @override
-  Future<bool> isPublished({
-    required String authorId,
-    required String localSentenceId,
-  }) async =>
-      (await _shared.doc(idFor(authorId, localSentenceId)).get()).exists;
+  Future<void> unpublish({required String sentenceId}) =>
+      _shared.doc(sentenceId).update({'visibility': SentenceCloudStore.private});
+
+  @override
+  Future<bool> isPublished({required String sentenceId}) async {
+    final doc = await _shared.doc(sentenceId).get();
+    return doc.data()?['visibility'] == SentenceCloudStore.public;
+  }
 
   @override
   Future<void> setLiked({

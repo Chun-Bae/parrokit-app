@@ -74,23 +74,42 @@ service cloud.firestore {
       }
     }
 
-    // 둘러보기에 공개된 문장. 문서 id는 "작성자uid:내문장id" 형태다.
-    match /shared_sentences/{sharedId} {
-      allow read: if request.auth != null;
+    // 문장. 내 문장과 둘러보기에 공개된 문장은 같은 문서이고 visibility로 구분한다.
+    // - ownerId: 문서를 가진 사람. 읽기(비공개)·수정·삭제의 기준이다.
+    // - authorId: 원작자. 남의 공개 문장을 저장한 사본은 원작자가 ownerId와 다르다.
+    // - visibility: 'private'은 주인만, 'public'은 로그인한 누구나 읽는다.
+    //   공개는 주인이 원작자일 때만 할 수 있어서, 남의 문장은 다시 공유할 수 없다.
+    // 목록 조회는 where('visibility', '==', 'public') 또는 where('ownerId', '==', 내 uid)로 해야 한다.
+    match /sentences/{sentenceId} {
+      allow read: if request.auth != null && (
+        resource.data.visibility == 'public'
+        || resource.data.ownerId == request.auth.uid
+      );
       allow create: if request.auth != null
-        && request.resource.data.authorId == request.auth.uid
-        && sharedId.matches(request.auth.uid + ':.*')
-        && request.resource.data.likeCount == 0;
-      // 작성자는 내용만, 다른 사람은 좋아요 수를 1씩만 바꿀 수 있다.
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.likeCount == 0
+        && (
+          request.resource.data.visibility == 'private'
+          || (request.resource.data.visibility == 'public'
+              && request.resource.data.authorId == request.auth.uid)
+        );
       allow update: if request.auth != null && (
-        (request.auth.uid == resource.data.authorId
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['language', 'text', 'translation', 'pronunciation', 'topic', 'authorName']))
-        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+        // 주인: 소유자·원작자·좋아요 수는 바꿀 수 없고, 내용과 공개 여부만 바꾼다.
+        // 공개로 바꾸려면 내가 원작자여야 한다.
+        (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.authorId == resource.data.authorId
+          && request.resource.data.likeCount == resource.data.likeCount
+          && (request.resource.data.visibility == 'private'
+              || (request.resource.data.visibility == 'public'
+                  && resource.data.authorId == request.auth.uid)))
+        // 다른 사람: 공개된 문장의 좋아요 수만 1씩 바꾼다.
+        || (resource.data.visibility == 'public'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
           && (request.resource.data.likeCount - resource.data.likeCount == 1
               || resource.data.likeCount - request.resource.data.likeCount == 1))
       );
-      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
     // 디바이스 토큰 관리

@@ -7,28 +7,31 @@ import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/sentence_seed.dart';
+
+late FakeFirebaseFirestore firestore;
 late FirestoreSharedSentenceRepository repo;
 
 Widget app() => MaterialApp(
     home: Scaffold(body: SentenceCollectionPreview(repository: repo)));
 
 /// 다른 사람이 공유한 문장 하나를 서버에 넣어 둔다.
-Future<void> seedShared() => repo.publish(
-      localSentenceId: 'my-1',
-      authorId: 'mina',
+Future<void> seedShared() => seedSentence(
+      firestore,
+      'my-seed',
+      ownerId: 'mina',
       authorName: 'Mina',
-      language: '영어',
       text: 'Could I get this to go?',
       translation: '이거 포장해 주실 수 있나요?',
-      pronunciation: '',
       topic: '카페',
+      visibility: 'public',
     );
 
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    repo =
-        FirestoreSharedSentenceRepository(firestore: FakeFirebaseFirestore());
+    firestore = FakeFirebaseFirestore();
+    repo = FirestoreSharedSentenceRepository(firestore: firestore);
   });
 
   testWidgets('추가한 문장이 내 문장 목록에 나타난다', (tester) async {
