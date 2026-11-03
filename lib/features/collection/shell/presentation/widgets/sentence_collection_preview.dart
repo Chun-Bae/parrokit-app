@@ -1,7 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:parrokit/core/content/sentence_transfer.dart';
+import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
@@ -291,6 +296,71 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     }
   }
 
+  /// 내 문장(가져온 문장 포함, 모든 언어)을 CSV나 엑셀(xlsx) 파일로 내보낸다.
+  Future<void> exportMySentences({required bool xlsx}) async {
+    if (mine.isEmpty) {
+      toast('내보낼 문장이 없어요.');
+      return;
+    }
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File(
+          '${dir.path}/parrokit_sentences.${xlsx ? 'xlsx' : 'csv'}');
+      if (xlsx) {
+        await file.writeAsBytes(SentenceTransfer.exportXlsx(mine));
+      } else {
+        await file.writeAsString(SentenceTransfer.exportCsv(mine));
+      }
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
+        title: 'Parrokit 내 문장',
+      ));
+    } catch (_) {
+      if (mounted) toast('문장을 내보내지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
+  /// CSV나 엑셀(xlsx) 파일에서 문장을 가져온다. 원문만 있으면 되고 뜻은 있으면 함께 넣는다.
+  /// 언어 열이 없거나 비어 있으면 지금 고른 언어로 들어가고, 이미 있는 문장은 건너뛴다.
+  Future<void> importMySentences() async {
+    try {
+      final picked = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['csv', 'xlsx', 'tsv', 'txt'],
+        withData: true,
+      );
+      final file = picked?.files.single;
+      final bytes = file?.bytes;
+      if (file == null || bytes == null) return;
+      final items = SentenceTransfer.parse(bytes, file.name);
+      if (items.isEmpty) {
+        toast('가져올 문장이 없어요.');
+        return;
+      }
+      var added = 0;
+      for (final item in items) {
+        final ok = await MySentenceStore.add(
+          accountId,
+          language: item.language.isEmpty ? language : item.language,
+          text: item.text,
+          translation: item.translation,
+          pronunciation: item.pronunciation,
+          author: authorName,
+        );
+        if (ok) added++;
+      }
+      if (!mounted) return;
+      final skipped = items.length - added;
+      toast(skipped == 0
+          ? '문장 $added개를 가져왔어요.'
+          : '문장 $added개를 가져왔어요. 이미 있는 $skipped개는 건너뛰었어요.');
+    } on FormatException {
+      if (mounted) toast('파일을 읽지 못했어요. 문장, 뜻 열이 있는 CSV나 엑셀 파일인지 확인해주세요.');
+    } catch (_) {
+      if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -431,7 +501,35 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
             ]),
           ),
           const SizedBox(height: 24),
-          const _SectionTitle(title: '내 문장', subtitle: '최근 추가한 순서'),
+          _SectionTitle(
+              title: '내 문장',
+              subtitle: '최근 추가한 순서',
+              trailing: PopupMenuButton<String>(
+                tooltip: '가져오기·내보내기',
+                icon: const Icon(Icons.more_horiz_rounded),
+                onSelected: (value) => switch (value) {
+                  'import' => importMySentences(),
+                  'xlsx' => exportMySentences(xlsx: true),
+                  _ => exportMySentences(xlsx: false),
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                      value: 'import',
+                      child: ListTile(
+                          leading: Icon(Icons.file_download_outlined),
+                          title: Text('CSV·엑셀에서 가져오기'))),
+                  PopupMenuItem(
+                      value: 'csv',
+                      child: ListTile(
+                          leading: Icon(Icons.file_upload_outlined),
+                          title: Text('CSV로 내보내기'))),
+                  PopupMenuItem(
+                      value: 'xlsx',
+                      child: ListTile(
+                          leading: Icon(Icons.table_chart_outlined),
+                          title: Text('엑셀(xlsx)로 내보내기'))),
+                ],
+              )),
           const SizedBox(height: 10),
           ...List.generate(mySentences.length, (index) {
             final sentence = mySentences[index];
@@ -680,7 +778,7 @@ Future<void> showSentenceDetails(
   SharedSentence? shared,
   Future<void> Function(bool liked)? onSharedLike,
 }) =>
-    showModalBottomSheet<void>(
+    hideNavBarWhile(showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -695,7 +793,7 @@ Future<void> showSentenceDetails(
         shared: shared,
         onSharedLike: onSharedLike,
       ),
-    );
+    ));
 
 class _MySentenceTile extends StatelessWidget {
   const _MySentenceTile({
@@ -1043,7 +1141,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         20,
         4,
         20,
-        MediaQuery.paddingOf(context).bottom + 24,
+        MediaQuery.paddingOf(context).bottom,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

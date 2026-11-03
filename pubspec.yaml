@@ -121,6 +121,7 @@ dependencies:
   rive: ^0.13.20
   flutter_tts: ^4.2.5
   speech_to_text: ^7.4.0
+  xml: ^6.6.1
 
 # -----------------------------------------------------------
 # Dependency Overrides

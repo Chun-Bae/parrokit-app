@@ -21,6 +21,16 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/storage_transfer_sheet.dart';
 import 'package:provider/provider.dart';
 
+/// 0보다 크면 바텀 네비바를 숨긴다. 네비바가 iOS 네이티브 뷰라서 모달 시트가
+/// 덮지 못하고 위에 겹쳐 보이므로, 시트를 띄우는 동안 [hideNavBarWhile]로 숨긴다.
+final ValueNotifier<int> navBarHiddenCount = ValueNotifier<int>(0);
+
+/// [task]가 끝날 때까지 바텀 네비바를 숨긴다.
+Future<T> hideNavBarWhile<T>(Future<T> task) {
+  navBarHiddenCount.value++;
+  return task.whenComplete(() => navBarHiddenCount.value--);
+}
+
 /// 앱 메인 쉘 위젯.
 ///
 /// 바텀 네비게이션 바를 포함한 레이아웃.
@@ -63,12 +73,18 @@ class AppShell extends StatelessWidget {
       body: child,
       bottomNavigationBar: hideNav
           ? null
-          : showCollectionSelectionBar
-              ? _buildCollectionSelectionBar(context)
-              : AppBottomNavBar(
-                  currentIndex: currentIndex,
-                  onTap: (i) => _onTabTap(context, i),
-                ),
+          : ValueListenableBuilder<int>(
+              valueListenable: navBarHiddenCount,
+              builder: (context, hiddenCount, _) {
+                if (hiddenCount > 0) return const SizedBox.shrink();
+                return showCollectionSelectionBar
+                    ? _buildCollectionSelectionBar(context)
+                    : AppBottomNavBar(
+                        currentIndex: currentIndex,
+                        onTap: (i) => _onTabTap(context, i),
+                      );
+              },
+            ),
     );
   }
 

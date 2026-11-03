@@ -87,7 +87,7 @@ void main() {
   });
   testWidgets('따라 말하기는 문장과 음파만 표시하고 체크로 다음 문장으로 넘어간다', (tester) async {
     await openPreview(tester);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     expect(find.byType(BottomSheet), findsNothing);
     expect(find.byKey(microphone), findsOneWidget);
@@ -105,37 +105,51 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(currentPhrase('How was your day?'), findsOneWidget);
-    await tapTooltip(tester, '자동 모드');
+    await tapTooltip(tester, '따라 말하기 모드 끄기');
     await finishPhrase(tester);
     expect(find.byKey(complete), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
   });
-  testWidgets('일시 정지 중에는 응답 UI가 나타나지 않는다', (tester) async {
+  testWidgets('일시 정지 중에는 응답 UI를 쓸 수 없다', (tester) async {
     await openPreview(tester);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await tester.pump(const Duration(seconds: 1));
     await tapTooltip(tester, '말하기 일시 정지');
     await tester.pump(const Duration(seconds: 5));
-    expect(find.byKey(complete), findsNothing);
+    expect(tester.widget<IconButton>(find.byKey(complete)).onPressed, isNull);
     await tapTooltip(tester, '말하기 재개');
     await finishPhrase(tester);
-    expect(find.byKey(complete), findsOneWidget);
+    expect(tester.widget<IconButton>(find.byKey(complete)).onPressed, isNotNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('앵무새가 말하는 중에도 마이크를 누르면 멈추고 내 차례가 된다', (tester) async {
+    final recognizer = FakeRecognizer();
+    await openPreview(tester, recognizer: recognizer);
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(microphone), findsOneWidget);
+    await tester.ensureVisible(find.byKey(microphone));
+    await tester.tap(find.byKey(microphone));
+    await tester.pump();
+    expect(recognizer.listening, isTrue);
+    await tester.pump(const Duration(seconds: 5));
+    expect(currentPhrase('Hello there!'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('마이크 시안은 XP 없음, 체크 중복 지급 방지와 레벨 복원', (tester) async {
     SharedPreferences.setMockInitialValues(
-        {'parrokit.speaking.xp.v1.guest': 9});
+        {'parrokit.speaking.xp.v1.guest': 9.95});
     await openPreview(tester);
     await tester.pump();
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
     await tester.pump();
     expect(
         (await SharedPreferences.getInstance())
-            .getInt('parrokit.speaking.xp.v1.guest'),
-        9);
+            .getDouble('parrokit.speaking.xp.v1.guest'),
+        9.95);
     final confirm = tester.widget<IconButton>(find.byKey(complete)).onPressed!;
     confirm();
     confirm();
@@ -143,8 +157,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(
         (await SharedPreferences.getInstance())
-            .getInt('parrokit.speaking.xp.v1.guest'),
-        10);
+            .getDouble('parrokit.speaking.xp.v1.guest'),
+        10.05);
     expect(find.text('Lv.2'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await openPreview(tester);
@@ -159,7 +173,7 @@ void main() {
       tester,
       onPracticeCompleted: () async => completionCount++,
     );
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
 
     final confirm = tester.widget<IconButton>(find.byKey(complete)).onPressed!;
@@ -174,7 +188,7 @@ void main() {
 
   testWidgets('기본 문장의 앵무새 말하기와 사용자 연습 횟수를 기록한다', (tester) async {
     await openPreview(tester);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
 
     var activity = await SentenceActivityStore.load('guest', 'basic-en-001');
@@ -224,7 +238,7 @@ void main() {
   testWidgets('인식된 말이 문장과 충분히 비슷하면 자동으로 완료한다', (tester) async {
     final recognizer = FakeRecognizer();
     await openPreview(tester, recognizer: recognizer);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
@@ -236,15 +250,25 @@ void main() {
     expect(currentPhrase('Hello there!'), findsOneWidget);
     recognizer.onResult!('hello there');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('100점'), findsOneWidget);
     expect(recognizer.listening, isFalse);
+    // 통과해도 자동으로 넘어가지 않고 체크를 눌러야 넘어간다.
+    await tester.pump(const Duration(seconds: 3));
+    expect(currentPhrase('Hello there!'), findsOneWidget);
+    await tester.tap(find.byKey(complete));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(currentPhrase('How was your day?'), findsOneWidget);
+    expect(
+        (await SharedPreferences.getInstance())
+            .getDouble('parrokit.speaking.xp.v1.guest'),
+        1.0);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('인식이 끝났는데 비슷하지 않으면 다시 말하도록 안내한다', (tester) async {
     final recognizer = FakeRecognizer();
     await openPreview(tester, recognizer: recognizer);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
@@ -259,7 +283,7 @@ void main() {
   testWidgets('음성 인식을 쓸 수 없으면 안내하고 체크로 넘어갈 수 있다', (tester) async {
     final recognizer = FakeRecognizer()..available = false;
     await openPreview(tester, recognizer: recognizer);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
@@ -271,7 +295,7 @@ void main() {
   testWidgets('듣는 동안 목소리 크기에 맞춰 음파 막대 높이가 달라진다', (tester) async {
     final recognizer = FakeRecognizer();
     await openPreview(tester, recognizer: recognizer);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
@@ -311,7 +335,7 @@ void main() {
   testWidgets('인식 성공과 실패, 직접 완료가 모두 시도 기록으로 남는다', (tester) async {
     final recognizer = FakeRecognizer();
     await openPreview(tester, recognizer: recognizer);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
 
     // 1) 실패: 엉뚱한 말을 하고 인식이 끝난다.
@@ -342,7 +366,7 @@ void main() {
   });
   testWidgets('체크 버튼으로 직접 완료하면 직접 완료로 기록한다', (tester) async {
     await openPreview(tester);
-    await tapTooltip(tester, '따라 말하기 모드');
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(complete));
     await tester.tap(find.byKey(complete));
