@@ -18,7 +18,8 @@ description: >-
 - Bundle ID `com.bull.parrokit`, Team ID `X8P2QKDF7W`
 - Firebase iOS 앱 ID `1:392832464036:ios:71b3e2d9c65fa1922e6231` (`firebase.json`)
 - 워크플로 파일 `.github/workflows/ios-distribute.yml`, 러너 `macos-latest`
-- 기본 브랜치는 `dev`. `workflow_dispatch`는 기본 브랜치에 파일이 있어야 Run 버튼이 보인다.
+- 기본 브랜치는 `dev`. `workflow_dispatch`는 기본 브랜치에 파일이 있어야 웹의 Run 버튼이 보인다.
+- 실행 브랜치는 `dev`로 제한되지 않는다. 배포할 변경이 있는 브랜치를 `ref`로 골라 돌리면 되고, `dev`에 merge할 필요는 없다. 단 `dev`로 돌리면 `dev`에 있는 코드만 올라간다.
 - 앱은 CocoaPods 기반이다 (`ios/Podfile.lock`에 플러그인 Pod가 들어 있다).
 
 ## 파이프라인 순서
