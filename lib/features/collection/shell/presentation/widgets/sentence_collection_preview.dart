@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
@@ -13,6 +14,7 @@ import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
+import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'clip_sentence_matches_section.dart';
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -200,6 +202,28 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       isSaved(sentence) &&
       (activities[communityId(sentence)]?.routineEnabled ?? true);
 
+  /// 가져간 사람 수를 올린다. 세지 못해도 저장은 그대로 두고 조용히 넘어간다.
+  Future<void> countImport(SharedSentence sentence) async {
+    final repo = repository;
+    if (repo == null || accountId == 'guest' || isMine(sentence)) return;
+    try {
+      final counted = await repo.recordImport(
+        sharedId: sentence.id,
+        viewerId: accountId,
+      );
+      if (!counted || !mounted) return;
+      setState(() {
+        shared = [
+          for (final item in shared)
+            if (item.id == sentence.id)
+              item.copyWith(importCount: item.importCount + 1)
+            else
+              item,
+        ];
+      });
+    } catch (_) {/* 가져온 수만 못 올리고 문장은 저장돼 있다. */}
+  }
+
   Future<void> toggleSave(SharedSentence sentence) async {
     try {
       if (isSaved(sentence)) {
@@ -210,7 +234,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         await MySentenceStore.remove(accountId, communityId(sentence));
         if (mounted) toast('내 문장에서 뺐어요.');
       } else {
-        await MySentenceStore.add(
+        final added = await MySentenceStore.add(
           accountId,
           language: sentence.language,
           text: sentence.text,
@@ -220,6 +244,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           authorId: sentence.authorId,
           sourceSharedId: sentence.id,
         );
+        if (added) await countImport(sentence);
         if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
       }
     } catch (_) {
@@ -252,7 +277,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   Future<void> toggleParrot(SharedSentence sentence) async {
     try {
       if (!isSaved(sentence)) {
-        await MySentenceStore.add(
+        final added = await MySentenceStore.add(
           accountId,
           language: sentence.language,
           text: sentence.text,
@@ -263,6 +288,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           authorId: sentence.authorId,
           sourceSharedId: sentence.id,
         );
+        if (added) await countImport(sentence);
         // 저장하면 내 문장에 새 id가 생기니, 그 id로 루틴을 켠다.
         final saved = await MySentenceStore.findByText(
             accountId, sentence.language, sentence.text);
@@ -304,8 +330,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     }
     try {
       final dir = await getTemporaryDirectory();
-      final file = File(
-          '${dir.path}/parrokit_sentences.${xlsx ? 'xlsx' : 'csv'}');
+      final file =
+          File('${dir.path}/parrokit_sentences.${xlsx ? 'xlsx' : 'csv'}');
       if (xlsx) {
         await file.writeAsBytes(SentenceTransfer.exportXlsx(mine));
       } else {
@@ -322,6 +348,36 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
 
   /// CSV나 엑셀(xlsx) 파일에서 문장을 가져온다. 원문만 있으면 되고 뜻은 있으면 함께 넣는다.
   /// 언어 열이 없거나 비어 있으면 지금 고른 언어로 들어가고, 이미 있는 문장은 건너뛴다.
+  /// 사용자가 복사해 붙여넣은 스크립트를 문장으로 나눠 고른 문장만 내 문장에 추가한다.
+  Future<void> addFromScript() async {
+    final picked = await hideNavBarWhile(showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _ScriptImportSheet(),
+    ));
+    if (picked == null || picked.isEmpty) return;
+    try {
+      var added = 0;
+      for (final text in picked) {
+        final ok = await MySentenceStore.add(
+          accountId,
+          language: language,
+          text: text,
+          author: authorName,
+        );
+        if (ok) added++;
+      }
+      if (!mounted) return;
+      final skipped = picked.length - added;
+      toast(skipped == 0
+          ? '문장 $added개를 추가했어요.'
+          : '문장 $added개를 추가했어요. 이미 있는 $skipped개는 건너뛰었어요.');
+    } catch (_) {
+      if (mounted) toast('문장을 추가하지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
   Future<void> importMySentences() async {
     try {
       final picked = await FilePicker.platform.pickFiles(
@@ -508,11 +564,17 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                 tooltip: '가져오기·내보내기',
                 icon: const Icon(Icons.more_horiz_rounded),
                 onSelected: (value) => switch (value) {
+                  'script' => addFromScript(),
                   'import' => importMySentences(),
                   'xlsx' => exportMySentences(xlsx: true),
                   _ => exportMySentences(xlsx: false),
                 },
                 itemBuilder: (_) => const [
+                  PopupMenuItem(
+                      value: 'script',
+                      child: ListTile(
+                          leading: Icon(Icons.content_paste_rounded),
+                          title: Text('스크립트 붙여넣어 문장 만들기'))),
                   PopupMenuItem(
                       value: 'import',
                       child: ListTile(
@@ -745,6 +807,19 @@ class _SentenceCard extends StatelessWidget {
                             sentence.liked ? const Color(0xFFFF768B) : null)),
                 Text('${sentence.likeCount}',
                     style: const TextStyle(fontSize: 12)),
+                const SizedBox(width: 14),
+                Tooltip(
+                  message: '가져간 사람 수',
+                  child: Row(children: [
+                    Icon(Icons.download_rounded,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 3),
+                    Text('${sentence.importCount}',
+                        key: const ValueKey('shared-import-count'),
+                        style: const TextStyle(fontSize: 12)),
+                  ]),
+                ),
                 const Spacer(),
                 IconButton(
                     tooltip: '내 문장에 저장',
@@ -818,17 +893,37 @@ class _MySentenceTile extends StatelessWidget {
         authorName: authorName,
       );
 
-  @override
-  Widget build(BuildContext context) => Material(
-        color: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(17),
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
+  /// 최고 단계 카드의 연한 황금 그라데이션 배경. 터치 물결이 그 위에 그려지도록 Ink를 쓴다.
+  Widget _goldBackground(bool maxed, Widget child) => !maxed
+      ? child
+      : Ink(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFFBEA), Color(0xFFFFF1C9), Color(0xFFFFFAE6)],
+            ),
           ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ListTile(
+          child: child,
+        );
+
+  @override
+  Widget build(BuildContext context) {
+    final maxed = affinityOf(activity).isMax;
+    final card = Material(
+      color: maxed ? Colors.transparent : Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(maxed ? 15.5 : 17),
+        side: maxed
+            ? BorderSide.none
+            : BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: _goldBackground(
+        maxed,
+        ListTile(
           onTap: () => openDetails(context),
           title: Text(
             sentence.text,
@@ -838,12 +933,30 @@ class _MySentenceTile extends StatelessWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _MasteryBadge(mastery: masteryOf(activity)),
+              _MasteryBadge(
+                  mastery: masteryOf(activity), affinity: affinityOf(activity)),
               const Icon(Icons.chevron_right_rounded),
             ],
           ),
         ),
-      );
+      ),
+    );
+    if (!maxed) return card;
+    // 친밀도 최고 단계는 금색 그라데이션 테두리와 연한 황금빛 배경으로 표시한다.
+    return Container(
+      key: const ValueKey('sentence-card-gold'),
+      padding: const EdgeInsets.all(1.5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(17),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF7D774), Color(0xFFC9972B), Color(0xFFFFE9A0)],
+        ),
+      ),
+      child: card,
+    );
+  }
 }
 
 class _SentenceDetailSheet extends StatefulWidget {
@@ -880,11 +993,19 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   bool loading = true;
   bool changingRoutine = false;
 
+  final memoController = TextEditingController();
+  final memoFocus = FocusNode();
+  Timer? memoTimer;
+
+  /// 마지막으로 저장한 메모. 바뀐 게 없으면 다시 저장하지 않는다.
+  String savedMemo = '';
+
   /// 이 문장이 둘러보기에 공개돼 있는지. 모르면 null.
   bool? published;
   bool publishing = false;
   late bool sharedLiked = widget.shared?.liked ?? false;
   late int sharedLikes = widget.shared?.likeCount ?? 0;
+  late final int sharedImports = widget.shared?.importCount ?? 0;
 
   static const _ttsLocales = {'영어': 'en-US', '일본어': 'ja-JP', '중국어': 'zh-CN'};
   final FlutterTts tts = FlutterTts();
@@ -894,6 +1015,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   @override
   void initState() {
     super.initState();
+    memoFocus.addListener(saveMemo);
     loadActivity();
     unawaited(setupTts());
     unawaited(loadPublished());
@@ -1021,6 +1143,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   @override
   void dispose() {
+    memoTimer?.cancel();
+    memoFocus.removeListener(saveMemo);
+    // 시트를 바로 닫아도 쓰던 메모가 사라지지 않게 마지막으로 저장한다.
+    saveMemo();
+    memoController.dispose();
+    memoFocus.dispose();
     unawaited(tts.stop());
     super.dispose();
   }
@@ -1034,7 +1162,26 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     setState(() {
       activity = loaded;
       loading = false;
+      savedMemo = loaded.memo;
+      if (memoController.text.isEmpty) memoController.text = loaded.memo;
     });
+  }
+
+  void changeMemo(String _) {
+    memoTimer?.cancel();
+    memoTimer = Timer(const Duration(milliseconds: 800), saveMemo);
+  }
+
+  void saveMemo() {
+    if (loading) return;
+    final text = memoController.text.trim();
+    if (text == savedMemo) return;
+    savedMemo = text;
+    unawaited(SentenceActivityStore.setMemo(
+      widget.accountId,
+      widget.sentence.id,
+      text,
+    ).catchError((Object _) {/* 저장 실패는 화면 흐름에 영향 주지 않는다. */}));
   }
 
   Future<void> changeRoutine(bool enabled) async {
@@ -1163,7 +1310,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 ),
               ),
               const SizedBox(width: 8),
-              _MasteryBadge(mastery: masteryOf(activity)),
+              _MasteryBadge(
+                  mastery: masteryOf(activity), affinity: affinityOf(activity)),
               const Spacer(),
               IconButton(
                 key: const ValueKey('like-sentence'),
@@ -1176,8 +1324,16 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   color: liked ? const Color(0xFFFF768B) : null,
                 ),
               ),
-              if (widget.shared != null)
+              if (widget.shared != null) ...[
                 Text('$sharedLikes', style: const TextStyle(fontSize: 12)),
+                const SizedBox(width: 12),
+                Icon(Icons.download_rounded,
+                    size: 18, color: colors.onSurfaceVariant),
+                const SizedBox(width: 3),
+                Text('$sharedImports',
+                    key: const ValueKey('detail-import-count'),
+                    style: const TextStyle(fontSize: 12)),
+              ],
               IconButton(
                 tooltip: '문장 공유',
                 onPressed: shareSentence,
@@ -1246,6 +1402,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
             ),
           ],
           const SizedBox(height: 26),
+          SentenceAffinityBar(
+            key: const ValueKey('sentence-affinity'),
+            affinity: affinityOf(activity),
+            loading: loading,
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -1280,6 +1442,27 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               text:
                   '${relativeDayLabel(DateTime.now(), widget.sentence.addedAt!)} 추가',
             ),
+          if (widget.saved) ...[
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('sentence-memo'),
+              controller: memoController,
+              focusNode: memoFocus,
+              enabled: !loading,
+              minLines: 2,
+              maxLines: 5,
+              maxLength: 500,
+              textInputAction: TextInputAction.newline,
+              onChanged: changeMemo,
+              onTapOutside: (_) => memoFocus.unfocus(),
+              decoration: const InputDecoration(
+                labelText: '메모',
+                hintText: '이 문장에 대한 메모를 남겨 보세요',
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           ClipSentenceMatchesSection(sentence: widget.sentence.text),
           const SizedBox(height: 10),
@@ -1419,27 +1602,30 @@ class _SharedMessage extends StatelessWidget {
 }
 
 class _MasteryBadge extends StatelessWidget {
-  const _MasteryBadge({required this.mastery});
+  const _MasteryBadge({required this.mastery, required this.affinity});
 
   final SentenceMastery mastery;
+  final SentenceAffinity affinity;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final (background, foreground) = switch (mastery) {
-      SentenceMastery.fresh => (
-          colors.surfaceContainerHighest,
-          colors.onSurfaceVariant
-        ),
-      SentenceMastery.learning => (
-          colors.tertiaryContainer,
-          colors.onTertiaryContainer
-        ),
-      SentenceMastery.familiar => (
-          colors.primaryContainer,
-          colors.onPrimaryContainer
-        ),
-    };
+    final (background, foreground) = affinity.isMax
+        ? (const Color(0xFFFFEBB0), const Color(0xFF6B4A00))
+        : switch (mastery) {
+            SentenceMastery.fresh => (
+                colors.surfaceContainerHighest,
+                colors.onSurfaceVariant
+              ),
+            SentenceMastery.learning => (
+                colors.tertiaryContainer,
+                colors.onTertiaryContainer
+              ),
+            SentenceMastery.familiar => (
+                colors.primaryContainer,
+                colors.onPrimaryContainer
+              ),
+          };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -1447,7 +1633,7 @@ class _MasteryBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        mastery.label,
+        'Lv.${affinity.level} ${affinity.name}',
         style: TextStyle(
           color: foreground,
           fontSize: 10,
@@ -1474,6 +1660,164 @@ class _HistoryLine extends StatelessWidget {
         const SizedBox(width: 7),
         Text(text, style: TextStyle(color: color, fontSize: 12)),
       ]),
+    );
+  }
+}
+
+/// 붙여넣은 스크립트를 문장으로 나눠 보여주고, 체크한 문장만 돌려준다.
+class _ScriptImportSheet extends StatefulWidget {
+  const _ScriptImportSheet();
+
+  @override
+  State<_ScriptImportSheet> createState() => _ScriptImportSheetState();
+}
+
+class _ScriptImportSheetState extends State<_ScriptImportSheet> {
+  final input = TextEditingController();
+  List<String> sentences = [];
+  Set<int> selected = {};
+  bool split = false;
+
+  @override
+  void dispose() {
+    input.dispose();
+    super.dispose();
+  }
+
+  void runSplit() {
+    final result = ScriptSplitter.split(input.text);
+    setState(() {
+      split = true;
+      sentences = result;
+      selected = {for (var i = 0; i < result.length; i++) i};
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final height = MediaQuery.sizeOf(context).height * 0.8;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SizedBox(
+        height: height,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('스크립트로 문장 만들기',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              Container(
+                key: const ValueKey('script-notice'),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '유튜브 주소로 자막을 자동으로 가져오지는 않아요. '
+                  '영상의 \'스크립트 표시\'에서 직접 복사해 붙여넣어 주세요. '
+                  '저작권이 있는 영상의 문장은 개인 학습용으로만 쓰고 공유하지 마세요.',
+                  style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                      fontSize: 12,
+                      height: 1.4),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (!split) ...[
+                Expanded(
+                  child: TextField(
+                    key: const ValueKey('script-input'),
+                    controller: input,
+                    maxLines: null,
+                    expands: true,
+                    textAlignVertical: TextAlignVertical.top,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                      hintText: '복사한 스크립트를 여기에 붙여넣어 주세요',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const ValueKey('script-split'),
+                    onPressed: input.text.trim().isEmpty ? null : runSplit,
+                    child: const Text('문장 나누기'),
+                  ),
+                ),
+              ] else if (sentences.isEmpty) ...[
+                const Expanded(child: Center(child: Text('나눌 문장을 찾지 못했어요.'))),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => setState(() => split = false),
+                    child: const Text('다시 붙여넣기'),
+                  ),
+                ),
+              ] else ...[
+                Row(children: [
+                  Text('${selected.length} / ${sentences.length}개 선택',
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => setState(() => selected =
+                        selected.length == sentences.length
+                            ? {}
+                            : {for (var i = 0; i < sentences.length; i++) i}),
+                    child: Text(selected.length == sentences.length
+                        ? '전체 해제'
+                        : '전체 선택'),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => split = false),
+                    child: const Text('다시 붙여넣기'),
+                  ),
+                ]),
+                Expanded(
+                  child: ListView.builder(
+                    key: const ValueKey('script-sentences'),
+                    itemCount: sentences.length,
+                    itemBuilder: (context, i) => CheckboxListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: selected.contains(i),
+                      title: Text(sentences[i]),
+                      onChanged: (value) => setState(() {
+                        if (value == true) {
+                          selected.add(i);
+                        } else {
+                          selected.remove(i);
+                        }
+                      }),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const ValueKey('script-add'),
+                    onPressed: selected.isEmpty
+                        ? null
+                        : () => Navigator.pop(context, [
+                              for (final i in (selected.toList()..sort()))
+                                sentences[i],
+                            ]),
+                    child: Text('내 문장에 ${selected.length}개 추가'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

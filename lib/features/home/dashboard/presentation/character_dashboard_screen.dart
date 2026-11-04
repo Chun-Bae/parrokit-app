@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -17,7 +16,6 @@ import 'widgets/sentence_history_dashboard.dart';
 import 'widgets/today_practice_summary.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
-import 'tts_test_screen.dart';
 
 /// 성장 UI를 비교하기 위한 별도 화면. 경험치와 퀘스트는 저장되지 않는 예시다.
 class CharacterDashboardScreen extends StatefulWidget {
@@ -282,14 +280,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                         context.push(AppRoutes.classicDashboardPath),
                     child: Text('기존 대시보드 열기', style: TextStyle(color: muted)),
                   ),
-                  if (kDebugMode)
-                    TextButton(
-                      onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                              builder: (_) => const TtsTestScreen())),
-                      child: Text('TTS 테스트 (debug)',
-                          style: TextStyle(color: muted)),
-                    ),
                 ]
                     .map((child) => child is StagePreviewScreen
                         ? child

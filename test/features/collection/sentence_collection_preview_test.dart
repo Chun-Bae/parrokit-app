@@ -161,4 +161,114 @@ void main() {
         .ensureVisible(find.byKey(const ValueKey('publish-sentence-disabled')));
     expect(find.textContaining('기본 문장은 공유할 수 없어요'), findsOneWidget);
   });
+
+  testWidgets('친밀도 최고 단계 문장 카드만 금색 테두리가 된다', (tester) async {
+    for (var i = 0; i < 25; i++) {
+      await SentenceActivityStore.incrementPractice('guest', 'basic-en-001');
+    }
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sentence-card-gold')), findsOneWidget);
+    expect(find.text('Lv.5 단짝'), findsOneWidget);
+  });
+
+  testWidgets('스크립트를 붙여넣어 문장으로 나누고 고른 문장만 추가한다', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('가져오기·내보내기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('스크립트 붙여넣어 문장 만들기'));
+    await tester.pumpAndSettle();
+    // 자동으로 가져오지 않는다는 고지가 보인다.
+    expect(find.byKey(const ValueKey('script-notice')), findsOneWidget);
+    expect(find.textContaining('자동으로 가져오지는 않아요'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('script-input')),
+        '0:01\nNice to meet you!\n0:03\nWhere is the station?');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('script-split')));
+    await tester.pumpAndSettle();
+    expect(find.text('Nice to meet you!'), findsOneWidget);
+    expect(find.text('Where is the station?'), findsOneWidget);
+    await tester.tap(find.text('Where is the station?'));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('script-add')));
+    await tester.pumpAndSettle();
+    expect(find.text('Nice to meet you!', skipOffstage: false), findsOneWidget);
+    expect(
+        find.text('Where is the station?', skipOffstage: false), findsNothing);
+  });
+
+  testWidgets('문장 상세에서 메모를 쓰면 저장되고 다시 열면 보인다', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hello there!'));
+    await tester.pumpAndSettle();
+    final memo = find.byKey(const ValueKey('sentence-memo'));
+    await tester.ensureVisible(memo);
+    await tester.enterText(memo, '  인사할 때 쓰기  ');
+    await tester.pump(const Duration(seconds: 1));
+    final saved = await SentenceActivityStore.load('guest', 'basic-en-001');
+    expect(saved.memo, '인사할 때 쓰기');
+    // 지우면 메모도 사라진다.
+    await tester.enterText(memo, '');
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+        (await SentenceActivityStore.load('guest', 'basic-en-001')).memo, '');
+  });
+  testWidgets('메모는 다른 활동 기록을 지우지 않는다', (tester) async {
+    await SentenceActivityStore.incrementPractice('guest', 'basic-en-001');
+    await SentenceActivityStore.setMemo('guest', 'basic-en-001', '메모');
+    final activity = await SentenceActivityStore.load('guest', 'basic-en-001');
+    expect(activity.memo, '메모');
+    expect(activity.practiceCount, 1);
+  });
+
+  test('가져간 사람 수는 사람마다 한 번만 올라가고 원작자는 세지 않는다', () async {
+    await seedShared();
+    Future<int> count() async =>
+        ((await firestore.collection('sentences').doc('my-seed').get())
+                .data()!['importCount'] as num)
+            .toInt();
+    expect(
+        await repo.recordImport(sharedId: 'my-seed', viewerId: 'u2'), isTrue);
+    expect(await count(), 1);
+    // 같은 사람이 다시 가져가도 늘지 않는다.
+    expect(
+        await repo.recordImport(sharedId: 'my-seed', viewerId: 'u2'), isFalse);
+    expect(await count(), 1);
+    expect(
+        await repo.recordImport(sharedId: 'my-seed', viewerId: 'u3'), isTrue);
+    expect(await count(), 2);
+    // 원작자 본인은 세지 않는다.
+    expect(await repo.recordImport(sharedId: 'my-seed', viewerId: 'mina'),
+        isFalse);
+    expect(await count(), 2);
+    // 없는 문장은 세지 않는다.
+    expect(await repo.recordImport(sharedId: 'nope', viewerId: 'u2'), isFalse);
+  });
+
+  testWidgets('둘러보기 카드에 가져간 사람 수가 보인다', (tester) async {
+    await seedSentence(
+      firestore,
+      'my-popular',
+      ownerId: 'mina',
+      authorName: 'Mina',
+      text: 'See you around!',
+      translation: '또 봐요!',
+      visibility: 'public',
+      importCount: 7,
+    );
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('See you around!'), 300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const ValueKey('shared-import-count')), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+  });
 }

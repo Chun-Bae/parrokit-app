@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -165,7 +166,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
             ),
           Expanded(
             child: Text(
-              isSelectionMode ? '$selectedCount개 선택' : '콜렉션',
+              isSelectionMode ? '$selectedCount개 선택' : '보관함',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.7,
@@ -187,7 +188,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
             )
           else ...[
             IconButton.filledTonal(
-              tooltip: '콜렉션 검색',
+              tooltip: '보관함 검색',
               onPressed: () => _showSearchSheet(context),
               icon: const Icon(Icons.search_rounded),
             ),
@@ -376,7 +377,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Future<void> _showSearchSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
+    await hideNavBarWhile(showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => Padding(
@@ -402,7 +403,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
             ),
             const SizedBox(height: 20),
             Text(
-              '콜렉션 검색',
+              '보관함 검색',
               style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -419,13 +420,12 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           ],
         ),
       ),
-    );
+    ));
   }
 
   /// 문장 탭의 + 버튼과 같은 문장 추가 화면을 연다.
   Future<void> _addSentence(BuildContext context) async {
-    final accountId =
-        context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+    final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
     final messenger = ScaffoldMessenger.of(context);
     try {
       final result = await addSentenceFlow(
@@ -435,8 +435,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       );
       if (result == null) return;
       messenger.showSnackBar(SnackBar(
-          content: Text(
-              result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.')));
+          content:
+              Text(result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.')));
     } catch (_) {
       messenger.showSnackBar(
           const SnackBar(content: Text('문장을 저장하지 못했어요. 다시 시도해주세요.')));
@@ -444,7 +444,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Future<void> _showAddSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
+    await hideNavBarWhile(showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
@@ -495,7 +495,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

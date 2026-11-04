@@ -74,8 +74,8 @@ class QuickActionsSection extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             QuickActionButton(
-              label: '콜렉션',
-              icon: Icons.bookmarks_rounded,
+              label: '보관함',
+              icon: Icons.inventory_2_rounded,
               cardBg: cardBg,
               subtle: subtle,
               textPrimary: textPrimary,

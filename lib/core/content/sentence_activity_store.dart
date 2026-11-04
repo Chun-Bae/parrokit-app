@@ -11,6 +11,7 @@ class SentenceActivity {
     this.lastPracticedAt,
     this.routineEnabled = true,
     this.liked = false,
+    this.memo = '',
   });
 
   final int parrotSpeakCount;
@@ -26,6 +27,9 @@ class SentenceActivity {
   /// 이 문장에 좋아요를 눌렀는지. 서버가 없어서 이 기기에만 저장한다.
   final bool liked;
 
+  /// 이 문장에 대한 내 메모. 이 기기에만 저장한다.
+  final String memo;
+
   SentenceActivity copyWith({
     int? parrotSpeakCount,
     int? practiceCount,
@@ -33,6 +37,7 @@ class SentenceActivity {
     DateTime? lastPracticedAt,
     bool? routineEnabled,
     bool? liked,
+    String? memo,
   }) =>
       SentenceActivity(
         parrotSpeakCount: parrotSpeakCount ?? this.parrotSpeakCount,
@@ -41,6 +46,7 @@ class SentenceActivity {
         lastPracticedAt: lastPracticedAt ?? this.lastPracticedAt,
         routineEnabled: routineEnabled ?? this.routineEnabled,
         liked: liked ?? this.liked,
+        memo: memo ?? this.memo,
       );
 
   Map<String, Object> toJson() => {
@@ -51,6 +57,7 @@ class SentenceActivity {
         'listenCount': listenCount,
         'routineEnabled': routineEnabled,
         if (liked) 'liked': true,
+        if (memo.isNotEmpty) 'memo': memo,
       };
 
   factory SentenceActivity.fromJson(Object? value) {
@@ -68,6 +75,7 @@ class SentenceActivity {
       },
       routineEnabled: value['routineEnabled'] as bool? ?? true,
       liked: value['liked'] as bool? ?? false,
+      memo: value['memo'] as String? ?? '',
     );
   }
 }
@@ -165,6 +173,18 @@ class SentenceActivityStore {
         accountId,
         sentenceId,
         (activity) => activity.copyWith(liked: liked),
+      );
+
+  /// 빈 문자열이면 메모를 지운다.
+  static Future<void> setMemo(
+    String accountId,
+    String sentenceId,
+    String memo,
+  ) =>
+      _update(
+        accountId,
+        sentenceId,
+        (activity) => activity.copyWith(memo: memo.trim()),
       );
 
   static Future<void> _update(

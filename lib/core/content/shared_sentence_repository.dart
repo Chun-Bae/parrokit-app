@@ -14,6 +14,7 @@ class SharedSentence {
     required this.authorId,
     required this.authorName,
     required this.likeCount,
+    this.importCount = 0,
     this.liked = false,
     this.createdAt,
   });
@@ -30,11 +31,15 @@ class SharedSentence {
   final String authorName;
   final int likeCount;
 
+  /// 이 문장을 내 문장으로 가져간 사람 수. 사람마다 한 번만 센다.
+  final int importCount;
+
   /// 지금 보는 사람이 좋아요를 눌렀는지.
   final bool liked;
   final DateTime? createdAt;
 
-  SharedSentence copyWith({int? likeCount, bool? liked}) => SharedSentence(
+  SharedSentence copyWith({int? likeCount, int? importCount, bool? liked}) =>
+      SharedSentence(
         id: id,
         language: language,
         text: text,
@@ -44,6 +49,7 @@ class SharedSentence {
         authorId: authorId,
         authorName: authorName,
         likeCount: likeCount ?? this.likeCount,
+        importCount: importCount ?? this.importCount,
         liked: liked ?? this.liked,
         createdAt: createdAt,
       );
@@ -69,6 +75,13 @@ abstract class SharedSentenceRepository {
   Future<void> unpublish({required String sentenceId});
 
   Future<bool> isPublished({required String sentenceId});
+
+  /// [viewerId]가 이 문장을 내 문장으로 가져갔다고 세어 둔다.
+  /// 같은 사람이 다시 가져가거나 내가 쓴 문장이면 세지 않고 false를 돌려준다.
+  Future<bool> recordImport({
+    required String sharedId,
+    required String viewerId,
+  });
 
   /// 좋아요를 켜거나 끈다. 이미 그 상태면 개수를 바꾸지 않는다.
   Future<void> setLiked({
@@ -96,6 +109,16 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
           .collection('users')
           .doc(viewerId)
           .collection('sentence_likes')
+          .doc(sharedId);
+
+  DocumentReference<Map<String, dynamic>> _import(
+    String viewerId,
+    String sharedId,
+  ) =>
+      _firestore
+          .collection('users')
+          .doc(viewerId)
+          .collection('sentence_imports')
           .doc(sharedId);
 
   @override
@@ -151,6 +174,7 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
         authorId: data['authorId'] as String? ?? '',
         authorName: data['authorName'] as String? ?? '',
         likeCount: (data['likeCount'] as num?)?.toInt() ?? 0,
+        importCount: (data['importCount'] as num?)?.toInt() ?? 0,
         liked: liked,
         createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       );
@@ -166,14 +190,32 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
       });
 
   @override
-  Future<void> unpublish({required String sentenceId}) =>
-      _shared.doc(sentenceId).update({'visibility': SentenceCloudStore.private});
+  Future<void> unpublish({required String sentenceId}) => _shared
+      .doc(sentenceId)
+      .update({'visibility': SentenceCloudStore.private});
 
   @override
   Future<bool> isPublished({required String sentenceId}) async {
     final doc = await _shared.doc(sentenceId).get();
     return doc.data()?['visibility'] == SentenceCloudStore.public;
   }
+
+  @override
+  Future<bool> recordImport({
+    required String sharedId,
+    required String viewerId,
+  }) =>
+      _firestore.runTransaction((tx) async {
+        final importRef = _import(viewerId, sharedId);
+        final sharedRef = _shared.doc(sharedId);
+        final shared = await tx.get(sharedRef);
+        final data = shared.data();
+        if (data == null || data['authorId'] == viewerId) return false;
+        if ((await tx.get(importRef)).exists) return false;
+        tx.set(importRef, {'at': FieldValue.serverTimestamp()});
+        tx.update(sharedRef, {'importCount': FieldValue.increment(1)});
+        return true;
+      });
 
   @override
   Future<void> setLiked({

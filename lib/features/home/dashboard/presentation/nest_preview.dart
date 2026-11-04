@@ -47,7 +47,7 @@ class _NestPreviewState extends State<NestPreview>
         codec.dispose();
       }
     } catch (_) {
-      // 파일을 읽지 못하면 기존 코드 그림을 표시한다.
+      // 파일을 읽지 못하면 앵무새 없이 둥지만 그린다.
     }
   }
 
@@ -327,65 +327,6 @@ class NestScenePainter extends CustomPainter {
         destination,
         Paint()..filterQuality = FilterQuality.medium,
       );
-    } else {
-      // 꼬리, 몸, 날개.
-      final tail = Path()
-        ..moveTo(23, 171)
-        ..quadraticBezierTo(66, 179, 64, 214)
-        ..quadraticBezierTo(31, 205, 17, 191)
-        ..close();
-      canvas.drawPath(tail, Paint()..color = const Color(0xFF79A9A4));
-      oval(const Rect.fromLTWH(-42, 123, 84, 80), const Color(0xFF91BEB0));
-      oval(const Rect.fromLTWH(-29, 142, 59, 58), const Color(0xFFD7E5C4));
-      canvas.save();
-      canvas.translate(-29, 157);
-      canvas.rotate(-0.22 - bounce * 0.025);
-      oval(const Rect.fromLTWH(-12, -12, 23, 43), const Color(0xFF78A99D));
-      canvas.restore();
-      // 얼굴을 조금 돌리고 눈동자만 옮겨 두리번거린다.
-      final look = math.sin(phase * math.pi * 2);
-      canvas.save();
-      canvas.translate(0, 123);
-      canvas.rotate(look * 0.045);
-      canvas.translate(0, -123);
-      oval(const Rect.fromLTWH(-45, 76, 90, 81), const Color(0xFFA6CCB9));
-      final crest = Path()
-        ..moveTo(-13, 83)
-        ..quadraticBezierTo(-20, 57, -4, 62)
-        ..quadraticBezierTo(4, 65, 4, 78)
-        ..quadraticBezierTo(11, 59, 19, 68)
-        ..lineTo(19, 85)
-        ..close();
-      canvas.drawPath(crest, Paint()..color = const Color(0xFF91BEB0));
-      final blink =
-          (phase > 0.23 && phase < 0.245) || (phase > 0.72 && phase < 0.735);
-      for (final x in [-19.0, 19.0]) {
-        if (blink || joy > 0) {
-          final eye = Path()
-            ..moveTo(x - 5, 112)
-            ..quadraticBezierTo(x, joy > 0 ? 105 : 116, x + 5, 112);
-          canvas.drawPath(
-              eye,
-              Paint()
-                ..color = const Color(0xFF3E5D57)
-                ..style = PaintingStyle.stroke
-                ..strokeWidth = 2.5
-                ..strokeCap = StrokeCap.round);
-        } else {
-          oval(Rect.fromLTWH(x - 6, 103, 12, 17), const Color(0xFFFFFEF7));
-          oval(Rect.fromLTWH(x - 3 + look * 2, 107, 6, 9),
-              const Color(0xFF3E5D57));
-        }
-        oval(Rect.fromLTWH(x - 7, 124, 14, 6),
-            const Color(0xFFE8C5AE).withValues(alpha: 0.75));
-      }
-      final beak = Path()
-        ..moveTo(-7, 119)
-        ..quadraticBezierTo(0, 113, 8, 119)
-        ..quadraticBezierTo(5, 132, 0, 134)
-        ..close();
-      canvas.drawPath(beak, Paint()..color = const Color(0xFFE2B373));
-      canvas.restore();
     }
     canvas.restore();
     if (joy > 0) {

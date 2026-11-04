@@ -20,6 +20,51 @@ SentenceMastery masteryOf(SentenceActivity activity) {
   return SentenceMastery.familiar;
 }
 
+/// 문장별 친밀도. 숙련도와 같은 점수(청취 1점, 따라 말하기 2점)로 계산하고 따로 저장하지 않는다.
+/// 한 번 오른 단계는 내려가지 않는다.
+class SentenceAffinity {
+  const SentenceAffinity._(
+      this.level, this.name, this.points, this.floor, this.next);
+
+  /// 1부터 시작하는 단계.
+  final int level;
+  final String name;
+  final int points;
+
+  /// 이 단계가 시작되는 점수와 다음 단계가 시작되는 점수. 마지막 단계면 [next]는 null.
+  final int floor;
+  final int? next;
+
+  bool get isMax => next == null;
+
+  /// 다음 단계까지 진행률(0~1). 마지막 단계는 1.
+  double get progress =>
+      next == null ? 1 : ((points - floor) / (next! - floor)).clamp(0.0, 1.0);
+
+  static const _steps = [
+    (0, '첫 만남'),
+    (3, '낯익음'),
+    (10, '친해지는 중'),
+    (25, '친구'),
+    (50, '단짝'),
+  ];
+
+  static const maxLevel = 5;
+}
+
+SentenceAffinity affinityOf(SentenceActivity activity) {
+  final points = activity.listenCount + activity.practiceCount * 2;
+  var index = 0;
+  for (var i = 0; i < SentenceAffinity._steps.length; i++) {
+    if (points >= SentenceAffinity._steps[i].$1) index = i;
+  }
+  final step = SentenceAffinity._steps[index];
+  final next = index + 1 < SentenceAffinity._steps.length
+      ? SentenceAffinity._steps[index + 1].$1
+      : null;
+  return SentenceAffinity._(index + 1, step.$2, points, step.$1, next);
+}
+
 /// "오늘", "어제", "N일 전" 형태로 날짜 차이를 표현한다.
 String relativeDayLabel(DateTime now, DateTime then) {
   final days = DateTime(now.year, now.month, now.day)

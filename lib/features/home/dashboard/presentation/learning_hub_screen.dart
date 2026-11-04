@@ -176,7 +176,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
           destination(Icons.swipe_up_rounded, '쇼츠로 발견하기',
               '짧은 영상을 넘기며 마음에 드는 표현 찾기', AppRoutes.explorePath),
           destination(Icons.video_library_outlined, '동영상별로 보기',
-              '콜렉션에서 영상과 학습 클립 찾아보기', AppRoutes.collectionPath),
+              '보관함에서 영상과 학습 클립 찾아보기', AppRoutes.collectionPath),
           destination(Icons.people_outline_rounded, '함께 나눈 영상 보기',
               '내가 공유하거나 다른 사람이 공유한 영상', null),
         ],

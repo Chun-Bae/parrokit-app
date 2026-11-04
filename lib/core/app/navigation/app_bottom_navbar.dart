@@ -39,7 +39,7 @@ class AppBottomNavBar extends StatelessWidget {
         NativeGlassNavBarItem(label: '쇼츠', symbol: 'play.rectangle.fill'),
         NativeGlassNavBarItem(label: '커뮤니티', symbol: 'person.2.fill'),
         NativeGlassNavBarItem(label: '홈', symbol: 'house.fill'),
-        NativeGlassNavBarItem(label: '콜렉션', symbol: 'bookmark.fill'),
+        NativeGlassNavBarItem(label: '보관함', symbol: 'archivebox.fill'),
         NativeGlassNavBarItem(label: '더보기', symbol: 'ellipsis'),
       ],
       fallback: _GlassFallbackNavBar(
@@ -67,7 +67,7 @@ class _GlassFallbackNavBar extends StatelessWidget {
       (Icons.slow_motion_video, '쇼츠'),
       (Icons.people, '커뮤니티'),
       (Icons.home_rounded, '홈'),
-      (Icons.bookmarks, '콜렉션'),
+      (Icons.inventory_2_rounded, '보관함'),
       (Icons.more_horiz, '더보기'),
     ];
 

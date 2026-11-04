@@ -119,7 +119,8 @@ void main() {
     expect(tester.widget<IconButton>(find.byKey(complete)).onPressed, isNull);
     await tapTooltip(tester, '말하기 재개');
     await finishPhrase(tester);
-    expect(tester.widget<IconButton>(find.byKey(complete)).onPressed, isNotNull);
+    expect(
+        tester.widget<IconButton>(find.byKey(complete)).onPressed, isNotNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('앵무새가 말하는 중에도 마이크를 누르면 멈추고 내 차례가 된다', (tester) async {
@@ -395,6 +396,83 @@ void main() {
         (await SharedPreferences.getInstance())
             .getBool('parrokit.speaking.count_listen.v1.guest'),
         isFalse);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('재생 순서 버튼은 누를 때마다 순서대로, 하나 반복, 랜덤으로 바뀐다', (tester) async {
+    await openPreview(tester);
+    expect(find.byTooltip('재생 순서: 순서대로'), findsOneWidget);
+    await tapTooltip(tester, '재생 순서: 순서대로');
+    expect(find.byTooltip('재생 순서: 하나 반복'), findsOneWidget);
+    await tapTooltip(tester, '재생 순서: 하나 반복');
+    expect(find.byTooltip('재생 순서: 랜덤'), findsOneWidget);
+    await tapTooltip(tester, '재생 순서: 랜덤');
+    expect(find.byTooltip('재생 순서: 순서대로'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('하나 반복은 같은 문장을 계속 보여준다', (tester) async {
+    await openPreview(tester);
+    await tapTooltip(tester, '재생 순서: 순서대로');
+    await finishPhrase(tester);
+    await finishPhrase(tester);
+    expect(currentPhrase('Hello there!'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('랜덤은 방금 본 문장을 바로 다시 고르지 않는다', (tester) async {
+    await openPreview(tester);
+    await tapTooltip(tester, '재생 순서: 순서대로');
+    await tapTooltip(tester, '재생 순서: 하나 반복');
+    await finishPhrase(tester);
+    expect(currentPhrase('Hello there!'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('다음 문장과 이전 문장 버튼으로 바로 넘어간다', (tester) async {
+    await openPreview(tester);
+    await tester.pump();
+    expect(currentPhrase('Hello there!'), findsOneWidget);
+    await tapTooltip(tester, '다음 문장');
+    await tester.pump();
+    expect(currentPhrase('How was your day?'), findsOneWidget);
+    await tapTooltip(tester, '이전 문장');
+    await tester.pump();
+    expect(currentPhrase('Hello there!'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('하나 반복 중에도 다음 문장 버튼은 다음 문장으로 간다', (tester) async {
+    await openPreview(tester);
+    await tapTooltip(tester, '재생 순서: 순서대로');
+    await tapTooltip(tester, '다음 문장');
+    await tester.pump();
+    expect(currentPhrase('Hello there!'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('따라 말하기 중에는 그 문장의 친밀도 게이지가 보이고 완료하면 올라간다', (tester) async {
+    await openPreview(tester);
+    expect(find.byKey(const ValueKey('repeat-affinity')), findsNothing);
+    await tapTooltip(tester, '따라 말하기 모드 켜기');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('repeat-affinity')), findsOneWidget);
+    expect(find.text('Lv.1 첫 만남'), findsOneWidget);
+    expect(find.text('3점 남음'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(complete));
+    await tester.tap(find.byKey(complete));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byTooltip('이전 문장'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('1점 남음'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('문장 목록에서 고른 문장으로 바로 이동한다', (tester) async {
+    await openPreview(tester);
+    await tester.pump();
+    await tapTooltip(tester, '문장 목록');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('phrase-list')), findsOneWidget);
+    await tester.tap(find.text('How was your day?'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('phrase-list')), findsNothing);
+    expect(currentPhrase('How was your day?'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 }

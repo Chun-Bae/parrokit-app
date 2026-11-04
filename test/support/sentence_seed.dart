@@ -14,6 +14,7 @@ Future<void> seedSentence(
   String topic = '내 문장',
   String visibility = 'private',
   int likeCount = 0,
+  int importCount = 0,
   String sourceSharedId = '',
   DateTime? createdAt,
 }) =>
@@ -28,6 +29,7 @@ Future<void> seedSentence(
       'topic': topic,
       'visibility': visibility,
       'likeCount': likeCount,
+      'importCount': importCount,
       'createdAt': Timestamp.fromDate(createdAt ?? DateTime.now()),
       if (sourceSharedId.isNotEmpty) 'sourceSharedId': sourceSharedId,
     });

@@ -22,4 +22,17 @@ void main() {
     expect(relativeDayLabel(now, DateTime(2026, 10, 27, 23)), '어제');
     expect(relativeDayLabel(now, DateTime(2026, 10, 25)), '3일 전');
   });
+
+  test('친밀도는 청취 1점, 따라 말하기 2점으로 단계가 오른다', () {
+    expect(affinityOf(const SentenceActivity()).level, 1);
+    expect(affinityOf(const SentenceActivity(listenCount: 3)).level, 2);
+    expect(affinityOf(const SentenceActivity(practiceCount: 5)).level, 3);
+    final mid = affinityOf(const SentenceActivity(listenCount: 6));
+    expect(mid.level, 2);
+    expect(mid.progress, closeTo(3 / 7, 1e-9));
+    final max = affinityOf(const SentenceActivity(practiceCount: 25));
+    expect(max.level, SentenceAffinity.maxLevel);
+    expect(max.isMax, isTrue);
+    expect(max.progress, 1);
+  });
 }

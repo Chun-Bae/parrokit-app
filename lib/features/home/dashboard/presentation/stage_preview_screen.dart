@@ -6,19 +6,35 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/learning_languages.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
+import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
+import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'package:parrokit/core/speech/phrase_recognizer.dart';
 import 'package:parrokit/core/speech/speech_match.dart';
 import 'add_sentence_screen.dart';
 import 'nest_preview.dart';
 
 enum _SpeakingMode { automatic, repeat }
+
+/// 다음 문장을 고르는 방식. 버튼을 누를 때마다 순서대로 → 하나 반복 → 랜덤 순으로 바뀐다.
+enum _PlayOrder {
+  sequential('순서대로', Icons.repeat_rounded),
+  repeatOne('하나 반복', Icons.repeat_one_rounded),
+  shuffle('랜덤', Icons.shuffle_rounded);
+
+  const _PlayOrder(this.label, this.icon);
+  final String label;
+  final IconData icon;
+
+  _PlayOrder get next => values[(index + 1) % values.length];
+}
 
 /// 앵무새의 자동 말하기와 따라 말하기 흐름을 확인하는 시안.
 /// 기존 경로 호환을 위해 화면 이름은 유지한다.
@@ -102,6 +118,33 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   final _ttsLocaleAvailable = <String, bool>{};
   static const _ttsLocales = {'영어': 'en-US', '일본어': 'ja-JP', '중국어': 'zh-CN'};
   int phraseIndex = 0;
+  _PlayOrder playOrder = _PlayOrder.sequential;
+  final math.Random _random = math.Random();
+
+  /// 같은 문장을 다시 보여줄 때도 응답 UI가 새로 시작되도록 문장이 넘어갈 때마다 오른다.
+  int phraseRound = 0;
+
+  /// 지나온 문장 번호. 이전 문장 버튼이 랜덤 재생에서도 방금 본 문장으로 돌아가게 한다.
+  final List<int> phraseHistory = [];
+
+  /// 재생 방식에 맞는 다음 문장 번호. 랜덤은 방금 문장을 피한다.
+  /// [skip]이면 하나 반복에서도 다음 문장으로 넘어간다.
+  int nextPhraseIndex({bool skip = false}) {
+    final count = phrases.length;
+    phraseRound++;
+    phraseHistory.add(phraseIndex);
+    if (phraseHistory.length > 100) phraseHistory.removeAt(0);
+    return switch (skip && playOrder == _PlayOrder.repeatOne
+        ? _PlayOrder.sequential
+        : playOrder) {
+      _PlayOrder.sequential => (phraseIndex + 1) % count,
+      _PlayOrder.repeatOne => phraseIndex % count,
+      _PlayOrder.shuffle => count <= 1
+          ? 0
+          : (phraseIndex % count + 1 + _random.nextInt(count - 1)) % count,
+    };
+  }
+
   double totalXp = 0;
   bool xpReady = false;
   List<String> customPhrases = [];
@@ -257,6 +300,16 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
 
   void handleRoutineChanged() => unawaited(loadRoutineSettings());
 
+  /// 문장별 활동 기록. 따라 말하는 문장의 친밀도 게이지에 쓴다.
+  Map<String, SentenceActivity> activities = {};
+
+  Future<void> loadActivities() async {
+    try {
+      final loaded = await SentenceActivityStore.loadAll(widget.accountId);
+      if (mounted) setState(() => activities = loaded);
+    } catch (_) {/* 게이지만 비어 보이고 연습은 그대로 된다. */}
+  }
+
   Future<void> loadCustomPhrases() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -271,6 +324,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     SentenceActivityStore.revision.addListener(handleRoutineChanged);
+    SentenceActivityStore.activityRevision.addListener(loadActivities);
+    unawaited(loadActivities());
     unawaited(loadSprite());
     unawaited(loadXp());
     unawaited(loadCustomPhrases());
@@ -427,7 +482,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       } finally {
         codec.dispose();
       }
-    } catch (_) {/* 파일이 없으면 코드 그림을 표시한다. */}
+    } catch (_) {/* 파일이 없으면 앵무새 없이 배경만 그린다. */}
   }
 
   @override
@@ -444,6 +499,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.language != widget.language) {
       phraseIndex = 0;
+      phraseHistory.clear();
       awaitingResponse = false;
       customPhrases = [];
       pendingAdvance = false;
@@ -527,7 +583,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       if (mode == _SpeakingMode.repeat) {
         awaitingResponse = true;
       } else {
-        phraseIndex = (phraseIndex + 1) % phrases.length;
+        phraseIndex = nextPhraseIndex();
       }
     });
     syncPlayback();
@@ -539,6 +595,97 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     stopTts();
     pendingAdvance = false;
     finishPhrase();
+  }
+
+  /// 음악 플레이어처럼 다음/이전 문장으로 바로 넘어간다.
+  void skipPhrase({required bool forward}) {
+    if (completingResponse || !mounted) return;
+    final count = phrases.length;
+    stopTts();
+    pendingAdvance = false;
+    setState(() {
+      awaitingResponse = false;
+      if (forward) {
+        phraseIndex = nextPhraseIndex(skip: true);
+      } else {
+        phraseRound++;
+        phraseIndex = phraseHistory.isNotEmpty
+            ? phraseHistory.removeLast() % count
+            : (phraseIndex % count - 1 + count) % count;
+      }
+    });
+    animation.reset();
+    syncPlayback();
+  }
+
+  /// 목록에서 고른 문장으로 바로 이동한다.
+  void jumpToPhrase(int index) {
+    if (completingResponse || !mounted) return;
+    stopTts();
+    pendingAdvance = false;
+    phraseHistory.add(phraseIndex);
+    if (phraseHistory.length > 100) phraseHistory.removeAt(0);
+    setState(() {
+      awaitingResponse = false;
+      phraseRound++;
+      phraseIndex = index;
+    });
+    animation.reset();
+    syncPlayback();
+  }
+
+  /// 지금 나오는 문장들을 목록으로 열고, 고른 문장을 바로 듣거나 따라 말한다.
+  Future<void> pickPhrase() async {
+    if (!hasSpeakablePhrase) return;
+    final list = phrases;
+    final current = phraseIndex % list.length;
+    final picked = await hideNavBarWhile(showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        builder: (context, controller) => Column(children: [
+          const Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('문장 목록',
+                      style: TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w800)))),
+          Expanded(
+              child: ListView.builder(
+                  key: const ValueKey('phrase-list'),
+                  controller: controller,
+                  itemCount: list.length,
+                  itemBuilder: (context, i) {
+                    final sentence = sentenceForPhrase(list[i]);
+                    final level = sentence == null
+                        ? null
+                        : affinityOf(activities[sentence.id] ??
+                                const SentenceActivity())
+                            .level;
+                    return ListTile(
+                      selected: i == current,
+                      leading: i == current
+                          ? const Icon(Icons.volume_up_rounded)
+                          : Text('${i + 1}'),
+                      title: Text(list[i]),
+                      subtitle: sentence == null || sentence.translation.isEmpty
+                          ? null
+                          : Text(sentence.translation,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                      trailing: level == null ? null : Text('Lv.$level'),
+                      onTap: () => Navigator.pop(context, i),
+                    );
+                  })),
+        ]),
+      ),
+    ));
+    if (picked != null) jumpToPhrase(picked);
   }
 
   void changeMode(_SpeakingMode next) {
@@ -593,7 +740,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       if (!mounted) return;
       setState(() {
         awaitingResponse = false;
-        phraseIndex = (phraseIndex + 1) % phrases.length;
+        phraseIndex = nextPhraseIndex();
       });
       animation.reset();
     } finally {
@@ -659,6 +806,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     SentenceActivityStore.revision.removeListener(handleRoutineChanged);
+    SentenceActivityStore.activityRevision.removeListener(loadActivities);
     stopTts();
     typing.dispose();
     animation.dispose();
@@ -720,7 +868,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
             const SizedBox(height: 6),
             Align(
                 alignment: Alignment.centerRight,
-                child: Text(xpReady ? '${xpText(totalXp % 10)} / 10 XP' : 'XP 불러오는 중…',
+                child: Text(
+                    xpReady ? '${xpText(totalXp % 10)} / 10 XP' : 'XP 불러오는 중…',
                     style: const TextStyle(color: muted, fontSize: 11))),
           ])),
       Container(
@@ -842,6 +991,36 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                           onTap: () => setListenMode(!listenMode)),
                       const SizedBox(width: 4),
                       _GameMenuButton(
+                          key: const ValueKey('play-order'),
+                          dimension: 40,
+                          label: '재생 순서: ${playOrder.label}',
+                          icon: playOrder.icon,
+                          selected: playOrder != _PlayOrder.sequential,
+                          onTap: () =>
+                              setState(() => playOrder = playOrder.next)),
+                      const SizedBox(width: 4),
+                      _GameMenuButton(
+                          key: const ValueKey('previous-phrase'),
+                          dimension: 40,
+                          label: '이전 문장',
+                          icon: Icons.skip_previous_rounded,
+                          onTap: () => skipPhrase(forward: false)),
+                      const SizedBox(width: 4),
+                      _GameMenuButton(
+                          key: const ValueKey('next-phrase'),
+                          dimension: 40,
+                          label: '다음 문장',
+                          icon: Icons.skip_next_rounded,
+                          onTap: () => skipPhrase(forward: true)),
+                      const SizedBox(width: 4),
+                      _GameMenuButton(
+                          key: const ValueKey('phrase-list-button'),
+                          dimension: 40,
+                          label: '문장 목록',
+                          icon: Icons.queue_music_rounded,
+                          onTap: pickPhrase),
+                      const SizedBox(width: 4),
+                      _GameMenuButton(
                           dimension: 40,
                           label: '쇼츠 학습',
                           icon: Icons.smart_display_rounded,
@@ -868,16 +1047,26 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       if (awaitingResponse || mode == _SpeakingMode.repeat)
         Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-            child: _SpeechWavePreview(
-                key: ValueKey('${widget.language}-$phraseIndex'),
-                phrase: phrase,
-                localeId: _speechLocales[widget.language] ?? 'en_US',
-                recognizer: recognizer,
-                enabled: !completingResponse && !paused,
-                reduceMotion: reduceMotion,
-                onAttempt: recordAttempt,
-                onBeforeStart: interruptParrot,
-                onComplete: completeRepeat)),
+            child: Column(children: [
+              if (sentenceForPhrase(phrase) case final sentence?) ...[
+                SentenceAffinityBar(
+                    key: const ValueKey('repeat-affinity'),
+                    affinity: affinityOf(
+                        activities[sentence.id] ?? const SentenceActivity()),
+                    compact: true),
+                const SizedBox(height: 14),
+              ],
+              _SpeechWavePreview(
+                  key: ValueKey('${widget.language}-$phraseIndex-$phraseRound'),
+                  phrase: phrase,
+                  localeId: _speechLocales[widget.language] ?? 'en_US',
+                  recognizer: recognizer,
+                  enabled: !completingResponse && !paused,
+                  reduceMotion: reduceMotion,
+                  onAttempt: recordAttempt,
+                  onBeforeStart: interruptParrot,
+                  onComplete: completeRepeat),
+            ])),
       const SizedBox(height: 16),
       const SizedBox(height: 16),
     ]);
@@ -1100,9 +1289,8 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
         Text('${(score * 100).round()}점',
             key: const ValueKey('speech-score'),
             style: TextStyle(
-                color: score >= speechPassScore
-                    ? active
-                    : const Color(0xFF607482),
+                color:
+                    score >= speechPassScore ? active : const Color(0xFF607482),
                 fontSize: 18,
                 fontWeight: FontWeight.w800)),
       ],
@@ -1217,7 +1405,8 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
                   divisions: 19,
                   label: '${gap.toStringAsFixed(1)}초',
                   onChanged: (value) => setState(() => gap = value)),
-              const Text('앵무새가 문장을 다 말한 뒤 다음 문장으로 넘어가기 전에 쉬는 시간이에요. 따라 말하기 모드에서는 적용되지 않아요.',
+              const Text(
+                  '앵무새가 문장을 다 말한 뒤 다음 문장으로 넘어가기 전에 쉬는 시간이에요. 따라 말하기 모드에서는 적용되지 않아요.',
                   style: TextStyle(color: Color(0xFF61758D), fontSize: 12)),
               const SizedBox(height: 8),
               SwitchListTile(
@@ -1405,11 +1594,7 @@ class _HomeHelpDialog extends StatelessWidget {
           '앵무새 목소리를 켜고 끕니다. 듣기 모드와 함께 켜져 있어야 문장을 읽어줘요.'
         ),
         (Icons.add_comment_rounded, '문장 추가', '내가 연습할 문장을 직접 추가합니다.'),
-        (
-          Icons.tune_rounded,
-          '문장 설정',
-          '언어별로 앵무새가 말할 문장을 고릅니다.'
-        ),
+        (Icons.tune_rounded, '문장 설정', '언어별로 앵무새가 말할 문장을 고릅니다.'),
         (Icons.calendar_month_rounded, '학습 기록', '준비 중이에요.'),
       ]
     ),
@@ -1420,11 +1605,7 @@ class _HomeHelpDialog extends StatelessWidget {
         (Icons.checkroom_rounded, '꾸미기', '준비 중이에요.'),
         (Icons.backpack_rounded, '보관함', '준비 중이에요.'),
         (Icons.emoji_events_rounded, '도전 과제', '준비 중이에요.'),
-        (
-          Icons.settings_rounded,
-          '설정',
-          '앵무새 말하기 간격과 들은 횟수 기록 여부를 정합니다.'
-        ),
+        (Icons.settings_rounded, '설정', '앵무새 말하기 간격과 들은 횟수 기록 여부를 정합니다.'),
       ]
     ),
     (
@@ -1435,18 +1616,10 @@ class _HomeHelpDialog extends StatelessWidget {
           '따라 말하기 모드',
           '앵무새가 말한 문장을 마이크로 따라 말하고 점수를 받습니다.'
         ),
-        (
-          Icons.headphones_rounded,
-          '듣기 모드',
-          '켜면 앵무새가 문장을 소리 내어 읽어줍니다.'
-        ),
+        (Icons.headphones_rounded, '듣기 모드', '켜면 앵무새가 문장을 소리 내어 읽어줍니다.'),
         (Icons.smart_display_rounded, '쇼츠 학습', '준비 중이에요.'),
         (Icons.groups_rounded, '공유 영상', '준비 중이에요.'),
-        (
-          Icons.pause_rounded,
-          '일시 정지 / 재개',
-          '앵무새 말하기를 잠시 멈추거나 다시 시작합니다.'
-        ),
+        (Icons.pause_rounded, '일시 정지 / 재개', '앵무새 말하기를 잠시 멈추거나 다시 시작합니다.'),
       ]
     ),
   ];
@@ -1495,8 +1668,7 @@ class _HomeHelpDialog extends StatelessWidget {
                 ]))),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('닫기')),
+              onPressed: () => Navigator.pop(context), child: const Text('닫기')),
         ],
       );
 }
