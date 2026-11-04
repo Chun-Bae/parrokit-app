@@ -648,6 +648,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
         ),
       );
 
+  Future<void> showHelp() => showDialog<void>(
+      context: context, builder: (context) => const _HomeHelpDialog());
+
   void previewFeature() {
     unawaited(HapticFeedback.selectionClick());
   }
@@ -692,6 +695,19 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                       color: Color(0xFF42766C),
                       fontSize: 16,
                       fontWeight: FontWeight.w800)),
+              const SizedBox(width: 6),
+              Semantics(
+                  label: '도움말',
+                  button: true,
+                  child: Tooltip(
+                      message: '도움말',
+                      excludeFromSemantics: true,
+                      child: InkResponse(
+                          key: const ValueKey('home-help'),
+                          radius: 18,
+                          onTap: showHelp,
+                          child: const Icon(Icons.help_outline_rounded,
+                              size: 22, color: Color(0xFF718B98))))),
             ]),
             const SizedBox(height: 10),
             ClipRRect(
@@ -1374,6 +1390,115 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
       ),
     );
   }
+}
+
+class _HomeHelpDialog extends StatelessWidget {
+  const _HomeHelpDialog();
+
+  static const _sections = <(String, List<(IconData, String, String)>)>[
+    (
+      '왼쪽 버튼',
+      [
+        (
+          Icons.volume_up_rounded,
+          '소리',
+          '앵무새 목소리를 켜고 끕니다. 듣기 모드와 함께 켜져 있어야 문장을 읽어줘요.'
+        ),
+        (Icons.add_comment_rounded, '문장 추가', '내가 연습할 문장을 직접 추가합니다.'),
+        (
+          Icons.tune_rounded,
+          '문장 설정',
+          '언어별로 앵무새가 말할 문장을 고릅니다.'
+        ),
+        (Icons.calendar_month_rounded, '학습 기록', '준비 중이에요.'),
+      ]
+    ),
+    (
+      '오른쪽 버튼',
+      [
+        (Icons.badge_rounded, '캐릭터 정보', '준비 중이에요.'),
+        (Icons.checkroom_rounded, '꾸미기', '준비 중이에요.'),
+        (Icons.backpack_rounded, '보관함', '준비 중이에요.'),
+        (Icons.emoji_events_rounded, '도전 과제', '준비 중이에요.'),
+        (
+          Icons.settings_rounded,
+          '설정',
+          '앵무새 말하기 간격과 들은 횟수 기록 여부를 정합니다.'
+        ),
+      ]
+    ),
+    (
+      '아래 버튼',
+      [
+        (
+          Icons.record_voice_over_rounded,
+          '따라 말하기 모드',
+          '앵무새가 말한 문장을 마이크로 따라 말하고 점수를 받습니다.'
+        ),
+        (
+          Icons.headphones_rounded,
+          '듣기 모드',
+          '켜면 앵무새가 문장을 소리 내어 읽어줍니다.'
+        ),
+        (Icons.smart_display_rounded, '쇼츠 학습', '준비 중이에요.'),
+        (Icons.groups_rounded, '공유 영상', '준비 중이에요.'),
+        (
+          Icons.pause_rounded,
+          '일시 정지 / 재개',
+          '앵무새 말하기를 잠시 멈추거나 다시 시작합니다.'
+        ),
+      ]
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('도움말'),
+        content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  for (final (title, items) in _sections) ...[
+                    Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 6),
+                        child: Text(title,
+                            style: const TextStyle(
+                                color: Color(0xFF42766C),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800))),
+                    for (final (icon, name, desc) in items)
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(icon,
+                                    size: 22, color: const Color(0xFF718B98)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                      Text(name,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700)),
+                                      Text(desc,
+                                          style: const TextStyle(
+                                              color: Color(0xFF61758D),
+                                              fontSize: 12.5)),
+                                    ])),
+                              ])),
+                  ],
+                ]))),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('닫기')),
+        ],
+      );
 }
 
 class _GameMenuButton extends StatelessWidget {
