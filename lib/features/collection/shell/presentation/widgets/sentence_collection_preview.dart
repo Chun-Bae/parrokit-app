@@ -1073,7 +1073,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         builder: (context) => AlertDialog(
           title: const Text('둘러보기에 공유할까요?'),
           content: Text('모든 사용자에게 공개되고, 작성자로 "${widget.authorName}"이(가) 표시돼요. '
-              '언제든 공유를 취소할 수 있어요.'),
+              '언제든 공유를 취소할 수 있어요. 하루에 ${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -1100,6 +1100,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       if (mounted) setState(() => published = next);
       messenger.showSnackBar(
           SnackBar(content: Text(next ? '둘러보기에 공유했어요.' : '공유를 취소했어요.')));
+    } on ShareLimitReachedException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e 내일 다시 공유해주세요.')));
     } catch (_) {
       messenger
           .showSnackBar(const SnackBar(content: Text('처리하지 못했어요. 다시 시도해주세요.')));

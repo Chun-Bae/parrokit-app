@@ -2,6 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'sentence_cloud_store.dart';
 
+/// 하루 공유 한도를 넘겨서 공개하지 못했을 때 던진다.
+class ShareLimitReachedException implements Exception {
+  const ShareLimitReachedException();
+
+  @override
+  String toString() => '하루에 ${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.';
+}
+
 /// 둘러보기에 공개된 문장. 내 문장(`sentences` 문서)의 `visibility`가 `public`이면 이 모양으로 보인다.
 class SharedSentence {
   const SharedSentence({
@@ -57,6 +65,10 @@ class SharedSentence {
 
 /// 둘러보기 공개 문장의 저장소. 화면은 이 인터페이스만 본다.
 abstract class SharedSentenceRepository {
+  /// 한 사람이 하루에 새로 공개할 수 있는 문장 수. 하루는 한국 시간 0시에 바뀐다.
+  /// 같은 한도가 firestore.rules에도 있다.
+  static const dailyShareLimit = 10;
+
   /// 최신순으로 [language] 문장을 가져온다. [viewerId]의 좋아요 여부도 함께 채운다.
   Future<List<SharedSentence>> list({
     required String language,
@@ -65,6 +77,8 @@ abstract class SharedSentenceRepository {
   });
 
   /// 내 문장을 둘러보기에 공개한다. 이미 공개돼 있으면 작성자 닉네임만 갱신한다.
+  /// 새로 공개할 때는 하루 한도([dailyShareLimit])를 쓰고, 넘으면 [ShareLimitReachedException]을 던진다.
+  /// 공개를 취소했다가 다시 공개해도 한도를 다시 쓴다.
   /// [sentenceId]는 내 문장 문서의 id이고, 남의 문장을 저장한 사본은 공개할 수 없다.
   Future<void> publish({
     required String sentenceId,
@@ -179,14 +193,41 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
         createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       );
 
+  /// 오늘 공유 횟수를 세는 문서. 문서 id는 한국 시간 기준 날짜이고 firestore.rules가 같은 값을 검사한다.
+  DocumentReference<Map<String, dynamic>> _quota(String ownerId, DateTime now) {
+    final kst = now.toUtc().add(const Duration(hours: 9));
+    return _firestore
+        .collection('users')
+        .doc(ownerId)
+        .collection('share_quota')
+        .doc('${kst.year}-${kst.month}-${kst.day}');
+  }
+
   @override
   Future<void> publish({
     required String sentenceId,
     required String authorName,
   }) =>
-      _shared.doc(sentenceId).update({
-        'visibility': SentenceCloudStore.public,
-        'authorName': authorName,
+      _firestore.runTransaction((tx) async {
+        final ref = _shared.doc(sentenceId);
+        final data = (await tx.get(ref)).data();
+        if (data == null) throw StateError('sentence not found');
+        if (data['visibility'] == SentenceCloudStore.public) {
+          // 이미 공개돼 있으면 한도를 쓰지 않고 닉네임만 갱신한다.
+          tx.update(ref, {'authorName': authorName});
+          return;
+        }
+        final quotaRef = _quota(data['ownerId'] as String, DateTime.now());
+        final used =
+            ((await tx.get(quotaRef)).data()?['count'] as num?)?.toInt() ?? 0;
+        if (used >= SharedSentenceRepository.dailyShareLimit) {
+          throw const ShareLimitReachedException();
+        }
+        tx.set(quotaRef, {'count': used + 1});
+        tx.update(ref, {
+          'visibility': SentenceCloudStore.public,
+          'authorName': authorName,
+        });
       });
 
   @override

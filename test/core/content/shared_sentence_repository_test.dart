@@ -68,4 +68,26 @@ void main() {
     expect(list.single.likeCount, 1);
     expect(list.single.liked, isFalse);
   });
+
+  test('하루에 10개까지만 새로 공개할 수 있고 이미 공개한 문장 갱신은 한도를 쓰지 않는다', () async {
+    for (var i = 0; i < 11; i++) {
+      await seedSentence(firestore, 'my-$i', text: 'Sentence $i');
+    }
+    for (var i = 0; i < 10; i++) {
+      await repo.publish(sentenceId: 'my-$i', authorName: '앵무');
+    }
+    await expectLater(repo.publish(sentenceId: 'my-10', authorName: '앵무'),
+        throwsA(isA<ShareLimitReachedException>()));
+    expect(await repo.isPublished(sentenceId: 'my-10'), isFalse);
+
+    // 이미 공개한 문장의 닉네임 갱신은 한도와 상관없이 된다.
+    await repo.publish(sentenceId: 'my-0', authorName: '바뀐 닉네임');
+    final list = await repo.list(language: '영어', viewerId: 'v');
+    expect(list.firstWhere((s) => s.id == 'my-0').authorName, '바뀐 닉네임');
+
+    // 취소했다가 다시 공개해도 한도를 다시 쓴다.
+    await repo.unpublish(sentenceId: 'my-0');
+    await expectLater(repo.publish(sentenceId: 'my-0', authorName: '앵무'),
+        throwsA(isA<ShareLimitReachedException>()));
+  });
 }

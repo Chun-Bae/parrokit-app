@@ -1,7 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    // 하루 공유 한도(10개). 날짜는 한국 시간 기준이고 앱의 share_quota 문서 id와 같은 형식이다.
+    function shareDayKey() {
+      let t = request.time + duration.value(9, 'h');
+      return string(t.year()) + '-' + string(t.month()) + '-' + string(t.day());
+    }
+    function shareQuotaPath(uid) {
+      return /databases/$(database)/documents/users/$(uid)/share_quota/$(shareDayKey());
+    }
+    // 공개로 바꾸는 쓰기는 같은 요청에서 오늘 공유 횟수를 1 올리고 10을 넘지 않아야 한다.
+    function shareQuotaUsed(uid) {
+      return getAfter(shareQuotaPath(uid)).data.count <= 10
+        && getAfter(shareQuotaPath(uid)).data.count
+          == (exists(shareQuotaPath(uid)) ? get(shareQuotaPath(uid)).data.count : 0) + 1;
+    }
+
     // 유저 (프로필, 닉네임 등) 설정
     match /users/{userId} {
       allow read: if request.auth != null;
@@ -63,6 +78,14 @@ service cloud.firestore {
       }
 
       // 동기화 상태 namespace
+      match /share_quota/{day} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && request.auth.uid == userId
+          && day == shareDayKey()
+          && request.resource.data.keys().hasOnly(['count'])
+          && request.resource.data.count <= 10;
+      }
+
       match /namespaces/{namespaceId}/meta/{metaId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
@@ -97,7 +120,8 @@ service cloud.firestore {
         && (
           request.resource.data.visibility == 'private'
           || (request.resource.data.visibility == 'public'
-              && request.resource.data.authorId == request.auth.uid)
+              && request.resource.data.authorId == request.auth.uid
+              && shareQuotaUsed(request.auth.uid))
         );
       allow update: if request.auth != null && (
         // 주인: 소유자·원작자·좋아요 수는 바꿀 수 없고, 내용과 공개 여부만 바꾼다.
@@ -109,7 +133,9 @@ service cloud.firestore {
           && request.resource.data.get('importCount', 0) == resource.data.get('importCount', 0)
           && (request.resource.data.visibility == 'private'
               || (request.resource.data.visibility == 'public'
-                  && resource.data.authorId == request.auth.uid)))
+                  && resource.data.authorId == request.auth.uid
+                  && (resource.data.visibility == 'public'
+                      || shareQuotaUsed(request.auth.uid)))))
         // 다른 사람: 공개된 문장의 좋아요 수를 1씩 바꾸거나, 가져간 수를 1 올린다.
         || (resource.data.visibility == 'public'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
