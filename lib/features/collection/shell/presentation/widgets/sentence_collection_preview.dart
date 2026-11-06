@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
+import 'package:parrokit/core/content/sentence_url_import.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
@@ -24,7 +26,11 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
-  const SentenceCollectionPreview({super.key, this.repository});
+  const SentenceCollectionPreview(
+      {super.key, this.repository, this.urlFetcher});
+
+  /// 주소에서 파일을 내려받는 함수. 비우면 실제로 내려받는다.
+  final Future<Uint8List> Function(Uri uri)? urlFetcher;
 
   /// 둘러보기 공개 문장 저장소. 비우면 Firestore를 쓴다.
   final SharedSentenceRepository? repository;
@@ -74,11 +80,18 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   void initState() {
     super.initState();
     SentenceActivityStore.revision.addListener(reload);
+    SharedSentenceRepository.revision.addListener(reloadSharedQuietly);
+  }
+
+  /// 공개·공개 취소·공개한 문장 삭제가 있으면 둘러보기 목록을 조용히 다시 읽는다.
+  void reloadSharedQuietly() {
+    if (loadedOnce) loadShared(silent: true);
   }
 
   @override
   void dispose() {
     SentenceActivityStore.revision.removeListener(reload);
+    SharedSentenceRepository.revision.removeListener(reloadSharedQuietly);
     super.dispose();
   }
 
@@ -99,7 +112,12 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     }
   }
 
-  Future<void> loadShared() async {
+  /// 당겨서 새로고침하거나 새로고침 버튼을 눌렀을 때. 목록을 비우지 않고 내 문장 저장 상태도 다시 읽는다.
+  Future<void> refreshExplore() async {
+    await Future.wait([reload(), loadShared(silent: true)]);
+  }
+
+  Future<void> loadShared({bool silent = false}) async {
     final repo = repository;
     final requestedLanguage = language;
     final requestedAccount = accountId;
@@ -110,10 +128,12 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       });
       return;
     }
-    setState(() {
-      sharedLoading = true;
-      sharedFailed = false;
-    });
+    if (!silent) {
+      setState(() {
+        sharedLoading = true;
+        sharedFailed = false;
+      });
+    }
     try {
       final list = await repo.list(
         language: requestedLanguage,
@@ -127,9 +147,15 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       setState(() {
         shared = list;
         sharedLoading = false;
+        sharedFailed = false;
       });
     } catch (_) {
       if (!mounted) return;
+      if (silent && shared.isNotEmpty) {
+        // 새로고침에 실패해도 보던 목록은 그대로 둔다.
+        toast('새로고침하지 못했어요. 다시 시도해주세요.');
+        return;
+      }
       setState(() {
         sharedLoading = false;
         sharedFailed = true;
@@ -234,6 +260,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           return;
         }
         await MySentenceStore.remove(accountId, communityId(sentence));
+        await reload();
         if (mounted) toast('내 문장에서 뺐어요.');
       } else {
         final added = await MySentenceStore.add(
@@ -247,6 +274,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           sourceSharedId: sentence.id,
         );
         if (added) await countImport(sentence);
+        // 로그인하지 않은 기기 저장은 알림이 없어서 직접 다시 읽어 카드 표시를 바꾼다.
+        await reload();
         if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
       }
     } catch (_) {
@@ -264,6 +293,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         authorName: authorName,
         shared: sentence,
         onSharedLike: (liked) => setSharedLiked(sentence, liked),
+        onSaveShared: () => toggleSave(sentence),
         sentence: DefaultConversationSentence(
           id: communityId(sentence),
           language: sentence.language,
@@ -298,6 +328,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           await SentenceActivityStore.setRoutineEnabled(
               accountId, saved.id, true);
         }
+        await reload();
         if (mounted) toast('앵무새에게 보냈어요.');
         return;
       }
@@ -390,7 +421,38 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       final file = picked?.files.single;
       final bytes = file?.bytes;
       if (file == null || bytes == null) return;
-      final items = SentenceTransfer.parse(bytes, file.name);
+      await saveImported(SentenceTransfer.parse(bytes, file.name));
+    } on FormatException {
+      if (mounted) toast('파일을 읽지 못했어요. 문장, 뜻 열이 있는 CSV나 엑셀 파일인지 확인해주세요.');
+    } catch (_) {
+      if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
+  /// 주소를 입력받아 그 주소의 CSV·엑셀 파일을 내려받아 가져온다.
+  Future<void> importFromUrl() async {
+    final input = await showDialog<String>(
+      context: context,
+      builder: (context) => const _UrlImportDialog(),
+    );
+    if (input == null || !mounted) return;
+    try {
+      final uri = SentenceUrlImport.downloadUri(input);
+      final bytes = await (widget.urlFetcher ?? SentenceUrlImport.fetch)(uri);
+      await saveImported(SentenceTransfer.parseDownloaded(bytes));
+    } on FormatException catch (e) {
+      if (!mounted) return;
+      toast(e.message.startsWith('https')
+          ? e.message
+          : '파일을 읽지 못했어요. 누구나 볼 수 있는 CSV·엑셀 파일 주소인지 확인해주세요.');
+    } catch (_) {
+      if (mounted) toast('주소에서 파일을 내려받지 못했어요. 주소와 공개 설정을 확인해주세요.');
+    }
+  }
+
+  /// 가져온 문장을 내 문장에 추가하고 결과를 알린다. 이미 있는 문장은 건너뛴다.
+  Future<void> saveImported(List<ImportedSentence> items) async {
+    try {
       if (items.isEmpty) {
         toast('가져올 문장이 없어요.');
         return;
@@ -412,8 +474,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       toast(skipped == 0
           ? '문장 $added개를 가져왔어요.'
           : '문장 $added개를 가져왔어요. 이미 있는 $skipped개는 건너뛰었어요.');
-    } on FormatException {
-      if (mounted) toast('파일을 읽지 못했어요. 문장, 뜻 열이 있는 CSV나 엑셀 파일인지 확인해주세요.');
     } catch (_) {
       if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해주세요.');
     }
@@ -446,176 +506,251 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     final routineCount = mySentences
         .where((item) => activities[item.id]?.routineEnabled ?? true)
         .length;
-    return ListView(
-      key: const PageStorageKey('sentence-collection-preview'),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
-      children: [
-        _ViewSwitch(
-            explore: explore,
-            onChanged: (value) {
-              setState(() => explore = value);
-              AppConfig.sentenceExplore = value;
-              AppConfig.saveToPrefs();
-            }),
-        const SizedBox(height: 16),
-        LearningLanguagePicker(
-          value: language,
-          onChanged: (value) {
-            setState(() => language = value);
-            loadShared();
-          },
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 36,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 7),
-            itemBuilder: (context, index) {
-              final item = categories[index];
-              return ChoiceChip(
-                  label: Text(item),
-                  selected: category == item,
-                  showCheckmark: false,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: (_) => setState(() => category = item));
-            },
-          ),
-        ),
-        const SizedBox(height: 24),
-        if (explore) ...[
-          _SectionTitle(
-              title: 'Parrokit 제공',
-              subtitle: '계속 추가되는 문장 묶음',
-              trailing: TextButton(onPressed: () {}, child: const Text('전체'))),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 148,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: packs.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) => _PackCard(pack: packs[index]),
+    return RefreshIndicator(
+        onRefresh: refreshExplore,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          key: const PageStorageKey('sentence-collection-preview'),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
+          children: [
+            _ViewSwitch(
+                explore: explore,
+                onChanged: (value) {
+                  setState(() => explore = value);
+                  AppConfig.sentenceExplore = value;
+                  AppConfig.saveToPrefs();
+                }),
+            const SizedBox(height: 16),
+            LearningLanguagePicker(
+              value: language,
+              onChanged: (value) {
+                setState(() => language = value);
+                loadShared();
+              },
             ),
-          ),
-          const SizedBox(height: 28),
-          _SectionTitle(title: '공유된 문장', subtitle: '다른 사람이 공유한 문장을 저장해서 연습해요'),
-          const SizedBox(height: 10),
-          if (sharedLoading)
-            const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()))
-          else if (sharedFailed)
-            _SharedMessage(
-                key: const ValueKey('shared-message'),
-                text: '공유된 문장을 불러오지 못했어요.',
-                actionLabel: '다시 불러오기',
-                onAction: loadShared)
-          else if (visibleShared.isEmpty)
-            const _SharedMessage(
-                key: ValueKey('shared-message'),
-                text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.')
-          else
-            ...visibleShared.map((sentence) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _SentenceCard(
-                    sentence: sentence,
-                    saved: isSaved(sentence),
-                    active: isParrotActive(sentence),
-                    onLike: () => unawaited(
-                        setSharedLiked(sentence, !sentence.liked)
-                            .catchError((Object _) {})),
-                    onSave: () => toggleSave(sentence),
-                    onParrot: () => toggleParrot(sentence),
-                    onOpen: () => openCommunityDetails(sentence),
-                  ),
-                )),
-        ] else ...[
-          _SectionTitle(
-              title: '앵무새가 말할 문장',
-              subtitle: '지금 활성화된 문장을 빠르게 연습해요',
-              trailing: IconButton.filledTonal(
-                  tooltip: '문장 추가',
-                  onPressed: addMySentence,
-                  icon: const Icon(Icons.add_rounded))),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-                color: colors.primaryContainer.withValues(alpha: 0.42),
-                borderRadius: BorderRadius.circular(20)),
-            child: Row(children: [
-              const CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.record_voice_over_rounded)),
-              const SizedBox(width: 14),
-              Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Text('앵무새가 말할 문장 $routineCount개',
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 4),
-                    const Text('홈 앵무새가 순서대로 말해줘요',
-                        style: TextStyle(fontSize: 12)),
-                  ])),
-            ]),
-          ),
-          const SizedBox(height: 24),
-          _SectionTitle(
-              title: '내 문장',
-              subtitle: '최근 추가한 순서',
-              trailing: PopupMenuButton<String>(
-                tooltip: '가져오기·내보내기',
-                icon: const Icon(Icons.more_horiz_rounded),
-                onSelected: (value) => switch (value) {
-                  'script' => addFromScript(),
-                  'import' => importMySentences(),
-                  'xlsx' => exportMySentences(xlsx: true),
-                  _ => exportMySentences(xlsx: false),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 36,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 7),
+                itemBuilder: (context, index) {
+                  final item = categories[index];
+                  return ChoiceChip(
+                      label: Text(item),
+                      selected: category == item,
+                      showCheckmark: false,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => setState(() => category = item));
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                      value: 'script',
-                      child: ListTile(
-                          leading: Icon(Icons.content_paste_rounded),
-                          title: Text('스크립트 붙여넣어 문장 만들기'))),
-                  PopupMenuItem(
-                      value: 'import',
-                      child: ListTile(
-                          leading: Icon(Icons.file_download_outlined),
-                          title: Text('CSV·엑셀에서 가져오기'))),
-                  PopupMenuItem(
-                      value: 'csv',
-                      child: ListTile(
-                          leading: Icon(Icons.file_upload_outlined),
-                          title: Text('CSV로 내보내기'))),
-                  PopupMenuItem(
-                      value: 'xlsx',
-                      child: ListTile(
-                          leading: Icon(Icons.table_chart_outlined),
-                          title: Text('엑셀(xlsx)로 내보내기'))),
-                ],
-              )),
-          const SizedBox(height: 10),
-          ...List.generate(mySentences.length, (index) {
-            final sentence = mySentences[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _MySentenceTile(
-                sentence: sentence,
-                accountId: accountId,
-                activity: activities[sentence.id] ?? const SentenceActivity(),
-                repository: repository,
-                authorName: authorName,
               ),
-            );
-          }),
-        ],
-      ],
-    );
+            ),
+            const SizedBox(height: 24),
+            if (explore) ...[
+              _SectionTitle(
+                  title: 'Parrokit 제공',
+                  subtitle: '계속 추가되는 문장 묶음',
+                  trailing:
+                      TextButton(onPressed: () {}, child: const Text('전체'))),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 148,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: packs.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) =>
+                      _PackCard(pack: packs[index]),
+                ),
+              ),
+              const SizedBox(height: 28),
+              _SectionTitle(
+                  title: '공유된 문장',
+                  subtitle: '다른 사람이 공유한 문장을 저장해서 연습해요',
+                  trailing: IconButton(
+                      key: const ValueKey('refresh-shared'),
+                      tooltip: '새로고침',
+                      onPressed: sharedLoading ? null : refreshExplore,
+                      icon: const Icon(Icons.refresh_rounded))),
+              const SizedBox(height: 10),
+              if (sharedLoading)
+                const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()))
+              else if (sharedFailed)
+                _SharedMessage(
+                    key: const ValueKey('shared-message'),
+                    text: '공유된 문장을 불러오지 못했어요.',
+                    actionLabel: '다시 불러오기',
+                    onAction: loadShared)
+              else if (visibleShared.isEmpty)
+                const _SharedMessage(
+                    key: ValueKey('shared-message'),
+                    text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.')
+              else
+                ...visibleShared.map((sentence) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SentenceCard(
+                        sentence: sentence,
+                        saved: isSaved(sentence),
+                        active: isParrotActive(sentence),
+                        onLike: () => unawaited(
+                            setSharedLiked(sentence, !sentence.liked)
+                                .catchError((Object _) {})),
+                        onSave: () => toggleSave(sentence),
+                        onParrot: () => toggleParrot(sentence),
+                        onOpen: () => openCommunityDetails(sentence),
+                      ),
+                    )),
+            ] else ...[
+              _SectionTitle(
+                  title: '앵무새가 말할 문장',
+                  subtitle: '지금 활성화된 문장을 빠르게 연습해요',
+                  trailing: IconButton.filledTonal(
+                      tooltip: '문장 추가',
+                      onPressed: addMySentence,
+                      icon: const Icon(Icons.add_rounded))),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                    color: colors.primaryContainer.withValues(alpha: 0.42),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Row(children: [
+                  const CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.record_voice_over_rounded)),
+                  const SizedBox(width: 14),
+                  Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                        Text('앵무새가 말할 문장 $routineCount개',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        const Text('홈 앵무새가 순서대로 말해줘요',
+                            style: TextStyle(fontSize: 12)),
+                      ])),
+                ]),
+              ),
+              const SizedBox(height: 24),
+              _SectionTitle(
+                  title: '내 문장',
+                  subtitle: '최근 추가한 순서',
+                  trailing: PopupMenuButton<String>(
+                    tooltip: '가져오기·내보내기',
+                    icon: const Icon(Icons.more_horiz_rounded),
+                    onSelected: (value) => switch (value) {
+                      'script' => addFromScript(),
+                      'import' => importMySentences(),
+                      'url' => importFromUrl(),
+                      'xlsx' => exportMySentences(xlsx: true),
+                      _ => exportMySentences(xlsx: false),
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                          value: 'script',
+                          child: ListTile(
+                              leading: Icon(Icons.content_paste_rounded),
+                              title: Text('스크립트 붙여넣어 문장 만들기'))),
+                      PopupMenuItem(
+                          value: 'import',
+                          child: ListTile(
+                              leading: Icon(Icons.file_download_outlined),
+                              title: Text('CSV·엑셀에서 가져오기'))),
+                      PopupMenuItem(
+                          value: 'url',
+                          child: ListTile(
+                              leading: Icon(Icons.link_rounded),
+                              title: Text('주소(URL)에서 가져오기'))),
+                      PopupMenuItem(
+                          value: 'csv',
+                          child: ListTile(
+                              leading: Icon(Icons.file_upload_outlined),
+                              title: Text('CSV로 내보내기'))),
+                      PopupMenuItem(
+                          value: 'xlsx',
+                          child: ListTile(
+                              leading: Icon(Icons.table_chart_outlined),
+                              title: Text('엑셀(xlsx)로 내보내기'))),
+                    ],
+                  )),
+              const SizedBox(height: 10),
+              ...List.generate(mySentences.length, (index) {
+                final sentence = mySentences[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _MySentenceTile(
+                    sentence: sentence,
+                    accountId: accountId,
+                    activity:
+                        activities[sentence.id] ?? const SentenceActivity(),
+                    repository: repository,
+                    authorName: authorName,
+                  ),
+                );
+              }),
+            ],
+          ],
+        ));
   }
+}
+
+/// CSV·엑셀 파일 주소를 입력받는 창. 확인하면 입력한 주소를 돌려준다.
+class _UrlImportDialog extends StatefulWidget {
+  const _UrlImportDialog();
+
+  @override
+  State<_UrlImportDialog> createState() => _UrlImportDialogState();
+}
+
+class _UrlImportDialogState extends State<_UrlImportDialog> {
+  final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('주소(URL)에서 가져오기'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              key: const ValueKey('url-import-input'),
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(
+                hintText: 'https://…/sentences.csv',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'https 주소의 CSV·엑셀(xlsx) 파일을 읽어요. 구글 스프레드시트는 "링크가 있는 모든 사용자 보기" 공유 주소를 그대로 붙여넣으면 돼요. '
+              '열 순서는 문장, 뜻, 발음이고 5MB까지 가져올 수 있어요.',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          FilledButton(
+              key: const ValueKey('url-import-confirm'),
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: const Text('가져오기')),
+        ],
+      );
 }
 
 class _ViewSwitch extends StatelessWidget {
@@ -759,11 +894,23 @@ class _SentenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Theme.of(context).colorScheme.surface,
+        key: ValueKey(saved ? 'sentence-card-saved' : 'sentence-card-unsaved'),
+        // 내 문장으로 가져온 문장은 연한 색과 테두리로 구분한다.
+        color: saved
+            ? Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withValues(alpha: 0.35)
+            : Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant)),
+                color: saved
+                    ? Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.5)
+                    : Theme.of(context).colorScheme.outlineVariant)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onOpen,
@@ -784,6 +931,26 @@ class _SentenceCard extends StatelessWidget {
                     child: Text(sentence.topic,
                         style: const TextStyle(
                             fontSize: 10, fontWeight: FontWeight.w800))),
+                if (saved) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                      key: const ValueKey('saved-chip'),
+                      padding: const EdgeInsets.fromLTRB(6, 4, 8, 4),
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.check_rounded,
+                            size: 12,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                        const SizedBox(width: 3),
+                        Text('저장됨',
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800)),
+                      ])),
+                ],
                 const Spacer(),
                 Text('@${sentence.authorName}',
                     style: TextStyle(
@@ -831,9 +998,13 @@ class _SentenceCard extends StatelessWidget {
                     tooltip: '내 문장에 저장',
                     visualDensity: VisualDensity.compact,
                     onPressed: onSave,
-                    icon: Icon(saved
-                        ? Icons.bookmark_rounded
-                        : Icons.bookmark_border_rounded)),
+                    icon: Icon(
+                        saved
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_border_rounded,
+                        color: saved
+                            ? Theme.of(context).colorScheme.primary
+                            : null)),
                 IconButton(
                     tooltip: '앵무새에게 보내기',
                     visualDensity: VisualDensity.compact,
@@ -858,6 +1029,7 @@ Future<void> showSentenceDetails(
   String authorName = '',
   SharedSentence? shared,
   Future<void> Function(bool liked)? onSharedLike,
+  Future<void> Function()? onSaveShared,
 }) =>
     hideNavBarWhile(showModalBottomSheet<void>(
       context: context,
@@ -873,6 +1045,7 @@ Future<void> showSentenceDetails(
         authorName: authorName,
         shared: shared,
         onSharedLike: onSharedLike,
+        onSaveShared: onSaveShared,
       ),
     ));
 
@@ -974,6 +1147,7 @@ class _SentenceDetailSheet extends StatefulWidget {
     this.authorName = '',
     this.shared,
     this.onSharedLike,
+    this.onSaveShared,
   });
 
   final DefaultConversationSentence sentence;
@@ -989,6 +1163,9 @@ class _SentenceDetailSheet extends StatefulWidget {
   /// 둘러보기에서 연 공개 문장이면 그 정보. 좋아요는 서버에 저장한다.
   final SharedSentence? shared;
   final Future<void> Function(bool liked)? onSharedLike;
+
+  /// 둘러보기의 남의 문장을 내 문장으로 가져온다. 저장하지 않은 공개 문장일 때만 버튼이 보인다.
+  final Future<void> Function()? onSaveShared;
 
   @override
   State<_SentenceDetailSheet> createState() => _SentenceDetailSheetState();
@@ -1028,8 +1205,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   }
 
   /// 내가 등록한 문장만 공유할 수 있다. 기본 문장이나 남이 올린 문장은 해당이 없다.
-  bool get canPublish =>
-      widget.saved && widget.shared == null && publishBlockedReason == null;
+  /// 둘러보기에서 연 내 문장(공유 중)도 여기서 공유를 취소할 수 있다.
+  bool get canPublish => widget.saved && publishBlockedReason == null;
 
   /// 공유할 수 없는 문장이면 그 이유. 공유할 수 있으면 null.
   String? get publishBlockedReason {
@@ -1062,6 +1239,26 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       messenger.showSnackBar(const SnackBar(content: Text('로그인 후 공유할 수 있어요.')));
       return;
     }
+    if (published == true) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          key: const ValueKey('unpublish-dialog'),
+          title: const Text('공유를 취소할까요?'),
+          content: const Text('둘러보기에서 사라지고 좋아요 수와 가져간 수도 함께 사라져요.\n'
+              '이미 가져간 사람의 문장은 그대로 남아요. 내 문장함에는 계속 있어요.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('그대로 두기')),
+            FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('공유 취소')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
     if (published != true) {
       if (widget.authorName.trim().isEmpty) {
         messenger
@@ -1072,7 +1269,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('둘러보기에 공유할까요?'),
-          content: Text('모든 사용자에게 공개되고, 작성자로 "${widget.authorName}"이(가) 표시돼요. '
+          content: Text('공개되는 것: 문장, 뜻, 발음, 작성자 "${widget.authorName}"\n'
+              '공개되지 않는 것: 들은 횟수, 연습 기록, 친밀도, 메모\n\n'
               '언제든 공유를 취소할 수 있어요. 하루에 ${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.'),
           actions: [
             TextButton(
@@ -1220,6 +1418,26 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   Future<void> removeSentence() async {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const ValueKey('delete-dialog'),
+        title: const Text('내 문장에서 삭제할까요?'),
+        content: Text(published == true
+            ? '지금 둘러보기에 공유 중인 문장이에요. 삭제하면 둘러보기에서도 사라지고 '
+                '좋아요 수와 가져간 수도 함께 사라져요.\n이미 가져간 사람의 문장은 그대로 남아요.'
+            : '삭제하면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('삭제')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     try {
       await MySentenceStore.remove(widget.accountId, widget.sentence.id);
       navigator.pop();
@@ -1409,47 +1627,52 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               ],
             ),
           ],
-          const SizedBox(height: 26),
-          SentenceAffinityBar(
-            key: const ValueKey('sentence-affinity'),
-            affinity: affinityOf(activity),
-            loading: loading,
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _ActivityCountCard(
-                  icon: Icons.headphones_rounded,
-                  label: '내가 들음',
-                  count: activity.listenCount,
-                  loading: loading,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActivityCountCard(
-                  icon: Icons.mic_rounded,
-                  label: '내가 연습함',
-                  count: activity.practiceCount,
-                  loading: loading,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _HistoryLine(
-            icon: Icons.history_rounded,
-            text: activity.lastPracticedAt == null
-                ? '아직 따라 말해보지 않았어요'
-                : '마지막 연습 ${relativeDayLabel(DateTime.now(), activity.lastPracticedAt!)}',
-          ),
-          if (widget.sentence.addedAt != null)
-            _HistoryLine(
-              icon: Icons.bookmark_added_outlined,
-              text:
-                  '${relativeDayLabel(DateTime.now(), widget.sentence.addedAt!)} 추가',
+          // 내 기록은 내 문장일 때만 보인다. 저장하지 않은 남의 문장에는 보이지 않는다.
+          if (widget.saved) ...[
+            const SizedBox(height: 22),
+            const _PrivateSectionLabel(),
+            const SizedBox(height: 12),
+            SentenceAffinityBar(
+              key: const ValueKey('sentence-affinity'),
+              affinity: affinityOf(activity),
+              loading: loading,
             ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _ActivityCountCard(
+                    icon: Icons.headphones_rounded,
+                    label: '내가 들음',
+                    count: activity.listenCount,
+                    loading: loading,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActivityCountCard(
+                    icon: Icons.mic_rounded,
+                    label: '내가 연습함',
+                    count: activity.practiceCount,
+                    loading: loading,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _HistoryLine(
+              icon: Icons.history_rounded,
+              text: activity.lastPracticedAt == null
+                  ? '아직 따라 말해보지 않았어요'
+                  : '마지막 연습 ${relativeDayLabel(DateTime.now(), activity.lastPracticedAt!)}',
+            ),
+            if (widget.sentence.addedAt != null)
+              _HistoryLine(
+                icon: Icons.bookmark_added_outlined,
+                text:
+                    '${relativeDayLabel(DateTime.now(), widget.sentence.addedAt!)} 추가',
+              ),
+          ],
           if (widget.saved) ...[
             const SizedBox(height: 14),
             TextField(
@@ -1474,6 +1697,24 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
           const SizedBox(height: 14),
           ClipSentenceMatchesSection(sentence: widget.sentence.text),
           const SizedBox(height: 10),
+          if (!widget.saved &&
+              widget.shared != null &&
+              widget.onSaveShared != null) ...[
+            FilledButton.icon(
+              key: const ValueKey('save-shared-sentence'),
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                await widget.onSaveShared!();
+                if (navigator.mounted) navigator.pop();
+              },
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              icon: const Icon(Icons.bookmark_add_outlined),
+              label: const Text('내 문장으로 가져오기'),
+            ),
+            const SizedBox(height: 6),
+          ],
           if (widget.saved)
             SwitchListTile(
               value: activity.routineEnabled,
@@ -1607,6 +1848,34 @@ class _SharedMessage extends StatelessWidget {
             TextButton(onPressed: onAction, child: Text(actionLabel ?? '')),
         ]),
       );
+}
+
+/// 친밀도·들은 횟수·연습 기록·메모는 이 기기와 내 계정에만 있고 공유해도 공개되지 않는다.
+class _PrivateSectionLabel extends StatelessWidget {
+  const _PrivateSectionLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      key: const ValueKey('private-section'),
+      children: [
+        Icon(Icons.lock_outline_rounded,
+            size: 15, color: colors.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Text('나만 보는 기록',
+            style: TextStyle(
+                color: colors.onSurfaceVariant,
+                fontSize: 13,
+                fontWeight: FontWeight.w800)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text('공유해도 공개되지 않아요',
+              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11)),
+        ),
+      ],
+    );
+  }
 }
 
 class _MasteryBadge extends StatelessWidget {

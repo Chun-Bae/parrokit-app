@@ -761,7 +761,6 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       context,
       sentence: sentence,
       accountId: widget.accountId,
-      saved: mySentences.any((s) => s.id == sentence.id),
     );
   }
 

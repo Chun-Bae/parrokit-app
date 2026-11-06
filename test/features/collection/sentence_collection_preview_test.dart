@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +56,57 @@ void main() {
 
     expect(
         find.text('Brand new sentence', skipOffstage: false), findsOneWidget);
+  });
+
+  testWidgets('저장한 공유 문장은 카드에 내 문장 표시가 붙는다', (tester) async {
+    await seedShared();
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Could I get this to go?'), 300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const ValueKey('saved-chip')), findsNothing);
+    await tester.ensureVisible(find.byTooltip('내 문장에 저장').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('내 문장에 저장').first);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('saved-chip'), skipOffstage: false),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('sentence-card-saved'), skipOffstage: false),
+        findsOneWidget);
+  });
+
+  testWidgets('공개가 취소되면 둘러보기 목록에서 바로 사라진다', (tester) async {
+    await seedShared();
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(find.text('Could I get this to go?', skipOffstage: false),
+        findsOneWidget);
+    await repo.unpublish(sentenceId: 'my-seed');
+    await tester.pumpAndSettle();
+    expect(find.text('Could I get this to go?', skipOffstage: false),
+        findsNothing);
+  });
+
+  testWidgets('새로고침 버튼으로 새로 공유된 문장을 불러온다', (tester) async {
+    await seedShared();
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await seedSentence(firestore, 'my-new',
+        ownerId: 'kai',
+        authorName: 'Kai',
+        text: 'Brand new shared line',
+        topic: '일상',
+        visibility: 'public');
+    expect(
+        find.text('Brand new shared line', skipOffstage: false), findsNothing);
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('refresh-shared')), 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.byKey(const ValueKey('refresh-shared')));
+    await tester.pumpAndSettle();
+    expect(find.text('Brand new shared line', skipOffstage: false),
+        findsOneWidget);
   });
 
   testWidgets('둘러보기에서 저장한 문장이 내 문장에 나타난다', (tester) async {
@@ -146,6 +200,20 @@ void main() {
     expect(find.byKey(const ValueKey('like-sentence')), findsOneWidget);
     expect(find.text('홈 말하기 루틴'), findsNothing);
     expect(find.byKey(const ValueKey('publish-sentence')), findsNothing);
+    // 저장하지 않은 남의 문장에는 내 친밀도·들은 횟수·연습 기록이 보이지 않는다.
+    expect(find.byKey(const ValueKey('private-section')), findsNothing);
+    expect(find.byKey(const ValueKey('sentence-affinity')), findsNothing);
+    expect(find.text('내가 들음'), findsNothing);
+    expect(find.text('내가 연습함'), findsNothing);
+    // 대신 내 문장으로 가져오는 버튼이 보이고, 누르면 저장된다.
+    expect(find.byKey(const ValueKey('save-shared-sentence')), findsOneWidget);
+    await tester
+        .ensureVisible(find.byKey(const ValueKey('save-shared-sentence')));
+    await tester.tap(find.byKey(const ValueKey('save-shared-sentence')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('save-shared-sentence')), findsNothing);
+    final saved = await MySentenceStore.load('guest');
+    expect(saved.any((s) => s.text == 'Could I get this to go?'), isTrue);
   });
 
   testWidgets('내 문장 탭에서 기본 문장을 누르면 상세가 열린다', (tester) async {
@@ -157,6 +225,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('like-sentence')), findsOneWidget);
     expect(find.text('홈 말하기 루틴'), findsOneWidget);
+    expect(find.byKey(const ValueKey('private-section')), findsOneWidget);
+    expect(find.text('내가 들음'), findsOneWidget);
     // 기본 문장은 내가 등록한 문장이 아니라 공유할 수 없고, 이유를 알려준다.
     expect(find.byKey(const ValueKey('publish-sentence')), findsNothing);
     await tester
@@ -202,6 +272,62 @@ void main() {
     expect(find.text('Nice to meet you!', skipOffstage: false), findsOneWidget);
     expect(
         find.text('Where is the station?', skipOffstage: false), findsNothing);
+  });
+
+  testWidgets('주소를 입력하면 CSV를 내려받아 내 문장에 추가한다', (tester) async {
+    Uri? requested;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SentenceCollectionPreview(
+      repository: repo,
+      urlFetcher: (uri) async {
+        requested = uri;
+        return Uint8List.fromList(
+            utf8.encode('문장,뜻\nSee you soon,곧 봐요\nHello,안녕\n'));
+      },
+    ))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('가져오기·내보내기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('주소(URL)에서 가져오기'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('url-import-input')),
+        'https://example.com/sentences.csv');
+    await tester.tap(find.byKey(const ValueKey('url-import-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(requested, Uri.parse('https://example.com/sentences.csv'));
+    expect(find.text('See you soon', skipOffstage: false), findsOneWidget);
+    // 기본 문장 'Hello there!'와 달라서 새로 추가된다.
+    expect(find.textContaining('가져왔어요'), findsOneWidget);
+  });
+
+  testWidgets('https가 아닌 주소는 내려받지 않고 안내한다', (tester) async {
+    var called = false;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SentenceCollectionPreview(
+      repository: repo,
+      urlFetcher: (uri) async {
+        called = true;
+        return Uint8List(0);
+      },
+    ))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('가져오기·내보내기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('주소(URL)에서 가져오기'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('url-import-input')),
+        'http://example.com/a.csv');
+    await tester.tap(find.byKey(const ValueKey('url-import-confirm')));
+    await tester.pumpAndSettle();
+    expect(called, isFalse);
+    expect(find.textContaining('https로 시작하는 주소만'), findsOneWidget);
   });
 
   testWidgets('문장 상세에서 메모를 쓰면 저장되고 다시 열면 보인다', (tester) async {

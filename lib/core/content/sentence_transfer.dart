@@ -107,6 +107,27 @@ class SentenceTransfer {
   /// 읽을 수 없는 내용이면 [FormatException]을 던진다.
   static List<ImportedSentence> parse(Uint8List bytes, String fileName) {
     final isXlsx = fileName.toLowerCase().endsWith('.xlsx');
+    return _parseAs(bytes, isXlsx: isXlsx);
+  }
+
+  /// 주소에서 받은 내용처럼 파일 이름이 없을 때, 내용이 zip(`PK`)이면 xlsx로 보고 아니면 CSV로 읽는다.
+  /// 로그인 페이지 같은 웹 페이지(HTML)가 내려오면 [FormatException]을 던진다.
+  static List<ImportedSentence> parseDownloaded(Uint8List bytes) {
+    final isXlsx = bytes.length > 3 && bytes[0] == 0x50 && bytes[1] == 0x4B;
+    if (!isXlsx) {
+      final head = utf8
+          .decode(bytes.take(200).toList(), allowMalformed: true)
+          .trimLeft()
+          .toLowerCase();
+      if (head.startsWith('<!doctype') || head.startsWith('<html')) {
+        throw const FormatException('웹 페이지가 내려왔어요.');
+      }
+    }
+    return _parseAs(bytes, isXlsx: isXlsx);
+  }
+
+  static List<ImportedSentence> _parseAs(Uint8List bytes,
+      {required bool isXlsx}) {
     final rows = isXlsx ? _xlsxRows(bytes) : _csvRows(utf8.decode(bytes));
     return _fromRows(rows);
   }
@@ -230,7 +251,8 @@ class SentenceTransfer {
           ];
 
     final rows = <List<String>>[];
-    for (final rowElement in XmlDocument.parse(sheetXml).findAllElements('row')) {
+    for (final rowElement
+        in XmlDocument.parse(sheetXml).findAllElements('row')) {
       final row = <String>[];
       for (final c in rowElement.findElements('c')) {
         final at = _columnIndex(c.getAttribute('r') ?? '');
@@ -241,8 +263,7 @@ class SentenceTransfer {
         final value = c.getElement('v')?.innerText ?? '';
         final text = switch (type) {
           's' => shared.elementAtOrNull(int.tryParse(value) ?? -1) ?? '',
-          'inlineStr' =>
-            c.findAllElements('t').map((t) => t.innerText).join(),
+          'inlineStr' => c.findAllElements('t').map((t) => t.innerText).join(),
           _ => value,
         };
         if (at < row.length) {

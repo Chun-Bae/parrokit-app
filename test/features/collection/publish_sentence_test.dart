@@ -74,10 +74,72 @@ void main() {
     expect(list.single.authorName, '앵무');
     expect(find.text('둘러보기 공유 취소'), findsOneWidget);
 
+    // 공유 취소는 안내 창에서 한 번 더 확인한다. 그대로 두면 계속 공개된다.
     await tester.tap(find.byKey(const ValueKey('publish-sentence')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('unpublish-dialog')), findsOneWidget);
+    expect(find.textContaining('이미 가져간 사람의 문장은 그대로 남아요'), findsOneWidget);
+    await tester.tap(find.text('그대로 두기'));
+    await tester.pumpAndSettle();
+    expect(await repo.list(language: '영어', viewerId: 'u1'), hasLength(1));
+
+    await tester.tap(find.byKey(const ValueKey('publish-sentence')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('공유 취소'));
     await tester.pumpAndSettle();
     expect(await repo.list(language: '영어', viewerId: 'u1'), isEmpty);
     expect(find.text('둘러보기에 공유하기'), findsOneWidget);
+  });
+
+  testWidgets('공유 중인 문장을 삭제하려 하면 둘러보기에서도 사라진다고 안내한다', (tester) async {
+    await openSheet(tester);
+    await tester.ensureVisible(find.byKey(const ValueKey('publish-sentence')));
+    await tester.tap(find.byKey(const ValueKey('publish-sentence')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('공유'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('내 문장에서 삭제'));
+    await tester.tap(find.text('내 문장에서 삭제'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('delete-dialog')), findsOneWidget);
+    expect(find.textContaining('둘러보기에서도 사라지고'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    // 취소하면 시트가 그대로 열려 있다.
+    expect(find.text('내 문장에서 삭제'), findsOneWidget);
+  });
+
+  testWidgets('둘러보기에서 연 내 문장에도 공유 취소 버튼이 있다', (tester) async {
+    await repo.publish(sentenceId: mine.id, authorName: '앵무');
+    final shared = (await repo.list(language: '영어', viewerId: 'u1')).single;
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () => showSentenceDetails(
+              context,
+              sentence: mine,
+              accountId: 'u1',
+              repository: repo,
+              authorName: '앵무',
+              shared: shared,
+              onSharedLike: (_) async {},
+            ),
+            child: const Text('열기'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('publish-sentence')));
+    expect(find.text('둘러보기 공유 취소'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('publish-sentence')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('공유 취소'));
+    await tester.pumpAndSettle();
+    expect(await repo.isPublished(sentenceId: mine.id), isFalse);
   });
 
   testWidgets('확인에서 취소하면 올라가지 않는다', (tester) async {

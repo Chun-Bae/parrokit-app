@@ -60,8 +60,8 @@ void main() {
     var list = await repo.list(language: '영어', viewerId: 'a');
     expect(list.single.likeCount, 2);
     expect(list.single.liked, isTrue);
-    expect((await repo.list(language: '영어', viewerId: 'c')).single.liked,
-        isFalse);
+    expect(
+        (await repo.list(language: '영어', viewerId: 'c')).single.liked, isFalse);
     await repo.setLiked(sharedId: 'my-1', viewerId: 'a', liked: false);
     await repo.setLiked(sharedId: 'my-1', viewerId: 'a', liked: false);
     list = await repo.list(language: '영어', viewerId: 'a');
@@ -89,5 +89,14 @@ void main() {
     await repo.unpublish(sentenceId: 'my-0');
     await expectLater(repo.publish(sentenceId: 'my-0', authorName: '앵무'),
         throwsA(isA<ShareLimitReachedException>()));
+  });
+
+  test('공개와 공개 취소는 목록 갱신 신호를 올린다', () async {
+    await seedSentence(firestore, 'my-1');
+    final before = SharedSentenceRepository.revision.value;
+    await repo.publish(sentenceId: 'my-1', authorName: '앵무');
+    expect(SharedSentenceRepository.revision.value, before + 1);
+    await repo.unpublish(sentenceId: 'my-1');
+    expect(SharedSentenceRepository.revision.value, before + 2);
   });
 }

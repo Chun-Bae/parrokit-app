@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import 'sentence_cloud_store.dart';
 
@@ -7,7 +8,8 @@ class ShareLimitReachedException implements Exception {
   const ShareLimitReachedException();
 
   @override
-  String toString() => '하루에 ${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.';
+  String toString() =>
+      '하루에 ${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.';
 }
 
 /// 둘러보기에 공개된 문장. 내 문장(`sentences` 문서)의 `visibility`가 `public`이면 이 모양으로 보인다.
@@ -68,6 +70,10 @@ abstract class SharedSentenceRepository {
   /// 한 사람이 하루에 새로 공개할 수 있는 문장 수. 하루는 한국 시간 0시에 바뀐다.
   /// 같은 한도가 firestore.rules에도 있다.
   static const dailyShareLimit = 10;
+
+  /// 공개 목록이 바뀔 수 있는 일(공개·공개 취소·공개한 문장 삭제)이 있으면 올라간다.
+  /// 둘러보기 화면이 이 값을 보고 목록을 다시 읽는다.
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
   /// 최신순으로 [language] 문장을 가져온다. [viewerId]의 좋아요 여부도 함께 채운다.
   Future<List<SharedSentence>> list({
@@ -228,12 +234,15 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
           'visibility': SentenceCloudStore.public,
           'authorName': authorName,
         });
-      });
+      }).then((_) => SharedSentenceRepository.revision.value++);
 
   @override
-  Future<void> unpublish({required String sentenceId}) => _shared
-      .doc(sentenceId)
-      .update({'visibility': SentenceCloudStore.private});
+  Future<void> unpublish({required String sentenceId}) async {
+    await _shared
+        .doc(sentenceId)
+        .update({'visibility': SentenceCloudStore.private});
+    SharedSentenceRepository.revision.value++;
+  }
 
   @override
   Future<bool> isPublished({required String sentenceId}) async {

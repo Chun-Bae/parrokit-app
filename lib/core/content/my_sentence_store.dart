@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'default_conversation_sentences.dart';
 import 'sentence_activity_store.dart';
 import 'sentence_cloud_store.dart';
+import 'shared_sentence_repository.dart';
 
 /// 사용자가 저장하거나 직접 추가한 "내 문장"을 계정별로 보관한다.
 ///
@@ -116,6 +117,8 @@ class MySentenceStore {
     if (_useCloud(accountId)) {
       await cloud!.remove(id);
       SentenceActivityStore.revision.value++;
+      // 내가 공개한 문장이면 같은 문서가 지워져서 둘러보기에서도 사라진다.
+      SharedSentenceRepository.revision.value++;
       return;
     }
     final all = await load(accountId);
