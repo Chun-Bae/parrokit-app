@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 
 class WordCollectionPreview extends StatefulWidget {
   const WordCollectionPreview({super.key});
@@ -8,7 +9,7 @@ class WordCollectionPreview extends StatefulWidget {
 }
 
 class _WordCollectionPreviewState extends State<WordCollectionPreview> {
-  bool explore = false;
+  bool explore = AppConfig.wordExplore;
   String language = '영어';
   String category = '전체';
   final savedWords = <int>{0, 2};
@@ -46,7 +47,11 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
       children: [
         _ViewSwitch(
           explore: explore,
-          onChanged: (value) => setState(() => explore = value),
+          onChanged: (value) {
+            setState(() => explore = value);
+            AppConfig.wordExplore = value;
+            AppConfig.saveToPrefs();
+          },
         ),
         const SizedBox(height: 16),
         Row(

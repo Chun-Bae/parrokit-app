@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
@@ -29,6 +30,7 @@ Future<void> seedShared() => seedSentence(
 
 void main() {
   setUp(() {
+    AppConfig.sentenceExplore = true;
     SharedPreferences.setMockInitialValues({});
     firestore = FakeFirebaseFirestore();
     repo = FirestoreSharedSentenceRepository(firestore: firestore);
@@ -171,7 +173,7 @@ void main() {
     await tester.tap(find.text('내 문장'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('sentence-card-gold')), findsOneWidget);
-    expect(find.text('Lv.5 단짝'), findsOneWidget);
+    expect(find.text('Lv.5 능숙한'), findsOneWidget);
   });
 
   testWidgets('스크립트를 붙여넣어 문장으로 나누고 고른 문장만 추가한다', (tester) async {

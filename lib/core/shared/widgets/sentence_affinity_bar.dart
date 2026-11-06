@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
+
+/// 단계별 뱃지(`assets/badges/affinity_N.svg`)와 같은 계열의 칩 배경색과 글자색.
+(Color, Color) affinityChipColors(int level) {
+  const palette = [
+    (Color(0xFFCFD8DC), Color(0xFF455A64)),
+    (Color(0xFFC5E8B7), Color(0xFF2E6F3C)),
+    (Color(0xFFA8F0E6), Color(0xFF0B6B66)),
+    (Color(0xFFB9C8FF), Color(0xFF2E32A8)),
+    (Color(0xFFFFE7A0), Color(0xFF8A4B00)),
+  ];
+  return palette[(level - 1).clamp(0, palette.length - 1)];
+}
 
 /// 문장 친밀도 단계와 다음 단계까지 진행 막대. 상세 시트와 따라 말하기 화면에서 함께 쓴다.
 /// [compact]면 안내 문구 없이 한 줄과 얇은 막대만 그린다.
@@ -30,9 +43,11 @@ class SentenceAffinityBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(children: [
-          Icon(Icons.favorite_rounded,
-              size: compact ? 14 : 16, color: colors.primary),
-          const SizedBox(width: 6),
+          SvgPicture.asset(
+              'assets/badges/affinity_${affinity.level.clamp(1, SentenceAffinity.maxLevel)}.svg',
+              width: compact ? 20 : 28,
+              height: compact ? 20 : 28),
+          SizedBox(width: compact ? 6 : 8),
           Text(title,
               style: TextStyle(
                   fontWeight: FontWeight.w800, fontSize: compact ? 12 : 14)),

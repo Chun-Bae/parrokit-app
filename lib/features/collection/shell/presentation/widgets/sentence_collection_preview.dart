@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
@@ -33,7 +35,7 @@ class SentenceCollectionPreview extends StatefulWidget {
 }
 
 class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
-  bool explore = true;
+  bool explore = AppConfig.sentenceExplore;
   String language = '영어';
   String category = '전체';
   String accountId = 'guest';
@@ -450,7 +452,11 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       children: [
         _ViewSwitch(
             explore: explore,
-            onChanged: (value) => setState(() => explore = value)),
+            onChanged: (value) {
+              setState(() => explore = value);
+              AppConfig.sentenceExplore = value;
+              AppConfig.saveToPrefs();
+            }),
         const SizedBox(height: 16),
         LearningLanguagePicker(
           value: language,
@@ -1609,37 +1615,28 @@ class _MasteryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final (background, foreground) = affinity.isMax
-        ? (const Color(0xFFFFEBB0), const Color(0xFF6B4A00))
-        : switch (mastery) {
-            SentenceMastery.fresh => (
-                colors.surfaceContainerHighest,
-                colors.onSurfaceVariant
-              ),
-            SentenceMastery.learning => (
-                colors.tertiaryContainer,
-                colors.onTertiaryContainer
-              ),
-            SentenceMastery.familiar => (
-                colors.primaryContainer,
-                colors.onPrimaryContainer
-              ),
-          };
+    final (background, foreground) = affinityChipColors(affinity.level);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.fromLTRB(4, 2, 8, 2),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        'Lv.${affinity.level} ${affinity.name}',
-        style: TextStyle(
-          color: foreground,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        SvgPicture.asset(
+            'assets/badges/affinity_${affinity.level.clamp(1, SentenceAffinity.maxLevel)}.svg',
+            width: 18,
+            height: 18),
+        const SizedBox(width: 3),
+        Text(
+          'Lv.${affinity.level} ${affinity.name}',
+          style: TextStyle(
+            color: foreground,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-      ),
+      ]),
     );
   }
 }

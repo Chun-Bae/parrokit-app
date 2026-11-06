@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -34,7 +35,11 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: AppConfig.libraryTab,
+    );
     _tabController.addListener(_handleTabChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -52,6 +57,10 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   void _handleTabChanged() {
     if (_tabController.indexIsChanging || !mounted) return;
     setState(() {});
+    if (AppConfig.libraryTab != _tabController.index) {
+      AppConfig.libraryTab = _tabController.index;
+      AppConfig.saveToPrefs();
+    }
     if (_tabController.index != 1) {
       context.read<ClipProvider>().closeCollectionMenu();
     }

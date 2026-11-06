@@ -42,11 +42,11 @@ class SentenceAffinity {
       next == null ? 1 : ((points - floor) / (next! - floor)).clamp(0.0, 1.0);
 
   static const _steps = [
-    (0, '첫 만남'),
-    (3, '낯익음'),
-    (10, '친해지는 중'),
-    (25, '친구'),
-    (50, '단짝'),
+    (0, '낯선'),
+    (3, '익숙한'),
+    (10, '편안한'),
+    (25, '자연스러운'),
+    (50, '능숙한'),
   ];
 
   static const maxLevel = 5;

@@ -451,7 +451,7 @@ void main() {
     await tapTooltip(tester, '따라 말하기 모드 켜기');
     await tester.pump();
     expect(find.byKey(const ValueKey('repeat-affinity')), findsOneWidget);
-    expect(find.text('Lv.1 첫 만남'), findsOneWidget);
+    expect(find.text('Lv.1 낯선'), findsOneWidget);
     expect(find.text('3점 남음'), findsOneWidget);
     await tester.ensureVisible(find.byKey(complete));
     await tester.tap(find.byKey(complete));
@@ -461,6 +461,17 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('1점 남음'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('말풍선을 누르면 문장 정보 시트가 열린다', (tester) async {
+    await openPreview(tester);
+    await tester.pump();
+    final box = find.byKey(const ValueKey('phrase-bubble'));
+    final top = tester.getTopLeft(box);
+    final size = tester.getSize(box);
+    await tester.tapAt(Offset(top.dx + size.width / 2, top.dy + 30));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sentence-affinity')), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('문장 목록에서 고른 문장으로 바로 이동한다', (tester) async {

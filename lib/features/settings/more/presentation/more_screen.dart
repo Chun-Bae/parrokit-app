@@ -29,9 +29,7 @@ import 'sections/cache_section.dart';
 import 'sections/logout_section.dart';
 import 'sections/delete_account_section.dart';
 import 'sections/info_section.dart';
-import 'sections/player_settings_section.dart';
 import 'sections/remote_storage_section.dart';
-import 'sections/shorts_settings_section.dart';
 import 'sections/storage_section.dart';
 
 /// 설정/더보기 화면.
@@ -68,14 +66,6 @@ class MoreScreen extends StatelessWidget {
             // // 결제 (광고 제거 + 코인 충전 + 구매 내역)
             // const PaymentSection(),
             // const SizedBox(height: AppSpacing.sectionGap),
-
-            // 플레이어 설정
-            const PlayerSettingsSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 쇼츠 설정
-            const ShortsSettingsSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
 
             // 앱 설정
             const AppSettingsSection(),

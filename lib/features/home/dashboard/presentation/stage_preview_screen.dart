@@ -18,6 +18,8 @@ import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'package:parrokit/core/speech/phrase_recognizer.dart';
 import 'package:parrokit/core/speech/speech_match.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart'
+    show showSentenceDetails;
 import 'add_sentence_screen.dart';
 import 'nest_preview.dart';
 
@@ -751,6 +753,18 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     }
   }
 
+  /// 말풍선을 누르면 보관함과 같은 문장 정보 시트를 연다.
+  Future<void> openPhraseDetails() async {
+    final sentence = sentenceForPhrase(phrase);
+    if (sentence == null) return;
+    await showSentenceDetails(
+      context,
+      sentence: sentence,
+      accountId: widget.accountId,
+      saved: mySentences.any((s) => s.id == sentence.id),
+    );
+  }
+
   Future<void> addPhrase() async {
     ({AddedSentence sentence, bool added})? result;
     try {
@@ -881,29 +895,44 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                 bottom: 62,
                 child: Semantics(
                     label: '앵무새가 이야기해요. $phrase',
-                    child: AnimatedBuilder(
-                        animation: Listenable.merge(
-                            [animation, birdAnimation, typing]),
-                        builder: (context, _) {
-                          final moving = !reduceMotion && !paused;
-                          // 음성이 이어지는 동안은 말풍선 시간이 끝나도 사라지지 않게 붙잡는다.
-                          final holdBubble =
-                              voiceTyping && (ttsSpeaking || gapWaiting);
-                          final phase = awaitingResponse
-                              ? 0.6
-                              : holdBubble
-                                  ? math.min(animation.value, 0.6)
-                                  : animation.value;
-                          return CustomPaint(
-                              painter: _GrowthPainter(
-                                  typedFraction:
-                                      voiceTyping ? typedFraction : null,
-                                  phase: phase,
-                                  birdPhase: birdAnimation.value,
-                                  sprite: nestSprite,
-                                  phrase: phrase,
-                                  animate: moving));
-                        }))),
+                    child: LayoutBuilder(
+                        builder: (context, constraints) => AnimatedBuilder(
+                            animation: Listenable.merge(
+                                [animation, birdAnimation, typing]),
+                            builder: (context, _) {
+                              final moving = !reduceMotion && !paused;
+                              // 음성이 이어지는 동안은 말풍선 시간이 끝나도 사라지지 않게 붙잡는다.
+                              final holdBubble =
+                                  voiceTyping && (ttsSpeaking || gapWaiting);
+                              final phase = awaitingResponse
+                                  ? 0.6
+                                  : holdBubble
+                                      ? math.min(animation.value, 0.6)
+                                      : animation.value;
+                              return GestureDetector(
+                                  key: const ValueKey('phrase-bubble'),
+                                  behavior: HitTestBehavior.translucent,
+                                  onTapUp: (details) {
+                                    if (_GrowthPainter.bubbleRect(
+                                            Size(constraints.maxWidth,
+                                                constraints.maxHeight),
+                                            phrase)
+                                        .inflate(6)
+                                        .contains(details.localPosition)) {
+                                      openPhraseDetails();
+                                    }
+                                  },
+                                  child: CustomPaint(
+                                      painter: _GrowthPainter(
+                                          typedFraction: voiceTyping
+                                              ? typedFraction
+                                              : null,
+                                          phase: phase,
+                                          birdPhase: birdAnimation.value,
+                                          sprite: nestSprite,
+                                          phrase: phrase,
+                                          animate: moving)));
+                            })))),
             Positioned(
                 left: 8,
                 top: 30,
@@ -1757,6 +1786,24 @@ class _GrowthPainter extends CustomPainter {
   /// null이면 애니메이션 시간으로, 값이 있으면 음성 진행 비율로 글자를 보여준다.
   final double? typedFraction;
 
+  static const _speechStyle = TextStyle(
+      color: Color(0xFF253C34), fontSize: 13, fontWeight: FontWeight.w800);
+
+  static TextPainter _speechPainter(Size size, String phrase) => TextPainter(
+      text: TextSpan(text: phrase, style: _speechStyle),
+      textDirection: TextDirection.ltr)
+    ..layout(maxWidth: size.width * 0.58);
+
+  /// 말풍선이 그려지는 영역. 터치 판정에도 같이 쓴다.
+  static Rect bubbleRect(Size size, String phrase) {
+    final fullSpeech = _speechPainter(size, phrase);
+    final bubbleWidth = fullSpeech.width + 24;
+    final left = ((size.width - bubbleWidth) / 2)
+        .clamp(4.0, math.max(4.0, size.width - bubbleWidth - 4));
+    return Rect.fromLTWH(
+        left.toDouble(), 16, bubbleWidth, fullSpeech.height + 16);
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..isAntiAlias = true;
@@ -1767,13 +1814,8 @@ class _GrowthPainter extends CustomPainter {
     canvas.restore();
     // 등장 → 한 글자씩 표시 → 잠깐 유지 → 사라짐. 위치와 크기는 고정한다.
     if (phrase.isNotEmpty && (!animate || (phase >= 0.08 && phase < 0.88))) {
-      const speechStyle = TextStyle(
-          color: Color(0xFF253C34), fontSize: 13, fontWeight: FontWeight.w800);
-      final maxWidth = size.width * 0.58;
-      final fullSpeech = TextPainter(
-          text: TextSpan(text: phrase, style: speechStyle),
-          textDirection: TextDirection.ltr)
-        ..layout(maxWidth: maxWidth);
+      const speechStyle = _speechStyle;
+      final fullSpeech = _speechPainter(size, phrase);
       final letters = phrase.characters.toList();
       final typed = typedFraction != null
           ? (typedFraction!.clamp(0.0, 1.0) * letters.length).ceil()
@@ -1785,11 +1827,7 @@ class _GrowthPainter extends CustomPainter {
           text: TextSpan(text: letters.take(typed).join(), style: speechStyle),
           textDirection: TextDirection.ltr)
         ..layout(minWidth: fullSpeech.width, maxWidth: fullSpeech.width);
-      final bubbleWidth = fullSpeech.width + 24;
-      final left = ((size.width - bubbleWidth) / 2)
-          .clamp(4.0, math.max(4.0, size.width - bubbleWidth - 4));
-      final bubble = Rect.fromLTWH(
-          left.toDouble(), 16, bubbleWidth, fullSpeech.height + 16);
+      final bubble = bubbleRect(size, phrase);
       final opacity = !animate
           ? 1.0
           : math.min(((phase - 0.08) / 0.05).clamp(0.0, 1.0),

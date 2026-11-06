@@ -219,6 +219,8 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                   // Provider 상태
                   onAutoNextChanged: (enabled) {
                     shorts.setAutoNext(enabled);
+                    AppConfig.autoNext = enabled;
+                    AppConfig.saveToPrefs();
                   },
                   onOpenExternalPlayer: () {
                     final item = shorts.shorts[_currentIndex];
@@ -238,6 +240,8 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                     setState(() {
                       _showSubtitle = enabled;
                     });
+                    AppConfig.shortsShowSubtitles = enabled;
+                    AppConfig.saveToPrefs();
                   },
                 ),
               ),

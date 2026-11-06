@@ -155,6 +155,7 @@ flutter:
     - assets/characters/idle_bird/
     - assets/logos/pa_logo.png
     - assets/icons/
+    - assets/badges/
     - assets/intros/
 
   # Custom Fonts (IBM Plex Sans KR)

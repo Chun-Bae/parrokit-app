@@ -132,16 +132,32 @@ class ClipPlayerViewModel extends ChangeNotifier
   set mutableSegIndex(int value) => _segIndex = value;
 
   @override
-  set mutableScope(PlayScope value) => _scope = value;
+  set mutableScope(PlayScope value) {
+    _scope = value;
+    AppConfig.segmentLoop = value == PlayScope.full;
+    AppConfig.saveToPrefs();
+  }
 
   @override
-  set mutableLoopSegment(bool value) => _loopSegment = value;
+  set mutableLoopSegment(bool value) {
+    _loopSegment = value;
+    AppConfig.repeatAll = value;
+    AppConfig.saveToPrefs();
+  }
 
   @override
-  set mutableShowSubtitles(bool value) => _showSubtitles = value;
+  set mutableShowSubtitles(bool value) {
+    _showSubtitles = value;
+    AppConfig.showSubtitles = value;
+    AppConfig.saveToPrefs();
+  }
 
   @override
-  set mutablePlaybackRate(double value) => _playbackRate = value;
+  set mutablePlaybackRate(double value) {
+    _playbackRate = value;
+    AppConfig.defaultPlaybackRate = value;
+    AppConfig.saveToPrefs();
+  }
 
   @override
   set mutableBgPlaying(bool value) => _bgPlaying = value;
