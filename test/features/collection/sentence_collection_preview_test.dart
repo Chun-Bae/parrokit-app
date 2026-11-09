@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -30,6 +31,29 @@ Future<void> seedShared() => seedSentence(
       topic: '카페',
       visibility: 'public',
     );
+
+/// 내 문장 탭에서 주소 가져오기 창을 열고 주소를 입력해 확인까지 누른다.
+Future<void> startUrlImport(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('내 문장'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byTooltip('가져오기·내보내기'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('CSV·엑셀에서 가져오기'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byKey(const ValueKey('url-import-input')),
+      'https://example.com/sentences.csv');
+  await tester.tap(find.byKey(const ValueKey('url-import-confirm')));
+}
+
+Widget urlApp(String csv, {Future<Uint8List> Function(Uri)? fetcher}) =>
+    MaterialApp(
+        home: Scaffold(
+            body: SentenceCollectionPreview(
+      repository: repo,
+      urlFetcher:
+          fetcher ?? (uri) async => Uint8List.fromList(utf8.encode(csv)),
+    )));
 
 void main() {
   setUp(() {
@@ -274,34 +298,126 @@ void main() {
         find.text('Where is the station?', skipOffstage: false), findsNothing);
   });
 
-  testWidgets('주소를 입력하면 CSV를 내려받아 내 문장에 추가한다', (tester) async {
+  testWidgets('주소에서 받은 문장을 목록으로 보여주고 고른 문장만 가져온다', (tester) async {
     Uri? requested;
+    await tester.pumpWidget(urlApp('', fetcher: (uri) async {
+      requested = uri;
+      return Uint8List.fromList(
+          utf8.encode('문장,뜻\nSee you soon,곧 봐요\nHello,안녕\nTake care,몸조심해요\n'));
+    }));
+    await startUrlImport(tester);
+    await tester.pumpAndSettle();
+
+    expect(requested, Uri.parse('https://example.com/sentences.csv'));
+    // 아직 등록되지 않고 목록에서 고른다.
+    expect(find.byKey(const ValueKey('import-sheet')), findsOneWidget);
+    expect(find.text('가져올 문장 3개'), findsOneWidget);
+    expect(find.text('3개 가져오기'), findsOneWidget);
+    expect((await MySentenceStore.load('guest')), isEmpty);
+
+    // 하나를 빼면 2개만 가져온다.
+    await tester.tap(find.byKey(const ValueKey('import-item-1')));
+    await tester.pump();
+    expect(find.text('2개 가져오기'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('import-start')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('import-summary')), findsOneWidget);
+    expect(find.text('2개를 가져왔어요.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('import-done')));
+    await tester.pumpAndSettle();
+
+    final saved = (await MySentenceStore.load('guest')).map((e) => e.text);
+    expect(saved, containsAll(['See you soon', 'Take care']));
+    expect(saved, isNot(contains('Hello')));
+    expect(find.textContaining('2개를 가져왔어요'), findsOneWidget);
+  });
+
+  testWidgets('옮기기가 끝난 뒤 취소하면 방금 가져온 문장이 모두 사라진다', (tester) async {
+    await tester
+        .pumpWidget(urlApp('문장,뜻\nSee you soon,곧 봐요\nTake care,몸조심해요\n'));
+    await startUrlImport(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('import-start')));
+    await tester.pumpAndSettle();
+    expect((await MySentenceStore.load('guest')).length, 2);
+
+    await tester.tap(find.byKey(const ValueKey('import-undo')));
+    await tester.pumpAndSettle();
+    expect(await MySentenceStore.load('guest'), isEmpty);
+    // 닫히지 않고 고르는 목록으로 돌아가서 URL이나 파일을 다시 고르지 않아도 된다.
+    expect(find.byKey(const ValueKey('import-sheet')), findsOneWidget);
+    expect(find.text('2개 가져오기'), findsOneWidget);
+
+    // 하나만 빼고 다시 가져온다.
+    await tester.tap(find.byKey(const ValueKey('import-item-1')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('import-start')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('import-done')));
+    await tester.pumpAndSettle();
+    expect((await MySentenceStore.load('guest')).map((e) => e.text),
+        ['See you soon']);
+  });
+
+  testWidgets('이미 있는 문장은 목록에서 제외되고 가져오기 전에 취소할 수 있다', (tester) async {
+    await MySentenceStore.add('guest', language: '영어', text: 'See you soon');
+    await tester
+        .pumpWidget(urlApp('문장,뜻\nSee you soon,곧 봐요\nTake care,몸조심해요\n'));
+    await startUrlImport(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('1개 가져오기'), findsOneWidget);
+    expect(find.textContaining('이미 있어요'), findsWidgets);
+
+    await tester.tap(find.byKey(const ValueKey('import-cancel')));
+    await tester.pumpAndSettle();
+    expect((await MySentenceStore.load('guest')).length, 1);
+  });
+
+  testWidgets('주소에서 가져오는 동안 진행 창이 보이고 끝나면 닫힌다', (tester) async {
+    final download = Completer<Uint8List>();
+    await tester.pumpWidget(urlApp('', fetcher: (uri) => download.future));
+    await startUrlImport(tester);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('import-progress')), findsOneWidget);
+    expect(find.textContaining('파일을 받는 중'), findsOneWidget);
+
+    download
+        .complete(Uint8List.fromList(utf8.encode('문장,뜻\nSee you soon,곧 봐요\n')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('import-progress')), findsNothing);
+    expect(find.byKey(const ValueKey('import-sheet')), findsOneWidget);
+  });
+
+  testWidgets('중첩된 내비게이터 안에서 가져와도 진행 창만 닫히고 화면은 남는다', (tester) async {
     await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-            body: SentenceCollectionPreview(
-      repository: repo,
-      urlFetcher: (uri) async {
-        requested = uri;
-        return Uint8List.fromList(
-            utf8.encode('문장,뜻\nSee you soon,곧 봐요\nHello,안녕\n'));
-      },
+            body: Navigator(
+      onGenerateRoute: (_) => MaterialPageRoute<void>(
+          builder: (_) => SentenceCollectionPreview(
+                repository: repo,
+                urlFetcher: (uri) async => Uint8List.fromList(
+                    utf8.encode('문장,뜻\nSee you soon,곧 봐요\n')),
+              )),
     ))));
     await tester.pumpAndSettle();
     await tester.tap(find.text('내 문장'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('가져오기·내보내기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('주소(URL)에서 가져오기'));
+    await tester.tap(find.text('CSV·엑셀에서 가져오기'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('url-import-input')),
         'https://example.com/sentences.csv');
     await tester.tap(find.byKey(const ValueKey('url-import-confirm')));
     await tester.pumpAndSettle();
-
-    expect(requested, Uri.parse('https://example.com/sentences.csv'));
+    expect(find.byKey(const ValueKey('import-progress')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('import-start')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('import-done')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SentenceCollectionPreview), findsOneWidget);
     expect(find.text('See you soon', skipOffstage: false), findsOneWidget);
-    // 기본 문장 'Hello there!'와 달라서 새로 추가된다.
-    expect(find.textContaining('가져왔어요'), findsOneWidget);
   });
 
   testWidgets('https가 아닌 주소는 내려받지 않고 안내한다', (tester) async {
@@ -320,7 +436,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('가져오기·내보내기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('주소(URL)에서 가져오기'));
+    await tester.tap(find.text('CSV·엑셀에서 가져오기'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('url-import-input')),
         'http://example.com/a.csv');

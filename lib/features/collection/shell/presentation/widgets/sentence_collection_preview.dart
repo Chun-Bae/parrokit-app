@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -20,6 +21,8 @@ import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'clip_sentence_matches_section.dart';
+import 'sentence_import_method_dialog.dart';
+import 'sentence_import_sheet.dart';
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -429,51 +432,104 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     }
   }
 
-  /// 주소를 입력받아 그 주소의 CSV·엑셀 파일을 내려받아 가져온다.
-  Future<void> importFromUrl() async {
-    final input = await showDialog<String>(
+  NavigatorState? _progressNavigator;
+
+  /// 가져오는 동안 닫을 수 없는 진행 창을 띄운다. 끝나면 [hideImportProgress]로 닫는다.
+  /// 창은 맨 위(루트) 내비게이터에 뜨므로, 닫을 때도 같은 내비게이터를 써야 화면이 같이 닫히지 않는다.
+  void showImportProgress(ValueNotifier<_ImportProgress> progress) {
+    if (!mounted || _progressNavigator != null) return;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    _progressNavigator = navigator;
+    showDialog<void>(
       context: context,
-      builder: (context) => const _UrlImportDialog(),
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (context) => _ImportProgressDialog(progress: progress),
     );
-    if (input == null || !mounted) return;
+  }
+
+  void hideImportProgress() {
+    final navigator = _progressNavigator;
+    if (navigator == null) return;
+    _progressNavigator = null;
+    if (navigator.mounted) navigator.pop();
+  }
+
+  /// CSV·엑셀 가져오기 창을 열고, 고른 방법(파일 또는 주소)으로 가져온다.
+  Future<void> importSentences() async {
+    final source = await showDialog<SentenceImportSource>(
+      context: context,
+      builder: (context) => const SentenceImportMethodDialog(),
+    );
+    if (source == null || !mounted) return;
+    final url = source.url;
+    if (url == null) {
+      await importMySentences();
+    } else {
+      await importFromUrl(url);
+    }
+  }
+
+  /// 입력한 주소의 CSV·엑셀 파일을 내려받아 가져온다.
+  Future<void> importFromUrl(String input) async {
     try {
       final uri = SentenceUrlImport.downloadUri(input);
-      final bytes = await (widget.urlFetcher ?? SentenceUrlImport.fetch)(uri);
-      await saveImported(SentenceTransfer.parseDownloaded(bytes));
-    } on FormatException catch (e) {
+      final progress = ValueNotifier<_ImportProgress>(
+          const _ImportProgress('주소에서 파일을 받는 중이에요…'));
+      Uint8List bytes;
+      try {
+        showImportProgress(progress);
+        bytes = await (widget.urlFetcher ?? SentenceUrlImport.fetch)(uri);
+      } finally {
+        hideImportProgress();
+        progress.dispose();
+      }
       if (!mounted) return;
-      toast(e.message.startsWith('https')
-          ? e.message
-          : '파일을 읽지 못했어요. 누구나 볼 수 있는 CSV·엑셀 파일 주소인지 확인해주세요.');
+      await saveImported(SentenceTransfer.parseDownloaded(bytes));
+    } on SentenceUrlException catch (e) {
+      if (mounted) toast(e.message);
+    } on FormatException {
+      if (mounted) toast('파일을 읽지 못했어요. 누구나 볼 수 있는 CSV·엑셀 파일 주소인지 확인해주세요.');
     } catch (_) {
       if (mounted) toast('주소에서 파일을 내려받지 못했어요. 주소와 공개 설정을 확인해주세요.');
     }
   }
 
-  /// 가져온 문장을 내 문장에 추가하고 결과를 알린다. 이미 있는 문장은 건너뛴다.
+  /// 가져올 문장을 바로 등록하지 않고 목록 시트로 먼저 보여준다.
+  /// 고른 문장만 옮기고, 끝나면 완료하거나 취소(되돌리기)할 수 있다.
   Future<void> saveImported(List<ImportedSentence> items) async {
+    if (items.isEmpty) {
+      toast('가져올 문장이 없어요.');
+      return;
+    }
     try {
-      if (items.isEmpty) {
-        toast('가져올 문장이 없어요.');
-        return;
-      }
-      var added = 0;
-      for (final item in items) {
-        final ok = await MySentenceStore.add(
-          accountId,
-          language: item.language.isEmpty ? language : item.language,
-          text: item.text,
-          translation: item.translation,
-          pronunciation: item.pronunciation,
-          author: authorName,
-        );
-        if (ok) added++;
-      }
-      if (!mounted) return;
-      final skipped = items.length - added;
-      toast(skipped == 0
-          ? '문장 $added개를 가져왔어요.'
-          : '문장 $added개를 가져왔어요. 이미 있는 $skipped개는 건너뛰었어요.');
+      final result = await showSentenceImportSheet(
+        context,
+        items: items,
+        defaultLanguage: language,
+        existingKeys: {
+          for (final item in mine) sentenceImportKey(item.language, item.text),
+        },
+        addOne: (item) async {
+          final itemLanguage = item.language.isEmpty ? language : item.language;
+          final added = await MySentenceStore.add(
+            accountId,
+            language: itemLanguage,
+            text: item.text,
+            translation: item.translation,
+            pronunciation: item.pronunciation,
+            author: authorName,
+          );
+          if (!added) return null;
+          final saved = await MySentenceStore.findByText(
+              accountId, itemLanguage, item.text);
+          return saved?.id ?? '';
+        },
+        removeOne: (id) => MySentenceStore.remove(accountId, id),
+      );
+      await reload();
+      if (!mounted || result == null) return;
+      toast('문장 ${result.added}개를 가져왔어요.');
     } catch (_) {
       if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해주세요.');
     }
@@ -644,8 +700,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                     icon: const Icon(Icons.more_horiz_rounded),
                     onSelected: (value) => switch (value) {
                       'script' => addFromScript(),
-                      'import' => importMySentences(),
-                      'url' => importFromUrl(),
+                      'import' => importSentences(),
                       'xlsx' => exportMySentences(xlsx: true),
                       _ => exportMySentences(xlsx: false),
                     },
@@ -660,11 +715,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                           child: ListTile(
                               leading: Icon(Icons.file_download_outlined),
                               title: Text('CSV·엑셀에서 가져오기'))),
-                      PopupMenuItem(
-                          value: 'url',
-                          child: ListTile(
-                              leading: Icon(Icons.link_rounded),
-                              title: Text('주소(URL)에서 가져오기'))),
                       PopupMenuItem(
                           value: 'csv',
                           child: ListTile(
@@ -698,58 +748,37 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   }
 }
 
-/// CSV·엑셀 파일 주소를 입력받는 창. 확인하면 입력한 주소를 돌려준다.
-class _UrlImportDialog extends StatefulWidget {
-  const _UrlImportDialog();
+/// 주소에서 파일을 받는 동안 보여주는 진행 상황.
+class _ImportProgress {
+  const _ImportProgress(this.label);
 
-  @override
-  State<_UrlImportDialog> createState() => _UrlImportDialogState();
+  final String label;
 }
 
-class _UrlImportDialogState extends State<_UrlImportDialog> {
-  final controller = TextEditingController();
+class _ImportProgressDialog extends StatelessWidget {
+  const _ImportProgressDialog({required this.progress});
+
+  final ValueListenable<_ImportProgress> progress;
 
   @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('주소(URL)에서 가져오기'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              key: const ValueKey('url-import-input'),
-              controller: controller,
-              autofocus: true,
-              keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                hintText: 'https://…/sentences.csv',
-                border: OutlineInputBorder(),
-              ),
+  Widget build(BuildContext context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          key: const ValueKey('import-progress'),
+          content: ValueListenableBuilder<_ImportProgress>(
+            valueListenable: progress,
+            builder: (context, value, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value.label,
+                    style: const TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 14),
+                const LinearProgressIndicator(),
+              ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              'https 주소의 CSV·엑셀(xlsx) 파일을 읽어요. 구글 스프레드시트는 "링크가 있는 모든 사용자 보기" 공유 주소를 그대로 붙여넣으면 돼요. '
-              '열 순서는 문장, 뜻, 발음이고 5MB까지 가져올 수 있어요.',
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 12),
-            ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('취소')),
-          FilledButton(
-              key: const ValueKey('url-import-confirm'),
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('가져오기')),
-        ],
       );
 }
 

@@ -156,6 +156,7 @@ flutter:
     - assets/logos/pa_logo.png
     - assets/icons/
     - assets/badges/
+    - assets/help/
     - assets/intros/
 
   # Custom Fonts (IBM Plex Sans KR)
