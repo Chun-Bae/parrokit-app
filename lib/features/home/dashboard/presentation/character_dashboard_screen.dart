@@ -10,14 +10,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
+import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
 
+import 'home_palette.dart';
 import 'widgets/study_garden_preview.dart';
 import 'widgets/sentence_history_dashboard.dart';
 import 'widgets/today_practice_summary.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
 
-/// 성장 UI를 비교하기 위한 별도 화면. 경험치와 퀘스트는 저장되지 않는 예시다.
+/// 앱 홈 화면. 앵무새 무대([StagePreviewScreen])를 맨 위에 품고,
+/// 연습 기록과 추천 문장, 학습 잔디를 함께 보여준다.
+/// 연습 횟수와 하루 목표는 기기에 저장한다.
 class CharacterDashboardScreen extends StatefulWidget {
   const CharacterDashboardScreen({super.key});
 
@@ -40,6 +44,10 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
   void initState() {
     super.initState();
     scrollController = ScrollController()..addListener(handleScroll);
+    // 홈 첫 진입에서 한 번 팁을 보여준다 (예전에는 클래식 대시보드가 띄웠다).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showTipDialog(context);
+    });
   }
 
   void handleScroll() {
@@ -180,24 +188,29 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     final user = context.watch<UserProvider?>()?.currentUser;
     final accountId = user?.id ?? 'guest';
     ensureStatsLoaded(accountId);
-    const background = Color(0xFFF3F8FD);
-    const surface = Color(0xFFFFFFFF);
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
-    const accent = Color(0xFFA8CBE8);
-    final localTheme = ThemeData.light(useMaterial3: true).copyWith(
+    final isDark = HomePalette.isDark(context);
+    final palette = HomePalette.of(context);
+    final background = palette.background;
+    final muted = palette.muted;
+    final base = isDark
+        ? ThemeData.dark(useMaterial3: true)
+        : ThemeData.light(useMaterial3: true);
+    final localTheme = base.copyWith(
       scaffoldBackgroundColor: background,
-      textTheme: ThemeData.light().textTheme.apply(
+      textTheme: base.textTheme.apply(
           fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily),
-      colorScheme: const ColorScheme.light(
-          surface: surface,
-          primary: Color(0xFF4F6EAF),
-          onPrimary: Colors.white,
-          onSurface: ink),
+      colorScheme:
+          (isDark ? const ColorScheme.dark() : const ColorScheme.light())
+              .copyWith(
+        surface: palette.surface,
+        primary: palette.primary,
+        onPrimary: isDark ? const Color(0xFF10202F) : Colors.white,
+        onSurface: palette.ink,
+      ),
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Theme(
         data: localTheme,
         child: Scaffold(
@@ -247,8 +260,8 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                   FilledButton.icon(
                     onPressed: () => context.push(AppRoutes.learningHubPath),
                     style: FilledButton.styleFrom(
-                      backgroundColor: accent,
-                      foregroundColor: const Color(0xFF24364F),
+                      backgroundColor: palette.accent,
+                      foregroundColor: palette.onAccent,
                       minimumSize: const Size.fromHeight(58),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
@@ -273,12 +286,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     practiceGoals: practiceGoals,
                     dailyGoal: dailyGoal,
                     totalPracticed: totalPracticed,
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () =>
-                        context.push(AppRoutes.classicDashboardPath),
-                    child: Text('기존 대시보드 열기', style: TextStyle(color: muted)),
                   ),
                 ]
                     .map((child) => child is StagePreviewScreen
@@ -307,8 +314,8 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                                 heroTag: 'dashboard-scroll-to-top',
                                 tooltip: '맨 위로',
                                 elevation: 3,
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF547B91),
+                                backgroundColor: palette.surface,
+                                foregroundColor: palette.primary,
                                 onPressed: scrollToTop,
                                 child: const Icon(
                                     Icons.keyboard_arrow_up_rounded)))))),

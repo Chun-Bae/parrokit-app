@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../home_palette.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_log.dart';
@@ -88,17 +90,18 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
     final data = summary;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF46637A).withValues(alpha: 0.07),
+            color: palette.shadow.withValues(alpha: 0.07),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -106,7 +109,7 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Expanded(
+          Expanded(
               child: Text('내 문장 기록',
                   style: TextStyle(
                       color: ink,
@@ -116,15 +119,15 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
           if (widget.onViewAll != null)
             TextButton(
                 onPressed: widget.onViewAll,
-                child: const Text('전체 보기', style: TextStyle(color: muted))),
+                child: Text('전체 보기', style: TextStyle(color: muted))),
         ]),
         const SizedBox(height: 12),
         if (data == null)
           const SizedBox(
               height: 80, child: Center(child: CircularProgressIndicator()))
         else if (data.isEmpty)
-          const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+          Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text('아직 연습한 문장이 없어요. 앵무새를 따라 말하면 여기에 기록돼요.',
                   style: TextStyle(color: muted, fontSize: 13, height: 1.5)))
         else ...[
@@ -160,13 +163,16 @@ class _SectionTitle extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text,
-          style: const TextStyle(
-              color: Color(0xFF61758D),
-              fontSize: 12,
-              fontWeight: FontWeight.w800)));
+  Widget build(BuildContext context) {
+    final palette = HomePalette.of(context);
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(text,
+            style: TextStyle(
+                color: palette.muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w800)));
+  }
 }
 
 class _Stats extends StatelessWidget {
@@ -187,24 +193,27 @@ class _Stat extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) => Expanded(
-          child: Column(children: [
-        Text(value,
-            style: const TextStyle(
-                color: Color(0xFF24364F),
-                fontSize: 22,
-                fontWeight: FontWeight.w900)),
-        const SizedBox(height: 2),
-        Text(label,
-            style: const TextStyle(color: Color(0xFF61758D), fontSize: 11)),
-      ]));
+  Widget build(BuildContext context) {
+    final palette = HomePalette.of(context);
+    return Expanded(
+        child: Column(children: [
+      Text(value,
+          style: TextStyle(
+              color: palette.ink, fontSize: 22, fontWeight: FontWeight.w900)),
+      const SizedBox(height: 2),
+      Text(label, style: TextStyle(color: palette.muted, fontSize: 11)),
+    ]));
+  }
 }
 
-Color masteryColor(SentenceMastery mastery) => switch (mastery) {
-      SentenceMastery.fresh => const Color(0xFFD9E3EA),
-      SentenceMastery.learning => const Color(0xFFA8CBE8),
-      SentenceMastery.familiar => const Color(0xFF6D9890),
-    };
+Color masteryColor(BuildContext context, SentenceMastery mastery) {
+  final palette = HomePalette.of(context);
+  return switch (mastery) {
+    SentenceMastery.fresh => palette.mastery[0],
+    SentenceMastery.learning => palette.mastery[1],
+    SentenceMastery.familiar => palette.mastery[2],
+  };
+}
 
 class _MasteryBar extends StatelessWidget {
   const _MasteryBar({required this.data});
@@ -212,6 +221,7 @@ class _MasteryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = HomePalette.of(context);
     final total =
         data.masteryCounts.values.fold<int>(0, (sum, count) => sum + count);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -224,7 +234,8 @@ class _MasteryBar extends StatelessWidget {
                   if ((data.masteryCounts[mastery] ?? 0) > 0)
                     Expanded(
                         flex: data.masteryCounts[mastery]!,
-                        child: ColoredBox(color: masteryColor(mastery))),
+                        child:
+                            ColoredBox(color: masteryColor(context, mastery))),
               ]))),
       const SizedBox(height: 8),
       Wrap(spacing: 14, runSpacing: 4, children: [
@@ -234,10 +245,11 @@ class _MasteryBar extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                    color: masteryColor(mastery), shape: BoxShape.circle)),
+                    color: masteryColor(context, mastery),
+                    shape: BoxShape.circle)),
             const SizedBox(width: 5),
             Text('${mastery.label} ${data.masteryCounts[mastery] ?? 0}',
-                style: const TextStyle(color: Color(0xFF61758D), fontSize: 11)),
+                style: TextStyle(color: palette.muted, fontSize: 11)),
           ]),
         if (total == 0) const SizedBox.shrink(),
       ]),
@@ -255,6 +267,7 @@ class _AttemptLine extends StatelessWidget {
     final rate = log.successRate;
     final minutes = log.totalDuration.inMinutes;
     final seconds = log.totalDuration.inSeconds % 60;
+    final palette = HomePalette.of(context);
     final parts = [
       '시도 ${log.attempts}회',
       if (rate != null) '성공률 ${(rate * 100).round()}%',
@@ -264,7 +277,7 @@ class _AttemptLine extends StatelessWidget {
     return Center(
         child: Text(parts.join(' · '),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF61758D), fontSize: 11)));
+            style: TextStyle(color: palette.muted, fontSize: 11)));
   }
 }
 
@@ -280,6 +293,7 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final last = item.activity.lastPracticedAt;
+    final palette = HomePalette.of(context);
     final detail = showListen
         ? '들은 ${item.activity.listenCount}회 · 따라 말하기 ${item.activity.practiceCount}회'
         : '${last == null ? '' : '${relativeDayLabel(DateTime.now(), last)} · '}'
@@ -292,7 +306,7 @@ class _HistoryRow extends StatelessWidget {
               width: 4,
               height: 34,
               decoration: BoxDecoration(
-                  color: masteryColor(item.mastery),
+                  color: masteryColor(context, item.mastery),
                   borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 12),
           Expanded(
@@ -302,20 +316,20 @@ class _HistoryRow extends StatelessWidget {
                 Text(item.sentence.text,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: Color(0xFF24364F),
+                    style: TextStyle(
+                        color: palette.ink,
                         fontSize: 14,
                         fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(detail,
-                    style: const TextStyle(
-                        color: Color(0xFF61758D), fontSize: 11)),
+                    style: TextStyle(color: palette.muted, fontSize: 11)),
               ])),
           Text(item.mastery.label,
               style: TextStyle(
-                  color: masteryColor(item.mastery) == const Color(0xFFD9E3EA)
-                      ? const Color(0xFF61758D)
-                      : masteryColor(item.mastery),
+                  color:
+                      masteryColor(context, item.mastery) == palette.mastery[0]
+                          ? palette.muted
+                          : masteryColor(context, item.mastery),
                   fontSize: 11,
                   fontWeight: FontWeight.w800)),
         ]));

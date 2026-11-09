@@ -32,7 +32,9 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       IconButton(
-                        onPressed: () => context.go(AppRoutes.dashboardPath),
+                        onPressed: () => context.canPop()
+                            ? context.pop()
+                            : context.go(AppRoutes.dashboardPath),
                         icon: const Icon(Icons.arrow_back_rounded),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,

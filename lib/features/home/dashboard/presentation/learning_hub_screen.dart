@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'home_palette.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -15,11 +17,12 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFF3F8FD);
-    const surface = Colors.white;
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
-    const accent = Color(0xFFA8CBE8);
+    final palette = HomePalette.of(context);
+    final background = palette.background;
+    final surface = palette.surface;
+    final ink = palette.ink;
+    final muted = palette.muted;
+    final accent = palette.accent;
 
     Widget destination(
         IconData icon, String title, String subtitle, String? path) {
@@ -95,19 +98,17 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
                                   index == 0
                                       ? Icons.record_voice_over_rounded
                                       : Icons.headphones_rounded,
-                                  color:
-                                      selected ? const Color(0xFF24364F) : ink,
+                                  color: selected ? palette.onAccent : ink,
                                   size: 30),
                               const Spacer(),
                               if (selected)
-                                const Icon(Icons.check_circle_rounded,
-                                    color: Color(0xFF24364F), size: 20),
+                                Icon(Icons.check_circle_rounded,
+                                    color: palette.onAccent, size: 20),
                             ]),
                             const SizedBox(height: 20),
                             Text(index == 0 ? '따라 말하기' : '반복 듣기',
                                 style: TextStyle(
-                                  color:
-                                      selected ? const Color(0xFF24364F) : ink,
+                                  color: selected ? palette.onAccent : ink,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                 )),
@@ -117,9 +118,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
                                     ? '듣고 내 목소리로\n소리 내어 연습해요'
                                     : '좋아하는 구간을\n여러 번 들어요',
                                 style: TextStyle(
-                                  color: selected
-                                      ? const Color(0xFF415C7A)
-                                      : muted,
+                                  color: selected ? palette.inkSoft : muted,
                                   fontSize: 12,
                                   height: 1.6,
                                 )),
@@ -156,7 +155,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             onPressed: () => context.push(AppRoutes.collectionPath),
             style: FilledButton.styleFrom(
               backgroundColor: accent,
-              foregroundColor: const Color(0xFF24364F),
+              foregroundColor: palette.onAccent,
               minimumSize: const Size.fromHeight(56),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18)),

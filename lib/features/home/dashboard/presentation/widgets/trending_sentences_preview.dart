@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../home_palette.dart';
+
 class TrendingSentencesPreview extends StatefulWidget {
   const TrendingSentencesPreview({
     super.key,
@@ -117,8 +119,9 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,18 +131,18 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE5E9),
+                color: palette.likeSoft,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.circle, size: 7, color: Color(0xFFFF657E)),
-                  SizedBox(width: 5),
+                  Icon(Icons.circle, size: 7, color: palette.like),
+                  const SizedBox(width: 5),
                   Text(
                     'LIVE',
                     style: TextStyle(
-                      color: Color(0xFFBC4055),
+                      color: palette.likeInk,
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                     ),
@@ -148,7 +151,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               '지금 뜨는 문장',
               style: TextStyle(
                 color: ink,
@@ -165,7 +168,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
           ],
         ),
         const SizedBox(height: 2),
-        const Text(
+        Text(
           '사람들이 지금 저장하고 있는 표현이에요',
           style: TextStyle(color: muted, fontSize: 12),
         ),
@@ -220,18 +223,19 @@ class _SentenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
 
     return Container(
       width: 284,
       padding: const EdgeInsets.fromLTRB(16, 14, 10, 9),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF46637A).withValues(alpha: 0.08),
+            color: palette.shadow.withValues(alpha: 0.08),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -245,21 +249,20 @@ class _SentenceCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE4F1F8),
+                  color: palette.surfaceAlt,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   item.topic,
-                  style: const TextStyle(
-                    color: Color(0xFF43677E),
+                  style: TextStyle(
+                    color: palette.inkSoft,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               const Spacer(),
-              Text(item.age,
-                  style: const TextStyle(color: muted, fontSize: 10)),
+              Text(item.age, style: TextStyle(color: muted, fontSize: 10)),
             ],
           ),
           const SizedBox(height: 13),
@@ -267,7 +270,7 @@ class _SentenceCard extends StatelessWidget {
             item.sentence,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: ink,
               fontSize: 18,
               height: 1.25,
@@ -279,20 +282,20 @@ class _SentenceCard extends StatelessWidget {
             item.translation,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: muted, fontSize: 12),
+            style: TextStyle(color: muted, fontSize: 12),
           ),
           const Spacer(),
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 11,
-                backgroundColor: Color(0xFFDDEFEA),
-                child: Icon(Icons.person_rounded,
-                    size: 14, color: Color(0xFF547B72)),
+                backgroundColor: palette.goodSoft,
+                child:
+                    Icon(Icons.person_rounded, size: 14, color: palette.good),
               ),
               const SizedBox(width: 6),
               Text('@${item.author}',
-                  style: const TextStyle(color: muted, fontSize: 10)),
+                  style: TextStyle(color: muted, fontSize: 10)),
               const Spacer(),
               IconButton(
                 visualDensity: VisualDensity.compact,
@@ -303,11 +306,11 @@ class _SentenceCard extends StatelessWidget {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   size: 20,
-                  color: liked ? const Color(0xFFFF657E) : muted,
+                  color: liked ? palette.like : muted,
                 ),
               ),
               Text('${item.likes + (liked ? 1 : 0)}',
-                  style: const TextStyle(color: muted, fontSize: 10)),
+                  style: TextStyle(color: muted, fontSize: 10)),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: '저장',
@@ -317,15 +320,15 @@ class _SentenceCard extends StatelessWidget {
                       ? Icons.bookmark_rounded
                       : Icons.bookmark_border_rounded,
                   size: 20,
-                  color: saved ? const Color(0xFF4F6EAF) : muted,
+                  color: saved ? palette.primary : muted,
                 ),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: '연습에 추가',
                 onPressed: onPractice,
-                icon: const Icon(Icons.record_voice_over_rounded,
-                    size: 20, color: Color(0xFF4F6EAF)),
+                icon: Icon(Icons.record_voice_over_rounded,
+                    size: 20, color: palette.primary),
               ),
             ],
           ),

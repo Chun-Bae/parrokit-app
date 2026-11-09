@@ -21,6 +21,7 @@ abstract class AppRoutes {
   static const explore = 'explore';
   static const collection = 'collection';
   static const collectionClip = 'collection_clip';
+  static const clipDiscover = 'clip_discover';
   static const more = 'more';
   static const profileEdit = 'profile_edit';
   static const storageCacheManagement = 'storage_cache_management';
@@ -61,9 +62,7 @@ abstract class AppRoutes {
   // ─────────────────────────────────────────────────────────────────
 
   static const dashboardPath = '/dashboard';
-  static const stagePreviewPath = '/dashboard/stage-preview';
   static const learningHubPath = '/dashboard/learn';
-  static const classicDashboardPath = '/dashboard/classic';
   static const communityPath = '/community';
   static const communityBoardViewPath = '/community/board/:postId';
   static const communityBoardWritePath = '/community/board/write';
@@ -78,6 +77,7 @@ abstract class AppRoutes {
   static const explorePath = '/explore';
   static const collectionPath = '/collection';
   static const collectionClipPath = 'clip';
+  static const clipDiscoverPath = 'clip-discover';
   static const morePath = '/more';
   static const profileEditPath = 'profile_edit';
   static const storageCacheManagementPath = '/storage-cache-management';

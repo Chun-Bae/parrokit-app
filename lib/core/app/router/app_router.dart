@@ -19,10 +19,8 @@ import 'package:parrokit/features/auth/sign-in/sign_in_screen.dart';
 import 'package:parrokit/features/auth/sign-up/sign_up_screen.dart';
 import 'package:parrokit/features/auth/find-pw/find_pw_screen.dart';
 import 'package:parrokit/features/auth/onboarding/onboarding_screen.dart';
-import 'package:parrokit/features/home/dashboard/presentation/dashboard_screen.dart';
 import 'package:parrokit/features/home/dashboard/presentation/character_dashboard_screen.dart';
 import 'package:parrokit/features/home/dashboard/presentation/learning_hub_screen.dart';
-import 'package:parrokit/features/home/dashboard/presentation/stage_preview_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/community_shell_screen.dart';
 import 'package:parrokit/features/community/board/presentation/board_view_screen.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
@@ -35,6 +33,7 @@ import 'package:parrokit/features/community/block/presentation/blocked_users_scr
 import 'package:parrokit/features/community/notification/presentation/community_notification_screen.dart';
 import 'package:parrokit/features/community/activity/presentation/activity_screen.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/shorts_screen.dart';
+import 'package:parrokit/features/collection/library/presentation/clip_discover_screen.dart';
 import 'package:parrokit/features/collection/library/presentation/library_screen.dart';
 import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 import 'package:parrokit/features/settings/more/presentation/more_screen.dart';
@@ -294,24 +293,8 @@ ShellRoute get _shellRoute => ShellRoute(
           ),
         ),
         GoRoute(
-          path: AppRoutes.stagePreviewPath,
-          builder: (context, state) {
-            final user = context.watch<UserProvider>().currentUser;
-            return StagePreviewScreen(
-                key: ValueKey(user?.id ?? 'guest'),
-                nickname: user?.displayName ?? '나',
-                accountId: user?.id ?? 'guest');
-          },
-        ),
-        GoRoute(
           path: AppRoutes.learningHubPath,
           builder: (context, state) => const LearningHubScreen(),
-        ),
-        GoRoute(
-          path: AppRoutes.classicDashboardPath,
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: DashboardScreen(),
-          ),
         ),
 
         // Community
@@ -343,6 +326,11 @@ ShellRoute get _shellRoute => ShellRoute(
             child: CollectionShellScreen(),
           ),
           routes: [
+            GoRoute(
+              path: AppRoutes.clipDiscoverPath,
+              name: AppRoutes.clipDiscover,
+              builder: (context, state) => const ClipDiscoverScreen(),
+            ),
             GoRoute(
               path: AppRoutes.collectionClipPath,
               name: AppRoutes.collectionClip,

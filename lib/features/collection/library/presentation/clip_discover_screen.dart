@@ -1,17 +1,17 @@
 // ============================================================================
-// lib/features/dashboard/presentation/dashboard_screen.dart
+// lib/features/collection/library/presentation/clip_discover_screen.dart
 // ============================================================================
 //
 // [역할]
-// 대시보드 메인 화면. 앱 홈 화면으로 사용.
-// 히어로 카드, 이어보기, 모음집, 랜덤 자막 섹션으로 구성.
+// 보관함 하위 "이어보기·추천" 화면.
+// 예전 홈(대시보드)이던 화면으로, 클립 중심의 이어보기와 추천을 모아둔다.
+// 홈은 문장·캐릭터 학습을 맡고, 이 화면은 보관함 클립 탭에서 열린다.
 //
 // [레이어]
 // Presentation Layer - View
 // ClipActivityProvider를 통해 데이터를 구독하고 표시.
 //
 // [구성 요소]
-// - HeaderSection: 상단 로고 + 클립 수 표시
 // - HeroSection: 오늘의 학습 카드
 // - ContinueWatchingSection: 이어보기 리스트
 // - CollectionsSection: 모음집 그리드
@@ -26,25 +26,23 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/shared/widgets/expandable_action_fab.dart';
 
-import 'sections/header_section.dart';
-import 'sections/hero_section.dart';
-import 'sections/continue_watching_section.dart';
-import 'sections/collections_section.dart';
-import 'sections/random_subtitle_section.dart';
-import '../../../../core/shared/widgets/tip_dialog.dart';
+import 'package:parrokit/features/home/dashboard/presentation/sections/hero_section.dart';
+import 'package:parrokit/features/home/dashboard/presentation/sections/continue_watching_section.dart';
+import 'package:parrokit/features/home/dashboard/presentation/sections/collections_section.dart';
+import 'package:parrokit/features/home/dashboard/presentation/sections/random_subtitle_section.dart';
 
-/// 대시보드 메인 화면 (앱 홈).
+/// 보관함 하위 "이어보기·추천" 화면.
 ///
 /// [ClipActivityProvider]를 구독하여 데이터 표시.
 /// Pull-to-refresh로 데이터 갱신.
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+class ClipDiscoverScreen extends StatefulWidget {
+  const ClipDiscoverScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<ClipDiscoverScreen> createState() => _ClipDiscoverScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isContentStudioExtended = true;
 
@@ -61,7 +59,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final ui = context.read<ClipActivityProvider>();
       ui.refreshRandomSegments();
       ui.refreshRandomHeroClip();
-      if (context.mounted) showTipDialog(context);
     });
   }
 
@@ -108,6 +105,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: bg,
+      appBar: AppBar(
+        title: const Text('이어보기·추천',
+            style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: bg,
+        surfaceTintColor: bg,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       // Scaffold.floatingActionButton은 body와 별개 레이어라서 스크롤뷰의
       // 오버스크롤 효과와 겹치는 문제 자체가 생기지 않습니다. AppShell(바깥
@@ -135,19 +138,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
-            // ───────────────────────────────────────────────────────────
-            // 헤더 섹션 (로고 + 클립 수)
-            // ───────────────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: const HeaderSection(),
-                ),
-              ),
-            ),
-
             // ───────────────────────────────────────────────────────────
             // 히어로 카드 섹션
             // ───────────────────────────────────────────────────────────

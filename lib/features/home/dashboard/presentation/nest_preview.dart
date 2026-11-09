@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
+import 'home_palette.dart';
+
 /// 학습 기록과 연결하기 전, 먹이와 꾸미기 흐름을 확인하는 별도 시안.
 class NestPreview extends StatefulWidget {
   const NestPreview({super.key});
@@ -91,8 +93,9 @@ class _NestPreviewState extends State<NestPreview>
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF334E65);
-    const muted = Color(0xFF7A909D);
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
     final message = meals == 0
         ? '네가 공부하는 동안, 여기서 기다릴게.'
         : meals < 3
@@ -117,18 +120,18 @@ class _NestPreviewState extends State<NestPreview>
                 ? '따뜻한 조명'
                 : '꽃 가랜드';
     return Container(
-      color: const Color(0xFFF3F8FD),
+      color: palette.background,
       padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 18),
       child: Column(children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(children: [
             Icon(Icons.spa_outlined, size: 18, color: muted),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text('나의 작은 둥지',
                 style: TextStyle(
                     color: ink, fontSize: 16, fontWeight: FontWeight.w700)),
-            Spacer(),
+            const Spacer(),
             Text('첫 번째 보금자리', style: TextStyle(color: muted, fontSize: 11)),
           ]),
         ),
@@ -139,7 +142,7 @@ class _NestPreviewState extends State<NestPreview>
           child: Text(message,
               key: ValueKey(message),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: ink, fontSize: 14)),
+              style: TextStyle(color: ink, fontSize: 14)),
         ),
         SizedBox(
           height: 280,
@@ -162,12 +165,11 @@ class _NestPreviewState extends State<NestPreview>
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(children: [
             Row(children: [
-              const Text('함께 보낸 시간',
+              Text('함께 보낸 시간',
                   style: TextStyle(
                       color: ink, fontSize: 12, fontWeight: FontWeight.w600)),
               const Spacer(),
-              Text('$meals / 10',
-                  style: const TextStyle(color: muted, fontSize: 12)),
+              Text('$meals / 10', style: TextStyle(color: muted, fontSize: 12)),
             ]),
             const SizedBox(height: 10),
             ClipRRect(
@@ -175,15 +177,15 @@ class _NestPreviewState extends State<NestPreview>
                 child: LinearProgressIndicator(
                   value: meals / 10,
                   minHeight: 5,
-                  color: const Color(0xFF9CBCCE),
-                  backgroundColor: const Color(0xFFE2EBF1),
+                  color: palette.primary,
+                  backgroundColor: palette.surfaceAlt,
                 )),
             const SizedBox(height: 10),
             Text(
                 meals >= 10
                     ? '꽃과 빛으로 가득한 우리의 둥지'
                     : '$reward까지 먹이 ${next - meals}번',
-                style: const TextStyle(color: muted, fontSize: 12)),
+                style: TextStyle(color: muted, fontSize: 12)),
             const SizedBox(height: 20),
             OutlinedButton.icon(
               onPressed: meals < 10 ? feed : null,
@@ -192,13 +194,13 @@ class _NestPreviewState extends State<NestPreview>
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
                 foregroundColor: ink,
-                side: const BorderSide(color: Color(0xFFCADBE5)),
+                side: BorderSide(color: palette.border),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18)),
               ),
             ),
             const SizedBox(height: 8),
-            const Text('먹이를 눌러보는 시안이에요 · 실제 학습 기록과 연결되지 않아요',
+            Text('먹이를 눌러보는 시안이에요 · 실제 학습 기록과 연결되지 않아요',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: muted, fontSize: 10)),
           ]),

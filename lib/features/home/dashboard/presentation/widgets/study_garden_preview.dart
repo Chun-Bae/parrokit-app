@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../home_palette.dart';
+
 class StudyGardenPreview extends StatefulWidget {
   const StudyGardenPreview({
     super.key,
@@ -61,15 +63,10 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
-    const levels = [
-      Color(0xFFF0F5FA),
-      Color(0xFFDDEAF8),
-      Color(0xFFB9D2EF),
-      Color(0xFF82A8D8),
-      Color(0xFF4F6EAF),
-    ];
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
+    final levels = palette.garden;
     final days = DateTime(month.year, month.month + 1, 0).day;
     final offset = month.weekday % 7;
     final cells = ((offset + days + 6) ~/ 7) * 7;
@@ -85,7 +82,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -93,7 +90,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   '학습 캘린더',
                   style: TextStyle(
@@ -107,12 +104,12 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDEAF8),
+                  color: palette.surfaceAlt,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '누적 ${widget.totalPracticed}문장',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: ink,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -122,7 +119,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             '연습한 문장이 많을수록 날짜가 진해져요.',
             style: TextStyle(color: muted, fontSize: 12),
           ),
@@ -132,13 +129,13 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               IconButton(
                 tooltip: '이전 달',
                 onPressed: () => moveMonth(-1),
-                icon: const Icon(Icons.chevron_left_rounded, color: ink),
+                icon: Icon(Icons.chevron_left_rounded, color: ink),
               ),
               Expanded(
                 child: Text(
                   '${month.year}년 ${month.month}월',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -160,7 +157,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                     child: Text(
                       day,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: muted, fontSize: 11),
+                      style: TextStyle(color: muted, fontSize: 11),
                     ),
                   ),
                 )
@@ -243,7 +240,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
             children: [
               Text(
                 '학습 $activeDays일 · 목표 완료 $completedDays일',
-                style: const TextStyle(
+                style: TextStyle(
                   color: ink,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -252,8 +249,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('적게',
-                      style: TextStyle(color: muted, fontSize: 10)),
+                  Text('적게', style: TextStyle(color: muted, fontSize: 10)),
                   const SizedBox(width: 5),
                   ...levels.map(
                     (color) => Container(
@@ -266,8 +262,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                       ),
                     ),
                   ),
-                  const Text('완료',
-                      style: TextStyle(color: muted, fontSize: 10)),
+                  Text('완료', style: TextStyle(color: muted, fontSize: 10)),
                 ],
               ),
             ],
@@ -277,7 +272,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
             selected == null
                 ? '날짜를 누르면 그날 연습한 문장 수를 볼 수 있어요.'
                 : '${selected!.month}월 ${selected!.day}일 · $selectedCount / ${goalFor(selected!)}문장${selectedCount! >= goalFor(selected!) ? ' · 목표 완료' : ''}',
-            style: const TextStyle(color: muted, fontSize: 11, height: 1.5),
+            style: TextStyle(color: muted, fontSize: 11, height: 1.5),
           ),
         ],
       ),

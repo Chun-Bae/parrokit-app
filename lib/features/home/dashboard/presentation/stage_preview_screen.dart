@@ -21,6 +21,7 @@ import 'package:parrokit/core/speech/speech_match.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart'
     show showSentenceDetails;
 import 'add_sentence_screen.dart';
+import 'home_palette.dart';
 import 'nest_preview.dart';
 
 enum _SpeakingMode { automatic, repeat }
@@ -38,7 +39,8 @@ enum _PlayOrder {
   _PlayOrder get next => values[(index + 1) % values.length];
 }
 
-/// 앵무새의 자동 말하기와 따라 말하기 흐름을 확인하는 시안.
+/// 앵무새의 자동 말하기와 따라 말하기 무대.
+/// 홈([CharacterDashboardScreen])이 `embedded: true`로 맨 위에 품는다.
 /// 기존 경로 호환을 위해 화면 이름은 유지한다.
 class StagePreviewScreen extends StatefulWidget {
   const StagePreviewScreen(
@@ -830,8 +832,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
 
   @override
   Widget build(BuildContext context) {
-    const muted = Color(0xFF61758D);
-    const accent = Color(0xFF4F6EAF);
+    final isDark = HomePalette.isDark(context);
+    final palette = HomePalette.of(context);
+    final muted = palette.muted;
+    final accent = palette.primary;
     final content =
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SizedBox(
@@ -847,13 +851,13 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                       widget.nickname.trim().isEmpty ? '나' : widget.nickname,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: Color(0xFF24364F),
+                      style: TextStyle(
+                          color: palette.ink,
                           fontSize: 19,
                           fontWeight: FontWeight.w800))),
               Text('Lv.$level',
-                  style: const TextStyle(
-                      color: Color(0xFF42766C),
+                  style: TextStyle(
+                      color: palette.good,
                       fontSize: 16,
                       fontWeight: FontWeight.w800)),
               const SizedBox(width: 6),
@@ -867,8 +871,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                           key: const ValueKey('home-help'),
                           radius: 18,
                           onTap: showHelp,
-                          child: const Icon(Icons.help_outline_rounded,
-                              size: 22, color: Color(0xFF718B98))))),
+                          child: Icon(Icons.help_outline_rounded,
+                              size: 22, color: palette.muted)))),
             ]),
             const SizedBox(height: 10),
             ClipRRect(
@@ -876,19 +880,19 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                 child: LinearProgressIndicator(
                     value: (totalXp % 10) / 10,
                     minHeight: 5,
-                    color: const Color(0xFF91BEB0),
-                    backgroundColor: const Color(0xFFE1EAF0))),
+                    color: palette.good,
+                    backgroundColor: palette.surfaceAlt)),
             const SizedBox(height: 6),
             Align(
                 alignment: Alignment.centerRight,
                 child: Text(
                     xpReady ? '${xpText(totalXp % 10)} / 10 XP' : 'XP 불러오는 중…',
-                    style: const TextStyle(color: muted, fontSize: 11))),
+                    style: TextStyle(color: muted, fontSize: 11))),
           ])),
       Container(
           height: 320,
           width: double.infinity,
-          color: const Color(0xFFF3F8FD),
+          color: palette.background,
           child: Stack(children: [
             Positioned.fill(
                 bottom: 62,
@@ -1098,17 +1102,26 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       const SizedBox(height: 16),
       const SizedBox(height: 16),
     ]);
-    final theme = ThemeData.light(useMaterial3: true).copyWith(
-        colorScheme: const ColorScheme.light(
-            primary: accent, onPrimary: Colors.white, surface: Colors.white),
-        textTheme: ThemeData.light().textTheme.apply(
+    final base = isDark
+        ? ThemeData.dark(useMaterial3: true)
+        : ThemeData.light(useMaterial3: true);
+    final theme = base.copyWith(
+        colorScheme:
+            (isDark ? const ColorScheme.dark() : const ColorScheme.light())
+                .copyWith(
+          primary: accent,
+          onPrimary: isDark ? const Color(0xFF10202F) : Colors.white,
+          surface: palette.surface,
+          onSurface: palette.ink,
+        ),
+        textTheme: base.textTheme.apply(
             fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily));
     return Theme(
         data: theme,
         child: widget.embedded
-            ? Container(color: const Color(0xFFF3F8FD), child: content)
+            ? Container(color: palette.background, child: content)
             : Scaffold(
-                backgroundColor: const Color(0xFFF3F8FD),
+                backgroundColor: palette.background,
                 appBar: AppBar(title: const Text('앵무새와 말하기')),
                 body: SingleChildScrollView(
                     padding: EdgeInsets.only(
@@ -1296,7 +1309,9 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
 
   @override
   Widget build(BuildContext context) {
-    const active = Color(0xFF6D9890);
+    final palette = HomePalette.of(context);
+    final active = palette.good;
+    final idle = palette.muted;
     final letters = widget.phrase.characters.toList();
     final highlighted = (score * letters.length).floor();
     return Column(children: [
@@ -1304,10 +1319,10 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
           TextSpan(children: [
             TextSpan(
                 text: letters.take(highlighted).join(),
-                style: const TextStyle(color: active)),
+                style: TextStyle(color: active)),
             TextSpan(
                 text: letters.skip(highlighted).join(),
-                style: const TextStyle(color: Color(0xFF607482))),
+                style: TextStyle(color: idle)),
           ]),
           textAlign: TextAlign.center,
           style: const TextStyle(
@@ -1317,8 +1332,7 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
         Text('${(score * 100).round()}점',
             key: const ValueKey('speech-score'),
             style: TextStyle(
-                color:
-                    score >= speechPassScore ? active : const Color(0xFF607482),
+                color: score >= speechPassScore ? active : idle,
                 fontSize: 18,
                 fontWeight: FontWeight.w800)),
       ],
@@ -1332,9 +1346,8 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                 tooltip: listening ? '음성 인식 중지' : '따라 말하기 시작',
                 onPressed: widget.enabled ? toggleListening : null,
                 style: IconButton.styleFrom(
-                    backgroundColor:
-                        listening ? active : const Color(0xFFE1EBE8),
-                    foregroundColor: listening ? Colors.white : active),
+                    backgroundColor: listening ? active : palette.goodSoft,
+                    foregroundColor: listening ? palette.surface : active),
                 icon:
                     Icon(listening ? Icons.stop_rounded : Icons.mic_rounded))),
         const SizedBox(width: 12),
@@ -1358,8 +1371,7 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                             width: 3,
                             height: base * wave,
                             decoration: BoxDecoration(
-                                color:
-                                    voiced ? active : const Color(0xFFDDE6EB),
+                                color: voiced ? active : palette.surfaceAlt,
                                 borderRadius: BorderRadius.circular(2)));
                       }));
                 }))),
@@ -1378,16 +1390,14 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                     widget.onComplete(score > 0 ? score : null);
                   }
                 : null,
-            icon: const Icon(Icons.check_circle_rounded,
-                color: active, size: 30)),
+            icon: Icon(Icons.check_circle_rounded, color: active, size: 30)),
       ]),
       if (message != null)
         Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(message!,
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(color: Color(0xFF607482), fontSize: 12))),
+                style: TextStyle(color: idle, fontSize: 12))),
     ]);
   }
 }
@@ -1412,50 +1422,53 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
   late bool countListen = widget.initialCountListen;
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('설정'),
-        content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                const Expanded(
-                    child: Text('앵무새 말하기 간격',
-                        style: TextStyle(fontWeight: FontWeight.w700))),
-                Text('${gap.toStringAsFixed(1)}초',
-                    style: const TextStyle(fontWeight: FontWeight.w800)),
-              ]),
-              Slider(
-                  key: const ValueKey('gap-slider'),
-                  value: gap,
-                  min: _SpeakingSettingsDialog.minGap,
-                  max: _SpeakingSettingsDialog.maxGap,
-                  divisions: 19,
-                  label: '${gap.toStringAsFixed(1)}초',
-                  onChanged: (value) => setState(() => gap = value)),
-              const Text(
-                  '앵무새가 문장을 다 말한 뒤 다음 문장으로 넘어가기 전에 쉬는 시간이에요. 따라 말하기 모드에서는 적용되지 않아요.',
-                  style: TextStyle(color: Color(0xFF61758D), fontSize: 12)),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                  key: const ValueKey('count-listen-switch'),
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('들은 횟수 기록',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: const Text('끄면 앵무새 말을 끝까지 들어도 들은 횟수가 오르지 않아요.',
-                      style: TextStyle(fontSize: 12)),
-                  value: countListen,
-                  onChanged: (value) => setState(() => countListen = value)),
+  Widget build(BuildContext context) {
+    final palette = HomePalette.of(context);
+    return AlertDialog(
+      title: const Text('설정'),
+      content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Expanded(
+                  child: Text('앵무새 말하기 간격',
+                      style: TextStyle(fontWeight: FontWeight.w700))),
+              Text('${gap.toStringAsFixed(1)}초',
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
             ]),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('취소')),
-          FilledButton(
-              onPressed: () =>
-                  Navigator.pop(context, (gap: gap, countListen: countListen)),
-              child: const Text('저장')),
-        ],
-      );
+            Slider(
+                key: const ValueKey('gap-slider'),
+                value: gap,
+                min: _SpeakingSettingsDialog.minGap,
+                max: _SpeakingSettingsDialog.maxGap,
+                divisions: 19,
+                label: '${gap.toStringAsFixed(1)}초',
+                onChanged: (value) => setState(() => gap = value)),
+            Text(
+                '앵무새가 문장을 다 말한 뒤 다음 문장으로 넘어가기 전에 쉬는 시간이에요. 따라 말하기 모드에서는 적용되지 않아요.',
+                style: TextStyle(color: palette.muted, fontSize: 12)),
+            const SizedBox(height: 8),
+            SwitchListTile(
+                key: const ValueKey('count-listen-switch'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('들은 횟수 기록',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('끄면 앵무새 말을 끝까지 들어도 들은 횟수가 오르지 않아요.',
+                    style: TextStyle(fontSize: 12)),
+                value: countListen,
+                onChanged: (value) => setState(() => countListen = value)),
+          ]),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context), child: const Text('취소')),
+        FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, (gap: gap, countListen: countListen)),
+            child: const Text('저장')),
+      ],
+    );
+  }
 }
 
 class _PhraseSettingsDialog extends StatefulWidget {
@@ -1493,9 +1506,10 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF6C8092);
-    const active = Color(0xFF6D9890);
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
+    final active = palette.good;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -1505,7 +1519,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
           child: Column(children: [
             Row(children: [
-              const Expanded(
+              Expanded(
                   child: Text('말하기 설정',
                       style: TextStyle(
                           color: ink,
@@ -1514,7 +1528,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
               IconButton(
                   tooltip: '닫기',
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, color: muted)),
+                  icon: Icon(Icons.close_rounded, color: muted)),
             ]),
             const SizedBox(height: 8),
             LearningLanguagePicker(
@@ -1527,11 +1541,11 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F7),
+                    color: palette.surfaceSoft,
                     borderRadius: BorderRadius.circular(12)),
-                child: const Row(children: [
+                child: Row(children: [
                   Icon(Icons.lock_outline_rounded, size: 16, color: muted),
-                  SizedBox(width: 7),
+                  const SizedBox(width: 7),
                   Text('그 외 언어는 준비 중',
                       style: TextStyle(
                           color: muted,
@@ -1540,14 +1554,14 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                 ])),
             const SizedBox(height: 18),
             Row(children: [
-              const Expanded(
+              Expanded(
                   child: Text('앵무새가 말할 문장',
                       style: TextStyle(
                           color: ink,
                           fontSize: 15,
                           fontWeight: FontWeight.w800))),
               Text('${enabled.length} / ${visiblePhrases.length}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: muted, fontSize: 12, fontWeight: FontWeight.w700)),
             ]),
             const SizedBox(height: 8),
@@ -1559,9 +1573,8 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                       final phrase = visiblePhrases[index];
                       final selected = enabled.contains(phrase);
                       return Material(
-                          color: selected
-                              ? const Color(0xFFEAF3F0)
-                              : const Color(0xFFF7F9FA),
+                          color:
+                              selected ? palette.goodSoft : palette.surfaceSoft,
                           borderRadius: BorderRadius.circular(13),
                           child: CheckboxListTile(
                               dense: true,
@@ -1574,7 +1587,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                               title: Text(phrase,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: ink,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600)),
@@ -1653,52 +1666,54 @@ class _HomeHelpDialog extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('도움말'),
-        content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  for (final (title, items) in _sections) ...[
+  Widget build(BuildContext context) {
+    final palette = HomePalette.of(context);
+    return AlertDialog(
+      title: const Text('도움말'),
+      content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                for (final (title, items) in _sections) ...[
+                  Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 6),
+                      child: Text(title,
+                          style: TextStyle(
+                              color: palette.good,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800))),
+                  for (final (icon, name, desc) in items)
                     Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 6),
-                        child: Text(title,
-                            style: const TextStyle(
-                                color: Color(0xFF42766C),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800))),
-                    for (final (icon, name, desc) in items)
-                      Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 5),
-                          child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(icon,
-                                    size: 22, color: const Color(0xFF718B98)),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                      Text(name,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w700)),
-                                      Text(desc,
-                                          style: const TextStyle(
-                                              color: Color(0xFF61758D),
-                                              fontSize: 12.5)),
-                                    ])),
-                              ])),
-                  ],
-                ]))),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('닫기')),
-        ],
-      );
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(icon, size: 22, color: palette.muted),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                    Text(name,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w700)),
+                                    Text(desc,
+                                        style: TextStyle(
+                                            color: palette.muted,
+                                            fontSize: 12.5)),
+                                  ])),
+                            ])),
+                ],
+              ]))),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context), child: const Text('닫기')),
+      ],
+    );
+  }
 }
 
 class _GameMenuButton extends StatelessWidget {
@@ -1717,55 +1732,55 @@ class _GameMenuButton extends StatelessWidget {
   final double dimension;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => SizedBox.square(
-        dimension: dimension,
-        child: Semantics(
-          label: label,
-          selected: selected,
-          button: true,
-          child: Tooltip(
-            message: label,
-            excludeFromSemantics: true,
-            child: Material(
-              color: selected ? const Color(0xFF6D9890) : Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                      color: selected
-                          ? const Color(0xFF6D9890)
-                          : const Color(0xFFDDE8ED))),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                  onTap: onTap,
-                  child: Stack(alignment: Alignment.center, children: [
-                    Icon(icon,
-                        size: dimension <= 40 ? 21 : 23,
-                        color:
-                            selected ? Colors.white : const Color(0xFF718B98)),
-                    if (badge)
-                      Positioned(
-                          top: 5,
-                          right: 5,
-                          child: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                  color: Color(0xFFFF8E72),
-                                  shape: BoxShape.circle))),
-                    if (selected)
-                      Positioned(
-                          bottom: 5,
-                          child: Container(
-                              width: 12,
-                              height: 2,
-                              decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.75),
-                                  borderRadius: BorderRadius.circular(2)))),
-                  ])),
-            ),
+  Widget build(BuildContext context) {
+    final palette = HomePalette.of(context);
+    return SizedBox.square(
+      dimension: dimension,
+      child: Semantics(
+        label: label,
+        selected: selected,
+        button: true,
+        child: Tooltip(
+          message: label,
+          excludeFromSemantics: true,
+          child: Material(
+            color: selected ? palette.good : palette.surface,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                    color: selected ? palette.good : palette.border)),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+                onTap: onTap,
+                child: Stack(alignment: Alignment.center, children: [
+                  Icon(icon,
+                      size: dimension <= 40 ? 21 : 23,
+                      color: selected ? Colors.white : palette.muted),
+                  if (badge)
+                    Positioned(
+                        top: 5,
+                        right: 5,
+                        child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                                color: Color(0xFFFF8E72),
+                                shape: BoxShape.circle))),
+                  if (selected)
+                    Positioned(
+                        bottom: 5,
+                        child: Container(
+                            width: 12,
+                            height: 2,
+                            decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.75),
+                                borderRadius: BorderRadius.circular(2)))),
+                ])),
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _GrowthPainter extends CustomPainter {

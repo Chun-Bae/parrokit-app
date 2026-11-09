@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../home_palette.dart';
+
 class TodayPracticeSummary extends StatelessWidget {
   const TodayPracticeSummary({
     super.key,
@@ -16,9 +18,10 @@ class TodayPracticeSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF24364F);
-    const muted = Color(0xFF61758D);
-    const accent = Color(0xFF4F6EAF);
+    final palette = HomePalette.of(context);
+    final ink = palette.ink;
+    final muted = palette.muted;
+    final accent = palette.primary;
     final safeGoal = goal < 1 ? 1 : goal;
     final progress = (completed / safeGoal).clamp(0.0, 1.0);
     final isComplete = completed >= safeGoal;
@@ -26,11 +29,11 @@ class TodayPracticeSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF46637A).withValues(alpha: 0.07),
+            color: palette.shadow.withValues(alpha: 0.07),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -41,7 +44,7 @@ class TodayPracticeSummary extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   '오늘 연습',
                   style: TextStyle(
@@ -57,19 +60,19 @@ class TodayPracticeSummary extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDDEFEA),
+                    color: palette.goodSoft,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.check_circle_rounded,
-                          size: 15, color: Color(0xFF477B70)),
-                      SizedBox(width: 5),
+                          size: 15, color: palette.good),
+                      const SizedBox(width: 5),
                       Text(
                         '오늘 완료',
                         style: TextStyle(
-                          color: Color(0xFF477B70),
+                          color: palette.good,
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                         ),
@@ -97,7 +100,7 @@ class TodayPracticeSummary extends StatelessWidget {
             children: [
               Text(
                 '$completed',
-                style: const TextStyle(
+                style: TextStyle(
                   color: ink,
                   fontSize: 38,
                   height: 1,
@@ -108,7 +111,7 @@ class TodayPracticeSummary extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 5, bottom: 3),
                 child: Text(
                   '/ $safeGoal문장',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: muted,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -119,7 +122,7 @@ class TodayPracticeSummary extends StatelessWidget {
               Text(
                 isComplete ? '목표 달성!' : '${safeGoal - completed}문장 남음',
                 style: TextStyle(
-                  color: isComplete ? const Color(0xFF477B70) : accent,
+                  color: isComplete ? palette.good : accent,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
@@ -132,20 +135,20 @@ class TodayPracticeSummary extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 12,
-              backgroundColor: const Color(0xFFE8EFF7),
+              backgroundColor: palette.surfaceAlt,
               valueColor: AlwaysStoppedAnimation(
-                isComplete ? const Color(0xFF6FA69A) : accent,
+                isComplete ? palette.good : accent,
               ),
             ),
           ),
           const SizedBox(height: 13),
           Row(
             children: [
-              const Icon(Icons.auto_awesome_rounded, size: 16, color: accent),
+              Icon(Icons.auto_awesome_rounded, size: 16, color: accent),
               const SizedBox(width: 7),
               Text(
                 '지금까지 총 $total문장을 연습했어요',
-                style: const TextStyle(
+                style: TextStyle(
                   color: muted,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,

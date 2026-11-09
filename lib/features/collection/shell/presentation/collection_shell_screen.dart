@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/app/config/app_config.dart';
+import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -340,7 +342,18 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     return Column(
       children: [
         if (!hideControls) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton.icon(
+                onPressed: () => context.pushNamed(AppRoutes.clipDiscover),
+                icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
+                label: const Text('이어보기·추천'),
+              ),
+            ),
+          ),
           StorageScopeTabs(
             value: _storageMode,
             onChanged: _onStorageModeChanged,
@@ -498,6 +511,16 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _tabController.animateTo(2);
+                },
+              ),
+              _AddMaterialTile(
+                icon: Icons.auto_awesome_rounded,
+                title: '콘텐츠 제작',
+                subtitle: '자막, TTS, 영상을 직접 만들어요',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  // push로 열어야 뒤로가기가 보관함으로 돌아온다.
+                  context.push(AppRoutes.contentStudioBridgePath);
                 },
               ),
             ],

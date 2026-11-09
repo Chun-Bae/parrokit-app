@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import 'home_palette.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
@@ -77,7 +79,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const muted = Color(0xFF61758D);
+    final muted = HomePalette.of(context).muted;
     return Scaffold(
       appBar: AppBar(title: const Text('문장 추가')),
       // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
@@ -165,7 +167,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Center(
+              Center(
                   child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워둬도 돼요.',
                       style: TextStyle(color: muted, fontSize: 12))),
             ],
@@ -241,8 +243,8 @@ class _HangulTransliterateRow extends StatelessWidget {
                   _ => '변환하지 못했어요. 다시 시도하거나 원문을 직접 입력해주세요.',
                 },
                 key: const ValueKey('transliterate-message'),
-                style:
-                    const TextStyle(color: Color(0xFF61758D), fontSize: 12))),
+                style: TextStyle(
+                    color: HomePalette.of(context).muted, fontSize: 12))),
     ]);
   }
 }
