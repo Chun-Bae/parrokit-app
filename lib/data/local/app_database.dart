@@ -46,6 +46,9 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_open());
 
+  /// 테스트용. 메모리 DB 등 다른 실행기를 끼울 때 쓴다.
+  AppDatabase.withExecutor(super.executor);
+
   @override
   int get schemaVersion => 3;
 

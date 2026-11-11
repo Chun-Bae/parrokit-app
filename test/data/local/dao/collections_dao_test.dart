@@ -1,0 +1,76 @@
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/data/local/app_database.dart';
+
+void main() {
+  late AppDatabase db;
+
+  setUp(() {
+    db = AppDatabase.withExecutor(NativeDatabase.memory());
+  });
+
+  tearDown(() async {
+    await db.close();
+  });
+
+  group('CollectionsDao.findOrCreate', () {
+    test('없으면 만들고, 두 번째 호출은 같은 콜렉션을 돌려준다', () async {
+      final first = await db.collectionsDao.findOrCreate('여행', 'local');
+      final second = await db.collectionsDao.findOrCreate('여행', 'local');
+
+      expect(second.id, first.id);
+      expect(await db.collectionsDao.fetchAll(), hasLength(1));
+    });
+
+    test('storageMode가 다르면 이름이 같아도 따로 만든다', () async {
+      final local = await db.collectionsDao.findOrCreate('여행', 'local');
+      final server = await db.collectionsDao.findOrCreate('여행', 'server');
+
+      expect(server.id, isNot(local.id));
+      expect(await db.collectionsDao.fetchAll(), hasLength(2));
+    });
+
+    test('찾은 콜렉션에 원격 id가 없으면 넘겨준 값을 붙인다', () async {
+      final created = await db.collectionsDao.findOrCreate('여행', 'server');
+      expect(created.remoteId, isNull);
+
+      final linked = await db.collectionsDao
+          .findOrCreate('여행', 'server', remoteId: 'remote-1');
+
+      expect(linked.id, created.id);
+      expect(linked.remoteId, 'remote-1');
+      // DB에도 남아야 다음 pull이 findByRemoteId로 바로 찾는다.
+      expect(await db.collectionsDao.findByRemoteId('remote-1'), isNotNull);
+    });
+
+    test('이미 다른 원격 id가 붙어 있으면 덮어쓰지 않는다', () async {
+      await db.collectionsDao
+          .findOrCreate('여행', 'server', remoteId: 'remote-1');
+
+      final again = await db.collectionsDao
+          .findOrCreate('여행', 'server', remoteId: 'remote-2');
+
+      expect(again.remoteId, 'remote-1');
+      expect(await db.collectionsDao.findByRemoteId('remote-2'), isNull);
+    });
+  });
+
+  group('CollectionsDao.pruneIfEmpty', () {
+    test('그룹에 속한 빈 콜렉션도 지운다', () async {
+      final collection =
+          await db.collectionsDao.findOrCreate('여행', 'local');
+      final groupId = await db.groupsDao.insertGroup('올해', 'local');
+      await db.into(db.groupCollections).insert(
+            GroupCollectionsCompanion.insert(
+              groupId: groupId,
+              collectionId: collection.id,
+            ),
+          );
+
+      await db.collectionsDao.pruneIfEmpty(collection.id);
+
+      expect(await db.collectionsDao.fetchAll(), isEmpty);
+      expect(await db.select(db.groupCollections).get(), isEmpty);
+    });
+  });
+}
