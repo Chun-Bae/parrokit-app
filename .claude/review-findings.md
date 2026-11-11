@@ -325,3 +325,67 @@ ffmpeg 작업이 겹치는데, 둘 다 `aw_tmp_audio.pcm` **한 경로**에 쓰�
   군데가 걸렸는데 전부 오탐이었다 (한 파일에 클래스가 여럿이라 생긴 것).
 - `CaptioningProvider.save()`는 `isSaving` 동안 저장 버튼이 꺼져서 중복 제출이
   막힌다.
+
+## 돈이 걸린 경로 — 세 곳에서 같은 모양의 버그
+
+묶음 5를 보다가 `if (mounted)` 가드가 **화면 갱신이 아니라 지급을 막고 있는**
+자리를 찾았다. 리포 전체를 훑어 세 곳을 고쳤다. 전부 사용자가 돈을 내거나
+시간을 쓴 뒤에 아무것도 못 받는 경로다.
+
+**24. 코인 충전: 결제는 됐는데 코인을 안 주고 끝났다**
+`coin_store_section.dart`. `await Purchases.purchase(...)` 다음 지급이
+`if (mounted)` 안에 있었다. 결제 시트가 떠 있는 사이에 화면이 사라지면 —
+앱을 내렸다 올리거나, 다른 탭으로 가거나, 라우트가 새로 그려지면 —
+`addCoins`가 아예 불리지 않았다. 오류도 안 뜬다.
+Provider를 결제 시작 전에 잡아 두고, 지급은 화면 수명과 무관하게 한다.
+
+**25. 광고 보상: 끝까지 봐도 코인을 못 받았다**
+`ad_reward_section.dart`. `onRewarded` 콜백 맨 위에 `if (!mounted) return;`이
+있었다. 보상형 광고는 전체 화면으로 30초쯤 도는데, 그 사이 더보기 화면을
+떠나면 광고를 끝까지 봐도 코인도 쿨다운 기록도 없었다. 같은 방식으로 고쳤다.
+
+**26. 페이월: 모르는 상품과 지급 실패가 조용히 넘어갔다**
+`payment_section.dart`. 결제된 `productId`가 `CoinPackage.packages`에 없으면
+`orElse`로 **첫 상품 기준** 코인을 준다. RevenueCat에만 상품을 올리고 앱
+목록에 안 넣으면 낸 돈과 받는 코인이 어긋난 채 아무 흔적이 안 남는다.
+`addCoins`도 기다리지 않고 불러서 실패가 사라졌다. 지급 동작은 그대로 두고
+둘 다 로그와 안내를 남긴다.
+
+### 보류
+
+**파. 서버 영수증 검증과 지급 재시도가 없다**
+결제 성공을 클라이언트에서 판단하고 클라이언트가 코인을 더한다. 지급이
+실패하면 지금은 사용자에게 안내만 하고 끝이다. 재시도 큐나 서버 지급으로
+옮기는 건 설계 판단이라 손대지 않았다.
+
+### 가드가 맞게 걸려 있던 곳
+
+같은 패턴을 리포 전체에서 찾아 네 곳을 봤는데 나머지 셋은 문제가 없었다.
+- `clip_list_view.dart` — 확인 대화상자 뒤 `context.mounted` 검사는 삭제
+  **전에** 있다. 화면이 사라졌으면 지우지 않는 게 맞다.
+- `community_notification_list_section.dart` — 쓰기는 이미 끝났고 가드는
+  토스트·이동에만 걸린다.
+- `question_write_screen.dart` — 크래커 차감은 서버 트랜잭션에서 이미 했고,
+  이 줄은 로컬 사본만 맞추는 것이다. `UserProvider`의 watch가 서버 값으로
+  다시 덮어쓰므로 빠져도 저절로 맞는다.
+
+## 묶음 5 — 홈 (`lib/features/home`)
+
+고칠 것을 찾지 못했다. 이 묶음은 상태가 좋다.
+
+- 삼킨 예외 다섯 곳이 전부 "왜 그냥 넘어가도 되는지" 주석을 달고 있다.
+  (`// 파일을 읽지 못하면 앵무새 없이 둥지만 그린다.` 같은)
+- `gapTimer`는 `dispose`에 직접 없지만 `dispose`가 부르는 `stopTts()`가
+  취소한다. `passTimer`는 직접 취소한다.
+- `handleTtsProgress`의 `end / text.length`는 바로 위에서 `text.isEmpty`를
+  막는다.
+- 테스트 파일이 다섯 개 붙어 있다 (stage_preview, nest_preview,
+  sentence_history_dashboard, add_sentence_screen, home_tokens).
+
+### 보류
+
+**하. `today_practice_summary`의 목표 버튼이 상태에 따라 다른 컨트롤이 된다**
+목표를 채우면 라벨 없는 `IconButton`(tooltip '목표 수정',
+`visualDensity: compact`라 44pt 미만), 못 채우면 `TextButton.icon`(라벨
+'목표 설정')이 된다. 같은 동작인데 모양도 글자도 바뀐다. 어느 쪽으로
+맞출지는 디자인·문구 판단이다.

@@ -18,7 +18,7 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 | 2 | 데이터 | `lib/data/local`, `lib/data/models` | 27 | 완료 (고침 4, 보류 4) |
 | 3 | 커뮤니티 셸 | `lib/features/community/shell` | 25 | 완료 (고침 9, 보류 3) |
 | 4 | 자막 제작 | `lib/features/content-studio/captioning` | 58 | 완료 (고침 4, 보류 1) |
-| 5 | 홈 | `lib/features/home` | 31 | 대기 |
+| 5 | 홈 | `lib/features/home` | 31 | 완료 (고칠 것 없음, 보류 1) |
 | 6 | 보관함 | `lib/features/collection` | 54 | 대기 |
 | 7 | 커뮤니티 글·질문·투표 | `lib/features/community/{board,question,vote,shared}` | 32 | 대기 |
 | 8 | 커뮤니티 알림·활동·메뉴·차단 | `lib/features/community/{notification,activity,menu,block}` | 42 | 대기 |
@@ -26,7 +26,7 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 | 10 | 챗봇·영상·허브 | `lib/features/content-studio/{chat-bot,video,hub,shared}` | 32 | 대기 |
 | 11 | 공용 위젯·테마 | `lib/core/shared` | 41 | 대기 |
 | 12 | 앱 셸·라우터·인프라 | `lib/core/{app,infrastructure,content,speech}` | 51 | 대기 |
-| 13 | 설정·더보기 | `lib/features/settings` | 37 | 대기 |
+| 13 | 설정·더보기 | `lib/features/settings` | 37 | 돈 경로만 먼저 함 (고침 3) |
 | 14 | 인증 | `lib/features/auth` | 4 | 대기 |
 
 ## 함께 처리할 남은 일 (어젯밤 UI 작업에서 넘어온 것)
