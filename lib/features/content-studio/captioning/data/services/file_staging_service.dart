@@ -92,27 +92,45 @@ class FileStagingService {
   }
 
   Future<void> discard(String stagedPath) async {
-    try {
-      await File(stagedPath).delete();
-    } catch (_) {}
+    await _deleteQuietly(File(stagedPath));
   }
 
   /// 최종 저장
+  ///
+  /// 복사가 중간에 끊기면 반쯤 쓰인 파일을 지우고 던진다. 전에는 그냥 던져서
+  /// 깨진 영상이 videos/ 아래에 남았고, sweepOld는 임시 폴더만 쓸기 때문에
+  /// 아무도 치우지 않았다. 저장 용량에는 계속 잡힌다.
+  ///
+  /// 다 쓴 뒤 길이도 원본과 맞는지 본다. 전에는 `length > 0`만 봐서 잘린
+  /// 파일도 통과했고, 그대로 임시 원본을 지워서 되돌릴 수가 없었다.
   Future<String> finalize(String stagedPath) async {
     final finalDir = await _ensureFinalDir();
     final ext = _extensionOf(stagedPath);
     final name = '${DateTime.now().millisecondsSinceEpoch}_${_uuid.v4()}$ext';
     final dest = File('${finalDir.path}/$name');
 
-    await _copyByStream(File(stagedPath).openRead(), dest);
+    final sourceLength = await File(stagedPath).length();
 
-    if (await dest.exists() && (await dest.length() > 0)) {
-      try {
-        await File(stagedPath).delete();
-      } catch (_) {}
+    try {
+      await _copyByStream(File(stagedPath).openRead(), dest);
+    } catch (_) {
+      await _deleteQuietly(dest);
+      rethrow;
+    }
+
+    if (await dest.exists() && await dest.length() == sourceLength) {
+      await _deleteQuietly(File(stagedPath));
       return 'videos/$name'; // 상대 경로
     }
+
+    await _deleteQuietly(dest);
     throw Exception('Final copy failed');
+  }
+
+  Future<void> _deleteQuietly(File file) async {
+    try {
+      if (await file.exists()) await file.delete();
+    } catch (_) {}
   }
 
   /// 임시 저장 파일이 있는가?
