@@ -20,6 +20,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/vote_option.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class VoteWriteScreen extends StatefulWidget {
   const VoteWriteScreen({super.key});
@@ -273,7 +274,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                 backgroundColor: blue600,
                 disabledBackgroundColor: blue600.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(AppRadius.xl)),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
               ),
@@ -364,7 +365,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: periodChipBg,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Row(
                               children: [
@@ -402,7 +403,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                               horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
                             color: optionCardColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             border: Border.all(
                               color: colorScheme.outlineVariant
                                   .withValues(alpha: 0.45),
@@ -467,14 +468,14 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                         padding: const EdgeInsets.only(top: 8.0),
                         child: InkWell(
                           onTap: _addOption,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: Container(
                             height: 48,
                             width: double.infinity,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: addOptionBg,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(color: addOptionBorder),
                             ),
                             child: Row(

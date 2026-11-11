@@ -5,6 +5,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class VoteStickyCommentBar extends StatelessWidget {
   const VoteStickyCommentBar({
@@ -88,7 +89,7 @@ class VoteStickyCommentBar extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       color: context.tokens.surfaceContainer,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       border:
                           Border.all(color: context.tokens.surface, width: 1),
                     ),

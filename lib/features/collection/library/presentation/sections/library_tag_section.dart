@@ -204,7 +204,7 @@ class LibraryTagSection extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(AppRadius.md)),
                     ),
                     child: const Icon(Icons.cleaning_services, size: 20),
                   ),
@@ -261,7 +261,8 @@ class LibraryTagSection extends StatelessWidget {
                               checkmarkColor: Colors.white,
                               showCheckmark: false,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.xl),
                                 side: BorderSide(
                                     color: context.tokens.primary, width: 1),
                               ),

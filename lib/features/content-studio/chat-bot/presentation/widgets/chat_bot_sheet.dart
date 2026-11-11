@@ -11,6 +11,7 @@ import 'routing_bottom_sheet.dart';
 import 'script_recommendation_sheet.dart';
 import 'video_prompt_recommendation_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 Future<void> showChatBotSheet(
   BuildContext context, {
@@ -233,7 +234,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       gradient: getGradientForMode(provider.chatbotMode),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: const Icon(
                       Icons.auto_awesome_rounded,
@@ -296,13 +297,13 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                   InkWell(
                     onTap: () =>
                         showModelSelectorBottomSheet(context, provider),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: context.tokens.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         border: Border.all(
                           color: context.tokens.dividerSubtle,
                         ),
@@ -428,7 +429,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                         ),
                         offset: const Offset(12, -210),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                           side: BorderSide(
                             color: context.tokens.divider,
                             width: 1, // 테두리 두께

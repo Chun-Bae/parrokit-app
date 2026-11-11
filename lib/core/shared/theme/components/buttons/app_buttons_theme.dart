@@ -1,16 +1,18 @@
 // lib/theme/components/app_buttons_theme.dart
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 ButtonStyle _baseButton(ColorScheme cs, {required bool isDark}) {
   return ButtonStyle(
     shape: WidgetStatePropertyAll(
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
     ),
     elevation: const WidgetStatePropertyAll(0),
   );
 }
 
-ElevatedButtonThemeData appElevatedButtonTheme(ColorScheme cs, {required bool isDark}) {
+ElevatedButtonThemeData appElevatedButtonTheme(ColorScheme cs,
+    {required bool isDark}) {
   return ElevatedButtonThemeData(
     style: _baseButton(cs, isDark: isDark).copyWith(
       backgroundColor: WidgetStateProperty.resolveWith((states) {
@@ -44,7 +46,8 @@ ElevatedButtonThemeData appElevatedButtonTheme(ColorScheme cs, {required bool is
   );
 }
 
-OutlinedButtonThemeData appOutlinedButtonTheme(ColorScheme cs, {required bool isDark}) {
+OutlinedButtonThemeData appOutlinedButtonTheme(ColorScheme cs,
+    {required bool isDark}) {
   return OutlinedButtonThemeData(
     style: _baseButton(cs, isDark: isDark).copyWith(
       foregroundColor: WidgetStateProperty.resolveWith((states) {
@@ -57,7 +60,8 @@ OutlinedButtonThemeData appOutlinedButtonTheme(ColorScheme cs, {required bool is
         if (states.contains(WidgetState.disabled)) {
           return BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3));
         }
-        if (states.contains(WidgetState.pressed) || states.contains(WidgetState.hovered)) {
+        if (states.contains(WidgetState.pressed) ||
+            states.contains(WidgetState.hovered)) {
           return BorderSide(color: cs.primary.withValues(alpha: 0.75));
         }
         return BorderSide(color: cs.outlineVariant.withValues(alpha: 0.6));
@@ -107,22 +111,23 @@ TextButtonThemeData appTextButtonTheme(ColorScheme cs, {required bool isDark}) {
   );
 }
 
-ToggleButtonsThemeData appToggleButtonsTheme(ColorScheme cs, {required bool isDark}) {
+ToggleButtonsThemeData appToggleButtonsTheme(ColorScheme cs,
+    {required bool isDark}) {
   return ToggleButtonsThemeData(
-    borderRadius: BorderRadius.circular(999),
+    borderRadius: BorderRadius.circular(AppRadius.full),
     borderWidth: 1,
     borderColor: cs.outlineVariant.withValues(alpha: 0.6),
     selectedBorderColor: cs.primary,
     color: cs.onSurface.withValues(alpha: 0.74), // 기본 텍스트/아이콘
-    selectedColor: cs.primary,            // 선택 시 파란색 텍스트/아이콘
+    selectedColor: cs.primary, // 선택 시 파란색 텍스트/아이콘
     fillColor: cs.primary.withValues(alpha: 0.08), // 아주 옅은 파란 배경
   );
 }
 
-FilledButtonThemeData appFilledButtonTheme(ColorScheme cs, {required bool isDark}) {
+FilledButtonThemeData appFilledButtonTheme(ColorScheme cs,
+    {required bool isDark}) {
   return FilledButtonThemeData(
     style: _baseButton(cs, isDark: isDark).copyWith(
-
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
           return cs.primary.withValues(alpha: 0.06); // 약한 disabled 배경

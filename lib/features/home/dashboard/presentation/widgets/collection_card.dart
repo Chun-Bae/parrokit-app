@@ -106,7 +106,7 @@ class CollectionCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: storageColor.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
                           border: Border.all(
                             color: storageColor.withValues(alpha: 0.6),
                             width: 1,

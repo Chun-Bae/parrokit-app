@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class ContentStudioBridgeScreen extends StatelessWidget {
   const ContentStudioBridgeScreen({super.key});
@@ -135,7 +136,7 @@ class _BridgeFeatureRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border.all(color: borderColor),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

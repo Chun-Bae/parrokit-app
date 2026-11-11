@@ -30,6 +30,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -675,7 +676,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                     color: colors.primaryContainer.withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(AppRadius.xl)),
                 child: Row(children: [
                   CircleAvatar(
                       backgroundColor: context.tokens.surface,
@@ -825,10 +826,10 @@ class _SwitchItem extends StatelessWidget {
         color: selected
             ? Theme.of(context).colorScheme.surface
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Text(label,
@@ -876,14 +877,15 @@ class _PackCard extends StatelessWidget {
         width: 174,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-            color: pack.color, borderRadius: BorderRadius.circular(20)),
+            color: pack.color,
+            borderRadius: BorderRadius.circular(AppRadius.xl)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(AppRadius.xl)),
                 child: Text('공식', style: context.texts.labelSmall)),
             Icon(pack.icon, size: 23, color: CollectionColors.packIcon),
           ]),
@@ -930,7 +932,7 @@ class _SentenceCard extends StatelessWidget {
                 .withValues(alpha: 0.35)
             : Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             side: BorderSide(
                 color: saved
                     ? Theme.of(context)
@@ -954,7 +956,7 @@ class _SentenceCard extends StatelessWidget {
                             .colorScheme
                             .secondaryContainer
                             .withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(20)),
+                        borderRadius: BorderRadius.circular(AppRadius.xl)),
                     child:
                         Text(sentence.topic, style: context.texts.labelSmall)),
                 if (saved) ...[
@@ -964,7 +966,7 @@ class _SentenceCard extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(6, 4, 8, 4),
                       decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(20)),
+                          borderRadius: BorderRadius.circular(AppRadius.xl)),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.check_rounded,
                             size: 12,
@@ -1544,7 +1546,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: colors.primaryContainer,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
                   '${widget.sentence.language} · ${widget.sentence.topic}',
@@ -1895,7 +1897,7 @@ class _MasteryBadge extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 2, 8, 2),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         SvgPicture.asset(
@@ -1981,7 +1983,7 @@ class _ScriptImportSheetState extends State<_ScriptImportSheet> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   '유튜브 주소로 자막을 자동으로 가져오지는 않아요. '

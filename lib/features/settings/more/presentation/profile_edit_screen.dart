@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/editable_avatar.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -283,7 +284,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           decoration: InputDecoration(
                             hintText: '새로운 닉네임을 입력하세요',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             filled: true,
                             fillColor: cs.surfaceContainerHighest
@@ -304,7 +305,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                   : _checkDuplicate,
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             backgroundColor: isVerified
                                 ? context.tokens.success.withValues(alpha: 0.2)

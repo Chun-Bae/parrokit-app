@@ -214,7 +214,8 @@ class ClipListView extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
         title: Text(
           '삭제할까요?',
           style: Theme.of(dialogContext)
@@ -245,7 +246,7 @@ class ClipListView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg, vertical: AppSpacing.md),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
             child: const Text('삭제'),

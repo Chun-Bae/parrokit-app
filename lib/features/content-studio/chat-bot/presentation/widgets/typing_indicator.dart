@@ -4,6 +4,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
 import 'gradient_helper.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class TypingIndicator extends StatelessWidget {
   const TypingIndicator({super.key});
@@ -44,10 +45,10 @@ class TypingIndicator extends StatelessWidget {
                   ? context.tokens.surfaceContainerHigh
                   : context.tokens.surfaceContainer,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(20),
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+                topLeft: Radius.circular(AppRadius.xs),
+                topRight: Radius.circular(AppRadius.xl),
+                bottomLeft: Radius.circular(AppRadius.xl),
+                bottomRight: Radius.circular(AppRadius.xl),
               ),
               border: Border.all(
                 color: context.tokens.dividerSubtle,

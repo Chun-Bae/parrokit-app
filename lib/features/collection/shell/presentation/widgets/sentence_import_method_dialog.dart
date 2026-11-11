@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 가져올 곳으로 고른 방법. [url]이 null이면 파일에서, 아니면 그 주소에서 가져온다.
 class SentenceImportSource {
@@ -115,7 +116,7 @@ class _SentenceImportMethodDialogState
                     decoration: BoxDecoration(
                       color:
                           _page == i ? colors.primary : colors.outlineVariant,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                   ),
               ]),

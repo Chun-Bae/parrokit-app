@@ -46,7 +46,7 @@ class ClipThumbnailCard extends StatelessWidget {
         width: 220,
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: subtle),
         ),
         clipBehavior: Clip.antiAlias,

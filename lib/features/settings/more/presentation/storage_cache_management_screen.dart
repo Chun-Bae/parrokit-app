@@ -6,6 +6,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/card_container.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class StorageCacheManagementScreen extends StatefulWidget {
   const StorageCacheManagementScreen({super.key});
@@ -84,7 +85,8 @@ class _StorageCacheManagementScreenState
 
   Color _storageColor(BuildContext context, String storageMode) {
     final cs = Theme.of(context).colorScheme;
-    if (storageMode == ClipStorageConstants.storageModeServer) return cs.secondary;
+    if (storageMode == ClipStorageConstants.storageModeServer)
+      return cs.secondary;
     if (storageMode == ClipStorageConstants.storageModeGoogleDrive) {
       return cs.tertiary;
     }
@@ -388,7 +390,7 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
         label,

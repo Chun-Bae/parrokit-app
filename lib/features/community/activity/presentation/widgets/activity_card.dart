@@ -3,6 +3,7 @@ import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/activity_item.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class ActivityCard extends StatelessWidget {
   const ActivityCard({
@@ -138,7 +139,7 @@ class ActivityCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         label,

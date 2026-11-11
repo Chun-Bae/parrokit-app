@@ -129,7 +129,7 @@ class _Thumbnail extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: SizedBox(
         width: 128,
         height: 72,

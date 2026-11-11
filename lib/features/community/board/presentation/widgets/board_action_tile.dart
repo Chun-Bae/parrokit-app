@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardActionTile extends StatefulWidget {
   const BoardActionTile({
@@ -45,7 +46,7 @@ class _BoardActionTileState extends State<BoardActionTile> {
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
@@ -53,7 +54,7 @@ class _BoardActionTileState extends State<BoardActionTile> {
           height: 55,
           decoration: BoxDecoration(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(color: borderColor, width: borderWidth),
           ),
           child: Column(

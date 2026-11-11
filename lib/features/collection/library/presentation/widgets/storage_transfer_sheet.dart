@@ -25,7 +25,7 @@ Future<String?> showStorageTransferSheet(
     isScrollControlled: true,
     backgroundColor: cs.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
     ),
     clipBehavior: Clip.antiAlias,
     builder: (sheetContext) => SafeArea(
@@ -61,9 +61,7 @@ Future<String?> showStorageTransferSheet(
               ),
               _StoragePickTile(
                 title: '서버',
-                subtitle: isServerLocked
-                    ? '유료 기능 준비 중이에요.'
-                    : '서버 저장으로 옮깁니다.',
+                subtitle: isServerLocked ? '유료 기능 준비 중이에요.' : '서버 저장으로 옮깁니다.',
                 icon: Icons.cloud_queue_rounded,
                 selected:
                     selectedMode == ClipStorageConstants.storageModeServer,

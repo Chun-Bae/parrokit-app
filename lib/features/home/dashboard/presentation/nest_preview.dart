@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 학습 기록과 연결하기 전, 먹이와 꾸미기 흐름을 확인하는 별도 시안.
 class NestPreview extends StatefulWidget {
@@ -176,7 +177,7 @@ class _NestPreviewState extends State<NestPreview>
             ]),
             const SizedBox(height: 10),
             ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: LinearProgressIndicator(
                   value: meals / 10,
                   minHeight: 5,

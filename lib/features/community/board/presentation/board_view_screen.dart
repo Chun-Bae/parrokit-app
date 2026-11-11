@@ -16,6 +16,7 @@ import 'package:parrokit/features/community/board/presentation/widgets/board_pos
 import 'package:parrokit/features/community/board/presentation/sections/board_comments_section.dart';
 import 'package:parrokit/features/community/board/presentation/handlers/board_options_handler.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardViewScreen extends StatefulWidget {
   final String postId;
@@ -135,8 +136,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg)),
             title: const Text('댓글 삭제',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             content: const Text('정말로 이 댓글을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'),
@@ -183,8 +184,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg)),
             title: const Text('게시글 삭제',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             content: const Text('정말로 이 게시글을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'),

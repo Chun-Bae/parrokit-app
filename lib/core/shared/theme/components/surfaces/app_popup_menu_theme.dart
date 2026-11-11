@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import '../typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// PopupMenu 테마
 PopupMenuThemeData appPopupMenuTheme(ColorScheme cs, {required bool isDark}) {
@@ -13,7 +14,7 @@ PopupMenuThemeData appPopupMenuTheme(ColorScheme cs, {required bool isDark}) {
     surfaceTintColor: Colors.transparent,
     shadowColor: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       side: BorderSide(
         color: cs.outlineVariant.withValues(alpha: 0.5),
         width: 1,

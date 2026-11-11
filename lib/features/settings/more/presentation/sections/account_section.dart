@@ -21,6 +21,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 계정 섹션.
 class AccountSection extends StatelessWidget {
@@ -231,7 +232,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -257,7 +258,7 @@ class _StatusBadge extends StatelessWidget {
     if (onHelpTap != null) {
       return InkWell(
         onTap: onHelpTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: badgeContent,
       );
     }

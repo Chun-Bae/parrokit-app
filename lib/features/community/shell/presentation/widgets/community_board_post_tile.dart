@@ -6,6 +6,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class CommunityBoardPostTile extends StatelessWidget {
   final Post post;
@@ -39,7 +40,7 @@ class CommunityBoardPostTile extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
               child: Text(
                 post.category,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/content/learning_languages.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class LearningLanguagePicker extends StatelessWidget {
   const LearningLanguagePicker({
@@ -33,10 +34,10 @@ class LearningLanguagePicker extends StatelessWidget {
       color: compact
           ? colors.surface
           : colors.surfaceContainerHighest.withValues(alpha: 0.55),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: () => openPicker(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: compact ? 10 : 14,
@@ -149,7 +150,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                       ),
                 filled: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),

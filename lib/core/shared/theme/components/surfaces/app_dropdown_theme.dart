@@ -1,6 +1,7 @@
 // lib/theme/components/app_dropdown_theme.dart
 import 'package:flutter/material.dart';
 import '../typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 DropdownMenuThemeData appDropdownMenuTheme(ColorScheme cs,
     {required bool isDark}) {
@@ -12,7 +13,7 @@ DropdownMenuThemeData appDropdownMenuTheme(ColorScheme cs,
       shape: WidgetStatePropertyAll(
         RoundedRectangleBorder(
           side: BorderSide(color: cs.outlineVariant, width: 1),
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
         ),
       ),
     ),
@@ -27,15 +28,15 @@ DropdownMenuThemeData appDropdownMenuTheme(ColorScheme cs,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderSide: BorderSide(color: cs.outlineVariant, width: 1),
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
       ),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: cs.outlineVariant, width: 1),
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
       ),
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(color: cs.primary, width: 1.2),
-        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
       ),
       hintStyle: TextStyle(
         color: cs.onSurface.withValues(alpha: isDark ? 0.56 : 0.45),

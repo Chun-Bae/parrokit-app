@@ -7,6 +7,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import 'gradient_helper.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
@@ -37,10 +38,10 @@ class ChatBubble extends StatelessWidget {
               end: Alignment.bottomRight,
             ),
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(4),
+              topLeft: Radius.circular(AppRadius.xl),
+              topRight: Radius.circular(AppRadius.xl),
+              bottomLeft: Radius.circular(AppRadius.xl),
+              bottomRight: Radius.circular(AppRadius.xs),
             ),
             boxShadow: [
               BoxShadow(
@@ -103,10 +104,10 @@ class ChatBubble extends StatelessWidget {
                           ? context.tokens.surfaceContainerHigh
                           : context.tokens.surfaceContainer,
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(4),
-                        topRight: Radius.circular(20),
-                        bottomLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(20),
+                        topLeft: Radius.circular(AppRadius.xs),
+                        topRight: Radius.circular(AppRadius.xl),
+                        bottomLeft: Radius.circular(AppRadius.xl),
+                        bottomRight: Radius.circular(AppRadius.xl),
                       ),
                       border: Border.all(
                         color: context.tokens.dividerSubtle,
@@ -200,7 +201,7 @@ class ChatBubble extends StatelessWidget {
                                 );
                               }
                             },
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             child: Ink(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 10),
@@ -221,7 +222,8 @@ class ChatBubble extends StatelessWidget {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
                                 boxShadow: [
                                   BoxShadow(
                                     color: ((message.actionType ==
@@ -296,7 +298,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           color: context.tokens.divider,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
         child: Text(
           codeText,
@@ -317,7 +319,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
         color: isDark
             ? Colors.black.withValues(alpha: 0.3)
             : Colors.black.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: context.tokens.dividerSubtle,
         ),
@@ -345,7 +347,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: codeText));
                   showToast('추천 프롬프트가 복사되었습니다');

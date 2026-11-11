@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -111,7 +112,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest
                       .withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -175,11 +176,11 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   filled: true,
                   fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(color: context.tokens.borderStrong),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(color: context.tokens.borderStrong),
                   ),
                 ),
@@ -193,7 +194,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     color: context.tokens.info.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Row(
                     children: [
@@ -219,7 +220,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(AppRadius.md)),
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
                 ),
@@ -269,7 +270,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           color: isSelected
               ? Theme.of(context).colorScheme.primary
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary

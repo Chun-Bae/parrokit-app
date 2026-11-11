@@ -11,6 +11,7 @@ import 'package:parrokit/features/community/shell/domain/data/community_filters.
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardWriteScreen extends StatefulWidget {
   final Post? editPost;
@@ -65,7 +66,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
@@ -530,7 +531,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                             clipBehavior: Clip.none,
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
                                 child: isExisting
                                     ? Image.network(
                                         _existingImageUrls[index],

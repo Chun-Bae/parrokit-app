@@ -366,7 +366,7 @@ class _PickedStateState extends State<PickedState> {
     return Container(
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Column(
@@ -402,7 +402,7 @@ class _PickedStateState extends State<PickedState> {
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerHighest,
                       borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(12),
+                        left: Radius.circular(AppRadius.md),
                       ),
                     ),
                     child: Text(
@@ -427,7 +427,7 @@ class _PickedStateState extends State<PickedState> {
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerHighest,
                       borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(12),
+                        right: Radius.circular(AppRadius.md),
                       ),
                     ),
                     child: Text(
@@ -827,7 +827,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: cs.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.xs),
                               ),
                               child: Text(
                                 ext,
@@ -945,7 +946,7 @@ class _TabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           child: Icon(icon, size: 28, color: color),
         ),
@@ -973,7 +974,7 @@ class _TabButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         child: child,

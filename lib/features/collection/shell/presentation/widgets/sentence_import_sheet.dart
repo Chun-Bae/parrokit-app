@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 가져오기 시트에서 "완료"로 확정한 결과. 취소하거나 닫으면 시트는 null을 돌려준다.
 class SentenceImportResult {
@@ -59,7 +60,7 @@ class _LanguageChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: colors.secondaryContainer,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(label,
           style: context.texts.labelSmall

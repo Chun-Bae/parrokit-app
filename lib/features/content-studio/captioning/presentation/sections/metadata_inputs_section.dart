@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/constants/edit_strings.dart';
 import '../providers/captioning_provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class MetadataInputsSection extends StatelessWidget {
   const MetadataInputsSection({super.key, required this.vm});
@@ -126,7 +127,7 @@ class MetadataInputsSection extends StatelessWidget {
                         backgroundColor: context.tokens.surfaceContainerHigh,
                         side: BorderSide.none,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(AppRadius.lg)),
                       ))
                   .toList(),
             ),

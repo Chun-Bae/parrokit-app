@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardCommentsEmptyState extends StatelessWidget {
   const BoardCommentsEmptyState({super.key, required this.onTap});
@@ -24,12 +25,12 @@ class BoardCommentsEmptyState extends StatelessWidget {
         Center(
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

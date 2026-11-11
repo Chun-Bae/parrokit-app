@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
   final theme = Theme.of(context);
@@ -20,7 +21,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(24),
+            top: Radius.circular(AppRadius.xxl),
           ),
           border: Border(
             top: BorderSide(color: borderCol, width: 1),
@@ -61,11 +62,11 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                   provider.updateChatbotMode('tts');
                   provider.sendMessage('음성(TTS) 생성을 진행하고 싶어');
                 },
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isDark
                           ? StudioColors.ttsPink.withValues(alpha: 0.4)
@@ -99,7 +100,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: const Icon(
                           Icons.audiotrack_rounded,
@@ -147,11 +148,11 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                   provider.updateChatbotMode('video');
                   provider.sendMessage('비디오(영상) 생성을 진행하고 싶어');
                 },
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isDark
                           ? StudioColors.videoCyan.withValues(alpha: 0.4)
@@ -185,7 +186,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: const Icon(
                           Icons.videocam_rounded,

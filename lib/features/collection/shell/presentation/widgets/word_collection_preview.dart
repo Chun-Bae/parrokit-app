@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class WordCollectionPreview extends StatefulWidget {
   const WordCollectionPreview({super.key});
@@ -194,10 +195,10 @@ class _SwitchButton extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Material(
       color: selected ? colors.surface : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Text(
@@ -327,7 +328,7 @@ class _WordCard extends StatelessWidget {
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         side: BorderSide(color: colors.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,

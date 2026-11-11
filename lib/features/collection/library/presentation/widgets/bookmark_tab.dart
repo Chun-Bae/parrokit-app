@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// [역할]
 /// BookmarkTabs 내의 개별 탭 버튼.
@@ -29,7 +30,7 @@ class BookmarkTab extends StatelessWidget {
         ? cs.onSurface.withValues(alpha: 0.4)
         : (active ? cs.primary : cs.onSurface);
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
       child: Container(
         height: 42,

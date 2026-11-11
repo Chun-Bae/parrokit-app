@@ -6,6 +6,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -238,7 +239,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   backgroundColor: context.tokens.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                 ),
                 child: const Text('중복 확인'),

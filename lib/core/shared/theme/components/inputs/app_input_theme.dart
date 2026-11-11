@@ -1,12 +1,13 @@
 // lib/theme/components/app_input_theme.dart
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 InputDecorationTheme appInputDecorationTheme(ColorScheme cs,
     {required bool isDark}) {
   OutlineInputBorder baseBorder(Color color, {double width = 1}) {
     return OutlineInputBorder(
       borderSide: BorderSide(color: color, width: width),
-      borderRadius: const BorderRadius.all(Radius.circular(12)),
+      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
     );
   }
 

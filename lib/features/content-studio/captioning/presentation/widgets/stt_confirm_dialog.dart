@@ -16,6 +16,7 @@ import '../../data/adapters/asr_engine.dart';
 import '../providers/captioning_provider.dart';
 import 'stt_progress_card.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// STT 시작 전 안내 다이얼로그를 표시하고 진행 상황 위젯을 바텀시트 내에서 보여줍니다.
 Future<void> showSttConfirmDialog(
@@ -52,7 +53,7 @@ Future<void> showSttConfirmDialog(
             decoration: BoxDecoration(
               color: bg,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+                top: Radius.circular(AppRadius.xxl),
               ),
             ),
             child: AnimatedSwitcher(
@@ -107,7 +108,8 @@ Future<void> showSttConfirmDialog(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: cs.primaryContainer,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Text(
                                 '10초당 1패롯 소모',
@@ -197,13 +199,13 @@ class _ModelOptionCard extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: borderColor,
             width: isSelected ? 2.0 : 1.0,

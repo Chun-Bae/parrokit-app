@@ -16,6 +16,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// [역할]
 /// 쇼츠 화면에서 클립의 태그 정보를 아이콘과 함께 표시하는 배지 위젯.
@@ -35,7 +36,7 @@ class ShortsBadge extends StatelessWidget {
           horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: fixedColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: fixedColor.withValues(alpha: 0.2)),
       ),
       child: Row(

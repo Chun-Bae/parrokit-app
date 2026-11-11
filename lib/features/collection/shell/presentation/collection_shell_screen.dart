@@ -21,6 +21,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/storag
 import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -251,7 +252,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           padding: const EdgeInsets.fromLTRB(18, 17, 16, 17),
           decoration: BoxDecoration(
             color: page.color,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
           ),
           child: Row(
             children: [
@@ -300,7 +301,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: colors.surfaceContainerHighest.withValues(alpha: 0.65),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: TabBar(
           controller: _tabController,
@@ -308,7 +309,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           indicatorSize: TabBarIndicatorSize.tab,
           indicator: BoxDecoration(
             color: colors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
@@ -416,7 +417,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 height: 4,
                 decoration: BoxDecoration(
                   color: Theme.of(sheetContext).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
               ),
             ),

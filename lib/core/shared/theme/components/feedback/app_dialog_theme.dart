@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import '../typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// Dialog 테마
 DialogThemeData appDialogTheme(ColorScheme cs, {required bool isDark}) {
@@ -12,7 +13,7 @@ DialogThemeData appDialogTheme(ColorScheme cs, {required bool isDark}) {
     elevation: 0,
     surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     titleTextStyle: AppTextScale.titleLarge.copyWith(color: cs.onSurface),
     contentTextStyle: AppTextScale.bodyMedium

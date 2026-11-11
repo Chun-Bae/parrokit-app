@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import '../../app_colors.dart';
 import '../typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// SnackBar 테마
 SnackBarThemeData appSnackBarTheme(ColorScheme cs, {required bool isDark}) {
@@ -19,7 +20,7 @@ SnackBarThemeData appSnackBarTheme(ColorScheme cs, {required bool isDark}) {
     elevation: 0,
     behavior: SnackBarBehavior.floating,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     showCloseIcon: false,

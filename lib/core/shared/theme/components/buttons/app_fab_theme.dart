@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import '../typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// FloatingActionButton 테마
 FloatingActionButtonThemeData appFabTheme(ColorScheme cs,
@@ -20,7 +21,7 @@ FloatingActionButtonThemeData appFabTheme(ColorScheme cs,
     highlightElevation: 0,
     disabledElevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     enableFeedback: true,
     sizeConstraints: const BoxConstraints.tightFor(width: 56, height: 56),

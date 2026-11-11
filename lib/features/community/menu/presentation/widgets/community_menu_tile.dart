@@ -5,6 +5,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/features/community/menu/domain/entities/community_menu_entry.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class CommunityMenuTile extends StatelessWidget {
   const CommunityMenuTile({
@@ -27,7 +28,7 @@ class CommunityMenuTile extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           color: _backgroundColorOf(context, item.colorKey),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Icon(_iconOf(item.iconKey),
             color: _iconColorOf(context, item.colorKey), size: 20),

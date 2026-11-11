@@ -377,7 +377,7 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: theme.colorScheme.errorContainer.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Text(
                 _errorMessage!,

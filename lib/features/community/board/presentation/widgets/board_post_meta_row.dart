@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardPostMetaRow extends StatelessWidget {
   const BoardPostMetaRow({
@@ -26,7 +27,7 @@ class BoardPostMetaRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xxl),
             ),
             child: Row(
               children: [

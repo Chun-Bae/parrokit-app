@@ -47,7 +47,7 @@ class BookmarkTabs extends StatelessWidget {
                 height: 42,
                 decoration: BoxDecoration(
                   color: cs.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
                       color: cs.primary.withValues(alpha: 0.5), width: 0.8),
                 ),

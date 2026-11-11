@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class TrendingSentencesPreview extends StatefulWidget {
   const TrendingSentencesPreview({
@@ -133,7 +134,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: palette.likeSoft,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -244,7 +245,7 @@ class _SentenceCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: palette.surfaceAlt,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
                   item.topic,

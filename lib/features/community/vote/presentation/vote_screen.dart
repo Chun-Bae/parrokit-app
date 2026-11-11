@@ -9,6 +9,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 // ─── VoteScreen ────────────────────────────────────────────────────────────────
 class VoteScreen extends StatefulWidget {
@@ -519,7 +520,7 @@ class VoteCard extends StatelessWidget {
         color: isDark
             ? context.tokens.surfaceContainerHigh
             : context.tokens.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: cs.outlineVariant.withValues(alpha: 0.45),
           width: 1,
@@ -632,7 +633,7 @@ class VoteCard extends StatelessWidget {
                           color: cs.onSurface.withValues(alpha: 0.55),
                           width: 1.2),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
                       ),
                     ),
                     child: showResult
@@ -702,7 +703,7 @@ class VoteCard extends StatelessWidget {
                   content: Text(
                       '\'${options[i].text}\' 항목에 투표하시겠습니까?\n한 번 투표하면 수정할 수 없습니다.'),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(AppRadius.lg)),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
@@ -730,7 +731,7 @@ class VoteCard extends StatelessWidget {
                 color: isSelected
                     ? cs.primary
                     : (isDark ? cs.surfaceContainer : cs.surfaceContainerHigh),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
                 options[i].text,

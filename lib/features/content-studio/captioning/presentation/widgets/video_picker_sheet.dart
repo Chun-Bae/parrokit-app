@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 void showVideoPickerSheet({
   required BuildContext context,
@@ -19,7 +20,7 @@ void showVideoPickerSheet({
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(24),
+            top: Radius.circular(AppRadius.xxl),
           ),
         ),
         child: SafeArea(

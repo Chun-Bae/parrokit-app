@@ -23,6 +23,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class VoteViewScreen extends StatefulWidget {
   final String voteId;
@@ -370,7 +371,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                               horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
                             color: context.tokens.primarySoft,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                           child: Text(
                             '작성자',
@@ -642,7 +643,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       border: Border.all(color: colorScheme.surface, width: 1),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),

@@ -4,6 +4,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardPostContentSection extends StatelessWidget {
   const BoardPostContentSection({super.key, required this.post});
@@ -44,7 +45,7 @@ class BoardPostContentSection extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 return ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: CachedNetworkImage(

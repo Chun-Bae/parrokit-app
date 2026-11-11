@@ -68,7 +68,7 @@ class EpisodeThumbnail extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.black45,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               padding: const EdgeInsets.all(AppSpacing.xs),
               child: const Icon(Icons.play_arrow_rounded,

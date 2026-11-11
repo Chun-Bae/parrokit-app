@@ -5,6 +5,7 @@ import 'package:parrokit/data/models/user.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardCommentItem extends StatelessWidget {
   const BoardCommentItem({
@@ -121,7 +122,7 @@ class BoardCommentItem extends StatelessWidget {
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                             color: context.tokens.primarySoft,
-                            borderRadius: BorderRadius.circular(4)),
+                            borderRadius: BorderRadius.circular(AppRadius.xs)),
                         child: Text('작성자',
                             style: context.texts.labelSmall
                                 .copyWith(color: context.tokens.primary)),
@@ -137,7 +138,7 @@ class BoardCommentItem extends StatelessWidget {
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                             color: context.tokens.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(4)),
+                            borderRadius: BorderRadius.circular(AppRadius.xs)),
                         child: Text('내 댓글',
                             style: context.texts.labelSmall
                                 .copyWith(color: context.tokens.textTertiary)),

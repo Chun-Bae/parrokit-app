@@ -3,6 +3,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../chat_bot_provider.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 void showModelSelectorBottomSheet(
     BuildContext context, ChatBotProvider provider) {
@@ -21,7 +22,7 @@ void showModelSelectorBottomSheet(
         decoration: BoxDecoration(
           color: bg,
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(24),
+            top: Radius.circular(AppRadius.xxl),
           ),
         ),
         child: Column(
@@ -126,13 +127,13 @@ class ModelOptionCard extends StatelessWidget {
       opacity: locked ? 0.5 : 1.0,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: borderColor,
               width: isSelected ? 2.0 : 1.0,
@@ -234,7 +235,7 @@ class FeatureChip extends StatelessWidget {
         color: isDark
             ? Colors.white.withValues(alpha: 0.08)
             : Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         label,

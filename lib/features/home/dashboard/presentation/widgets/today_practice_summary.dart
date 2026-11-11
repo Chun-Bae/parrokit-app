@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class TodayPracticeSummary extends StatelessWidget {
   const TodayPracticeSummary({
@@ -31,7 +32,7 @@ class TodayPracticeSummary extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         boxShadow: [
           BoxShadow(
             color: palette.shadow.withValues(alpha: 0.07),
@@ -58,7 +59,7 @@ class TodayPracticeSummary extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: palette.goodSoft,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -114,7 +115,7 @@ class TodayPracticeSummary extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(99),
+            borderRadius: BorderRadius.circular(AppRadius.full),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 12,

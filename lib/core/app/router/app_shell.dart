@@ -20,6 +20,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/storage_transfer_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 0보다 크면 바텀 네비바를 숨긴다. 네비바가 iOS 네이티브 뷰라서 모달 시트가
 /// 덮지 못하고 위에 겹쳐 보이므로, 시트를 띄우는 동안 [hideNavBarWhile]로 숨긴다.
@@ -96,7 +97,7 @@ class AppShell extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 40),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.22),
         ),
@@ -109,7 +110,7 @@ class AppShell extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: DecoratedBox(

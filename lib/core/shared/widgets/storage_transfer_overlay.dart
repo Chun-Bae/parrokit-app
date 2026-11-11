@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 클립을 로컬/서버/Google Drive 사이로 옮기는 동안 다른 조작을 막고
 /// 진행 과정을 보여주는 전체 화면 오버레이. 단일 클립 이동과 다중 선택
@@ -72,7 +73,7 @@ class _StorageTransferCard extends StatelessWidget {
     final progressValue = total > 0 ? (progress / total).clamp(0.0, 1.0) : null;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.xxl),
       child: DecoratedBox(
         decoration: BoxDecoration(color: colorScheme.surface),
         child: Padding(
@@ -119,7 +120,7 @@ class _StorageTransferCard extends StatelessWidget {
               if (!isError && isRunning && total > 0) ...[
                 const SizedBox(height: 16),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                   child: LinearProgressIndicator(
                     minHeight: 6,
                     value: progressValue,

@@ -449,7 +449,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                     width: double.infinity,
                     height: 50,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       gradient:
                           provider.providerType == TtsProviderType.gemini &&
                                   !(provider.isGenerating ||

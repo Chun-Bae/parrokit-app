@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class StudyGardenPreview extends StatefulWidget {
   const StudyGardenPreview({
@@ -84,7 +85,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +103,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: palette.surfaceAlt,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   '누적 ${widget.totalPracticed}문장',

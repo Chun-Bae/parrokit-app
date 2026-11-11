@@ -26,6 +26,7 @@ import '../widgets/folder_grid.dart';
 import '../widgets/group_collection_manager_modal.dart';
 import '../widgets/clip_list_view.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// [역할]
 /// 라이브러리의 '폴더' 탭 UI 섹션.
@@ -113,7 +114,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             const SizedBox(height: 10),
             ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.full),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 10,
@@ -161,7 +162,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             onTap: _toggleStorageSummary,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -255,7 +256,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
           if (progress != null) ...[
             const SizedBox(height: 10),
             ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.full),
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 minHeight: 10,
@@ -463,7 +464,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         : visibleSegments;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.full),
       child: SizedBox(
         height: 10,
         child: Row(
@@ -491,7 +492,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Text(
@@ -517,7 +518,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       backgroundColor: cs.surface,
       barrierColor: Colors.black.withValues(alpha: 0.42),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
       ),
       clipBehavior: Clip.antiAlias,
       builder: (sheetContext) => SafeArea(
@@ -595,7 +597,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
           backgroundColor: cs.surface,
           barrierColor: Colors.black.withValues(alpha: 0.42),
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
           ),
           clipBehavior: Clip.antiAlias,
           builder: (_) => GroupCollectionManagerModal(

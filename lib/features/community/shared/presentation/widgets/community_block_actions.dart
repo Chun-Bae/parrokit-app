@@ -7,6 +7,7 @@ import 'package:parrokit/features/community/block/presentation/providers/block_p
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 CommunityOptionAction buildCommunityBlockAction({
   required BuildContext context,
@@ -22,8 +23,8 @@ CommunityOptionAction buildCommunityBlockAction({
         builder: (dialogContext) {
           final displayName = (targetDisplayName ?? '').trim();
           return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg)),
             title: const Text('사용자 차단'),
             content: Text(
               displayName.isEmpty

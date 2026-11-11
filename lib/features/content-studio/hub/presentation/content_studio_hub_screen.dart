@@ -17,6 +17,7 @@ import 'package:parrokit/features/content-studio/chat-bot/presentation/widgets/c
 import 'content_studio_app_bar.dart';
 import 'widgets/content_studio_exit_confirm_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class ContentStudioHubScreen extends StatefulWidget {
   const ContentStudioHubScreen({
@@ -347,7 +348,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -427,7 +428,7 @@ class _AppBarOptionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(

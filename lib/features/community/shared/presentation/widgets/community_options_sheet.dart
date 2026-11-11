@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class CommunityOptionAction {
   const CommunityOptionAction({
@@ -25,7 +26,7 @@ Future<void> showCommunityOptionsSheet({
     context: context,
     backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
     ),
     builder: (sheetContext) {
       return SafeArea(
@@ -81,7 +82,7 @@ class _CommunityOptionActionTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

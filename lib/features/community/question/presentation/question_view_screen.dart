@@ -10,6 +10,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class QuestionViewScreen extends StatefulWidget {
   final String questionId;
@@ -410,7 +411,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: context.tokens.primarySoft,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                         color: context.tokens.primary.withValues(alpha: 0.35)),
                   ),

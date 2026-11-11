@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 void sendEmail(BuildContext context) async {
   final Email email = Email(
@@ -32,7 +33,7 @@ void sendEmail(BuildContext context) async {
 
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           backgroundColor: cs.surface,
           title: Text(
@@ -44,8 +45,8 @@ void sendEmail(BuildContext context) async {
             children: [
               Text(
                 '현재 기기에서 기본 메일 앱을 열 수 없어 앱 내에서 바로 문의를 보낼 수 없어요.\n\n'
-                    '불편하시겠지만 아래 주소로 직접 메일을 보내주시면 빠르게 답변드리겠습니다.\n\n'
-                    '📧  cnsqodla2056@gmail.com',
+                '불편하시겠지만 아래 주소로 직접 메일을 보내주시면 빠르게 답변드리겠습니다.\n\n'
+                '📧  cnsqodla2056@gmail.com',
                 style: tt.bodyMedium?.copyWith(height: 1.4),
               ),
               const SizedBox(height: 20),
@@ -55,17 +56,20 @@ void sendEmail(BuildContext context) async {
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     foregroundColor: cs.primary,
                     backgroundColor: cs.primary,
                   ),
                   onPressed: () => Navigator.pop(ctx),
-                  child:  Text(
+                  child: Text(
                     '확인',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: tt.bodyMedium?.copyWith(height: 1.4).copyWith(color: cs.surface).color,
+                      color: tt.bodyMedium
+                          ?.copyWith(height: 1.4)
+                          .copyWith(color: cs.surface)
+                          .color,
                     ),
                   ),
                 ),

@@ -8,6 +8,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class QuestionScreen extends StatefulWidget {
   final String selectedFilter;
@@ -187,7 +188,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: context.tokens.primarySoft,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
                                     border: Border.all(
                                         color: context.tokens.primary
                                             .withValues(alpha: 0.35)),
@@ -222,7 +224,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: statusBgColor,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
                       ),
                       child: Text(
                         statusText,

@@ -7,6 +7,7 @@ import '../../domain/utils/timecode_service.dart';
 import 'labeled_text_field.dart';
 import 'time_triplet_field.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class SegmentCard extends StatelessWidget {
   const SegmentCard({
@@ -52,7 +53,7 @@ class SegmentCard extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +100,8 @@ class SegmentCard extends StatelessWidget {
                               Material(
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
                                 clipBehavior: Clip.antiAlias,
                                 child: InkWell(
                                   onTap: onDelete,
@@ -229,7 +231,7 @@ class _SegmentTimeButton extends StatelessWidget {
       children: [
         Material(
           color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onPressed,

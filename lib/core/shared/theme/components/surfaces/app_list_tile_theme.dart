@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import '../typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// ListTile 테마
 ListTileThemeData appListTileTheme(ColorScheme cs, {required bool isDark}) {
@@ -18,7 +19,7 @@ ListTileThemeData appListTileTheme(ColorScheme cs, {required bool isDark}) {
     horizontalTitleGap: 12,
     minLeadingWidth: 24,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     enableFeedback: true,
     dense: false,

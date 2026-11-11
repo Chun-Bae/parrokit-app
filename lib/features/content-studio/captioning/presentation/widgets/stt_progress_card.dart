@@ -12,6 +12,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/edit_state.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// STT 진행 상황 표시 카드.
 class SttProgressCard extends StatelessWidget {
@@ -46,7 +47,7 @@ class SttProgressCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
       ),
       child: Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 Future<void> showScriptRecommendationSheet(
   BuildContext context,
@@ -19,7 +20,7 @@ Future<void> showScriptRecommendationSheet(
     isScrollControlled: true,
     backgroundColor: context.tokens.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
     builder: (BuildContext sheetContext) {
       return StatefulBuilder(builder: (context, setState) {
@@ -73,11 +74,11 @@ Future<void> showScriptRecommendationSheet(
                               selectedIndex = index;
                             });
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(
                                 color: isSelected
                                     ? context.tokens.primary

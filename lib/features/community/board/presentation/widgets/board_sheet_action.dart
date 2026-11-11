@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardSheetAction extends StatelessWidget {
   const BoardSheetAction({
@@ -22,7 +23,7 @@ class BoardSheetAction extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),

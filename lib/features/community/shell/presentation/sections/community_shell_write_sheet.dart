@@ -3,13 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 void showCommunityWriteBottomSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
     ),
     builder: (context) {
       final colorScheme = Theme.of(context).colorScheme;
@@ -92,7 +93,7 @@ class _CommunityWriteOption extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
@@ -101,7 +102,8 @@ class _CommunityWriteOption extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                  color: bgColor, borderRadius: BorderRadius.circular(16)),
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(AppRadius.lg)),
               child: Icon(icon, color: iconColor, size: 28),
             ),
             const SizedBox(width: 16),

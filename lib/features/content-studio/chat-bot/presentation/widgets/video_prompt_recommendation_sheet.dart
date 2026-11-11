@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 Future<void> showVideoPromptRecommendationSheet(
   BuildContext context, {
@@ -18,7 +19,7 @@ Future<void> showVideoPromptRecommendationSheet(
     isScrollControlled: true,
     backgroundColor: context.tokens.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
     builder: (BuildContext sheetContext) {
       return StatefulBuilder(
@@ -69,11 +70,11 @@ Future<void> showVideoPromptRecommendationSheet(
                               selectedIndex = index;
                             });
                           },
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               border: Border.all(
                                 color: isSelected
                                     ? context.tokens.primary

@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 const _prefKey = 'editor_tip_dismissed_date';
 
@@ -56,7 +57,8 @@ class _TipDialog extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),

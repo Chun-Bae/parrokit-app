@@ -8,6 +8,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class VoteCommentsSection extends StatelessWidget {
   const VoteCommentsSection({
@@ -142,7 +143,8 @@ class VoteCommentsSection extends StatelessWidget {
                               horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
                               color: context.tokens.primarySoft,
-                              borderRadius: BorderRadius.circular(4)),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.xs)),
                           child: Text('작성자',
                               style: context.texts.labelSmall
                                   .copyWith(color: context.tokens.primary)),

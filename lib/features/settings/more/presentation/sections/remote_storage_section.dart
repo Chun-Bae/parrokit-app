@@ -15,6 +15,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import '../widgets/card_container.dart';
 import '../widgets/section_title.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class RemoteStorageSection extends StatefulWidget {
   const RemoteStorageSection({super.key});
@@ -45,9 +46,9 @@ class _RemoteStorageSectionState extends State<RemoteStorageSection> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Material(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: () => setState(() => _isExpanded = !_isExpanded),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -134,7 +135,7 @@ class _RemoteStorageSectionState extends State<RemoteStorageSection> {
           if (progress != null) ...[
             const SizedBox(height: 10),
             ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.full),
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 minHeight: 10,
@@ -172,7 +173,7 @@ class _RemoteStorageSectionState extends State<RemoteStorageSection> {
         : visibleSegments;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.full),
       child: SizedBox(
         height: 10,
         child: Row(
@@ -358,7 +359,7 @@ class _RemoteStorageSectionState extends State<RemoteStorageSection> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Text(

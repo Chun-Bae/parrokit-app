@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class LearningHubScreen extends StatefulWidget {
   const LearningHubScreen({super.key});
@@ -31,10 +32,10 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
         padding: const EdgeInsets.only(bottom: 10),
         child: Material(
           color: surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: ListTile(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.xl)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             leading: Icon(icon, color: path == null ? muted : ink),

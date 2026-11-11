@@ -19,6 +19,7 @@ import 'widgets/today_practice_summary.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 앱 홈 화면. 앵무새 무대([StagePreviewScreen])를 맨 위에 품고,
 /// 연습 기록과 추천 문장, 학습 잔디를 함께 보여준다.
@@ -258,7 +259,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                       foregroundColor: palette.onAccent,
                       minimumSize: const Size.fromHeight(58),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
+                          borderRadius: BorderRadius.circular(AppRadius.xl)),
                     ),
                     icon: const Icon(Icons.play_arrow_rounded),
                     label: Text('학습하러 가기', style: context.texts.titleMedium),

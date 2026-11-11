@@ -12,7 +12,8 @@ import 'bookmark_tab.dart';
 /// 탭으로, [BookmarkTabs]와 같은 시각적 언어(세그먼트 컨트롤)를 3개 항목으로
 /// 확장한 위젯입니다.
 class StorageScopeTabs extends StatelessWidget {
-  const StorageScopeTabs({super.key, required this.value, required this.onChanged});
+  const StorageScopeTabs(
+      {super.key, required this.value, required this.onChanged});
 
   final String value;
   final ValueChanged<String> onChanged;
@@ -70,7 +71,7 @@ class StorageScopeTabs extends StatelessWidget {
                   height: 42,
                   decoration: BoxDecoration(
                     color: cs.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                         color: cs.primary.withValues(alpha: 0.5), width: 0.8),
                   ),
@@ -85,10 +86,12 @@ class StorageScopeTabs extends StatelessWidget {
                       icon: item.icon,
                       label: item.label,
                       active: item.mode == value,
-                      locked: item.mode == ClipStorageConstants.storageModeServer &&
-                          isServerLocked,
+                      locked:
+                          item.mode == ClipStorageConstants.storageModeServer &&
+                              isServerLocked,
                       onTap: () {
-                        if (item.mode == ClipStorageConstants.storageModeServer &&
+                        if (item.mode ==
+                                ClipStorageConstants.storageModeServer &&
                             isServerLocked) {
                           showToast('서버 저장은 준비 중이에요. 출시 후 이용할 수 있어요.');
                           return;

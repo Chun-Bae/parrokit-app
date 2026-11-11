@@ -8,6 +8,7 @@ import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/sentence_history.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 캐릭터 아래에서 내가 연습한 문장의 기록을 한눈에 보여주는 대시보드.
 class SentenceHistoryDashboard extends StatefulWidget {
@@ -99,7 +100,7 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         boxShadow: [
           BoxShadow(
             color: palette.shadow.withValues(alpha: 0.07),

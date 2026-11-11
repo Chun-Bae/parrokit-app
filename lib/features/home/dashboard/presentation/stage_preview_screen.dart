@@ -24,6 +24,7 @@ import 'add_sentence_screen.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'nest_preview.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 enum _SpeakingMode { automatic, repeat }
 
@@ -1501,7 +1502,8 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
     final active = palette.good;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xxl)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420, maxHeight: 570),
         child: Padding(
@@ -1528,7 +1530,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 decoration: BoxDecoration(
                     color: palette.surfaceSoft,
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(AppRadius.md)),
                 child: Row(children: [
                   Icon(Icons.lock_outline_rounded, size: 16, color: muted),
                   const SizedBox(width: 7),
@@ -1720,7 +1722,7 @@ class _GameMenuButton extends StatelessWidget {
           child: Material(
             color: selected ? palette.good : palette.surface,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 side: BorderSide(
                     color: selected ? palette.good : palette.border)),
             clipBehavior: Clip.antiAlias,
@@ -1837,7 +1839,8 @@ class _GrowthPainter extends CustomPainter {
           Paint()..color = Colors.white.withValues(alpha: opacity));
       paint.color = const Color(0xFFFFFBE3);
       canvas.drawRRect(
-          RRect.fromRectAndRadius(bubble, const Radius.circular(12)), paint);
+          RRect.fromRectAndRadius(bubble, const Radius.circular(AppRadius.md)),
+          paint);
       final tail = Path()
         ..moveTo(bubble.center.dx - 5, bubble.bottom - 1)
         ..lineTo(bubble.center.dx + 1, bubble.bottom + 6)

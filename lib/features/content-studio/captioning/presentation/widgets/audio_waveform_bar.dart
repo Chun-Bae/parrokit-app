@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 오디오 파형 그래프 위젯.
 ///
@@ -637,7 +638,7 @@ class _OverlayRangeTile extends StatelessWidget {
                     color: borderColor,
                     width: isSelected ? 2 : 1,
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
             ),

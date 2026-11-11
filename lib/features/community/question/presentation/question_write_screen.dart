@@ -17,6 +17,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class QuestionWriteScreen extends StatefulWidget {
   const QuestionWriteScreen({super.key});
@@ -141,7 +142,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                 backgroundColor: accentBlue,
                 disabledBackgroundColor: accentBlue.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(AppRadius.xl)),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
               ),
@@ -219,7 +220,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: tokens.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(color: tokens.divider),
                       ),
                       child: Column(
