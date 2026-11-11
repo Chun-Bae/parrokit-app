@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/infrastructure/services/ad_service.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -65,18 +66,35 @@ class _AdRewardSectionState extends State<AdRewardSection> {
   }
 
   void _onWatchAd() {
+    // 광고는 전체 화면으로 30초쯤 돈다. 그 사이에 이 섹션이 사라질 수 있으니
+    // Provider는 미리 잡아 둔다.
+    final userProvider = context.read<UserProvider>();
+
     AdService().showRewardedAd(
       onRewarded: (coins) async {
-        if (!mounted) return;
         if (coins == null) {
           showToast('광고가 아직 준비 중이에요. 잠시 후 다시 시도해 주세요.');
           return;
         }
-        context.read<UserProvider>().addCoins(coins);
+
+        // 보상 지급에 `if (!mounted) return;`이 걸려 있었다. 사용자가 광고를
+        // 끝까지 봤는데 그 사이 화면을 떠났으면 코인을 못 받았다. 지급과
+        // 쿨다운 기록은 화면 수명과 상관없이 한다.
+        try {
+          await userProvider.addCoins(coins);
+        } catch (e) {
+          AppLogger.e('[AdReward] 광고 보상 지급 실패 coins=$coins', error: e);
+          showToast('광고 보상 지급에 실패했어요. 잠시 후 다시 시도해 주세요.');
+          return;
+        }
+
         showToast('코인 $coins개를 받았어요!');
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(_prefKey, DateTime.now().millisecondsSinceEpoch);
-        _startTimer(_cooldown);
+
+        // 타이머는 화면이 살아 있을 때만 의미가 있다.
+        if (mounted) _startTimer(_cooldown);
       },
     );
   }
