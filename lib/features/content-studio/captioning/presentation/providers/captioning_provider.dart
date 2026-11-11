@@ -352,9 +352,11 @@ class CaptioningProvider extends ChangeNotifier
       showToast('저장 실패: $e');
       _saveState = EditSaveState.error;
       notifyListeners();
-    } finally {
-      _setSaving(false);
     }
+    // finally에서 _setSaving(false)를 부르고 있었다. 그건 무조건 idle을 넣기
+    // 때문에 방금 넣은 success와 error를 바로 덮어썼다. 두 상태는 밖에서
+    // 한 번도 보이지 않았다. 지금은 성공·실패 상태가 그대로 남는다.
+    // isSaving은 saving일 때만 참이라 저장 버튼은 똑같이 다시 열린다.
   }
 
   /// 현재 UI 상태에서 ClipFormData를 빌드합니다.
