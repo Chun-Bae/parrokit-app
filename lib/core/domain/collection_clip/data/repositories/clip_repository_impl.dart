@@ -14,6 +14,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/data/models/clip_view.dart';
@@ -162,7 +163,11 @@ class ClipRepositoryImpl implements ClipRepository {
           final abs = await ClipPathUtils.absolutePathFor(sourcePath);
           final f = File(abs);
           if (await f.exists()) await f.delete();
-        } catch (_) {}
+        } catch (e) {
+          // DB 행은 이미 지웠으니 삭제 자체를 되돌리지는 않는다. 다만 남은
+          // 파일이 저장 용량에 계속 잡히므로 조용히 넘기지는 않는다.
+          AppLogger.w('[ClipRepository] 원본 파일 삭제 실패 clipId=$clipId: $e');
+        }
       }
 
       for (final cacheEntry in cacheEntries) {
@@ -170,11 +175,15 @@ class ClipRepositoryImpl implements ClipRepository {
           final abs = await ClipPathUtils.absolutePathFor(cacheEntry.filePath);
           final f = File(abs);
           if (await f.exists()) await f.delete();
-        } catch (_) {}
+        } catch (e) {
+          AppLogger.w('[ClipRepository] 캐시 파일 삭제 실패 clipId=$clipId: $e');
+        }
       }
 
       return true;
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.e('[ClipRepository] 클립 삭제 실패 clipId=$clipId',
+          error: e, stackTrace: st);
       return false;
     }
   }
