@@ -35,6 +35,7 @@ import 'components/feedback/app_dialog_theme.dart';
 import 'components/feedback/app_bottom_sheet_theme.dart';
 import 'components/feedback/app_snackbar_theme.dart';
 import 'components/feedback/app_progress_theme.dart';
+import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 
 class AppTheme {
   static const bottomNavHeight = 72.0;
@@ -132,6 +133,7 @@ class AppTheme {
       extensions: <ThemeExtension<dynamic>>[
         isDark ? AppTokens.dark : AppTokens.light,
         isDark ? HomeTokens.dark : HomeTokens.light,
+        isDark ? CollectionTokens.dark : CollectionTokens.light,
       ],
 
       // ─────────────────────────────────────────────────────────────────

@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,6 +30,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -75,14 +75,19 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   }
 
   static const categories = ['전체', '일상', '여행', '카페', '감정', '회사', '학교'];
-  static const packs = [
-    _SentencePack('카페에서 바로 쓰는 말', '8문장 · 입문', Icons.local_cafe_rounded,
-        CollectionColors.cream),
-    _SentencePack('짧은 일상 반응', '12문장 · 초급', Icons.chat_bubble_rounded,
-        CollectionColors.mint),
-    _SentencePack(
-        '여행 첫날 표현', '10문장 · 초급', Icons.luggage_rounded, CollectionColors.sky),
-  ];
+
+  /// 문장팩 목록. 카드 배경이 밝기에 따라 달라져서 context가 필요하다.
+  static List<_SentencePack> packsOf(BuildContext context) {
+    final tints = context.collectionTokens;
+    return [
+      _SentencePack(
+          '카페에서 바로 쓰는 말', '8문장 · 입문', Icons.local_cafe_rounded, tints.cream),
+      _SentencePack(
+          '짧은 일상 반응', '12문장 · 초급', Icons.chat_bubble_rounded, tints.mint),
+      _SentencePack('여행 첫날 표현', '10문장 · 초급', Icons.luggage_rounded, tints.sky),
+    ];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -616,13 +621,16 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
               const SizedBox(height: 10),
               SizedBox(
                 height: 148,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: packs.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) =>
-                      _PackCard(pack: packs[index]),
-                ),
+                child: Builder(builder: (context) {
+                  final packs = packsOf(context);
+                  return ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: packs.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) =>
+                        _PackCard(pack: packs[index]),
+                  );
+                }),
               ),
               const SizedBox(height: 28),
               _SectionTitle(
@@ -887,7 +895,7 @@ class _PackCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(AppRadius.xl)),
                 child: Text('공식', style: context.texts.labelSmall)),
-            Icon(pack.icon, size: 23, color: CollectionColors.packIcon),
+            Icon(pack.icon, size: 23, color: context.collectionTokens.skyInk),
           ]),
           const Spacer(),
           Text(pack.title,
@@ -897,7 +905,7 @@ class _PackCard extends StatelessWidget {
           const SizedBox(height: 5),
           Text(pack.detail,
               style: context.texts.labelSmall
-                  .copyWith(color: CollectionColors.packLabel)),
+                  .copyWith(color: context.collectionTokens.tintLabel)),
         ]),
       );
 }
@@ -999,7 +1007,9 @@ class _SentenceCard extends StatelessWidget {
                         sentence.liked
                             ? Icons.favorite_rounded
                             : Icons.favorite_border,
-                        color: sentence.liked ? CollectionColors.liked : null)),
+                        color: sentence.liked
+                            ? context.collectionTokens.liked
+                            : null)),
                 Text('${sentence.likeCount}', style: context.texts.bodySmall),
                 const SizedBox(width: 14),
                 Tooltip(
@@ -1031,7 +1041,9 @@ class _SentenceCard extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     onPressed: onParrot,
                     icon: Icon(Icons.record_voice_over_rounded,
-                        color: active ? CollectionColors.voiceActive : null)),
+                        color: active
+                            ? context.collectionTokens.voiceActive
+                            : null)),
               ]),
             ]),
           ),
@@ -1094,18 +1106,19 @@ class _MySentenceTile extends StatelessWidget {
       );
 
   /// 최고 단계 카드의 연한 황금 그라데이션 배경. 터치 물결이 그 위에 그려지도록 Ink를 쓴다.
-  Widget _goldBackground(bool maxed, Widget child) => !maxed
-      ? child
-      : Ink(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: CollectionColors.goldBackground,
-            ),
-          ),
-          child: child,
-        );
+  Widget _goldBackground(BuildContext context, bool maxed, Widget child) =>
+      !maxed
+          ? child
+          : Ink(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: context.collectionTokens.goldBackground,
+                ),
+              ),
+              child: child,
+            );
 
   @override
   Widget build(BuildContext context) {
@@ -1122,6 +1135,7 @@ class _MySentenceTile extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: _goldBackground(
+        context,
         maxed,
         ListTile(
           onTap: () => openDetails(context),
@@ -1148,10 +1162,10 @@ class _MySentenceTile extends StatelessWidget {
       padding: const EdgeInsets.all(1.5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(17),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: CollectionColors.goldBorder,
+          colors: context.collectionTokens.goldBorder,
         ),
       ),
       child: card,
@@ -1565,7 +1579,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   liked
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
-                  color: liked ? CollectionColors.liked : null,
+                  color: liked ? context.collectionTokens.liked : null,
                 ),
               ),
               if (widget.shared != null) ...[

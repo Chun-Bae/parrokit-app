@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 
 class WordCollectionPreview extends StatefulWidget {
   const WordCollectionPreview({super.key});
@@ -252,7 +252,7 @@ class _ReviewSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: CollectionColors.cream,
+        color: context.collectionTokens.cream,
         borderRadius: BorderRadius.circular(22),
       ),
       child: Row(
@@ -264,8 +264,8 @@ class _ReviewSummary extends StatelessWidget {
               color: colors.surface.withValues(alpha: 0.82),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.bolt_rounded,
-                color: CollectionColors.creamIcon),
+            child: Icon(Icons.bolt_rounded,
+                color: context.collectionTokens.creamInk),
           ),
           const SizedBox(width: 14),
           Expanded(

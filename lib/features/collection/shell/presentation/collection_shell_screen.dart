@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -22,6 +21,7 @@ import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -219,25 +219,28 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Widget _buildOverview(BuildContext context, int clipCount) {
-    final colors = Theme.of(context).colorScheme;
+    final tints = context.collectionTokens;
     final pages = [
       (
         icon: Icons.format_quote_rounded,
         title: '모아둔 문장을 바로 연습해요',
         detail: '공식 문장팩과 사람들이 공유한 표현을 둘러보세요',
-        color: CollectionColors.mint,
+        color: tints.mint,
+        ink: tints.mintInk,
       ),
       (
         icon: Icons.video_library_rounded,
         title: '클립 $clipCount개를 보관 중이에요',
         detail: '영상의 장면과 문장을 함께 기억할 수 있어요',
-        color: CollectionColors.sky,
+        color: tints.sky,
+        ink: tints.skyInk,
       ),
       (
         icon: Icons.spellcheck_rounded,
         title: '문장에서 만난 단어를 모아요',
         detail: '따로 외우기보다 실제 표현과 함께 복습해요',
-        color: CollectionColors.cream,
+        color: tints.cream,
+        ink: tints.creamInk,
       ),
     ];
     final page = pages[_tabController.index];
@@ -260,10 +263,10 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: colors.surface.withValues(alpha: 0.82),
+                  color: tints.tintSurface.withValues(alpha: 0.82),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(page.icon, color: CollectionColors.tabIcon),
+                child: Icon(page.icon, color: page.ink),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -273,14 +276,13 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                     Text(
                       page.title,
                       style: context.texts.titleMedium
-                          .copyWith(letterSpacing: -0.3),
+                          .copyWith(letterSpacing: -0.3, color: page.ink),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       page.detail,
-                      style: context.texts.bodySmall.copyWith(
-                          color: colors.onSurface.withValues(alpha: 0.66),
-                          height: 1.35),
+                      style: context.texts.bodySmall
+                          .copyWith(color: tints.tintLabel, height: 1.35),
                     ),
                   ],
                 ),
