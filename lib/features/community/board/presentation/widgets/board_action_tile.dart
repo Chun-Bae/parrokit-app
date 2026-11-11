@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
 class BoardActionTile extends StatefulWidget {
   const BoardActionTile({
@@ -46,25 +47,32 @@ class _BoardActionTileState extends State<BoardActionTile> {
         onTapDown: (_) => setState(() => _pressed = true),
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          width: 55,
-          height: 55,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            color: widget.selected
+                ? widget.accentColor.withValues(alpha: 0.12)
+                : context.tokens.surfaceContainer,
+            borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(color: borderColor, width: borderWidth),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(widget.icon, size: 18, color: contentColor),
-              const SizedBox(height: 2),
+              const SizedBox(width: AppSpacing.sm - 2),
               Text(
                 widget.label,
-                style: context.texts.bodySmall.copyWith(color: labelColor),
+                style: context.texts.bodyMedium.copyWith(
+                  color: labelColor,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),

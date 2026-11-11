@@ -17,6 +17,7 @@ import 'package:parrokit/features/community/board/presentation/sections/board_co
 import 'package:parrokit/features/community/board/presentation/handlers/board_options_handler.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
 class BoardViewScreen extends StatefulWidget {
   final String postId;
@@ -335,7 +336,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             provider.toggleLike(widget.postId, user.id);
                           },
                         ),
-                        const SizedBox(width: 26),
+                        const SizedBox(width: AppSpacing.md),
                         BoardActionTile(
                           icon: scrapped
                               ? Icons.bookmark
