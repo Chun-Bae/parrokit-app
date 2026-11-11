@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_theme.dart';
 
 class DashboardStudioSwitchFab extends StatefulWidget {
   const DashboardStudioSwitchFab({
@@ -32,8 +33,10 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
     final surface =
         isDark ? context.tokens.surfaceContainer : context.tokens.surface;
     final border = context.tokens.dividerSubtle;
-    final selectedBg = context.tokens.primary;
-    final selectedText = Colors.white;
+    // 앱 메인 탭바와 같은 선택 표시를 쓴다. 자리와 역할이 같아서다.
+    final selectedBg = context.tokens.primary
+        .withValues(alpha: AppTheme.bottomNavSelectionOpacity);
+    final selectedText = context.tokens.primary;
     final unselectedText = context.tokens.textSecondary;
 
     return AnimatedContainer(
