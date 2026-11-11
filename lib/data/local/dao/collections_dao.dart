@@ -18,27 +18,29 @@ class CollectionsDao extends DatabaseAccessor<AppDatabase>
   Future<List<Collection>> fetchAll() => select(collections).get();
   Stream<List<Collection>> watchAll() => select(collections).watch();
 
-  // Find or create collection by (name, storageMode)
+  /// (name, storageMode)로 콜렉션을 찾고 없으면 만든다.
+  ///
+  /// 찾기와 만들기를 한 트랜잭션에 묶는다. 전에는 나뉘어 있어서, pull 동기화가
+  /// 도는 중에 사용자가 같은 이름의 콜렉션에 클립을 넣으면 양쪽이 "없다"를
+  /// 보고 각각 insert해 같은 이름의 콜렉션이 둘 생길 수 있었다.
+  /// (name, storageMode)에 unique index를 걸면 더 확실하지만 스키마 변경이다.
   Future<Collection> findOrCreate(
     String name,
     String storageMode, {
     String? remoteId,
-  }) async {
-    final existing = await (select(collections)
-          ..where(
-            (c) => c.name.equals(name) & c.storageMode.equals(storageMode),
-          )
-          ..limit(1))
-        .getSingleOrNull();
-    if (existing != null) return existing;
-    final id = await into(collections).insert(
-      CollectionsCompanion.insert(
-        name: name,
-        storageMode: Value(storageMode),
-        remoteId: Value(remoteId),
-      ),
-    );
-    return (select(collections)..where((c) => c.id.equals(id))).getSingle();
+  }) {
+    return transaction(() async {
+      final existing = await findByNameAndStorageMode(name, storageMode);
+      if (existing != null) return existing;
+      final id = await into(collections).insert(
+        CollectionsCompanion.insert(
+          name: name,
+          storageMode: Value(storageMode),
+          remoteId: Value(remoteId),
+        ),
+      );
+      return (select(collections)..where((c) => c.id.equals(id))).getSingle();
+    });
   }
 
   Future<Collection?> findById(int id) => (select(collections)
