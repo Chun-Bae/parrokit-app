@@ -64,6 +64,7 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> toggleLike(String postId, String userId) async {
+    _errorMessage = null;
     final originalState = _postLikedStates[postId] ?? _isCurrentPostLiked;
     final targetState = !originalState;
     _postLikedStates[postId] = targetState;
@@ -96,6 +97,7 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> toggleScrap(String postId, String userId) async {
+    _errorMessage = null;
     final originalState = _postScrappedStates[postId] ?? _isCurrentPostScrapped;
     final targetState = !originalState;
     _postScrappedStates[postId] = targetState;

@@ -5,6 +5,7 @@ extension CommunityProviderComment on CommunityProvider {
 
   // 특정 게시글의 댓글 목록 가져오기 (현재 로그인된 유저 ID도 받아와서 좋아요 상태 셋팅)
   Future<void> fetchComments(String postId, {String? currentUserId}) async {
+    _errorMessage = null;
     _currentPostComments.clear();
     _replyingTo = null;
 
@@ -36,6 +37,7 @@ extension CommunityProviderComment on CommunityProvider {
     required String authorNickname,
     String? authorAvatarUrl,
   }) async {
+    _errorMessage = null;
     try {
       final postIndex = _posts.indexWhere((p) => p.id == postId);
       final postType = postIndex != -1 ? _posts[postIndex].postType : 'board';
@@ -68,6 +70,7 @@ extension CommunityProviderComment on CommunityProvider {
   }
 
   Future<bool> deleteComment(String postId, String commentId) async {
+    _errorMessage = null;
     try {
       await deleteCommentUseCase.execute(postId, commentId);
 
@@ -90,6 +93,7 @@ extension CommunityProviderComment on CommunityProvider {
   }
 
   Future<void> toggleCommentLike(String postId, String commentId, String userId) async {
+    _errorMessage = null;
     final isLiked = _likedCommentIds.contains(commentId);
     final targetState = !isLiked;
 
