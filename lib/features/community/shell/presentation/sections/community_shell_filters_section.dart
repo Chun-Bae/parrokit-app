@@ -6,7 +6,11 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 
 /// 게시판 칩 줄 높이. 가로 스크롤이라 바깥에서 높이를 정해 줘야 한다.
-const double _boardChipHeight = 36;
+///
+/// 44로 둔다. 전에는 36이어서 손가락으로 누를 영역이 권장 최소치(44pt)보다
+/// 작았다. SizedBox가 ListView를 가두니 칩 안에서 영역을 더 줄 수도 없었다.
+/// 질문·투표 탭의 세그먼트 컨트롤도 44를 넘기므로 세 탭 높이가 맞는다.
+const double _boardChipHeight = 44;
 
 class CommunityShellFiltersSection extends StatelessWidget {
   const CommunityShellFiltersSection({

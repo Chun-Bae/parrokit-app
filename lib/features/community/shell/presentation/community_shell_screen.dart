@@ -116,8 +116,9 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                   zone1Widget: _buildTabBar(context),
                   zone2Widget: _buildFilterSection(),
                   // 게시판은 가로 스크롤 칩 줄, 질문·투표는 세그먼트 컨트롤이라
-                  // 필요한 높이가 다르다.
-                  zone2Height: _tabController.index == 0 ? 60 : 72,
+                  // 필요한 높이가 다르다. 게시판은 위 여백 12 + 칩 44 +
+                  // 아래 여백 11 + 구분선 1 = 68이다.
+                  zone2Height: _tabController.index == 0 ? 68 : 72,
                 ),
               ),
             ];
