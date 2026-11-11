@@ -67,6 +67,10 @@ mixin EditFileMixin on ChangeNotifier {
 
   String? _tempPcmPath;
 
+  /// 파형 추출 요청 번호. 영상을 바꾸면 올라간다.
+  /// 앞선 요청이 늦게 끝나도 결과를 버리기 위한 것이다.
+  int _waveformRequestId = 0;
+
   // ─────────────────────────────────────────────────────────────────
   // 파일 선택
   // ─────────────────────────────────────────────────────────────────
@@ -164,6 +168,9 @@ mixin EditFileMixin on ChangeNotifier {
     _originalStagedPath = null;
     _waveformData = null;
     _waveformLoading = false;
+    // 아직 돌고 있는 파형 추출이 있으면 그 결과를 버리게 한다. 번호를 올리지
+    // 않으면 영상을 지운 뒤에 지운 영상의 파형이 뒤늦게 올라온다.
+    _waveformRequestId++;
     _cleanupTempPcm();
 
     if (p != null && staging.isInStaging(p)) {
@@ -184,22 +191,31 @@ mixin EditFileMixin on ChangeNotifier {
 
   // ── 오디오 파형 추출 ──────────────────────────────────────────────────────
 
+  /// 영상에서 오디오 파형을 뽑는다.
+  ///
+  /// 호출한 쪽이 await 하지 않는다. 영상을 빠르게 두 번 고르면 ffmpeg 작업이
+  /// 겹치는데, 전에는 둘 다 `aw_tmp_audio.pcm` 한 경로에 쓰고 늦게 끝난 쪽이
+  /// _waveformData를 덮었다. 그래서 두 번째 영상 밑에 첫 번째 영상의 파형이
+  /// 걸리는 일이 있었다.
+  ///
+  /// 요청마다 번호와 파일 이름을 따로 준다. 자기보다 새 요청이 생겼으면
+  /// 결과를 버리고, 자기가 만든 임시 파일은 어떤 경로로 끝나든 자기가 지운다.
   Future<void> _extractWaveform(String videoPath) async {
+    final requestId = ++_waveformRequestId;
+
     _waveformLoading = true;
     _waveformData = null;
     notifyListeners();
 
     AppLogger.i('[Captioning][Waveform] 파형 추출 시작 path=$videoPath');
 
+    final tmpDir = await getTemporaryDirectory();
+    final pcmOut = '${tmpDir.path}/aw_tmp_audio_$requestId.pcm';
+    final outFile = File(pcmOut);
+    _tempPcmPath = pcmOut;
+
     try {
-      final tmpDir = await getTemporaryDirectory();
-      final pcmOut = '${tmpDir.path}/aw_tmp_audio.pcm';
-
-      await _cleanupTempPcm();
-      _tempPcmPath = pcmOut;
-
-      final outFile = File(pcmOut);
-      if (await outFile.exists()) await outFile.delete();
+      await _deleteQuietly(outFile);
 
       final session = await FFmpegKit.executeWithArguments([
         '-y',
@@ -218,6 +234,8 @@ mixin EditFileMixin on ChangeNotifier {
       ]);
       final rc = await session.getReturnCode();
 
+      if (requestId != _waveformRequestId) return;
+
       if (!ReturnCode.isSuccess(rc) || !await outFile.exists()) {
         final logs = await session.getAllLogsAsString();
         AppLogger.w('[Captioning][Waveform] ffmpeg PCM 추출 실패 logs=$logs');
@@ -231,6 +249,8 @@ mixin EditFileMixin on ChangeNotifier {
       final bytes = await outFile.readAsBytes();
       final data = _computeWaveformFromPcm(bytes);
 
+      if (requestId != _waveformRequestId) return;
+
       AppLogger.i('[Captioning][Waveform] 파형 계산 완료 samples=${data.length}');
 
       _waveformData = data;
@@ -238,8 +258,21 @@ mixin EditFileMixin on ChangeNotifier {
       notifyListeners();
     } catch (e) {
       AppLogger.e('[Captioning][Waveform] 파형 추출 예외', error: e);
+      if (requestId != _waveformRequestId) return;
       _waveformLoading = false;
       notifyListeners();
+    } finally {
+      // 180초 분량이면 3MB쯤 된다. 다 읽었으면 들고 있을 이유가 없다.
+      await _deleteQuietly(outFile);
+      if (_tempPcmPath == pcmOut) _tempPcmPath = null;
+    }
+  }
+
+  Future<void> _deleteQuietly(File file) async {
+    try {
+      if (await file.exists()) await file.delete();
+    } catch (e) {
+      AppLogger.w('[Captioning][Waveform] 임시 PCM 파일 삭제 실패', error: e);
     }
   }
 
@@ -276,13 +309,8 @@ mixin EditFileMixin on ChangeNotifier {
   Future<void> _cleanupTempPcm() async {
     final path = _tempPcmPath;
     if (path == null) return;
-    try {
-      final f = File(path);
-      if (await f.exists()) await f.delete();
-    } catch (e) {
-      AppLogger.w('[Captioning][Waveform] 임시 PCM 파일 삭제 실패', error: e);
-    }
     _tempPcmPath = null;
+    await _deleteQuietly(File(path));
   }
 
   // Mixin 초기화 헬퍼
