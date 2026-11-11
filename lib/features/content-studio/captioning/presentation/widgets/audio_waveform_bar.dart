@@ -881,7 +881,7 @@ class _LoadingSkeletonState extends State<_LoadingSkeleton>
                     height: h,
                     decoration: BoxDecoration(
                       color: widget.cs.onSurface.withValues(alpha: alpha),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.track),
                     ),
                   ),
                 ),

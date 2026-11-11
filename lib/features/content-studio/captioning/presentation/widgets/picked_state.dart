@@ -202,7 +202,7 @@ class _PickedStateState extends State<PickedState> {
                     height: 4,
                     decoration: BoxDecoration(
                       color: cs.onSurface.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppRadius.track),
                     ),
                   ),
                 ),

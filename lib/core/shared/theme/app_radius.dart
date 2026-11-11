@@ -13,6 +13,9 @@ abstract final class AppRadius {
   /// 없음 (0dp)
   static const double none = 0;
 
+  /// 초극소 (2dp) - 진행 막대, 슬라이더 레일, 시트 드래그 핸들 같은 얇은 바
+  static const double xxs = 2;
+
   /// 극소 (4dp) - 작은 뱃지, 태그
   static const double xs = 4;
 
@@ -58,4 +61,7 @@ abstract final class AppRadius {
 
   /// 썸네일 (8dp)
   static const double thumbnail = sm;
+
+  /// 얇은 바 (2dp) - 진행 막대와 드래그 핸들
+  static const double track = xxs;
 }

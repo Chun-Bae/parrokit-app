@@ -1362,7 +1362,8 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                             height: base * wave,
                             decoration: BoxDecoration(
                                 color: voiced ? active : palette.surfaceAlt,
-                                borderRadius: BorderRadius.circular(2)));
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.track)));
                       }));
                 }))),
         const SizedBox(width: 12),
@@ -1750,7 +1751,8 @@ class _GameMenuButton extends StatelessWidget {
                             height: 2,
                             decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.75),
-                                borderRadius: BorderRadius.circular(2)))),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.track)))),
                 ])),
           ),
         ),

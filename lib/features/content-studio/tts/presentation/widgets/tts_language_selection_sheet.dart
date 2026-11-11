@@ -60,7 +60,7 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
             height: 4,
             decoration: BoxDecoration(
               color: context.tokens.disabled,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.track),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

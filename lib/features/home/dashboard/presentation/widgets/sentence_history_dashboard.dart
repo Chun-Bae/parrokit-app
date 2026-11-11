@@ -304,7 +304,7 @@ class _HistoryRow extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                   color: masteryColor(context, item.mastery),
-                  borderRadius: BorderRadius.circular(2))),
+                  borderRadius: BorderRadius.circular(AppRadius.track))),
           const SizedBox(width: 12),
           Expanded(
               child: Column(

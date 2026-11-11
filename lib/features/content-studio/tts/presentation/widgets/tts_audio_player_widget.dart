@@ -278,7 +278,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                                     : context
                                                         .tokens.dividerSubtle,
                                                 borderRadius:
-                                                    BorderRadius.circular(2),
+                                                    BorderRadius.circular(
+                                                        AppRadius.track),
                                               ),
                                             ),
                                             FractionallySizedBox(
@@ -304,7 +305,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                                               .tokens.secondary)
                                                       : null,
                                                   borderRadius:
-                                                      BorderRadius.circular(2),
+                                                      BorderRadius.circular(
+                                                          AppRadius.track),
                                                 ),
                                               ),
                                             ),

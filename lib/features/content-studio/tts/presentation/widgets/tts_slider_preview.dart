@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class TtsSliderPreview extends StatelessWidget {
   const TtsSliderPreview({
@@ -77,7 +78,7 @@ class TtsSliderPreview extends StatelessWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: context.tokens.dividerSubtle,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(AppRadius.track),
                       ),
                     ),
                     FractionallySizedBox(
@@ -86,7 +87,7 @@ class TtsSliderPreview extends StatelessWidget {
                         height: 4,
                         decoration: BoxDecoration(
                           color: activeColor ?? theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(AppRadius.track),
                         ),
                       ),
                     ),

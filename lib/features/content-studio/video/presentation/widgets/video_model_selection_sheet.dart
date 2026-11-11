@@ -34,7 +34,7 @@ class VideoModelSelectionSheet extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 color: context.tokens.disabled,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.track),
               ),
             ),
           ),

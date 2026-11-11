@@ -85,8 +85,9 @@ class _StorageCacheManagementScreenState
 
   Color _storageColor(BuildContext context, String storageMode) {
     final cs = Theme.of(context).colorScheme;
-    if (storageMode == ClipStorageConstants.storageModeServer)
+    if (storageMode == ClipStorageConstants.storageModeServer) {
       return cs.secondary;
+    }
     if (storageMode == ClipStorageConstants.storageModeGoogleDrive) {
       return cs.tertiary;
     }

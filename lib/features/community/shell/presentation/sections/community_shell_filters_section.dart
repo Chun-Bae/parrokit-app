@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class CommunityShellFiltersSection extends StatelessWidget {
   const CommunityShellFiltersSection({
@@ -146,7 +147,7 @@ class _QuestionTab extends StatelessWidget {
               width: isSelected ? 64 : 0,
               decoration: BoxDecoration(
                 color: cs.primary,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.track),
               ),
             ),
           ],
