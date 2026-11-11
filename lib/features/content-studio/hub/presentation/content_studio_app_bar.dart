@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class ContentStudioAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -46,9 +47,9 @@ class ContentStudioAppBar extends StatelessWidget
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 '🦜',
-                style: TextStyle(fontSize: 18),
+                style: context.texts.titleLarge,
               ),
               const SizedBox(width: 5),
               Text(
@@ -59,7 +60,9 @@ class ContentStudioAppBar extends StatelessWidget
                 const SizedBox(width: 4),
                 IconButton(
                   icon: Icon(
-                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     color: theme.colorScheme.onSurface,
                   ),
                   tooltip: isExpanded ? '옵션 닫기' : '옵션 열기',

@@ -21,6 +21,7 @@ import 'package:parrokit/features/collection/library/presentation/providers/tag_
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import '../widgets/clip_list_view.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class LibraryTagSection extends StatelessWidget {
   const LibraryTagSection({
@@ -145,14 +146,13 @@ class LibraryTagSection extends StatelessWidget {
                                               t.name,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                fontFamily: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.fontFamily,
-                                              ),
+                                              style: context.texts.bodyMedium
+                                                  .copyWith(
+                                                      fontFamily:
+                                                          Theme.of(context)
+                                                              .textTheme
+                                                              .bodyMedium
+                                                              ?.fontFamily),
                                             ),
                                           ),
                                         ],
@@ -189,11 +189,8 @@ class LibraryTagSection extends StatelessWidget {
                     ),
                     child: Text(
                       'All',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      style: context.texts.labelMedium.copyWith(
+                          color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                 ),
@@ -247,15 +244,12 @@ class LibraryTagSection extends StatelessWidget {
                               label: Text(
                                 name,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.fontFamily,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                                style: context.texts.bodyMedium.copyWith(
+                                    fontFamily: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.fontFamily,
+                                    color: Colors.white),
                               ),
                               selected: true,
                               onSelected: (_) {},

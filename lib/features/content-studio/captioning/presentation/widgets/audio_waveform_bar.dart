@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 오디오 파형 그래프 위젯.
 ///
@@ -421,30 +422,20 @@ class _AudioWaveformBarState extends State<AudioWaveformBar> {
                   children: [
                     Text(
                       _formatDuration(math.max(0, _windowStartMs)),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: cs.onSurface.withValues(alpha: 0.4),
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.texts.labelSmall
+                          .copyWith(color: cs.onSurface.withValues(alpha: 0.4)),
                     ),
                     Text(
                       _formatDuration(math.min(
                           c?.value.duration.inMilliseconds ?? endMs, endMs)),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: cs.onSurface.withValues(alpha: 0.4),
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.texts.labelSmall
+                          .copyWith(color: cs.onSurface.withValues(alpha: 0.4)),
                     ),
                   ],
                 ),
                 Text(
                   _formatDuration(c?.value.position.inMilliseconds ?? 0),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: cs.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: context.texts.labelSmall.copyWith(color: cs.primary),
                 ),
               ],
             ),

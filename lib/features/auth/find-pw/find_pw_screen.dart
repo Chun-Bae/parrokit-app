@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class FindPwScreen extends StatefulWidget {
   const FindPwScreen({super.key});
@@ -62,13 +63,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           '비밀번호 재설정',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: context.texts.titleLarge.copyWith(color: Colors.black),
         ),
         centerTitle: true,
       ),
@@ -82,20 +79,16 @@ class _FindPwScreenState extends State<FindPwScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     '비밀번호 재설정',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5),
+                    style: context.texts.headlineSmall
+                        .copyWith(letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.',
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                        letterSpacing: -0.5),
+                    style: context.texts.bodyMedium.copyWith(
+                        color: Colors.grey.shade600, letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 32),
                   Form(
@@ -114,8 +107,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
   }
 
   Widget _buildFormFields() {
-    final WidgetStateColor iconColor =
-        WidgetStateColor.resolveWith((states) {
+    final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
@@ -174,9 +166,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2),
               )
-            : const Text(
+            : Text(
                 '메일 전송',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.texts.titleMedium,
               ),
       ),
     );

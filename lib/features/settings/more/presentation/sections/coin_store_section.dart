@@ -59,7 +59,8 @@ class _CoinStoreSectionState extends State<CoinStoreSection> {
       children: [
         Text(
           '코인 충전',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(

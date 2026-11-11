@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class TrendingSentencesPreview extends StatefulWidget {
   const TrendingSentencesPreview({
@@ -119,7 +120,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
 
@@ -141,11 +142,8 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
                   const SizedBox(width: 5),
                   Text(
                     'LIVE',
-                    style: TextStyle(
-                      color: palette.likeInk,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: context.texts.labelSmall
+                        .copyWith(color: palette.likeInk),
                   ),
                 ],
               ),
@@ -153,12 +151,8 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
             const SizedBox(width: 8),
             Text(
               '지금 뜨는 문장',
-              style: TextStyle(
-                color: ink,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.4,
-              ),
+              style: context.texts.headlineSmall
+                  .copyWith(color: ink, letterSpacing: -0.4),
             ),
             const Spacer(),
             TextButton(
@@ -170,7 +164,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
         const SizedBox(height: 2),
         Text(
           '사람들이 지금 저장하고 있는 표현이에요',
-          style: TextStyle(color: muted, fontSize: 12),
+          style: context.texts.bodySmall.copyWith(color: muted),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -223,7 +217,7 @@ class _SentenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
 
@@ -254,15 +248,13 @@ class _SentenceCard extends StatelessWidget {
                 ),
                 child: Text(
                   item.topic,
-                  style: TextStyle(
-                    color: palette.inkSoft,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style:
+                      context.texts.labelSmall.copyWith(color: palette.inkSoft),
                 ),
               ),
               const Spacer(),
-              Text(item.age, style: TextStyle(color: muted, fontSize: 10)),
+              Text(item.age,
+                  style: context.texts.labelSmall.copyWith(color: muted)),
             ],
           ),
           const SizedBox(height: 13),
@@ -270,19 +262,14 @@ class _SentenceCard extends StatelessWidget {
             item.sentence,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: ink,
-              fontSize: 18,
-              height: 1.25,
-              fontWeight: FontWeight.w900,
-            ),
+            style: context.texts.titleLarge.copyWith(color: ink, height: 1.25),
           ),
           const SizedBox(height: 5),
           Text(
             item.translation,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: muted, fontSize: 12),
+            style: context.texts.bodySmall.copyWith(color: muted),
           ),
           const Spacer(),
           Row(
@@ -295,7 +282,7 @@ class _SentenceCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text('@${item.author}',
-                  style: TextStyle(color: muted, fontSize: 10)),
+                  style: context.texts.labelSmall.copyWith(color: muted)),
               const Spacer(),
               IconButton(
                 visualDensity: VisualDensity.compact,
@@ -310,7 +297,7 @@ class _SentenceCard extends StatelessWidget {
                 ),
               ),
               Text('${item.likes + (liked ? 1 : 0)}',
-                  style: TextStyle(color: muted, fontSize: 10)),
+                  style: context.texts.labelSmall.copyWith(color: muted)),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: '저장',

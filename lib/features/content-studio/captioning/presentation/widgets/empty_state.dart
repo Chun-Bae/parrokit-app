@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'video_picker_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -55,11 +56,8 @@ class EmptyState extends StatelessWidget {
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         '영상을 불러오는 중...',
-                        style: TextStyle(
-                          color: cs.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                        style: context.texts.bodyMedium
+                            .copyWith(color: cs.onSurfaceVariant),
                       ),
                     ],
                   )
@@ -81,20 +79,14 @@ class EmptyState extends StatelessWidget {
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         '여기를 눌러 영상 선택',
-                        style: TextStyle(
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
+                        style: context.texts.titleMedium
+                            .copyWith(color: cs.onSurface),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '자막을 생성할 영상을 추가해주세요',
-                        style: TextStyle(
-                          color: cs.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                        ),
+                        style: context.texts.labelMedium
+                            .copyWith(color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),

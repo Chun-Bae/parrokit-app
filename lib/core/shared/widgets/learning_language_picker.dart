@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/content/learning_languages.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class LearningLanguagePicker extends StatelessWidget {
   const LearningLanguagePicker({
@@ -44,24 +45,18 @@ class LearningLanguagePicker extends StatelessWidget {
           child: Row(
             mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
             children: [
-              Text(language.flag, style: const TextStyle(fontSize: 20)),
+              Text(language.flag, style: context.texts.headlineSmall),
               const SizedBox(width: 9),
               if (!compact)
                 Text(
                   '학습 언어',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.texts.bodySmall
+                      .copyWith(color: colors.onSurfaceVariant),
                 ),
               if (!compact) const Spacer(),
               Text(
                 language.label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: context.texts.bodyLarge,
               ),
               const SizedBox(width: 5),
               Icon(
@@ -136,7 +131,8 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
             const SizedBox(height: 5),
             Text(
               '앵무새가 말하고 기록할 언어를 선택하세요.',
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -184,7 +180,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                           leading: Text(language.flag,
-                              style: const TextStyle(fontSize: 25)),
+                              style: context.texts.headlineMedium),
                           title: Text(
                             language.label,
                             style: const TextStyle(fontWeight: FontWeight.w800),
@@ -206,10 +202,8 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                 const SizedBox(width: 7),
                 Text(
                   '새 언어는 이 목록에 계속 추가할 수 있어요.',
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 11,
-                  ),
+                  style: context.texts.labelSmall
+                      .copyWith(color: colors.onSurfaceVariant),
                 ),
               ],
             ),

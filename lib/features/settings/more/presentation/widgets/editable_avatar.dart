@@ -42,9 +42,9 @@ class EditableAvatar extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         if (onSelected == null) return;
-        
+
         final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
-        
+
         final choice = await showModalBottomSheet<int>(
           context: context,
           showDragHandle: true,
@@ -58,8 +58,10 @@ class EditableAvatar extends StatelessWidget {
                 ),
                 if (hasPhoto)
                   ListTile(
-                    leading: const Icon(Icons.delete_outline, color: Colors.red),
-                    title: const Text('현재 사진 삭제', style: TextStyle(color: Colors.red)),
+                    leading:
+                        const Icon(Icons.delete_outline, color: Colors.red),
+                    title: const Text('현재 사진 삭제',
+                        style: TextStyle(color: Colors.red)),
                     onTap: () => Navigator.pop(context, 2),
                   ),
               ],
@@ -69,7 +71,8 @@ class EditableAvatar extends StatelessWidget {
 
         if (choice == 1) {
           final picker = ImagePicker();
-          final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+          final pickedFile = await picker.pickImage(
+              source: ImageSource.gallery, imageQuality: 80);
           if (pickedFile != null) {
             onSelected!(pickedFile.path); // 로컬 파일 경로 리턴
           }
@@ -149,7 +152,7 @@ class EditableAvatar extends StatelessWidget {
         fit: BoxFit.cover,
       );
     }
-    
+
     // 그 외 일반 이미지 (Firebase Storage에서 가져온 JPG/PNG 등)
     // 과거에 저장된 SVG(Dicebear) URL일 경우 에러가 나면서 자동으로 errorBuilder가 실행되어 기본 아이콘을 보여줌
     return CachedNetworkImage(

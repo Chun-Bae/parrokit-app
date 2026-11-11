@@ -12,6 +12,7 @@ import 'package:parrokit/features/community/shell/presentation/sections/communit
 import 'package:parrokit/features/community/shell/presentation/widgets/community_header_delegate.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/widgets/expandable_action_fab.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityShellScreen extends StatefulWidget {
   const CommunityShellScreen({super.key});
@@ -146,11 +147,8 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
         children: [
           Text(
             '커뮤니티',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
+            style: context.texts.headlineMedium
+                .copyWith(color: colorScheme.onSurface),
           ),
           Row(
             children: [
@@ -168,8 +166,8 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                       IconButton(
                         icon: Icon(Icons.notifications_none,
                             color: colorScheme.onSurface),
-                        onPressed: () => context
-                            .push(AppRoutes.communityNotificationPath),
+                        onPressed: () =>
+                            context.push(AppRoutes.communityNotificationPath),
                       ),
                       if (unreadCount > 0)
                         Positioned(
@@ -188,12 +186,8 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                             child: Text(
                               unreadCount > 99 ? '99+' : unreadCount.toString(),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1,
-                              ),
+                              style: context.texts.labelSmall
+                                  .copyWith(color: Colors.white, height: 1),
                             ),
                           ),
                         ),
@@ -220,10 +214,9 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
       isScrollable: true,
       tabAlignment: TabAlignment.start,
       labelColor: colorScheme.onSurface,
-      labelStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      labelStyle: context.texts.titleLarge,
       unselectedLabelColor: colorScheme.onSurfaceVariant,
-      unselectedLabelStyle:
-          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      unselectedLabelStyle: context.texts.titleLarge,
       indicatorColor: colorScheme.onSurface,
       indicatorSize: TabBarIndicatorSize.label,
       dividerColor: Colors.transparent,

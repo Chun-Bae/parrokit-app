@@ -3,7 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
-import 'home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 학습 기록과 연결하기 전, 먹이와 꾸미기 흐름을 확인하는 별도 시안.
 class NestPreview extends StatefulWidget {
@@ -93,7 +94,7 @@ class _NestPreviewState extends State<NestPreview>
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
     final message = meals == 0
@@ -129,10 +130,10 @@ class _NestPreviewState extends State<NestPreview>
             Icon(Icons.spa_outlined, size: 18, color: muted),
             const SizedBox(width: 8),
             Text('나의 작은 둥지',
-                style: TextStyle(
-                    color: ink, fontSize: 16, fontWeight: FontWeight.w700)),
+                style: context.texts.titleMedium.copyWith(color: ink)),
             const Spacer(),
-            Text('첫 번째 보금자리', style: TextStyle(color: muted, fontSize: 11)),
+            Text('첫 번째 보금자리',
+                style: context.texts.labelSmall.copyWith(color: muted)),
           ]),
         ),
         const SizedBox(height: 28),
@@ -142,7 +143,7 @@ class _NestPreviewState extends State<NestPreview>
           child: Text(message,
               key: ValueKey(message),
               textAlign: TextAlign.center,
-              style: TextStyle(color: ink, fontSize: 14)),
+              style: context.texts.bodyMedium.copyWith(color: ink)),
         ),
         SizedBox(
           height: 280,
@@ -166,10 +167,10 @@ class _NestPreviewState extends State<NestPreview>
           child: Column(children: [
             Row(children: [
               Text('함께 보낸 시간',
-                  style: TextStyle(
-                      color: ink, fontSize: 12, fontWeight: FontWeight.w600)),
+                  style: context.texts.bodySmall.copyWith(color: ink)),
               const Spacer(),
-              Text('$meals / 10', style: TextStyle(color: muted, fontSize: 12)),
+              Text('$meals / 10',
+                  style: context.texts.bodySmall.copyWith(color: muted)),
             ]),
             const SizedBox(height: 10),
             ClipRRect(
@@ -185,7 +186,7 @@ class _NestPreviewState extends State<NestPreview>
                 meals >= 10
                     ? '꽃과 빛으로 가득한 우리의 둥지'
                     : '$reward까지 먹이 ${next - meals}번',
-                style: TextStyle(color: muted, fontSize: 12)),
+                style: context.texts.bodySmall.copyWith(color: muted)),
             const SizedBox(height: 20),
             OutlinedButton.icon(
               onPressed: meals < 10 ? feed : null,
@@ -202,7 +203,7 @@ class _NestPreviewState extends State<NestPreview>
             const SizedBox(height: 8),
             Text('먹이를 눌러보는 시안이에요 · 실제 학습 기록과 연결되지 않아요',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: muted, fontSize: 10)),
+                style: context.texts.labelSmall.copyWith(color: muted)),
           ]),
         ),
       ]),

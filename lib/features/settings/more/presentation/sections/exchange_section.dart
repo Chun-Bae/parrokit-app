@@ -16,7 +16,8 @@ class ExchangeSection extends StatelessWidget {
       children: [
         Text(
           '코인 환전소',
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(

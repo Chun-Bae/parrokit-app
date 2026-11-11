@@ -6,6 +6,7 @@ import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'providers/activity_provider.dart';
 import 'widgets/activity_card.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityActivityScreen extends StatefulWidget {
   const CommunityActivityScreen({
@@ -145,10 +146,7 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
         appBar: AppBar(
           title: Text(
             _getAppBarTitle(),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: context.texts.titleLarge,
           ),
           centerTitle: true,
         ),
@@ -175,8 +173,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                     const SizedBox(height: 16),
                     Text(
                       '아직 활동 내역이 없습니다.',
-                      style: TextStyle(
-                          fontSize: 16, color: colorScheme.onSurfaceVariant),
+                      style: context.texts.titleMedium
+                          .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -198,11 +196,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                   ),
                   child: Text(
                     _getTotalCountLabel(provider.activities.length),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: context.texts.bodyMedium
+                        .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ),
                 Expanded(
@@ -220,7 +215,9 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.zero,
                         itemCount: provider.activities.length +
-                            (provider.hasMore || provider.isLoadingMore ? 1 : 0),
+                            (provider.hasMore || provider.isLoadingMore
+                                ? 1
+                                : 0),
                         itemBuilder: (context, index) {
                           if (index >= provider.activities.length) {
                             return const Padding(
@@ -229,7 +226,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                                 child: SizedBox(
                                   width: 24,
                                   height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               ),
                             );

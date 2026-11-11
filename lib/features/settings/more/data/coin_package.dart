@@ -49,9 +49,16 @@ class CoinPackage {
   /// | parrokit_coins_5   | ₩5,000  | 400   | 40     | 440     |
   /// | parrokit_coins_10  | ₩10,000 | 800   | 80     | 880     |
   static const List<CoinPackage> packages = [
-    CoinPackage(productId: 'parrokit_coins_1',  price: 1000,  coins: 80,  bonusCoins: 8),
-    CoinPackage(productId: 'parrokit_coins_3',  price: 3000,  coins: 240, bonusCoins: 24),
-    CoinPackage(productId: 'parrokit_coins_5',  price: 5000,  coins: 400, bonusCoins: 40),
-    CoinPackage(productId: 'parrokit_coins_10', price: 10000, coins: 800, bonusCoins: 80),
+    CoinPackage(
+        productId: 'parrokit_coins_1', price: 1000, coins: 80, bonusCoins: 8),
+    CoinPackage(
+        productId: 'parrokit_coins_3', price: 3000, coins: 240, bonusCoins: 24),
+    CoinPackage(
+        productId: 'parrokit_coins_5', price: 5000, coins: 400, bonusCoins: 40),
+    CoinPackage(
+        productId: 'parrokit_coins_10',
+        price: 10000,
+        coins: 800,
+        bonusCoins: 80),
   ];
 }

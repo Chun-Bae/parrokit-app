@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityOptionAction {
   const CommunityOptionAction({
@@ -78,7 +79,7 @@ class _CommunityOptionActionTile extends StatelessWidget {
     final foregroundColor =
         action.isDestructive ? AppColors.danger : colorScheme.onSurface;
 
-      return InkWell(
+    return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -90,11 +91,7 @@ class _CommunityOptionActionTile extends StatelessWidget {
           children: [
             Text(
               action.label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: foregroundColor,
-              ),
+              style: context.texts.titleMedium.copyWith(color: foregroundColor),
             ),
           ],
         ),

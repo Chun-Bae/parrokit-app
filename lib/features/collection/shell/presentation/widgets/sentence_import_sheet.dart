@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/sentence_transfer.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 가져오기 시트에서 "완료"로 확정한 결과. 취소하거나 닫으면 시트는 null을 돌려준다.
 class SentenceImportResult {
@@ -61,10 +62,8 @@ class _LanguageChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label,
-          style: TextStyle(
-              color: colors.onSecondaryContainer,
-              fontSize: 11,
-              fontWeight: FontWeight.w800)),
+          style: context.texts.labelSmall
+              .copyWith(color: colors.onSecondaryContainer)),
     );
   }
 }
@@ -280,17 +279,15 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(title, style: context.texts.titleLarge),
               if (_phase == _Phase.select) ...[
                 const SizedBox(height: 2),
                 Text(
                   _duplicates.isEmpty
                       ? '빼고 싶은 문장은 체크를 풀어주세요.'
                       : '빼고 싶은 문장은 체크를 풀어주세요. 이미 있는 ${_duplicates.length}개는 제외돼요.',
-                  style:
-                      TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+                  style: context.texts.bodySmall
+                      .copyWith(color: colors.onSurfaceVariant),
                 ),
               ],
             ],
@@ -422,8 +419,8 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
                       ? '멈추는 중… $_processed / $total'
                       : '$_processed / $total',
                   key: const ValueKey('import-progress-count'),
-                  style:
-                      TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+                  style: context.texts.bodySmall
+                      .copyWith(color: colors.onSurfaceVariant)),
               const Spacer(),
               if (running)
                 TextButton(
@@ -462,7 +459,8 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
                 _notStarted > 0
                     ? '"완료"는 여기까지 가져온 문장을 남기고, "취소"는 되돌리고 목록으로 돌아가요.'
                     : '"취소"를 누르면 방금 가져온 문장을 되돌리고 목록으로 돌아가요.',
-                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+                style: context.texts.bodySmall
+                    .copyWith(color: colors.onSurfaceVariant)),
             const SizedBox(height: 12),
             Row(children: [
               Expanded(

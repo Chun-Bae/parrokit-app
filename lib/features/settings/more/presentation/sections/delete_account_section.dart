@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 회원탈퇴 섹션.
 class DeleteAccountSection extends StatelessWidget {
@@ -44,10 +45,9 @@ class DeleteAccountSection extends StatelessWidget {
         onPressed: () => _confirm(context),
         child: Text(
           '회원탈퇴',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.6),
-            fontSize: 13,
-          ),
+          style: context.texts.labelMedium.copyWith(
+              color:
+                  Theme.of(context).colorScheme.error.withValues(alpha: 0.6)),
         ),
       ),
     );

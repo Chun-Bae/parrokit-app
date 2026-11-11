@@ -21,8 +21,9 @@ import 'package:parrokit/core/speech/speech_match.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart'
     show showSentenceDetails;
 import 'add_sentence_screen.dart';
-import 'home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'nest_preview.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 enum _SpeakingMode { automatic, repeat }
 
@@ -653,13 +654,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
         minChildSize: 0.35,
         maxChildSize: 0.9,
         builder: (context, controller) => Column(children: [
-          const Padding(
+          Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('문장 목록',
-                      style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w800)))),
+                  child: Text('문장 목록', style: context.texts.titleMedium))),
           Expanded(
               child: ListView.builder(
                   key: const ValueKey('phrase-list'),
@@ -832,8 +831,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = HomePalette.isDark(context);
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final muted = palette.muted;
     final accent = palette.primary;
     final content =
@@ -851,15 +849,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                       widget.nickname.trim().isEmpty ? '나' : widget.nickname,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          color: palette.ink,
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800))),
+                      style: context.texts.titleLarge
+                          .copyWith(color: palette.ink))),
               Text('Lv.$level',
-                  style: TextStyle(
-                      color: palette.good,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800)),
+                  style:
+                      context.texts.titleMedium.copyWith(color: palette.good)),
               const SizedBox(width: 6),
               Semantics(
                   label: '도움말',
@@ -887,7 +881,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                 alignment: Alignment.centerRight,
                 child: Text(
                     xpReady ? '${xpText(totalXp % 10)} / 10 XP' : 'XP 불러오는 중…',
-                    style: TextStyle(color: muted, fontSize: 11))),
+                    style: context.texts.labelSmall.copyWith(color: muted))),
           ])),
       Container(
           height: 320,
@@ -1102,20 +1096,14 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       const SizedBox(height: 16),
       const SizedBox(height: 16),
     ]);
-    final base = isDark
-        ? ThemeData.dark(useMaterial3: true)
-        : ThemeData.light(useMaterial3: true);
-    final theme = base.copyWith(
-        colorScheme:
-            (isDark ? const ColorScheme.dark() : const ColorScheme.light())
-                .copyWith(
-          primary: accent,
-          onPrimary: isDark ? const Color(0xFF10202F) : Colors.white,
-          surface: palette.surface,
-          onSurface: palette.ink,
-        ),
-        textTheme: base.textTheme.apply(
-            fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily));
+    // 앱 테마에서 파생시킨다 (character_dashboard_screen과 같은 이유).
+    final appTheme = Theme.of(context);
+    final theme = appTheme.copyWith(
+        colorScheme: appTheme.colorScheme.copyWith(
+      primary: accent,
+      surface: palette.surface,
+      onSurface: palette.ink,
+    ));
     return Theme(
         data: theme,
         child: widget.embedded
@@ -1309,7 +1297,7 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final active = palette.good;
     final idle = palette.muted;
     final letters = widget.phrase.characters.toList();
@@ -1325,16 +1313,13 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                 style: TextStyle(color: idle)),
           ]),
           textAlign: TextAlign.center,
-          style: const TextStyle(
-              fontSize: 21, fontWeight: FontWeight.w600, height: 1.5)),
+          style: context.texts.headlineSmall.copyWith(height: 1.5)),
       if (score > 0) ...[
         const SizedBox(height: 8),
         Text('${(score * 100).round()}점',
             key: const ValueKey('speech-score'),
-            style: TextStyle(
-                color: score >= speechPassScore ? active : idle,
-                fontSize: 18,
-                fontWeight: FontWeight.w800)),
+            style: context.texts.titleLarge
+                .copyWith(color: score >= speechPassScore ? active : idle)),
       ],
       const SizedBox(height: 16),
       Row(children: [
@@ -1397,7 +1382,7 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(message!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: idle, fontSize: 12))),
+                style: context.texts.bodySmall.copyWith(color: idle))),
     ]);
   }
 }
@@ -1423,7 +1408,7 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     return AlertDialog(
       title: const Text('설정'),
       content: Column(
@@ -1447,15 +1432,15 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
                 onChanged: (value) => setState(() => gap = value)),
             Text(
                 '앵무새가 문장을 다 말한 뒤 다음 문장으로 넘어가기 전에 쉬는 시간이에요. 따라 말하기 모드에서는 적용되지 않아요.',
-                style: TextStyle(color: palette.muted, fontSize: 12)),
+                style: context.texts.bodySmall.copyWith(color: palette.muted)),
             const SizedBox(height: 8),
             SwitchListTile(
                 key: const ValueKey('count-listen-switch'),
                 contentPadding: EdgeInsets.zero,
                 title: const Text('들은 횟수 기록',
                     style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('끄면 앵무새 말을 끝까지 들어도 들은 횟수가 오르지 않아요.',
-                    style: TextStyle(fontSize: 12)),
+                subtitle: Text('끄면 앵무새 말을 끝까지 들어도 들은 횟수가 오르지 않아요.',
+                    style: context.texts.bodySmall),
                 value: countListen,
                 onChanged: (value) => setState(() => countListen = value)),
           ]),
@@ -1506,7 +1491,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
     final active = palette.good;
@@ -1521,10 +1506,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
             Row(children: [
               Expanded(
                   child: Text('말하기 설정',
-                      style: TextStyle(
-                          color: ink,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800))),
+                      style: context.texts.headlineSmall.copyWith(color: ink))),
               IconButton(
                   tooltip: '닫기',
                   onPressed: () => Navigator.pop(context),
@@ -1547,22 +1529,15 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                   Icon(Icons.lock_outline_rounded, size: 16, color: muted),
                   const SizedBox(width: 7),
                   Text('그 외 언어는 준비 중',
-                      style: TextStyle(
-                          color: muted,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600)),
+                      style: context.texts.bodySmall.copyWith(color: muted)),
                 ])),
             const SizedBox(height: 18),
             Row(children: [
               Expanded(
                   child: Text('앵무새가 말할 문장',
-                      style: TextStyle(
-                          color: ink,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800))),
+                      style: context.texts.bodyLarge.copyWith(color: ink))),
               Text('${enabled.length} / ${visiblePhrases.length}',
-                  style: TextStyle(
-                      color: muted, fontSize: 12, fontWeight: FontWeight.w700)),
+                  style: context.texts.bodySmall.copyWith(color: muted)),
             ]),
             const SizedBox(height: 8),
             Expanded(
@@ -1587,10 +1562,8 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                               title: Text(phrase,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      color: ink,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600)),
+                                  style: context.texts.bodyMedium
+                                      .copyWith(color: ink)),
                               onChanged: (value) => setState(() {
                                     if (value == true) {
                                       enabled.add(phrase);
@@ -1667,7 +1640,7 @@ class _HomeHelpDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     return AlertDialog(
       title: const Text('도움말'),
       content: SizedBox(
@@ -1680,10 +1653,8 @@ class _HomeHelpDialog extends StatelessWidget {
                   Padding(
                       padding: const EdgeInsets.only(top: 8, bottom: 6),
                       child: Text(title,
-                          style: TextStyle(
-                              color: palette.good,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800))),
+                          style: context.texts.labelMedium
+                              .copyWith(color: palette.good))),
                   for (final (icon, name, desc) in items)
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1701,9 +1672,8 @@ class _HomeHelpDialog extends StatelessWidget {
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w700)),
                                     Text(desc,
-                                        style: TextStyle(
-                                            color: palette.muted,
-                                            fontSize: 12.5)),
+                                        style: context.texts.bodySmall
+                                            .copyWith(color: palette.muted)),
                                   ])),
                             ])),
                 ],
@@ -1733,7 +1703,7 @@ class _GameMenuButton extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     return SizedBox.square(
       dimension: dimension,
       child: Semantics(
@@ -1800,8 +1770,9 @@ class _GrowthPainter extends CustomPainter {
   /// null이면 애니메이션 시간으로, 값이 있으면 음성 진행 비율로 글자를 보여준다.
   final double? typedFraction;
 
-  static const _speechStyle = TextStyle(
-      color: Color(0xFF253C34), fontSize: 13, fontWeight: FontWeight.w800);
+  // CustomPainter에는 BuildContext가 없어서 스케일 상수를 직접 쓴다.
+  static final _speechStyle =
+      AppTextScale.labelMedium.copyWith(color: const Color(0xFF253C34));
 
   static TextPainter _speechPainter(Size size, String phrase) => TextPainter(
       text: TextSpan(text: phrase, style: _speechStyle),
@@ -1828,7 +1799,7 @@ class _GrowthPainter extends CustomPainter {
     canvas.restore();
     // 등장 → 한 글자씩 표시 → 잠깐 유지 → 사라짐. 위치와 크기는 고정한다.
     if (phrase.isNotEmpty && (!animate || (phase >= 0.08 && phase < 0.88))) {
-      const speechStyle = _speechStyle;
+      final speechStyle = _speechStyle;
       final fullSpeech = _speechPainter(size, phrase);
       final letters = phrase.characters.toList();
       final typed = typedFraction != null

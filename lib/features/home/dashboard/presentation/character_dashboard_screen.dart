@@ -12,12 +12,13 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
 
-import 'home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'widgets/study_garden_preview.dart';
 import 'widgets/sentence_history_dashboard.dart';
 import 'widgets/today_practice_summary.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 앱 홈 화면. 앵무새 무대([StagePreviewScreen])를 맨 위에 품고,
 /// 연습 기록과 추천 문장, 학습 잔디를 함께 보여준다.
@@ -188,23 +189,19 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     final user = context.watch<UserProvider?>()?.currentUser;
     final accountId = user?.id ?? 'guest';
     ensureStatsLoaded(accountId);
-    final isDark = HomePalette.isDark(context);
-    final palette = HomePalette.of(context);
+    final isDark = HomeTokens.isDark(context);
+    final palette = HomeTokens.of(context);
     final background = palette.background;
     final muted = palette.muted;
-    final base = isDark
-        ? ThemeData.dark(useMaterial3: true)
-        : ThemeData.light(useMaterial3: true);
-    final localTheme = base.copyWith(
+    // 앱 테마를 통째로 갈아끼우지 않고 파생시킨다. 테마를 새로 만들면
+    // AppTheme이 정의한 컴포넌트 테마(버튼·다이얼로그·입력 등)와 색 토큰이
+    // 이 화면 안에서 전부 사라진다.
+    final appTheme = Theme.of(context);
+    final localTheme = appTheme.copyWith(
       scaffoldBackgroundColor: background,
-      textTheme: base.textTheme.apply(
-          fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily),
-      colorScheme:
-          (isDark ? const ColorScheme.dark() : const ColorScheme.light())
-              .copyWith(
+      colorScheme: appTheme.colorScheme.copyWith(
         surface: palette.surface,
         primary: palette.primary,
-        onPrimary: isDark ? const Color(0xFF10202F) : Colors.white,
         onSurface: palette.ink,
       ),
     );
@@ -244,10 +241,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     ),
                     const Spacer(),
                     Text('누적 $totalPracticed문장',
-                        style: TextStyle(
-                            color: muted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
+                        style: context.texts.bodySmall.copyWith(color: muted)),
                   ]),
                   const SizedBox(height: 16),
                   SentenceHistoryDashboard(
@@ -267,14 +261,13 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                           borderRadius: BorderRadius.circular(20)),
                     ),
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: const Text('학습하러 가기',
-                        style: TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w800)),
+                    label: Text('학습하러 가기', style: context.texts.titleMedium),
                   ),
                   const SizedBox(height: 8),
                   Center(
                       child: Text('따라 말하기부터 반복 듣기까지, 내 방식대로',
-                          style: TextStyle(color: muted, fontSize: 12))),
+                          style:
+                              context.texts.bodySmall.copyWith(color: muted))),
                   const SizedBox(height: 30),
                   TrendingSentencesPreview(
                     language: language,

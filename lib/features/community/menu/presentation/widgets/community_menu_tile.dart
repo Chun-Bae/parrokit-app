@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/features/community/menu/domain/entities/community_menu_entry.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityMenuTile extends StatelessWidget {
   const CommunityMenuTile({
@@ -27,15 +28,12 @@ class CommunityMenuTile extends StatelessWidget {
           color: _backgroundColorOf(item.colorKey),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(_iconOf(item.iconKey), color: _iconColorOf(item.colorKey), size: 20),
+        child: Icon(_iconOf(item.iconKey),
+            color: _iconColorOf(item.colorKey), size: 20),
       ),
       title: Text(
         item.title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
+        style: context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
       ),
       trailing: const Icon(
         Icons.chevron_right_rounded,

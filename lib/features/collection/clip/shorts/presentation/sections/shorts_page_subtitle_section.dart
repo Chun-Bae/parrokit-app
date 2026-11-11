@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/local/app_database.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// [역할]
 /// 영상의 현재 재생 구간(Segment)에 맞춰 자막을 표시하는 위젯.
@@ -80,27 +81,13 @@ class ShortsPageSubtitleSection extends StatelessWidget {
     ),
   ];
 
-  static const _originalStyle = TextStyle(
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: FontWeight.w800,
-    height: 1.25,
-    shadows: _shadows,
-  );
+  // 정적 상수라 BuildContext가 없다. 크기는 같은 스케일에서 가져온다.
+  static final _originalStyle = AppTextScale.titleLarge
+      .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);
 
-  static const _pronStyle = TextStyle(
-    color: Colors.white70,
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    height: 1.25,
-    shadows: _shadows,
-  );
+  static final _pronStyle = AppTextScale.bodyMedium
+      .copyWith(color: Colors.white70, height: 1.25, shadows: _shadows);
 
-  static const _transStyle = TextStyle(
-    color: Colors.white,
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
-    height: 1.25,
-    shadows: _shadows,
-  );
+  static final _transStyle = AppTextScale.bodyLarge
+      .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);
 }

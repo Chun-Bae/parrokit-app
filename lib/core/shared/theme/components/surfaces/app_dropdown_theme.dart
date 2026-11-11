@@ -1,5 +1,6 @@
 // lib/theme/components/app_dropdown_theme.dart
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 DropdownMenuThemeData appDropdownMenuTheme(ColorScheme cs,
     {required bool isDark}) {
@@ -17,11 +18,7 @@ DropdownMenuThemeData appDropdownMenuTheme(ColorScheme cs,
     ),
 
     // 여기서는 그냥 TextStyle만 넘겨야 함
-    textStyle: TextStyle(
-      color: cs.onSurface,
-      fontWeight: FontWeight.w700,
-      fontSize: 14,
-    ),
+    textStyle: AppTextScale.bodyMedium.copyWith(color: cs.onSurface),
 
     // 입력 필드(트리거) 스타일
     inputDecorationTheme: InputDecorationTheme(

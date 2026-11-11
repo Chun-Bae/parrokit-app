@@ -5,6 +5,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/tts/domain/repositories/tts_generation_repository.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class TtsAudioPlayerWidget extends StatefulWidget {
   const TtsAudioPlayerWidget({super.key, required this.provider});
@@ -32,7 +33,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
     _player.playerStateStream.listen((state) {
       if (mounted) {
         setState(() {
-          _isPlaying = state.playing && state.processingState != ProcessingState.completed;
+          _isPlaying = state.playing &&
+              state.processingState != ProcessingState.completed;
         });
       }
     });
@@ -88,49 +90,64 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final mutedText = isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
 
     return Container(
       height: 76,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceContainerHighDark : AppColors.surfaceContainerHigh,
+        color: isDark
+            ? AppColors.surfaceContainerHighDark
+            : AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
           const SizedBox(width: AppSpacing.lg),
           GestureDetector(
-            onTap: widget.provider.isGenerating || widget.provider.generatedFilePath == null ? null : _togglePlay,
+            onTap: widget.provider.isGenerating ||
+                    widget.provider.generatedFilePath == null
+                ? null
+                : _togglePlay,
             child: Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: widget.provider.generatedFilePath != null && widget.provider.providerType == TtsProviderType.gemini && !widget.provider.isGenerating
+                gradient: widget.provider.generatedFilePath != null &&
+                        widget.provider.providerType ==
+                            TtsProviderType.gemini &&
+                        !widget.provider.isGenerating
                     ? AppColors.geminiGradient
                     : null,
                 color: widget.provider.isGenerating
                     ? Colors.grey
                     : (widget.provider.generatedFilePath != null
-                        ? (widget.provider.providerType == TtsProviderType.google
+                        ? (widget.provider.providerType ==
+                                TtsProviderType.google
                             ? theme.colorScheme.primary
-                            : (widget.provider.providerType == TtsProviderType.elevenlabs ? AppColors.secondary : null))
+                            : (widget.provider.providerType ==
+                                    TtsProviderType.elevenlabs
+                                ? AppColors.secondary
+                                : null))
                         : Colors.grey.shade400),
               ),
               child: Center(
                 child: widget.provider.isGenerating
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        _isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
                         color: Colors.white,
                       ),
-                    )
-                  : Icon(
-                      _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                      color: Colors.white,
-                    ),
               ),
             ),
           ),
@@ -151,14 +168,16 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                if (widget.provider.generatedFilePath != null && !widget.provider.isGenerating)
+                if (widget.provider.generatedFilePath != null &&
+                    !widget.provider.isGenerating)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
                         width: 36,
                         child: Text(
-                          _formatDuration(_isDragging ? _dragPosition : _position),
+                          _formatDuration(
+                              _isDragging ? _dragPosition : _position),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: mutedText,
                           ),
@@ -181,16 +200,31 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                       }
                                       setState(() {
                                         _isDragging = true;
-                                        final percent = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
-                                        _dragPosition = Duration(milliseconds: (_duration.inMilliseconds * percent).toInt());
+                                        final percent =
+                                            (details.localPosition.dx /
+                                                    constraints.maxWidth)
+                                                .clamp(0.0, 1.0);
+                                        _dragPosition = Duration(
+                                            milliseconds:
+                                                (_duration.inMilliseconds *
+                                                        percent)
+                                                    .toInt());
                                       });
                                     }
                                   },
                                   onHorizontalDragUpdate: (details) {
-                                    if (_duration > Duration.zero && _isDragging) {
+                                    if (_duration > Duration.zero &&
+                                        _isDragging) {
                                       setState(() {
-                                        final percent = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
-                                        _dragPosition = Duration(milliseconds: (_duration.inMilliseconds * percent).toInt());
+                                        final percent =
+                                            (details.localPosition.dx /
+                                                    constraints.maxWidth)
+                                                .clamp(0.0, 1.0);
+                                        _dragPosition = Duration(
+                                            milliseconds:
+                                                (_duration.inMilliseconds *
+                                                        percent)
+                                                    .toInt());
                                       });
                                     }
                                   },
@@ -206,17 +240,29 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                   },
                                   onTapDown: (details) {
                                     if (_duration > Duration.zero) {
-                                      final percent = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
-                                      final newPos = Duration(milliseconds: (_duration.inMilliseconds * percent).toInt());
+                                      final percent =
+                                          (details.localPosition.dx /
+                                                  constraints.maxWidth)
+                                              .clamp(0.0, 1.0);
+                                      final newPos = Duration(
+                                          milliseconds:
+                                              (_duration.inMilliseconds *
+                                                      percent)
+                                                  .toInt());
                                       _player.seek(newPos);
                                     }
                                   },
                                   child: Builder(
                                     builder: (context) {
-                                      final percent = (_duration.inMilliseconds > 0
-                                              ? (_isDragging ? _dragPosition : _position).inMilliseconds / _duration.inMilliseconds
-                                              : 0.0)
-                                          .clamp(0.0, 1.0);
+                                      final percent =
+                                          (_duration.inMilliseconds > 0
+                                                  ? (_isDragging
+                                                              ? _dragPosition
+                                                              : _position)
+                                                          .inMilliseconds /
+                                                      _duration.inMilliseconds
+                                                  : 0.0)
+                                              .clamp(0.0, 1.0);
                                       return Container(
                                         height: 24, // 터치 영역 확보
                                         alignment: Alignment.center,
@@ -228,8 +274,12 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                               height: 4,
                                               width: double.infinity,
                                               decoration: BoxDecoration(
-                                                color: isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle,
-                                                borderRadius: BorderRadius.circular(2),
+                                                color: isDark
+                                                    ? AppColors
+                                                        .dividerSubtleDark
+                                                    : AppColors.dividerSubtle,
+                                                borderRadius:
+                                                    BorderRadius.circular(2),
                                               ),
                                             ),
                                             FractionallySizedBox(
@@ -237,20 +287,31 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                               child: Container(
                                                 height: 4,
                                                 decoration: BoxDecoration(
-                                                  gradient: widget.provider.providerType == TtsProviderType.gemini
+                                                  gradient: widget.provider
+                                                              .providerType ==
+                                                          TtsProviderType.gemini
                                                       ? AppColors.geminiGradient
                                                       : null,
-                                                  color: widget.provider.providerType != TtsProviderType.gemini
-                                                      ? (widget.provider.providerType == TtsProviderType.google
-                                                          ? theme.colorScheme.primary
+                                                  color: widget.provider
+                                                              .providerType !=
+                                                          TtsProviderType.gemini
+                                                      ? (widget.provider
+                                                                  .providerType ==
+                                                              TtsProviderType
+                                                                  .google
+                                                          ? theme.colorScheme
+                                                              .primary
                                                           : AppColors.secondary)
                                                       : null,
-                                                  borderRadius: BorderRadius.circular(2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
                                                 ),
                                               ),
                                             ),
                                             Positioned(
-                                              left: (constraints.maxWidth * percent) - 6,
+                                              left: (constraints.maxWidth *
+                                                      percent) -
+                                                  6,
                                               child: Container(
                                                 width: 12,
                                                 height: 12,
@@ -259,9 +320,12 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                                   shape: BoxShape.circle,
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: Colors.black.withValues(alpha: 0.15),
+                                                      color: Colors.black
+                                                          .withValues(
+                                                              alpha: 0.15),
                                                       blurRadius: 3,
-                                                      offset: const Offset(0, 1),
+                                                      offset:
+                                                          const Offset(0, 1),
                                                     ),
                                                   ],
                                                 ),
@@ -276,21 +340,21 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                               },
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 2.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     '0:00',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10,
+                                    style: context.texts.labelSmall.copyWith(
                                       color: mutedText.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   Text(
                                     _formatDuration(_duration),
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10,
+                                    style: context.texts.labelSmall.copyWith(
                                       color: mutedText.withValues(alpha: 0.7),
                                     ),
                                   ),
@@ -317,7 +381,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
               ],
             ),
           ),
-          if (widget.provider.generatedFilePath == null || widget.provider.isGenerating)
+          if (widget.provider.generatedFilePath == null ||
+              widget.provider.isGenerating)
             const SizedBox(width: AppSpacing.lg),
         ],
       ),

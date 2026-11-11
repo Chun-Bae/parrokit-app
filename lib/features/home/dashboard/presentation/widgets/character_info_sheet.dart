@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 Future<void> showCharacterInfoSheet(
   BuildContext context, {
@@ -52,13 +53,11 @@ class CharacterInfoSheet extends StatelessWidget {
               Icon(icon, size: 18, color: muted),
               const SizedBox(width: 8),
               Flexible(
-                  child:
-                      Text(title, style: TextStyle(color: muted, fontSize: 12)))
+                  child: Text(title,
+                      style: context.texts.bodySmall.copyWith(color: muted)))
             ]),
             const SizedBox(height: 10),
-            Text(value,
-                style: TextStyle(
-                    color: ink, fontSize: 17, fontWeight: FontWeight.w800)),
+            Text(value, style: context.texts.titleMedium.copyWith(color: ink)),
           ]),
         );
 
@@ -76,10 +75,8 @@ class CharacterInfoSheet extends StatelessWidget {
                 Row(children: [
                   Expanded(
                       child: Text('캐릭터 정보',
-                          style: TextStyle(
-                              color: ink,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800))),
+                          style: context.texts.headlineSmall
+                              .copyWith(color: ink))),
                   IconButton(
                       tooltip: '닫기',
                       onPressed: () => Navigator.pop(context),
@@ -90,15 +87,12 @@ class CharacterInfoSheet extends StatelessWidget {
                   const ExcludeSemantics(
                       child: Text('🦜', style: TextStyle(fontSize: 84))),
                   Text('피코',
-                      style: TextStyle(
-                          color: ink,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800)),
+                      style: context.texts.headlineMedium.copyWith(color: ink)),
                   const SizedBox(height: 6),
                   Text('Lv. 5 · 작은 모험가', style: TextStyle(color: muted)),
                   const SizedBox(height: 8),
                   Text('한 문장씩 배우며 함께 자라는 친구',
-                      style: TextStyle(color: muted, fontSize: 12)),
+                      style: context.texts.bodySmall.copyWith(color: muted)),
                 ])),
                 const SizedBox(height: 24),
                 Row(
@@ -108,7 +102,8 @@ class CharacterInfoSheet extends StatelessWidget {
                           style: TextStyle(
                               color: ink, fontWeight: FontWeight.w700)),
                       Text('$experience / 100',
-                          style: TextStyle(color: muted, fontSize: 12)),
+                          style:
+                              context.texts.bodySmall.copyWith(color: muted)),
                     ]),
                 const SizedBox(height: 10),
                 LinearProgressIndicator(
@@ -144,11 +139,11 @@ class CharacterInfoSheet extends StatelessWidget {
                 }),
                 const SizedBox(height: 20),
                 Text('앞으로의 성장',
-                    style: TextStyle(
-                        color: ink, fontSize: 16, fontWeight: FontWeight.w800)),
+                    style: context.texts.titleMedium.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 Text('학습으로 경험치를 모으고, 새로운 모습과 장비를 만나게 될 예정이에요.',
-                    style: TextStyle(color: muted, fontSize: 13, height: 1.6)),
+                    style: context.texts.labelMedium
+                        .copyWith(color: muted, height: 1.6)),
                 const SizedBox(height: 20),
                 Container(
                   width: double.infinity,
@@ -157,8 +152,8 @@ class CharacterInfoSheet extends StatelessWidget {
                       color: tile, borderRadius: BorderRadius.circular(14)),
                   child: Text(
                       '미리보기 정보예요. 레벨·경험치는 예시이며 실제 학습 기록이나 자동 전투 능력치와 연결되지 않아요.',
-                      style:
-                          TextStyle(color: muted, fontSize: 11, height: 1.6)),
+                      style: context.texts.labelSmall
+                          .copyWith(color: muted, height: 1.6)),
                 ),
               ]),
         ),

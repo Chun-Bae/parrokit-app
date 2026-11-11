@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class LearningHubScreen extends StatefulWidget {
   const LearningHubScreen({super.key});
@@ -17,7 +18,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final background = palette.background;
     final surface = palette.surface;
     final ink = palette.ink;
@@ -39,10 +40,11 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             leading: Icon(icon, color: path == null ? muted : ink),
             title: Text(title,
                 style: TextStyle(color: ink, fontWeight: FontWeight.w700)),
-            subtitle:
-                Text(subtitle, style: TextStyle(color: muted, fontSize: 12)),
+            subtitle: Text(subtitle,
+                style: context.texts.bodySmall.copyWith(color: muted)),
             trailing: path == null
-                ? Text('준비 중', style: TextStyle(color: muted, fontSize: 12))
+                ? Text('준비 중',
+                    style: context.texts.bodySmall.copyWith(color: muted))
                 : Icon(Icons.arrow_forward_rounded, color: muted),
             onTap: path == null ? null : () => context.push(path),
           ),
@@ -63,18 +65,12 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             24, 16, 24, MediaQuery.paddingOf(context).bottom + 120),
         children: [
           Text('오늘은 어떻게\n공부해볼까요?',
-              style: TextStyle(
-                color: ink,
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                height: 1.3,
-              )),
+              style: context.texts.headlineLarge
+                  .copyWith(color: ink, height: 1.3)),
           const SizedBox(height: 10),
           Text('내게 맞는 방법으로, 한 문장씩 가볍게.', style: TextStyle(color: muted)),
           const SizedBox(height: 28),
-          Text('학습 방법',
-              style: TextStyle(
-                  color: ink, fontSize: 19, fontWeight: FontWeight.w800)),
+          Text('학습 방법', style: context.texts.titleLarge.copyWith(color: ink)),
           const SizedBox(height: 12),
           LayoutBuilder(builder: (context, constraints) {
             final cards = List.generate(2, (index) {
@@ -107,21 +103,16 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
                             ]),
                             const SizedBox(height: 20),
                             Text(index == 0 ? '따라 말하기' : '반복 듣기',
-                                style: TextStyle(
-                                  color: selected ? palette.onAccent : ink,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                )),
+                                style: context.texts.titleLarge.copyWith(
+                                    color: selected ? palette.onAccent : ink)),
                             const SizedBox(height: 6),
                             Text(
                                 index == 0
                                     ? '듣고 내 목소리로\n소리 내어 연습해요'
                                     : '좋아하는 구간을\n여러 번 들어요',
-                                style: TextStyle(
-                                  color: selected ? palette.inkSoft : muted,
-                                  fontSize: 12,
-                                  height: 1.6,
-                                )),
+                                style: context.texts.bodySmall.copyWith(
+                                    color: selected ? palette.inkSoft : muted,
+                                    height: 1.6)),
                           ]),
                     ),
                   ),
@@ -149,7 +140,8 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
               mode == 0
                   ? '영상을 고른 뒤, 자막을 보며 직접 따라 말해보세요. 음성 인식과 자동 경험치 지급은 준비 중이에요.'
                   : '영상을 고른 뒤, 플레이어의 반복 버튼으로 원하는 자막 구간을 반복해서 들어보세요.',
-              style: TextStyle(color: muted, fontSize: 12, height: 1.7)),
+              style:
+                  context.texts.bodySmall.copyWith(color: muted, height: 1.7)),
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: () => context.push(AppRoutes.collectionPath),
@@ -166,11 +158,10 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
           ),
           const SizedBox(height: 30),
           Text('공부할 영상 찾기',
-              style: TextStyle(
-                  color: ink, fontSize: 19, fontWeight: FontWeight.w800)),
+              style: context.texts.titleLarge.copyWith(color: ink)),
           const SizedBox(height: 6),
           Text('먼저 영상을 둘러봐도 좋아요.',
-              style: TextStyle(color: muted, fontSize: 12)),
+              style: context.texts.bodySmall.copyWith(color: muted)),
           const SizedBox(height: 14),
           destination(Icons.swipe_up_rounded, '쇼츠로 발견하기',
               '짧은 영상을 넘기며 마음에 드는 표현 찾기', AppRoutes.explorePath),

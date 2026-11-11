@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -13,7 +14,7 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _nicknameController = TextEditingController();
-  
+
   bool _isNicknameAvailable = false;
   bool _hasCheckedNickname = false;
   String? _nicknameCheckMessage;
@@ -37,22 +38,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
 
-    final isAvailable = await context.read<UserProvider>().isNicknameAvailable(nickname);
+    final isAvailable =
+        await context.read<UserProvider>().isNicknameAvailable(nickname);
     setState(() {
       _isNicknameAvailable = isAvailable;
       _hasCheckedNickname = true;
-      _nicknameCheckMessage = isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
+      _nicknameCheckMessage =
+          isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
     });
   }
 
   Future<void> _onSubmit() async {
     final nickname = _nicknameController.text.trim();
-    
+
     if (nickname.isEmpty) {
       showToast('닉네임을 입력해주세요.');
       return;
     }
-    
+
     if (!_hasCheckedNickname || !_isNicknameAvailable) {
       showToast('닉네임 중복 확인을 먼저 해주세요.');
       return;
@@ -72,8 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final WidgetStateColor iconColor =
-        WidgetStateColor.resolveWith((states) {
+    final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
@@ -86,17 +88,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(
+        title: Text(
           '프로필 설정',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: context.texts.titleLarge.copyWith(color: Colors.black),
         ),
         centerTitle: true,
         // 뒤로가기 방지 (필수 관문)
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: Align(
@@ -108,20 +106,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     '환영합니다! 🎉',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5),
+                    style: context.texts.headlineMedium
+                        .copyWith(letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '커뮤니티에서 사용할 멋진 닉네임을 설정해주세요.',
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                        letterSpacing: -0.5),
+                    style: context.texts.bodyMedium.copyWith(
+                        color: Colors.grey.shade600, letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 48),
                   // 닉네임 입력칸
@@ -140,16 +134,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           decoration: InputDecoration(
                             labelText: '닉네임',
                             labelStyle: TextStyle(
-                                color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500),
                             floatingLabelStyle: const TextStyle(
-                                color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                                color: Color(0xFF0066FF),
+                                fontWeight: FontWeight.bold),
                             prefixIconColor: iconColor,
                             prefixIcon: const Icon(Icons.badge),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             focusedBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
+                              borderSide: BorderSide(
+                                  color: Color(0xFF0066FF), width: 2),
                             ),
                           ),
                         ),
@@ -158,7 +156,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: ElevatedButton(
-                          onPressed: _nicknameController.text.trim().isEmpty ? null : _checkNickname,
+                          onPressed: _nicknameController.text.trim().isEmpty
+                              ? null
+                              : _checkNickname,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0066FF),
                             foregroundColor: Colors.white,
@@ -178,10 +178,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           _nicknameCheckMessage!,
-                          style: TextStyle(
-                            color: _isNicknameAvailable ? Colors.green : Colors.red,
-                            fontSize: 12,
-                          ),
+                          style: context.texts.bodySmall.copyWith(
+                              color: _isNicknameAvailable
+                                  ? Colors.green
+                                  : Colors.red),
                         ),
                       ),
                     ),
@@ -206,9 +206,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2),
                             )
-                          : const Text(
+                          : Text(
                               '시작하기',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: context.texts.titleMedium,
                             ),
                     ),
                   ),

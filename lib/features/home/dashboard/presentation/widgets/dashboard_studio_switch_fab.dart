@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class DashboardStudioSwitchFab extends StatefulWidget {
   const DashboardStudioSwitchFab({
@@ -28,12 +29,10 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface =
-        isDark ? AppColors.surfaceContainerDark : AppColors.surface;
+    final surface = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
     final border =
         isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle;
-    final selectedBg =
-        isDark ? AppColors.primaryDark : AppColors.primary;
+    final selectedBg = isDark ? AppColors.primaryDark : AppColors.primary;
     final selectedText = Colors.white;
     final unselectedText =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
@@ -154,12 +153,9 @@ class _StudioSwitchItem extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     title,
-                    style: TextStyle(
-                      color: isSelected ? selectedText : unselectedText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.1,
-                    ),
+                    style: context.texts.labelMedium.copyWith(
+                        color: isSelected ? selectedText : unselectedText,
+                        letterSpacing: 0.1),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../chat_bot_provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 void showModelSelectorBottomSheet(
     BuildContext context, ChatBotProvider provider) {
@@ -232,7 +233,6 @@ class FeatureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -243,9 +243,7 @@ class FeatureChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
+        style: context.texts.labelSmall.copyWith(
           color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
         ),
       ),

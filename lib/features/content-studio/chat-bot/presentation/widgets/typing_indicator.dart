@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import '../chat_bot_provider.dart';
 import 'gradient_helper.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class TypingIndicator extends StatelessWidget {
   const TypingIndicator({super.key});
@@ -69,12 +70,10 @@ class TypingIndicator extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   'AI가 답변을 생성하고 있어요',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: context.texts.bodySmall.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

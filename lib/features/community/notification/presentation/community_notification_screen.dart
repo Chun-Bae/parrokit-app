@@ -5,6 +5,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/notification/presentation/providers/community_notification_provider.dart';
 import 'package:parrokit/features/community/notification/presentation/sections/community_notification_list_section.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityNotificationScreen extends StatefulWidget {
   const CommunityNotificationScreen({super.key});
@@ -14,7 +15,8 @@ class CommunityNotificationScreen extends StatefulWidget {
       _CommunityNotificationScreenState();
 }
 
-class _CommunityNotificationScreenState extends State<CommunityNotificationScreen> {
+class _CommunityNotificationScreenState
+    extends State<CommunityNotificationScreen> {
   CommunityNotificationProvider? _provider;
 
   @override
@@ -56,20 +58,18 @@ class _CommunityNotificationScreenState extends State<CommunityNotificationScree
                 color: Colors.black,
               ),
             ),
-            title: const Text(
+            title: Text(
               '알림',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
+              style: context.texts.headlineMedium
+                  .copyWith(color: AppColors.textPrimary),
             ),
             actions: [
               IconButton(
                 onPressed: provider.hasNotifications
                     ? () => _showNotificationActionsSheet(context, provider)
                     : null,
-                icon: const Icon(Icons.more_vert_rounded, size: 24, color: Colors.black87),
+                icon: const Icon(Icons.more_vert_rounded,
+                    size: 24, color: Colors.black87),
               ),
               const SizedBox(width: 4),
             ],
@@ -84,15 +84,13 @@ class _CommunityNotificationScreenState extends State<CommunityNotificationScree
               if (provider.errorMessage != null)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   color: AppColors.danger.withValues(alpha: 0.08),
                   child: Text(
                     provider.errorMessage!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.danger,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.texts.bodyMedium
+                        .copyWith(color: AppColors.danger),
                   ),
                 ),
               Expanded(
@@ -118,7 +116,8 @@ class _CommunityNotificationScreenState extends State<CommunityNotificationScree
         CommunityOptionAction(
           label: '모두 읽음',
           icon: Icons.done_all_rounded,
-          onTap: provider.unreadCount == 0 ? () async {} : provider.markAllAsRead,
+          onTap:
+              provider.unreadCount == 0 ? () async {} : provider.markAllAsRead,
         ),
         CommunityOptionAction(
           label: '모두 지우기',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentInputBar extends StatelessWidget {
   const BoardCommentInputBar({
@@ -50,16 +51,14 @@ class BoardCommentInputBar extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${replyingTo!.authorNickname}님에게 답글 남기는 중',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: context.texts.labelMedium
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ),
                   GestureDetector(
                     onTap: onCancelReply,
-                    child: const Icon(Icons.close, size: 18, color: AppColors.textTertiary),
+                    child: const Icon(Icons.close,
+                        size: 18, color: AppColors.textTertiary),
                   ),
                 ],
               ),
@@ -92,19 +91,13 @@ class BoardCommentInputBar extends StatelessWidget {
                               focusNode: focusNode,
                               onChanged: onChanged,
                               onSubmitted: (_) => onSubmit(),
-                              style: TextStyle(
-                                color: colorScheme.onSurface,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: context.texts.titleMedium
+                                  .copyWith(color: colorScheme.onSurface),
                               decoration: InputDecoration(
                                 hintText: '댓글을 입력해주세요.',
                                 fillColor: colorScheme.surfaceContainerHigh,
-                                hintStyle: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                hintStyle: context.texts.titleLarge.copyWith(
+                                    color: colorScheme.onSurfaceVariant),
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,
                                 border: InputBorder.none,
@@ -118,7 +111,9 @@ class BoardCommentInputBar extends StatelessWidget {
                             onTap: canSubmit ? onSubmit : null,
                             child: Icon(
                               Icons.keyboard_return_rounded,
-                              color: canSubmit ? sendAccent : AppColors.textTertiary,
+                              color: canSubmit
+                                  ? sendAccent
+                                  : AppColors.textTertiary,
                               size: 30,
                             ),
                           ),

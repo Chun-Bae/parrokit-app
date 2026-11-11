@@ -3,6 +3,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionStickyReplyBar extends StatelessWidget {
   const QuestionStickyReplyBar({
@@ -25,7 +26,8 @@ class QuestionStickyReplyBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: const Border(top: BorderSide(color: AppColors.surfaceContainerHigh)),
+        border: const Border(
+            top: BorderSide(color: AppColors.surfaceContainerHigh)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -38,22 +40,21 @@ class QuestionStickyReplyBar extends StatelessWidget {
                 children: [
                   Text(
                     '${provider.replyingTo!.authorNickname}님에게 답글 남기는 중',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: context.texts.labelMedium
+                        .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const Spacer(),
                   GestureDetector(
                     onTap: () => provider.setReplyingTo(null),
-                    child: const Icon(Icons.close, size: 16, color: AppColors.textDisabled),
+                    child: const Icon(Icons.close,
+                        size: 16, color: AppColors.textDisabled),
                   ),
                 ],
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: SafeArea(
               top: false,
               child: Row(
@@ -65,7 +66,8 @@ class QuestionStickyReplyBar extends StatelessWidget {
                         ? NetworkImage(currentUser!.photoUrl!)
                         : null,
                     child: currentUser?.photoUrl == null
-                        ? Icon(Icons.person, size: 14, color: colorScheme.onSurfaceVariant)
+                        ? Icon(Icons.person,
+                            size: 14, color: colorScheme.onSurfaceVariant)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -75,21 +77,20 @@ class QuestionStickyReplyBar extends StatelessWidget {
                       focusNode: replyFocusNode,
                       decoration: InputDecoration(
                         hintText: '답글 남기기...',
-                        hintStyle: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                        hintStyle: context.texts.bodyMedium
+                            .copyWith(color: colorScheme.onSurfaceVariant),
                         border: InputBorder.none,
                       ),
-                      style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                   ),
                   TextButton(
                     onPressed: onSubmitReply,
                     child: Text(
                       '답글',
-                      style: TextStyle(
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: AppColors.warning),
                     ),
                   ),
                 ],

@@ -3,6 +3,7 @@
 // ListTile 테마 - 목록 항목 스타일 통합
 
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 /// ListTile 테마
 ListTileThemeData appListTileTheme(ColorScheme cs, {required bool isDark}) {
@@ -22,20 +23,10 @@ ListTileThemeData appListTileTheme(ColorScheme cs, {required bool isDark}) {
     enableFeedback: true,
     dense: false,
     visualDensity: VisualDensity.compact,
-    titleTextStyle: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      color: cs.onSurface,
-    ),
-    subtitleTextStyle: TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-      color: cs.onSurface.withValues(alpha: 0.6),
-    ),
-    leadingAndTrailingTextStyle: TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: cs.onSurface.withValues(alpha: 0.74),
-    ),
+    titleTextStyle: AppTextScale.titleMedium.copyWith(color: cs.onSurface),
+    subtitleTextStyle: AppTextScale.labelMedium
+        .copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+    leadingAndTrailingTextStyle: AppTextScale.bodyMedium
+        .copyWith(color: cs.onSurface.withValues(alpha: 0.74)),
   );
 }

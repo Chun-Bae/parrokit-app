@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 void showCommunityWriteBottomSheet(BuildContext context) {
   showModalBottomSheet<void>(
@@ -21,7 +22,8 @@ void showCommunityWriteBottomSheet(BuildContext context) {
             children: [
               Text(
                 '커뮤니티 글쓰기',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                style: context.texts.headlineSmall
+                    .copyWith(color: colorScheme.onSurface),
               ),
               const SizedBox(height: 20),
               _CommunityWriteOption(
@@ -98,7 +100,8 @@ class _CommunityWriteOption extends StatelessWidget {
             Container(
               width: 52,
               height: 52,
-              decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                  color: bgColor, borderRadius: BorderRadius.circular(16)),
               child: Icon(icon, color: iconColor, size: 28),
             ),
             const SizedBox(width: 16),
@@ -106,13 +109,18 @@ class _CommunityWriteOption extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+                  Text(title,
+                      style: context.texts.titleLarge
+                          .copyWith(color: colorScheme.onSurface)),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+                  Text(subtitle,
+                      style: context.texts.bodyMedium
+                          .copyWith(color: colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 28),
+            Icon(Icons.chevron_right,
+                color: colorScheme.onSurfaceVariant, size: 28),
           ],
         ),
       ),

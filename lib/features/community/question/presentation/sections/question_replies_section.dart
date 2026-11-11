@@ -8,6 +8,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionRepliesSection extends StatelessWidget {
   const QuestionRepliesSection({
@@ -28,13 +29,14 @@ class QuestionRepliesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (answers.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
         child: Center(
           child: Text(
             '아직 답변이 없습니다.\n첫 번째 답변을 남겨보세요!',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textDisabled, fontSize: 14),
+            style: context.texts.bodyMedium
+                .copyWith(color: AppColors.textDisabled),
           ),
         ),
       );
@@ -42,27 +44,32 @@ class QuestionRepliesSection extends StatelessWidget {
 
     final parentAnswers = answers.where((c) => c.parentId == null).toList();
     final childAnswers = answers.where((c) => c.parentId != null).toList();
-    parentAnswers.sort((a, b) => (b.isAccepted ? 1 : 0).compareTo(a.isAccepted ? 1 : 0));
+    parentAnswers
+        .sort((a, b) => (b.isAccepted ? 1 : 0).compareTo(a.isAccepted ? 1 : 0));
 
     final widgets = <Widget>[];
     for (var i = 0; i < parentAnswers.length; i++) {
       final parent = parentAnswers[i];
       widgets.add(_buildReplyItem(context, parent, isReply: false));
 
-      final children = childAnswers.where((c) => c.parentId == parent.id).toList();
+      final children =
+          childAnswers.where((c) => c.parentId == parent.id).toList();
       for (final child in children) {
         widgets.add(_buildReplyItem(context, child, isReply: true));
       }
 
       if (i < parentAnswers.length - 1 || children.isNotEmpty) {
-        widgets.add(const Divider(height: 1, color: AppColors.surfaceContainerHigh));
+        widgets.add(
+            const Divider(height: 1, color: AppColors.surfaceContainerHigh));
       }
     }
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: widgets);
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch, children: widgets);
   }
 
-  Widget _buildReplyItem(BuildContext context, Comment answer, {required bool isReply}) {
+  Widget _buildReplyItem(BuildContext context, Comment answer,
+      {required bool isReply}) {
     final colorScheme = Theme.of(context).colorScheme;
     final currentUser = context.read<UserProvider>().currentUser;
     final isMe = currentUser != null && question.authorId == currentUser.id;
@@ -71,16 +78,20 @@ class QuestionRepliesSection extends StatelessWidget {
 
     final answererName = (answer.authorId == currentUser?.id)
         ? (currentUser?.displayName ?? answer.authorNickname)
-        : (provider.getCachedUser(answer.authorId)?.displayName ?? answer.authorNickname);
+        : (provider.getCachedUser(answer.authorId)?.displayName ??
+            answer.authorNickname);
 
     final answererAvatar = (answer.authorId == currentUser?.id)
         ? (currentUser?.photoUrl ?? answer.authorAvatarUrl)
-        : (provider.getCachedUser(answer.authorId)?.photoUrl ?? answer.authorAvatarUrl);
+        : (provider.getCachedUser(answer.authorId)?.photoUrl ??
+            answer.authorAvatarUrl);
 
     return Container(
       padding: EdgeInsets.fromLTRB(isReply ? 46 : 16, 16, 16, 16),
       decoration: isReply
-          ? const BoxDecoration(border: Border(left: BorderSide(color: AppColors.disabled, width: 3)))
+          ? const BoxDecoration(
+              border:
+                  Border(left: BorderSide(color: AppColors.disabled, width: 3)))
           : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,12 +101,20 @@ class QuestionRepliesSection extends StatelessWidget {
               CircleAvatar(
                 radius: isReply ? 14 : 18,
                 backgroundColor: AppColors.surfaceContainerHigh,
-                backgroundImage: (!isBlocked && answererAvatar != null) ? NetworkImage(answererAvatar) : null,
+                backgroundImage: (!isBlocked && answererAvatar != null)
+                    ? NetworkImage(answererAvatar)
+                    : null,
                 child: answererAvatar == null || isBlocked
-                    ? Icon(isBlocked ? Icons.block_rounded : Icons.person, size: isReply ? 14 : 18, color: colorScheme.onSurfaceVariant)
+                    ? Icon(isBlocked ? Icons.block_rounded : Icons.person,
+                        size: isReply ? 14 : 18,
+                        color: colorScheme.onSurfaceVariant)
                     : null,
               ),
-              if (!isReply) Container(width: 2, height: 40, color: AppColors.surfaceContainerHigh),
+              if (!isReply)
+                Container(
+                    width: 2,
+                    height: 40,
+                    color: AppColors.surfaceContainerHigh),
             ],
           ),
           const SizedBox(width: 12),
@@ -105,15 +124,20 @@ class QuestionRepliesSection extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(isBlocked ? '차단한 사용자' : answererName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    Text(isBlocked ? '차단한 사용자' : answererName,
+                        style: context.texts.bodyLarge
+                            .copyWith(color: AppColors.textPrimary)),
                     const Spacer(),
                     if (!isBlocked) ...[
-                      Text(formatTimeAgo(answer.createdAt), style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                      Text(formatTimeAgo(answer.createdAt),
+                          style: context.texts.bodySmall
+                              .copyWith(color: colorScheme.onSurfaceVariant)),
                       const SizedBox(width: 4),
                       IconButton(
                         icon: const Icon(Icons.more_vert_rounded, size: 18),
                         color: colorScheme.onSurfaceVariant,
-                        onPressed: () => _showAnswerOptionsSheet(context, answer),
+                        onPressed: () =>
+                            _showAnswerOptionsSheet(context, answer),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
@@ -124,18 +148,23 @@ class QuestionRepliesSection extends StatelessWidget {
                 if (answer.isAccepted) ...[
                   Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppColors.successSoft,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+                      border: Border.all(
+                          color: AppColors.success.withValues(alpha: 0.35)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.verified, color: AppColors.success, size: 12),
+                        const Icon(Icons.verified,
+                            color: AppColors.success, size: 12),
                         const SizedBox(width: 4),
-                        const Text('채택된 답변', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.success)),
+                        Text('채택된 답변',
+                            style: context.texts.labelSmall
+                                .copyWith(color: AppColors.success)),
                       ],
                     ),
                   ),
@@ -146,12 +175,14 @@ class QuestionRepliesSection extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       '@${answer.replyToNickname}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: AppColors.primary),
                     ),
                   ),
                 Text(
                   isBlocked ? '차단된 사용자의 답변입니다.' : answer.content,
-                  style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.45),
+                  style: context.texts.bodyLarge
+                      .copyWith(color: AppColors.textSecondary, height: 1.45),
                 ),
                 const SizedBox(height: 12),
                 if (!isBlocked)
@@ -162,13 +193,19 @@ class QuestionRepliesSection extends StatelessWidget {
                         children: [
                           IconButton(
                             icon: Icon(
-                              provider.likedCommentIds.contains(answer.id) ? Icons.bolt : Icons.bolt_outlined,
+                              provider.likedCommentIds.contains(answer.id)
+                                  ? Icons.bolt
+                                  : Icons.bolt_outlined,
                               size: 18,
-                              color: provider.likedCommentIds.contains(answer.id) ? AppColors.warning : AppColors.textSecondary,
+                              color:
+                                  provider.likedCommentIds.contains(answer.id)
+                                      ? AppColors.warning
+                                      : AppColors.textSecondary,
                             ),
                             onPressed: () {
                               if (currentUser != null) {
-                                provider.toggleCommentLike(question.id, answer.id, currentUser.id);
+                                provider.toggleCommentLike(
+                                    question.id, answer.id, currentUser.id);
                               } else {
                                 showToast('로그인이 필요합니다.');
                               }
@@ -177,10 +214,13 @@ class QuestionRepliesSection extends StatelessWidget {
                             constraints: const BoxConstraints(),
                           ),
                           const SizedBox(width: 4),
-                          Text('${answer.likeCount}', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                          Text('${answer.likeCount}',
+                              style: context.texts.bodySmall.copyWith(
+                                  color: colorScheme.onSurfaceVariant)),
                           const SizedBox(width: 12),
                           IconButton(
-                            icon: const Icon(Icons.mode_comment_outlined, size: 18, color: AppColors.textSecondary),
+                            icon: const Icon(Icons.mode_comment_outlined,
+                                size: 18, color: AppColors.textSecondary),
                             onPressed: () {
                               provider.setReplyingTo(answer);
                               onFocusReplyInput();
@@ -190,13 +230,21 @@ class QuestionRepliesSection extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (!isReply && isMe && question.questionStatus == 'waiting' && answer.authorId != question.authorId)
+                      if (!isReply &&
+                          isMe &&
+                          question.questionStatus == 'waiting' &&
+                          answer.authorId != question.authorId)
                         GestureDetector(
                           onTap: () => onAcceptAnswer(answer),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(color: AppColors.successSoft, borderRadius: BorderRadius.circular(6)),
-                            child: const Text('채택하기', style: TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.bold)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                                color: AppColors.successSoft,
+                                borderRadius: BorderRadius.circular(6)),
+                            child: Text('채택하기',
+                                style: context.texts.bodySmall
+                                    .copyWith(color: AppColors.success)),
                           ),
                         ),
                     ],
@@ -209,9 +257,11 @@ class QuestionRepliesSection extends StatelessWidget {
     );
   }
 
-  Future<void> _showAnswerOptionsSheet(BuildContext context, Comment answer) async {
+  Future<void> _showAnswerOptionsSheet(
+      BuildContext context, Comment answer) async {
     final currentUser = context.read<UserProvider>().currentUser;
-    final isMyComment = currentUser != null && answer.authorId == currentUser.id;
+    final isMyComment =
+        currentUser != null && answer.authorId == currentUser.id;
 
     await showCommunityOptionsSheet(
       context: context,
@@ -223,7 +273,9 @@ class QuestionRepliesSection extends StatelessWidget {
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
-              final deleted = await context.read<CommunityProvider>().deleteComment(question.id, answer.id);
+              final deleted = await context
+                  .read<CommunityProvider>()
+                  .deleteComment(question.id, answer.id);
               if (!context.mounted) return;
               showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },

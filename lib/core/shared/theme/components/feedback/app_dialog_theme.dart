@@ -3,6 +3,7 @@
 // Dialog 테마 - AlertDialog, SimpleDialog 등 스타일 통합
 
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 /// Dialog 테마
 DialogThemeData appDialogTheme(ColorScheme cs, {required bool isDark}) {
@@ -13,17 +14,9 @@ DialogThemeData appDialogTheme(ColorScheme cs, {required bool isDark}) {
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     ),
-    titleTextStyle: TextStyle(
-      fontSize: 18,
-      fontWeight: FontWeight.w800,
-      color: cs.onSurface,
-    ),
-    contentTextStyle: TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      color: cs.onSurface.withValues(alpha: 0.8),
-      height: 1.5,
-    ),
+    titleTextStyle: AppTextScale.titleLarge.copyWith(color: cs.onSurface),
+    contentTextStyle: AppTextScale.bodyMedium
+        .copyWith(color: cs.onSurface.withValues(alpha: 0.8), height: 1.5),
     actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
   );
 }

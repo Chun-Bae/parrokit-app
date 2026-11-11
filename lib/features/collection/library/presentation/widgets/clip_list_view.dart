@@ -14,6 +14,7 @@ import 'episode_thumbnail.dart';
 import 'swipe_action_tile.dart';
 import 'mini_chip.dart';
 import 'storage_transfer_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class ClipListView extends StatelessWidget {
   const ClipListView({
@@ -197,11 +198,7 @@ class ClipListView extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextScale.labelSmall.copyWith(color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

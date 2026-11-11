@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import '../widgets/gradient_icon.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 대시보드 상단 헤더 섹션.
 ///
@@ -96,12 +97,8 @@ class _HeaderSectionState extends State<HeaderSection>
         end: Alignment.bottomRight,
       ).createShader(const Rect.fromLTWH(0, 0, 200, 40));
 
-    final numberStyle = TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      foreground: gradientPaint,
-      height: 1.0,
-    );
+    final numberStyle = context.texts.headlineSmall
+        .copyWith(foreground: gradientPaint, height: 1.0);
 
     // 트윈 시작/끝점
     final tweenBegin = _prevFinal;
@@ -150,9 +147,7 @@ class _HeaderSectionState extends State<HeaderSection>
                     const SizedBox(width: 4),
                     Text(
                       '개의 클립을 모았어요 🎬',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                      style: context.texts.titleLarge.copyWith(
                         color: textPrimary,
                       ),
                     ),
@@ -163,7 +158,6 @@ class _HeaderSectionState extends State<HeaderSection>
               ],
             ),
           ),
-
         ],
       ),
     );

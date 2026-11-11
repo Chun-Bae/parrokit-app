@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentsEmptyState extends StatelessWidget {
   const BoardCommentsEmptyState({super.key, required this.onTap});
@@ -12,14 +13,11 @@ class BoardCommentsEmptyState extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 130),
-        const Center(
+        Center(
           child: Text(
             '첫 댓글을 남겨보세요',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textTertiary,
-              fontWeight: FontWeight.w500,
-            ),
+            style: context.texts.titleMedium
+                .copyWith(color: AppColors.textTertiary),
           ),
         ),
         const SizedBox(height: 24),
@@ -36,15 +34,13 @@ class BoardCommentsEmptyState extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.edit_outlined, size: 24, color: colorScheme.onSurfaceVariant),
+                  Icon(Icons.edit_outlined,
+                      size: 24, color: colorScheme.onSurfaceVariant),
                   const SizedBox(width: 10),
                   Text(
                     '댓글 쓰기',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: context.texts.titleMedium
+                        .copyWith(color: colorScheme.onSurface),
                   ),
                 ],
               ),

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
@@ -10,6 +10,7 @@ import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 문장 추가 화면을 하단 네비바 위로 열어 저장까지 한다. 취소하면 null.
 /// 저장에 실패하면 예외를 그대로 던지니 부른 쪽에서 안내한다.
@@ -79,7 +80,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final muted = HomePalette.of(context).muted;
+    final muted = HomeTokens.of(context).muted;
     return Scaffold(
       appBar: AppBar(title: const Text('문장 추가')),
       // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
@@ -120,8 +121,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
               TextField(
                 key: const ValueKey('sentence-text'),
                 controller: controller.text,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: context.texts.titleLarge,
                 maxLength: 80,
                 maxLines: null,
                 textInputAction: TextInputAction.next,
@@ -141,7 +141,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
               TextField(
                 key: const ValueKey('sentence-translation'),
                 controller: controller.translation,
-                style: const TextStyle(fontSize: 16),
+                style: context.texts.titleMedium,
                 maxLines: null,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
@@ -156,7 +156,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
               TextField(
                 key: const ValueKey('sentence-pronunciation'),
                 controller: controller.pronunciation,
-                style: const TextStyle(fontSize: 14),
+                style: context.texts.bodyMedium,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: '발음 (선택)',
@@ -169,7 +169,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
               const SizedBox(height: 16),
               Center(
                   child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워둬도 돼요.',
-                      style: TextStyle(color: muted, fontSize: 12))),
+                      style: context.texts.bodySmall.copyWith(color: muted))),
             ],
           ),
         ),
@@ -205,7 +205,7 @@ class _HangulTransliterateRow extends StatelessWidget {
             child: TextField(
           key: const ValueKey('sentence-hangul'),
           controller: controller.hangul,
-          style: const TextStyle(fontSize: 16),
+          style: context.texts.titleMedium,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => controller.transliterate(),
           decoration: InputDecoration(
@@ -243,8 +243,8 @@ class _HangulTransliterateRow extends StatelessWidget {
                   _ => '변환하지 못했어요. 다시 시도하거나 원문을 직접 입력해주세요.',
                 },
                 key: const ValueKey('transliterate-message'),
-                style: TextStyle(
-                    color: HomePalette.of(context).muted, fontSize: 12))),
+                style: context.texts.bodySmall
+                    .copyWith(color: HomeTokens.of(context).muted))),
     ]);
   }
 }
@@ -288,20 +288,19 @@ class _AutoFillCard extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.auto_awesome_rounded, size: 18),
           label: Text(status == AssistStatus.failed ? '다시 채우기' : '뜻·발음 채우기',
-              style: const TextStyle(fontSize: 14)),
+              style: context.texts.bodyMedium),
         ),
         const SizedBox(width: 12),
         if (used != null && limit != null)
           Text('$used / $limit',
               key: const ValueKey('usage-count'),
-              style: TextStyle(
-                  color: exhausted ? colors.error : colors.onSurfaceVariant,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600))
+              style: context.texts.bodyMedium.copyWith(
+                  color: exhausted ? colors.error : colors.onSurfaceVariant))
         else if (controller.usageStatus == UsageStatus.loading)
           Text('횟수 확인 중…',
               key: const ValueKey('usage-loading'),
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12))
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant))
         else
           // 못 읽었을 때도 아무것도 안 보이지 않게, 다시 확인할 수 있게 안내한다.
           InkWell(
@@ -311,8 +310,8 @@ class _AutoFillCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
               child: Text('횟수를 확인하지 못했어요 · 탭해서 다시 확인',
-                  style:
-                      TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+                  style: context.texts.bodySmall
+                      .copyWith(color: colors.onSurfaceVariant)),
             ),
           ),
       ]),
@@ -321,9 +320,8 @@ class _AutoFillCard extends StatelessWidget {
           padding: const EdgeInsets.only(top: 6),
           child: Text(note,
               key: const ValueKey('auto-fill-message'),
-              style: TextStyle(
-                  color: exhausted ? colors.error : colors.onSurfaceVariant,
-                  fontSize: 12)),
+              style: context.texts.bodySmall.copyWith(
+                  color: exhausted ? colors.error : colors.onSurfaceVariant)),
         ),
     ]);
   }

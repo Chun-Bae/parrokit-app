@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class TodayPracticeSummary extends StatelessWidget {
   const TodayPracticeSummary({
@@ -18,7 +19,7 @@ class TodayPracticeSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
     final accent = palette.primary;
@@ -47,12 +48,8 @@ class TodayPracticeSummary extends StatelessWidget {
               Expanded(
                 child: Text(
                   '오늘 연습',
-                  style: TextStyle(
-                    color: ink,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.4,
-                  ),
+                  style: context.texts.headlineSmall
+                      .copyWith(color: ink, letterSpacing: -0.4),
                 ),
               ),
               if (isComplete) ...[
@@ -71,11 +68,8 @@ class TodayPracticeSummary extends StatelessWidget {
                       const SizedBox(width: 5),
                       Text(
                         '오늘 완료',
-                        style: TextStyle(
-                          color: palette.good,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: context.texts.labelSmall
+                            .copyWith(color: palette.good),
                       ),
                     ],
                   ),
@@ -100,32 +94,21 @@ class TodayPracticeSummary extends StatelessWidget {
             children: [
               Text(
                 '$completed',
-                style: TextStyle(
-                  color: ink,
-                  fontSize: 38,
-                  height: 1,
-                  fontWeight: FontWeight.w900,
-                ),
+                style:
+                    context.texts.headlineLarge.copyWith(color: ink, height: 1),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 5, bottom: 3),
                 child: Text(
                   '/ $safeGoal문장',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.texts.bodyLarge.copyWith(color: muted),
                 ),
               ),
               const Spacer(),
               Text(
                 isComplete ? '목표 달성!' : '${safeGoal - completed}문장 남음',
-                style: TextStyle(
-                  color: isComplete ? palette.good : accent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: context.texts.bodySmall
+                    .copyWith(color: isComplete ? palette.good : accent),
               ),
             ],
           ),
@@ -148,11 +131,7 @@ class TodayPracticeSummary extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 '지금까지 총 $total문장을 연습했어요',
-                style: TextStyle(
-                  color: muted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: context.texts.bodySmall.copyWith(color: muted),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/content/clip_sentence_match.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 문장 상세에서 이 문장이 나오는 클립 자막을 찾아 보여주는 구역.
 class ClipSentenceMatchesSection extends StatefulWidget {
@@ -43,7 +44,8 @@ class _ClipSentenceMatchesSectionState
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final muted = TextStyle(color: colors.onSurfaceVariant, fontSize: 13);
+    final muted =
+        context.texts.labelMedium.copyWith(color: colors.onSurfaceVariant);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -108,7 +110,8 @@ class _ClipMatchTile extends StatelessWidget {
       title: Text(match.segment.original,
           maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Text('${match.segment.clipTitle} · $time · ${match.kind.label}',
-          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+          style:
+              context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant)),
     );
   }
 }

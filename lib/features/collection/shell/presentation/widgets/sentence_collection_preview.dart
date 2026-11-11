@@ -27,6 +27,7 @@ import 'package:parrokit/features/home/dashboard/presentation/add_sentence_scree
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -686,8 +687,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                             style:
                                 const TextStyle(fontWeight: FontWeight.w800)),
                         const SizedBox(height: 4),
-                        const Text('홈 앵무새가 순서대로 말해줘요',
-                            style: TextStyle(fontSize: 12)),
+                        Text('홈 앵무새가 순서대로 말해줘요',
+                            style: context.texts.bodySmall),
                       ])),
                 ]),
               ),
@@ -853,14 +854,11 @@ class _SectionTitle extends StatelessWidget {
         Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+          Text(title, style: context.texts.titleLarge),
           const SizedBox(height: 3),
           Text(subtitle,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 12)),
+              style: context.texts.bodySmall.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ])),
         if (trailing != null) trailing!,
       ]);
@@ -884,20 +882,18 @@ class _PackCard extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20)),
-                child: const Text('공식',
-                    style:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.w800))),
+                child: Text('공식', style: context.texts.labelSmall)),
             Icon(pack.icon, size: 23, color: const Color(0xFF3D5966)),
           ]),
           const Spacer(),
           Text(pack.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+              style: context.texts.bodyLarge),
           const SizedBox(height: 5),
           Text(pack.detail,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF526977))),
+              style:
+                  context.texts.labelSmall.copyWith(color: Color(0xFF526977))),
         ]),
       );
 }
@@ -957,9 +953,8 @@ class _SentenceCard extends StatelessWidget {
                             .secondaryContainer
                             .withValues(alpha: 0.55),
                         borderRadius: BorderRadius.circular(20)),
-                    child: Text(sentence.topic,
-                        style: const TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w800))),
+                    child:
+                        Text(sentence.topic, style: context.texts.labelSmall)),
                 if (saved) ...[
                   const SizedBox(width: 6),
                   Container(
@@ -974,27 +969,22 @@ class _SentenceCard extends StatelessWidget {
                             color: Theme.of(context).colorScheme.onPrimary),
                         const SizedBox(width: 3),
                         Text('저장됨',
-                            style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800)),
+                            style: context.texts.labelSmall.copyWith(
+                                color:
+                                    Theme.of(context).colorScheme.onPrimary)),
                       ])),
                 ],
                 const Spacer(),
                 Text('@${sentence.authorName}',
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 11)),
+                    style: context.texts.labelSmall.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ]),
               const SizedBox(height: 12),
-              Text(sentence.text,
-                  style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w800)),
+              Text(sentence.text, style: context.texts.titleMedium),
               const SizedBox(height: 5),
               Text(sentence.translation,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 13)),
+                  style: context.texts.labelMedium.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 8),
               Row(children: [
                 IconButton(
@@ -1007,8 +997,7 @@ class _SentenceCard extends StatelessWidget {
                             : Icons.favorite_border,
                         color:
                             sentence.liked ? const Color(0xFFFF768B) : null)),
-                Text('${sentence.likeCount}',
-                    style: const TextStyle(fontSize: 12)),
+                Text('${sentence.likeCount}', style: context.texts.bodySmall),
                 const SizedBox(width: 14),
                 Tooltip(
                   message: '가져간 사람 수',
@@ -1019,7 +1008,7 @@ class _SentenceCard extends StatelessWidget {
                     const SizedBox(width: 3),
                     Text('${sentence.importCount}',
                         key: const ValueKey('shared-import-count'),
-                        style: const TextStyle(fontSize: 12)),
+                        style: context.texts.bodySmall),
                   ]),
                 ),
                 const Spacer(),
@@ -1558,10 +1547,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 ),
                 child: Text(
                   '${widget.sentence.language} · ${widget.sentence.topic}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: context.texts.labelSmall,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1580,14 +1566,14 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 ),
               ),
               if (widget.shared != null) ...[
-                Text('$sharedLikes', style: const TextStyle(fontSize: 12)),
+                Text('$sharedLikes', style: context.texts.bodySmall),
                 const SizedBox(width: 12),
                 Icon(Icons.download_rounded,
                     size: 18, color: colors.onSurfaceVariant),
                 const SizedBox(width: 3),
                 Text('$sharedImports',
                     key: const ValueKey('detail-import-count'),
-                    style: const TextStyle(fontSize: 12)),
+                    style: context.texts.bodySmall),
               ],
               IconButton(
                 tooltip: '문장 공유',
@@ -1603,11 +1589,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               Expanded(
                 child: Text(
                   widget.sentence.text,
-                  style: const TextStyle(
-                    fontSize: 26,
-                    height: 1.25,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: context.texts.headlineMedium.copyWith(height: 1.25),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1623,19 +1605,13 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
           const SizedBox(height: 8),
           Text(
             widget.sentence.pronunciation,
-            style: TextStyle(
-              color: colors.primary,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
+            style: context.texts.bodyMedium.copyWith(color: colors.primary),
           ),
           const SizedBox(height: 5),
           Text(
             widget.sentence.translation,
-            style: TextStyle(
-              color: colors.onSurfaceVariant,
-              fontSize: 15,
-            ),
+            style: context.texts.bodyLarge
+                .copyWith(color: colors.onSurfaceVariant),
           ),
           if (widget.sentence.author.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -1647,11 +1623,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 const SizedBox(width: 6),
                 Text(
                   widget.sentence.author,
-                  style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.texts.labelMedium
+                      .copyWith(color: colors.onSurfaceVariant),
                 ),
               ],
             ),
@@ -1782,7 +1755,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
             Text(
               publishBlockedReason ?? '',
               textAlign: TextAlign.center,
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
             ),
           ],
           if (canPublish)
@@ -1832,12 +1806,13 @@ class _ActivityCountCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             loading ? '—' : '$count번',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            style: context.texts.headlineSmall,
           ),
           const SizedBox(height: 3),
           Text(
             label,
-            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11),
+            style: context.texts.labelSmall
+                .copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -1893,14 +1868,13 @@ class _PrivateSectionLabel extends StatelessWidget {
             size: 15, color: colors.onSurfaceVariant),
         const SizedBox(width: 6),
         Text('나만 보는 기록',
-            style: TextStyle(
-                color: colors.onSurfaceVariant,
-                fontSize: 13,
-                fontWeight: FontWeight.w800)),
+            style: context.texts.labelMedium
+                .copyWith(color: colors.onSurfaceVariant)),
         const SizedBox(width: 8),
         Expanded(
           child: Text('공유해도 공개되지 않아요',
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11)),
+              style: context.texts.labelSmall
+                  .copyWith(color: colors.onSurfaceVariant)),
         ),
       ],
     );
@@ -1930,11 +1904,7 @@ class _MasteryBadge extends StatelessWidget {
         const SizedBox(width: 3),
         Text(
           'Lv.${affinity.level} ${affinity.name}',
-          style: TextStyle(
-            color: foreground,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-          ),
+          style: context.texts.labelSmall.copyWith(color: foreground),
         ),
       ]),
     );
@@ -1955,7 +1925,7 @@ class _HistoryLine extends StatelessWidget {
       child: Row(children: [
         Icon(icon, size: 15, color: color),
         const SizedBox(width: 7),
-        Text(text, style: TextStyle(color: color, fontSize: 12)),
+        Text(text, style: context.texts.bodySmall.copyWith(color: color)),
       ]),
     );
   }
@@ -2003,8 +1973,7 @@ class _ScriptImportSheetState extends State<_ScriptImportSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('스크립트로 문장 만들기',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text('스크립트로 문장 만들기', style: context.texts.titleLarge),
               const SizedBox(height: 8),
               Container(
                 key: const ValueKey('script-notice'),
@@ -2017,10 +1986,8 @@ class _ScriptImportSheetState extends State<_ScriptImportSheet> {
                   '유튜브 주소로 자막을 자동으로 가져오지는 않아요. '
                   '영상의 \'스크립트 표시\'에서 직접 복사해 붙여넣어 주세요. '
                   '저작권이 있는 영상의 문장은 개인 학습용으로만 쓰고 공유하지 마세요.',
-                  style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                      fontSize: 12,
-                      height: 1.4),
+                  style: context.texts.bodySmall
+                      .copyWith(color: colors.onSurfaceVariant, height: 1.4),
                 ),
               ),
               const SizedBox(height: 12),

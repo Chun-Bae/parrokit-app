@@ -18,6 +18,7 @@ import '../widgets/card_container.dart';
 import '../widgets/section_title.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 계정 섹션.
 class AccountSection extends StatelessWidget {
@@ -48,7 +49,8 @@ class AccountSection extends StatelessWidget {
     }
   }
 
-  void _showCurrencyInfo(BuildContext context, String title, String description) {
+  void _showCurrencyInfo(
+      BuildContext context, String title, String description) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -104,7 +106,8 @@ class AccountSection extends StatelessWidget {
                             ? CachedNetworkImage(
                                 imageUrl: user!.photoUrl!,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => Shimmer.fromColors(
+                                placeholder: (context, url) =>
+                                    Shimmer.fromColors(
                                   baseColor: Colors.grey[300]!,
                                   highlightColor: Colors.grey[100]!,
                                   child: Container(color: Colors.white),
@@ -118,10 +121,7 @@ class AccountSection extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       user?.displayName ?? user?.email ?? '-',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                      ),
+                      style: context.texts.titleLarge,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 12),
@@ -142,14 +142,16 @@ class AccountSection extends StatelessWidget {
                             icon: Icons.verified_rounded,
                             label: '이메일 인증됨',
                             color: Colors.blueAccent,
-                            backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                            backgroundColor:
+                                Colors.blueAccent.withValues(alpha: 0.1),
                           ),
                         // 패롯 뱃지
                         _StatusBadge(
                           icon: Icons.auto_awesome_rounded,
                           label: '${user?.parrots ?? 0} 패롯',
                           color: const Color(0xFF10B981),
-                          backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          backgroundColor:
+                              const Color(0xFF10B981).withValues(alpha: 0.1),
                           onHelpTap: () => _showCurrencyInfo(
                             context,
                             '패롯(Parrot)이란?',
@@ -161,7 +163,8 @@ class AccountSection extends StatelessWidget {
                           icon: Icons.cookie_rounded,
                           label: '${user?.crackers ?? 0} 크래커',
                           color: const Color(0xFFF59E0B),
-                          backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                          backgroundColor:
+                              const Color(0xFFF59E0B).withValues(alpha: 0.1),
                           onHelpTap: () => _showCurrencyInfo(
                             context,
                             '크래커(Cracker)란?',

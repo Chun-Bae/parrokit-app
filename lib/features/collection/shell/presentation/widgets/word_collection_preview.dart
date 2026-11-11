@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class WordCollectionPreview extends StatefulWidget {
   const WordCollectionPreview({super.key});
@@ -264,16 +265,16 @@ class _ReviewSummary extends StatelessWidget {
             child: const Icon(Icons.bolt_rounded, color: Color(0xFFAA6B20)),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '오늘 다시 볼 단어 6개',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                  style: context.texts.titleMedium,
                 ),
                 SizedBox(height: 4),
-                Text('예문을 소리 내어 말하며 복습해요', style: TextStyle(fontSize: 12)),
+                Text('예문을 소리 내어 말하며 복습해요', style: context.texts.bodySmall),
               ],
             ),
           ),
@@ -296,16 +297,12 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+          Text(title, style: context.texts.titleLarge),
           const SizedBox(height: 3),
           Text(
             subtitle,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 12,
-            ),
+            style: context.texts.bodySmall.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       );
@@ -345,9 +342,7 @@ class _WordCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.word,
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w900)),
+                        Text(item.word, style: context.texts.titleLarge),
                         const SizedBox(height: 3),
                         Text(item.meaning,
                             style: TextStyle(color: colors.onSurfaceVariant)),
@@ -378,8 +373,8 @@ class _WordCard extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 3),
                     Text(item.translation,
-                        style: TextStyle(
-                            color: colors.onSurfaceVariant, fontSize: 12)),
+                        style: context.texts.bodySmall
+                            .copyWith(color: colors.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -391,11 +386,8 @@ class _WordCard extends StatelessWidget {
                   const SizedBox(width: 5),
                   Text(
                     '${item.count}개 문장에서 사용됨',
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.texts.labelSmall
+                        .copyWith(color: colors.onSurfaceVariant),
                   ),
                 ],
               ),

@@ -5,6 +5,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -144,13 +145,10 @@ class _SignInScreenState extends State<SignInScreen> {
                       Image.asset('assets/logos/pa_logo.png',
                           width: 64, height: 64),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         '패로킷',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1,
-                        ),
+                        style: context.texts.headlineLarge
+                            .copyWith(letterSpacing: -1),
                       ),
                     ],
                   ),
@@ -177,13 +175,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         '자동 로그인',
-                        style: TextStyle(
-                          color: Color(0xFF0066FF),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                        style: context.texts.bodyMedium
+                            .copyWith(color: Color(0xFF0066FF)),
                       ),
                       const SizedBox(width: 12),
                     ],
@@ -198,12 +193,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     children: [
                       GestureDetector(
                         onTap: () => context.pushNamed(AppRoutes.findPw),
-                        child: const Text(
+                        child: Text(
                           '비밀번호를 잊으셨나요?',
-                          style: TextStyle(
-                              color: Color(0xFF0066FF),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13),
+                          style: context.texts.labelMedium
+                              .copyWith(color: Color(0xFF0066FF)),
                         ),
                       ),
                       const Padding(
@@ -212,12 +205,10 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       GestureDetector(
                         onTap: () => context.pushNamed(AppRoutes.signUp),
-                        child: const Text(
+                        child: Text(
                           '회원가입',
-                          style: TextStyle(
-                              color: Color(0xFF0066FF),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13),
+                          style: context.texts.labelMedium
+                              .copyWith(color: Color(0xFF0066FF)),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -231,8 +222,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text('또는',
-                            style: TextStyle(
-                                color: Colors.grey.shade500, fontSize: 14)),
+                            style: context.texts.bodyMedium
+                                .copyWith(color: Colors.grey.shade500)),
                       ),
                       const Expanded(child: Divider()),
                     ],
@@ -265,8 +256,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget _buildFormFields() {
-    final WidgetStateColor iconColor =
-        WidgetStateColor.resolveWith((states) {
+    final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
@@ -351,9 +341,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2),
               )
-            : const Text(
+            : Text(
                 '로그인',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.texts.titleMedium,
               ),
       ),
     );

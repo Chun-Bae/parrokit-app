@@ -15,6 +15,7 @@ import '../../../../../core/shared/utils/show_toast.dart';
 import '../../domain/utils/timecode_service.dart';
 import '../models/edit_state.dart';
 import 'video_picker_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class PickedState extends StatefulWidget {
   const PickedState({
@@ -375,20 +376,14 @@ class _PickedStateState extends State<PickedState> {
               Expanded(
                 child: Text(
                   '구간 #${index + 1}',
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+                  style:
+                      context.texts.labelMedium.copyWith(color: cs.onSurface),
                 ),
               ),
               Text(
                 '$startText  -  $endText',
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.texts.labelSmall
+                    .copyWith(color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -566,11 +561,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
               const SizedBox(height: 24),
               Text(
                 '스킵 간격 (초)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
+                style: context.texts.titleMedium.copyWith(color: cs.onSurface),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -590,11 +581,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                     return Center(
                       child: Text(
                         '${skip.toStringAsFixed(skip == skip.truncateToDouble() ? 0 : 1)}초',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: context.texts.titleLarge
+                            .copyWith(color: cs.onSurface),
                       ),
                     );
                   }).toList(),
@@ -632,11 +620,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
               const SizedBox(height: 24),
               Text(
                 '재생 속도',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
+                style: context.texts.titleMedium.copyWith(color: cs.onSurface),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -656,11 +640,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                     return Center(
                       child: Text(
                         '${speed.toStringAsFixed(2)}x',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: context.texts.titleLarge
+                            .copyWith(color: cs.onSurface),
                       ),
                     );
                   }).toList(),
@@ -800,20 +781,16 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             SizedBox(
                               width: 70,
                               child: Text('파일이름',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: cs.onSurfaceVariant)),
+                                  style: context.texts.bodySmall
+                                      .copyWith(color: cs.onSurfaceVariant)),
                             ),
                             Expanded(
                               child: Text(
                                 widget.picked.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: cs.onSurface),
+                                style: context.texts.bodyMedium
+                                    .copyWith(color: cs.onSurface),
                               ),
                             ),
                           ],
@@ -824,19 +801,14 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             SizedBox(
                               width: 70,
                               child: Text('동영상 길이',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: cs.onSurfaceVariant)),
+                                  style: context.texts.bodySmall
+                                      .copyWith(color: cs.onSurfaceVariant)),
                             ),
                             Text(
                               _formatDuration(
                                   widget.controller?.value.duration),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurface,
-                              ),
+                              style: context.texts.labelMedium
+                                  .copyWith(color: cs.onSurface),
                             ),
                           ],
                         ),
@@ -846,10 +818,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             SizedBox(
                               width: 70,
                               child: Text('확장자',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: cs.onSurfaceVariant)),
+                                  style: context.texts.bodySmall
+                                      .copyWith(color: cs.onSurfaceVariant)),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -860,11 +830,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                               ),
                               child: Text(
                                 ext,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: cs.onSurfaceVariant,
-                                ),
+                                style: context.texts.labelSmall
+                                    .copyWith(color: cs.onSurfaceVariant),
                               ),
                             ),
                           ],
@@ -984,12 +951,10 @@ class _TabButton extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight:
-                isActive || isGradient ? FontWeight.w800 : FontWeight.w600,
-            color: color,
-          ),
+          style: context.texts.labelSmall.copyWith(
+              fontWeight:
+                  isActive || isGradient ? FontWeight.w800 : FontWeight.w600,
+              color: color),
         ),
       ],
     );

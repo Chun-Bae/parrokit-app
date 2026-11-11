@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardActionTile extends StatefulWidget {
   const BoardActionTile({
@@ -30,9 +31,8 @@ class _BoardActionTileState extends State<BoardActionTile> {
     final borderColor =
         widget.selected ? widget.accentColor : AppColors.disabled;
     final borderWidth = _pressed ? 2.0 : 1.4;
-    final contentColor = widget.selected
-        ? widget.accentColor
-        : colorScheme.onSurfaceVariant;
+    final contentColor =
+        widget.selected ? widget.accentColor : colorScheme.onSurfaceVariant;
     final labelColor =
         widget.selected ? widget.accentColor : AppColors.textSecondary;
 
@@ -63,11 +63,7 @@ class _BoardActionTileState extends State<BoardActionTile> {
               const SizedBox(height: 2),
               Text(
                 widget.label,
-                style: TextStyle(
-                  color: labelColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
+                style: context.texts.bodySmall.copyWith(color: labelColor),
               ),
             ],
           ),

@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../../domain/utils/timecode_service.dart';
 import 'labeled_text_field.dart';
 import 'time_triplet_field.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class SegmentCard extends StatelessWidget {
   const SegmentCard({
@@ -118,12 +119,9 @@ class SegmentCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 '삭제',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.5),
-                                ),
+                                style: context.texts.labelSmall.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.5)),
                               ),
                             ],
                           ),
@@ -241,11 +239,7 @@ class _SegmentTimeButton extends StatelessWidget {
               alignment: Alignment.center,
               child: Text(
                 symbol,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
+                style: context.texts.bodyMedium.copyWith(color: color),
               ),
             ),
           ),
@@ -253,12 +247,11 @@ class _SegmentTimeButton extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           '추가',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
+          style: context.texts.labelSmall.copyWith(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.5)),
         ),
       ],
     );

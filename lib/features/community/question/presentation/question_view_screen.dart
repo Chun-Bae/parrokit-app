@@ -9,6 +9,7 @@ import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionViewScreen extends StatefulWidget {
   final String questionId;
@@ -187,7 +188,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
-              final deleted = await context.read<CommunityProvider>().deletePost(question.id);
+              final deleted = await context
+                  .read<CommunityProvider>()
+                  .deletePost(question.id);
               if (!mounted) return;
               if (deleted) {
                 showToast('질문이 삭제되었습니다.');
@@ -217,7 +220,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
 
   Future<void> _showAnswerOptionsSheet(Post question, Comment answer) async {
     final currentUser = context.read<UserProvider>().currentUser;
-    final isMyComment = currentUser != null && answer.authorId == currentUser.id;
+    final isMyComment =
+        currentUser != null && answer.authorId == currentUser.id;
 
     await showCommunityOptionsSheet(
       context: context,
@@ -229,7 +233,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
-              final deleted = await context.read<CommunityProvider>().deleteComment(question.id, answer.id);
+              final deleted = await context
+                  .read<CommunityProvider>()
+                  .deleteComment(question.id, answer.id);
               if (!mounted) return;
               showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },
@@ -284,8 +290,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       ),
       title: Text(
         '질문 스레드',
-        style: TextStyle(
-            color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
+        style: context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
@@ -384,10 +389,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       children: [
                         Text(
                           authorName,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: colorScheme.onSurface),
+                          style: context.texts.titleMedium
+                              .copyWith(color: colorScheme.onSurface),
                         ),
                         if (question.questionStatus == 'resolved') ...[
                           const SizedBox(width: 4),
@@ -406,19 +409,18 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.35)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('🍪', style: TextStyle(fontSize: 12)),
+                      Text('🍪', style: context.texts.bodySmall),
                       const SizedBox(width: 4),
                       Text(
                         '${question.rewardCrackers}',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary),
+                        style: context.texts.labelMedium
+                            .copyWith(color: AppColors.primary),
                       ),
                     ],
                   ),
@@ -434,17 +436,14 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           const SizedBox(height: 16),
           Text(
             question.title,
-            style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSurface,
-                height: 1.35),
+            style: context.texts.titleLarge
+                .copyWith(color: colorScheme.onSurface, height: 1.35),
           ),
           const SizedBox(height: 12),
           Text(
             question.content,
-            style: TextStyle(
-                fontSize: 16, color: colorScheme.onSurface, height: 1.5),
+            style: context.texts.titleMedium
+                .copyWith(color: colorScheme.onSurface, height: 1.5),
           ),
           const SizedBox(height: 16),
           if (question.hasImage && question.imageUrls.isNotEmpty)
@@ -456,37 +455,39 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               child: Image.network(
                 question.imageUrls.first,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Icon(Icons.image_not_supported, color: colorScheme.onSurfaceVariant),
+                errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.image_not_supported,
+                    color: colorScheme.onSurfaceVariant),
               ),
             ),
           Text(
             '${_formatTimeAgo(question.createdAt)} · 조회 ${question.viewCount}회',
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+            style: context.texts.bodyMedium
+                .copyWith(color: colorScheme.onSurfaceVariant),
           ),
-          Divider(height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
+          Divider(
+              height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
           Row(
             children: [
               Text('${question.likeCount}',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: colorScheme.onSurface)),
+                  style: context.texts.bodyMedium
+                      .copyWith(color: colorScheme.onSurface)),
               const SizedBox(width: 4),
               Text('유용해요',
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14)),
+                  style: context.texts.bodyMedium
+                      .copyWith(color: colorScheme.onSurface)),
               const SizedBox(width: 16),
               Text('${question.commentCount}',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: colorScheme.onSurface)),
+                  style: context.texts.bodyMedium
+                      .copyWith(color: colorScheme.onSurface)),
               const SizedBox(width: 4),
               Text('답글',
-                  style: TextStyle(color: colorScheme.onSurface, fontSize: 14)),
+                  style: context.texts.bodyMedium
+                      .copyWith(color: colorScheme.onSurface)),
             ],
           ),
-          Divider(height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
+          Divider(
+              height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -527,16 +528,20 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
 
   Widget _buildDivider() {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(height: 8, color: colorScheme.onSurface.withValues(alpha: 0.1));
+    return Container(
+        height: 8, color: colorScheme.onSurface.withValues(alpha: 0.1));
   }
 
   Widget _buildRepliesSection(Post question, List<Comment> answers) {
     final colorScheme = Theme.of(context).colorScheme;
     if (answers.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
         child: Center(
-          child: Text('아직 답변이 없습니다.\n첫 번째 답변을 남겨보세요!', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textDisabled, fontSize: 14)),
+          child: Text('아직 답변이 없습니다.\n첫 번째 답변을 남겨보세요!',
+              textAlign: TextAlign.center,
+              style: context.texts.bodyMedium
+                  .copyWith(color: AppColors.textDisabled)),
         ),
       );
     }
@@ -544,20 +549,23 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     final parentAnswers = answers.where((c) => c.parentId == null).toList();
     final childAnswers = answers.where((c) => c.parentId != null).toList();
 
-    parentAnswers.sort((a, b) => (b.isAccepted ? 1 : 0).compareTo(a.isAccepted ? 1 : 0));
+    parentAnswers
+        .sort((a, b) => (b.isAccepted ? 1 : 0).compareTo(a.isAccepted ? 1 : 0));
 
     final List<Widget> widgets = [];
     for (var i = 0; i < parentAnswers.length; i++) {
       final parent = parentAnswers[i];
       widgets.add(_buildReplyItem(question, parent, isReply: false));
-      
-      final children = childAnswers.where((c) => c.parentId == parent.id).toList();
+
+      final children =
+          childAnswers.where((c) => c.parentId == parent.id).toList();
       for (var child in children) {
         widgets.add(_buildReplyItem(question, child, isReply: true));
       }
-      
+
       if (i < parentAnswers.length - 1 || children.isNotEmpty) {
-        widgets.add(Divider(height: 1, color: colorScheme.onSurface.withValues(alpha: 0.05)));
+        widgets.add(Divider(
+            height: 1, color: colorScheme.onSurface.withValues(alpha: 0.05)));
       }
     }
 
@@ -569,7 +577,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     );
   }
 
-  Widget _buildReplyItem(Post question, Comment answer, {bool isReply = false}) {
+  Widget _buildReplyItem(Post question, Comment answer,
+      {bool isReply = false}) {
     final colorScheme = Theme.of(context).colorScheme;
     final currentUser = context.read<UserProvider>().currentUser;
     final isMe = currentUser != null && question.authorId == currentUser.id;
@@ -605,11 +614,16 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     ? NetworkImage(answererAvatar)
                     : null,
                 child: answererAvatar == null || isBlocked
-                    ? Icon(isBlocked ? Icons.block_rounded : Icons.person, size: isReply ? 14 : 18, color: colorScheme.onSurfaceVariant)
+                    ? Icon(isBlocked ? Icons.block_rounded : Icons.person,
+                        size: isReply ? 14 : 18,
+                        color: colorScheme.onSurfaceVariant)
                     : null,
               ),
               if (!isReply)
-                Container(width: 2, height: 40, color: colorScheme.onSurface.withValues(alpha: 0.2)),
+                Container(
+                    width: 2,
+                    height: 40,
+                    color: colorScheme.onSurface.withValues(alpha: 0.2)),
             ],
           ),
           const SizedBox(width: 12),
@@ -620,20 +634,19 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 Row(
                   children: [
                     Text(isBlocked ? '차단한 사용자' : answererName,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: colorScheme.onSurface)),
+                        style: context.texts.bodyLarge
+                            .copyWith(color: colorScheme.onSurface)),
                     const Spacer(),
                     if (!isBlocked) ...[
                       Text(_formatTimeAgo(answer.createdAt),
-                          style:
-                              TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                          style: context.texts.bodySmall
+                              .copyWith(color: colorScheme.onSurfaceVariant)),
                       const SizedBox(width: 4),
                       IconButton(
                         icon: const Icon(Icons.more_vert_rounded, size: 18),
                         color: colorScheme.onSurfaceVariant,
-                        onPressed: () => _showAnswerOptionsSheet(question, answer),
+                        onPressed: () =>
+                            _showAnswerOptionsSheet(question, answer),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
@@ -649,18 +662,18 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.35)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.verified, color: AppColors.primary, size: 12),
-                        SizedBox(width: 4),
+                      children: [
+                        const Icon(Icons.verified,
+                            color: AppColors.primary, size: 12),
+                        const SizedBox(width: 4),
                         Text('채택된 답변',
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary)),
+                            style: context.texts.labelSmall
+                                .copyWith(color: AppColors.primary)),
                       ],
                     ),
                   ),
@@ -671,17 +684,14 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
                       '@${answer.replyToNickname}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: AppColors.primary),
                     ),
                   ),
                 Text(
                   isBlocked ? '차단된 사용자의 답변입니다.' : answer.content,
-                  style: TextStyle(
-                      fontSize: 15, color: colorScheme.onSurface, height: 1.45),
+                  style: context.texts.bodyLarge
+                      .copyWith(color: colorScheme.onSurface, height: 1.45),
                 ),
                 const SizedBox(height: 12),
                 if (!isBlocked)
@@ -696,10 +706,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                       ? Icons.bolt
                                       : Icons.bolt_outlined,
                                   size: 18,
-                                  color:
-                                      provider.likedCommentIds.contains(answer.id)
-                                          ? AppColors.primary
-                                          : AppColors.textSecondary),
+                                  color: provider.likedCommentIds
+                                          .contains(answer.id)
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary),
                               onPressed: () {
                                 if (currentUser != null) {
                                   provider.toggleCommentLike(
@@ -712,14 +722,16 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                               constraints: const BoxConstraints()),
                           const SizedBox(width: 4),
                           Text('${answer.likeCount}',
-                              style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                              style: context.texts.bodySmall.copyWith(
+                                  color: colorScheme.onSurfaceVariant)),
                           const SizedBox(width: 12),
                           IconButton(
-                            icon: const Icon(Icons.mode_comment_outlined, size: 18, color: AppColors.textSecondary),
+                            icon: const Icon(Icons.mode_comment_outlined,
+                                size: 18, color: AppColors.textSecondary),
                             onPressed: () {
                               provider.setReplyingTo(answer);
-                              FocusScope.of(context).requestFocus(_replyFocusNode);
+                              FocusScope.of(context)
+                                  .requestFocus(_replyFocusNode);
                             },
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -739,11 +751,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                               color: AppColors.primarySoft,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text('채택하기',
-                                style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
+                            child: Text('채택하기',
+                                style: context.texts.bodySmall
+                                    .copyWith(color: AppColors.primary)),
                           ),
                         ),
                     ],
@@ -763,7 +773,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.12))),
+        border: Border(
+            top: BorderSide(
+                color: colorScheme.onSurface.withValues(alpha: 0.12))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -776,24 +788,23 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 children: [
                   Text(
                     '${provider.replyingTo!.authorNickname}님에게 답글 남기는 중',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: context.texts.labelMedium
+                        .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const Spacer(),
                   GestureDetector(
                     onTap: () {
                       provider.setReplyingTo(null);
                     },
-                    child: const Icon(Icons.close, size: 16, color: AppColors.textDisabled),
+                    child: const Icon(Icons.close,
+                        size: 16, color: AppColors.textDisabled),
                   ),
                 ],
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: SafeArea(
               top: false,
               child: Row(
@@ -805,7 +816,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                         ? NetworkImage(currentUser!.photoUrl!)
                         : null,
                     child: currentUser?.photoUrl == null
-                        ? Icon(Icons.person, size: 14, color: colorScheme.onSurfaceVariant)
+                        ? Icon(Icons.person,
+                            size: 14, color: colorScheme.onSurfaceVariant)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -815,19 +827,19 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       focusNode: _replyFocusNode,
                       decoration: InputDecoration(
                         hintText: '답글 남기기...',
-                        hintStyle: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+                        hintStyle: context.texts.bodyMedium
+                            .copyWith(color: colorScheme.onSurfaceVariant),
                         border: InputBorder.none,
                       ),
-                      style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                   ),
                   TextButton(
                     onPressed: _submitReply,
                     child: Text('답글',
-                        style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14)),
+                        style: context.texts.bodyMedium
+                            .copyWith(color: AppColors.primary)),
                   ),
                 ],
               ),

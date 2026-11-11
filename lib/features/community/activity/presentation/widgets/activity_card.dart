@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/activity_item.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class ActivityCard extends StatelessWidget {
   const ActivityCard({
@@ -36,11 +37,8 @@ class ActivityCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: context.texts.titleMedium
+                        .copyWith(color: colorScheme.onSurface),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -50,11 +48,8 @@ class ActivityCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               item.content,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
+              style: context.texts.bodyMedium
+                  .copyWith(color: colorScheme.onSurfaceVariant, height: 1.4),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -63,13 +58,12 @@ class ActivityCard extends StatelessWidget {
               children: [
                 Text(
                   DateFormat('yyyy.MM.dd HH:mm').format(item.createdAt),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: context.texts.bodySmall
+                      .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const Spacer(),
-                _buildCountIcon(context, Icons.thumb_up_alt_outlined, item.likeCount),
+                _buildCountIcon(
+                    context, Icons.thumb_up_alt_outlined, item.likeCount),
                 const SizedBox(width: 12),
                 _buildCountIcon(
                   context,
@@ -77,7 +71,8 @@ class ActivityCard extends StatelessWidget {
                   item.commentCount,
                 ),
                 const SizedBox(width: 12),
-                _buildCountIcon(context, Icons.remove_red_eye_outlined, item.viewCount),
+                _buildCountIcon(
+                    context, Icons.remove_red_eye_outlined, item.viewCount),
               ],
             ),
           ],
@@ -94,10 +89,8 @@ class ActivityCard extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           count.toString(),
-          style: TextStyle(
-            fontSize: 12,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: context.texts.bodySmall
+              .copyWith(color: colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -149,11 +142,7 @@ class ActivityCard extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-        ),
+        style: context.texts.labelSmall.copyWith(color: textColor),
       ),
     );
   }

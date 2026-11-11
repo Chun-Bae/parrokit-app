@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -45,17 +46,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final isAvailable = await context.read<UserProvider>().isNicknameAvailable(nickname);
+    final isAvailable =
+        await context.read<UserProvider>().isNicknameAvailable(nickname);
     setState(() {
       _isNicknameAvailable = isAvailable;
       _hasCheckedNickname = true;
-      _nicknameCheckMessage = isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
+      _nicknameCheckMessage =
+          isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
     });
   }
 
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (!_hasCheckedNickname || !_isNicknameAvailable) {
       showToast('닉네임 중복 확인을 먼저 해주세요.');
       return;
@@ -67,7 +70,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final userProvider = context.read<UserProvider>();
 
     try {
-      await userProvider.signUpWithEmail(email: email, password: password, nickname: nickname);
+      await userProvider.signUpWithEmail(
+          email: email, password: password, nickname: nickname);
       if (!mounted) return;
       showToast('회원가입이 완료되었습니다. 이메일로 전송된 인증 메일을 확인해 주세요.');
       context.pop(); // Go back to sign in
@@ -100,13 +104,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           '회원가입',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: context.texts.titleLarge.copyWith(color: Colors.black),
         ),
         centerTitle: true,
       ),
@@ -120,20 +120,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     '패로킷을 설치해주셔서 감사합니다.',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5),
+                    style: context.texts.headlineSmall
+                        .copyWith(letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '패로킷 회원가입을 위해 이메일과 비밀번호 등록을 진행해주세요.',
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                        letterSpacing: -0.5),
+                    style: context.texts.bodyMedium.copyWith(
+                        color: Colors.grey.shade600, letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 32),
                   Form(
@@ -152,8 +148,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _buildFormFields() {
-    final WidgetStateColor iconColor =
-        WidgetStateColor.resolveWith((states) {
+    final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
         return const Color(0xFF0066FF);
       }
@@ -181,80 +176,82 @@ class _SignUpScreenState extends State<SignUpScreen> {
               borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
             ),
           ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) return '이메일을 입력해주세요.';
-              if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          // 닉네임 입력 및 중복 확인
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _nicknameController,
-                  onChanged: (val) {
-                    setState(() {
-                      _hasCheckedNickname = false;
-                      _nicknameCheckMessage = null;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    labelText: '닉네임',
-                    labelStyle: TextStyle(
-                        color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-                    floatingLabelStyle: const TextStyle(
-                        color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
-                    prefixIconColor: iconColor,
-                    prefixIcon: const Icon(Icons.badge),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey.shade400),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
-                    ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return '이메일을 입력해주세요.';
+            if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        // 닉네임 입력 및 중복 확인
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _nicknameController,
+                onChanged: (val) {
+                  setState(() {
+                    _hasCheckedNickname = false;
+                    _nicknameCheckMessage = null;
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: '닉네임',
+                  labelStyle: TextStyle(
+                      color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                  floatingLabelStyle: const TextStyle(
+                      color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                  prefixIconColor: iconColor,
+                  prefixIcon: const Icon(Icons.badge),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade400),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) return '닉네임을 입력해주세요.';
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: ElevatedButton(
-                  onPressed: _nicknameController.text.trim().isEmpty ? null : _checkNickname,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0066FF),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('중복 확인'),
-                ),
-              ),
-            ],
-          ),
-          if (_hasCheckedNickname && _nicknameCheckMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8, left: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _nicknameCheckMessage!,
-                  style: TextStyle(
-                    color: _isNicknameAvailable ? Colors.green : Colors.red,
-                    fontSize: 12,
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
                   ),
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '닉네임을 입력해주세요.';
+                  }
+                  return null;
+                },
               ),
             ),
-          const SizedBox(height: 16),
-          // 비밀번호
+            const SizedBox(width: 12),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: ElevatedButton(
+                onPressed: _nicknameController.text.trim().isEmpty
+                    ? null
+                    : _checkNickname,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0066FF),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('중복 확인'),
+              ),
+            ),
+          ],
+        ),
+        if (_hasCheckedNickname && _nicknameCheckMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _nicknameCheckMessage!,
+                style: context.texts.bodySmall.copyWith(
+                    color: _isNicknameAvailable ? Colors.green : Colors.red),
+              ),
+            ),
+          ),
+        const SizedBox(height: 16),
+        // 비밀번호
         TextFormField(
           controller: _passwordController,
           obscureText: true,
@@ -330,9 +327,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2),
               )
-            : const Text(
+            : Text(
                 '회원가입',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: context.texts.titleMedium,
               ),
       ),
     );

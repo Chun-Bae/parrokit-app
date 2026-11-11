@@ -16,6 +16,7 @@ import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/features/content-studio/chat-bot/presentation/widgets/chat_bot_fab.dart';
 import 'content_studio_app_bar.dart';
 import 'widgets/content_studio_exit_confirm_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class ContentStudioHubScreen extends StatefulWidget {
   const ContentStudioHubScreen({
@@ -358,10 +359,9 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       '스튜디오 설정',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: context.texts.titleLarge,
                     ),
                     const SizedBox(height: 24),
                     SwitchListTile(
@@ -437,7 +437,7 @@ class _AppBarOptionItem extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: context.texts.bodySmall,
             ),
           ],
         ),

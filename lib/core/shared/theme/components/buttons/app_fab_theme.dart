@@ -3,6 +3,7 @@
 // FloatingActionButton 테마 - FAB 스타일 통합
 
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 /// FloatingActionButton 테마
 FloatingActionButtonThemeData appFabTheme(ColorScheme cs,
@@ -26,12 +27,8 @@ FloatingActionButtonThemeData appFabTheme(ColorScheme cs,
     smallSizeConstraints: const BoxConstraints.tightFor(width: 40, height: 40),
     largeSizeConstraints: const BoxConstraints.tightFor(width: 96, height: 96),
     extendedSizeConstraints: const BoxConstraints.tightFor(height: 48),
-    extendedTextStyle: TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w700,
-      color: cs.onPrimary,
-      letterSpacing: 0.1,
-    ),
+    extendedTextStyle: AppTextScale.bodyMedium
+        .copyWith(color: cs.onPrimary, letterSpacing: 0.1),
     extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
     extendedIconLabelSpacing: 8,
   );

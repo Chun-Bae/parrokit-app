@@ -1,5 +1,6 @@
 // lib/theme/components/app_navigation_bar_theme.dart
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 BottomNavigationBarThemeData appBottomNavigationBar(ColorScheme cs,
     {required bool isDark}) {
@@ -14,7 +15,8 @@ BottomNavigationBarThemeData appBottomNavigationBar(ColorScheme cs,
   );
 }
 
-NavigationBarThemeData appNavigationBar(ColorScheme cs, {required bool isDark}) {
+NavigationBarThemeData appNavigationBar(ColorScheme cs,
+    {required bool isDark}) {
   return NavigationBarThemeData(
     backgroundColor: cs.surface,
     elevation: 0,
@@ -34,11 +36,8 @@ NavigationBarThemeData appNavigationBar(ColorScheme cs, {required bool isDark}) 
     // 라벨 스타일: 선택 vs 미선택
     labelTextStyle: WidgetStateProperty.resolveWith((states) {
       final selected = states.contains(WidgetState.selected);
-      return TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
-        color: selected ? cs.primary : cs.onSurface.withValues(alpha: 0.74),
-      );
+      return AppTextScale.bodySmall.copyWith(
+          color: selected ? cs.primary : cs.onSurface.withValues(alpha: 0.74));
     }),
   );
 }

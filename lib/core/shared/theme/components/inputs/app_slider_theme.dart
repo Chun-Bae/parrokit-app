@@ -3,6 +3,7 @@
 // Slider 테마 - 슬라이더 스타일 통합
 
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 /// Slider 테마
 SliderThemeData appSliderTheme(ColorScheme cs, {required bool isDark}) {
@@ -25,10 +26,7 @@ SliderThemeData appSliderTheme(ColorScheme cs, {required bool isDark}) {
     inactiveTickMarkColor: cs.primary.withValues(alpha: 0.6),
     valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
     valueIndicatorColor: cs.primary,
-    valueIndicatorTextStyle: TextStyle(
-      color: cs.onPrimary,
-      fontWeight: FontWeight.w700,
-      fontSize: 12,
-    ),
+    valueIndicatorTextStyle:
+        AppTextScale.bodySmall.copyWith(color: cs.onPrimary),
   );
 }

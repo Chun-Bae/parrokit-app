@@ -6,6 +6,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 로그아웃 섹션.
 class LogoutSection extends StatelessWidget {
@@ -72,11 +73,11 @@ class LogoutSection extends StatelessWidget {
         onPressed: () => _confirmLogout(context),
         child: Text(
           '로그아웃',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.texts.labelMedium.copyWith(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.6)),
         ),
       ),
     );

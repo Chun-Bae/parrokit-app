@@ -10,10 +10,11 @@ import 'package:parrokit/features/community/shell/domain/data/community_filters.
 
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardWriteScreen extends StatefulWidget {
   final Post? editPost;
-  
+
   const BoardWriteScreen({super.key, this.editPost});
 
   @override
@@ -31,7 +32,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
   bool _isTagInputActive = false;
   final bool _isImageUploading = false;
   final ImagePicker _picker = ImagePicker();
-  
+
   // 수정 모드일 때 유지되는 기존 파이어베이스 이미지 URL들
   List<String> _existingImageUrls = [];
   // 갤러리에서 새로 추가한 로컬 파일들
@@ -80,11 +81,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                   child: Text(
                     '게시판 주제 선택',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: context.texts.titleMedium
+                        .copyWith(color: colorScheme.onSurface),
                   ),
                 ),
                 Wrap(
@@ -104,16 +102,13 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                       },
                       selectedColor: blue600,
                       backgroundColor: colorScheme.surfaceContainerHigh,
-                      labelStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
-                      ),
+                      labelStyle: context.texts.titleMedium.copyWith(
+                          color: selected
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurfaceVariant),
                       side: BorderSide(
                         width: 1,
-                        color: selected
-                            ? blue600
-                            : colorScheme.surface,
+                        color: selected ? blue600 : colorScheme.surface,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(50),
@@ -139,8 +134,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     }
 
     // 다이얼로그 텍스트와 퍼센티지를 업데이트하기 위한 변수 및 함수
-    String statusText = _selectedImages.isEmpty 
-        ? (_isEditMode ? '게시글을 수정하는 중입니다...' : '게시글을 등록하는 중입니다...') 
+    String statusText = _selectedImages.isEmpty
+        ? (_isEditMode ? '게시글을 수정하는 중입니다...' : '게시글을 등록하는 중입니다...')
         : '사진 업로드 준비 중...';
     double? currentProgress;
     StateSetter? dialogSetState;
@@ -173,7 +168,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
 
     final provider = context.read<CommunityProvider>();
     bool success;
-    
+
     if (_isEditMode) {
       success = await provider.editPost(
         widget.editPost!.id,
@@ -186,8 +181,9 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
         newImageFiles: _selectedImages.map((x) => File(x.path)).toList(),
         onImageProgress: (current, total, progress) {
           if (dialogSetState != null) {
-            dialogSetState!((){
-              statusText = '새 사진 업로드 중... ($current/$total)\n${(progress * 100).toInt()}% 완료';
+            dialogSetState!(() {
+              statusText =
+                  '새 사진 업로드 중... ($current/$total)\n${(progress * 100).toInt()}% 완료';
               currentProgress = progress;
             });
           }
@@ -205,8 +201,9 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
         imageFiles: _selectedImages.map((x) => File(x.path)).toList(),
         onImageProgress: (current, total, progress) {
           if (dialogSetState != null) {
-            dialogSetState!((){
-              statusText = '사진 업로드 중... ($current/$total)\n${(progress * 100).toInt()}% 완료';
+            dialogSetState!(() {
+              statusText =
+                  '사진 업로드 중... ($current/$total)\n${(progress * 100).toInt()}% 완료';
               currentProgress = progress;
             });
           }
@@ -243,7 +240,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     const lineColor = AppColors.disabled;
     const mutedText = AppColors.textDisabled;
     const tipBlue = AppColors.primary;
-    final panelBg = isDark ? const Color(0xFF3A4048) : AppColors.surfaceContainer;
+    final panelBg =
+        isDark ? const Color(0xFF3A4048) : AppColors.surfaceContainer;
     const contentBaseHeight = 230.0;
     const tipAreaHeight = 190.0;
     final contentFieldHeight =
@@ -263,17 +261,15 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.maybePop(context),
-                        icon: Icon(Icons.close, size: 34, color: colorScheme.onSurface),
+                        icon: Icon(Icons.close,
+                            size: 34, color: colorScheme.onSurface),
                       ),
                       Expanded(
                         child: Center(
                           child: Text(
                             _isEditMode ? '게시글 수정' : '게시글 작성',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: colorScheme.onSurface,
-                            ),
+                            style: context.texts.titleLarge
+                                .copyWith(color: colorScheme.onSurface),
                           ),
                         ),
                       ),
@@ -288,13 +284,10 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               )
                             : Text(
                                 _isEditMode ? '수정' : '완료',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: _canComplete
-                                      ? AppColors.primary
-                                      : AppColors.disabled,
-                                ),
+                                style: context.texts.titleLarge.copyWith(
+                                    color: _canComplete
+                                        ? AppColors.primary
+                                        : AppColors.disabled),
                               ),
                       ),
                     ],
@@ -317,11 +310,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               children: [
                                 Text(
                                   _selectedBoardTopic ?? '주제를 선택해주세요.',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    color: colorScheme.onSurface,
-                                  ),
+                                  style: context.texts.titleLarge
+                                      .copyWith(color: colorScheme.onSurface),
                                 ),
                                 const SizedBox(width: 8),
                                 Icon(Icons.keyboard_arrow_down_rounded,
@@ -340,13 +330,10 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                           child: TextField(
                             controller: _titleController,
                             onChanged: (_) => setState(() {}),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: '제목을 입력하세요.',
-                              hintStyle: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: mutedText,
-                              ),
+                              hintStyle: context.texts.headlineSmall
+                                  .copyWith(color: mutedText),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
@@ -354,11 +341,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               disabledBorder: InputBorder.none,
                               contentPadding: EdgeInsets.zero,
                             ),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
+                            style: context.texts.headlineSmall
+                                .copyWith(color: AppColors.textPrimary),
                           ),
                         ),
                         Padding(
@@ -372,15 +356,11 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               maxLines: null,
                               expands: true,
                               textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText:
                                     '쉐도잉에 도움 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.\n#자막 #쉐도잉 #발음 #미드추천',
-                                hintStyle: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.6,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textDisabled,
-                                ),
+                                hintStyle: context.texts.titleMedium.copyWith(
+                                    height: 1.6, color: AppColors.textDisabled),
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -388,12 +368,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 disabledBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                               ),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.6,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textPrimary,
-                              ),
+                              style: context.texts.titleLarge.copyWith(
+                                  height: 1.6, color: AppColors.textPrimary),
                             ),
                           ),
                         ),
@@ -408,11 +384,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 Expanded(
                                   child: Text(
                                     '쉐도잉 학습과 영상 자막 활용 경험을 나눠보세요',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : tipBlue,
-                                    ),
+                                    style: context.texts.bodyMedium.copyWith(
+                                        color: isDark ? Colors.white : tipBlue),
                                   ),
                                 ),
                               ],
@@ -504,22 +477,21 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                       focusNode: _tagFocusNode,
                       decoration: InputDecoration(
                         hintText: '태그를 입력하고 엔터를 누르세요',
-                        hintStyle: const TextStyle(
-                            color: AppColors.textDisabled, fontSize: 15),
+                        hintStyle: context.texts.bodyLarge
+                            .copyWith(color: AppColors.textDisabled),
                         border: InputBorder.none,
                         isDense: true,
                         suffixText: '${_tags.length}/${PostValidator.maxTags}',
-                        suffixStyle: const TextStyle(
-                            color: AppColors.textDisabled,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600),
+                        suffixStyle: context.texts.labelMedium
+                            .copyWith(color: AppColors.textDisabled),
                       ),
                       textInputAction: TextInputAction.done,
                       onSubmitted: (val) {
                         final text = val.trim();
                         if (text.isNotEmpty && !_tags.contains(text)) {
                           if (text.length > PostValidator.maxTagLength) {
-                            showToast('태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.');
+                            showToast(
+                                '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.');
                             return;
                           }
                           if (_tags.length >= PostValidator.maxTags) {
@@ -544,12 +516,14 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       clipBehavior: Clip.none, // 스크롤 시 잘림 방지
-                      itemCount: _existingImageUrls.length + _selectedImages.length,
+                      itemCount:
+                          _existingImageUrls.length + _selectedImages.length,
                       separatorBuilder: (context, index) =>
                           const SizedBox(width: 6), // 우측 패딩을 고려하여 간격 축소
                       itemBuilder: (context, index) {
-                        final bool isExisting = index < _existingImageUrls.length;
-                        
+                        final bool isExisting =
+                            index < _existingImageUrls.length;
+
                         return Padding(
                           padding: const EdgeInsets.only(top: 10, right: 10),
                           child: Stack(
@@ -557,19 +531,21 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: isExisting 
-                                  ? Image.network(
-                                      _existingImageUrls[index],
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.file(
-                                      File(_selectedImages[index - _existingImageUrls.length].path),
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
+                                child: isExisting
+                                    ? Image.network(
+                                        _existingImageUrls[index],
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        File(_selectedImages[index -
+                                                _existingImageUrls.length]
+                                            .path),
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
                               Positioned(
                                 top: -8,
@@ -580,14 +556,16 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                       if (isExisting) {
                                         _existingImageUrls.removeAt(index);
                                       } else {
-                                        _selectedImages.removeAt(index - _existingImageUrls.length);
+                                        _selectedImages.removeAt(
+                                            index - _existingImageUrls.length);
                                       }
                                     });
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: colorScheme.scrim.withValues(alpha: 0.55),
+                                      color: colorScheme.scrim
+                                          .withValues(alpha: 0.55),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -614,34 +592,36 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                                final int currentCount = _existingImageUrls.length + _selectedImages.length;
-                                final int remainingSlot = 5 - currentCount;
-                                if (remainingSlot <= 0) {
-                                  showToast('사진은 최대 5장까지만 첨부할 수 있습니다.');
-                                  return;
-                                }
+                          final int currentCount = _existingImageUrls.length +
+                              _selectedImages.length;
+                          final int remainingSlot = 5 - currentCount;
+                          if (remainingSlot <= 0) {
+                            showToast('사진은 최대 5장까지만 첨부할 수 있습니다.');
+                            return;
+                          }
 
-                                List<XFile>? images;
-                                try {
-                                  images = await _picker.pickMultiImage(
-                                    limit: remainingSlot, // 갤러리 자체에서 선택 개수 제한
-                                    requestFullMetadata:
-                                        false, // 아이클라우드 및 메타데이터 로드 실패 버그 우회용
-                                  );
-                                } catch (e) {
-                                  if (!context.mounted) return;
-                                  showToast('지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.');
-                                  return;
-                                }
-                                if (images.isEmpty) return;
+                          List<XFile>? images;
+                          try {
+                            images = await _picker.pickMultiImage(
+                              limit: remainingSlot, // 갤러리 자체에서 선택 개수 제한
+                              requestFullMetadata:
+                                  false, // 아이클라우드 및 메타데이터 로드 실패 버그 우회용
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            showToast('지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.');
+                            return;
+                          }
+                          if (images.isEmpty) return;
 
-                                setState(() {
-                                  _selectedImages.addAll(images!);
-                                });
-                              },
+                          setState(() {
+                            _selectedImages.addAll(images!);
+                          });
+                        },
                         child: _BottomTool(
                             icon: Icons.image_outlined,
-                            label: '사진 (${_existingImageUrls.length + _selectedImages.length}/5)'),
+                            label:
+                                '사진 (${_existingImageUrls.length + _selectedImages.length}/5)'),
                       ),
                       const SizedBox(width: 28),
                       GestureDetector(
@@ -689,13 +669,9 @@ class _TipBadge extends StatelessWidget {
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(5),
       ),
-      child: const Text(
+      child: Text(
         'TIP',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: AppColors.primary,
-        ),
+        style: context.texts.bodyMedium.copyWith(color: AppColors.primary),
       ),
     );
   }
@@ -721,12 +697,8 @@ class _TipBullet extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              fontWeight: FontWeight.w500,
-              color: bodyColor,
-            ),
+            style: context.texts.bodyMedium
+                .copyWith(height: 1.45, color: bodyColor),
           ),
         ),
       ],
@@ -755,11 +727,7 @@ class _BottomTool extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
+          style: context.texts.titleMedium.copyWith(color: color),
         ),
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 가져올 곳으로 고른 방법. [url]이 null이면 파일에서, 아니면 그 주소에서 가져온다.
 class SentenceImportSource {
@@ -121,8 +122,8 @@ class _SentenceImportMethodDialogState
               const SizedBox(height: 2),
               Text('${_page + 1} / $_pageCount',
                   key: const ValueKey('import-page-label'),
-                  style:
-                      TextStyle(color: colors.onSurfaceVariant, fontSize: 11)),
+                  style: context.texts.labelSmall
+                      .copyWith(color: colors.onSurfaceVariant)),
             ]),
           ),
           IconButton(
@@ -162,9 +163,9 @@ class _SentenceImportMethodDialogState
                 key: const ValueKey('url-import-confirm'),
                 onPressed: () => Navigator.pop(
                     context, SentenceImportSource.url(_url.text.trim())),
-                child: const Text('주소에서\n가져오기',
+                child: Text('주소에서\n가져오기',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12)),
+                    style: context.texts.bodySmall),
               ),
             ]),
             const SizedBox(height: 10),
@@ -229,8 +230,7 @@ class _SentenceImportMethodDialogState
     Widget cell(String text, {bool head = false}) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           child: Text(text,
-              style: TextStyle(
-                  fontSize: 12,
+              style: context.texts.bodySmall.copyWith(
                   fontWeight: head ? FontWeight.w800 : FontWeight.w500,
                   color: head ? colors.onPrimaryContainer : null)),
         );
@@ -264,7 +264,8 @@ class _SentenceImportMethodDialogState
       ),
       const SizedBox(height: 12),
       Text('실제 엑셀 화면 예시 (눌러서 크게 보기)',
-          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12)),
+          style:
+              context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant)),
       const SizedBox(height: 6),
       GestureDetector(
         key: const ValueKey('import-sample-image'),
@@ -314,8 +315,7 @@ class _SentenceImportMethodDialogState
 
   Widget _section(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 4),
-        child: Text(text,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+        child: Text(text, style: context.texts.labelMedium),
       );
 
   Widget _bullet(String text) => Padding(
@@ -329,7 +329,7 @@ class _SentenceImportMethodDialogState
             ),
             Expanded(
                 child: Text(text,
-                    style: const TextStyle(fontSize: 13, height: 1.4))),
+                    style: context.texts.labelMedium.copyWith(height: 1.4))),
           ],
         ),
       );

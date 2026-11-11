@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityShellFiltersSection extends StatelessWidget {
   const CommunityShellFiltersSection({
@@ -70,7 +71,8 @@ class CommunityShellFiltersSection extends StatelessWidget {
 }
 
 class _BoardChip extends StatelessWidget {
-  const _BoardChip({required this.label, required this.isSelected, required this.onTap});
+  const _BoardChip(
+      {required this.label, required this.isSelected, required this.onTap});
 
   final String label;
   final bool isSelected;
@@ -95,15 +97,14 @@ class _BoardChip extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
-                color: isSelected ? cs.onPrimary : cs.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                fontSize: 14,
-              ),
+              style: context.texts.bodyMedium.copyWith(
+                  color: isSelected ? cs.onPrimary : cs.onSurface,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600),
             ),
             if (isDropdown) ...[
               const SizedBox(width: 4),
-              Icon(Icons.keyboard_arrow_down, color: isSelected ? cs.onPrimary : cs.onSurface, size: 18),
+              Icon(Icons.keyboard_arrow_down,
+                  color: isSelected ? cs.onPrimary : cs.onSurface, size: 18),
             ],
           ],
         ),
@@ -113,7 +114,8 @@ class _BoardChip extends StatelessWidget {
 }
 
 class _QuestionTab extends StatelessWidget {
-  const _QuestionTab({required this.title, required this.isSelected, required this.onTap});
+  const _QuestionTab(
+      {required this.title, required this.isSelected, required this.onTap});
 
   final String title;
   final bool isSelected;
@@ -132,11 +134,9 @@ class _QuestionTab extends StatelessWidget {
           children: [
             Text(
               title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? cs.onSurface : cs.onSurfaceVariant,
-              ),
+              style: context.texts.bodyLarge.copyWith(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? cs.onSurface : cs.onSurfaceVariant),
             ),
             const SizedBox(height: 4),
             AnimatedContainer(
@@ -157,7 +157,8 @@ class _QuestionTab extends StatelessWidget {
 }
 
 class _VoteToggle extends StatelessWidget {
-  const _VoteToggle({required this.selectedVoteFilter, required this.onVoteFilterSelected});
+  const _VoteToggle(
+      {required this.selectedVoteFilter, required this.onVoteFilterSelected});
 
   final String selectedVoteFilter;
   final ValueChanged<String> onVoteFilterSelected;
@@ -170,9 +171,9 @@ class _VoteToggle extends StatelessWidget {
         ? CommunityFilters.vote[0]
         : selectedVoteFilter;
     final selectedIndex = CommunityFilters.vote.indexOf(normalizedFilter).clamp(
-      0,
-      CommunityFilters.vote.length - 1,
-    );
+          0,
+          CommunityFilters.vote.length - 1,
+        );
     final widthFactor = 1 / CommunityFilters.vote.length;
 
     return Padding(
@@ -182,14 +183,18 @@ class _VoteToggle extends StatelessWidget {
         child: Stack(
           children: [
             AnimatedAlign(
-              alignment: Alignment(-1 + (selectedIndex * 2 / (CommunityFilters.vote.length - 1)), 0),
+              alignment: Alignment(
+                  -1 + (selectedIndex * 2 / (CommunityFilters.vote.length - 1)),
+                  0),
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
               child: FractionallySizedBox(
                 widthFactor: widthFactor,
                 child: Container(
                   height: h,
-                  decoration: BoxDecoration(color: cs.primary, borderRadius: BorderRadius.circular(6)),
+                  decoration: BoxDecoration(
+                      color: cs.primary,
+                      borderRadius: BorderRadius.circular(6)),
                 ),
               ),
             ),
@@ -214,16 +219,17 @@ class _VoteToggle extends StatelessWidget {
                           Icon(
                             icon,
                             size: 16,
-                            color: isSelected ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.4),
+                            color: isSelected
+                                ? cs.onPrimary
+                                : cs.onSurface.withValues(alpha: 0.4),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             filter,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.4),
-                            ),
+                            style: context.texts.bodyMedium.copyWith(
+                                color: isSelected
+                                    ? cs.onPrimary
+                                    : cs.onSurface.withValues(alpha: 0.4)),
                           ),
                         ],
                       ),

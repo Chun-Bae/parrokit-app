@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 단계별 뱃지(`assets/badges/affinity_N.svg`)와 같은 계열의 칩 배경색과 글자색.
 (Color, Color) affinityChipColors(int level) {
@@ -49,15 +50,16 @@ class SentenceAffinityBar extends StatelessWidget {
               height: compact ? 20 : 28),
           SizedBox(width: compact ? 6 : 8),
           Text(title,
-              style: TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: compact ? 12 : 14)),
+              style: compact
+                  ? context.texts.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800)
+                  : context.texts.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w800)),
           if (compact && !loading) ...[
             const Spacer(),
             Text(affinity.isMax ? 'MAX' : '$remaining점 남음',
-                style: TextStyle(
-                    color: colors.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700)),
+                style: context.texts.labelSmall
+                    .copyWith(color: colors.onSurfaceVariant)),
           ],
         ]),
         SizedBox(height: compact ? 6 : 8),
@@ -76,7 +78,8 @@ class SentenceAffinityBar extends StatelessWidget {
         if (!compact) ...[
           const SizedBox(height: 6),
           Text(hint,
-              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11)),
+              style: context.texts.labelSmall
+                  .copyWith(color: colors.onSurfaceVariant)),
         ],
       ],
     );

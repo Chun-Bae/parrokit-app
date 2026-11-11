@@ -3,6 +3,7 @@
 // PopupMenu 테마 - 팝업 메뉴 스타일 통합
 
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 /// PopupMenu 테마
 PopupMenuThemeData appPopupMenuTheme(ColorScheme cs, {required bool isDark}) {
@@ -20,17 +21,9 @@ PopupMenuThemeData appPopupMenuTheme(ColorScheme cs, {required bool isDark}) {
     ),
     position: PopupMenuPosition.under,
     enableFeedback: true,
-    textStyle: TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: cs.onSurface,
-    ),
+    textStyle: AppTextScale.bodyMedium.copyWith(color: cs.onSurface),
     labelTextStyle: WidgetStateProperty.all(
-      TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: cs.onSurface,
-      ),
+      AppTextScale.bodyMedium.copyWith(color: cs.onSurface),
     ),
     menuPadding: const EdgeInsets.symmetric(vertical: 8),
   );

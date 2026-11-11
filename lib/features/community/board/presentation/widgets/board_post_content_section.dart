@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardPostContentSection extends StatelessWidget {
   const BoardPostContentSection({super.key, required this.post});
@@ -20,7 +21,7 @@ class BoardPostContentSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             post.title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, height: 1.25),
+            style: context.texts.titleLarge.copyWith(height: 1.25),
           ),
         ),
         const SizedBox(height: 16),
@@ -28,12 +29,8 @@ class BoardPostContentSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             post.content.replaceAll(RegExp(r'!\[.*?\]\(.*?\)'), '').trim(),
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              height: 1.6,
-              color: AppColors.textPrimary,
-            ),
+            style: context.texts.titleMedium
+                .copyWith(height: 1.6, color: AppColors.textPrimary),
           ),
         ),
         if (post.hasImage && post.imageUrls.isNotEmpty) ...[
@@ -60,7 +57,8 @@ class BoardPostContentSection extends StatelessWidget {
                       ),
                       errorWidget: (context, url, error) => Container(
                         color: colorScheme.surfaceContainerHigh,
-                        child: Icon(Icons.broken_image, color: colorScheme.onSurfaceVariant),
+                        child: Icon(Icons.broken_image,
+                            color: colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -81,11 +79,8 @@ class BoardPostContentSection extends StatelessWidget {
                   .map(
                     (tag) => Text(
                       '#$tag',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDisabled,
-                      ),
+                      style: context.texts.bodyLarge
+                          .copyWith(color: AppColors.textDisabled),
                     ),
                   )
                   .toList(),

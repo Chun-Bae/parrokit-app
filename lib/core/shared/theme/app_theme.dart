@@ -1,6 +1,7 @@
 // lib/theme/app_theme.dart
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'app_tokens.dart';
 
 // Navigation
 import 'components/navigation/app_appbar_theme.dart';
@@ -62,7 +63,8 @@ class AppTheme {
       surface: isDark ? AppColors.surfaceDark : AppColors.surface,
       onSurface: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
       surfaceTint: Colors.transparent,
-      surfaceContainerHighest: isDark ? AppColors.surfaceContainerDark : AppColors.surfaceContainer,
+      surfaceContainerHighest:
+          isDark ? AppColors.surfaceContainerDark : AppColors.surfaceContainer,
     );
 
     return ThemeData(
@@ -122,6 +124,15 @@ class AppTheme {
       bottomSheetTheme: appBottomSheetTheme(cs, isDark: isDark),
       snackBarTheme: appSnackBarTheme(cs, isDark: isDark),
       progressIndicatorTheme: appProgressIndicatorTheme(cs, isDark: isDark),
+
+      // ─────────────────────────────────────────────────────────────────
+      // Design Tokens
+      // ─────────────────────────────────────────────────────────────────
+      // 화면에서는 AppTokens.of(context) / HomeTokens.of(context) 로 꺼내 쓴다.
+      extensions: <ThemeExtension<dynamic>>[
+        isDark ? AppTokens.dark : AppTokens.light,
+        isDark ? HomeTokens.dark : HomeTokens.light,
+      ],
 
       // ─────────────────────────────────────────────────────────────────
       // Misc

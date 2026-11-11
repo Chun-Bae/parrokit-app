@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityMenuHeaderSection extends StatelessWidget {
   const CommunityMenuHeaderSection({super.key});
@@ -23,11 +24,8 @@ class CommunityMenuHeaderSection extends StatelessWidget {
             Expanded(
               child: Text(
                 '커뮤니티 메뉴',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface,
-                ),
+                style: context.texts.headlineSmall
+                    .copyWith(color: colorScheme.onSurface),
               ),
             ),
             IconButton(

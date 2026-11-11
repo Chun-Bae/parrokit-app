@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 비디오 플레이어 전용 컨트롤 바.
 /// [-3초] [처음으로] [재생/일시정지] [+3초] 버튼으로 구성된다.
@@ -290,13 +291,10 @@ class _ControlButton extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 9,
-            color: enabled
-                ? (isActive ? cs.primary : cs.onSurfaceVariant)
-                : cs.onSurface.withValues(alpha: 0.3),
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.texts.labelSmall.copyWith(
+              color: enabled
+                  ? (isActive ? cs.primary : cs.onSurfaceVariant)
+                  : cs.onSurface.withValues(alpha: 0.3)),
         ),
       ],
     );

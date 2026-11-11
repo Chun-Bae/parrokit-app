@@ -4,6 +4,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class VoteStickyCommentBar extends StatelessWidget {
   const VoteStickyCommentBar({
@@ -39,12 +40,14 @@ class VoteStickyCommentBar extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '${provider.replyingTo?.authorNickname} 님에게 답글 남기는 중',
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: context.texts.labelMedium
+                        .copyWith(color: AppColors.textSecondary),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => provider.setReplyingTo(null),
-                  child: const Icon(Icons.close, size: 16, color: AppColors.textTertiary),
+                  child: const Icon(Icons.close,
+                      size: 16, color: AppColors.textTertiary),
                 ),
               ],
             ),
@@ -59,7 +62,9 @@ class VoteStickyCommentBar extends StatelessWidget {
                 offset: const Offset(0, -4),
               ),
             ],
-            border: const Border(top: BorderSide(color: AppColors.surfaceContainerHigh, width: 1)),
+            border: const Border(
+                top: BorderSide(
+                    color: AppColors.surfaceContainerHigh, width: 1)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: SafeArea(
@@ -68,11 +73,14 @@ class VoteStickyCommentBar extends StatelessWidget {
                 CircleAvatar(
                   radius: 16,
                   backgroundColor: AppColors.surfaceContainerHigh,
-                  backgroundImage: (currentUser?.photoUrl != null && currentUser!.photoUrl!.isNotEmpty)
+                  backgroundImage: (currentUser?.photoUrl != null &&
+                          currentUser!.photoUrl!.isNotEmpty)
                       ? CachedNetworkImageProvider(currentUser.photoUrl!)
                       : null,
-                  child: (currentUser?.photoUrl == null || currentUser!.photoUrl!.isEmpty)
-                      ? const Icon(Icons.person, color: AppColors.textDisabled, size: 18)
+                  child: (currentUser?.photoUrl == null ||
+                          currentUser!.photoUrl!.isEmpty)
+                      ? const Icon(Icons.person,
+                          color: AppColors.textDisabled, size: 18)
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -97,7 +105,7 @@ class VoteStickyCommentBar extends StatelessWidget {
                         isDense: true,
                         contentPadding: EdgeInsets.symmetric(vertical: 8.0),
                       ),
-                      style: const TextStyle(fontSize: 14),
+                      style: context.texts.bodyMedium,
                     ),
                   ),
                 ),

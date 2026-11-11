@@ -25,6 +25,7 @@ import '../widgets/breadcrumb_bar.dart';
 import '../widgets/folder_grid.dart';
 import '../widgets/group_collection_manager_modal.dart';
 import '../widgets/clip_list_view.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// [역할]
 /// 라이브러리의 '폴더' 탭 UI 섹션.
@@ -1075,9 +1076,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                                   size: 16, color: cs.onErrorContainer),
                               const SizedBox(width: 8),
                               Text('삭제 모드 — 컬렉션을 눌러 삭제',
-                                  style: TextStyle(
-                                      color: cs.onErrorContainer,
-                                      fontSize: 13)),
+                                  style: context.texts.labelMedium
+                                      .copyWith(color: cs.onErrorContainer)),
                               const Spacer(),
                               TextButton(
                                 onPressed: _toggleDeleteMode,

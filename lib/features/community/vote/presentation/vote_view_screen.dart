@@ -22,6 +22,7 @@ import 'vote_screen.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class VoteViewScreen extends StatefulWidget {
   final String voteId;
@@ -169,8 +170,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
         ),
         title: Text(
           '투표 상세 토론',
-          style: TextStyle(
-              color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
+          style:
+              context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -232,11 +233,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                     child: Text(
                       '토론 & 의견 (${provider.currentPostComments.length})',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: context.texts.titleMedium
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                   ),
 
@@ -245,10 +243,10 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40.0),
                       child: Center(
-                      child: Text(
+                        child: Text(
                           '첫 의견을 작성해 투표 토론에 참여해보세요!',
-                          style:
-                              TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                          style: context.texts.bodyMedium
+                              .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ),
                     )
@@ -295,7 +293,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
       }
 
       if (i < parentComments.length - 1) {
-        widgets.add(Divider(color: colorScheme.onSurface.withValues(alpha: 0.06), height: 1));
+        widgets.add(Divider(
+            color: colorScheme.onSurface.withValues(alpha: 0.06), height: 1));
       }
     }
     return widgets;
@@ -318,7 +317,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
         decoration: isReply
             ? BoxDecoration(
                 border: Border(
-                  left: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.16), width: 3),
+                  left: BorderSide(
+                      color: colorScheme.onSurface.withValues(alpha: 0.16),
+                      width: 3),
                 ),
               )
             : null,
@@ -338,7 +339,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       comment.authorAvatarUrl!.isEmpty ||
                       isDeleted ||
                       isBlocked)
-                  ? Icon(isBlocked ? Icons.block_rounded : Icons.person, color: AppColors.textDisabled, size: 20)
+                  ? Icon(isBlocked ? Icons.block_rounded : Icons.person,
+                      color: AppColors.textDisabled, size: 20)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -355,13 +357,12 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                             : isBlocked
                                 ? '차단한 사용자'
                                 : comment.authorNickname,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: colorScheme.onSurface,
-                        ),
+                        style: context.texts.bodyMedium
+                            .copyWith(color: colorScheme.onSurface),
                       ),
-                      if (comment.authorId == postAuthorId && !isDeleted && !isBlocked) ...[
+                      if (comment.authorId == postAuthorId &&
+                          !isDeleted &&
+                          !isBlocked) ...[
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -372,11 +373,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                           ),
                           child: Text(
                             '작성자',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: context.texts.labelSmall
+                                .copyWith(color: AppColors.primary),
                           ),
                         ),
                       ],
@@ -384,10 +382,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       if (comment.createdAt != null && !isBlocked)
                         Text(
                           _formatTimeAgo(comment.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          style: context.texts.bodySmall
+                              .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       if (!isBlocked) ...[
                         const SizedBox(width: 4),
@@ -402,16 +398,16 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                if (isReply && comment.replyToNickname != null && !isDeleted && !isBlocked)
+                  if (isReply &&
+                      comment.replyToNickname != null &&
+                      !isDeleted &&
+                      !isBlocked)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
                         '@${comment.replyToNickname}',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: context.texts.labelMedium
+                            .copyWith(color: AppColors.primary),
                       ),
                     ),
                   Text(
@@ -420,13 +416,11 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                         : isBlocked
                             ? '차단된 사용자의 댓글입니다.'
                             : comment.content,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDeleted
-                          ? AppColors.textDisabled
-                          : colorScheme.onSurface,
-                      height: 1.45,
-                    ),
+                    style: context.texts.bodyMedium.copyWith(
+                        color: isDeleted
+                            ? AppColors.textDisabled
+                            : colorScheme.onSurface,
+                        height: 1.45),
                   ),
                   const SizedBox(height: 12),
                   if (!isDeleted && !isBlocked)
@@ -445,17 +439,17 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                                     ? Icons.favorite_rounded
                                     : Icons.favorite_border_rounded,
                                 size: 15,
-                                color: isLiked ? AppColors.danger : colorScheme.onSurfaceVariant,
+                                color: isLiked
+                                    ? AppColors.danger
+                                    : colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${comment.likeCount}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color:
-                                      isLiked ? AppColors.danger : colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: context.texts.bodySmall.copyWith(
+                                    color: isLiked
+                                        ? AppColors.danger
+                                        : colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
@@ -468,11 +462,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                           },
                           child: Text(
                             '답글 달기',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: context.texts.bodySmall
+                                .copyWith(color: colorScheme.onSurfaceVariant),
                           ),
                         ),
                       ],
@@ -502,7 +493,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
-              final deleted = await context.read<CommunityProvider>().deleteComment(widget.voteId, comment.id);
+              final deleted = await context
+                  .read<CommunityProvider>()
+                  .deleteComment(widget.voteId, comment.id);
               if (!mounted) return;
               showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
             },
@@ -552,7 +545,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
-              final deleted = await context.read<CommunityProvider>().deletePost(vote.id);
+              final deleted =
+                  await context.read<CommunityProvider>().deletePost(vote.id);
               if (!mounted) return;
               if (deleted) {
                 showToast('투표가 삭제되었습니다.');
@@ -598,8 +592,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                 Expanded(
                   child: Text(
                     '${provider.replyingTo?.authorNickname} 님에게 답글 남기는 중',
-                    style:
-                        const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: context.texts.labelMedium
+                        .copyWith(color: AppColors.textSecondary),
                   ),
                 ),
                 GestureDetector(
@@ -664,7 +658,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                         isDense: true,
                         contentPadding: EdgeInsets.symmetric(vertical: 8.0),
                       ),
-                      style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                   ),
                 ),
@@ -672,8 +667,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.send_rounded,
-                    color:
-                        _canSubmitComment ? AppColors.primary : colorScheme.onSurfaceVariant,
+                    color: _canSubmitComment
+                        ? AppColors.primary
+                        : colorScheme.onSurfaceVariant,
                     size: 22,
                   ),
                   onPressed: _canSubmitComment ? _submitComment : null,

@@ -19,6 +19,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/storag
 
 import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -269,20 +270,15 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   children: [
                     Text(
                       page.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
+                      style: context.texts.titleMedium
+                          .copyWith(letterSpacing: -0.3),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       page.detail,
-                      style: TextStyle(
-                        color: colors.onSurface.withValues(alpha: 0.66),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
+                      style: context.texts.bodySmall.copyWith(
+                          color: colors.onSurface.withValues(alpha: 0.66),
+                          height: 1.35),
                     ),
                   ],
                 ),

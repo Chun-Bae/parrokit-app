@@ -1,6 +1,7 @@
 // lib/theme/components/app_appbar_theme.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../typography/app_texts_theme.dart';
 
 AppBarTheme appAppBarTheme(ColorScheme cs, {required bool isDark}) {
   // 상태바(상단 시스템 영역) 아이콘 대비 설정
@@ -16,12 +17,8 @@ AppBarTheme appAppBarTheme(ColorScheme cs, {required bool isDark}) {
     centerTitle: true,
     toolbarHeight: 56,
     // 제목 스타일 (onSurface에 자동 맞춤)
-    titleTextStyle: TextStyle(
-      fontFamily: "IBMPlexSansKR",
-      fontSize: 18,
-      fontWeight: FontWeight.w800,
-      color: cs.onSurface,
-    ),
+    titleTextStyle: AppTextScale.titleLarge
+        .copyWith(fontFamily: "IBMPlexSansKR", color: cs.onSurface),
 
     // 아이콘 색상
     iconTheme: IconThemeData(color: cs.onSurface),

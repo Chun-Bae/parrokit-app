@@ -20,6 +20,7 @@ import 'package:parrokit/features/settings/more/data/coin_package.dart';
 import '../widgets/card_container.dart';
 import '../widgets/nav_tile.dart';
 import '../widgets/section_title.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 결제 섹션 (광고 제거 + 코인 충전 + 구매 내역).
 class PaymentSection extends StatelessWidget {
@@ -41,9 +42,8 @@ class PaymentSection extends StatelessWidget {
               NavTile(
                 icon: Icons.block_rounded,
                 title: '광고 제거',
-                subtitle: isPremium
-                    ? '쇼츠 광고가 비활성화되어 있어요'
-                    : '한 번 구매로 모든 광고를 없애요',
+                subtitle:
+                    isPremium ? '쇼츠 광고가 비활성화되어 있어요' : '한 번 구매로 모든 광고를 없애요',
                 showArrow: !isPremium,
                 trailing: isPremium ? _buildActiveChip(context) : null,
                 onTap: isPremium ? null : () => _presentPaywall(context),
@@ -85,11 +85,7 @@ class PaymentSection extends StatelessWidget {
       ),
       child: Text(
         '구매 완료',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: cs.onPrimaryContainer,
-        ),
+        style: context.texts.bodySmall.copyWith(color: cs.onPrimaryContainer),
       ),
     );
   }

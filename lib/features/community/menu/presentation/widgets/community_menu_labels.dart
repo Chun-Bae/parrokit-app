@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityMenuCategoryLabel extends StatelessWidget {
   const CommunityMenuCategoryLabel({
@@ -16,11 +17,8 @@ class CommunityMenuCategoryLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 10, 4, 4),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.onSurfaceVariant,
-        ),
+        style: context.texts.labelMedium
+            .copyWith(color: colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -42,11 +40,8 @@ class CommunityMenuSectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 6, 4, 8),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.onSurfaceVariant,
-        ),
+        style: context.texts.bodyMedium
+            .copyWith(color: colorScheme.onSurfaceVariant),
       ),
     );
   }

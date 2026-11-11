@@ -128,7 +128,8 @@ class _AdRewardSectionState extends State<AdRewardSection> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.play_circle_outline_rounded, size: 18),
+                        : const Icon(Icons.play_circle_outline_rounded,
+                            size: 18),
                 label: Text(
                   isCooldown
                       ? _formatRemaining(_remaining!)

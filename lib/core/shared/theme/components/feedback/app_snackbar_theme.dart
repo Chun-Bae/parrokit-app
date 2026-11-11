@@ -3,17 +3,14 @@
 // SnackBar 테마 - 토스트/스낵바 메시지 스타일 통합
 
 import 'package:flutter/material.dart';
+import '../typography/app_texts_theme.dart';
 
 /// SnackBar 테마
 SnackBarThemeData appSnackBarTheme(ColorScheme cs, {required bool isDark}) {
   return SnackBarThemeData(
     backgroundColor: isDark ? const Color(0xFF2C3038) : const Color(0xFF323232),
-    contentTextStyle: const TextStyle(
-      fontFamily: 'IBMPlexSansKR',
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-    ),
+    contentTextStyle: AppTextScale.bodyMedium
+        .copyWith(fontFamily: 'IBMPlexSansKR', color: Colors.white),
     actionTextColor: cs.primary,
     actionBackgroundColor: Colors.transparent,
     closeIconColor: Colors.white70,

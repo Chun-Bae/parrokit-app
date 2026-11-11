@@ -9,6 +9,7 @@ import 'model_selector_sheet.dart';
 import 'routing_bottom_sheet.dart';
 import 'script_recommendation_sheet.dart';
 import 'video_prompt_recommendation_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 Future<void> showChatBotSheet(
   BuildContext context, {
@@ -219,12 +220,10 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                         const SizedBox(width: 4),
                         Text(
                           '오늘 사용량 ${provider.remainingChatsToday}/${provider.dailyChatLimit}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+                          style: context.texts.labelSmall.copyWith(
                             color: isDark
                                 ? AppColors.textSecondaryDark
                                 : AppColors.textSecondary,
-                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -284,11 +283,10 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                     : provider.chatbotMode == 'video'
                                         ? '비디오 씬 기획 중'
                                         : '도움 준비 완료',
-                                style: theme.textTheme.bodySmall?.copyWith(
+                                style: context.texts.labelSmall.copyWith(
                                   color: isDark
                                       ? AppColors.textTertiaryDark
                                       : AppColors.textSecondary,
-                                  fontSize: 11,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

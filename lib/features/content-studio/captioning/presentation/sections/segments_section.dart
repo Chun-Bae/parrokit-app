@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../widgets/segment_card.dart';
 
 import '../providers/captioning_provider.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 자막 세그먼트 섹션.
 class SegmentsSection extends StatefulWidget {
@@ -256,11 +257,7 @@ class _SegmentSquareButton extends StatelessWidget {
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOutCubic,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
+              style: context.texts.bodySmall.copyWith(color: textColor),
               child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ),
@@ -300,11 +297,8 @@ class _AddSegmentButton extends StatelessWidget {
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOutCubic,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: effectiveTextColor,
-              ),
+              style:
+                  context.texts.bodySmall.copyWith(color: effectiveTextColor),
               child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ),

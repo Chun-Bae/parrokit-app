@@ -4,6 +4,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardPostAuthorRow extends StatelessWidget {
   const BoardPostAuthorRow({
@@ -24,8 +25,11 @@ class BoardPostAuthorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final photoUrl = (isMe ? currentUser?.photoUrl : cachedAuthor?.photoUrl) ?? post.authorAvatarUrl;
-    final displayName = (isMe ? currentUser?.displayName : cachedAuthor?.displayName) ?? post.authorNickname;
+    final photoUrl = (isMe ? currentUser?.photoUrl : cachedAuthor?.photoUrl) ??
+        post.authorAvatarUrl;
+    final displayName =
+        (isMe ? currentUser?.displayName : cachedAuthor?.displayName) ??
+            post.authorNickname;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -48,10 +52,11 @@ class BoardPostAuthorRow extends StatelessWidget {
                         highlightColor: colorScheme.surfaceContainer,
                         child: Container(color: colorScheme.surface),
                       ),
-                      errorWidget: (context, url, error) =>
-                          Icon(Icons.person, size: 30, color: colorScheme.onSurfaceVariant),
+                      errorWidget: (context, url, error) => Icon(Icons.person,
+                          size: 30, color: colorScheme.onSurfaceVariant),
                     )
-                  : Icon(Icons.person, size: 30, color: colorScheme.onSurfaceVariant),
+                  : Icon(Icons.person,
+                      size: 30, color: colorScheme.onSurfaceVariant),
             ),
           ),
           const SizedBox(width: 10),
@@ -60,16 +65,13 @@ class BoardPostAuthorRow extends StatelessWidget {
             children: [
               Text(
                 displayName,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                style: context.texts.titleMedium,
               ),
               const SizedBox(height: 2),
               Text(
                 timeAgoText,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textTertiary,
-                ),
+                style: context.texts.bodyLarge
+                    .copyWith(color: AppColors.textTertiary),
               ),
             ],
           ),

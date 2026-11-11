@@ -15,6 +15,7 @@ import 'package:parrokit/core/shared/theme/app_colors.dart';
 import '../../data/adapters/asr_engine.dart';
 import '../providers/captioning_provider.dart';
 import 'stt_progress_card.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// STT 시작 전 안내 다이얼로그를 표시하고 진행 상황 위젯을 바텀시트 내에서 보여줍니다.
 Future<void> showSttConfirmDialog(
@@ -110,11 +111,8 @@ Future<void> showSttConfirmDialog(
                               ),
                               child: Text(
                                 '10초당 1패롯 소모',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.onPrimaryContainer,
-                                ),
+                                style: context.texts.labelMedium
+                                    .copyWith(color: cs.onPrimaryContainer),
                               ),
                             ),
                             const SizedBox(height: 24),

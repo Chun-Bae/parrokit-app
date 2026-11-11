@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../home_palette.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_log.dart';
@@ -90,7 +91,7 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
     final data = summary;
@@ -111,11 +112,8 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
         Row(children: [
           Expanded(
               child: Text('내 문장 기록',
-                  style: TextStyle(
-                      color: ink,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.4))),
+                  style: context.texts.headlineSmall
+                      .copyWith(color: ink, letterSpacing: -0.4))),
           if (widget.onViewAll != null)
             TextButton(
                 onPressed: widget.onViewAll,
@@ -129,7 +127,8 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
           Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text('아직 연습한 문장이 없어요. 앵무새를 따라 말하면 여기에 기록돼요.',
-                  style: TextStyle(color: muted, fontSize: 13, height: 1.5)))
+                  style: context.texts.labelMedium
+                      .copyWith(color: muted, height: 1.5)))
         else ...[
           _Stats(data: data),
           if (practice case final log? when !log.isEmpty) ...[
@@ -164,14 +163,11 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     return Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(text,
-            style: TextStyle(
-                color: palette.muted,
-                fontSize: 12,
-                fontWeight: FontWeight.w800)));
+            style: context.texts.bodySmall.copyWith(color: palette.muted)));
   }
 }
 
@@ -194,20 +190,20 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     return Expanded(
         child: Column(children: [
       Text(value,
-          style: TextStyle(
-              color: palette.ink, fontSize: 22, fontWeight: FontWeight.w900)),
+          style: context.texts.headlineSmall.copyWith(color: palette.ink)),
       const SizedBox(height: 2),
-      Text(label, style: TextStyle(color: palette.muted, fontSize: 11)),
+      Text(label,
+          style: context.texts.labelSmall.copyWith(color: palette.muted)),
     ]));
   }
 }
 
 Color masteryColor(BuildContext context, SentenceMastery mastery) {
-  final palette = HomePalette.of(context);
+  final palette = HomeTokens.of(context);
   return switch (mastery) {
     SentenceMastery.fresh => palette.mastery[0],
     SentenceMastery.learning => palette.mastery[1],
@@ -221,7 +217,7 @@ class _MasteryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final total =
         data.masteryCounts.values.fold<int>(0, (sum, count) => sum + count);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -249,7 +245,7 @@ class _MasteryBar extends StatelessWidget {
                     shape: BoxShape.circle)),
             const SizedBox(width: 5),
             Text('${mastery.label} ${data.masteryCounts[mastery] ?? 0}',
-                style: TextStyle(color: palette.muted, fontSize: 11)),
+                style: context.texts.labelSmall.copyWith(color: palette.muted)),
           ]),
         if (total == 0) const SizedBox.shrink(),
       ]),
@@ -267,7 +263,7 @@ class _AttemptLine extends StatelessWidget {
     final rate = log.successRate;
     final minutes = log.totalDuration.inMinutes;
     final seconds = log.totalDuration.inSeconds % 60;
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final parts = [
       '시도 ${log.attempts}회',
       if (rate != null) '성공률 ${(rate * 100).round()}%',
@@ -277,7 +273,7 @@ class _AttemptLine extends StatelessWidget {
     return Center(
         child: Text(parts.join(' · '),
             textAlign: TextAlign.center,
-            style: TextStyle(color: palette.muted, fontSize: 11)));
+            style: context.texts.labelSmall.copyWith(color: palette.muted)));
   }
 }
 
@@ -293,7 +289,7 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final last = item.activity.lastPracticedAt;
-    final palette = HomePalette.of(context);
+    final palette = HomeTokens.of(context);
     final detail = showListen
         ? '들은 ${item.activity.listenCount}회 · 따라 말하기 ${item.activity.practiceCount}회'
         : '${last == null ? '' : '${relativeDayLabel(DateTime.now(), last)} · '}'
@@ -316,22 +312,19 @@ class _HistoryRow extends StatelessWidget {
                 Text(item.sentence.text,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        color: palette.ink,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700)),
+                    style:
+                        context.texts.bodyMedium.copyWith(color: palette.ink)),
                 const SizedBox(height: 2),
                 Text(detail,
-                    style: TextStyle(color: palette.muted, fontSize: 11)),
+                    style: context.texts.labelSmall
+                        .copyWith(color: palette.muted)),
               ])),
           Text(item.mastery.label,
-              style: TextStyle(
+              style: context.texts.labelSmall.copyWith(
                   color:
                       masteryColor(context, item.mastery) == palette.mastery[0]
                           ? palette.muted
-                          : masteryColor(context, item.mastery),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800)),
+                          : masteryColor(context, item.mastery))),
         ]));
   }
 }

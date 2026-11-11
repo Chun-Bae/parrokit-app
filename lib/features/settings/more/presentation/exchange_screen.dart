@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -50,7 +51,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
     try {
       final deduct = amount;
-      final add = _isParrotsToCrackers ? amount * 1000 : (amount / 1000).floor();
+      final add =
+          _isParrotsToCrackers ? amount * 1000 : (amount / 1000).floor();
 
       if (!_isParrotsToCrackers && amount % 1000 != 0) {
         showToast('크래커에서 패롯으로의 환전은 1000 단위로만 가능합니다.');
@@ -63,7 +65,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         amountToAdd: add,
         isParrotsToCrackers: _isParrotsToCrackers,
       );
-      
+
       if (!mounted) return;
       _amountController.clear();
       showToast('환전이 완료되었습니다!');
@@ -85,11 +87,14 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     }
 
     final int inputAmount = int.tryParse(_amountController.text) ?? 0;
-    final int expectedAmount = _isParrotsToCrackers ? inputAmount * 1000 : (inputAmount / 1000).floor();
+    final int expectedAmount = _isParrotsToCrackers
+        ? inputAmount * 1000
+        : (inputAmount / 1000).floor();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('코인 환전소', style: TextStyle(fontWeight: FontWeight.bold)),
+        title:
+            const Text('코인 환전소', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -102,14 +107,16 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildBalanceItem('패롯', user.parrots, Colors.green),
-                    const Icon(Icons.compare_arrows_rounded, color: Colors.grey),
+                    const Icon(Icons.compare_arrows_rounded,
+                        color: Colors.grey),
                     _buildBalanceItem('크래커', user.crackers, Colors.orange),
                   ],
                 ),
@@ -151,7 +158,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               // 입력 폼
               Text(
                 _isParrotsToCrackers ? '교환할 패롯 수량' : '교환할 크래커 수량 (1000단위)',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: context.texts.bodyMedium,
               ),
               const SizedBox(height: 8),
               TextField(
@@ -178,18 +185,21 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               // 예상 결과
               if (inputAmount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     color: Colors.blue.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 18, color: Colors.blue),
+                      const Icon(Icons.info_outline,
+                          size: 18, color: Colors.blue),
                       const SizedBox(width: 8),
                       Text(
                         '예상 획득량: $expectedAmount ${_isParrotsToCrackers ? '크래커' : '패롯'}',
-                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            color: Colors.blue, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -199,10 +209,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
               // 환전 버튼
               ElevatedButton(
-                onPressed: _isExchanging || inputAmount <= 0 ? null : _onExchange,
+                onPressed:
+                    _isExchanging || inputAmount <= 0 ? null : _onExchange,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
                 ),
@@ -210,11 +222,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text(
+                    : Text(
                         '환전하기',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: context.texts.titleMedium,
                       ),
               ),
             ],
@@ -227,26 +240,34 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   Widget _buildBalanceItem(String title, int amount, Color color) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        Text(title,
+            style: context.texts.labelMedium.copyWith(color: Colors.grey)),
         const SizedBox(height: 4),
         Text(
           '$amount',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+          style: context.texts.headlineSmall.copyWith(color: color),
         ),
       ],
     );
   }
 
-  Widget _buildModeToggle({required String title, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildModeToggle(
+      {required String title,
+      required bool isSelected,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey.shade300,
           ),
         ),
         alignment: Alignment.center,
@@ -254,7 +275,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           title,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.grey.shade600,
+            color: isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Colors.grey.shade600,
           ),
         ),
       ),

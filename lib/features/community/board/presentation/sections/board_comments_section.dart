@@ -6,6 +6,7 @@ import 'package:parrokit/features/community/board/presentation/widgets/board_com
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentsSection extends StatelessWidget {
   const BoardCommentsSection({
@@ -32,12 +33,14 @@ class BoardCommentsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 40),
-        Divider(height: 1, thickness: 5, color: colorScheme.surfaceContainerHigh),
+        Divider(
+            height: 1, thickness: 5, color: colorScheme.surfaceContainerHigh),
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 18, 28, 0),
           child: Text(
             '댓글 ${comments.length}',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textTertiary),
+            style: context.texts.titleLarge
+                .copyWith(color: AppColors.textTertiary),
           ),
         ),
         if (comments.isEmpty) ...[
@@ -57,7 +60,8 @@ class BoardCommentsSection extends StatelessWidget {
     final widgets = <Widget>[];
     for (final parent in parentComments) {
       widgets.add(_buildCommentItem(context, parent, isReply: false));
-      final children = childComments.where((c) => c.parentId == parent.id).toList();
+      final children =
+          childComments.where((c) => c.parentId == parent.id).toList();
       for (final child in children) {
         widgets.add(_buildCommentItem(context, child, isReply: true));
       }
@@ -65,9 +69,11 @@ class BoardCommentsSection extends StatelessWidget {
     return widgets;
   }
 
-  Widget _buildCommentItem(BuildContext context, Comment comment, {required bool isReply}) {
+  Widget _buildCommentItem(BuildContext context, Comment comment,
+      {required bool isReply}) {
     final currentUser = context.read<UserProvider>().currentUser;
-    final isMyComment = currentUser != null && comment.authorId == currentUser.id;
+    final isMyComment =
+        currentUser != null && comment.authorId == currentUser.id;
     final provider = context.watch<CommunityProvider>();
     final isLiked = provider.likedCommentIds.contains(comment.id);
 
@@ -82,7 +88,9 @@ class BoardCommentsSection extends StatelessWidget {
       cachedUser: provider.getCachedUser(comment.authorId),
       onLike: () {
         if (currentUser == null) return;
-        context.read<CommunityProvider>().toggleCommentLike(postId, comment.id, currentUser.id);
+        context
+            .read<CommunityProvider>()
+            .toggleCommentLike(postId, comment.id, currentUser.id);
       },
       onReply: () {
         context.read<CommunityProvider>().setReplyingTo(comment);

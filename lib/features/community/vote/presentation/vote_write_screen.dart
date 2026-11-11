@@ -19,6 +19,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/vote_option.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class VoteWriteScreen extends StatefulWidget {
   const VoteWriteScreen({super.key});
@@ -103,11 +104,14 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   CupertinoButton(
-                    child: const Text('취소', style: TextStyle(color: CupertinoColors.destructiveRed)),
+                    child: const Text('취소',
+                        style:
+                            TextStyle(color: CupertinoColors.destructiveRed)),
                     onPressed: () => Navigator.pop(context),
                   ),
                   CupertinoButton(
-                    child: const Text('완료', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('완료',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () {
                       setState(() {
                         _selectedExpirationDays = tempSelectedDays;
@@ -134,7 +138,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                     return Center(
                       child: Text(
                         '${index + 1}일',
-                        style: const TextStyle(fontSize: 20),
+                        style: context.texts.headlineSmall,
                       ),
                     );
                   }),
@@ -185,9 +189,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     }
 
     // 만료일 계산
-    final voteEndTime = DateTime.now()
-        .toUtc()
-        .add(Duration(days: _selectedExpirationDays));
+    final voteEndTime =
+        DateTime.now().toUtc().add(Duration(days: _selectedExpirationDays));
 
     final success = await communityProvider.addPost(
       _titleController.text.trim(),
@@ -232,11 +235,17 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLight = !isDark;
     const blue600 = AppColors.primary;
-    final dividerColor = colorScheme.outlineVariant.withValues(alpha: isDark ? 0.48 : 0.72);
+    final dividerColor =
+        colorScheme.outlineVariant.withValues(alpha: isDark ? 0.48 : 0.72);
     final optionCardColor = colorScheme.onSecondary;
-    final addOptionBg = isDark ? AppColors.surfaceContainerDark : colorScheme.surfaceContainerLow;
-    final periodChipBg = isDark ? AppColors.surfaceContainerDark : colorScheme.surfaceContainerHigh;
-    final addOptionBorder = colorScheme.outlineVariant.withValues(alpha: isDark ? 0.60 : 0.72);
+    final addOptionBg = isDark
+        ? AppColors.surfaceContainerDark
+        : colorScheme.surfaceContainerLow;
+    final periodChipBg = isDark
+        ? AppColors.surfaceContainerDark
+        : colorScheme.surfaceContainerHigh;
+    final addOptionBorder =
+        colorScheme.outlineVariant.withValues(alpha: isDark ? 0.60 : 0.72);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -246,25 +255,25 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
         scrolledUnderElevation: 0,
         title: Text(
           '투표 작성',
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style:
+              context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
         leading: IconButton(
           onPressed: () => Navigator.maybePop(context),
-          icon: Icon(Icons.close_rounded, size: 28, color: colorScheme.onSurface),
+          icon:
+              Icon(Icons.close_rounded, size: 28, color: colorScheme.onSurface),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
+            padding:
+                const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
             child: ElevatedButton(
               onPressed: (_isValid && !isLoading) ? _submitVote : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: blue600,
                 disabledBackgroundColor: blue600.withValues(alpha: 0.4),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
               ),
@@ -272,15 +281,13 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text(
+                  : Text(
                       '투표 올리기',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: Colors.white),
                     ),
             ),
           )
@@ -303,11 +310,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       controller: _titleController,
                       decoration: InputDecoration(
                         hintText: '투표 제목을 입력하세요.',
-                        hintStyle: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        hintStyle: context.texts.headlineSmall
+                            .copyWith(color: colorScheme.onSurfaceVariant),
                         filled: true,
                         fillColor: Colors.transparent,
                         border: InputBorder.none,
@@ -315,11 +319,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                         focusedBorder: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: context.texts.headlineSmall
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 16),
 
@@ -330,11 +331,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
                         hintText: '투표에 대한 자세한 설명을 적어보세요.',
-                        hintStyle: TextStyle(
-                          fontSize: 16,
-                          color: colorScheme.onSurfaceVariant,
-                          height: 1.5,
-                        ),
+                        hintStyle: context.texts.titleMedium.copyWith(
+                            color: colorScheme.onSurfaceVariant, height: 1.5),
                         filled: true,
                         fillColor: Colors.transparent,
                         border: InputBorder.none,
@@ -342,11 +340,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                         focusedBorder: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: colorScheme.onSurface,
-                        height: 1.5,
-                      ),
+                      style: context.texts.titleMedium
+                          .copyWith(color: colorScheme.onSurface, height: 1.5),
                     ),
                     const SizedBox(height: 24),
 
@@ -359,11 +354,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       children: [
                         Text(
                           '투표 진행 기간',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
+                          style: context.texts.bodyLarge
+                              .copyWith(color: colorScheme.onSurface),
                         ),
                         GestureDetector(
                           onTap: () => _showExpirationPicker(context),
@@ -378,10 +370,13 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                               children: [
                                 Text(
                                   '$_selectedExpirationDays일 동안',
-                                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                                  style: context.texts.bodyMedium
+                                      .copyWith(color: colorScheme.onSurface),
                                 ),
                                 const SizedBox(width: 4),
-                                Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: colorScheme.onSurfaceVariant),
+                                Icon(Icons.keyboard_arrow_down_rounded,
+                                    size: 20,
+                                    color: colorScheme.onSurfaceVariant),
                               ],
                             ),
                           ),
@@ -393,11 +388,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                     // Vote Options Section
                     Text(
                       '투표 대상 항목',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: context.texts.bodyLarge
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 16),
 
@@ -406,18 +398,21 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
                             color: optionCardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+                              color: colorScheme.outlineVariant
+                                  .withValues(alpha: 0.45),
                               width: 1,
                             ),
                             boxShadow: isLight
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.04),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.04),
                                       blurRadius: 10,
                                       offset: const Offset(0, 3),
                                     ),
@@ -428,11 +423,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                             children: [
                               Text(
                                 '${index + 1}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: blue600,
-                                ),
+                                style: context.texts.bodyMedium
+                                    .copyWith(color: blue600),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
@@ -440,7 +432,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                                   controller: _optionControllers[index],
                                   decoration: InputDecoration(
                                     hintText: '항목 ${index + 1} 입력',
-                                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15),
+                                    hintStyle: context.texts.bodyLarge.copyWith(
+                                        color: colorScheme.onSurfaceVariant),
                                     filled: true,
                                     fillColor: Colors.transparent,
                                     border: InputBorder.none,
@@ -448,12 +441,16 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                                     focusedBorder: InputBorder.none,
                                     isDense: true,
                                   ),
-                                  style: TextStyle(fontSize: 15, color: colorScheme.onSurface),
+                                  style: context.texts.bodyLarge
+                                      .copyWith(color: colorScheme.onSurface),
                                 ),
                               ),
                               if (_optionControllers.length > 2)
                                 IconButton(
-                                icon: Icon(Icons.remove_circle_outline_rounded, color: Colors.red[400], size: 20),
+                                  icon: Icon(
+                                      Icons.remove_circle_outline_rounded,
+                                      color: Colors.red[400],
+                                      size: 20),
                                   onPressed: () => _removeOption(index),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
@@ -483,15 +480,13 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_circle_outline_rounded, size: 18, color: blue600),
+                                Icon(Icons.add_circle_outline_rounded,
+                                    size: 18, color: blue600),
                                 const SizedBox(width: 8),
                                 Text(
                                   '항목 추가하기',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: blue600,
-                                  ),
+                                  style: context.texts.bodyMedium
+                                      .copyWith(color: blue600),
                                 ),
                               ],
                             ),

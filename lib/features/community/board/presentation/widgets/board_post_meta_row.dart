@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardPostMetaRow extends StatelessWidget {
   const BoardPostMetaRow({
@@ -31,30 +32,30 @@ class BoardPostMetaRow extends StatelessWidget {
               children: [
                 Text(
                   post.category,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textTertiary,
-                  ),
+                  style: context.texts.bodyLarge
+                      .copyWith(color: AppColors.textTertiary),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right, size: 20, color: AppColors.textTertiary),
+                const Icon(Icons.chevron_right,
+                    size: 20, color: AppColors.textTertiary),
               ],
             ),
           ),
           const Spacer(),
-          const Icon(Icons.remove_red_eye_outlined, color: AppColors.textDisabled, size: 24),
+          const Icon(Icons.remove_red_eye_outlined,
+              color: AppColors.textDisabled, size: 24),
           const SizedBox(width: 6),
           Text(
             '${post.viewCount}',
-            style: const TextStyle(color: AppColors.textDisabled, fontSize: 15, fontWeight: FontWeight.w700),
+            style:
+                context.texts.bodyLarge.copyWith(color: AppColors.textDisabled),
           ),
           const SizedBox(width: 18),
           Icon(Icons.thumb_up_outlined, color: likeIconColor, size: 24),
           const SizedBox(width: 6),
           Text(
             '${post.likeCount}',
-            style: TextStyle(color: likeMetaColor, fontSize: 15, fontWeight: FontWeight.w700),
+            style: context.texts.bodyLarge.copyWith(color: likeMetaColor),
           ),
         ],
       ),

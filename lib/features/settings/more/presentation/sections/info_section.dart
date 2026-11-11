@@ -32,7 +32,8 @@ class _InfoSectionState extends State<InfoSection> {
     super.initState();
     PackageInfo.fromPlatform().then((info) {
       if (!mounted) return;
-      setState(() => _versionLabel = '버전 ${info.version} (${info.buildNumber})');
+      setState(
+          () => _versionLabel = '버전 ${info.version} (${info.buildNumber})');
     });
   }
 
