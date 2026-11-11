@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_user_service.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/data/models/user.dart';
@@ -81,8 +82,11 @@ class CommunityProvider with ChangeNotifier {
         } else {
           _userCache[uid] = AppUser(id: uid, displayName: '알 수 없음', email: '');
         }
-      } catch (_) {
-        // noop
+      } catch (e) {
+        // 캐시에 아무것도 넣지 않으므로 다음 렌더에서 이 uid를 다시 불러온다.
+        // 일시적인 오류(오프라인 등)에는 그게 맞지만, 계속 실패하면 목록이
+        // 다시 그려질 때마다 Firestore를 읽는다. 조용히 넘기지는 않는다.
+        AppLogger.w('[CommunityProvider] 작성자 정보 불러오기 실패 uid=$uid: $e');
       }
     }));
   }
