@@ -26,7 +26,7 @@ void main() {
       when(mockRepository.addComment(any, any)).thenAnswer((_) async => returnedComment);
 
       final result = await addCommentUseCase.execute(
-        'post_1',
+        'post_123',
         '테스트 댓글',
         postType: 'board',
         authorId: 'user_1',
