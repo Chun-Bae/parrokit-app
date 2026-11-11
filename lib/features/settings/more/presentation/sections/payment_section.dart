@@ -7,11 +7,14 @@
 // RevenueCat Paywall / Customer Center 연동.
 // ============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -144,11 +147,31 @@ class _CoinPaywallPageState extends State<_CoinPaywallPage> {
       displayCloseButton: true,
       onPurchaseCompleted: (_, storeTransaction) {
         // 구매 즉시 코인 지급 + 토스트 (onDismiss 의존 X)
-        final pkg = CoinPackage.packages.firstWhere(
-          (p) => p.productId == storeTransaction.productIdentifier,
-          orElse: () => CoinPackage.packages.first,
-        );
-        widget.userProvider.addCoins(pkg.totalCoins);
+        final productId = storeTransaction.productIdentifier;
+        final matched =
+            CoinPackage.packages.where((p) => p.productId == productId);
+
+        // 못 찾으면 첫 상품 기준으로 준다. 지금 동작 그대로다. 다만 조용히
+        // 넘어가면 안 된다 — RevenueCat에만 상품을 추가하고 앱의
+        // CoinPackage.packages에 안 넣으면, 사용자가 낸 돈과 받는 코인이
+        // 어긋난 채로 아무 흔적이 안 남는다.
+        if (matched.isEmpty) {
+          AppLogger.e(
+              '[Paywall] 앱에 없는 상품이 결제됐다 productId=$productId. '
+              'CoinPackage.packages 첫 항목 기준으로 지급한다.');
+        }
+        final pkg = matched.isNotEmpty ? matched.first : CoinPackage.packages.first;
+
+        // 콜백이 동기라 await 할 수 없다. 대신 실패를 삼키지는 않는다.
+        unawaited(() async {
+          try {
+            await widget.userProvider.addCoins(pkg.totalCoins);
+          } catch (e) {
+            AppLogger.e('[Paywall] 코인 지급 실패 productId=$productId', error: e);
+            showToast('결제는 됐지만 코인 지급에 실패했어요. 앱을 다시 켜 보고, 그래도 안 되면 문의해 주세요.');
+          }
+        }());
+
         showToast('${pkg.totalCoins}코인이 충전됐어요!');
       },
       onDismiss: () {
