@@ -17,7 +17,7 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 | 1 | 상태·도메인 | `lib/core/state`, `lib/core/domain` | 30 | 완료 (고침 6, 보류 4) |
 | 2 | 데이터 | `lib/data/local`, `lib/data/models` | 27 | 완료 (고침 4, 보류 4) |
 | 3 | 커뮤니티 셸 | `lib/features/community/shell` | 25 | 완료 (고침 9, 보류 3) |
-| 4 | 자막 제작 | `lib/features/content-studio/captioning` | 58 | 대기 |
+| 4 | 자막 제작 | `lib/features/content-studio/captioning` | 58 | 완료 (고침 4, 보류 1) |
 | 5 | 홈 | `lib/features/home` | 31 | 대기 |
 | 6 | 보관함 | `lib/features/collection` | 54 | 대기 |
 | 7 | 커뮤니티 글·질문·투표 | `lib/features/community/{board,question,vote,shared}` | 32 | 대기 |
