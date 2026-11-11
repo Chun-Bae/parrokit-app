@@ -3,7 +3,14 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/content-studio/tts/domain/repositories/tts_generation_repository.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
+/// TTS 공급자 고르기.
+///
+/// 생김새는 [AppSegmentedTabs]와 같은 계열이지만 따로 만들어 둔다.
+/// 고른 공급자마다 글자색이 다르고(Google은 primary, ElevenLabs는 secondary,
+/// Gemini는 그라디언트) 그게 어느 엔진인지 알려 주는 표시 역할을 하기 때문이다.
+/// 공용 위젯으로 옮기면 그 뜻이 사라진다.
 class TtsProviderSelector extends StatelessWidget {
   const TtsProviderSelector({
     super.key,
@@ -23,10 +30,10 @@ class TtsProviderSelector extends StatelessWidget {
 
     return Container(
       height: 48,
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -52,15 +59,7 @@ class TtsProviderSelector extends StatelessWidget {
                     color: isDark
                         ? context.tokens.surfaceContainer
                         : context.tokens.surface,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
