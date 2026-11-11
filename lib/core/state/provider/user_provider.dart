@@ -448,6 +448,8 @@ class UserProvider extends ChangeNotifier {
   @override
   void dispose() {
     _stopUserSubscription();
+    // 라우터가 refreshListenable로 붙잡고 있는 Notifier도 같이 닫는다.
+    routerRefreshNotifier.dispose();
     super.dispose();
   }
 }
