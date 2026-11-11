@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
 
 class VoteCommentsSection extends StatelessWidget {
   const VoteCommentsSection({
@@ -90,13 +91,8 @@ class VoteCommentsSection extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => onCommentLongPress(comment),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(isReply ? 48 : 16, 16, 16, 16),
-        decoration: isReply
-            ? BoxDecoration(
-                border: Border(
-                    left: BorderSide(color: context.tokens.disabled, width: 3)))
-            : null,
+      child: CommentRow(
+        isReply: isReply,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

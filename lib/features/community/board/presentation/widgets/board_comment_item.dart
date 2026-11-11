@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
 
 class BoardCommentItem extends StatelessWidget {
   const BoardCommentItem({
@@ -50,14 +51,9 @@ class BoardCommentItem extends StatelessWidget {
         : (isMyComment ? currentUser?.displayName : cachedUser?.displayName) ??
             comment.authorNickname;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(isReply ? 52 : 18, 18, 18, 0),
-      decoration: isReply
-          ? BoxDecoration(
-              border: Border(
-                  left: BorderSide(color: context.tokens.disabled, width: 3)),
-            )
-          : null,
+    return CommentRow(
+      isReply: isReply,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

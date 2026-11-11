@@ -305,3 +305,52 @@ AnimatedBuilder(
 이걸로 세그먼트 컨트롤 다섯 벌이 모두 하나가 됐다.
 
 **되돌리려면:** 이 커밋만 revert 하면 된다.
+
+---
+
+## 9. 댓글 답글의 세로 안내선이 화면 끝에 붙어 있던 것
+
+**화면:** 커뮤니티 게시글·질문·투표의 댓글
+
+**문제:** 답글의 세로 안내선이 **화면 맨 왼쪽(x=0)에 붙어** 있었다. 글은 48pt쯤
+안으로 들어가 있는데 선만 가장자리에 남아서, 들여쓰기 표시가 아니라 화면 테두리처럼
+보인다. 다크 모드에서 특히 눈에 띈다.
+
+원인은 한 줄이다.
+
+```dart
+padding: EdgeInsets.fromLTRB(isReply ? 48 : 16, 16, 16, 16),
+decoration: isReply ? BoxDecoration(border: Border(left: BorderSide(..., width: 3))) : null,
+```
+
+패딩은 컨테이너 **안쪽**이고 테두리는 **바깥 끝**이다. 둘을 한 컨테이너에 주면
+선과 글이 떨어진다.
+
+**같은 코드가 네 벌이었고 값도 제각각이었다.**
+
+| 파일 | 들여쓰기 | 선 색 |
+|---|---|---|
+| `board_comment_item.dart` | 52 | `tokens.disabled` |
+| `vote_comments_section.dart` | 48 | `tokens.disabled` |
+| `question_replies_section.dart` | 46 | `tokens.disabled` |
+| `vote_view_screen.dart` | 48 | `onSurface @0.16` |
+
+**고른 방향:** `CommentRow` 위젯 하나로 묶었다. 바깥 `Padding`이 들여쓰고
+안쪽 `Container`가 선을 그린다. **선이 들여쓴 자리에 선다.**
+
+```dart
+Padding(
+  padding: EdgeInsets.only(left: isReply ? replyIndent : 0),
+  child: Container(
+    padding: padding,
+    decoration: isReply ? 왼쪽 테두리 : null,
+```
+
+들여쓰기는 `replyIndent = 32`로 모으고 안쪽 여백 16을 더해 글이 48에 선다.
+기존 48 두 곳은 그대로고, 52와 46이 48로 모인다.
+선 색은 네 곳 모두 `tokens.disabled`로 맞췄다.
+
+**외형이 바뀐다.** 답글 안내선이 화면 끝에서 글 바로 왼쪽으로 옮겨온다.
+이게 이번 변경의 핵심이다.
+
+**되돌리려면:** 이 커밋만 revert 하면 된다.

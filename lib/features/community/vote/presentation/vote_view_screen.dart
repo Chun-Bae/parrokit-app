@@ -24,6 +24,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
 
 class VoteViewScreen extends StatefulWidget {
   final String voteId;
@@ -314,17 +315,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
     return GestureDetector(
       onLongPress: () => _showCommentOptionsSheet(comment),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(isReply ? 48 : 16, 16, 16, 16),
-        decoration: isReply
-            ? BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                      color: colorScheme.onSurface.withValues(alpha: 0.16),
-                      width: 3),
-                ),
-              )
-            : null,
+      child: CommentRow(
+        isReply: isReply,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

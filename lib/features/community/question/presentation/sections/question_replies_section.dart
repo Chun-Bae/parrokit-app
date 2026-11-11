@@ -9,6 +9,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
 
 class QuestionRepliesSection extends StatelessWidget {
   const QuestionRepliesSection({
@@ -86,13 +87,8 @@ class QuestionRepliesSection extends StatelessWidget {
         : (provider.getCachedUser(answer.authorId)?.photoUrl ??
             answer.authorAvatarUrl);
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(isReply ? 46 : 16, 16, 16, 16),
-      decoration: isReply
-          ? BoxDecoration(
-              border: Border(
-                  left: BorderSide(color: context.tokens.disabled, width: 3)))
-          : null,
+    return CommentRow(
+      isReply: isReply,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
