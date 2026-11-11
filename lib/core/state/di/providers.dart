@@ -104,57 +104,44 @@ List<SingleChildWidget> buildProviders({
       },
     ),
     ChangeNotifierProxyProvider<UserProvider, CommunityNotificationProvider>(
-      create: (_) => CommunityNotificationProvider(
-        watchNotificationsUseCase: WatchNotificationsUseCase(
-          CommunityNotificationRepositoryImpl(),
-        ),
-        fetchNotificationsUseCase: FetchNotificationsUseCase(
-          CommunityNotificationRepositoryImpl(),
-        ),
-        markNotificationReadUseCase: MarkNotificationReadUseCase(
-          CommunityNotificationRepositoryImpl(),
-        ),
-        markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase(
-          CommunityNotificationRepositoryImpl(),
-        ),
-        deleteNotificationUseCase: DeleteNotificationUseCase(
-          CommunityNotificationRepositoryImpl(),
-        ),
-        deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase(
-          CommunityNotificationRepositoryImpl(),
-        ),
-        messagingService: FirebaseMessagingService(
-          firebaseUserService: FirebaseUserService(),
-        ),
-      ),
+      create: (_) => _createCommunityNotificationProvider(),
       update: (_, userProvider, notificationProvider) {
-        final provider = notificationProvider ??
-            CommunityNotificationProvider(
-              watchNotificationsUseCase: WatchNotificationsUseCase(
-                CommunityNotificationRepositoryImpl(),
-              ),
-              fetchNotificationsUseCase: FetchNotificationsUseCase(
-                CommunityNotificationRepositoryImpl(),
-              ),
-              markNotificationReadUseCase: MarkNotificationReadUseCase(
-                CommunityNotificationRepositoryImpl(),
-              ),
-              markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase(
-                CommunityNotificationRepositoryImpl(),
-              ),
-              deleteNotificationUseCase: DeleteNotificationUseCase(
-                CommunityNotificationRepositoryImpl(),
-              ),
-              deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase(
-                CommunityNotificationRepositoryImpl(),
-              ),
-              messagingService: FirebaseMessagingService(
-                firebaseUserService: FirebaseUserService(),
-              ),
-            );
+        final provider =
+            notificationProvider ?? _createCommunityNotificationProvider();
         provider.syncUser(userProvider.currentUser?.id);
         return provider;
       },
     ),
   ];
+}
+
+/// 커뮤니티 알림 Provider를 만든다.
+///
+/// create와 update 양쪽에서 쓴다. update는 create 직후에 불리면서 그 인스턴스를
+/// 넘겨받기 때문에 update 쪽 생성은 사실상 쓰이지 않지만, 둘 다 같은 조립을
+/// 적어 두면 한쪽만 고치는 일이 생긴다. 그래서 한곳에 모았다.
+CommunityNotificationProvider _createCommunityNotificationProvider() {
+  return CommunityNotificationProvider(
+    watchNotificationsUseCase: WatchNotificationsUseCase(
+      CommunityNotificationRepositoryImpl(),
+    ),
+    fetchNotificationsUseCase: FetchNotificationsUseCase(
+      CommunityNotificationRepositoryImpl(),
+    ),
+    markNotificationReadUseCase: MarkNotificationReadUseCase(
+      CommunityNotificationRepositoryImpl(),
+    ),
+    markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase(
+      CommunityNotificationRepositoryImpl(),
+    ),
+    deleteNotificationUseCase: DeleteNotificationUseCase(
+      CommunityNotificationRepositoryImpl(),
+    ),
+    deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase(
+      CommunityNotificationRepositoryImpl(),
+    ),
+    messagingService: FirebaseMessagingService(
+      firebaseUserService: FirebaseUserService(),
+    ),
+  );
 }
