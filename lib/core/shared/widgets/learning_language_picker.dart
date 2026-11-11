@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/content/learning_languages.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
 class LearningLanguagePicker extends StatelessWidget {
   const LearningLanguagePicker({
@@ -40,14 +41,14 @@ class LearningLanguagePicker extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 14,
-            vertical: compact ? 9 : 12,
+            horizontal: compact ? AppSpacing.sm : AppSpacing.md,
+            vertical: compact ? AppSpacing.sm : AppSpacing.md,
           ),
           child: Row(
             mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
             children: [
               Text(language.flag, style: context.texts.headlineSmall),
-              const SizedBox(width: 9),
+              const SizedBox(width: AppSpacing.sm),
               if (!compact)
                 Text(
                   '학습 언어',
@@ -59,7 +60,7 @@ class LearningLanguagePicker extends StatelessWidget {
                 language.label,
                 style: context.texts.bodyLarge,
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: AppSpacing.xs),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 20,
@@ -81,6 +82,9 @@ class _LanguagePickerSheet extends StatefulWidget {
   @override
   State<_LanguagePickerSheet> createState() => _LanguagePickerSheetState();
 }
+
+/// 목록이 차지할 수 있는 화면 높이 비율.
+const _listHeightRatio = 0.48;
 
 class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
   late final TextEditingController searchController;
@@ -114,10 +118,10 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          20,
-          2,
-          20,
-          MediaQuery.viewInsetsOf(context).bottom + 20,
+          AppSpacing.xl,
+          2, // 드래그 핸들 바로 아래라 눈금보다 좁게 둔다
+          AppSpacing.xl,
+          MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -129,13 +133,13 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                     fontWeight: FontWeight.w900,
                   ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '앵무새가 말하고 기록할 언어를 선택하세요.',
               style: context.texts.bodySmall
                   .copyWith(color: colors.onSurfaceVariant),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             TextField(
               controller: searchController,
               decoration: InputDecoration(
@@ -155,10 +159,11 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.48,
+                // 검색창과 안내 문구가 함께 보이도록 화면의 절반 아래로 묶는다.
+                maxHeight: MediaQuery.sizeOf(context).height * _listHeightRatio,
               ),
               child: languages.isEmpty
                   ? const Padding(
@@ -168,7 +173,8 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                   : ListView.separated(
                       shrinkWrap: true,
                       itemCount: languages.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 5),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.xs),
                       itemBuilder: (context, index) {
                         final language = languages[index];
                         final selected = language.label == widget.selected;
@@ -178,13 +184,14 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                               ? colors.primaryContainer.withValues(alpha: 0.65)
                               : null,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           leading: Text(language.flag,
                               style: context.texts.headlineMedium),
                           title: Text(
                             language.label,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
+                            style: context.texts.bodyLarge
+                                .copyWith(fontWeight: FontWeight.w800),
                           ),
                           subtitle: Text(language.nativeLabel),
                           trailing: selected
@@ -195,12 +202,12 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                       },
                     ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 Icon(Icons.add_circle_outline_rounded,
                     size: 16, color: colors.onSurfaceVariant),
-                const SizedBox(width: 7),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   '새 언어는 이 목록에 계속 추가할 수 있어요.',
                   style: context.texts.labelSmall
