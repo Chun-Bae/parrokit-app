@@ -8,14 +8,14 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 ## 기준선
 
 - `flutter analyze` → No issues found
-- `flutter test` → 188개 전부 통과
+- `flutter test` → 188개 전부 통과 (리뷰 중 추가한 테스트로 지금은 193개)
 
 ## 묶음 목록
 
 | # | 묶음 | 경로 | 파일 | 상태 |
 |---|------|------|------|------|
 | 1 | 상태·도메인 | `lib/core/state`, `lib/core/domain` | 30 | 완료 (고침 6, 보류 4) |
-| 2 | 데이터 | `lib/data/local`, `lib/data/models` | 27 | 대기 |
+| 2 | 데이터 | `lib/data/local`, `lib/data/models` | 27 | 완료 (고침 4, 보류 4) |
 | 3 | 커뮤니티 셸 | `lib/features/community/shell` | 25 | 대기 |
 | 4 | 자막 제작 | `lib/features/content-studio/captioning` | 58 | 대기 |
 | 5 | 홈 | `lib/features/home` | 31 | 대기 |
