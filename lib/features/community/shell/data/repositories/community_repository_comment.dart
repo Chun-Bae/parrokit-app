@@ -53,10 +53,17 @@ mixin CommunityRepositoryComment {
         updatedAt: DateTime.now(),
       );
 
-      await docRef.set(newComment.toJson());
-      await _firestore.collection('posts').doc(postId).update({
+      // 댓글 문서 쓰기와 commentCount 올리기를 한 배치로 묶는다. 전에는 따로
+      // 보내서, 댓글은 써지고 카운트 올리기가 실패하면 예외만 올라갔다.
+      // 호출한 쪽은 "댓글 등록에 실패했습니다"를 띄우는데 댓글은 이미 올라가
+      // 있어서, 사용자가 다시 쓰면 같은 댓글이 두 개 남았다.
+      // 같은 파일의 toggleCommentLike도 이런 짝을 트랜잭션으로 묶고 있다.
+      final batch = _firestore.batch();
+      batch.set(docRef, newComment.toJson());
+      batch.update(_firestore.collection('posts').doc(postId), {
         'commentCount': FieldValue.increment(1),
       });
+      await batch.commit();
 
       return newComment;
     } catch (e) {
@@ -126,7 +133,9 @@ mixin CommunityRepositoryComment {
             return doc.id;
           })
           .toSet();
-    } catch (_) {
+    } catch (e) {
+      // 실패하면 좋아요가 전부 안 눌린 것처럼 보인다. 조용히 넘기지는 않는다.
+      AppLogger.w('[CommunityRepository] 댓글 좋아요 목록 불러오기 실패 userId=$userId: $e');
       return {};
     }
   }
