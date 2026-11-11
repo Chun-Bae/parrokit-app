@@ -406,18 +406,18 @@ class CaptioningProvider extends ChangeNotifier
       tags.addAll(form.tags);
 
       // 세그먼트
-      segmentForms.clear();
-      for (final seg in form.segments) {
-        final f = SegmentFormData.empty();
-        f.startCtl.text = seg.start;
-        f.endCtl.text = seg.end;
-        f.originalCtl.text = seg.original;
-        f.pronCtl.text = seg.pron;
-        f.koCtl.text = seg.ko;
-        segmentForms.add(f);
-      }
-      if (segmentForms.isEmpty) {
-        segmentForms.add(SegmentFormData.empty());
+      //
+      // EditSegmentMixin은 segmentForms와 겹침 판정용 스냅샷 목록을 짝으로
+      // 관리한다. 여기서는 그 믹스인을 건너뛰고 segmentForms를 직접
+      // clear/add 하고 있었다. 그래서 (1) 버린 폼의 컨트롤러가 해제되지 않고,
+      // (2) 스냅샷은 초기 폼 한 개짜리로 남은 채 폼만 N개가 되어, 편집으로
+      // 연 클립에서는 "겹침 방지 자동 조정"이 엉뚱한 구간을 기준으로 돌았다.
+      // 믹스인이 제공하는 경로로 지나가게 한다.
+      disposeSegmentForms();
+      if (form.segments.isEmpty) {
+        initSegmentForms();
+      } else {
+        _fillSegmentsFromDraft(form.segments);
       }
 
       // 기존 파일 경로가 있으면 Step 1에 표시
