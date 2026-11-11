@@ -13,6 +13,17 @@ import '../app_database.dart';
 /// - 기존에 로컬/서버/gdrive 클립이 섞여 있던 콜렉션을 storageMode별로 분리
 ///   (같은 이름의 콜렉션/그룹을 목적지 storageMode에서 찾거나 새로 만들고,
 ///   그 모드의 클립들을 재배정)
+///
+/// 주의 — 마지막 항목(storageMode별 분리)은 실제로 한 번도 실행되지 않는다.
+/// 아래 UPDATE가 WHERE 없이 모든 클립의 storage_mode를 'local'로 덮어쓴 뒤에
+/// 그 값을 읽어 모드를 가르기 때문에, distinctModes는 늘 {'local'}이고
+/// `if (... == 'local') continue;`에서 전부 빠진다. 그래서 분리 루프와 그
+/// 뒤의 빈 콜렉션 정리까지 도달하지 않는다.
+///
+/// v2에는 클립별 storageMode 컬럼 자체가 없었으니(이 마이그레이션이 추가한다)
+/// v2 클립은 모두 로컬이고, 가를 것이 애초에 없었던 것으로 보인다. 지우지
+/// 않고 남겨 둔다 — 이미 사용자 기기에서 돌아간 마이그레이션이라, 판단은
+/// 이 코드를 쓴 사람이 하는 게 맞다.
 Future<void> migrateV2ToV3(Migrator m, AppDatabase db) async {
   await m.createTable(db.groups);
   await m.createTable(db.groupCollections);
