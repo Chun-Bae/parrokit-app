@@ -7,6 +7,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -128,34 +129,18 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               ),
               const SizedBox(height: 32),
 
-              // 환전 모드 선택 토글
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildModeToggle(
-                      title: '패롯 -> 크래커',
-                      isSelected: _isParrotsToCrackers,
-                      onTap: () {
-                        setState(() {
-                          _isParrotsToCrackers = true;
-                          _amountController.clear();
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildModeToggle(
-                      title: '크래커 -> 패롯',
-                      isSelected: !_isParrotsToCrackers,
-                      onTap: () {
-                        setState(() {
-                          _isParrotsToCrackers = false;
-                          _amountController.clear();
-                        });
-                      },
-                    ),
-                  ),
+              // 환전 방향 고르기
+              AppSegmentedTabs(
+                selectedIndex: _isParrotsToCrackers ? 0 : 1,
+                onChanged: (index) {
+                  setState(() {
+                    _isParrotsToCrackers = index == 0;
+                    _amountController.clear();
+                  });
+                },
+                segments: const [
+                  AppSegment(label: '패롯 → 크래커'),
+                  AppSegment(label: '크래커 → 패롯'),
                 ],
               ),
               const SizedBox(height: 32),
@@ -255,39 +240,6 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           style: context.texts.headlineSmall.copyWith(color: color),
         ),
       ],
-    );
-  }
-
-  Widget _buildModeToggle(
-      {required String title,
-      required bool isSelected,
-      required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : context.tokens.borderStrong,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isSelected
-                ? Theme.of(context).colorScheme.onPrimary
-                : context.tokens.textSecondary,
-          ),
-        ),
-      ),
     );
   }
 }
