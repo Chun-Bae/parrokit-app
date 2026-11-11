@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -263,14 +264,6 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     );
   }
 
-  String _formatTimeAgo(DateTime? time) {
-    if (time == null) return '';
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays}일 전';
-    if (diff.inHours > 0) return '${diff.inHours}시간 전';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
-    return '방금 전';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -467,7 +460,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               ),
             ),
           Text(
-            '${_formatTimeAgo(question.createdAt)} · 조회 ${question.viewCount}회',
+            '${formatCommunityTimeAgo(question.createdAt)} · 조회 ${question.viewCount}회',
             style: context.texts.bodyMedium
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
@@ -645,7 +638,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                             .copyWith(color: colorScheme.onSurface)),
                     const Spacer(),
                     if (!isBlocked) ...[
-                      Text(_formatTimeAgo(answer.createdAt),
+                      Text(formatCommunityTimeAgo(answer.createdAt),
                           style: context.texts.bodySmall
                               .copyWith(color: colorScheme.onSurfaceVariant)),
                       const SizedBox(width: 4),

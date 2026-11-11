@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -489,14 +490,6 @@ class VoteCard extends StatelessWidget {
     this.showMoreButton = true,
   });
 
-  String _formatTimeAgo(DateTime? time) {
-    if (time == null) return '';
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays}일 전';
-    if (diff.inHours > 0) return '${diff.inHours}시간 전';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
-    return '방금 전';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -586,7 +579,7 @@ class VoteCard extends StatelessWidget {
                               .copyWith(color: cs.onSurface)),
                       Text(
                           item.createdAt != null
-                              ? _formatTimeAgo(item.createdAt!)
+                              ? formatCommunityTimeAgo(item.createdAt!)
                               : '',
                           style: context.texts.bodySmall
                               .copyWith(color: cs.onSurfaceVariant)),

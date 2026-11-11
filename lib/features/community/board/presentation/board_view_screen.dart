@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -68,14 +69,6 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     });
   }
 
-  String _formatTimeAgo(DateTime? time) {
-    if (time == null) return '';
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays}일 전';
-    if (diff.inHours > 0) return '${diff.inHours}시간 전';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
-    return '방금 전';
-  }
 
   void _submitComment() async {
     final text = _commentController.text.trim();
@@ -316,7 +309,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                       cachedAuthor: cachedAuthor,
                       isMe: isMe,
                       timeAgoText:
-                          '${_formatTimeAgo(post.createdAt)}${post.editHistory.isNotEmpty ? ' (수정됨)' : ''}',
+                          '${formatCommunityTimeAgo(post.createdAt)}${post.editHistory.isNotEmpty ? ' (수정됨)' : ''}',
                     ),
                     const SizedBox(height: 28),
                     BoardPostContentSection(post: post),
@@ -366,7 +359,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                       postId: widget.postId,
                       onFocusCommentInput: _focusCommentInput,
                       onCommentMore: _showCommentOptionsSheet,
-                      formatTimeAgo: _formatTimeAgo,
+                      formatTimeAgo: formatCommunityTimeAgo,
                     ),
                     const SizedBox(height: 280),
                   ],

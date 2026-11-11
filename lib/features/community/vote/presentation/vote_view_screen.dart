@@ -10,6 +10,7 @@
 // [레이어]
 // Presentation Layer > Screens
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -271,14 +272,6 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
     );
   }
 
-  String _formatTimeAgo(DateTime? time) {
-    if (time == null) return '';
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays}일 전';
-    if (diff.inHours > 0) return '${diff.inHours}시간 전';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
-    return '방금 전';
-  }
 
   List<Widget> _buildStructuredComments(
       List<Comment> allComments, String postAuthorId) {
@@ -378,7 +371,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       const Spacer(),
                       if (comment.createdAt != null && !isBlocked)
                         Text(
-                          _formatTimeAgo(comment.createdAt),
+                          formatCommunityTimeAgo(comment.createdAt),
                           style: context.texts.bodySmall
                               .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
