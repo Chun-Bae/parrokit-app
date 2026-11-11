@@ -81,9 +81,14 @@ extension CommunityProviderUserAction on CommunityProvider {
     } catch (e) {
       _isCurrentPostLiked = originalState;
       _postLikedStates[postId] = originalState;
-      if (postIndex != -1) {
-        final p = _posts[postIndex];
-        _posts[postIndex] = p.copyWith(likeCount: p.likeCount + (originalState ? 1 : -1));
+      // await 사이에 fetchPosts·setBlockedUserIds가 _posts를 갈아끼울 수 있다.
+      // 위에서 잡아 둔 postIndex를 그대로 쓰면 되돌리기가 엉뚱한 글의
+      // 수를 건드린다. 다시 찾는다.
+      final rollbackIndex = _posts.indexWhere((p) => p.id == postId);
+      if (rollbackIndex != -1) {
+        final p = _posts[rollbackIndex];
+        _posts[rollbackIndex] =
+            p.copyWith(likeCount: p.likeCount + (originalState ? 1 : -1));
       }
       _errorMessage = '추천 처리에 실패했습니다.';
       _notifyListenersSafe();
@@ -110,9 +115,13 @@ extension CommunityProviderUserAction on CommunityProvider {
     } catch (e) {
       _isCurrentPostScrapped = originalState;
       _postScrappedStates[postId] = originalState;
-      if (postIndex != -1) {
-        final p = _posts[postIndex];
-        _posts[postIndex] = p.copyWith(
+      // await 사이에 fetchPosts·setBlockedUserIds가 _posts를 갈아끼울 수 있다.
+      // 위에서 잡아 둔 postIndex를 그대로 쓰면 되돌리기가 엉뚱한 글의
+      // 수를 건드린다. 다시 찾는다.
+      final rollbackIndex = _posts.indexWhere((p) => p.id == postId);
+      if (rollbackIndex != -1) {
+        final p = _posts[rollbackIndex];
+        _posts[rollbackIndex] = p.copyWith(
           scrapCount: p.scrapCount + (originalState ? 1 : -1),
         );
       }
