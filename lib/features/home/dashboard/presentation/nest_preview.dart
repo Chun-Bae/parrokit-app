@@ -158,6 +158,8 @@ class _NestPreviewState extends State<NestPreview>
                 joy: happy.isAnimating ? happy.value : 0,
                 meals: meals,
                 sprite: sprite,
+                groundOuter: palette.groundOuter,
+                groundInner: palette.groundInner,
               )),
             ),
           ),
@@ -216,11 +218,19 @@ class NestScenePainter extends CustomPainter {
       {required this.phase,
       required this.joy,
       required this.meals,
+      required this.groundOuter,
+      required this.groundInner,
       this.sprite});
   final ui.Image? sprite;
   final double phase;
   final double joy;
   final int meals;
+
+  /// 바닥 그림자 바깥 타원. 밝기에 따라 달라진다.
+  final Color groundOuter;
+
+  /// 바닥 그림자 안쪽 타원.
+  final Color groundInner;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -239,8 +249,8 @@ class NestScenePainter extends CustomPainter {
           ..strokeCap = StrokeCap.round);
     const branch = Color(0xFFB59379);
     // 바닥과 둥지는 매번 그대로. 소품만 학습 횟수에 따라 더해진다.
-    oval(const Rect.fromLTWH(-139, 220, 278, 23), const Color(0xFFE4EDF2));
-    oval(const Rect.fromLTWH(-118, 211, 236, 14), const Color(0xFFF8FCFE));
+    oval(const Rect.fromLTWH(-139, 220, 278, 23), groundOuter);
+    oval(const Rect.fromLTWH(-118, 211, 236, 14), groundInner);
     if (meals >= 1) {
       line(const Offset(-105, 218), const Offset(-105, 179),
           const Color(0xFF91AD8D), 3);
@@ -355,5 +365,7 @@ class NestScenePainter extends CustomPainter {
       phase != oldDelegate.phase ||
       joy != oldDelegate.joy ||
       meals != oldDelegate.meals ||
-      sprite != oldDelegate.sprite;
+      sprite != oldDelegate.sprite ||
+      groundOuter != oldDelegate.groundOuter ||
+      groundInner != oldDelegate.groundInner;
 }

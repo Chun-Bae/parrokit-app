@@ -371,6 +371,8 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
     required this.likeInk,
     required this.garden,
     required this.mastery,
+    required this.groundOuter,
+    required this.groundInner,
   });
 
   /// 화면 배경.
@@ -430,6 +432,12 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
   /// 문장 친밀도 단계 색. 처음, 익히는 중, 익숙함 순서.
   final List<Color> mastery;
 
+  /// 둥지 그림 아래 바닥 그림자의 바깥 타원.
+  final Color groundOuter;
+
+  /// 바닥 그림자의 안쪽 타원. 바깥보다 밝다.
+  final Color groundInner;
+
   static const light = HomeTokens(
     background: Color(0xFFF3F8FD),
     surface: Color(0xFFFFFFFF),
@@ -460,6 +468,8 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
       Color(0xFFA8CBE8),
       Color(0xFF6D9890),
     ],
+    groundOuter: Color(0xFFE4EDF2),
+    groundInner: Color(0xFFF8FCFE),
   );
 
   static const dark = HomeTokens(
@@ -492,6 +502,8 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
       Color(0xFF3E5C7D),
       Color(0xFF4E7D73),
     ],
+    groundOuter: Color(0xFF1B2533),
+    groundInner: Color(0xFF243246),
   );
 
   /// 테마에 등록된 홈 토큰. 없으면 밝기에 맞는 기본값으로 떨어진다.
@@ -526,6 +538,8 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
     Color? likeInk,
     List<Color>? garden,
     List<Color>? mastery,
+    Color? groundOuter,
+    Color? groundInner,
   }) =>
       HomeTokens(
         background: background ?? this.background,
@@ -547,6 +561,8 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
         likeInk: likeInk ?? this.likeInk,
         garden: garden ?? this.garden,
         mastery: mastery ?? this.mastery,
+        groundOuter: groundOuter ?? this.groundOuter,
+        groundInner: groundInner ?? this.groundInner,
       );
 
   static List<Color> _lerpList(List<Color> a, List<Color> b, double t) => [
@@ -577,6 +593,8 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
       likeInk: Color.lerp(likeInk, other.likeInk, t)!,
       garden: _lerpList(garden, other.garden, t),
       mastery: _lerpList(mastery, other.mastery, t),
+      groundOuter: Color.lerp(groundOuter, other.groundOuter, t)!,
+      groundInner: Color.lerp(groundInner, other.groundInner, t)!,
     );
   }
 }

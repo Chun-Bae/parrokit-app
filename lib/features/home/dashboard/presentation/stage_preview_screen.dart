@@ -928,7 +928,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                                           birdPhase: birdAnimation.value,
                                           sprite: nestSprite,
                                           phrase: phrase,
-                                          animate: moving)));
+                                          animate: moving,
+                                          groundOuter: HomeTokens.of(context)
+                                              .groundOuter,
+                                          groundInner: HomeTokens.of(context)
+                                              .groundInner)));
                             })))),
             Positioned(
                 left: 8,
@@ -1760,12 +1764,18 @@ class _GrowthPainter extends CustomPainter {
       required this.phase,
       required this.phrase,
       required this.animate,
+      required this.groundOuter,
+      required this.groundInner,
       this.typedFraction});
   final double birdPhase;
   final ui.Image? sprite;
   final double phase;
   final String phrase;
   final bool animate;
+
+  /// 둥지 바닥 그림자 색. CustomPainter에는 context가 없어 받아서 쓴다.
+  final Color groundOuter;
+  final Color groundInner;
 
   /// null이면 애니메이션 시간으로, 값이 있으면 음성 진행 비율로 글자를 보여준다.
   final double? typedFraction;
@@ -1794,7 +1804,13 @@ class _GrowthPainter extends CustomPainter {
     final paint = Paint()..isAntiAlias = true;
     canvas.save();
     canvas.translate(0, 30);
-    NestScenePainter(phase: birdPhase, joy: 0, meals: 0, sprite: sprite)
+    NestScenePainter(
+            phase: birdPhase,
+            joy: 0,
+            meals: 0,
+            sprite: sprite,
+            groundOuter: groundOuter,
+            groundInner: groundInner)
         .paint(canvas, Size(size.width, size.height - 30));
     canvas.restore();
     // 등장 → 한 글자씩 표시 → 잠깐 유지 → 사라짐. 위치와 크기는 고정한다.
