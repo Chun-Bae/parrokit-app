@@ -19,7 +19,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'vote_screen.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -175,7 +175,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: AppColors.surfaceContainerHigh, height: 1),
+          child:
+              Container(color: context.tokens.surfaceContainerHigh, height: 1),
         ),
       ),
       body: Column(
@@ -328,7 +329,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: AppColors.surfaceContainerHigh,
+              backgroundColor: context.tokens.surfaceContainerHigh,
               backgroundImage: (comment.authorAvatarUrl != null &&
                       comment.authorAvatarUrl!.isNotEmpty &&
                       !isDeleted &&
@@ -340,7 +341,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       isDeleted ||
                       isBlocked)
                   ? Icon(isBlocked ? Icons.block_rounded : Icons.person,
-                      color: AppColors.textDisabled, size: 20)
+                      color: context.tokens.textDisabled, size: 20)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -368,13 +369,13 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
-                            color: AppColors.primarySoft,
+                            color: context.tokens.primarySoft,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             '작성자',
                             style: context.texts.labelSmall
-                                .copyWith(color: AppColors.primary),
+                                .copyWith(color: context.tokens.primary),
                           ),
                         ),
                       ],
@@ -407,7 +408,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       child: Text(
                         '@${comment.replyToNickname}',
                         style: context.texts.labelMedium
-                            .copyWith(color: AppColors.primary),
+                            .copyWith(color: context.tokens.primary),
                       ),
                     ),
                   Text(
@@ -418,7 +419,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                             : comment.content,
                     style: context.texts.bodyMedium.copyWith(
                         color: isDeleted
-                            ? AppColors.textDisabled
+                            ? context.tokens.textDisabled
                             : colorScheme.onSurface,
                         height: 1.45),
                   ),
@@ -440,7 +441,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                                     : Icons.favorite_border_rounded,
                                 size: 15,
                                 color: isLiked
-                                    ? AppColors.danger
+                                    ? context.tokens.danger
                                     : colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
@@ -448,7 +449,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                                 '${comment.likeCount}',
                                 style: context.texts.bodySmall.copyWith(
                                     color: isLiked
-                                        ? AppColors.danger
+                                        ? context.tokens.danger
                                         : colorScheme.onSurfaceVariant),
                               ),
                             ],
@@ -586,20 +587,20 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: AppColors.surfaceContainer,
+            color: context.tokens.surfaceContainer,
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     '${provider.replyingTo?.authorNickname} 님에게 답글 남기는 중',
                     style: context.texts.labelMedium
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: context.tokens.textSecondary),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => provider.setReplyingTo(null),
-                  child: const Icon(Icons.close,
-                      size: 16, color: AppColors.textTertiary),
+                  child: Icon(Icons.close,
+                      size: 16, color: context.tokens.textTertiary),
                 ),
               ],
             ),
@@ -614,8 +615,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                 offset: const Offset(0, -4),
               ),
             ],
-            border: const Border(
-              top: BorderSide(color: AppColors.surfaceContainerHigh, width: 1),
+            border: Border(
+              top: BorderSide(
+                  color: context.tokens.surfaceContainerHigh, width: 1),
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -624,15 +626,15 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: AppColors.surfaceContainerHigh,
+                  backgroundColor: context.tokens.surfaceContainerHigh,
                   backgroundImage: (currentUser?.photoUrl != null &&
                           currentUser!.photoUrl!.isNotEmpty)
                       ? CachedNetworkImageProvider(currentUser.photoUrl!)
                       : null,
                   child: (currentUser?.photoUrl == null ||
                           currentUser!.photoUrl!.isEmpty)
-                      ? const Icon(Icons.person,
-                          color: AppColors.textDisabled, size: 18)
+                      ? Icon(Icons.person,
+                          color: context.tokens.textDisabled, size: 18)
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -668,7 +670,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                   icon: Icon(
                     Icons.send_rounded,
                     color: _canSubmitComment
-                        ? AppColors.primary
+                        ? context.tokens.primary
                         : colorScheme.onSurfaceVariant,
                     size: 22,
                   ),

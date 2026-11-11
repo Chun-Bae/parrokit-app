@@ -12,7 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 모음집 카드 위젯.
@@ -53,13 +53,10 @@ class CollectionCard extends StatelessWidget {
   // 있어(예: secondary = primarySoft) 배지 색으로 쓰면 거의 안 보인다.
   // 3개 저장위치가 뚜렷이 구분되도록 AppColors의 선명한 색을 직접 쓴다.
   Color _storageColor(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return switch (storageMode) {
-      ClipStorageConstants.storageModeServer =>
-        isDark ? AppColors.secondaryDark : AppColors.secondary,
-      ClipStorageConstants.storageModeGoogleDrive =>
-        isDark ? AppColors.successDark : AppColors.success,
-      _ => isDark ? AppColors.primaryDark : AppColors.primary,
+      ClipStorageConstants.storageModeServer => context.tokens.secondary,
+      ClipStorageConstants.storageModeGoogleDrive => context.tokens.success,
+      _ => context.tokens.primary,
     };
   }
 
@@ -117,10 +114,11 @@ class CollectionCard extends StatelessWidget {
                         ),
                         child: Text(
                           storageLabel,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: storageColor,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: storageColor,
+                                  ),
                         ),
                       ),
                     ],

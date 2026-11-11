@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
 import 'gradient_helper.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -41,8 +41,8 @@ class TypingIndicator extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.surfaceContainerHighDark
-                  : AppColors.surfaceContainer,
+                  ? context.tokens.surfaceContainerHigh
+                  : context.tokens.surfaceContainer,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(20),
@@ -50,30 +50,26 @@ class TypingIndicator extends StatelessWidget {
                 bottomRight: Radius.circular(20),
               ),
               border: Border.all(
-                color: isDark
-                    ? AppColors.dividerSubtleDark
-                    : AppColors.dividerSubtle,
+                color: context.tokens.dividerSubtle,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 12,
                   height: 12,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.secondary),
+                        AlwaysStoppedAnimation<Color>(context.tokens.secondary),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   'AI가 답변을 생성하고 있어요',
                   style: context.texts.bodySmall.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
+                    color: context.tokens.textSecondary,
                   ),
                 ),
               ],

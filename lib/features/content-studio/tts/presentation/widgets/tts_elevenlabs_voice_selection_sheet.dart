@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/tts/data/data_sources/tts_remote_data_source.dart';
@@ -42,7 +43,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        color: context.tokens.surface,
         borderRadius:
             const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
@@ -55,7 +56,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                color: context.tokens.disabled,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -134,9 +135,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                               child: Text(
                                 '해당 억양의 보이스가 없습니다.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondary,
+                                  color: context.tokens.textSecondary,
                                 ),
                               ),
                             )
@@ -159,7 +158,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                                           ? FontWeight.bold
                                           : FontWeight.normal,
                                       color: isSelected
-                                          ? const Color(0xFF9B72CB)
+                                          ? StudioColors.geminiPurple
                                           : null,
                                     ),
                                   ),
@@ -172,9 +171,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                                         voice.friendlyDescription,
                                         style: theme.textTheme.labelSmall
                                             ?.copyWith(
-                                          color: isDark
-                                              ? AppColors.textSecondaryDark
-                                              : AppColors.textSecondary,
+                                          color: context.tokens.textSecondary,
                                         ),
                                       ),
                                       if (voice.originLabel != null) ...[
@@ -184,9 +181,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                                               voice.originLabel!),
                                           style: theme.textTheme.labelSmall
                                               ?.copyWith(
-                                            color: isDark
-                                                ? AppColors.textSecondaryDark
-                                                : AppColors.textSecondary,
+                                            color: context.tokens.textSecondary,
                                           ),
                                         ),
                                       ],
@@ -194,7 +189,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                                   ),
                                   trailing: isSelected
                                       ? const Icon(Icons.check_circle_rounded,
-                                          color: Color(0xFF9B72CB))
+                                          color: StudioColors.geminiPurple)
                                       : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius:
@@ -233,10 +228,10 @@ class _AccentNoticeBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.warningSoftDark : AppColors.warningSoft,
+        color: context.tokens.warningSoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isDark ? AppColors.warningDark : AppColors.warning,
+          color: context.tokens.warning,
         ),
       ),
       child: Row(
@@ -245,7 +240,7 @@ class _AccentNoticeBanner extends StatelessWidget {
           Icon(
             Icons.warning_amber_rounded,
             size: 18,
-            color: isDark ? AppColors.warningDark : AppColors.warning,
+            color: context.tokens.warning,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -290,8 +285,8 @@ class _AccentFilterDropdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.surfaceContainerHighDark
-            : AppColors.surfaceContainer,
+            ? context.tokens.surfaceContainerHigh
+            : context.tokens.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: DropdownButtonHideUnderline(

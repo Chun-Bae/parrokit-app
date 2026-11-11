@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -114,10 +116,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildBalanceItem('패롯', user.parrots, Colors.green),
-                    const Icon(Icons.compare_arrows_rounded,
-                        color: Colors.grey),
-                    _buildBalanceItem('크래커', user.crackers, Colors.orange),
+                    _buildBalanceItem(
+                        '패롯', user.parrots, AppColors.parrotCurrency),
+                    Icon(Icons.compare_arrows_rounded,
+                        color: context.tokens.textTertiary),
+                    _buildBalanceItem(
+                        '크래커', user.crackers, AppColors.crackerCurrency),
                   ],
                 ),
               ),
@@ -172,11 +176,11 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: context.tokens.borderStrong),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: context.tokens.borderStrong),
                   ),
                 ),
               ),
@@ -188,18 +192,19 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.05),
+                    color: context.tokens.info.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline,
-                          size: 18, color: Colors.blue),
+                      Icon(Icons.info_outline,
+                          size: 18, color: context.tokens.info),
                       const SizedBox(width: 8),
                       Text(
                         '예상 획득량: $expectedAmount ${_isParrotsToCrackers ? '크래커' : '패롯'}',
-                        style: const TextStyle(
-                            color: Colors.blue, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: context.tokens.info,
+                            fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -241,7 +246,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     return Column(
       children: [
         Text(title,
-            style: context.texts.labelMedium.copyWith(color: Colors.grey)),
+            style: context.texts.labelMedium
+                .copyWith(color: context.tokens.textTertiary)),
         const SizedBox(height: 4),
         Text(
           '$amount',
@@ -267,7 +273,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
-                : Colors.grey.shade300,
+                : context.tokens.borderStrong,
           ),
         ),
         alignment: Alignment.center,
@@ -277,7 +283,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
             fontWeight: FontWeight.bold,
             color: isSelected
                 ? Theme.of(context).colorScheme.onPrimary
-                : Colors.grey.shade600,
+                : context.tokens.textSecondary,
           ),
         ),
       ),

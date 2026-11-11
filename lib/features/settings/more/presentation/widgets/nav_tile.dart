@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'leading_icon.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 // lib/widgets/nav_tile.dart
 class NavTile extends StatelessWidget {
@@ -28,7 +29,7 @@ class NavTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final textColor = danger ? Colors.red : cs.onSurface;
+    final textColor = danger ? context.tokens.danger : cs.onSurface;
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),

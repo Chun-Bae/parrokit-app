@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:video_player/video_player.dart';
 
@@ -157,13 +157,10 @@ class _SegmentSwitchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final selectedIndex = currentPage.clamp(0, total - 1).toInt();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final segmentBg =
-        isDark ? AppColors.surfaceContainerDark : AppColors.surfaceContainer;
-    final addBg = isDark
-        ? AppColors.surfaceContainerHighDark
-        : AppColors.surfaceContainerHigh;
+    final segmentBg = context.tokens.surfaceContainer;
+    final addBg = context.tokens.surfaceContainerHigh;
     final baseBg =
-        isDark ? AppColors.surfaceContainerHighDark : AppColors.surface;
+        isDark ? context.tokens.surfaceContainerHigh : context.tokens.surface;
     final contentWidth = (total * _SegmentSwitchBarLayout.segmentWidth) +
         _SegmentSwitchBarLayout.addWidth;
 

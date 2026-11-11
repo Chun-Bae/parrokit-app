@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
@@ -95,18 +96,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.tokens.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.tokens.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back_ios_new, color: context.tokens.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           '회원가입',
-          style: context.texts.titleLarge.copyWith(color: Colors.black),
+          style: context.texts.titleLarge
+              .copyWith(color: context.tokens.textPrimary),
         ),
         centerTitle: true,
       ),
@@ -129,7 +132,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   Text(
                     '패로킷 회원가입을 위해 이메일과 비밀번호 등록을 진행해주세요.',
                     style: context.texts.bodyMedium.copyWith(
-                        color: Colors.grey.shade600, letterSpacing: -0.5),
+                        color: context.tokens.textSecondary,
+                        letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 32),
                   Form(
@@ -150,9 +154,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget _buildFormFields() {
     final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
-        return const Color(0xFF0066FF);
+        return context.tokens.primary;
       }
-      return Colors.grey.shade500;
+      return context.tokens.textTertiary;
     });
 
     return Column(
@@ -164,16 +168,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           decoration: InputDecoration(
             labelText: '이메일',
             labelStyle: TextStyle(
-                color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-            floatingLabelStyle: const TextStyle(
-                color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                color: context.tokens.textTertiary,
+                fontWeight: FontWeight.w500),
+            floatingLabelStyle: TextStyle(
+                color: context.tokens.primary, fontWeight: FontWeight.bold),
             prefixIconColor: iconColor,
             prefixIcon: const Icon(Icons.person),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade400),
+              borderSide: BorderSide(color: context.tokens.borderStrong),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: context.tokens.primary, width: 2),
             ),
           ),
           validator: (value) {
@@ -199,16 +204,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 decoration: InputDecoration(
                   labelText: '닉네임',
                   labelStyle: TextStyle(
-                      color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-                  floatingLabelStyle: const TextStyle(
-                      color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                      color: context.tokens.textTertiary,
+                      fontWeight: FontWeight.w500),
+                  floatingLabelStyle: TextStyle(
+                      color: context.tokens.primary,
+                      fontWeight: FontWeight.bold),
                   prefixIconColor: iconColor,
                   prefixIcon: const Icon(Icons.badge),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey.shade400),
+                    borderSide: BorderSide(color: context.tokens.borderStrong),
                   ),
-                  focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide:
+                        BorderSide(color: context.tokens.primary, width: 2),
                   ),
                 ),
                 validator: (value) {
@@ -227,7 +235,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ? null
                     : _checkNickname,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0066FF),
+                  backgroundColor: context.tokens.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -246,7 +254,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Text(
                 _nicknameCheckMessage!,
                 style: context.texts.bodySmall.copyWith(
-                    color: _isNicknameAvailable ? Colors.green : Colors.red),
+                    color: _isNicknameAvailable
+                        ? context.tokens.success
+                        : context.tokens.danger),
               ),
             ),
           ),
@@ -258,16 +268,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           decoration: InputDecoration(
             labelText: '비밀번호',
             labelStyle: TextStyle(
-                color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-            floatingLabelStyle: const TextStyle(
-                color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                color: context.tokens.textTertiary,
+                fontWeight: FontWeight.w500),
+            floatingLabelStyle: TextStyle(
+                color: context.tokens.primary, fontWeight: FontWeight.bold),
             prefixIconColor: iconColor,
             prefixIcon: const Icon(Icons.lock),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade400),
+              borderSide: BorderSide(color: context.tokens.borderStrong),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: context.tokens.primary, width: 2),
             ),
           ),
           validator: (value) {
@@ -284,16 +295,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           decoration: InputDecoration(
             labelText: '비밀번호 확인',
             labelStyle: TextStyle(
-                color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-            floatingLabelStyle: const TextStyle(
-                color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                color: context.tokens.textTertiary,
+                fontWeight: FontWeight.w500),
+            floatingLabelStyle: TextStyle(
+                color: context.tokens.primary, fontWeight: FontWeight.bold),
             prefixIconColor: iconColor,
             prefixIcon: const Icon(Icons.lock),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade400),
+              borderSide: BorderSide(color: context.tokens.borderStrong),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: context.tokens.primary, width: 2),
             ),
           ),
           validator: (value) {
@@ -313,7 +325,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _onSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0066FF), // 파란색
+          backgroundColor: context.tokens.primary, // 파란색
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(

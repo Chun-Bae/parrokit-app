@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardPostContentSection extends StatelessWidget {
@@ -30,7 +30,7 @@ class BoardPostContentSection extends StatelessWidget {
           child: Text(
             post.content.replaceAll(RegExp(r'!\[.*?\]\(.*?\)'), '').trim(),
             style: context.texts.titleMedium
-                .copyWith(height: 1.6, color: AppColors.textPrimary),
+                .copyWith(height: 1.6, color: context.tokens.textPrimary),
           ),
         ),
         if (post.hasImage && post.imageUrls.isNotEmpty) ...[
@@ -80,7 +80,7 @@ class BoardPostContentSection extends StatelessWidget {
                     (tag) => Text(
                       '#$tag',
                       style: context.texts.bodyLarge
-                          .copyWith(color: AppColors.textDisabled),
+                          .copyWith(color: context.tokens.textDisabled),
                     ),
                   )
                   .toList(),

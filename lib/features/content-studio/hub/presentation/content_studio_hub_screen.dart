@@ -12,7 +12,7 @@ import 'package:parrokit/features/content-studio/video/presentation/video_provid
 import 'package:parrokit/features/content-studio/chat-bot/presentation/chat_bot_provider.dart';
 import 'studio_hub_provider.dart';
 import 'package:parrokit/features/home/dashboard/presentation/widgets/dashboard_studio_switch_fab.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/content-studio/chat-bot/presentation/widgets/chat_bot_fab.dart';
 import 'content_studio_app_bar.dart';
 import 'widgets/content_studio_exit_confirm_sheet.dart';
@@ -81,7 +81,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     final theme = Theme.of(context);
     final userProvider = context.watch<UserProvider>();
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppColors.surfaceDark : theme.colorScheme.surface;
+    final bg = isDark ? context.tokens.surface : theme.colorScheme.surface;
     final appBarTitle = switch (_selectedIndex) {
       0 => '편집',
       1 => 'TTS 생성',
@@ -305,7 +305,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                                     child: _AppBarOptionItem(
                                       icon: Icons.storefront_rounded,
                                       label: '패롯 충전',
-                                      iconColor: Colors.amber,
+                                      iconColor: context.tokens.warning,
                                       onTap: () {
                                         context.pushReplacement(
                                             AppRoutes.morePath);

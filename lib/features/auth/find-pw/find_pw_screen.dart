@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
@@ -54,18 +55,20 @@ class _FindPwScreenState extends State<FindPwScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.tokens.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.tokens.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back_ios_new, color: context.tokens.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           '비밀번호 재설정',
-          style: context.texts.titleLarge.copyWith(color: Colors.black),
+          style: context.texts.titleLarge
+              .copyWith(color: context.tokens.textPrimary),
         ),
         centerTitle: true,
       ),
@@ -88,7 +91,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
                   Text(
                     '가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.',
                     style: context.texts.bodyMedium.copyWith(
-                        color: Colors.grey.shade600, letterSpacing: -0.5),
+                        color: context.tokens.textSecondary,
+                        letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 32),
                   Form(
@@ -109,9 +113,9 @@ class _FindPwScreenState extends State<FindPwScreen> {
   Widget _buildFormFields() {
     final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
-        return const Color(0xFF0066FF);
+        return context.tokens.primary;
       }
-      return Colors.grey.shade500;
+      return context.tokens.textTertiary;
     });
 
     return Column(
@@ -123,16 +127,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
           decoration: InputDecoration(
             labelText: '이메일',
             labelStyle: TextStyle(
-                color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-            floatingLabelStyle: const TextStyle(
-                color: Color(0xFF0066FF), fontWeight: FontWeight.bold),
+                color: context.tokens.textTertiary,
+                fontWeight: FontWeight.w500),
+            floatingLabelStyle: TextStyle(
+                color: context.tokens.primary, fontWeight: FontWeight.bold),
             prefixIconColor: iconColor,
             prefixIcon: const Icon(Icons.person),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey.shade400),
+              borderSide: BorderSide(color: context.tokens.borderStrong),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF0066FF), width: 2),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: context.tokens.primary, width: 2),
             ),
           ),
           validator: (value) {
@@ -152,7 +157,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _onSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0066FF), // 파란색
+          backgroundColor: context.tokens.primary, // 파란색
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(

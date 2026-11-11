@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/post.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardPostMetaRow extends StatelessWidget {
@@ -33,22 +33,22 @@ class BoardPostMetaRow extends StatelessWidget {
                 Text(
                   post.category,
                   style: context.texts.bodyLarge
-                      .copyWith(color: AppColors.textTertiary),
+                      .copyWith(color: context.tokens.textTertiary),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right,
-                    size: 20, color: AppColors.textTertiary),
+                Icon(Icons.chevron_right,
+                    size: 20, color: context.tokens.textTertiary),
               ],
             ),
           ),
           const Spacer(),
-          const Icon(Icons.remove_red_eye_outlined,
-              color: AppColors.textDisabled, size: 24),
+          Icon(Icons.remove_red_eye_outlined,
+              color: context.tokens.textDisabled, size: 24),
           const SizedBox(width: 6),
           Text(
             '${post.viewCount}',
-            style:
-                context.texts.bodyLarge.copyWith(color: AppColors.textDisabled),
+            style: context.texts.bodyLarge
+                .copyWith(color: context.tokens.textDisabled),
           ),
           const SizedBox(width: 18),
           Icon(Icons.thumb_up_outlined, color: likeIconColor, size: 24),

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -28,6 +29,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -74,11 +76,11 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   static const categories = ['전체', '일상', '여행', '카페', '감정', '회사', '학교'];
   static const packs = [
     _SentencePack('카페에서 바로 쓰는 말', '8문장 · 입문', Icons.local_cafe_rounded,
-        Color(0xFFFFE8C7)),
+        CollectionColors.cream),
+    _SentencePack('짧은 일상 반응', '12문장 · 초급', Icons.chat_bubble_rounded,
+        CollectionColors.mint),
     _SentencePack(
-        '짧은 일상 반응', '12문장 · 초급', Icons.chat_bubble_rounded, Color(0xFFDDEFEA)),
-    _SentencePack(
-        '여행 첫날 표현', '10문장 · 초급', Icons.luggage_rounded, Color(0xFFDCE9F8)),
+        '여행 첫날 표현', '10문장 · 초급', Icons.luggage_rounded, CollectionColors.sky),
   ];
   @override
   void initState() {
@@ -675,9 +677,9 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                     color: colors.primaryContainer.withValues(alpha: 0.42),
                     borderRadius: BorderRadius.circular(20)),
                 child: Row(children: [
-                  const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.record_voice_over_rounded)),
+                  CircleAvatar(
+                      backgroundColor: context.tokens.surface,
+                      child: const Icon(Icons.record_voice_over_rounded)),
                   const SizedBox(width: 14),
                   Expanded(
                       child: Column(
@@ -883,7 +885,7 @@ class _PackCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20)),
                 child: Text('공식', style: context.texts.labelSmall)),
-            Icon(pack.icon, size: 23, color: const Color(0xFF3D5966)),
+            Icon(pack.icon, size: 23, color: CollectionColors.packIcon),
           ]),
           const Spacer(),
           Text(pack.title,
@@ -892,8 +894,8 @@ class _PackCard extends StatelessWidget {
               style: context.texts.bodyLarge),
           const SizedBox(height: 5),
           Text(pack.detail,
-              style:
-                  context.texts.labelSmall.copyWith(color: Color(0xFF526977))),
+              style: context.texts.labelSmall
+                  .copyWith(color: CollectionColors.packLabel)),
         ]),
       );
 }
@@ -995,8 +997,7 @@ class _SentenceCard extends StatelessWidget {
                         sentence.liked
                             ? Icons.favorite_rounded
                             : Icons.favorite_border,
-                        color:
-                            sentence.liked ? const Color(0xFFFF768B) : null)),
+                        color: sentence.liked ? CollectionColors.liked : null)),
                 Text('${sentence.likeCount}', style: context.texts.bodySmall),
                 const SizedBox(width: 14),
                 Tooltip(
@@ -1028,7 +1029,7 @@ class _SentenceCard extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     onPressed: onParrot,
                     icon: Icon(Icons.record_voice_over_rounded,
-                        color: active ? const Color(0xFF6D9890) : null)),
+                        color: active ? CollectionColors.voiceActive : null)),
               ]),
             ]),
           ),
@@ -1098,7 +1099,7 @@ class _MySentenceTile extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFFFFBEA), Color(0xFFFFF1C9), Color(0xFFFFFAE6)],
+              colors: CollectionColors.goldBackground,
             ),
           ),
           child: child,
@@ -1148,7 +1149,7 @@ class _MySentenceTile extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF7D774), Color(0xFFC9972B), Color(0xFFFFE9A0)],
+          colors: CollectionColors.goldBorder,
         ),
       ),
       child: card,
@@ -1562,7 +1563,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   liked
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
-                  color: liked ? const Color(0xFFFF768B) : null,
+                  color: liked ? CollectionColors.liked : null,
                 ),
               ),
               if (widget.shared != null) ...[

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'chat_bot_sheet.dart';
 
 class ChatBotFab extends StatefulWidget {
   const ChatBotFab({super.key, this.onTriggerAction});
 
-  final void Function(int tabIndex, Map<String, dynamic>? actionData)? onTriggerAction;
+  final void Function(int tabIndex, Map<String, dynamic>? actionData)?
+      onTriggerAction;
 
   @override
   State<ChatBotFab> createState() => _ChatBotFabState();
@@ -38,8 +40,8 @@ class _ChatBotFabState extends State<ChatBotFab>
   Widget build(BuildContext context) {
     // AI스러운 그라데이션 및 효과
     final gradientColors = [
-      const Color(0xFF8B5CF6), // Purple
-      const Color(0xFF3B82F6), // Blue
+      StudioColors.generalPurple, // Purple
+      StudioColors.videoBlue, // Blue
     ];
 
     return AnimatedBuilder(

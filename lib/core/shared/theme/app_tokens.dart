@@ -17,6 +17,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.surfaceContainerHigh,
     required this.divider,
     required this.dividerSubtle,
+    required this.borderStrong,
     required this.textPrimary,
     required this.textSecondary,
     required this.textTertiary,
@@ -61,6 +62,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
   /// 얇은 구분선.
   final Color dividerSubtle;
+
+  /// 입력창·외곽선 버튼의 또렷한 테두리
+  final Color borderStrong;
 
   /// 본문 글자.
   final Color textPrimary;
@@ -144,6 +148,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     surfaceContainerHigh: AppColors.surfaceContainerHigh,
     divider: AppColors.divider,
     dividerSubtle: AppColors.dividerSubtle,
+    borderStrong: AppColors.borderStrong,
     textPrimary: AppColors.textPrimary,
     textSecondary: AppColors.textSecondary,
     textTertiary: AppColors.textTertiary,
@@ -178,6 +183,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     surfaceContainerHigh: AppColors.surfaceContainerHighDark,
     divider: AppColors.dividerDark,
     dividerSubtle: AppColors.dividerSubtleDark,
+    borderStrong: AppColors.borderStrongDark,
     textPrimary: AppColors.textPrimaryDark,
     textSecondary: AppColors.textSecondaryDark,
     textTertiary: AppColors.textTertiaryDark,
@@ -233,6 +239,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? surfaceContainerHigh,
     Color? divider,
     Color? dividerSubtle,
+    Color? borderStrong,
     Color? textPrimary,
     Color? textSecondary,
     Color? textTertiary,
@@ -266,6 +273,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
         surfaceContainerHigh: surfaceContainerHigh ?? this.surfaceContainerHigh,
         divider: divider ?? this.divider,
         dividerSubtle: dividerSubtle ?? this.dividerSubtle,
+        borderStrong: borderStrong ?? this.borderStrong,
         textPrimary: textPrimary ?? this.textPrimary,
         textSecondary: textSecondary ?? this.textSecondary,
         textTertiary: textTertiary ?? this.textTertiary,
@@ -305,6 +313,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
           Color.lerp(surfaceContainerHigh, other.surfaceContainerHigh, t)!,
       divider: Color.lerp(divider, other.divider, t)!,
       dividerSubtle: Color.lerp(dividerSubtle, other.dividerSubtle, t)!,
+      borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
@@ -570,4 +579,16 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
       mastery: _lerpList(mastery, other.mastery, t),
     );
   }
+}
+
+/// 색 토큰을 context에서 바로 꺼내는 창구. `context.tokens.textSecondary` 처럼 쓴다.
+///
+/// `context.texts`와 같은 꼴이다. 밝기 분기를 쓰는 쪽에서 적지 않아도 되므로
+/// `isDark ? AppColors.xDark : AppColors.x` 대신 이걸 쓴다.
+extension AppTokensContext on BuildContext {
+  /// 앱 전역 색 토큰.
+  AppTokens get tokens => AppTokens.of(this);
+
+  /// 홈 화면 전용 색 토큰.
+  HomeTokens get homeTokens => HomeTokens.of(this);
 }

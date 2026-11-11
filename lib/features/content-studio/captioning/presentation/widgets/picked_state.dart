@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
@@ -1010,8 +1011,8 @@ class _OptionCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: isDark
-              ? AppColors.surfaceContainerHighDark
-              : AppColors.surfaceContainer,
+              ? context.tokens.surfaceContainerHigh
+              : context.tokens.surfaceContainer,
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Row(

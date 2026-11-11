@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -121,7 +122,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
 
   void _showCommentOptionsSheet(Comment comment) {
     final currentUser = context.read<UserProvider>().currentUser;
-    final isMyComment = currentUser != null && comment.authorId == currentUser.id;
+    final isMyComment =
+        currentUser != null && comment.authorId == currentUser.id;
     BoardOptionsHandler.showCommentOptionsSheet(
       context: context,
       isMyComment: isMyComment,
@@ -133,17 +135,23 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('댓글 삭제', style: TextStyle(fontWeight: FontWeight.bold)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('댓글 삭제',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             content: const Text('정말로 이 댓글을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('취소', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                child: Text('취소',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('삭제', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                child: Text('삭제',
+                    style: TextStyle(
+                        color: context.tokens.danger,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -165,7 +173,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       onEdit: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => BoardWriteScreen(editPost: post)),
+          MaterialPageRoute(
+              builder: (context) => BoardWriteScreen(editPost: post)),
         );
       },
       onDelete: () async {
@@ -174,17 +183,23 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('게시글 삭제', style: TextStyle(fontWeight: FontWeight.bold)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('게시글 삭제',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             content: const Text('정말로 이 게시글을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('취소', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                child: Text('취소',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('삭제', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                child: Text('삭제',
+                    style: TextStyle(
+                        color: context.tokens.danger,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -207,16 +222,16 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = colorScheme.surface;
-    const likeAccent = AppColors.primary; // blue[600] 느낌
+    final likeAccent = context.tokens.primary; // blue[600] 느낌
     const scrapAccent = AppColors.communityScrapAccent; // 부드러운 노랑 느낌
-    const sendAccent = AppColors.primary;
+    final sendAccent = context.tokens.primary;
 
     final provider = context.watch<CommunityProvider>();
     final liked = provider.isCurrentPostLiked;
     final scrapped = provider.isCurrentPostScrapped;
 
-    final likeMetaColor = liked ? likeAccent : AppColors.textDisabled;
-    final likeIconColor = liked ? likeAccent : AppColors.textDisabled;
+    final likeMetaColor = liked ? likeAccent : context.tokens.textDisabled;
+    final likeIconColor = liked ? likeAccent : context.tokens.textDisabled;
 
     final post = provider.posts.firstWhere(
       (p) => p.id == widget.postId,
@@ -241,7 +256,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     if (_isFetchingDetails) {
       return Scaffold(
         backgroundColor: backgroundColor,
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(color: likeAccent),
         ),
       );
@@ -369,5 +384,4 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       ),
     );
   }
-
 }

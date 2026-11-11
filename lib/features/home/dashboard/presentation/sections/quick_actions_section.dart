@@ -12,7 +12,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../widgets/quick_action_button.dart';
 
 /// 대시보드 퀵 액션 버튼 섹션.
@@ -46,14 +46,13 @@ class QuickActionsSection extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardBg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
+    final cardBg =
+        isDark ? context.tokens.surfaceContainer : context.tokens.surface;
     final subtle = isDark
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.06);
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final textPrimary = context.tokens.textPrimary;
+    final textSecondary = context.tokens.textSecondary;
 
     return SizedBox(
       height: 56,

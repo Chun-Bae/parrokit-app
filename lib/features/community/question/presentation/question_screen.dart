@@ -6,7 +6,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionScreen extends StatefulWidget {
@@ -93,8 +93,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: 80), // Fab space
         itemCount: questionPosts.length,
-        separatorBuilder: (context, index) => const Divider(
-          color: AppColors.disabled,
+        separatorBuilder: (context, index) => Divider(
+          color: context.tokens.disabled,
           thickness: 8,
         ),
         itemBuilder: (context, index) {
@@ -129,8 +129,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
     final isExpired = question.questionStatus == 'expired';
 
     String statusText = '답변 대기중';
-    Color statusColor = AppColors.primary;
-    Color statusBgColor = AppColors.primarySoft;
+    Color statusColor = context.tokens.primary;
+    Color statusBgColor = context.tokens.primarySoft;
 
     if (isResolved) {
       statusText = '채택 완료';
@@ -138,8 +138,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
       statusBgColor = colorScheme.surfaceContainerHigh;
     } else if (isExpired) {
       statusText = '만료됨';
-      statusColor = AppColors.danger;
-      statusBgColor = AppColors.dangerSoft;
+      statusColor = context.tokens.danger;
+      statusBgColor = context.tokens.dangerSoft;
     }
 
     return Padding(
@@ -186,10 +186,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primarySoft,
+                                    color: context.tokens.primarySoft,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                        color: AppColors.primary
+                                        color: context.tokens.primary
                                             .withValues(alpha: 0.35)),
                                   ),
                                   child: Row(
@@ -201,7 +201,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                       Text(
                                         '${question.rewardCrackers}',
                                         style: context.texts.labelSmall
-                                            .copyWith(color: AppColors.primary),
+                                            .copyWith(
+                                                color: context.tokens.primary),
                                       ),
                                     ],
                                   ),

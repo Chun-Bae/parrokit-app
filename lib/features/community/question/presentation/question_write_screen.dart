@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionWriteScreen extends StatefulWidget {
@@ -107,10 +107,10 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    const accentBlue = AppColors.primary;
+    final tokens = AppTokens.of(context);
+    final accentBlue = tokens.primary;
     final valueTextStyle =
-        context.texts.titleMedium.copyWith(color: Colors.black87);
+        context.texts.titleMedium.copyWith(color: context.tokens.textPrimary);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -128,7 +128,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
           icon: Icon(
             Icons.close_rounded,
             size: 28,
-            color: isDark ? Colors.white : colorScheme.onSurface,
+            color: context.tokens.textPrimary,
           ),
         ),
         actions: [
@@ -165,7 +165,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
         child: Column(
           children: [
             // Thin top divider
-            Container(color: AppColors.surfaceContainerHigh, height: 1),
+            Container(color: tokens.divider, height: 1),
 
             Expanded(
               child: SingleChildScrollView(
@@ -181,7 +181,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                         filled: true,
                         fillColor: Colors.transparent,
                         hintStyle: context.texts.headlineSmall
-                            .copyWith(color: AppColors.textDisabled),
+                            .copyWith(color: tokens.textDisabled),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -202,8 +202,8 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                             '무엇이 궁금하신가요? 단어 번역, 문맥 상 의미, 억양 차이 등 자유롭게 질문해보세요.',
                         filled: true,
                         fillColor: Colors.transparent,
-                        hintStyle: context.texts.titleMedium.copyWith(
-                            color: AppColors.textDisabled, height: 1.5),
+                        hintStyle: context.texts.titleMedium
+                            .copyWith(color: tokens.textDisabled, height: 1.5),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -218,14 +218,9 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF3A3F46)
-                            : const Color(0xFFE3E6EB),
+                        color: tokens.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF5B616B)
-                                : const Color(0xFFCAD0D8)),
+                        border: Border.all(color: tokens.divider),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,9 +244,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                             onChanged: (val) =>
                                 setState(() => _rewardCrackers = val.toInt()),
                           ),
-                          const Divider(
-                              height: 32,
-                              color: AppColors.surfaceContainerHigh),
+                          Divider(height: 32, color: tokens.divider),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -283,36 +276,27 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
             // Bottom Attachment Toolbar
             Container(
               decoration: BoxDecoration(
-                border: const Border(
-                    top: BorderSide(color: AppColors.surfaceContainerHigh)),
-                color: isDark ? const Color(0xFF151922) : colorScheme.surface,
+                border: Border(top: BorderSide(color: tokens.divider)),
+                color: tokens.surface,
               ),
               padding:
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.image_outlined,
-                        color:
-                            isDark ? AppColors.primarySoft : AppColors.primary),
+                    icon: Icon(Icons.image_outlined, color: tokens.primary),
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: Icon(Icons.mic_none_rounded,
-                        color:
-                            isDark ? AppColors.primarySoft : AppColors.primary),
+                    icon: Icon(Icons.mic_none_rounded, color: tokens.primary),
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: Icon(Icons.link_rounded,
-                        color:
-                            isDark ? AppColors.primarySoft : AppColors.primary),
+                    icon: Icon(Icons.link_rounded, color: tokens.primary),
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: Icon(Icons.tag_rounded,
-                        color:
-                            isDark ? AppColors.primarySoft : AppColors.primary),
+                    icon: Icon(Icons.tag_rounded, color: tokens.primary),
                     onPressed: () {},
                   ),
                   const Spacer(),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../chat_bot_provider.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -8,7 +8,7 @@ void showModelSelectorBottomSheet(
     BuildContext context, ChatBotProvider provider) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
-  final bg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
+  final bg = isDark ? context.tokens.surfaceContainer : context.tokens.surface;
 
   showModalBottomSheet(
     context: context,
@@ -39,8 +39,8 @@ void showModelSelectorBottomSheet(
               '작업 성격에 맞는 Gemini AI 모델을 선택하세요.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textSecondary,
+                    ? context.tokens.textTertiary
+                    : context.tokens.textSecondary,
               ),
             ),
             const SizedBox(height: 20),
@@ -52,7 +52,7 @@ void showModelSelectorBottomSheet(
               speedText: '매우 빠름',
               costText: '가장 저렴함',
               isSelected: provider.selectedModel == 'gemini-2.5-flash',
-              accentColor: AppColors.primary,
+              accentColor: context.tokens.primary,
               onTap: () {
                 provider.updateSelectedModel('gemini-2.5-flash');
                 Navigator.pop(context);
@@ -68,7 +68,7 @@ void showModelSelectorBottomSheet(
               speedText: '보통',
               costText: '보통',
               isSelected: provider.selectedModel == 'gemini-2.5-pro',
-              accentColor: AppColors.secondary,
+              accentColor: context.tokens.secondary,
               locked: true,
               onTap: () {
                 showToast('Gemini 2.5 Pro는 유료 플랜 전용이에요. 출시 후 이용할 수 있어요.');
@@ -114,14 +114,13 @@ class ModelOptionCard extends StatelessWidget {
     final cardBg = isDark
         ? (isSelected
             ? accentColor.withValues(alpha: 0.1)
-            : AppColors.surfaceContainerHighDark)
+            : context.tokens.surfaceContainerHigh)
         : (isSelected
             ? accentColor.withValues(alpha: 0.05)
-            : AppColors.surfaceContainerHigh);
+            : context.tokens.surfaceContainerHigh);
 
-    final borderColor = isSelected
-        ? accentColor
-        : (isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle);
+    final borderColor =
+        isSelected ? accentColor : (context.tokens.dividerSubtle);
 
     return Opacity(
       opacity: locked ? 0.5 : 1.0,
@@ -153,7 +152,9 @@ class ModelOptionCard extends StatelessWidget {
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                             color: isSelected
-                                ? (isDark ? Colors.white : accentColor)
+                                ? (isDark
+                                    ? context.tokens.textPrimary
+                                    : accentColor)
                                 : null,
                           ),
                         ),
@@ -172,9 +173,7 @@ class ModelOptionCard extends StatelessWidget {
                     Text(
                       description,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
+                        color: context.tokens.textSecondary,
                         height: 1.35,
                       ),
                     ),
@@ -186,9 +185,7 @@ class ModelOptionCard extends StatelessWidget {
                   ? Icon(
                       Icons.lock_rounded,
                       size: 20,
-                      color: isDark
-                          ? AppColors.textDisabledDark
-                          : AppColors.textDisabled,
+                      color: context.tokens.textDisabled,
                     )
                   : Container(
                       width: 20,
@@ -199,9 +196,7 @@ class ModelOptionCard extends StatelessWidget {
                         border: Border.all(
                           color: isSelected
                               ? accentColor
-                              : (isDark
-                                  ? AppColors.textDisabledDark
-                                  : AppColors.textDisabled),
+                              : (context.tokens.textDisabled),
                           width: 2,
                         ),
                       ),
@@ -244,7 +239,7 @@ class FeatureChip extends StatelessWidget {
       child: Text(
         label,
         style: context.texts.labelSmall.copyWith(
-          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+          color: context.tokens.textSecondary,
         ),
       ),
     );

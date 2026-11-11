@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_gemini_models.dart';
@@ -13,15 +14,15 @@ class TtsGeminiModelSelectionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        color: context.tokens.surface,
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,7 +33,7 @@ class TtsGeminiModelSelectionSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                color: context.tokens.disabled,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -54,24 +55,28 @@ class TtsGeminiModelSelectionSheet extends StatelessWidget {
               itemCount: geminiModels.length,
               itemBuilder: (context, index) {
                 final model = geminiModels[index];
-                final isSelected = provider.modelId == model.id || (provider.modelId == null && model.id == 'gemini-2.5-flash');
+                final isSelected = provider.modelId == model.id ||
+                    (provider.modelId == null &&
+                        model.id == 'gemini-2.5-flash');
 
                 return ListTile(
                   title: Text(
                     model.name,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? const Color(0xFF9B72CB) : null,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? StudioColors.geminiPurple : null,
                     ),
                   ),
                   subtitle: Text(
                     model.description,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                      color: context.tokens.textSecondary,
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFF9B72CB))
+                      ? const Icon(Icons.check_circle_rounded,
+                          color: StudioColors.geminiPurple)
                       : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),

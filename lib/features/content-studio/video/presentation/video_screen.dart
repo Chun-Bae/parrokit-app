@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
@@ -116,8 +116,7 @@ class _VideoScreenState extends State<VideoScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final mutedText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
     final provider = context.watch<VideoProvider>();
 
     if (_dialogueController.text != provider.dialogue) {
@@ -467,9 +466,7 @@ class _VideoRecommendationFilterSheetState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final mutedText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
 
     return SafeArea(
       child: Padding(
@@ -610,7 +607,6 @@ class _FilterSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -619,8 +615,7 @@ class _FilterSection extends StatelessWidget {
           label,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color:
-                isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            color: context.tokens.textSecondary,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -705,8 +700,7 @@ class _VideoPreviewState extends State<_VideoPreview> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mutedText =
-        widget.isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
     final provider = context.watch<VideoProvider>();
     final videoUrl = provider.generatedFilePath;
 
@@ -727,14 +721,10 @@ class _VideoPreviewState extends State<_VideoPreview> {
             ? EdgeInsets.zero
             : const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: widget.isDark
-              ? AppColors.surfaceContainerDark
-              : AppColors.surfaceContainer,
+          color: context.tokens.surfaceContainer,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: widget.isDark
-                ? AppColors.dividerSubtleDark
-                : AppColors.dividerSubtle,
+            color: context.tokens.dividerSubtle,
           ),
         ),
         child: ClipRRect(
@@ -745,9 +735,7 @@ class _VideoPreviewState extends State<_VideoPreview> {
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: widget.isDark
-                          ? AppColors.surfaceContainerHighDark
-                          : AppColors.surfaceContainerHigh,
+                      color: context.tokens.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                   ),
@@ -825,13 +813,13 @@ class _VideoPreviewState extends State<_VideoPreview> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline_rounded,
-                            color: Colors.red, size: 32),
+                        Icon(Icons.error_outline_rounded,
+                            color: context.tokens.danger, size: 32),
                         const SizedBox(height: AppSpacing.md),
                         Text(
                           _playerError!,
                           style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: Colors.red),
+                              ?.copyWith(color: context.tokens.danger),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -870,10 +858,11 @@ class _Panel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceContainerDark : AppColors.surface,
+        color:
+            isDark ? context.tokens.surfaceContainer : context.tokens.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle,
+          color: context.tokens.dividerSubtle,
         ),
       ),
       child: Column(
@@ -915,11 +904,11 @@ class _SquareChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.surfaceContainerHighDark
-            : AppColors.surfaceContainer,
+            ? context.tokens.surfaceContainerHigh
+            : context.tokens.surfaceContainer,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle,
+          color: context.tokens.dividerSubtle,
         ),
       ),
       child: Text(
@@ -944,10 +933,10 @@ class _VideoWarningBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.warningSoftDark : AppColors.warningSoft,
+        color: context.tokens.warningSoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isDark ? AppColors.warningDark : AppColors.warning,
+          color: context.tokens.warning,
         ),
       ),
       child: Row(
@@ -955,7 +944,7 @@ class _VideoWarningBanner extends StatelessWidget {
         children: [
           Icon(
             Icons.warning_amber_rounded,
-            color: isDark ? AppColors.warningDark : AppColors.warning,
+            color: context.tokens.warning,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -992,9 +981,7 @@ class _VideoWarningBanner extends StatelessWidget {
                 Text(
                   '의도와 다르게 생성된 동영상에 대한 책임은 사용자에게 있습니다.',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
+                    color: context.tokens.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1024,8 +1011,7 @@ class _VideoWarningPoint extends StatelessWidget {
         Text(
           '•',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color:
-                    isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                color: context.tokens.textPrimary,
                 fontWeight: FontWeight.w900,
               ),
         ),
@@ -1052,8 +1038,7 @@ class _RecentVideoPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mutedText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
     final provider = context.watch<VideoProvider>();
     final recentVideos = provider.recentVideos;
     final isOperatorAccount =
@@ -1106,14 +1091,10 @@ class _RecentVideoPanel extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceContainerHighDark
-                            : AppColors.surfaceContainerHigh,
+                        color: context.tokens.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(
-                          color: isDark
-                              ? AppColors.dividerSubtleDark
-                              : AppColors.dividerSubtle,
+                          color: context.tokens.dividerSubtle,
                         ),
                       ),
                       child: Row(
@@ -1127,9 +1108,9 @@ class _RecentVideoPanel extends StatelessWidget {
                               ),
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.video_library_rounded,
-                              color: AppColors.primary,
+                              color: context.tokens.primary,
                             ),
                           ),
                           const SizedBox(width: AppSpacing.md),
@@ -1261,8 +1242,8 @@ class _ChoiceTile extends StatelessWidget {
         color: selected
             ? theme.colorScheme.primary
             : isDark
-                ? AppColors.surfaceContainerHighDark
-                : AppColors.surfaceContainer,
+                ? context.tokens.surfaceContainerHigh
+                : context.tokens.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
@@ -1302,8 +1283,8 @@ class _StyleRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
             color: isDark
-                ? AppColors.surfaceContainerHighDark
-                : AppColors.surfaceContainer,
+                ? context.tokens.surfaceContainerHigh
+                : context.tokens.surfaceContainer,
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Row(
@@ -1339,14 +1320,13 @@ class _InfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Expanded(
       child: Container(
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.primarySubtleDark : AppColors.primarySubtle,
+          color: context.tokens.primarySubtle,
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         child: Row(

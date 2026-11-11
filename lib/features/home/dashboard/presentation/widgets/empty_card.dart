@@ -11,7 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 빈 상태 카드 위젯.
@@ -32,7 +32,8 @@ class EmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.surfaceContainerDark : Colors.transparent;
+    final cardBg =
+        isDark ? context.tokens.surfaceContainer : Colors.transparent;
 
     return Container(
       height: 160,

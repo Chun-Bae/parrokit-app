@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -223,19 +224,19 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
         icon: Icons.format_quote_rounded,
         title: '모아둔 문장을 바로 연습해요',
         detail: '공식 문장팩과 사람들이 공유한 표현을 둘러보세요',
-        color: const Color(0xFFDDEFEA),
+        color: CollectionColors.mint,
       ),
       (
         icon: Icons.video_library_rounded,
         title: '클립 $clipCount개를 보관 중이에요',
         detail: '영상의 장면과 문장을 함께 기억할 수 있어요',
-        color: const Color(0xFFDCE9F8),
+        color: CollectionColors.sky,
       ),
       (
         icon: Icons.spellcheck_rounded,
         title: '문장에서 만난 단어를 모아요',
         detail: '따로 외우기보다 실제 표현과 함께 복습해요',
-        color: const Color(0xFFFFE8C7),
+        color: CollectionColors.cream,
       ),
     ];
     final page = pages[_tabController.index];
@@ -261,7 +262,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   color: colors.surface.withValues(alpha: 0.82),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(page.icon, color: const Color(0xFF42636A)),
+                child: Icon(page.icon, color: CollectionColors.tabIcon),
               ),
               const SizedBox(width: 14),
               Expanded(

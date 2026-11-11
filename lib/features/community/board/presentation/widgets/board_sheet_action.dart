@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardSheetAction extends StatelessWidget {
@@ -17,7 +17,8 @@ class BoardSheetAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textColor = isDestructive ? AppColors.danger : colorScheme.onSurface;
+    final textColor =
+        isDestructive ? context.tokens.danger : colorScheme.onSurface;
 
     return InkWell(
       onTap: onTap,

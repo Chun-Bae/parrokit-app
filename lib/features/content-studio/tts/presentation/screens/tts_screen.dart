@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:file_saver/file_saver.dart';
 
@@ -126,9 +128,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final mutedText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
     final provider = context.watch<TtsProvider>();
 
     if (_textController.text != provider.text) {
@@ -267,7 +267,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                   orElse: () => elevenLabsModels.first,
                                 )
                                 .name,
-                            accentColor: AppColors.secondary,
+                            accentColor: context.tokens.secondary,
                             onTap: () => showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
@@ -295,7 +295,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                         )
                                         .name ??
                                     provider.voiceId),
-                            accentColor: AppColors.secondary,
+                            accentColor: context.tokens.secondary,
                             onTap: () => _showElevenLabsVoiceSelectionSheet(
                                 context, provider),
                           ),
@@ -305,7 +305,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             valueText:
                                 '${(provider.elevenLabsStability * 100).toInt()}%',
                             value: provider.elevenLabsStability,
-                            activeColor: AppColors.secondary,
+                            activeColor: context.tokens.secondary,
                             onChanged: provider.updateElevenLabsStability,
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -314,7 +314,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             valueText:
                                 '${(provider.elevenLabsSimilarityBoost * 100).toInt()}%',
                             value: provider.elevenLabsSimilarityBoost,
-                            activeColor: AppColors.secondary,
+                            activeColor: context.tokens.secondary,
                             onChanged: provider.updateElevenLabsSimilarityBoost,
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -323,7 +323,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             valueText:
                                 '${(provider.elevenLabsStyle * 100).toInt()}%',
                             value: provider.elevenLabsStyle,
-                            activeColor: AppColors.secondary,
+                            activeColor: context.tokens.secondary,
                             onChanged: provider.updateElevenLabsStyle,
                           ),
                           const SizedBox(height: 8),
@@ -338,9 +338,9 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                               ),
                               Switch(
                                 value: provider.elevenLabsUseSpeakerBoost,
-                                activeTrackColor:
-                                    AppColors.secondary.withValues(alpha: 0.5),
-                                activeThumbColor: AppColors.secondary,
+                                activeTrackColor: context.tokens.secondary
+                                    .withValues(alpha: 0.5),
+                                activeThumbColor: context.tokens.secondary,
                                 onChanged:
                                     provider.updateElevenLabsUseSpeakerBoost,
                               ),
@@ -364,7 +364,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                   orElse: () => geminiModels.first,
                                 )
                                 .name,
-                            accentColor: const Color(0xFF9B72CB),
+                            accentColor: StudioColors.geminiPurple,
                             isGemini: true,
                             onTap: () => _showGeminiModelSelectionSheet(
                                 context, provider),
@@ -383,7 +383,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                   orElse: () => geminiVoices.first,
                                 )
                                 .name,
-                            accentColor: const Color(0xFF9B72CB),
+                            accentColor: StudioColors.geminiPurple,
                             isGemini: true,
                             onTap: () => _showGeminiVoiceSelectionSheet(
                                 context, provider),
@@ -423,9 +423,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.primarySubtleDark
-                              : AppColors.primarySubtle,
+                          color: context.tokens.primarySubtle,
                           borderRadius: BorderRadius.circular(AppRadius.full),
                         ),
                         child: Row(
@@ -475,7 +473,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           }
                           return provider.providerType == TtsProviderType.google
                               ? theme.colorScheme.primary
-                              : AppColors.secondary;
+                              : context.tokens.secondary;
                         }),
                         shadowColor: provider.providerType ==
                                 TtsProviderType.gemini

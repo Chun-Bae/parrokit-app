@@ -16,6 +16,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 /// 편집 가능한 사용자 아바타.
 class EditableAvatar extends StatelessWidget {
@@ -58,10 +59,10 @@ class EditableAvatar extends StatelessWidget {
                 ),
                 if (hasPhoto)
                   ListTile(
-                    leading:
-                        const Icon(Icons.delete_outline, color: Colors.red),
-                    title: const Text('현재 사진 삭제',
-                        style: TextStyle(color: Colors.red)),
+                    leading: Icon(Icons.delete_outline,
+                        color: context.tokens.danger),
+                    title: Text('현재 사진 삭제',
+                        style: TextStyle(color: context.tokens.danger)),
                     onTap: () => Navigator.pop(context, 2),
                   ),
               ],
@@ -161,8 +162,8 @@ class EditableAvatar extends StatelessWidget {
       width: size,
       height: size,
       placeholder: (context, url) => Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
+        baseColor: context.tokens.skeleton,
+        highlightColor: context.tokens.skeletonHighlight,
         child: Container(color: Colors.white),
       ),
       errorWidget: (context, url, error) => Center(

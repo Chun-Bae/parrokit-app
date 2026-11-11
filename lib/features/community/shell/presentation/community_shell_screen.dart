@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -250,7 +251,7 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
           ),
         ),
         const SizedBox(height: 11),
-        const Divider(color: AppColors.disabled, height: 1),
+        Divider(color: context.tokens.disabled, height: 1),
       ],
     );
   }

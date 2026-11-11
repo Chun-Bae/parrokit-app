@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
@@ -35,15 +36,16 @@ class TtsOptionRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: BoxDecoration(
           color: isDark
-              ? AppColors.surfaceContainerHighDark
-              : AppColors.surfaceContainer,
+              ? context.tokens.surfaceContainerHigh
+              : context.tokens.surfaceContainer,
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Row(
           children: [
             if (isGemini)
               ShaderMask(
-                shaderCallback: (bounds) => AppColors.geminiGradient.createShader(bounds),
+                shaderCallback: (bounds) =>
+                    AppColors.geminiGradient.createShader(bounds),
                 blendMode: BlendMode.srcIn,
                 child: Icon(icon, size: 20, color: Colors.white),
               )

@@ -31,6 +31,9 @@ abstract final class AppColors {
   /// 얇은 구분선 (6% 검정)
   static const Color dividerSubtle = Color(0x0F000000);
 
+  /// 입력창과 외곽선 버튼의 또렷한 테두리. 구분선보다 진하고 글자색보다 연하다.
+  static const Color borderStrong = Color(0xFFBDC4CC);
+
   // ─────────────────────────────────────────────────────────────────
   // Text (텍스트)
   // ─────────────────────────────────────────────────────────────────
@@ -130,6 +133,9 @@ abstract final class AppColors {
   /// 라이트 오버레이 (드롭다운 등)
   static const Color overlayLight = Color(0x1A000000);
 
+  /// 스낵바 배경. Material 관례에 따라 라이트 모드에서도 어두운 색을 쓴다.
+  static const Color snackbarSurface = Color(0xFF323232);
+
   // ─────────────────────────────────────────────────────────────────
   // Gradient (그라디언트)
   // ─────────────────────────────────────────────────────────────────
@@ -188,6 +194,9 @@ abstract final class AppColors {
 
   /// 다크 얇은 구분선
   static const Color dividerSubtleDark = Color(0x1AFFFFFF);
+
+  /// 다크 또렷한 테두리
+  static const Color borderStrongDark = Color(0xFF3F454E);
 
   // ─────────────────────────────────────────────────────────────────
   // Text (텍스트)
@@ -288,6 +297,8 @@ abstract final class AppColors {
   /// 다크 라이트 오버레이
   static const Color overlayLightDark = Color(0x33000000);
 
+  /// 다크 스낵바 배경
+  static const Color snackbarSurfaceDark = Color(0xFF2C3038);
 
   // ─────────────────────────────────────────────────────────────────
   // Feature Specific Accents
@@ -307,6 +318,12 @@ abstract final class AppColors {
   /// 커뮤니티 투표 게시판 액센트 (앰버)
   static const Color communityVoteAccent = Color(0xFFFFC107);
   static const Color communityVoteAccentSoft = Color(0xFFFFF8E1);
+
+  /// 패롯(프리미엄 재화) 색. 재화 식별 색이라 밝기에 따라 바뀌지 않는다.
+  static const Color parrotCurrency = Color(0xFF10B981);
+
+  /// 크래커(활동 재화) 색. 재화 식별 색이라 밝기에 따라 바뀌지 않는다.
+  static const Color crackerCurrency = Color(0xFFF59E0B);
 
   // ─────────────────────────────────────────────────────────────────
   // AI & Brand Specific Accents

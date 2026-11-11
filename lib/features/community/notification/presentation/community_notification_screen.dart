@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/notification/presentation/providers/community_notification_provider.dart';
 import 'package:parrokit/features/community/notification/presentation/sections/community_notification_list_section.dart';
@@ -45,37 +45,37 @@ class _CommunityNotificationScreenState
     return Consumer<CommunityNotificationProvider>(
       builder: (context, provider, _) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: context.tokens.surface,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: context.tokens.surface,
             elevation: 0,
             centerTitle: true,
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(
+              icon: Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 24,
-                color: Colors.black,
+                color: context.tokens.textPrimary,
               ),
             ),
             title: Text(
               '알림',
               style: context.texts.headlineMedium
-                  .copyWith(color: AppColors.textPrimary),
+                  .copyWith(color: context.tokens.textPrimary),
             ),
             actions: [
               IconButton(
                 onPressed: provider.hasNotifications
                     ? () => _showNotificationActionsSheet(context, provider)
                     : null,
-                icon: const Icon(Icons.more_vert_rounded,
-                    size: 24, color: Colors.black87),
+                icon: Icon(Icons.more_vert_rounded,
+                    size: 24, color: context.tokens.textPrimary),
               ),
               const SizedBox(width: 4),
             ],
-            bottom: const PreferredSize(
+            bottom: PreferredSize(
               preferredSize: Size.fromHeight(1),
-              child: Divider(height: 1, color: AppColors.disabled),
+              child: Divider(height: 1, color: context.tokens.disabled),
             ),
           ),
           body: Column(
@@ -86,11 +86,11 @@ class _CommunityNotificationScreenState
                   width: double.infinity,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  color: AppColors.danger.withValues(alpha: 0.08),
+                  color: context.tokens.danger.withValues(alpha: 0.08),
                   child: Text(
                     provider.errorMessage!,
                     style: context.texts.bodyMedium
-                        .copyWith(color: AppColors.danger),
+                        .copyWith(color: context.tokens.danger),
                   ),
                 ),
               Expanded(
@@ -160,8 +160,8 @@ class _NotificationSummaryBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: const Border(
-          bottom: BorderSide(color: AppColors.disabled, width: 1),
+        border: Border(
+          bottom: BorderSide(color: context.tokens.disabled, width: 1),
         ),
       ),
       child: Row(

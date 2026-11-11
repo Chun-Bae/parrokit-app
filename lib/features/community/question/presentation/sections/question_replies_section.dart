@@ -7,7 +7,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionRepliesSection extends StatelessWidget {
@@ -36,7 +36,7 @@ class QuestionRepliesSection extends StatelessWidget {
             '아직 답변이 없습니다.\n첫 번째 답변을 남겨보세요!',
             textAlign: TextAlign.center,
             style: context.texts.bodyMedium
-                .copyWith(color: AppColors.textDisabled),
+                .copyWith(color: context.tokens.textDisabled),
           ),
         ),
       );
@@ -60,7 +60,7 @@ class QuestionRepliesSection extends StatelessWidget {
 
       if (i < parentAnswers.length - 1 || children.isNotEmpty) {
         widgets.add(
-            const Divider(height: 1, color: AppColors.surfaceContainerHigh));
+            Divider(height: 1, color: context.tokens.surfaceContainerHigh));
       }
     }
 
@@ -89,9 +89,9 @@ class QuestionRepliesSection extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(isReply ? 46 : 16, 16, 16, 16),
       decoration: isReply
-          ? const BoxDecoration(
-              border:
-                  Border(left: BorderSide(color: AppColors.disabled, width: 3)))
+          ? BoxDecoration(
+              border: Border(
+                  left: BorderSide(color: context.tokens.disabled, width: 3)))
           : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +100,7 @@ class QuestionRepliesSection extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: isReply ? 14 : 18,
-                backgroundColor: AppColors.surfaceContainerHigh,
+                backgroundColor: context.tokens.surfaceContainerHigh,
                 backgroundImage: (!isBlocked && answererAvatar != null)
                     ? NetworkImage(answererAvatar)
                     : null,
@@ -114,7 +114,7 @@ class QuestionRepliesSection extends StatelessWidget {
                 Container(
                     width: 2,
                     height: 40,
-                    color: AppColors.surfaceContainerHigh),
+                    color: context.tokens.surfaceContainerHigh),
             ],
           ),
           const SizedBox(width: 12),
@@ -126,7 +126,7 @@ class QuestionRepliesSection extends StatelessWidget {
                   children: [
                     Text(isBlocked ? '차단한 사용자' : answererName,
                         style: context.texts.bodyLarge
-                            .copyWith(color: AppColors.textPrimary)),
+                            .copyWith(color: context.tokens.textPrimary)),
                     const Spacer(),
                     if (!isBlocked) ...[
                       Text(formatTimeAgo(answer.createdAt),
@@ -151,20 +151,21 @@ class QuestionRepliesSection extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.successSoft,
+                      color: context.tokens.successSoft,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.35)),
+                          color:
+                              context.tokens.success.withValues(alpha: 0.35)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.verified,
-                            color: AppColors.success, size: 12),
+                        Icon(Icons.verified,
+                            color: context.tokens.success, size: 12),
                         const SizedBox(width: 4),
                         Text('채택된 답변',
                             style: context.texts.labelSmall
-                                .copyWith(color: AppColors.success)),
+                                .copyWith(color: context.tokens.success)),
                       ],
                     ),
                   ),
@@ -176,13 +177,13 @@ class QuestionRepliesSection extends StatelessWidget {
                     child: Text(
                       '@${answer.replyToNickname}',
                       style: context.texts.bodyMedium
-                          .copyWith(color: AppColors.primary),
+                          .copyWith(color: context.tokens.primary),
                     ),
                   ),
                 Text(
                   isBlocked ? '차단된 사용자의 답변입니다.' : answer.content,
-                  style: context.texts.bodyLarge
-                      .copyWith(color: AppColors.textSecondary, height: 1.45),
+                  style: context.texts.bodyLarge.copyWith(
+                      color: context.tokens.textSecondary, height: 1.45),
                 ),
                 const SizedBox(height: 12),
                 if (!isBlocked)
@@ -199,8 +200,8 @@ class QuestionRepliesSection extends StatelessWidget {
                               size: 18,
                               color:
                                   provider.likedCommentIds.contains(answer.id)
-                                      ? AppColors.warning
-                                      : AppColors.textSecondary,
+                                      ? context.tokens.warning
+                                      : context.tokens.textSecondary,
                             ),
                             onPressed: () {
                               if (currentUser != null) {
@@ -219,8 +220,8 @@ class QuestionRepliesSection extends StatelessWidget {
                                   color: colorScheme.onSurfaceVariant)),
                           const SizedBox(width: 12),
                           IconButton(
-                            icon: const Icon(Icons.mode_comment_outlined,
-                                size: 18, color: AppColors.textSecondary),
+                            icon: Icon(Icons.mode_comment_outlined,
+                                size: 18, color: context.tokens.textSecondary),
                             onPressed: () {
                               provider.setReplyingTo(answer);
                               onFocusReplyInput();
@@ -240,11 +241,11 @@ class QuestionRepliesSection extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                                color: AppColors.successSoft,
+                                color: context.tokens.successSoft,
                                 borderRadius: BorderRadius.circular(6)),
                             child: Text('채택하기',
                                 style: context.texts.bodySmall
-                                    .copyWith(color: AppColors.success)),
+                                    .copyWith(color: context.tokens.success)),
                           ),
                         ),
                     ],

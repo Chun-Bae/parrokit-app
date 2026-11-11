@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityMenuHeaderSection extends StatelessWidget {
@@ -36,9 +36,9 @@ class CommunityMenuHeaderSection extends StatelessWidget {
           ],
         ),
       ),
-      bottom: const PreferredSize(
+      bottom: PreferredSize(
         preferredSize: Size.fromHeight(1),
-        child: Divider(height: 1, color: AppColors.disabled),
+        child: Divider(height: 1, color: context.tokens.disabled),
       ),
     );
   }

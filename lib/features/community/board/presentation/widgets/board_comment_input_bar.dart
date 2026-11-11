@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/comment.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentInputBar extends StatelessWidget {
@@ -15,7 +15,7 @@ class BoardCommentInputBar extends StatelessWidget {
     required this.onSubmit,
     required this.canSubmit,
     required this.sendAccent,
-    this.backgroundColor = AppColors.surface,
+    this.backgroundColor,
   });
 
   final Comment? replyingTo;
@@ -27,7 +27,9 @@ class BoardCommentInputBar extends StatelessWidget {
   final VoidCallback onSubmit;
   final bool canSubmit;
   final Color sendAccent;
-  final Color backgroundColor;
+
+  /// 비우면 테마의 기본 표면색을 쓴다.
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +37,8 @@ class BoardCommentInputBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: backgroundColor,
-        border: const Border(top: BorderSide(color: AppColors.disabled)),
+        color: backgroundColor ?? context.tokens.surface,
+        border: Border(top: BorderSide(color: context.tokens.disabled)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -45,20 +47,20 @@ class BoardCommentInputBar extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              color: AppColors.surfaceContainer,
+              color: context.tokens.surfaceContainer,
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       '${replyingTo!.authorNickname}님에게 답글 남기는 중',
                       style: context.texts.labelMedium
-                          .copyWith(color: AppColors.textSecondary),
+                          .copyWith(color: context.tokens.textSecondary),
                     ),
                   ),
                   GestureDetector(
                     onTap: onCancelReply,
-                    child: const Icon(Icons.close,
-                        size: 18, color: AppColors.textTertiary),
+                    child: Icon(Icons.close,
+                        size: 18, color: context.tokens.textTertiary),
                   ),
                 ],
               ),
@@ -70,7 +72,7 @@ class BoardCommentInputBar extends StatelessWidget {
                 IconButton(
                   onPressed: () {},
                   icon: const Icon(Icons.photo_outlined, size: 32),
-                  color: AppColors.textTertiary,
+                  color: context.tokens.textTertiary,
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -113,7 +115,7 @@ class BoardCommentInputBar extends StatelessWidget {
                               Icons.keyboard_return_rounded,
                               color: canSubmit
                                   ? sendAccent
-                                  : AppColors.textTertiary,
+                                  : context.tokens.textTertiary,
                               size: 30,
                             ),
                           ),

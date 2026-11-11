@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
@@ -13,14 +13,13 @@ class VideoModelSelectionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        color: context.tokens.surface,
         borderRadius:
             const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
@@ -34,7 +33,7 @@ class VideoModelSelectionSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                color: context.tokens.disabled,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -70,9 +69,7 @@ class VideoModelSelectionSheet extends StatelessWidget {
                 subtitle: Text(
                   model.description,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
+                    color: context.tokens.textSecondary,
                   ),
                 ),
                 trailing: isSelected

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/library/presentation/providers/tag_filter_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -225,7 +225,7 @@ class ClipListView extends StatelessWidget {
         content: Text(
           item.clip.title,
           style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-                color: Colors.black87,
+                color: context.tokens.textPrimary,
               ),
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -233,7 +233,7 @@ class ClipListView extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.grey[700],
+              foregroundColor: context.tokens.textSecondary,
               textStyle: const TextStyle(fontWeight: FontWeight.w600),
             ),
             child: const Text('취소'),
@@ -241,7 +241,7 @@ class ClipListView extends StatelessWidget {
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: context.tokens.danger,
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg, vertical: AppSpacing.md),
               shape: RoundedRectangleBorder(
@@ -338,7 +338,7 @@ class ClipListView extends StatelessWidget {
                       actionWidth: 300,
                       actions: [
                         _buildSwipeAction(
-                          color: AppColors.info,
+                          color: context.tokens.info,
                           icon: Icons.edit_rounded,
                           label: '편집',
                           onTap: () async {
@@ -367,7 +367,7 @@ class ClipListView extends StatelessWidget {
                           },
                         ),
                         _buildSwipeAction(
-                          color: AppColors.warning,
+                          color: context.tokens.warning,
                           icon: Icons.swap_horiz_rounded,
                           label: '전환',
                           onTap: () => _showStorageModeSheet(
@@ -377,7 +377,7 @@ class ClipListView extends StatelessWidget {
                           ),
                         ),
                         _buildSwipeAction(
-                          color: AppColors.danger,
+                          color: context.tokens.danger,
                           icon: Icons.delete_rounded,
                           label: '삭제',
                           onTap: () => _confirmDeleteClip(context, item),

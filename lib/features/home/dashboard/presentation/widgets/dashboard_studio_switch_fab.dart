@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -29,13 +29,12 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
-    final border =
-        isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle;
-    final selectedBg = isDark ? AppColors.primaryDark : AppColors.primary;
+    final surface =
+        isDark ? context.tokens.surfaceContainer : context.tokens.surface;
+    final border = context.tokens.dividerSubtle;
+    final selectedBg = context.tokens.primary;
     final selectedText = Colors.white;
-    final unselectedText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final unselectedText = context.tokens.textSecondary;
 
     return AnimatedContainer(
       duration: _animationDuration,

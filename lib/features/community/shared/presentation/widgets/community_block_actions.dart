@@ -6,6 +6,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/block/presentation/providers/block_provider.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 CommunityOptionAction buildCommunityBlockAction({
   required BuildContext context,
@@ -21,7 +22,8 @@ CommunityOptionAction buildCommunityBlockAction({
         builder: (dialogContext) {
           final displayName = (targetDisplayName ?? '').trim();
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('사용자 차단'),
             content: Text(
               displayName.isEmpty
@@ -35,9 +37,11 @@ CommunityOptionAction buildCommunityBlockAction({
               ),
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text(
+                child: Text(
                   '차단',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                      color: context.tokens.danger,
+                      fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -50,7 +54,8 @@ CommunityOptionAction buildCommunityBlockAction({
       final currentUser = context.read<UserProvider>().currentUser;
       if (currentUser == null) return;
 
-      final success = await context.read<BlockProvider>().blockUserByUid(targetUid);
+      final success =
+          await context.read<BlockProvider>().blockUserByUid(targetUid);
       if (!context.mounted) return;
 
       if (!success) {

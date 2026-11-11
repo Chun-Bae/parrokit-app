@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class CommunityOptionAction {
@@ -77,7 +77,7 @@ class _CommunityOptionActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final foregroundColor =
-        action.isDestructive ? AppColors.danger : colorScheme.onSurface;
+        action.isDestructive ? context.tokens.danger : colorScheme.onSurface;
 
     return InkWell(
       onTap: onTap,

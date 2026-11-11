@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class VoteStickyCommentBar extends StatelessWidget {
@@ -34,27 +34,27 @@ class VoteStickyCommentBar extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: AppColors.surfaceContainer,
+            color: context.tokens.surfaceContainer,
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     '${provider.replyingTo?.authorNickname} 님에게 답글 남기는 중',
                     style: context.texts.labelMedium
-                        .copyWith(color: AppColors.textSecondary),
+                        .copyWith(color: context.tokens.textSecondary),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => provider.setReplyingTo(null),
-                  child: const Icon(Icons.close,
-                      size: 16, color: AppColors.textTertiary),
+                  child: Icon(Icons.close,
+                      size: 16, color: context.tokens.textTertiary),
                 ),
               ],
             ),
           ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.tokens.surface,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -62,9 +62,9 @@ class VoteStickyCommentBar extends StatelessWidget {
                 offset: const Offset(0, -4),
               ),
             ],
-            border: const Border(
+            border: Border(
                 top: BorderSide(
-                    color: AppColors.surfaceContainerHigh, width: 1)),
+                    color: context.tokens.surfaceContainerHigh, width: 1)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: SafeArea(
@@ -72,24 +72,25 @@ class VoteStickyCommentBar extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: AppColors.surfaceContainerHigh,
+                  backgroundColor: context.tokens.surfaceContainerHigh,
                   backgroundImage: (currentUser?.photoUrl != null &&
                           currentUser!.photoUrl!.isNotEmpty)
                       ? CachedNetworkImageProvider(currentUser.photoUrl!)
                       : null,
                   child: (currentUser?.photoUrl == null ||
                           currentUser!.photoUrl!.isEmpty)
-                      ? const Icon(Icons.person,
-                          color: AppColors.textDisabled, size: 18)
+                      ? Icon(Icons.person,
+                          color: context.tokens.textDisabled, size: 18)
                       : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: context.tokens.surfaceContainer,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white, width: 1),
+                      border:
+                          Border.all(color: context.tokens.surface, width: 1),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: TextField(
@@ -113,7 +114,9 @@ class VoteStickyCommentBar extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     Icons.send_rounded,
-                    color: canSubmit ? Colors.blue[600] : Colors.grey[400],
+                    color: canSubmit
+                        ? context.tokens.primary
+                        : context.tokens.textDisabled,
                     size: 22,
                   ),
                   onPressed: canSubmit ? onSubmit : null,

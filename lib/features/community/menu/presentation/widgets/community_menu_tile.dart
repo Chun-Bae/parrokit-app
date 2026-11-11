@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
@@ -25,19 +26,19 @@ class CommunityMenuTile extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: _backgroundColorOf(item.colorKey),
+          color: _backgroundColorOf(context, item.colorKey),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(_iconOf(item.iconKey),
-            color: _iconColorOf(item.colorKey), size: 20),
+            color: _iconColorOf(context, item.colorKey), size: 20),
       ),
       title: Text(
         item.title,
         style: context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.chevron_right_rounded,
-        color: AppColors.textDisabled,
+        color: context.tokens.textDisabled,
         size: 24,
       ),
       onTap: onTap ??
@@ -90,7 +91,7 @@ IconData _iconOf(String iconKey) {
   }
 }
 
-Color _iconColorOf(String colorKey) {
+Color _iconColorOf(BuildContext context, String colorKey) {
   switch (colorKey) {
     case 'board':
       return AppColors.communityBoardAccent;
@@ -99,11 +100,11 @@ Color _iconColorOf(String colorKey) {
     case 'vote':
       return AppColors.communityVoteAccent;
     default:
-      return AppColors.textSecondary;
+      return context.tokens.textSecondary;
   }
 }
 
-Color _backgroundColorOf(String colorKey) {
+Color _backgroundColorOf(BuildContext context, String colorKey) {
   switch (colorKey) {
     case 'board':
       return AppColors.communityBoardAccentSoft;
@@ -112,6 +113,6 @@ Color _backgroundColorOf(String colorKey) {
     case 'vote':
       return AppColors.communityVoteAccentSoft;
     default:
-      return AppColors.surfaceContainerHigh;
+      return context.tokens.surfaceContainerHigh;
   }
 }

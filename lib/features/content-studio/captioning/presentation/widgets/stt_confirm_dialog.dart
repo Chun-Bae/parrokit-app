@@ -10,7 +10,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 import '../../data/adapters/asr_engine.dart';
 import '../providers/captioning_provider.dart';
@@ -25,7 +25,7 @@ Future<void> showSttConfirmDialog(
 }) async {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
-  final bg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
+  final bg = isDark ? context.tokens.surfaceContainer : context.tokens.surface;
   const visibleEngines = [AsrEngine.whisper];
 
   return showModalBottomSheet<void>(
@@ -97,8 +97,8 @@ Future<void> showSttConfirmDialog(
                               style:
                                   Theme.of(ctx).textTheme.bodySmall?.copyWith(
                                         color: isDark
-                                            ? AppColors.textTertiaryDark
-                                            : AppColors.textSecondary,
+                                            ? context.tokens.textTertiary
+                                            : context.tokens.textSecondary,
                                       ),
                             ),
                             const SizedBox(height: 16),
@@ -187,14 +187,13 @@ class _ModelOptionCard extends StatelessWidget {
     final cardBg = isDark
         ? (isSelected
             ? accentColor.withValues(alpha: 0.1)
-            : AppColors.surfaceContainerHighDark)
+            : context.tokens.surfaceContainerHigh)
         : (isSelected
             ? accentColor.withValues(alpha: 0.05)
-            : AppColors.surfaceContainerHigh);
+            : context.tokens.surfaceContainerHigh);
 
-    final borderColor = isSelected
-        ? accentColor
-        : (isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle);
+    final borderColor =
+        isSelected ? accentColor : (context.tokens.dividerSubtle);
 
     return InkWell(
       onTap: onTap,
@@ -222,7 +221,7 @@ class _ModelOptionCard extends StatelessWidget {
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: isSelected
-                          ? (isDark ? Colors.white : accentColor)
+                          ? (isDark ? context.tokens.textPrimary : accentColor)
                           : null,
                     ),
                   ),
@@ -230,9 +229,7 @@ class _ModelOptionCard extends StatelessWidget {
                   Text(
                     description,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
+                      color: context.tokens.textSecondary,
                       height: 1.35,
                     ),
                   ),
@@ -247,11 +244,8 @@ class _ModelOptionCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: isSelected ? accentColor : Colors.transparent,
                 border: Border.all(
-                  color: isSelected
-                      ? accentColor
-                      : (isDark
-                          ? AppColors.textDisabledDark
-                          : AppColors.textDisabled),
+                  color:
+                      isSelected ? accentColor : (context.tokens.textDisabled),
                   width: 2,
                 ),
               ),

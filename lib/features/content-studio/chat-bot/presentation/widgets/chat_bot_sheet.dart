@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
 import 'gradient_helper.dart';
 import 'chat_bubble.dart';
@@ -105,8 +106,9 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
-    final dividerColor = isDark ? AppColors.dividerDark : AppColors.divider;
+    final bg =
+        isDark ? context.tokens.surfaceContainer : context.tokens.surface;
+    final dividerColor = context.tokens.divider;
     final provider = context.watch<ChatBotProvider>();
 
     if (provider.hasPendingRouting) {
@@ -193,18 +195,14 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
               width: double.infinity,
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(vertical: 8),
-              color: isDark
-                  ? AppColors.surfaceContainerHighDark
-                  : AppColors.surfaceContainerHigh,
+              color: context.tokens.surfaceContainerHigh,
               child: provider.isUsageLoading
                   ? SizedBox(
                       width: 12,
                       height: 12,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
+                        color: context.tokens.textSecondary,
                       ),
                     )
                   : Row(
@@ -213,17 +211,13 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                         Icon(
                           Icons.bolt_rounded,
                           size: 14,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
+                          color: context.tokens.textSecondary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '오늘 사용량 ${provider.remainingChatsToday}/${provider.dailyChatLimit}',
                           style: context.texts.labelSmall.copyWith(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
+                            color: context.tokens.textSecondary,
                           ),
                         ),
                       ],
@@ -270,8 +264,8 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.success,
+                              decoration: BoxDecoration(
+                                color: context.tokens.success,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -285,8 +279,8 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                         : '도움 준비 완료',
                                 style: context.texts.labelSmall.copyWith(
                                   color: isDark
-                                      ? AppColors.textTertiaryDark
-                                      : AppColors.textSecondary,
+                                      ? context.tokens.textTertiary
+                                      : context.tokens.textSecondary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -307,14 +301,10 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceContainerHighDark
-                            : AppColors.surfaceContainerHigh,
+                        color: context.tokens.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark
-                              ? AppColors.dividerSubtleDark
-                              : AppColors.dividerSubtle,
+                          color: context.tokens.dividerSubtle,
                         ),
                       ),
                       child: Row(
@@ -323,9 +313,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                           Icon(
                             Icons.tune_rounded,
                             size: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
+                            color: context.tokens.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -334,18 +322,14 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                 : 'Gemini Pro',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondary,
+                              color: context.tokens.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 2),
                           Icon(
                             Icons.keyboard_arrow_down_rounded,
                             size: 14,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
+                            color: context.tokens.textSecondary,
                           ),
                         ],
                       ),
@@ -353,9 +337,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                   ),
                   const SizedBox(width: 8),
                   Material(
-                    color: isDark
-                        ? AppColors.surfaceContainerHighDark
-                        : AppColors.surfaceContainerHigh,
+                    color: context.tokens.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(30),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(30),
@@ -365,9 +347,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                         child: Icon(
                           Icons.close_rounded,
                           size: 18,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
+                          color: context.tokens.textSecondary,
                         ),
                       ),
                     ),
@@ -421,14 +401,10 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.surfaceContainerHighDark
-                        : AppColors.surfaceContainerHigh,
+                    color: context.tokens.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.dividerSubtleDark
-                          : AppColors.dividerSubtle,
+                      color: context.tokens.dividerSubtle,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -448,17 +424,13 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                         ),
                         icon: Icon(
                           Icons.menu_rounded,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
+                          color: context.tokens.textSecondary,
                         ),
                         offset: const Offset(12, -210),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(
-                            color: isDark
-                                ? AppColors.dividerDark
-                                : AppColors.divider,
+                            color: context.tokens.divider,
                             width: 1, // 테두리 두께
                           ),
                         ),
@@ -484,17 +456,13 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                 Icon(
                                   Icons.delete_outline_rounded,
                                   size: 18,
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimary,
+                                  color: context.tokens.textPrimary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '대화 초기화',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimary,
+                                    color: context.tokens.textPrimary,
                                   ),
                                 ),
                               ],
@@ -518,7 +486,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                       width: 8,
                                       height: 8,
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFF8B5CF6), // 퍼플
+                                        color: StudioColors.generalPurple, // 퍼플
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -529,9 +497,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   child: Text(
                                     '일반 안내 모드',
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: isDark
-                                          ? AppColors.textPrimaryDark
-                                          : AppColors.textPrimary,
+                                      color: context.tokens.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -539,7 +505,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   const Icon(
                                     Icons.check_rounded,
                                     size: 16,
-                                    color: Color(0xFF8B5CF6),
+                                    color: StudioColors.generalPurple,
                                   ),
                               ],
                             ),
@@ -559,7 +525,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                       width: 8,
                                       height: 8,
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFFEC4899), // 핑크
+                                        color: StudioColors.ttsPink, // 핑크
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -570,9 +536,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   child: Text(
                                     'TTS 전문가 모드',
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: isDark
-                                          ? AppColors.textPrimaryDark
-                                          : AppColors.textPrimary,
+                                      color: context.tokens.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -580,7 +544,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   const Icon(
                                     Icons.check_rounded,
                                     size: 16,
-                                    color: Color(0xFFEC4899),
+                                    color: StudioColors.ttsPink,
                                   ),
                               ],
                             ),
@@ -600,7 +564,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                       width: 8,
                                       height: 8,
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFF3B82F6), // 블루
+                                        color: StudioColors.videoBlue, // 블루
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -611,9 +575,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   child: Text(
                                     '비디오 전문가 모드',
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: isDark
-                                          ? AppColors.textPrimaryDark
-                                          : AppColors.textPrimary,
+                                      color: context.tokens.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -621,7 +583,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   const Icon(
                                     Icons.check_rounded,
                                     size: 16,
-                                    color: Color(0xFF3B82F6),
+                                    color: StudioColors.videoBlue,
                                   ),
                               ],
                             ),
@@ -636,9 +598,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                           decoration: InputDecoration(
                             hintText: 'TTS나 비디오 생성 요청을 입력하세요...',
                             hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                              color: isDark
-                                  ? AppColors.textTertiaryDark
-                                  : AppColors.textTertiary,
+                              color: context.tokens.textTertiary,
                             ),
                             border: InputBorder.none,
                             focusedBorder: InputBorder.none,
@@ -660,10 +620,10 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                         height: 42,
                         decoration: BoxDecoration(
                           gradient: _hasText
-                              ? const LinearGradient(
+                              ? LinearGradient(
                                   colors: [
-                                    AppColors.primary,
-                                    AppColors.secondary
+                                    context.tokens.primary,
+                                    context.tokens.secondary
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -672,15 +632,13 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                           color: _hasText
                               ? null
                               : (isDark
-                                  ? AppColors.surfaceContainerDark
-                                  : AppColors.surface),
+                                  ? context.tokens.surfaceContainer
+                                  : context.tokens.surface),
                           shape: BoxShape.circle,
                           border: _hasText
                               ? null
                               : Border.all(
-                                  color: isDark
-                                      ? AppColors.dividerSubtleDark
-                                      : AppColors.dividerSubtle,
+                                  color: context.tokens.dividerSubtle,
                                 ),
                         ),
                         child: IconButton(
@@ -688,9 +646,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                             Icons.send_rounded,
                             color: _hasText
                                 ? Colors.white
-                                : (isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiary),
+                                : (context.tokens.textTertiary),
                             size: 18,
                           ),
                           onPressed: _handleSend,

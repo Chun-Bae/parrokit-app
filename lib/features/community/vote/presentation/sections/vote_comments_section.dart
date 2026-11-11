@@ -6,7 +6,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class VoteCommentsSection extends StatelessWidget {
@@ -37,7 +37,7 @@ class VoteCommentsSection extends StatelessWidget {
           child: Text(
             '토론 & 의견 (${comments.length})',
             style: context.texts.titleMedium
-                .copyWith(color: AppColors.textPrimary),
+                .copyWith(color: context.tokens.textPrimary),
           ),
         ),
         if (comments.isEmpty)
@@ -46,7 +46,7 @@ class VoteCommentsSection extends StatelessWidget {
             child: Center(
               child: Text('첫 의견을 작성해 투표 토론에 참여해보세요!',
                   style: context.texts.bodyMedium
-                      .copyWith(color: Colors.grey[500])),
+                      .copyWith(color: context.tokens.textTertiary)),
             ),
           )
         else
@@ -72,7 +72,7 @@ class VoteCommentsSection extends StatelessWidget {
 
       if (i < parentComments.length - 1) {
         widgets.add(
-            const Divider(color: AppColors.surfaceContainerHigh, height: 1));
+            Divider(color: context.tokens.surfaceContainerHigh, height: 1));
       }
     }
     return widgets;
@@ -92,16 +92,16 @@ class VoteCommentsSection extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.fromLTRB(isReply ? 48 : 16, 16, 16, 16),
         decoration: isReply
-            ? const BoxDecoration(
+            ? BoxDecoration(
                 border: Border(
-                    left: BorderSide(color: AppColors.disabled, width: 3)))
+                    left: BorderSide(color: context.tokens.disabled, width: 3)))
             : null,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: AppColors.surfaceContainerHigh,
+              backgroundColor: context.tokens.surfaceContainerHigh,
               backgroundImage: (!isBlocked &&
                       comment.authorAvatarUrl != null &&
                       comment.authorAvatarUrl!.isNotEmpty &&
@@ -113,7 +113,7 @@ class VoteCommentsSection extends StatelessWidget {
                       isDeleted ||
                       isBlocked)
                   ? Icon(isBlocked ? Icons.block_rounded : Icons.person,
-                      color: AppColors.textDisabled, size: 20)
+                      color: context.tokens.textDisabled, size: 20)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -131,7 +131,7 @@ class VoteCommentsSection extends StatelessWidget {
                                 ? '차단한 사용자'
                                 : comment.authorNickname,
                         style: context.texts.bodyMedium
-                            .copyWith(color: AppColors.textPrimary),
+                            .copyWith(color: context.tokens.textPrimary),
                       ),
                       if (comment.authorId == postAuthorId &&
                           !isDeleted &&
@@ -141,23 +141,23 @@ class VoteCommentsSection extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              color: context.tokens.primarySoft,
                               borderRadius: BorderRadius.circular(4)),
                           child: Text('작성자',
                               style: context.texts.labelSmall
-                                  .copyWith(color: Colors.blue[600])),
+                                  .copyWith(color: context.tokens.primary)),
                         ),
                       ],
                       const Spacer(),
                       if (comment.createdAt != null && !isBlocked)
                         Text(formatTimeAgo(comment.createdAt),
                             style: context.texts.bodySmall
-                                .copyWith(color: Colors.grey[400])),
+                                .copyWith(color: context.tokens.textDisabled)),
                       if (!isBlocked) ...[
                         const SizedBox(width: 4),
                         IconButton(
                           icon: const Icon(Icons.more_vert_rounded, size: 18),
-                          color: Colors.grey[500],
+                          color: context.tokens.textTertiary,
                           onPressed: () =>
                               _showCommentOptionsSheet(context, comment),
                           padding: EdgeInsets.zero,
@@ -176,7 +176,7 @@ class VoteCommentsSection extends StatelessWidget {
                       child: Text(
                         '@${comment.replyToNickname}',
                         style: context.texts.labelMedium
-                            .copyWith(color: Colors.blue),
+                            .copyWith(color: context.tokens.primary),
                       ),
                     ),
                   Text(
@@ -187,8 +187,8 @@ class VoteCommentsSection extends StatelessWidget {
                             : comment.content,
                     style: context.texts.bodyMedium.copyWith(
                         color: isDeleted
-                            ? AppColors.textDisabled
-                            : AppColors.textSecondary,
+                            ? context.tokens.textDisabled
+                            : context.tokens.textSecondary,
                         height: 1.45),
                   ),
                   const SizedBox(height: 12),
@@ -208,14 +208,15 @@ class VoteCommentsSection extends StatelessWidget {
                                       ? Icons.favorite_rounded
                                       : Icons.favorite_border_rounded,
                                   size: 15,
-                                  color:
-                                      isLiked ? Colors.red : Colors.grey[400]),
+                                  color: isLiked
+                                      ? context.tokens.danger
+                                      : context.tokens.textDisabled),
                               const SizedBox(width: 4),
                               Text('${comment.likeCount}',
                                   style: context.texts.bodySmall.copyWith(
                                       color: isLiked
-                                          ? Colors.red
-                                          : Colors.grey[500])),
+                                          ? context.tokens.danger
+                                          : context.tokens.textTertiary)),
                             ],
                           ),
                         ),
@@ -226,8 +227,8 @@ class VoteCommentsSection extends StatelessWidget {
                             onFocusCommentInput();
                           },
                           child: Text('답글 달기',
-                              style: context.texts.bodySmall
-                                  .copyWith(color: Colors.grey[500])),
+                              style: context.texts.bodySmall.copyWith(
+                                  color: context.tokens.textTertiary)),
                         ),
                       ],
                     ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class QuestionStickyReplyBar extends StatelessWidget {
@@ -26,8 +26,8 @@ class QuestionStickyReplyBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: const Border(
-            top: BorderSide(color: AppColors.surfaceContainerHigh)),
+        border:
+            Border(top: BorderSide(color: context.tokens.surfaceContainerHigh)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -35,7 +35,7 @@ class QuestionStickyReplyBar extends StatelessWidget {
           if (provider.replyingTo != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: AppColors.surfaceContainer,
+              color: context.tokens.surfaceContainer,
               child: Row(
                 children: [
                   Text(
@@ -46,8 +46,8 @@ class QuestionStickyReplyBar extends StatelessWidget {
                   const Spacer(),
                   GestureDetector(
                     onTap: () => provider.setReplyingTo(null),
-                    child: const Icon(Icons.close,
-                        size: 16, color: AppColors.textDisabled),
+                    child: Icon(Icons.close,
+                        size: 16, color: context.tokens.textDisabled),
                   ),
                 ],
               ),
@@ -61,7 +61,7 @@ class QuestionStickyReplyBar extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundColor: AppColors.surfaceContainerHigh,
+                    backgroundColor: context.tokens.surfaceContainerHigh,
                     backgroundImage: currentUser?.photoUrl != null
                         ? NetworkImage(currentUser!.photoUrl!)
                         : null,
@@ -90,7 +90,7 @@ class QuestionStickyReplyBar extends StatelessWidget {
                     child: Text(
                       '답글',
                       style: context.texts.bodyMedium
-                          .copyWith(color: AppColors.warning),
+                          .copyWith(color: context.tokens.warning),
                     ),
                   ),
                 ],

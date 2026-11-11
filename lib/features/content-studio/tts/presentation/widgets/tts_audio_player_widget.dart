@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -90,15 +91,12 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final mutedText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
 
     return Container(
       height: 76,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.surfaceContainerHighDark
-            : AppColors.surfaceContainerHigh,
+        color: context.tokens.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
@@ -121,16 +119,16 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                     ? AppColors.geminiGradient
                     : null,
                 color: widget.provider.isGenerating
-                    ? Colors.grey
+                    ? context.tokens.disabled
                     : (widget.provider.generatedFilePath != null
                         ? (widget.provider.providerType ==
                                 TtsProviderType.google
                             ? theme.colorScheme.primary
                             : (widget.provider.providerType ==
                                     TtsProviderType.elevenlabs
-                                ? AppColors.secondary
+                                ? context.tokens.secondary
                                 : null))
-                        : Colors.grey.shade400),
+                        : context.tokens.disabled),
               ),
               child: Center(
                 child: widget.provider.isGenerating
@@ -277,7 +275,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                                 color: isDark
                                                     ? AppColors
                                                         .dividerSubtleDark
-                                                    : AppColors.dividerSubtle,
+                                                    : context
+                                                        .tokens.dividerSubtle,
                                                 borderRadius:
                                                     BorderRadius.circular(2),
                                               ),
@@ -301,7 +300,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                                                   .google
                                                           ? theme.colorScheme
                                                               .primary
-                                                          : AppColors.secondary)
+                                                          : context
+                                                              .tokens.secondary)
                                                       : null,
                                                   borderRadius:
                                                       BorderRadius.circular(2),

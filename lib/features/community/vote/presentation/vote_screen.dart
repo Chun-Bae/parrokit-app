@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 
 import 'package:provider/provider.dart';
@@ -434,13 +434,15 @@ class _NavButton extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: enabled ? Colors.black87 : Colors.grey[200],
+            color:
+                enabled ? context.tokens.textPrimary : context.tokens.disabled,
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
             size: 18,
-            color: enabled ? Colors.white : Colors.grey,
+            color:
+                enabled ? context.tokens.surface : context.tokens.textDisabled,
           ),
         ),
       ),
@@ -514,7 +516,9 @@ class VoteCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? cs.surfaceContainerHigh : Colors.white,
+        color: isDark
+            ? context.tokens.surfaceContainerHigh
+            : context.tokens.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: cs.outlineVariant.withValues(alpha: 0.45),
@@ -543,7 +547,7 @@ class VoteCard extends StatelessWidget {
                 Text(
                   expiresInText,
                   style: context.texts.labelMedium
-                      .copyWith(color: AppColors.primary),
+                      .copyWith(color: context.tokens.primary),
                 ),
                 const Spacer(),
                 if (showMoreButton)
@@ -611,7 +615,7 @@ class VoteCard extends StatelessWidget {
             // ── 옵션 or 결과 ──
             !(showResult || selectedOption != null)
                 ? _buildOptions(context, cs)
-                : _buildResults(cs, totalVotes),
+                : _buildResults(context, cs, totalVotes),
             const SizedBox(height: 16),
 
             // ── 결과 보기 / 리셋 버튼 ──
@@ -649,7 +653,7 @@ class VoteCard extends StatelessWidget {
                   child: Icon(
                     isPostLiked ? Icons.favorite : Icons.favorite_border,
                     size: 24,
-                    color: isPostLiked ? AppColors.danger : cs.onSurface,
+                    color: isPostLiked ? context.tokens.danger : cs.onSurface,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -661,7 +665,9 @@ class VoteCard extends StatelessWidget {
                     child: Icon(
                       isPostScrapped ? Icons.bookmark : Icons.bookmark_outline,
                       size: 22,
-                      color: isPostScrapped ? AppColors.primary : cs.onSurface,
+                      color: isPostScrapped
+                          ? context.tokens.primary
+                          : cs.onSurface,
                     ),
                   ),
                 ],
@@ -700,8 +706,8 @@ class VoteCard extends StatelessWidget {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('취소',
-                          style: TextStyle(color: Colors.grey)),
+                      child: Text('취소',
+                          style: TextStyle(color: context.tokens.textTertiary)),
                     ),
                     TextButton(
                       onPressed: () {
@@ -738,7 +744,7 @@ class VoteCard extends StatelessWidget {
     );
   }
 
-  Widget _buildResults(ColorScheme cs, int totalVotes) {
+  Widget _buildResults(BuildContext context, ColorScheme cs, int totalVotes) {
     final options = item.voteOptions ?? [];
     return Column(
       children: List.generate(options.length, (i) {
@@ -763,7 +769,7 @@ class VoteCard extends StatelessWidget {
                 child: Container(
                   height: 26,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: context.tokens.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   clipBehavior: Clip.hardEdge,

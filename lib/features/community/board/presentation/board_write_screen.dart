@@ -9,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 
 import 'package:parrokit/data/models/post.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardWriteScreen extends StatefulWidget {
@@ -59,7 +59,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
   }
 
   void _showBoardTopicSheet() {
-    const blue600 = AppColors.primary;
+    final blue600 = AppTokens.of(context).primary;
 
     showModalBottomSheet<void>(
       context: context,
@@ -237,11 +237,11 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const lineColor = AppColors.disabled;
-    const mutedText = AppColors.textDisabled;
-    const tipBlue = AppColors.primary;
-    final panelBg =
-        isDark ? const Color(0xFF3A4048) : AppColors.surfaceContainer;
+    final tokens = AppTokens.of(context);
+    final lineColor = tokens.disabled;
+    final mutedText = tokens.textDisabled;
+    final tipBlue = tokens.primary;
+    final panelBg = tokens.surfaceContainer;
     const contentBaseHeight = 230.0;
     const tipAreaHeight = 190.0;
     final contentFieldHeight =
@@ -286,14 +286,14 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 _isEditMode ? '수정' : '완료',
                                 style: context.texts.titleLarge.copyWith(
                                     color: _canComplete
-                                        ? AppColors.primary
-                                        : AppColors.disabled),
+                                        ? tokens.primary
+                                        : tokens.disabled),
                               ),
                       ),
                     ],
                   ),
                 ),
-                const Divider(height: 1, thickness: 1, color: lineColor),
+                Divider(height: 1, thickness: 1, color: lineColor),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
@@ -320,8 +320,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                             ),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Divider(
                               height: 1, thickness: 1, color: lineColor),
                         ),
@@ -342,7 +342,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               contentPadding: EdgeInsets.zero,
                             ),
                             style: context.texts.headlineSmall
-                                .copyWith(color: AppColors.textPrimary),
+                                .copyWith(color: tokens.textPrimary),
                           ),
                         ),
                         Padding(
@@ -360,7 +360,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 hintText:
                                     '쉐도잉에 도움 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.\n#자막 #쉐도잉 #발음 #미드추천',
                                 hintStyle: context.texts.titleMedium.copyWith(
-                                    height: 1.6, color: AppColors.textDisabled),
+                                    height: 1.6, color: tokens.textDisabled),
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -369,7 +369,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 contentPadding: EdgeInsets.zero,
                               ),
                               style: context.texts.titleLarge.copyWith(
-                                  height: 1.6, color: AppColors.textPrimary),
+                                  height: 1.6, color: tokens.textPrimary),
                             ),
                           ),
                         ),
@@ -445,10 +445,10 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                         _tags.remove(tag);
                                       });
                                     },
-                                    backgroundColor: AppColors.primarySoft,
-                                    deleteIconColor: AppColors.primary,
-                                    labelStyle: const TextStyle(
-                                      color: AppColors.primary,
+                                    backgroundColor: tokens.primarySoft,
+                                    deleteIconColor: tokens.primary,
+                                    labelStyle: TextStyle(
+                                      color: tokens.primary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -478,12 +478,12 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                       decoration: InputDecoration(
                         hintText: '태그를 입력하고 엔터를 누르세요',
                         hintStyle: context.texts.bodyLarge
-                            .copyWith(color: AppColors.textDisabled),
+                            .copyWith(color: tokens.textDisabled),
                         border: InputBorder.none,
                         isDense: true,
                         suffixText: '${_tags.length}/${PostValidator.maxTags}',
                         suffixStyle: context.texts.labelMedium
-                            .copyWith(color: AppColors.textDisabled),
+                            .copyWith(color: tokens.textDisabled),
                       ),
                       textInputAction: TextInputAction.done,
                       onSubmitted: (val) {
@@ -584,7 +584,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                   ),
 
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     border: Border(top: BorderSide(color: lineColor)),
                   ),
                   padding: const EdgeInsets.fromLTRB(28, 16, 28, 18),
@@ -663,15 +663,16 @@ class _TipBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = AppTokens.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: tokens.primarySoft,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         'TIP',
-        style: context.texts.bodyMedium.copyWith(color: AppColors.primary),
+        style: context.texts.bodyMedium.copyWith(color: tokens.primary),
       ),
     );
   }
@@ -685,7 +686,8 @@ class _TipBullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bodyColor = forceWhite ? Colors.white : AppColors.textPrimary;
+    final bodyColor =
+        forceWhite ? Colors.white : AppTokens.of(context).textPrimary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -719,7 +721,8 @@ class _BottomTool extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.primary : AppColors.textDisabled;
+    final tokens = AppTokens.of(context);
+    final color = isActive ? tokens.primary : tokens.textDisabled;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class ContentStudioBridgeScreen extends StatelessWidget {
   const ContentStudioBridgeScreen({super.key});
@@ -13,11 +13,9 @@ class ContentStudioBridgeScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final surface =
-        isDark ? AppColors.surfaceContainerDark : colorScheme.surface;
-    final border =
-        isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle;
-    final secondaryText =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+        isDark ? context.tokens.surfaceContainer : colorScheme.surface;
+    final border = context.tokens.dividerSubtle;
+    final secondaryText = context.tokens.textSecondary;
 
     return Scaffold(
       backgroundColor: surface,
@@ -44,12 +42,12 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
+                          color: context.tokens.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.auto_awesome_rounded,
-                          color: AppColors.primary,
+                          color: context.tokens.primary,
                           size: 28,
                         ),
                       ),
@@ -129,9 +127,7 @@ class _BridgeFeatureRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryText = theme.brightness == Brightness.dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final secondaryText = context.tokens.textSecondary;
 
     return Container(
       width: double.infinity,
@@ -144,7 +140,7 @@ class _BridgeFeatureRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primary, size: 22),
+          Icon(icon, color: context.tokens.primary, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -15,7 +15,7 @@ import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/library/presentation/providers/tag_filter_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
@@ -263,7 +263,7 @@ class LibraryTagSection extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                                 side: BorderSide(
-                                    color: AppColors.primary, width: 1),
+                                    color: context.tokens.primary, width: 1),
                               ),
                               materialTapTargetSize:
                                   MaterialTapTargetSize.shrinkWrap,

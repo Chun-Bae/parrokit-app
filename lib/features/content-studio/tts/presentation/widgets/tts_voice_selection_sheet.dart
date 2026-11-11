@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -116,11 +116,13 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     }
 
     final currentVoice = widget.provider.voiceId;
-    final currentEntry = _entries.where((e) => e.voiceId == currentVoice).firstOrNull;
+    final currentEntry =
+        _entries.where((e) => e.voiceId == currentVoice).firstOrNull;
 
     _selectedTier = currentEntry?.tier ?? tiers.first;
     final genders = _gendersFor(_selectedTier!);
-    _selectedGender = currentEntry?.gender ?? (genders.isNotEmpty ? genders.first : null);
+    _selectedGender =
+        currentEntry?.gender ?? (genders.isNotEmpty ? genders.first : null);
   }
 
   void _selectTier(String tier) {
@@ -160,11 +162,11 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final mutedText = isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final mutedText = context.tokens.textSecondary;
 
     final tiers = _tiersInOrder();
-    final genders = _selectedTier == null ? <String>[] : _gendersFor(_selectedTier!);
+    final genders =
+        _selectedTier == null ? <String>[] : _gendersFor(_selectedTier!);
     final candidates = (_selectedTier == null || _selectedGender == null)
         ? <_GoogleVoiceEntry>[]
         : _candidatesFor(_selectedTier!, _selectedGender!);
@@ -174,8 +176,9 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        color: context.tokens.surface,
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +189,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                color: context.tokens.disabled,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -196,7 +199,8 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
               '보이스 선택',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -246,12 +250,18 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
                     label: Text(googleGenderLabel(gender)),
                     selected: isSelected,
                     onSelected: (_) => _selectGender(gender),
-                    selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    selectedColor:
+                        theme.colorScheme.primary.withValues(alpha: 0.15),
                     labelStyle: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? theme.colorScheme.primary : (isDark ? Colors.white : Colors.black),
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : context.tokens.textPrimary,
                     ),
-                    side: isSelected ? BorderSide(color: theme.colorScheme.primary) : null,
+                    side: isSelected
+                        ? BorderSide(color: theme.colorScheme.primary)
+                        : null,
                   );
                 }).toList(),
               ),
@@ -264,41 +274,55 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
                   ? Center(
                       child: Text(
                         '해당 조합의 보이스가 없습니다.',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: mutedText),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: mutedText),
                       ),
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       itemCount: candidates.length,
                       itemBuilder: (context, index) {
                         final entry = candidates[index];
-                        final isSelected = widget.provider.voiceId == entry.voiceId;
-                        final isLoading = _previewLoadingVoiceId == entry.voiceId;
-                        final isPlaying = _previewPlayingVoiceId == entry.voiceId;
+                        final isSelected =
+                            widget.provider.voiceId == entry.voiceId;
+                        final isLoading =
+                            _previewLoadingVoiceId == entry.voiceId;
+                        final isPlaying =
+                            _previewPlayingVoiceId == entry.voiceId;
 
                         return ListTile(
                           title: Text(
                             '보이스 ${index + 1}',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? theme.colorScheme.primary : null,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color:
+                                  isSelected ? theme.colorScheme.primary : null,
                             ),
                           ),
                           leading: IconButton(
-                            onPressed: isLoading ? null : () => _onPreviewTap(entry.voiceId),
+                            onPressed: isLoading
+                                ? null
+                                : () => _onPreviewTap(entry.voiceId),
                             icon: isLoading
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   )
                                 : Icon(
-                                    isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                                    isPlaying
+                                        ? Icons.pause_circle_filled_rounded
+                                        : Icons.play_circle_fill_rounded,
                                   ),
                             color: theme.colorScheme.primary,
                           ),
                           trailing: isSelected
-                              ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary)
+                              ? Icon(Icons.check_circle_rounded,
+                                  color: theme.colorScheme.primary)
                               : null,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -367,7 +391,9 @@ class _ModelChoiceTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primary.withValues(alpha: 0.1)
-              : (isDark ? AppColors.surfaceContainerHighDark : AppColors.surfaceContainer),
+              : (isDark
+                  ? context.tokens.surfaceContainerHigh
+                  : context.tokens.surfaceContainer),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: isSelected ? theme.colorScheme.primary : Colors.transparent,
@@ -390,14 +416,15 @@ class _ModelChoiceTile extends StatelessWidget {
                   Text(
                     description,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                      color: context.tokens.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary, size: 20),
+              Icon(Icons.check_circle_rounded,
+                  color: theme.colorScheme.primary, size: 20),
           ],
         ),
       ),

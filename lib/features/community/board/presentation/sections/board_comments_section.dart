@@ -5,7 +5,7 @@ import 'package:parrokit/features/community/board/presentation/widgets/board_com
 import 'package:parrokit/features/community/board/presentation/widgets/board_comments_empty_state.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentsSection extends StatelessWidget {
@@ -40,7 +40,7 @@ class BoardCommentsSection extends StatelessWidget {
           child: Text(
             '댓글 ${comments.length}',
             style: context.texts.titleLarge
-                .copyWith(color: AppColors.textTertiary),
+                .copyWith(color: context.tokens.textTertiary),
           ),
         ),
         if (comments.isEmpty) ...[

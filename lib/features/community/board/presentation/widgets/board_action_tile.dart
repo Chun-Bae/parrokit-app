@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardActionTile extends StatefulWidget {
@@ -29,12 +29,12 @@ class _BoardActionTileState extends State<BoardActionTile> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final borderColor =
-        widget.selected ? widget.accentColor : AppColors.disabled;
+        widget.selected ? widget.accentColor : context.tokens.disabled;
     final borderWidth = _pressed ? 2.0 : 1.4;
     final contentColor =
         widget.selected ? widget.accentColor : colorScheme.onSurfaceVariant;
     final labelColor =
-        widget.selected ? widget.accentColor : AppColors.textSecondary;
+        widget.selected ? widget.accentColor : context.tokens.textSecondary;
 
     return AnimatedScale(
       scale: _pressed ? 0.94 : 1,

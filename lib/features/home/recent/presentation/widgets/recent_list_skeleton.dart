@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 /// 최근 본 클립 목록 로딩 스켈레톤.
 class RecentListSkeleton extends StatelessWidget {
@@ -65,8 +66,7 @@ class _ShimmerTileState extends State<_ShimmerTile>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = isDark ? Colors.white10 : Colors.black12;
+    final border = context.tokens.divider;
 
     return AnimatedBuilder(
       animation: _animation,

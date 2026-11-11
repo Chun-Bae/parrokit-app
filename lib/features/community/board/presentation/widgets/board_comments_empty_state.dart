@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentsEmptyState extends StatelessWidget {
@@ -17,7 +17,7 @@ class BoardCommentsEmptyState extends StatelessWidget {
           child: Text(
             '첫 댓글을 남겨보세요',
             style: context.texts.titleMedium
-                .copyWith(color: AppColors.textTertiary),
+                .copyWith(color: context.tokens.textTertiary),
           ),
         ),
         const SizedBox(height: 24),

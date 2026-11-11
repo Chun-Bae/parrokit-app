@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_language.dart';
@@ -11,7 +11,8 @@ class TtsLanguageSelectionSheet extends StatefulWidget {
   final TtsProvider provider;
 
   @override
-  State<TtsLanguageSelectionSheet> createState() => _TtsLanguageSelectionSheetState();
+  State<TtsLanguageSelectionSheet> createState() =>
+      _TtsLanguageSelectionSheetState();
 }
 
 class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
@@ -33,7 +34,7 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
     setState(() {
       _filteredLanguages = supportedTtsLanguages.where((lang) {
         return lang.displayName.toLowerCase().contains(lowerQuery) ||
-               lang.ttsCode.toLowerCase().contains(lowerQuery);
+            lang.ttsCode.toLowerCase().contains(lowerQuery);
       }).toList();
     });
   }
@@ -41,15 +42,15 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.8,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        color: context.tokens.surface,
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       child: Column(
         children: [
@@ -58,7 +59,7 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+              color: context.tokens.disabled,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -79,12 +80,13 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
                 hintText: '언어 검색...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
-                fillColor: isDark ? AppColors.surfaceContainerHighDark : AppColors.surfaceContainerHigh,
+                fillColor: context.tokens.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: AppSpacing.md),
+                contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0, horizontal: AppSpacing.md),
               ),
             ),
           ),
@@ -96,18 +98,20 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
               itemBuilder: (context, index) {
                 final lang = _filteredLanguages[index];
                 final isSelected = widget.provider.language == lang.ttsCode;
-                
+
                 return ListTile(
                   title: Text(
                     lang.displayName,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isSelected ? theme.colorScheme.primary : null,
                     ),
                   ),
-                  trailing: isSelected 
-                    ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary) 
-                    : null,
+                  trailing: isSelected
+                      ? Icon(Icons.check_circle_rounded,
+                          color: theme.colorScheme.primary)
+                      : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),

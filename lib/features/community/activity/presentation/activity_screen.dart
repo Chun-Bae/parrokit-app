@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'providers/activity_provider.dart';
 import 'widgets/activity_card.dart';
@@ -168,8 +168,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.inbox_rounded,
-                        size: 64, color: AppColors.textDisabled),
+                    Icon(Icons.inbox_rounded,
+                        size: 64, color: context.tokens.textDisabled),
                     const SizedBox(height: 16),
                     Text(
                       '아직 활동 내역이 없습니다.',

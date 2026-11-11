@@ -6,7 +6,7 @@ import 'package:parrokit/features/community/board/presentation/board_write_scree
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -130,9 +130,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               child: const Text('취소')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('채택하기',
+            child: Text('채택하기',
                 style: TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    color: context.tokens.primary,
+                    fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -294,7 +295,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(color: AppColors.surfaceContainerHigh, height: 1),
+        child: Container(color: context.tokens.surfaceContainerHigh, height: 1),
       ),
     );
   }
@@ -307,8 +308,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     final question = questions.isNotEmpty ? questions.first : null;
 
     if (_isFetchingDetails) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(
+          child: CircularProgressIndicator(color: context.tokens.primary));
     }
 
     if (question == null) {
@@ -340,8 +341,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
         if (_isAccepting)
           Container(
             color: colorScheme.scrim.withValues(alpha: 0.3),
-            child: const Center(
-                child: CircularProgressIndicator(color: AppColors.primary)),
+            child: Center(
+                child:
+                    CircularProgressIndicator(color: context.tokens.primary)),
           ),
       ],
     );
@@ -373,7 +375,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: AppColors.surfaceContainerHigh,
+                backgroundColor: context.tokens.surfaceContainerHigh,
                 backgroundImage:
                     avatarUrl != null ? NetworkImage(avatarUrl) : null,
                 child: avatarUrl == null
@@ -394,8 +396,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                         ),
                         if (question.questionStatus == 'resolved') ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.verified,
-                              color: AppColors.primary, size: 16),
+                          Icon(Icons.verified,
+                              color: context.tokens.primary, size: 16),
                         ],
                       ],
                     ),
@@ -407,10 +409,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primarySoft,
+                    color: context.tokens.primarySoft,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.35)),
+                        color: context.tokens.primary.withValues(alpha: 0.35)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -420,7 +422,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       Text(
                         '${question.rewardCrackers}',
                         style: context.texts.labelMedium
-                            .copyWith(color: AppColors.primary),
+                            .copyWith(color: context.tokens.primary),
                       ),
                     ],
                   ),
@@ -492,16 +494,17 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                icon: const Icon(Icons.mode_comment_outlined,
-                    size: 20, color: AppColors.textSecondary),
+                icon: Icon(Icons.mode_comment_outlined,
+                    size: 20, color: context.tokens.textSecondary),
                 onPressed: () =>
                     FocusScope.of(context).requestFocus(_replyFocusNode),
               ),
               IconButton(
                 icon: Icon(isLiked ? Icons.bolt : Icons.bolt_outlined,
                     size: 22,
-                    color:
-                        isLiked ? AppColors.primary : AppColors.textSecondary),
+                    color: isLiked
+                        ? context.tokens.primary
+                        : context.tokens.textSecondary),
                 onPressed: () => context
                     .read<CommunityProvider>()
                     .toggleLike(question.id, currentUser?.id ?? ''),
@@ -513,8 +516,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                         : Icons.bookmark_border_rounded,
                     size: 20,
                     color: isBookmarked
-                        ? AppColors.primary
-                        : AppColors.textSecondary),
+                        ? context.tokens.primary
+                        : context.tokens.textSecondary),
                 onPressed: () => context
                     .read<CommunityProvider>()
                     .toggleScrap(question.id, currentUser?.id ?? ''),
@@ -541,7 +544,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           child: Text('아직 답변이 없습니다.\n첫 번째 답변을 남겨보세요!',
               textAlign: TextAlign.center,
               style: context.texts.bodyMedium
-                  .copyWith(color: AppColors.textDisabled)),
+                  .copyWith(color: context.tokens.textDisabled)),
         ),
       );
     }
@@ -609,7 +612,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             children: [
               CircleAvatar(
                 radius: isReply ? 14 : 18,
-                backgroundColor: AppColors.surfaceContainerHigh,
+                backgroundColor: context.tokens.surfaceContainerHigh,
                 backgroundImage: (!isBlocked && answererAvatar != null)
                     ? NetworkImage(answererAvatar)
                     : null,
@@ -660,20 +663,21 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
+                      color: context.tokens.primarySoft,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.35)),
+                          color:
+                              context.tokens.primary.withValues(alpha: 0.35)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.verified,
-                            color: AppColors.primary, size: 12),
+                        Icon(Icons.verified,
+                            color: context.tokens.primary, size: 12),
                         const SizedBox(width: 4),
                         Text('채택된 답변',
                             style: context.texts.labelSmall
-                                .copyWith(color: AppColors.primary)),
+                                .copyWith(color: context.tokens.primary)),
                       ],
                     ),
                   ),
@@ -685,7 +689,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     child: Text(
                       '@${answer.replyToNickname}',
                       style: context.texts.bodyMedium
-                          .copyWith(color: AppColors.primary),
+                          .copyWith(color: context.tokens.primary),
                     ),
                   ),
                 Text(
@@ -708,8 +712,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                   size: 18,
                                   color: provider.likedCommentIds
                                           .contains(answer.id)
-                                      ? AppColors.primary
-                                      : AppColors.textSecondary),
+                                      ? context.tokens.primary
+                                      : context.tokens.textSecondary),
                               onPressed: () {
                                 if (currentUser != null) {
                                   provider.toggleCommentLike(
@@ -726,8 +730,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                   color: colorScheme.onSurfaceVariant)),
                           const SizedBox(width: 12),
                           IconButton(
-                            icon: const Icon(Icons.mode_comment_outlined,
-                                size: 18, color: AppColors.textSecondary),
+                            icon: Icon(Icons.mode_comment_outlined,
+                                size: 18, color: context.tokens.textSecondary),
                             onPressed: () {
                               provider.setReplyingTo(answer);
                               FocusScope.of(context)
@@ -748,12 +752,12 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.primarySoft,
+                              color: context.tokens.primarySoft,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text('채택하기',
                                 style: context.texts.bodySmall
-                                    .copyWith(color: AppColors.primary)),
+                                    .copyWith(color: context.tokens.primary)),
                           ),
                         ),
                     ],
@@ -796,8 +800,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     onTap: () {
                       provider.setReplyingTo(null);
                     },
-                    child: const Icon(Icons.close,
-                        size: 16, color: AppColors.textDisabled),
+                    child: Icon(Icons.close,
+                        size: 16, color: context.tokens.textDisabled),
                   ),
                 ],
               ),
@@ -811,7 +815,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundColor: AppColors.surfaceContainerHigh,
+                    backgroundColor: context.tokens.surfaceContainerHigh,
                     backgroundImage: currentUser?.photoUrl != null
                         ? NetworkImage(currentUser!.photoUrl!)
                         : null,
@@ -839,7 +843,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     onPressed: _submitReply,
                     child: Text('답글',
                         style: context.texts.bodyMedium
-                            .copyWith(color: AppColors.primary)),
+                            .copyWith(color: context.tokens.primary)),
                   ),
                 ],
               ),

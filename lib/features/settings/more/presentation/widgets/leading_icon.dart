@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class LeadingIcon extends StatelessWidget {
   const LeadingIcon({super.key, required this.icon, this.danger = false});
@@ -11,9 +12,10 @@ class LeadingIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final bg = danger
-        ? Colors.red.withValues(alpha: 0.08)
+        ? context.tokens.danger.withValues(alpha: 0.08)
         : cs.onSurface.withValues(alpha: 0.06);
-    final fg = danger ? Colors.red : cs.onSurface.withValues(alpha: 0.75);
+    final fg =
+        danger ? context.tokens.danger : cs.onSurface.withValues(alpha: 0.75);
 
     return Container(
       width: 36,

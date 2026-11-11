@@ -7,6 +7,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/editable_avatar.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -306,7 +307,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             backgroundColor: isVerified
-                                ? Colors.green.withValues(alpha: 0.2)
+                                ? context.tokens.success.withValues(alpha: 0.2)
                                 : null,
                           ),
                           child: _isCheckingDuplicate
@@ -319,8 +320,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                               : Text(
                                   isVerified ? '확인됨' : '중복확인',
                                   style: TextStyle(
-                                    color:
-                                        isVerified ? Colors.green[700] : null,
+                                    color: isVerified
+                                        ? context.tokens.success
+                                        : null,
                                     fontWeight: isVerified
                                         ? FontWeight.bold
                                         : FontWeight.normal,

@@ -21,7 +21,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/shared/widgets/expandable_action_fab.dart';
@@ -96,7 +96,8 @@ class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     // 테마 색상
-    final bg = isDark ? AppColors.surfaceDark : AppColors.surfaceContainer;
+    final bg =
+        isDark ? context.tokens.surface : context.tokens.surfaceContainer;
 
     // Provider 구독
     final ui = context.watch<ClipActivityProvider>();
@@ -123,9 +124,9 @@ class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
           icon: Icons.auto_awesome_rounded,
           label: '콘텐츠 제작',
           onTap: () => context.go(AppRoutes.contentStudioBridgePath),
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.primary,
-          border: Border.all(color: AppColors.dividerSubtle),
+          backgroundColor: context.tokens.surface,
+          foregroundColor: context.tokens.primary,
+          border: Border.all(color: context.tokens.dividerSubtle),
           iconSize: 19,
         ),
       ),

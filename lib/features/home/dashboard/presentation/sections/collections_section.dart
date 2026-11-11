@@ -13,7 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../widgets/section_header.dart';
 import '../widgets/collection_card.dart';
 import '../widgets/empty_card.dart';
@@ -35,14 +35,13 @@ class CollectionsSection extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardBg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
+    final cardBg =
+        isDark ? context.tokens.surfaceContainer : context.tokens.surface;
     final subtle = isDark
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.06);
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final textPrimary = context.tokens.textPrimary;
+    final textSecondary = context.tokens.textSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

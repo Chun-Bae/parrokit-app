@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/shared/collection_colors.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -250,7 +251,7 @@ class _ReviewSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFE8C7),
+        color: CollectionColors.cream,
         borderRadius: BorderRadius.circular(22),
       ),
       child: Row(
@@ -262,7 +263,8 @@ class _ReviewSummary extends StatelessWidget {
               color: colors.surface.withValues(alpha: 0.82),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.bolt_rounded, color: Color(0xFFAA6B20)),
+            child: const Icon(Icons.bolt_rounded,
+                color: CollectionColors.creamIcon),
           ),
           const SizedBox(width: 14),
           Expanded(

@@ -8,6 +8,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -19,6 +20,7 @@ import '../widgets/section_title.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 /// 계정 섹션.
 class AccountSection extends StatelessWidget {
@@ -108,8 +110,9 @@ class AccountSection extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
                                     Shimmer.fromColors(
-                                  baseColor: Colors.grey[300]!,
-                                  highlightColor: Colors.grey[100]!,
+                                  baseColor: context.tokens.skeleton,
+                                  highlightColor:
+                                      context.tokens.skeletonHighlight,
                                   child: Container(color: Colors.white),
                                 ),
                                 errorWidget: (context, url, error) =>
@@ -141,17 +144,17 @@ class AccountSection extends StatelessWidget {
                           _StatusBadge(
                             icon: Icons.verified_rounded,
                             label: '이메일 인증됨',
-                            color: Colors.blueAccent,
+                            color: context.tokens.primary,
                             backgroundColor:
-                                Colors.blueAccent.withValues(alpha: 0.1),
+                                context.tokens.primary.withValues(alpha: 0.1),
                           ),
                         // 패롯 뱃지
                         _StatusBadge(
                           icon: Icons.auto_awesome_rounded,
                           label: '${user?.parrots ?? 0} 패롯',
-                          color: const Color(0xFF10B981),
+                          color: AppColors.parrotCurrency,
                           backgroundColor:
-                              const Color(0xFF10B981).withValues(alpha: 0.1),
+                              AppColors.parrotCurrency.withValues(alpha: 0.1),
                           onHelpTap: () => _showCurrencyInfo(
                             context,
                             '패롯(Parrot)이란?',
@@ -162,9 +165,9 @@ class AccountSection extends StatelessWidget {
                         _StatusBadge(
                           icon: Icons.cookie_rounded,
                           label: '${user?.crackers ?? 0} 크래커',
-                          color: const Color(0xFFF59E0B),
+                          color: AppColors.crackerCurrency,
                           backgroundColor:
-                              const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                              AppColors.crackerCurrency.withValues(alpha: 0.1),
                           onHelpTap: () => _showCurrencyInfo(
                             context,
                             '크래커(Cracker)란?',

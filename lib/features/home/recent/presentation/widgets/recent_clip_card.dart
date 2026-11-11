@@ -13,7 +13,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 최근 본 클립 카드.
@@ -137,13 +137,13 @@ class _Thumbnail extends StatelessWidget {
             ? Image.memory(thumb!, fit: BoxFit.cover)
             : Container(
                 color: isDark
-                    ? AppColors.surfaceContainerHighDark
+                    ? context.tokens.surfaceContainerHigh
                     : cs.surfaceContainerHighest,
                 child: Center(
                   child: Icon(
                     Icons.video_library_outlined,
                     size: 28,
-                    color: isDark ? AppColors.textTertiaryDark : cs.outline,
+                    color: isDark ? context.tokens.textTertiary : cs.outline,
                   ),
                 ),
               ),

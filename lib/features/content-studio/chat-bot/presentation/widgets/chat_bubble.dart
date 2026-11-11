@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import 'gradient_helper.dart';
@@ -30,8 +31,8 @@ class ChatBubble extends StatelessWidget {
           margin: const EdgeInsets.only(top: 6, bottom: 6, left: 40),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, Color(0xFF0052D4)],
+            gradient: LinearGradient(
+              colors: [context.tokens.primary, context.tokens.primaryPressed],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -43,7 +44,7 @@ class ChatBubble extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.15),
+                color: context.tokens.primary.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -99,8 +100,8 @@ class ChatBubble extends StatelessWidget {
                         horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.surfaceContainerHighDark
-                          : AppColors.surfaceContainer,
+                          ? context.tokens.surfaceContainerHigh
+                          : context.tokens.surfaceContainer,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(20),
@@ -108,9 +109,7 @@ class ChatBubble extends StatelessWidget {
                         bottomRight: Radius.circular(20),
                       ),
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.dividerSubtleDark
-                            : AppColors.dividerSubtle,
+                        color: context.tokens.dividerSubtle,
                       ),
                     ),
                     child: Column(
@@ -126,9 +125,7 @@ class ChatBubble extends StatelessWidget {
                           styleSheet:
                               MarkdownStyleSheet.fromTheme(theme).copyWith(
                             p: theme.textTheme.bodyMedium?.copyWith(
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimary,
+                              color: context.tokens.textPrimary,
                               height: 1.4,
                             ),
                             code: const TextStyle(
@@ -209,18 +206,18 @@ class ChatBubble extends StatelessWidget {
                                   horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: (message.actionType ==
-                                              'video_trigger' ||
-                                          message.actionType ==
-                                              'video_prompt_recommendation')
-                                      ? [
-                                          AppColors.primary,
-                                          const Color(0xFF00C6FF)
-                                        ]
-                                      : [
-                                          AppColors.secondary,
-                                          const Color(0xFFC084FC)
-                                        ],
+                                  colors:
+                                      (message.actionType == 'video_trigger' ||
+                                              message.actionType ==
+                                                  'video_prompt_recommendation')
+                                          ? [
+                                              context.tokens.primary,
+                                              StudioColors.actionCyan
+                                            ]
+                                          : [
+                                              context.tokens.secondary,
+                                              StudioColors.purpleLight
+                                            ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -231,8 +228,8 @@ class ChatBubble extends StatelessWidget {
                                                     'video_trigger' ||
                                                 message.actionType ==
                                                     'video_prompt_recommendation')
-                                            ? AppColors.primary
-                                            : AppColors.secondary)
+                                            ? context.tokens.primary
+                                            : context.tokens.secondary)
                                         .withValues(alpha: 0.25),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
@@ -298,7 +295,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white12 : Colors.black12,
+          color: context.tokens.divider,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
@@ -306,7 +303,8 @@ class CodeElementBuilder extends MarkdownElementBuilder {
           style: preferredStyle?.copyWith(
             fontFamily: 'monospace',
             fontSize: 13,
-            color: isDark ? const Color(0xFFC084FC) : const Color(0xFF8B5CF6),
+            color:
+                isDark ? StudioColors.purpleLight : StudioColors.generalPurple,
           ),
         ),
       );
@@ -321,7 +319,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
             : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle,
+          color: context.tokens.dividerSubtle,
         ),
       ),
       child: Stack(
@@ -335,9 +333,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontFamily: 'monospace',
                   fontSize: 13,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimary,
+                  color: context.tokens.textPrimary,
                   height: 1.4,
                 ),
               ),
@@ -359,9 +355,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                   child: Icon(
                     Icons.copy_rounded,
                     size: 16,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
+                    color: context.tokens.textSecondary,
                   ),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -77,20 +78,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final WidgetStateColor iconColor = WidgetStateColor.resolveWith((states) {
       if (states.contains(WidgetState.focused)) {
-        return const Color(0xFF0066FF);
+        return context.tokens.primary;
       }
-      return Colors.grey.shade500;
+      return context.tokens.textTertiary;
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.tokens.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.tokens.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
           '프로필 설정',
-          style: context.texts.titleLarge.copyWith(color: Colors.black),
+          style: context.texts.titleLarge
+              .copyWith(color: context.tokens.textPrimary),
         ),
         centerTitle: true,
         // 뒤로가기 방지 (필수 관문)
@@ -115,7 +117,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Text(
                     '커뮤니티에서 사용할 멋진 닉네임을 설정해주세요.',
                     style: context.texts.bodyMedium.copyWith(
-                        color: Colors.grey.shade600, letterSpacing: -0.5),
+                        color: context.tokens.textSecondary,
+                        letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 48),
                   // 닉네임 입력칸
@@ -134,20 +137,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           decoration: InputDecoration(
                             labelText: '닉네임',
                             labelStyle: TextStyle(
-                                color: Colors.grey.shade500,
+                                color: context.tokens.textTertiary,
                                 fontWeight: FontWeight.w500),
-                            floatingLabelStyle: const TextStyle(
-                                color: Color(0xFF0066FF),
+                            floatingLabelStyle: TextStyle(
+                                color: context.tokens.primary,
                                 fontWeight: FontWeight.bold),
                             prefixIconColor: iconColor,
                             prefixIcon: const Icon(Icons.badge),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade400),
-                            ),
-                            focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color(0xFF0066FF), width: 2),
+                                  color: context.tokens.borderStrong),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: context.tokens.primary, width: 2),
                             ),
                           ),
                         ),
@@ -160,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               ? null
                               : _checkNickname,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0066FF),
+                            backgroundColor: context.tokens.primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -180,8 +183,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           _nicknameCheckMessage!,
                           style: context.texts.bodySmall.copyWith(
                               color: _isNicknameAvailable
-                                  ? Colors.green
-                                  : Colors.red),
+                                  ? context.tokens.success
+                                  : context.tokens.danger),
                         ),
                       ),
                     ),
@@ -192,7 +195,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _onSubmit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0066FF),
+                        backgroundColor: context.tokens.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

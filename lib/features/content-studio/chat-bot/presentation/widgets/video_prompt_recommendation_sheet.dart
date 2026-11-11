@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 Future<void> showVideoPromptRecommendationSheet(
   BuildContext context, {
@@ -16,9 +16,7 @@ Future<void> showVideoPromptRecommendationSheet(
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: isDark
-        ? AppColors.surfaceContainerHighDark
-        : AppColors.surfaceContainerHigh,
+    backgroundColor: context.tokens.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -34,10 +32,10 @@ Future<void> showVideoPromptRecommendationSheet(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.movie_filter_rounded,
                       size: 48,
-                      color: AppColors.primary,
+                      color: context.tokens.primary,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -51,9 +49,7 @@ Future<void> showVideoPromptRecommendationSheet(
                     Text(
                       '마음에 드는 세트를 고르면 스크립트와 영상 프롬프트가 함께 들어갑니다.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
+                        color: context.tokens.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -80,17 +76,16 @@ Future<void> showVideoPromptRecommendationSheet(
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.primary
-                                    : (isDark
-                                        ? AppColors.dividerSubtleDark
-                                        : AppColors.dividerSubtle),
+                                    ? context.tokens.primary
+                                    : (context.tokens.dividerSubtle),
                                 width: isSelected ? 2 : 1,
                               ),
                               color: isSelected
-                                  ? AppColors.primary.withValues(alpha: 0.1)
+                                  ? context.tokens.primary
+                                      .withValues(alpha: 0.1)
                                   : (isDark
-                                      ? AppColors.surfaceContainerDark
-                                      : AppColors.surface),
+                                      ? context.tokens.surfaceContainer
+                                      : context.tokens.surface),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,10 +97,8 @@ Future<void> showVideoPromptRecommendationSheet(
                                           ? Icons.radio_button_checked
                                           : Icons.radio_button_unchecked,
                                       color: isSelected
-                                          ? AppColors.primary
-                                          : (isDark
-                                              ? AppColors.textTertiaryDark
-                                              : AppColors.textTertiary),
+                                          ? context.tokens.primary
+                                          : (context.tokens.textTertiary),
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
@@ -115,9 +108,7 @@ Future<void> showVideoPromptRecommendationSheet(
                                         style: theme.textTheme.titleSmall
                                             ?.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: isDark
-                                              ? AppColors.textPrimaryDark
-                                              : AppColors.textPrimary,
+                                          color: context.tokens.textPrimary,
                                         ),
                                       ),
                                     ),
@@ -128,18 +119,14 @@ Future<void> showVideoPromptRecommendationSheet(
                                   '스크립트',
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondary,
+                                    color: context.tokens.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   pair['script'] ?? '',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimary,
+                                    color: context.tokens.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -147,18 +134,14 @@ Future<void> showVideoPromptRecommendationSheet(
                                   '장면 프롬프트',
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondary,
+                                    color: context.tokens.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   pair['prompt'] ?? '',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimary,
+                                    color: context.tokens.textPrimary,
                                   ),
                                 ),
                               ],

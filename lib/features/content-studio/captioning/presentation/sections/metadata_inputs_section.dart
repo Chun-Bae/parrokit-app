@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/constants/edit_strings.dart';
 import '../providers/captioning_provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class MetadataInputsSection extends StatelessWidget {
   const MetadataInputsSection({super.key, required this.vm});
@@ -11,7 +11,6 @@ class MetadataInputsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
@@ -78,11 +77,7 @@ class MetadataInputsSection extends StatelessWidget {
             },
           ),
 
-          Divider(
-              height: 1,
-              color: isDark
-                  ? AppColors.dividerSubtleDark
-                  : AppColors.dividerSubtle),
+          Divider(height: 1, color: context.tokens.dividerSubtle),
 
           // 2. 클립 제목
           _LinearInputField(
@@ -91,11 +86,7 @@ class MetadataInputsSection extends StatelessWidget {
             controller: vm.titleCtl,
           ),
 
-          Divider(
-              height: 1,
-              color: isDark
-                  ? AppColors.dividerSubtleDark
-                  : AppColors.dividerSubtle),
+          Divider(height: 1, color: context.tokens.dividerSubtle),
 
           // 3. 태그
           _LinearInputField(
@@ -132,9 +123,7 @@ class MetadataInputsSection extends StatelessWidget {
                         deleteIcon: const Icon(Icons.close_rounded, size: 16),
                         padding: const EdgeInsets.all(0),
                         onDeleted: () => vm.removeTag(tag),
-                        backgroundColor: isDark
-                            ? AppColors.surfaceContainerHighDark
-                            : AppColors.surfaceContainerHigh,
+                        backgroundColor: context.tokens.surfaceContainerHigh,
                         side: BorderSide.none,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16)),

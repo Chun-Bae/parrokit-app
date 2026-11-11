@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/content-studio/tts/domain/repositories/tts_generation_repository.dart';
@@ -18,9 +19,7 @@ class TtsProviderSelector extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final bg = isDark
-        ? AppColors.surfaceContainerHighDark
-        : AppColors.surfaceContainerHigh;
+    final bg = context.tokens.surfaceContainerHigh;
 
     return Container(
       height: 48,
@@ -50,11 +49,14 @@ class TtsProviderSelector extends StatelessWidget {
                 bottom: 0,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceContainerDark : Colors.white,
+                    color: isDark
+                        ? context.tokens.surfaceContainer
+                        : context.tokens.surface,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -75,9 +77,7 @@ class TtsProviderSelector extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             color: selectedType == TtsProviderType.google
                                 ? theme.colorScheme.primary
-                                : (isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondary),
+                                : (context.tokens.textSecondary),
                           ),
                           child: const Text('Google Cloud'),
                         ),
@@ -94,10 +94,8 @@ class TtsProviderSelector extends StatelessWidget {
                           style: theme.textTheme.bodyMedium!.copyWith(
                             fontWeight: FontWeight.w800,
                             color: selectedType == TtsProviderType.elevenlabs
-                                ? AppColors.secondary
-                                : (isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondary),
+                                ? context.tokens.secondary
+                                : (context.tokens.textSecondary),
                           ),
                           child: const Text('ElevenLabs'),
                         ),
@@ -111,13 +109,16 @@ class TtsProviderSelector extends StatelessWidget {
                       child: Center(
                         child: selectedType == TtsProviderType.gemini
                             ? ShaderMask(
-                                shaderCallback: (bounds) => AppColors.geminiGradient.createShader(bounds),
+                                shaderCallback: (bounds) => AppColors
+                                    .geminiGradient
+                                    .createShader(bounds),
                                 blendMode: BlendMode.srcIn,
                                 child: Text(
                                   'Gemini',
                                   style: theme.textTheme.bodyMedium!.copyWith(
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.white, // Required for ShaderMask
+                                    color:
+                                        Colors.white, // Required for ShaderMask
                                   ),
                                 ),
                               )
@@ -125,9 +126,7 @@ class TtsProviderSelector extends StatelessWidget {
                                 duration: const Duration(milliseconds: 200),
                                 style: theme.textTheme.bodyMedium!.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondary,
+                                  color: context.tokens.textSecondary,
                                 ),
                                 child: const Text('Gemini'),
                               ),

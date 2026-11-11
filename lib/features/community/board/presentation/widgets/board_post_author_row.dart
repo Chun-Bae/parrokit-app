@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardPostAuthorRow extends StatelessWidget {
@@ -71,7 +71,7 @@ class BoardPostAuthorRow extends StatelessWidget {
               Text(
                 timeAgoText,
                 style: context.texts.bodyLarge
-                    .copyWith(color: AppColors.textTertiary),
+                    .copyWith(color: context.tokens.textTertiary),
               ),
             ],
           ),

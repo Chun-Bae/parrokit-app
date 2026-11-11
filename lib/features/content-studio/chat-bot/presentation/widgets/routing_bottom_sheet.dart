@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
 
 void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
-  final bg = isDark ? AppColors.surfaceContainerDark : AppColors.surface;
-  final borderCol = isDark ? AppColors.dividerDark : AppColors.divider;
+  final bg = isDark ? context.tokens.surfaceContainer : context.tokens.surface;
+  final borderCol = context.tokens.divider;
 
   showModalBottomSheet(
     context: context,
@@ -38,7 +39,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                     '원하시는 작업을 선택해주세요',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                      color: context.tokens.textPrimary,
                     ),
                   ),
                   GestureDetector(
@@ -46,7 +47,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                     child: Icon(
                       Icons.close_rounded,
                       size: 20,
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                      color: context.tokens.textSecondary,
                     ),
                   ),
                 ],
@@ -67,19 +68,19 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? const Color(0xFFEC4899).withValues(alpha: 0.4)
-                          : const Color(0xFFEC4899).withValues(alpha: 0.2),
+                          ? StudioColors.ttsPink.withValues(alpha: 0.4)
+                          : StudioColors.ttsPink.withValues(alpha: 0.2),
                       width: 1.5,
                     ),
                     gradient: LinearGradient(
                       colors: isDark
                           ? [
-                              const Color(0xFFC084FC).withValues(alpha: 0.15),
-                              const Color(0xFFEC4899).withValues(alpha: 0.15)
+                              StudioColors.purpleLight.withValues(alpha: 0.15),
+                              StudioColors.ttsPink.withValues(alpha: 0.15)
                             ]
                           : [
-                              const Color(0xFFC084FC).withValues(alpha: 0.05),
-                              const Color(0xFFEC4899).withValues(alpha: 0.05)
+                              StudioColors.purpleLight.withValues(alpha: 0.05),
+                              StudioColors.ttsPink.withValues(alpha: 0.05)
                             ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -91,7 +92,10 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFC084FC), Color(0xFFEC4899)],
+                            colors: [
+                              StudioColors.purpleLight,
+                              StudioColors.ttsPink
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -112,14 +116,14 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                               '🎙️ AI 음성(TTS) 생성 요청',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                                color: context.tokens.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '자연스러운 AI 목소리로 음성을 생성하고 튜닝합니다.',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                                color: context.tokens.textSecondary,
                                 height: 1.3,
                               ),
                             ),
@@ -128,7 +132,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                       ),
                       Icon(
                         Icons.chevron_right_rounded,
-                        color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiary,
+                        color: context.tokens.textTertiary,
                       ),
                     ],
                   ),
@@ -150,19 +154,19 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? const Color(0xFF06B6D4).withValues(alpha: 0.4)
-                          : const Color(0xFF06B6D4).withValues(alpha: 0.2),
+                          ? StudioColors.videoCyan.withValues(alpha: 0.4)
+                          : StudioColors.videoCyan.withValues(alpha: 0.2),
                       width: 1.5,
                     ),
                     gradient: LinearGradient(
                       colors: isDark
                           ? [
-                              const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                              const Color(0xFF06B6D4).withValues(alpha: 0.15)
+                              StudioColors.videoBlue.withValues(alpha: 0.15),
+                              StudioColors.videoCyan.withValues(alpha: 0.15)
                             ]
                           : [
-                              const Color(0xFF3B82F6).withValues(alpha: 0.05),
-                              const Color(0xFF06B6D4).withValues(alpha: 0.05)
+                              StudioColors.videoBlue.withValues(alpha: 0.05),
+                              StudioColors.videoCyan.withValues(alpha: 0.05)
                             ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -174,7 +178,10 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
+                            colors: [
+                              StudioColors.videoBlue,
+                              StudioColors.videoCyan
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -195,14 +202,14 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                               '🎬 AI 비디오 생성 요청',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                                color: context.tokens.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '텍스트 시나리오를 바탕으로 멋진 비디오 씬을 기획합니다.',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                                color: context.tokens.textSecondary,
                                 height: 1.3,
                               ),
                             ),
@@ -211,7 +218,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                       ),
                       Icon(
                         Icons.chevron_right_rounded,
-                        color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiary,
+                        color: context.tokens.textTertiary,
                       ),
                     ],
                   ),

@@ -5,7 +5,7 @@
 // [역할]
 // 테두리가 없는(borderless) 깔끔하고 심플한 피드/트위터 스타일의 투표 작성 화면.
 // 제목, 설명, 그리고 추가/삭제 가능한 투표 대상 옵션 항목 입력창 제공.
-// 커뮤니티 대표 색상인 Colors.blue[600]을 일관되게 활용하여 제작.
+// 커뮤니티 대표 색상인 AppTokens.primary를 일관되게 활용하여 제작.
 //
 // [레이어]
 // Presentation Layer > Screens
@@ -18,7 +18,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/vote_option.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class VoteWriteScreen extends StatefulWidget {
@@ -234,15 +234,15 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLight = !isDark;
-    const blue600 = AppColors.primary;
+    final blue600 = context.tokens.primary;
     final dividerColor =
         colorScheme.outlineVariant.withValues(alpha: isDark ? 0.48 : 0.72);
     final optionCardColor = colorScheme.onSecondary;
     final addOptionBg = isDark
-        ? AppColors.surfaceContainerDark
+        ? context.tokens.surfaceContainer
         : colorScheme.surfaceContainerLow;
     final periodChipBg = isDark
-        ? AppColors.surfaceContainerDark
+        ? context.tokens.surfaceContainer
         : colorScheme.surfaceContainerHigh;
     final addOptionBorder =
         colorScheme.outlineVariant.withValues(alpha: isDark ? 0.60 : 0.72);
@@ -449,7 +449,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                                 IconButton(
                                   icon: Icon(
                                       Icons.remove_circle_outline_rounded,
-                                      color: Colors.red[400],
+                                      color: context.tokens.danger,
                                       size: 20),
                                   onPressed: () => _removeOption(index),
                                   padding: EdgeInsets.zero,

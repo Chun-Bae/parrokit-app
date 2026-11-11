@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
@@ -23,10 +23,11 @@ class TtsPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceContainerDark : AppColors.surface,
+        color:
+            isDark ? context.tokens.surfaceContainer : context.tokens.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isDark ? AppColors.dividerSubtleDark : AppColors.dividerSubtle,
+          color: context.tokens.dividerSubtle,
         ),
       ),
       child: Column(

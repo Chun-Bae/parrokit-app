@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
 
 class TtsSliderPreview extends StatelessWidget {
   const TtsSliderPreview({
@@ -49,15 +49,20 @@ class TtsSliderPreview extends StatelessWidget {
         const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, constraints) {
-            final percent = max > min ? ((value - min) / (max - min)).clamp(0.0, 1.0) : 0.0;
+            final percent =
+                max > min ? ((value - min) / (max - min)).clamp(0.0, 1.0) : 0.0;
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTapDown: (details) {
-                final newPercent = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
+                final newPercent =
+                    (details.localPosition.dx / constraints.maxWidth)
+                        .clamp(0.0, 1.0);
                 onChanged?.call(min + (max - min) * newPercent);
               },
               onHorizontalDragUpdate: (details) {
-                final newPercent = (details.localPosition.dx / constraints.maxWidth).clamp(0.0, 1.0);
+                final newPercent =
+                    (details.localPosition.dx / constraints.maxWidth)
+                        .clamp(0.0, 1.0);
                 onChanged?.call(min + (max - min) * newPercent);
               },
               child: Container(
@@ -71,9 +76,7 @@ class TtsSliderPreview extends StatelessWidget {
                       height: 4,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: theme.brightness == Brightness.dark 
-                            ? AppColors.dividerSubtleDark 
-                            : AppColors.dividerSubtle,
+                        color: context.tokens.dividerSubtle,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
