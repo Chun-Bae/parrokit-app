@@ -33,6 +33,7 @@ import 'widgets/shorts_page.dart';
 import 'widgets/progress_bar.dart';
 import 'widgets/action_rail.dart';
 import 'widgets/shorts_badge.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 
 /// [역할]
 /// 쇼츠(Shorts) 기능을 제공하는 메인 화면.
@@ -85,7 +86,8 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
 
     if (shouldShow) {
       _pauseSignal.value = true;
-      AdService().showInterstitialAd(); // premium이면 incrementBy가 false를 반환 → 여기 안 옴
+      AdService()
+          .showInterstitialAd(); // premium이면 incrementBy가 false를 반환 → 여기 안 옴
       ad.recordAdShown();
       _pauseSignal.value = false;
     }
@@ -109,13 +111,13 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (shorts.shorts.isEmpty) {
+          // 영상이 없을 때는 레터박스 검정 대신 보통 화면색을 쓴다.
           return Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
-            body: Center(
-              child: Text(
-                '아직 등록된 클립이 없어요.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+            body: const AppEmptyState(
+              icon: Icons.video_library_outlined,
+              title: '아직 등록된 클립이 없어요.',
+              description: '보관함에서 클립을 추가하면 여기에서 이어서 볼 수 있어요.',
             ),
           );
         }
