@@ -37,7 +37,7 @@ class ContentStudioAppBar extends StatelessWidget
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
         onPressed: onBack,
       ),
       actions: [

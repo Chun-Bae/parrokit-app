@@ -61,8 +61,8 @@ class _FindPwScreenState extends State<FindPwScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon:
-              Icon(Icons.arrow_back_ios_new, color: context.tokens.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: context.tokens.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(

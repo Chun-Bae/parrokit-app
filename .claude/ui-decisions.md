@@ -529,3 +529,37 @@ AppEmptyState(
 차지하는 자리가 줄고 입력창이 위로 올라온다.
 
 **되돌리려면:** 이 커밋만 revert 하면 된다.
+
+---
+
+## 15. 뒤로가기 아이콘을 하나로
+
+**범위:** 화면 9곳
+
+**문제:** 뒤로가기 아이콘이 **네 종류**였다.
+
+| 아이콘 | 곳 |
+|---|---|
+| `arrow_back_ios_new_rounded` | 커뮤니티 4 |
+| `arrow_back_ios_new` | 게시글 보기, auth 2 |
+| `arrow_back_rounded` | 콘텐츠 제작 브리지 |
+| `arrow_back` | 콘텐츠 제작 앱바 |
+
+`_rounded`가 붙고 안 붙고는 모서리 처리가 달라 나란히 두면 보인다.
+`arrow_back`과 `arrow_back_ios_new`는 아예 다른 모양이다(굵은 화살표 vs 얇은 꺾쇠).
+
+**고른 방향:** `arrow_back_ios_new_rounded` 하나로. 가장 많이 쓰이고 있었고(4곳),
+iOS 관례에 맞는 얇은 꺾쇠에 모서리가 둥글어 앱의 다른 둥근 아이콘과 어울린다.
+
+**안 건드린 것:** `chevron_left_rounded` 두 곳. 확인해 보니 뒤로가기가 아니라
+**페이지 넘기기**였다. 학습 잔디의 "이전 달"과 문장 가져오기 창의 "이전" 단계다.
+오른쪽 짝(`chevron_right_rounded`)과 함께 쓰이므로 그대로 둔다.
+
+**치환하다 한 번 망가뜨렸다.** `Icons.arrow_back`을 문자열로 바꾸니
+`Icons.arrow_back_ios_new_rounded` 안에도 걸려서
+`Icons.arrow_back_ios_new_rounded_ios_new_rounded`가 됐다. 분석기가 바로 잡았다.
+정규식으로 식별자 전체를 잡아 다시 했다.
+
+**외형이 바뀐다.** 다섯 화면의 뒤로가기 아이콘 모양이 조금 달라진다.
+
+**되돌리려면:** 이 커밋만 revert 하면 된다.

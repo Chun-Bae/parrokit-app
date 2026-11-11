@@ -34,7 +34,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                         onPressed: () => context.canPop()
                             ? context.pop()
                             : context.go(AppRoutes.dashboardPath),
-                        icon: const Icon(Icons.arrow_back_rounded),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
                       ),

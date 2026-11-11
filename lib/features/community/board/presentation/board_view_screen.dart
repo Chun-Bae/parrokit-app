@@ -276,7 +276,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.maybePop(context),
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 24),
+                    icon:
+                        const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
                   ),
                   const Spacer(),
                   IconButton(
