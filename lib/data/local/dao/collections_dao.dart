@@ -31,7 +31,21 @@ class CollectionsDao extends DatabaseAccessor<AppDatabase>
   }) {
     return transaction(() async {
       final existing = await findByNameAndStorageMode(name, storageMode);
-      if (existing != null) return existing;
+      if (existing != null) {
+        // 원격 id를 받아 왔는데 찾은 콜렉션에 아직 없으면 그때 붙여 준다.
+        // 전에는 조용히 버려서, 로컬에서 먼저 만든 콜렉션이 원격 문서와
+        // 끝까지 연결되지 않았다. 그러면 pull은 매번 이름으로만 찾게 되고,
+        // 사용자가 그 콜렉션 이름을 바꾸면 다음 pull이 같은 내용의 콜렉션을
+        // 하나 더 만든다.
+        // 이미 다른 원격 id가 붙어 있으면 건드리지 않는다.
+        if (remoteId != null &&
+            remoteId.isNotEmpty &&
+            (existing.remoteId == null || existing.remoteId!.isEmpty)) {
+          await updateRemoteId(existing.id, remoteId);
+          return existing.copyWith(remoteId: Value(remoteId));
+        }
+        return existing;
+      }
       final id = await into(collections).insert(
         CollectionsCompanion.insert(
           name: name,
