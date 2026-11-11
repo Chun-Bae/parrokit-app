@@ -185,9 +185,20 @@ LIMIT 6;
   }
 
   bool _buildingRecents = false;
+  List<QueryRow>? _pendingRecentRows;
 
+  /// 최근 본 클립 목록을 다시 만든다.
+  ///
+  /// 썸네일을 받아오는 동안(서버·클라우드 클립이면 내려받기까지 한다) 스트림이
+  /// 다시 울리면 예전에는 그 행들을 그냥 버렸다. 그래서 방금 본 클립이 목록에
+  /// 안 나타난 채로, 다음에 clips·collections·recent_clip_views가 바뀔 때까지
+  /// 낡은 목록이 남았다. 지금은 마지막 행만 기억해 두고 현재 작업이 끝나면
+  /// 이어서 한 번 더 만든다.
   Future<void> _rebuildRecents(List<QueryRow> rows) async {
-    if (_buildingRecents) return;
+    if (_buildingRecents) {
+      _pendingRecentRows = rows;
+      return;
+    }
     _buildingRecents = true;
     try {
       final result = <(int, Uint8List?, String?, String?)>[];
@@ -211,6 +222,12 @@ LIMIT 6;
       notifyListeners();
     } finally {
       _buildingRecents = false;
+    }
+
+    final pending = _pendingRecentRows;
+    if (pending != null) {
+      _pendingRecentRows = null;
+      await _rebuildRecents(pending);
     }
   }
 
