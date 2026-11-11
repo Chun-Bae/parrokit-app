@@ -149,3 +149,37 @@ v4 마이그레이션이 필요하고, 이미 중복이 생긴 기기에서는 i
 - `LibraryEntitySyncCoordinator`의 생성 순서(원격 먼저, 로컬 나중)는 동시에
   도는 pull이 방금 만든 것을 "원격에서 지워짐"으로 오인하는 레이스를 피하려는
   것이고, 주석에 그렇게 적혀 있다. 묶음 1의 보류 "나"도 같은 이유일 수 있다.
+
+## 전 화면 공통 — 눌러도 아무 일도 없는 버튼 12개
+
+리뷰 중에 리포 전체에서 `onPressed: () {}` / `onTap: () {}`을 찾았다.
+전부 **고치지 않았다.** 비우는 게 맞는지, 기능을 넣는 게 맞는지, 눌리지 않게
+회색으로 두는 게 맞는지는 버튼마다 다르고 전부 기능 판단이다.
+
+| 화면 | 버튼 | 파일 |
+|------|------|------|
+| 커뮤니티 목록 | 상단 검색 | `community/shell/presentation/community_shell_screen.dart:161` |
+| 게시글 보기 | 알림 끄기 | `community/board/presentation/board_view_screen.dart:284` |
+| 게시글 댓글 입력 | 사진 첨부 | `community/board/presentation/widgets/board_comment_input_bar.dart:73` |
+| 질문 쓰기 | 이미지 | `community/question/presentation/question_write_screen.dart:289` |
+| 질문 쓰기 | 마이크 | `community/question/presentation/question_write_screen.dart:293` |
+| 질문 쓰기 | 링크 | `community/question/presentation/question_write_screen.dart:297` |
+| 질문 쓰기 | 태그 | `community/question/presentation/question_write_screen.dart:301` |
+| 홈 무대 | 문장 추가 (filledTonal) | `home/dashboard/presentation/stage_preview_screen.dart:1586` |
+| 보관함 둘러보기 | "Parrokit 제공 — 전체" | `collection/shell/presentation/widgets/sentence_collection_preview.dart:621` |
+| 보관함 단어 미리보기 | 카드 전체 | `collection/shell/presentation/widgets/word_collection_preview.dart:281` |
+| 더보기 | 앱 정보 줄 | `settings/more/presentation/sections/info_section.dart:54` |
+
+눈여겨볼 것 둘:
+
+- **홈 무대의 "문장 추가"는 `IconButton.filledTonal`이다.** 칠해진 버튼은 앱에서
+  가장 "누르라"고 말하는 모양인데 아무 일도 없다. 질문 쓰기의 네 개는 아이콘
+  버튼이라 덜 눈에 띄지만, 네 개가 나란히 전부 죽어 있다.
+- **더보기의 앱 정보 줄은 기능이 없는 게 맞아 보인다** (버전을 보여 주는 줄,
+  `showArrow: false`). 그런데 `onTap: () {}`이라 눌리면 물결 효과는 난다.
+  이건 `onTap: null`로 두면 끝이지만, 눌리는 느낌이 사라지는 눈에 보이는
+  변화라 역시 손대지 않았다.
+
+의도적으로 비운 것 둘은 위 목록에서 뺐다 — 쇼츠 재생 컨트롤의 부모 탭 막기
+(`shorts_page_control_section.dart:65`, 주석 있음)와 `subtitle_tile.dart`의
+스켈레톤 placeholder.
