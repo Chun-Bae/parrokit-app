@@ -16,6 +16,7 @@ Future<void> showVideoPromptRecommendationSheet(
 
   await showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: context.tokens.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(

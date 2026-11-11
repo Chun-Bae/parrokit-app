@@ -76,6 +76,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
   void _showLanguageSelectionSheet(BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TtsLanguageSelectionSheet(provider: provider),
@@ -88,6 +89,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
     }
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TtsVoiceSelectionSheet(provider: provider),
@@ -98,6 +100,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
       BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TtsGeminiVoiceSelectionSheet(provider: provider),
@@ -108,6 +111,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
       BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TtsGeminiModelSelectionSheet(provider: provider),
@@ -118,6 +122,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
       BuildContext context, TtsProvider provider) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
@@ -270,6 +275,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             accentColor: context.tokens.secondary,
                             onTap: () => showModalBottomSheet(
                               context: context,
+                              useRootNavigator: true,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
                               builder: (context) =>

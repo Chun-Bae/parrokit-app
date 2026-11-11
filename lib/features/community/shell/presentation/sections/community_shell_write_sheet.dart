@@ -8,6 +8,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 void showCommunityWriteBottomSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),

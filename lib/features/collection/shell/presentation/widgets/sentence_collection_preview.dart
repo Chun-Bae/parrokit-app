@@ -12,7 +12,6 @@ import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/content/sentence_url_import.dart';
-import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
@@ -395,12 +394,13 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   /// 언어 열이 없거나 비어 있으면 지금 고른 언어로 들어가고, 이미 있는 문장은 건너뛴다.
   /// 사용자가 복사해 붙여넣은 스크립트를 문장으로 나눠 고른 문장만 내 문장에 추가한다.
   Future<void> addFromScript() async {
-    final picked = await hideNavBarWhile(showModalBottomSheet<List<String>>(
+    final picked = await showModalBottomSheet<List<String>>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => const _ScriptImportSheet(),
-    ));
+    );
     if (picked == null || picked.isEmpty) return;
     try {
       var added = 0;
@@ -1064,7 +1064,7 @@ Future<void> showSentenceDetails(
   Future<void> Function(bool liked)? onSharedLike,
   Future<void> Function()? onSaveShared,
 }) =>
-    hideNavBarWhile(showModalBottomSheet<void>(
+    showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -1080,7 +1080,7 @@ Future<void> showSentenceDetails(
         onSharedLike: onSharedLike,
         onSaveShared: onSaveShared,
       ),
-    ));
+    );
 
 class _MySentenceTile extends StatelessWidget {
   const _MySentenceTile({

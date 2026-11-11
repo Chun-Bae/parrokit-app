@@ -20,6 +20,7 @@ class LearningLanguagePicker extends StatelessWidget {
   Future<void> openPicker(BuildContext context) async {
     final selected = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => _LanguagePickerSheet(selected: value),

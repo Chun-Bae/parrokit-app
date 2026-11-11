@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 Future<bool?> showContentStudioExitConfirmSheet(BuildContext context) {
   return showModalBottomSheet<bool>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     builder: (ctx) {
       final cs = Theme.of(ctx).colorScheme;

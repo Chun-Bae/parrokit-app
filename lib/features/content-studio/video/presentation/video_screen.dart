@@ -69,6 +69,7 @@ class _VideoScreenState extends State<VideoScreen> {
   Future<void> _openVideoRecommendationFlow() async {
     final selection = await showModalBottomSheet<_VideoRecommendationSelection>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const _VideoRecommendationFilterSheet(
@@ -281,6 +282,7 @@ class _VideoScreenState extends State<VideoScreen> {
                     onTap: () {
                       showModalBottomSheet(
                         context: context,
+                        useRootNavigator: true,
                         backgroundColor: Colors.transparent,
                         isScrollControlled: true,
                         builder: (context) =>

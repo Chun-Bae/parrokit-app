@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -26,7 +25,7 @@ Future<SentenceImportResult?> showSentenceImportSheet(
   required Future<String?> Function(ImportedSentence item) addOne,
   required Future<void> Function(String id) removeOne,
 }) =>
-    hideNavBarWhile(showModalBottomSheet<SentenceImportResult>(
+    showModalBottomSheet<SentenceImportResult>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -40,7 +39,7 @@ Future<SentenceImportResult?> showSentenceImportSheet(
         addOne: addOne,
         removeOne: removeOne,
       ),
-    ));
+    );
 
 /// 언어와 문장으로 같은 문장인지 가리는 키.
 String sentenceImportKey(String language, String text) =>

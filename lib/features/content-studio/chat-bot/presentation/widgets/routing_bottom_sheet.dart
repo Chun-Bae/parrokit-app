@@ -12,6 +12,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
 
   showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.4),
     isScrollControlled: true,

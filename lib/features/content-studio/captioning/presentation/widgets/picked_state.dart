@@ -552,6 +552,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       builder: (context) {
         final cs = Theme.of(context).colorScheme;
@@ -611,6 +612,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       builder: (context) {
         final cs = Theme.of(context).colorScheme;

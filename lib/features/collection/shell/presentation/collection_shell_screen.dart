@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
-import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -399,8 +398,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Future<void> _showSearchSheet(BuildContext context) async {
-    await hideNavBarWhile(showModalBottomSheet<void>(
+    await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.fromLTRB(
@@ -442,7 +442,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           ],
         ),
       ),
-    ));
+    );
   }
 
   /// 문장 탭의 + 버튼과 같은 문장 추가 화면을 연다.
@@ -466,8 +466,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Future<void> _showAddSheet(BuildContext context) async {
-    await hideNavBarWhile(showModalBottomSheet<void>(
+    await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
         child: Padding(
@@ -527,7 +528,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           ),
         ),
       ),
-    ));
+    );
   }
 }
 

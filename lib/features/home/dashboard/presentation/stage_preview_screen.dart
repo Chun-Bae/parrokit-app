@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:parrokit/core/app/router/app_shell.dart' show hideNavBarWhile;
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/learning_languages.dart';
@@ -645,8 +644,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     if (!hasSpeakablePhrase) return;
     final list = phrases;
     final current = phraseIndex % list.length;
-    final picked = await hideNavBarWhile(showModalBottomSheet<int>(
+    final picked = await showModalBottomSheet<int>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => DraggableScrollableSheet(
@@ -688,7 +688,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                   })),
         ]),
       ),
-    ));
+    );
     if (picked != null) jumpToPhrase(picked);
   }
 

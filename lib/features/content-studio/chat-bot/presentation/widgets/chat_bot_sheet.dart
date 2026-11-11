@@ -25,6 +25,7 @@ Future<void> showChatBotSheet(
 
   await showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,

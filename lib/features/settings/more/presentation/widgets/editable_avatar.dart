@@ -48,6 +48,7 @@ class EditableAvatar extends StatelessWidget {
 
         final choice = await showModalBottomSheet<int>(
           context: context,
+          useRootNavigator: true,
           showDragHandle: true,
           builder: (context) => SafeArea(
             child: Wrap(
