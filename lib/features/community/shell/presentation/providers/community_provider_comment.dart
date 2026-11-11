@@ -115,9 +115,14 @@ extension CommunityProviderComment on CommunityProvider {
       } else {
         _likedCommentIds.remove(commentId);
       }
-      if (commentIndex != -1) {
-        final c = _currentPostComments[commentIndex];
-        _currentPostComments[commentIndex] =
+      // await 사이에 fetchComments·addComment·deleteComment가 목록을 갈아끼울 수
+      // 있다. 위에서 잡아 둔 commentIndex를 그대로 쓰면 되돌리기가 엉뚱한 댓글의
+      // 좋아요 수를 건드린다. 다시 찾는다.
+      final rollbackIndex =
+          _currentPostComments.indexWhere((c) => c.id == commentId);
+      if (rollbackIndex != -1) {
+        final c = _currentPostComments[rollbackIndex];
+        _currentPostComments[rollbackIndex] =
             c.copyWith(likeCount: c.likeCount + (!targetState ? 1 : -1));
       }
       _errorMessage = e.toString();
