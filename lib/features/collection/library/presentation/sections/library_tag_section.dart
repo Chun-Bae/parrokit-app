@@ -22,6 +22,7 @@ import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import '../widgets/clip_list_view.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 
 class LibraryTagSection extends StatelessWidget {
   const LibraryTagSection({
@@ -52,7 +53,11 @@ class LibraryTagSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (allTags.isEmpty) {
-      return const Center(child: Text('등록된 태그가 없어요.'));
+      return const AppEmptyState(
+        icon: Icons.sell_outlined,
+        title: '등록된 태그가 없어요.',
+        description: '클립에 태그를 달면 여기에서 묶어 볼 수 있어요.',
+      );
     }
 
     final names = selectedTags.toList().reversed.toList();

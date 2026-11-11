@@ -428,3 +428,54 @@ Padding(
 채운 파란 인디케이터에서 옅은 트랙 + 흰 카드로 바뀐다.
 
 **되돌리려면:** 이 커밋만 revert 하면 된다.
+
+---
+
+## 12. 빈 화면을 `AppEmptyState` 하나로
+
+**범위:** 앱 전체
+
+**문제:** 목록이 비었을 때 보여주는 안내가 **제각각이었다.**
+
+- 따로 만든 빈 화면 위젯 **다섯 벌**
+  (`EmptyCard`, `EmptyRecentView`, `EmptyState`, `BoardCommentsEmptyState`,
+  `CommunityNotificationEmptyState`)
+- 그 밖에 `Center(child: Text('...없어요.'))` 한 줄짜리가 여기저기
+
+`EmptyRecentView`와 `CommunityNotificationEmptyState`는 거의 같은 코드였다.
+아이콘 48, 간격 10과 12, 제목, 간격 6, 설명. 간격 두 픽셀만 다르다.
+
+한 줄짜리들은 아이콘도 없고 왜 비었는지도 안 알려 준다. 커뮤니티 질문·투표
+탭에서는 화면 한가운데 글자 한 줄만 떠 있는데, 바로 아래 글쓰기 버튼이 있는데도
+그쪽으로 이어 주지 않는다.
+
+**고른 방향:** `lib/core/shared/widgets/app_empty_state.dart`에 하나로 모았다.
+
+```dart
+AppEmptyState(
+  icon: Icons.how_to_vote_outlined,   // 없어도 된다
+  title: '진행 중인 투표가 없습니다.',
+  description: '새 투표를 만들면 여기에 올라와요.',  // 없어도 된다
+  actionLabel: ..., onAction: ...,     // 둘 다 줄 때만 버튼이 나온다
+  compact: true,                        // 목록 안에 끼울 때
+)
+```
+
+아이콘 48은 다섯 벌 중 셋이 쓰던 값이라 그대로 뒀다. 간격은 `AppSpacing` 눈금으로
+맞췄다.
+
+**설명을 새로 쓴 곳:** 한 줄짜리였던 곳에는 "왜 비었는지, 어떻게 채우는지"를
+한 줄 덧붙였다. 투표는 "새 투표를 만들면 여기에 올라와요", 태그는 "클립에 태그를
+달면 여기에서 묶어 볼 수 있어요". 빈 화면이 막다른 길이 아니라 다음 할 일을
+알려 주게 하려는 것이다.
+
+**이번에 바꾼 곳 7:** 알림, 최근 본 클립, 투표 목록, 태그 목록, 폴더 그리드,
+클립 목록, 일레븐랩스 보이스 목록.
+
+**아직 안 바꾼 것:** `EmptyCard`(홈 카드 안에 들어가는 꼴), 자막 `EmptyState`
+(98줄짜리 카드형), `BoardCommentsEmptyState`(고정 여백 130과 안내 줄이 따로 있음).
+셋 다 구조가 달라서 그대로 옮기면 모양이 크게 바뀐다. 따로 본다.
+
+**외형이 바뀐다.** 한 줄짜리였던 다섯 곳에 아이콘과 설명이 생긴다.
+
+**되돌리려면:** 이 커밋만 revert 하면 된다.

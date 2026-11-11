@@ -10,6 +10,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 
 // ─── VoteScreen ────────────────────────────────────────────────────────────────
 class VoteScreen extends StatefulWidget {
@@ -78,7 +79,11 @@ class _VoteScreenState extends State<VoteScreen> {
     }
 
     if (posts.isEmpty) {
-      return const Center(child: Text('진행 중인 투표가 없습니다.'));
+      return const AppEmptyState(
+        icon: Icons.how_to_vote_outlined,
+        title: '진행 중인 투표가 없습니다.',
+        description: '새 투표를 만들면 여기에 올라와요.',
+      );
     }
 
     return RefreshIndicator(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'folder_card.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 
 class FolderGrid extends StatelessWidget {
   const FolderGrid({
@@ -61,7 +62,11 @@ class FolderGrid extends StatelessWidget {
       ),
       if (totalCount == 0)
         const SliverFillRemaining(
-          child: Center(child: Text('아직 등록된 항목이 없어요.')),
+          child: AppEmptyState(
+            icon: Icons.folder_open_rounded,
+            title: '아직 등록된 항목이 없어요.',
+            compact: true,
+          ),
         )
       else
         SliverPadding(

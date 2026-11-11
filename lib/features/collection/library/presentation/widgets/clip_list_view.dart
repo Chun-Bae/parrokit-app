@@ -15,6 +15,7 @@ import 'swipe_action_tile.dart';
 import 'mini_chip.dart';
 import 'storage_transfer_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 
 class ClipListView extends StatelessWidget {
   const ClipListView({
@@ -298,7 +299,11 @@ class ClipListView extends StatelessWidget {
         const _SkeletonSliver()
       else if (items.isEmpty)
         const SliverFillRemaining(
-          child: Center(child: Text('아직 등록된 클립이 없어요.')),
+          child: AppEmptyState(
+            icon: Icons.video_library_outlined,
+            title: '아직 등록된 클립이 없어요.',
+            compact: true,
+          ),
         )
       else
         // ✅ 데이터일 때만 리스트 렌더

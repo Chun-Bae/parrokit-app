@@ -7,6 +7,7 @@ import 'package:parrokit/features/content-studio/tts/data/data_sources/tts_remot
 import 'package:parrokit/features/content-studio/tts/data/repositories/tts_voice_cache.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_elevenlabs_models.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 
 /// 국기 이모지(있으면) + 억양/언어 라벨을 한 줄로 조합합니다.
 String _originTagText(String? flag, String label) {
@@ -98,7 +99,11 @@ class _TtsElevenLabsVoiceSelectionSheetState
 
                 final voices = snapshot.data ?? [];
                 if (voices.isEmpty) {
-                  return const Center(child: Text('사용 가능한 보이스가 없습니다.'));
+                  return const AppEmptyState(
+                    icon: Icons.record_voice_over_outlined,
+                    title: '사용 가능한 보이스가 없습니다.',
+                    compact: true,
+                  );
                 }
 
                 final originFlagByLabel = <String, String?>{
