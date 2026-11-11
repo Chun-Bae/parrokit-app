@@ -370,11 +370,11 @@ class UserProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       await _userRepository.deleteAccount();
-      () async { try { await Purchases.logOut(); } catch (_) {} }();
+      _logOutPurchasesInBackground();
       _currentUser = null;
       _stopUserSubscription();
       _checkAndNotifyRouter();
-    notifyListeners();
+      notifyListeners();
     } finally {
       _setLoading(false);
     }
@@ -386,14 +386,29 @@ class UserProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       await _userRepository.signOut();
-      () async { try { await Purchases.logOut(); } catch (_) {} }();
+      _logOutPurchasesInBackground();
       _currentUser = null;
       _stopUserSubscription();
       _checkAndNotifyRouter();
-    notifyListeners();
+      notifyListeners();
     } finally {
       _setLoading(false);
     }
+  }
+
+  /// RevenueCat 로그아웃.
+  ///
+  /// 결제 쪽이 느리거나 막혀도 앱 로그아웃·탈퇴가 기다리게 하지 않으려고
+  /// 일부러 await 하지 않는다. 다만 전에는 빈 catch로 삼켜서, 실패해서
+  /// 결제 신원이 남아 있어도 알 수가 없었다.
+  void _logOutPurchasesInBackground() {
+    unawaited(() async {
+      try {
+        await Purchases.logOut();
+      } catch (e) {
+        AppLogger.w('[UserProvider] Purchases.logOut 실패: $e');
+      }
+    }());
   }
 
   void _setLoading(bool value) {
