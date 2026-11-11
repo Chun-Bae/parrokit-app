@@ -3,6 +3,7 @@ import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 
 class WordCollectionPreview extends StatefulWidget {
   const WordCollectionPreview({super.key});
@@ -149,70 +150,14 @@ class _ViewSwitch extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _SwitchButton(
-              label: '내 단어',
-              selected: !explore,
-              onTap: () => onChanged(false),
-            ),
-          ),
-          Expanded(
-            child: _SwitchButton(
-              label: '둘러보기',
-              selected: explore,
-              onTap: () => onChanged(true),
-            ),
-          ),
+  Widget build(BuildContext context) => AppSegmentedTabs(
+        selectedIndex: explore ? 1 : 0,
+        onChanged: (index) => onChanged(index == 1),
+        segments: const [
+          AppSegment(label: '내 단어'),
+          AppSegment(label: '둘러보기'),
         ],
-      ),
-    );
-  }
-}
-
-class _SwitchButton extends StatelessWidget {
-  const _SwitchButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: selected ? colors.surface : Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: selected ? colors.onSurface : colors.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+      );
 }
 
 class _LanguageButton extends StatelessWidget {

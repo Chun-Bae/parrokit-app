@@ -30,6 +30,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -801,54 +802,13 @@ class _ViewSwitch extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(15)),
-        child: Row(children: [
-          Expanded(
-              child: _SwitchItem(
-                  label: '내 문장',
-                  selected: !explore,
-                  onTap: () => onChanged(false))),
-          Expanded(
-              child: _SwitchItem(
-                  label: '둘러보기',
-                  selected: explore,
-                  onTap: () => onChanged(true))),
-        ]),
-      );
-}
-
-class _SwitchItem extends StatelessWidget {
-  const _SwitchItem(
-      {required this.label, required this.selected, required this.onTap});
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: selected
-            ? Theme.of(context).colorScheme.surface
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: selected
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant)))),
+  Widget build(BuildContext context) => AppSegmentedTabs(
+        selectedIndex: explore ? 1 : 0,
+        onChanged: (index) => onChanged(index == 1),
+        segments: const [
+          AppSegment(label: '내 문장'),
+          AppSegment(label: '둘러보기'),
+        ],
       );
 }
 
