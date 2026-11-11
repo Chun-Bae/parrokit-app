@@ -16,8 +16,13 @@ class CommunityRepository
         CommunityRepositoryUserAction,
         CommunityRepositoryQuestion,
         CommunityRepositoryVote {
+  /// 테스트에서 가짜 Firestore를 끼울 수 있게 받는다. 안 주면 평소대로
+  /// FirebaseFirestore.instance를 쓴다.
+  CommunityRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
   @override
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
   final Map<String, String> _authorNicknameCache = {};
 
   @override
