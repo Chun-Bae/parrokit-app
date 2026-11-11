@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:provider/provider.dart';
@@ -52,7 +53,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final provider = context.watch<CommunityProvider>();
 
     if (_isInitialLoading) {
@@ -78,12 +78,10 @@ class _QuestionScreenState extends State<QuestionScreen> {
     }
 
     if (questionPosts.isEmpty) {
-      return Center(
-        child: Text(
-          '해당 조건의 질문이 없습니다.',
-          style: context.texts.titleMedium
-              .copyWith(color: colorScheme.onSurfaceVariant),
-        ),
+      return const AppEmptyState(
+        icon: Icons.live_help_outlined,
+        title: '해당 조건의 질문이 없습니다.',
+        description: '다른 조건을 골라 보거나 직접 질문해 보세요.',
       );
     }
 

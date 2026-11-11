@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/features/community/shell/presentation/widgets/community_board_post_tile.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -33,13 +34,10 @@ class _BoardScreenState extends State<BoardScreen> {
     final filteredPosts = provider.getBoardPostsByFilter(widget.selectedFilter);
 
     if (filteredPosts.isEmpty) {
-      return Center(
-        child: Text(
-          '등록된 게시글이 없습니다.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
+      return const AppEmptyState(
+        icon: Icons.forum_outlined,
+        title: '등록된 게시글이 없습니다.',
+        description: '첫 글을 남겨 보세요.',
       );
     }
 
