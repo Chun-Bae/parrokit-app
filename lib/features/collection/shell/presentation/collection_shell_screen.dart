@@ -21,6 +21,8 @@ import 'widgets/word_collection_preview.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -294,38 +296,22 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Widget _buildCollectionTabs(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 62,
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHighest.withValues(alpha: 0.65),
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: TabBar(
-          controller: _tabController,
-          dividerColor: Colors.transparent,
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicator: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          labelColor: colors.onSurface,
-          unselectedLabelColor: colors.onSurfaceVariant,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w900),
-          tabs: const [
-            Tab(icon: Icon(Icons.format_quote_rounded, size: 18), text: '문장'),
-            Tab(icon: Icon(Icons.smart_display_rounded, size: 18), text: '클립'),
-            Tab(icon: Icon(Icons.spellcheck_rounded, size: 18), text: '단어'),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: AnimatedBuilder(
+        // TabBarView를 쓸어 넘길 때도 선택 표시가 같이 움직이도록
+        // 컨트롤러의 애니메이션 값을 따라간다.
+        animation: _tabController.animation ?? _tabController,
+        builder: (context, _) => AppSegmentedTabs(
+          stacked: true,
+          selectedIndex: (_tabController.animation?.value ??
+                  _tabController.index.toDouble())
+              .round(),
+          onChanged: _tabController.animateTo,
+          segments: const [
+            AppSegment(icon: Icons.format_quote_rounded, label: '문장'),
+            AppSegment(icon: Icons.smart_display_rounded, label: '클립'),
+            AppSegment(icon: Icons.spellcheck_rounded, label: '단어'),
           ],
         ),
       ),

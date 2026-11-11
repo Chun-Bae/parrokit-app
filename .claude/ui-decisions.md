@@ -270,3 +270,38 @@ iOS 표준 쪽을 고른 이유는 두 가지다. 가장 눈에 띄는 보관함
 `TabBarView`를 움직이고 있어 바꾸려면 컨트롤러 연결을 손봐야 한다. 다음에 한다.
 
 **되돌리려면:** 이 커밋만 revert 하면 된다.
+
+---
+
+## 8. 보관함 상단 탭도 `AppSegmentedTabs`로 (세그먼트 통일 마무리)
+
+**화면:** 보관함 상단 문장/클립/단어 탭
+
+**왜 따로 뺐나:** 이 탭만 `TabBar`라서 `TabController`로 `TabBarView`를 움직인다.
+다른 넷처럼 `value`/`onChanged`로 단순히 바꿀 수 없어 결정 7에서 미뤘다.
+
+**고른 방향:** 컨트롤러는 그대로 두고 표시만 공용 위젯으로 바꿨다.
+
+```dart
+AnimatedBuilder(
+  animation: _tabController.animation ?? _tabController,
+  builder: (context, _) => AppSegmentedTabs(
+    stacked: true,
+    selectedIndex: (_tabController.animation?.value ?? ...).round(),
+    onChanged: _tabController.animateTo,
+    ...
+```
+
+**`index`가 아니라 `animation.value`를 쓴 이유:** `_handleTabChanged`가
+`indexIsChanging`일 때 일찍 빠져나와서 `index`만 보면 전환 애니메이션이 끝난
+뒤에야 표시가 움직인다. 쓸어 넘길 때 300ms쯤 늦게 따라오는 꼴이 된다.
+애니메이션 값을 반올림해서 보면 손가락을 따라 절반 지점에서 넘어간다.
+
+`stacked: true`로 아이콘을 라벨 위에 쌓아 기존 `TabBar` 모양을 유지했다.
+
+**외형이 조금 바뀐다.** 기존 `TabBar`는 선택 칸에 그림자가 있었는데 공용 위젯은
+그림자 없이 표면색만 쓴다. 높이도 62 고정에서 내용에 맞춰 늘어나는 방식이 된다.
+
+이걸로 세그먼트 컨트롤 다섯 벌이 모두 하나가 됐다.
+
+**되돌리려면:** 이 커밋만 revert 하면 된다.
