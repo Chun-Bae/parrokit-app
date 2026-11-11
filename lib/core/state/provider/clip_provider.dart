@@ -141,6 +141,15 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     _collectionRepository = CollectionRepositoryImpl(db);
   }
 
+  @override
+  void dispose() {
+    // ClipTagMixin이 연 태그 watch 스트림은 아무 곳에서도 닫지 않고 있었다.
+    // 앱이 끝날 때까지 남아 태그 테이블이 바뀔 때마다 notifyListeners()를
+    // 불렀고, 이미 dispose된 뒤에 불리면 예외가 된다.
+    stopWatchingDistinctTags();
+    super.dispose();
+  }
+
   // ─────────────────────────────────────────────────────────────────
   // State
   // ─────────────────────────────────────────────────────────────────
