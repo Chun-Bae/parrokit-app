@@ -115,6 +115,9 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                   titleWidget: _buildTitleBar(context),
                   zone1Widget: _buildTabBar(context),
                   zone2Widget: _buildFilterSection(),
+                  // 게시판은 가로 스크롤 칩 줄, 질문·투표는 세그먼트 컨트롤이라
+                  // 필요한 높이가 다르다.
+                  zone2Height: _tabController.index == 0 ? 60 : 72,
                 ),
               ),
             ];
@@ -235,20 +238,17 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
     return Column(
       children: [
         const SizedBox(height: 12),
-        SizedBox(
-          height: 36,
-          child: CommunityShellFiltersSection(
-            tabIndex: _tabController.index,
-            selectedBoardFilter: _selectedBoardFilter,
-            selectedQuestionFilter: _selectedQuestionFilter,
-            selectedVoteFilter: _selectedVoteFilter,
-            onBoardFilterSelected: (value) =>
-                setState(() => _selectedBoardFilter = value),
-            onQuestionFilterSelected: (value) =>
-                setState(() => _selectedQuestionFilter = value),
-            onVoteFilterSelected: (value) => setState(
-                () => _selectedVoteFilter = _normalizedVoteFilter(value)),
-          ),
+        CommunityShellFiltersSection(
+          tabIndex: _tabController.index,
+          selectedBoardFilter: _selectedBoardFilter,
+          selectedQuestionFilter: _selectedQuestionFilter,
+          selectedVoteFilter: _selectedVoteFilter,
+          onBoardFilterSelected: (value) =>
+              setState(() => _selectedBoardFilter = value),
+          onQuestionFilterSelected: (value) =>
+              setState(() => _selectedQuestionFilter = value),
+          onVoteFilterSelected: (value) => setState(
+              () => _selectedVoteFilter = _normalizedVoteFilter(value)),
         ),
         const SizedBox(height: 11),
         Divider(color: context.tokens.disabled, height: 1),

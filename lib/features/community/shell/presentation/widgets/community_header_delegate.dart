@@ -5,11 +5,15 @@ class CommunityHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.titleWidget,
     required this.zone1Widget,
     required this.zone2Widget,
+    this.zone2Height = 60.0,
   });
 
   final double titleHeight = 56.0;
   final double zone1Height = 48.0;
-  final double zone2Height = 60.0;
+
+  /// 하위 필터 줄 높이. 탭마다 필터 모양이 달라서 바깥에서 정해 준다.
+  /// 가로 스크롤 칩 줄은 60, 세그먼트 컨트롤은 그보다 높다.
+  final double zone2Height;
 
   final Widget titleWidget;
   final Widget zone1Widget;
@@ -22,7 +26,8 @@ class CommunityHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => titleHeight + zone1Height + zone2Height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     final surface = Theme.of(context).colorScheme.surface;
     final titleTop = -shrinkOffset;
 
