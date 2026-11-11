@@ -124,6 +124,16 @@ class CommunityProvider with ChangeNotifier {
 
   String _currentPostType = 'board';
 
+  /// 이름에 Safe가 붙어 있지만 여기서는 아무것도 막지 않는다. 그냥
+  /// notifyListeners()다. 커뮤니티 기능 전체에서 쉰 곳 넘게 부른다.
+  ///
+  /// 같은 이름의 메서드가 CommunityNotificationProvider에도 있고 그쪽은
+  /// `if (_isActive && hasListeners)`로 실제로 막는다. 이름이 같아서
+  /// 이쪽도 막아 준다고 읽기 쉬우니 적어 둔다.
+  ///
+  /// 지금은 CommunityProvider가 앱 루트에 한 번 만들어지는 Provider라
+  /// dispose 뒤에 불릴 일이 사실상 없어서 그대로 뒀다. 화면마다 만드는
+  /// 구조로 바뀌면 여기에 실제 가드가 필요하다.
   void _notifyListenersSafe() {
     notifyListeners();
   }
