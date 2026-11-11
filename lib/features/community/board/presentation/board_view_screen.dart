@@ -102,6 +102,9 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     if (success) {
       _scrollToBottom();
     } else if (mounted) {
+      // 미리 비우는 건 반응이 빨라 보이려는 것이지, 실패했을 때 사용자가
+      // 다시 타이핑해야 한다는 뜻은 아니다. 쓴 글을 돌려준다.
+      _commentController.text = text;
       showToast(provider.errorMessage ?? '댓글 등록에 실패했습니다.');
     }
   }
