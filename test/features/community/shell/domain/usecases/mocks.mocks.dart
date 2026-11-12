@@ -418,6 +418,17 @@ class MockCommunityImageService extends _i1.Mock
       ) as _i5.Future<String?>);
 
   @override
+  _i5.Future<void> deleteImagesQuietly(Iterable<String>? imageUrls) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteImagesQuietly,
+          [imageUrls],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
   _i5.Future<bool> deleteImageFromStorage(String? imageUrl) =>
       (super.noSuchMethod(
         Invocation.method(
