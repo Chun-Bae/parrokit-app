@@ -6,6 +6,17 @@ import 'package:flutter_naver_login/interface/types/naver_login_result.dart';
 import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
 import 'package:flutter_naver_login/interface/types/naver_token.dart';
 
+/// 네이버 이메일이 이미 다른 로그인 방식의 계정에 있어서 로그인할 수 없을 때 던진다.
+/// [message]는 서버가 만든 안내 문구로, 그대로 사용자에게 보여준다.
+class NaverEmailInUseException implements Exception {
+  const NaverEmailInUseException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 /// Naver Login Service
 /// 
 /// 네이버 로그인은 OIDC를 기본 지원하지 않으므로, 
@@ -47,6 +58,16 @@ class NaverSsoService {
       final UserCredential userCredential = await _auth.signInWithCustomToken(customToken);
       return userCredential;
       
+    } on FirebaseFunctionsException catch (e) {
+      // 같은 이메일로 다른 방법(구글·애플 등)으로 가입한 계정이 있다.
+      // 다른 실패와 달리 다시 해도 같으니 안내 문구를 화면까지 올린다.
+      if (e.code == 'already-exists') {
+        AppLogger.w('[SSO][Naver] 이메일이 다른 계정에 있음');
+        throw NaverEmailInUseException(
+            e.message ?? '이미 다른 방법으로 가입한 이메일이에요. 처음 가입한 방법으로 로그인해 주세요.');
+      }
+      AppLogger.e('[SSO][Naver] 로그인 실패', error: e);
+      return null;
     } catch (e) {
       AppLogger.e('[SSO][Naver] 로그인 실패', error: e);
       return null;

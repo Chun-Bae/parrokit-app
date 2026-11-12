@@ -69,6 +69,13 @@ export const createNaverCustomToken = functions.https.onCall(
             // 합칠지 말지 정해야 하는 문제라 여기서 삼키지 않는다.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const code = (createError as any).code;
+            if (code === "auth/email-already-exists") {
+              // 계정을 합치지 않고 안내만 한다. 네이버 프로필 이메일이 본인
+              // 확인된 것이라는 보장이 없어서, 이메일로 기존 계정에 붙이면 남의
+              // 계정에 들어갈 수 있다. 전에는 이 오류가 internal로 덮여서 앱에는
+              // 아무 안내도 뜨지 않았다.
+              throw await emailInUseError(naverUser.email);
+            }
             if (code !== "auth/uid-already-exists") {
               throw createError;
             }
@@ -100,3 +107,40 @@ export const createNaverCustomToken = functions.https.onCall(
       );
     }
   });
+
+/**
+ * 기존 계정의 로그인 방식을 사람이 읽는 이름으로 바꾼다.
+ * @param {admin.auth.UserRecord} user 같은 이메일을 가진 기존 계정
+ * @return {string | null} 로그인 방식 이름. 모르면 null
+ */
+function signInMethodLabel(user: admin.auth.UserRecord): string | null {
+  const ids = user.providerData.map((info) => info.providerId);
+  if (ids.includes("google.com")) return "구글";
+  if (ids.includes("apple.com")) return "애플";
+  if (ids.includes("oidc.kakao")) return "카카오";
+  if (ids.includes("password")) return "이메일";
+  return null;
+}
+
+/**
+ * 네이버 이메일이 이미 다른 계정에 있을 때 앱에 돌려줄 오류.
+ * 이 이메일의 주인(네이버 토큰을 가진 사람)에게만 가는 응답이라
+ * 기존 로그인 방식을 알려줘도 된다.
+ * @param {string} email 네이버 프로필 이메일
+ * @return {Promise<functions.https.HttpsError>} already-exists 오류
+ */
+async function emailInUseError(
+  email: string
+): Promise<functions.https.HttpsError> {
+  let method: string | null = null;
+  try {
+    method = signInMethodLabel(await admin.auth().getUserByEmail(email));
+  } catch (lookupError) {
+    console.warn("[NaverAuth] existing account lookup failed", lookupError);
+  }
+  const message = method ?
+    `이미 ${method}(으)로 가입한 이메일이에요. ${method}(으)로 로그인해 주세요.` :
+    "이미 다른 방법으로 가입한 이메일이에요. 처음 가입한 방법으로 로그인해 주세요.";
+  return new functions.https.HttpsError("already-exists", message, {method});
+}
+

@@ -7,6 +7,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/core/infrastructure/services/sso/naver_sso_service.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -109,6 +110,9 @@ class _SignInScreenState extends State<SignInScreen> {
       if (userProvider.currentUser != null) {
         showToast('네이버 로그인에 성공했습니다.');
       }
+    } on NaverEmailInUseException catch (e) {
+      if (!mounted) return;
+      showToast(e.message);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       showToast('네이버 로그인 오류: ${e.message}');
