@@ -132,7 +132,15 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               isSelectionMode: isClipSelectionMode,
             ),
             if (!isClipSelectionMode) ...[
-              _buildOverview(context, clipProvider.clipItems.length),
+              _buildOverview(
+                context,
+                // 클립 목록을 연 상태일 때만 그 목록의 개수다. 그룹·콜렉션을
+                // 고르는 단계에서는 clipItems가 비어 있어서, 클립이 있어도
+                // '클립 0개를 보관 중이에요'라고 말했다.
+                clipProvider.selectedCollectionId == null
+                    ? null
+                    : clipProvider.clipItems.length,
+              ),
               const SizedBox(height: 14),
               _buildCollectionTabs(context),
               const SizedBox(height: 8),
@@ -219,7 +227,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     );
   }
 
-  Widget _buildOverview(BuildContext context, int clipCount) {
+  Widget _buildOverview(BuildContext context, int? clipCount) {
     final tints = context.collectionTokens;
     final pages = [
       (
@@ -231,7 +239,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       ),
       (
         icon: Icons.video_library_rounded,
-        title: '클립 $clipCount개를 보관 중이에요',
+        title: clipCount == null
+            ? '영상 클립을 모아 보관해요'
+            : '클립 $clipCount개를 보관 중이에요',
         detail: '영상의 장면과 문장을 함께 기억할 수 있어요',
         color: tints.sky,
         ink: tints.skyInk,
