@@ -19,20 +19,29 @@ class BgAudio {
     if (_booting != null) return _booting!;
 
     // 처음 딱 한 번만 init
-    _booting = AudioService.init(
-      builder: () => _BgAudioHandler.instance,
-      config: const AudioServiceConfig(
-        androidNotificationChannelId: 'parrokit.audio',
-        androidNotificationChannelName: 'Parrokit Playback',
-        androidNotificationOngoing: true,
-        androidStopForegroundOnPause: true,
-      ),
-    ).then((h) {
-      _handler = h;
-      return h;
-    });
+    return _booting = _init();
+  }
 
-    return _booting!;
+  Future<AudioHandler> _init() async {
+    try {
+      final handler = await AudioService.init(
+        builder: () => _BgAudioHandler.instance,
+        config: const AudioServiceConfig(
+          androidNotificationChannelId: 'parrokit.audio',
+          androidNotificationChannelName: 'Parrokit Playback',
+          androidNotificationOngoing: true,
+          androidStopForegroundOnPause: true,
+        ),
+      );
+      _handler = handler;
+      return handler;
+    } catch (_) {
+      // 실패한 Future를 _booting에 그대로 들고 있으면, 그 뒤의 모든 호출이
+      // 같은 실패를 돌려받는다. 한 번 넘어지면 앱이 꺼질 때까지 백그라운드
+      // 오디오가 영영 안 살아난다. 비워 두고 다음에 다시 해 보게 한다.
+      _booting = null;
+      rethrow;
+    }
   }
 }
 
