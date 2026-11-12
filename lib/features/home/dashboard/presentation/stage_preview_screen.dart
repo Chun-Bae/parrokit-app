@@ -241,13 +241,6 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     }
   }
 
-  static final samples = {
-    for (final language in availableLearningLanguages)
-      language.label: defaultSentencesFor(language.label)
-          .map((sentence) => sentence.text)
-          .toList(growable: false),
-  };
-
   /// 앵무새가 말할 수 있는 전체 문장: 기본 문장 + 내가 저장·추가한 문장.
   List<DefaultConversationSentence> get allSentences => [
         ...defaultSentencesFor(widget.language),
@@ -800,14 +793,18 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     final action = await showDialog<String>(
         context: context,
         builder: (context) => _PhraseSettingsDialog(
+          accountId: widget.accountId,
           initialLanguage: widget.language,
-          phrasesByLanguage: samples,
-          customPhrases: [
-            ...mySentences
-                .where((sentence) => sentence.language == widget.language)
-                .map((sentence) => sentence.text),
-            ...customPhrases,
-          ],
+          mySentences: mySentences,
+          initialEnabled: {
+            for (final sentence in [
+              for (final language in availableLearningLanguages)
+                ...defaultSentencesFor(language.label),
+              ...mySentences,
+            ])
+              sentence.id:
+                  activities[sentence.id]?.routineEnabled ?? true,
+          },
         ),
       );
     // 창의 + 버튼은 창을 닫고 왼쪽 '문장 추가'와 같은 흐름을 연다.
@@ -1418,14 +1415,18 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
 
 class _PhraseSettingsDialog extends StatefulWidget {
   const _PhraseSettingsDialog({
+    required this.accountId,
     required this.initialLanguage,
-    required this.phrasesByLanguage,
-    required this.customPhrases,
+    required this.mySentences,
+    required this.initialEnabled,
   });
 
+  final String accountId;
   final String initialLanguage;
-  final Map<String, List<String>> phrasesByLanguage;
-  final List<String> customPhrases;
+  final List<DefaultConversationSentence> mySentences;
+
+  /// 문장 id → 앵무새가 말하는지. 문장 탭의 '앵무새 끄기'와 같은 값이다.
+  final Map<String, bool> initialEnabled;
 
   /// + 버튼으로 닫을 때 돌려주는 값.
   static const addAction = 'add';
@@ -1436,7 +1437,7 @@ class _PhraseSettingsDialog extends StatefulWidget {
 
 class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
   late String language;
-  final enabledByLanguage = <String, Set<String>>{};
+  late final Map<String, bool> enabled = {...widget.initialEnabled};
 
   @override
   void initState() {
@@ -1444,13 +1445,23 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
     language = widget.initialLanguage;
   }
 
-  List<String> get visiblePhrases => [
-        ...(widget.phrasesByLanguage[language] ?? const <String>[]),
-        if (language == widget.initialLanguage) ...widget.customPhrases,
+  List<DefaultConversationSentence> get visibleSentences => [
+        ...defaultSentencesFor(language),
+        ...widget.mySentences.where((s) => s.language == language),
       ];
 
-  Set<String> get enabled =>
-      enabledByLanguage.putIfAbsent(language, () => visiblePhrases.toSet());
+  bool isOn(DefaultConversationSentence sentence) =>
+      enabled[sentence.id] ?? true;
+
+  /// 체크를 바꾸면 바로 저장한다. 예전에는 '적용'을 눌러도 저장되지 않고
+  /// 창을 닫으면 사라졌다. 저장 이벤트(SentenceActivityStore.revision)로 무대와
+  /// 문장 탭이 곧바로 다시 읽는다. 지금 언어에서 마지막 하나는 끌 수 없다.
+  void toggle(DefaultConversationSentence sentence, bool value) {
+    if (!value && visibleSentences.where(isOn).length <= 1) return;
+    setState(() => enabled[sentence.id] = value);
+    unawaited(SentenceActivityStore.setRoutineEnabled(
+        widget.accountId, sentence.id, value));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1502,17 +1513,18 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
               Expanded(
                   child: Text('앵무새가 말할 문장',
                       style: context.texts.bodyLarge.copyWith(color: ink))),
-              Text('${enabled.length} / ${visiblePhrases.length}',
+              Text(
+                  '${visibleSentences.where(isOn).length} / ${visibleSentences.length}',
                   style: context.texts.bodySmall.copyWith(color: muted)),
             ]),
             const SizedBox(height: 8),
             Expanded(
                 child: ListView.separated(
-                    itemCount: visiblePhrases.length,
+                    itemCount: visibleSentences.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
-                      final phrase = visiblePhrases[index];
-                      final selected = enabled.contains(phrase);
+                      final sentence = visibleSentences[index];
+                      final selected = isOn(sentence);
                       return Material(
                           color: selected
                               ? palette.primary.withValues(alpha: 0.12)
@@ -1526,45 +1538,28 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                               controlAffinity: ListTileControlAffinity.leading,
                               contentPadding:
                                   const EdgeInsets.symmetric(horizontal: 8),
-                              title: Text(phrase,
+                              title: Text(sentence.text,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: context.texts.bodyMedium
                                       .copyWith(color: ink)),
-                              onChanged: (value) => setState(() {
-                                    if (value == true) {
-                                      enabled.add(phrase);
-                                    } else if (enabled.length > 1) {
-                                      enabled.remove(phrase);
-                                    }
-                                  })));
+                              onChanged: (value) =>
+                                  toggle(sentence, value ?? false)));
                     })),
             const SizedBox(height: 14),
-            Row(children: [
-              // 예전에는 연결이 없어 비활성이었다. 창을 닫고 무대의
-              // '문장 추가' 흐름을 연다(showPhraseSettings가 받는다).
-              IconButton.filledTonal(
+            // '적용' 버튼은 없앴다. 체크가 바로 저장되고 닫기는 위 X로 한다.
+            // 문장 추가는 창을 닫고 무대의 '문장 추가' 흐름을 연다.
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
                   key: const ValueKey('phrase-settings-add'),
-                  tooltip: '문장 추가',
+                  style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
                   onPressed: () => Navigator.pop(
                       context, _PhraseSettingsDialog.addAction),
-                  icon: const Icon(Icons.add_rounded)),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: FilledButton(
-                      style: FilledButton.styleFrom(
-                          backgroundColor: active,
-                          // 다크의 good(7FC2AE)은 밝은 민트라 흰 글자 대비가
-                          // 2:1밖에 안 됐다. 다크에서는 배경색 글자를 쓴다.
-                          foregroundColor:
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? palette.background
-                                  : Colors.white,
-                          minimumSize: const Size.fromHeight(48)),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('적용',
-                          style: TextStyle(fontWeight: FontWeight.w800)))),
-            ]),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('문장 추가')),
+            ),
           ]),
         ),
       ),
@@ -1575,6 +1570,8 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
 class _HomeHelpDialog extends StatelessWidget {
   const _HomeHelpDialog();
 
+  // 4차에서 무대 버튼을 정리한 뒤의 모양에 맞춘다. 예전에는 지운 준비 중
+  // 버튼(캐릭터 정보, 꾸미기, 쇼츠 학습 등)까지 설명하고 있었다.
   static const _sections = <(String, List<(IconData, String, String)>)>[
     (
       '왼쪽 버튼',
@@ -1582,35 +1579,30 @@ class _HomeHelpDialog extends StatelessWidget {
         (
           Icons.volume_up_rounded,
           '소리',
-          '앵무새 목소리를 켜고 끕니다. 듣기 모드와 함께 켜져 있어야 문장을 읽어줘요.'
+          '앵무새 목소리를 켜고 끕니다. 듣기와 함께 켜져 있어야 문장을 읽어줘요.'
         ),
         (Icons.add_comment_rounded, '문장 추가', '내가 연습할 문장을 직접 추가합니다.'),
-        (Icons.tune_rounded, '문장 설정', '언어별로 앵무새가 말할 문장을 고릅니다.'),
-        (Icons.calendar_month_rounded, '학습 기록', '준비 중이에요.'),
+        (
+          Icons.tune_rounded,
+          '문장 설정',
+          '앵무새가 말할 문장을 고릅니다. 체크하면 바로 반영돼요.'
+        ),
+        (Icons.settings_rounded, '말하기 설정', '말하기 간격과 들은 횟수 기록 여부를 정합니다.'),
       ]
     ),
     (
-      '오른쪽 버튼',
-      [
-        (Icons.badge_rounded, '캐릭터 정보', '준비 중이에요.'),
-        (Icons.checkroom_rounded, '꾸미기', '준비 중이에요.'),
-        (Icons.backpack_rounded, '보관함', '준비 중이에요.'),
-        (Icons.emoji_events_rounded, '도전 과제', '준비 중이에요.'),
-        (Icons.settings_rounded, '설정', '앵무새 말하기 간격과 들은 횟수 기록 여부를 정합니다.'),
-      ]
-    ),
-    (
-      '아래 버튼',
+      '아래 줄',
       [
         (
           Icons.record_voice_over_rounded,
-          '따라 말하기 모드',
+          '따라 말하기',
           '앵무새가 말한 문장을 마이크로 따라 말하고 점수를 받습니다.'
         ),
-        (Icons.headphones_rounded, '듣기 모드', '켜면 앵무새가 문장을 소리 내어 읽어줍니다.'),
-        (Icons.smart_display_rounded, '쇼츠 학습', '준비 중이에요.'),
-        (Icons.groups_rounded, '공유 영상', '준비 중이에요.'),
-        (Icons.pause_rounded, '일시 정지 / 재개', '앵무새 말하기를 잠시 멈추거나 다시 시작합니다.'),
+        (Icons.headphones_rounded, '듣기', '켜면 앵무새가 문장을 소리 내어 읽어줍니다.'),
+        (Icons.skip_next_rounded, '이전 · 다음', '앞뒤 문장으로 넘어갑니다.'),
+        (Icons.pause_rounded, '멈춤 · 재생', '앵무새 말하기를 잠시 멈추거나 다시 시작합니다.'),
+        (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 랜덤 순서로 바꿉니다.'),
+        (Icons.queue_music_rounded, '목록', '문장 목록에서 바로 고릅니다.'),
       ]
     ),
   ];

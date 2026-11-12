@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/practice_log.dart';
@@ -217,6 +218,29 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(add, findsNothing);
     expect(find.byKey(const ValueKey('sentence-language')), findsOneWidget);
+  });
+
+  testWidgets('문장 설정 창의 체크는 적용 없이 바로 저장되고 무대에 반영된다', (tester) async {
+    final target = defaultConversationSentences
+        .firstWhere((s) => s.text == 'How was your day?');
+    await openPreview(tester);
+    expect(currentPhrase('Hello there!'), findsOneWidget);
+    await tapTooltip(tester, '문장 설정');
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('적용'), findsNothing);
+    final tile = find.widgetWithText(CheckboxListTile, 'How was your day?');
+    await tester.ensureVisible(tile);
+    await tester.tap(tile);
+    await tester.pump();
+    // 창을 닫기 전에 이미 저장돼 있다(문장 탭 '앵무새 끄기'와 같은 값).
+    expect((await SentenceActivityStore.load('guest', target.id)).routineEnabled,
+        isFalse);
+    await tapTooltip(tester, '닫기');
+    await tester.pump(const Duration(milliseconds: 400));
+    // 꺼진 문장은 건너뛰고 다음 문장으로 간다.
+    await finishPhrase(tester);
+    expect(currentPhrase('How was your day?'), findsNothing);
+    expect(currentPhrase('Can I get a coffee?'), findsOneWidget);
   });
 
   testWidgets('문장 추가 화면에서 원문, 뜻, 발음을 저장해 바로 보여준다', (tester) async {
