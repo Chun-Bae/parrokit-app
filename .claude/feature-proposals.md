@@ -84,6 +84,18 @@
 
 ---
 
+
+### 2-9. 쇼츠에 Google Drive 클립도 — 우선 2, 중간
+- **문제:** 쇼츠는 `ownerScope`가 device·app_account인 클립만 고른다. Drive(cloud_account) 클립만
+  있는 사용자는 쇼츠가 늘 비어 있다. 그런데 같은 파일 아래쪽에는 Drive 캐시 경로를 찾는 분기가
+  있다(`8b3a1683`). 조회 조건 때문에 그 분기에는 한 번도 들어가지 않는다
+- **구현:** 조회 조건에 `cloud_account & ownerKey == googleDriveStorageService.currentAccountKey()`를
+  더한다. 캐시가 없는 Drive 클립은 재생 파일이 없으니, 캐시가 있는 것만 고르거나 넘길 때
+  내려받기를 시작해야 한다
+- **서버·DB:** 없음
+
+---
+
 ## 상위 5개 (추천 순서)
 
 0. **홈 '지금 뜨는 문장'의 가짜 데이터 정리** — 출시 전에 꼭. 실제 공유 문장 연결 또는 문구 정리
