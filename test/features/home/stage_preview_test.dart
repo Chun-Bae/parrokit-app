@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -71,7 +72,12 @@ const complete = ValueKey('complete-repeat');
 const microphone = ValueKey('preview-microphone');
 
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  // 아래 테스트들은 개편 전 무대(글자 없는 아이콘 줄)를 본다. 새 디자인은
+  // 맨 아래 별도 테스트에서 본다.
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    AppConfig.newDesign = false;
+  });
   testWidgets('자동 반복은 XP를 주거나 응답 UI를 띄우지 않는다', (tester) async {
     await openPreview(tester);
     expect(currentPhrase('Hello there!'), findsOneWidget);
@@ -485,5 +491,26 @@ void main() {
     expect(find.byKey(const ValueKey('phrase-list')), findsNothing);
     expect(currentPhrase('How was your day?'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('새 디자인 무대는 글자 달린 조작 줄을 쓰고 준비 중 버튼은 숨긴다', (tester) async {
+    AppConfig.newDesign = true;
+    await openPreview(tester);
+    await tester.pump();
+    // 아이콘 아래 글자가 보인다.
+    for (final label in ['따라 말하기', '듣기', '이전', '멈춤', '다음', '목록']) {
+      expect(find.text(label), findsOneWidget, reason: label);
+    }
+    // 눌러도 아무 일 없던 준비 중 버튼은 없다.
+    for (final label in ['캐릭터 정보', '꾸미기', '도전 과제', '쇼츠 학습', '공유 영상', '학습 기록']) {
+      expect(find.byTooltip(label), findsNothing, reason: label);
+    }
+    // 멈춤을 누르면 재생으로 바뀐다.
+    await tester.tap(find.text('멈춤'));
+    await tester.pump();
+    expect(find.text('재생'), findsOneWidget);
+    // 말하기 설정은 왼쪽 줄로 옮겼다.
+    expect(find.byTooltip('말하기 설정'), findsOneWidget);
+    AppConfig.newDesign = false;
   });
 }

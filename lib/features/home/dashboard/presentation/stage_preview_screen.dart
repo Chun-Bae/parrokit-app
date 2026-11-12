@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/learning_languages.dart';
@@ -330,6 +331,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     WidgetsBinding.instance.addObserver(this);
     SentenceActivityStore.revision.addListener(handleRoutineChanged);
     SentenceActivityStore.activityRevision.addListener(loadActivities);
+    AppConfig.newDesignListenable.addListener(_onDesignChanged);
     unawaited(loadActivities());
     unawaited(loadSprite());
     unawaited(loadXp());
@@ -813,6 +815,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   Future<void> showHelp() => showDialog<void>(
       context: context, builder: (context) => const _HomeHelpDialog());
 
+  void _onDesignChanged() {
+    if (mounted) setState(() {});
+  }
+
   void previewFeature() {
     unawaited(HapticFeedback.selectionClick());
   }
@@ -822,6 +828,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     WidgetsBinding.instance.removeObserver(this);
     SentenceActivityStore.revision.removeListener(handleRoutineChanged);
     SentenceActivityStore.activityRevision.removeListener(loadActivities);
+    AppConfig.newDesignListenable.removeListener(_onDesignChanged);
     stopTts();
     typing.dispose();
     animation.dispose();
@@ -835,6 +842,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     final palette = HomeTokens.of(context);
     final muted = palette.muted;
     final accent = palette.primary;
+    final newDesign = AppConfig.newDesign;
     final content =
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SizedBox(
@@ -853,8 +861,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                       style: context.texts.titleLarge
                           .copyWith(color: palette.ink))),
               Text('Lv.$level',
-                  style:
-                      context.texts.titleMedium.copyWith(color: palette.primary)),
+                  style: context.texts.titleMedium
+                      .copyWith(color: palette.primary)),
               const SizedBox(width: 6),
               Semantics(
                   label: '도움말',
@@ -885,12 +893,13 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                     style: context.texts.labelSmall.copyWith(color: muted))),
           ])),
       Container(
-          height: 320,
+          // 새 디자인은 아래 아이콘 줄을 무대 밖 글자 달린 줄로 옮겨서 무대가 낮다.
+          height: newDesign ? 270 : 320,
           width: double.infinity,
           color: palette.background,
           child: Stack(children: [
             Positioned.fill(
-                bottom: 62,
+                bottom: newDesign ? 4 : 62,
                 child: Semantics(
                     label: '앵무새가 이야기해요. $phrase',
                     child: LayoutBuilder(
@@ -959,122 +968,180 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                       badge: true,
                       onTap: showPhraseSettings),
                   const SizedBox(height: 7),
-                  _GameMenuButton(
-                      label: '학습 기록',
-                      icon: Icons.calendar_month_rounded,
-                      onTap: previewFeature),
+                  if (newDesign)
+                    _GameMenuButton(
+                        label: '말하기 설정',
+                        icon: Icons.settings_rounded,
+                        onTap: showSpeakingSettings)
+                  else
+                    _GameMenuButton(
+                        label: '학습 기록',
+                        icon: Icons.calendar_month_rounded,
+                        onTap: previewFeature),
                 ])),
-            Positioned(
-                right: 8,
-                top: 16,
-                child: Column(children: [
-                  _GameMenuButton(
-                      label: '캐릭터 정보',
-                      icon: Icons.badge_rounded,
-                      onTap: previewFeature),
-                  const SizedBox(height: 7),
-                  _GameMenuButton(
-                      label: '꾸미기',
-                      icon: Icons.checkroom_rounded,
-                      badge: true,
-                      onTap: previewFeature),
-                  const SizedBox(height: 7),
-                  _GameMenuButton(
-                      label: '보관함',
-                      icon: Icons.backpack_rounded,
-                      onTap: previewFeature),
-                  const SizedBox(height: 7),
-                  _GameMenuButton(
-                      label: '도전 과제',
-                      icon: Icons.emoji_events_rounded,
-                      badge: true,
-                      onTap: previewFeature),
-                  const SizedBox(height: 7),
-                  _GameMenuButton(
-                      label: '설정',
-                      icon: Icons.settings_rounded,
-                      onTap: showSpeakingSettings),
-                ])),
-            Positioned(
-                left: 8,
-                right: 8,
-                bottom: 8,
-                child: SizedBox(
-                    height: 40,
-                    child:
-                        ListView(scrollDirection: Axis.horizontal, children: [
-                      _GameMenuButton(
-                          dimension: 40,
-                          label: mode == _SpeakingMode.repeat
-                              ? '따라 말하기 모드 끄기'
-                              : '따라 말하기 모드 켜기',
-                          icon: Icons.record_voice_over_rounded,
-                          selected: mode == _SpeakingMode.repeat,
-                          onTap: () => changeMode(mode == _SpeakingMode.repeat
-                              ? _SpeakingMode.automatic
-                              : _SpeakingMode.repeat)),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          dimension: 40,
-                          label: listenMode ? '듣기 모드 끄기' : '듣기 모드 켜기',
-                          icon: Icons.headphones_rounded,
-                          selected: listenMode,
-                          onTap: () => setListenMode(!listenMode)),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          key: const ValueKey('play-order'),
-                          dimension: 40,
-                          label: '재생 순서: ${playOrder.label}',
-                          icon: playOrder.icon,
-                          selected: playOrder != _PlayOrder.sequential,
-                          onTap: () =>
-                              setState(() => playOrder = playOrder.next)),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          key: const ValueKey('previous-phrase'),
-                          dimension: 40,
-                          label: '이전 문장',
-                          icon: Icons.skip_previous_rounded,
-                          onTap: () => skipPhrase(forward: false)),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          key: const ValueKey('next-phrase'),
-                          dimension: 40,
-                          label: '다음 문장',
-                          icon: Icons.skip_next_rounded,
-                          onTap: () => skipPhrase(forward: true)),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          key: const ValueKey('phrase-list-button'),
-                          dimension: 40,
-                          label: '문장 목록',
-                          icon: Icons.queue_music_rounded,
-                          onTap: pickPhrase),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          dimension: 40,
-                          label: '쇼츠 학습',
-                          icon: Icons.smart_display_rounded,
-                          onTap: previewFeature),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          dimension: 40,
-                          label: '공유 영상',
-                          icon: Icons.groups_rounded,
-                          onTap: previewFeature),
-                      const SizedBox(width: 4),
-                      _GameMenuButton(
-                          dimension: 40,
-                          label: paused ? '말하기 재개' : '말하기 일시 정지',
-                          icon: paused
-                              ? Icons.play_arrow_rounded
-                              : Icons.pause_rounded,
-                          onTap: () {
-                            setState(() => paused = !paused);
-                            syncPlayback();
-                          }),
-                    ]))),
+            // 새 디자인은 눌러도 아무 일 없던 준비 중 버튼(캐릭터 정보, 꾸미기,
+            // 보관함, 도전 과제, 쇼츠 학습, 공유 영상, 학습 기록)을 보여주지 않는다.
+            if (!newDesign)
+              Positioned(
+                  right: 8,
+                  top: 16,
+                  child: Column(children: [
+                    _GameMenuButton(
+                        label: '캐릭터 정보',
+                        icon: Icons.badge_rounded,
+                        onTap: previewFeature),
+                    const SizedBox(height: 7),
+                    _GameMenuButton(
+                        label: '꾸미기',
+                        icon: Icons.checkroom_rounded,
+                        badge: true,
+                        onTap: previewFeature),
+                    const SizedBox(height: 7),
+                    _GameMenuButton(
+                        label: '보관함',
+                        icon: Icons.backpack_rounded,
+                        onTap: previewFeature),
+                    const SizedBox(height: 7),
+                    _GameMenuButton(
+                        label: '도전 과제',
+                        icon: Icons.emoji_events_rounded,
+                        badge: true,
+                        onTap: previewFeature),
+                    const SizedBox(height: 7),
+                    _GameMenuButton(
+                        label: '설정',
+                        icon: Icons.settings_rounded,
+                        onTap: showSpeakingSettings),
+                  ])),
+            if (!newDesign)
+              Positioned(
+                  left: 8,
+                  right: 8,
+                  bottom: 8,
+                  child: SizedBox(
+                      height: 40,
+                      child:
+                          ListView(scrollDirection: Axis.horizontal, children: [
+                        _GameMenuButton(
+                            dimension: 40,
+                            label: mode == _SpeakingMode.repeat
+                                ? '따라 말하기 모드 끄기'
+                                : '따라 말하기 모드 켜기',
+                            icon: Icons.record_voice_over_rounded,
+                            selected: mode == _SpeakingMode.repeat,
+                            onTap: () => changeMode(mode == _SpeakingMode.repeat
+                                ? _SpeakingMode.automatic
+                                : _SpeakingMode.repeat)),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            dimension: 40,
+                            label: listenMode ? '듣기 모드 끄기' : '듣기 모드 켜기',
+                            icon: Icons.headphones_rounded,
+                            selected: listenMode,
+                            onTap: () => setListenMode(!listenMode)),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            key: const ValueKey('play-order'),
+                            dimension: 40,
+                            label: '재생 순서: ${playOrder.label}',
+                            icon: playOrder.icon,
+                            selected: playOrder != _PlayOrder.sequential,
+                            onTap: () =>
+                                setState(() => playOrder = playOrder.next)),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            key: const ValueKey('previous-phrase'),
+                            dimension: 40,
+                            label: '이전 문장',
+                            icon: Icons.skip_previous_rounded,
+                            onTap: () => skipPhrase(forward: false)),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            key: const ValueKey('next-phrase'),
+                            dimension: 40,
+                            label: '다음 문장',
+                            icon: Icons.skip_next_rounded,
+                            onTap: () => skipPhrase(forward: true)),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            key: const ValueKey('phrase-list-button'),
+                            dimension: 40,
+                            label: '문장 목록',
+                            icon: Icons.queue_music_rounded,
+                            onTap: pickPhrase),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            dimension: 40,
+                            label: '쇼츠 학습',
+                            icon: Icons.smart_display_rounded,
+                            onTap: previewFeature),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            dimension: 40,
+                            label: '공유 영상',
+                            icon: Icons.groups_rounded,
+                            onTap: previewFeature),
+                        const SizedBox(width: 4),
+                        _GameMenuButton(
+                            dimension: 40,
+                            label: paused ? '말하기 재개' : '말하기 일시 정지',
+                            icon: paused
+                                ? Icons.play_arrow_rounded
+                                : Icons.pause_rounded,
+                            onTap: () {
+                              setState(() => paused = !paused);
+                              syncPlayback();
+                            }),
+                      ]))),
           ])),
+      if (newDesign)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
+          child: Row(children: [
+            _LabeledControl(
+                key: const ValueKey('mode-repeat'),
+                label: '따라 말하기',
+                icon: Icons.record_voice_over_rounded,
+                selected: mode == _SpeakingMode.repeat,
+                onTap: () => changeMode(mode == _SpeakingMode.repeat
+                    ? _SpeakingMode.automatic
+                    : _SpeakingMode.repeat)),
+            _LabeledControl(
+                label: '듣기',
+                icon: Icons.headphones_rounded,
+                selected: listenMode,
+                onTap: () => setListenMode(!listenMode)),
+            _LabeledControl(
+                key: const ValueKey('previous-phrase'),
+                label: '이전',
+                icon: Icons.skip_previous_rounded,
+                onTap: () => skipPhrase(forward: false)),
+            _LabeledControl(
+                label: paused ? '재생' : '멈춤',
+                icon: paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                emphasized: true,
+                onTap: () {
+                  setState(() => paused = !paused);
+                  syncPlayback();
+                }),
+            _LabeledControl(
+                key: const ValueKey('next-phrase'),
+                label: '다음',
+                icon: Icons.skip_next_rounded,
+                onTap: () => skipPhrase(forward: true)),
+            _LabeledControl(
+                key: const ValueKey('play-order'),
+                label: playOrder.label,
+                icon: playOrder.icon,
+                selected: playOrder != _PlayOrder.sequential,
+                onTap: () => setState(() => playOrder = playOrder.next)),
+            _LabeledControl(
+                key: const ValueKey('phrase-list-button'),
+                label: '목록',
+                icon: Icons.queue_music_rounded,
+                onTap: pickPhrase),
+          ]),
+        ),
       if (awaitingResponse || mode == _SpeakingMode.repeat)
         Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
@@ -1336,7 +1403,9 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                 tooltip: listening ? '음성 인식 중지' : '따라 말하기 시작',
                 onPressed: widget.enabled ? toggleListening : null,
                 style: IconButton.styleFrom(
-                    backgroundColor: listening ? active : palette.primary.withValues(alpha: 0.12),
+                    backgroundColor: listening
+                        ? active
+                        : palette.primary.withValues(alpha: 0.12),
                     foregroundColor: listening ? palette.surface : active),
                 icon:
                     Icon(listening ? Icons.stop_rounded : Icons.mic_rounded))),
@@ -1555,8 +1624,9 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                       final phrase = visiblePhrases[index];
                       final selected = enabled.contains(phrase);
                       return Material(
-                          color:
-                              selected ? palette.primary.withValues(alpha: 0.12) : palette.surfaceSoft,
+                          color: selected
+                              ? palette.primary.withValues(alpha: 0.12)
+                              : palette.surfaceSoft,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           child: CheckboxListTile(
                               dense: true,
@@ -1867,4 +1937,75 @@ class _GrowthPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GrowthPainter oldDelegate) => true;
+}
+
+/// 새 디자인 무대 아래 줄의 버튼. 아이콘 아래에 글자를 붙인다. 전에는 글자
+/// 없는 아이콘 9개가 가로로 흘러서 무엇을 하는지 눌러 봐야 알았다.
+class _LabeledControl extends StatelessWidget {
+  const _LabeledControl({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.selected = false,
+    this.emphasized = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool selected;
+
+  /// 재생·멈춤처럼 가장 자주 누르는 버튼. 채운 원으로 그린다.
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = HomeTokens.of(context);
+    final active = selected || emphasized;
+    final iconColor = emphasized
+        ? palette.onAccent
+        : selected
+            ? palette.primary
+            : palette.inkSoft;
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        excludeSemantics: true,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 32,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: emphasized
+                      ? palette.primary
+                      : selected
+                          ? palette.primary.withValues(alpha: 0.12)
+                          : palette.surface,
+                  border: active ? null : Border.all(color: palette.border),
+                ),
+                child: Icon(icon, size: 22, color: iconColor),
+              ),
+              const SizedBox(height: 4),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.texts.labelSmall.copyWith(
+                      color: selected ? palette.primary : palette.muted,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500)),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
 }
