@@ -12,6 +12,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'sections/account_section.dart';
@@ -23,8 +24,39 @@ import 'sections/logout_section.dart';
 import 'sections/wallet_section.dart';
 
 /// 설정/더보기 화면.
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
+
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    TabReselect.instance.addListener(_onTabReselected);
+  }
+
+  /// 더보기에서 더보기 탭을 다시 누르면 맨 위로.
+  void _onTabReselected() {
+    if (TabReselect.instance.lastIndex != 4) return;
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    TabReselect.instance.removeListener(_onTabReselected);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +66,7 @@ class MoreScreen extends StatelessWidget {
       backgroundColor: t.colorScheme.surface,
       body: SafeArea(
         child: ListView(
+          controller: _scrollController,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.md,
