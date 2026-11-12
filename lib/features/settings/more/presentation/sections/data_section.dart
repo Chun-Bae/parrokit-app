@@ -15,7 +15,6 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import '../widgets/backup_progress_dialog.dart';
-import '../widgets/hairline_divider.dart';
 import '../widgets/nav_tile.dart';
 import 'remote_storage_section.dart';
 
@@ -159,8 +158,7 @@ class _DataSectionState extends State<DataSection> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const HairlineDivider(),
+          const SizedBox(height: 4),
           NavTile(
             icon: Icons.cloud_outlined,
             title: '저장 용량 · Google Drive',

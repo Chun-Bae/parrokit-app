@@ -7,8 +7,8 @@
 // 위에서부터 프로필 한 줄, 지갑(패롯·크래커와 광고·환전), 데이터(백업·복원·
 // 보관 영상·임시 파일 + 저장 용량), 앱 설정, 정보, 맨 아래 로그아웃·회원탈퇴.
 // 전에는 섹션마다 큰 제목과 설명문이 붙어 글이 많았다. 기능은 그대로 두고
-// 제목은 작은 머리말로, 설명은 ? 버튼과 시트로 옮겼다. 목록은 카드 없이
-// 붙여서 가는 선으로만 나눈다.
+// 제목은 작은 머리말로, 설명은 ? 버튼과 시트로 옮겼다. 목록은 카드와
+// 구분선 없이 붙이고, 묶음은 여백과 머리말로만 나눈다.
 // ============================================================================
 
 import 'package:flutter/material.dart';
@@ -21,7 +21,6 @@ import 'sections/delete_account_section.dart';
 import 'sections/info_section.dart';
 import 'sections/logout_section.dart';
 import 'sections/wallet_section.dart';
-import 'widgets/hairline_divider.dart';
 
 /// 설정/더보기 화면.
 class MoreScreen extends StatelessWidget {
@@ -51,8 +50,7 @@ class MoreScreen extends StatelessWidget {
             const AppSettingsSection(),
             const _GroupLabel('정보'),
             const InfoSection(),
-            const HairlineDivider(),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.md),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -70,8 +68,8 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
-/// 묶음 위의 작은 머리말. 카드 없이 목록이 이어지므로 위에 가는 선을 그어
-/// 묶음을 나눈다.
+/// 묶음 위의 작은 머리말. 카드도 구분선도 없이 여백과 머리말로만 묶음을
+/// 나눈다.
 class _GroupLabel extends StatelessWidget {
   const _GroupLabel(this.text);
 
@@ -82,10 +80,8 @@ class _GroupLabel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: AppSpacing.md),
-        const HairlineDivider(),
         Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.md),
+          padding: const EdgeInsets.only(top: AppSpacing.xl),
           child: Text(
             text,
             style: context.texts.labelLarge.copyWith(

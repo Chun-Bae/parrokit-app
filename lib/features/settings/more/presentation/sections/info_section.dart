@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
 
-import '../widgets/hairline_divider.dart';
 import '../widgets/nav_tile.dart';
 import '../web_document_screen.dart';
 
@@ -53,13 +52,11 @@ class _InfoSectionState extends State<InfoSection> {
                   ),
             ),
           ),
-          const HairlineDivider(),
           NavTile(
             icon: Icons.help_outline,
             title: '도움말',
             onTap: () => showTipDialog(context, force: true),
           ),
-          const HairlineDivider(),
           NavTile(
             icon: Icons.privacy_tip_outlined,
             title: '개인정보 처리방침',
@@ -75,7 +72,6 @@ class _InfoSectionState extends State<InfoSection> {
               );
             },
           ),
-          const HairlineDivider(),
           NavTile(
             icon: Icons.privacy_tip_outlined,
             title: '이용 약관',
