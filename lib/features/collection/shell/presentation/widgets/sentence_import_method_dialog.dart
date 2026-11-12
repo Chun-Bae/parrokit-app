@@ -166,7 +166,9 @@ class _SentenceImportMethodDialogState
                     context, SentenceImportSource.url(_url.text.trim())),
                 child: Text('주소에서\n가져오기',
                     textAlign: TextAlign.center,
-                    style: context.texts.bodySmall),
+                    // bodySmall의 흐린 회색이 파란 버튼 위에서 잘 안 보였다
+                    style: context.texts.bodySmall.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary)),
               ),
             ]),
             const SizedBox(height: 10),
