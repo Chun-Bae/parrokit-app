@@ -128,20 +128,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       if (currentUser?.photoUrl != _selectedPhotoUrl) {
         String? finalPhotoUrl = _selectedPhotoUrl;
 
-        // 1. 기존 프사가 Firebase Storage URL 이라면 미리 삭제 처리 (용량 절약)
-        if (currentUser?.photoUrl != null &&
-            currentUser!.photoUrl!.contains('firebasestorage.googleapis.com')) {
-          try {
-            final oldRef =
-                FirebaseStorage.instance.refFromURL(currentUser.photoUrl!);
-            await oldRef.delete();
-          } catch (e) {
-            // 삭제 실패하더라도 (이미 없거나 권한문제 등) 진행은 계속되도록 catch 처리
-            debugPrint('Failed to delete old profile photo: $e');
-          }
-        }
-
-        // 2. 로컬 경로일 경우 (기기에서 갤러리로 선택한 경우) Storage 에 새로 업로드
+        // 1. 로컬 경로일 경우 (기기에서 갤러리로 선택한 경우) Storage 에 새로 업로드
+        //
+        // 전에는 기존 프사를 먼저 지우고 나서 올렸다. 업로드가 실패하면
+        // 예전 사진은 이미 사라졌는데 새 사진은 안 올라가서, 사용자가
+        // 프로필 사진을 통째로 잃었다. 올리고 저장이 끝난 뒤에 지운다.
         if (finalPhotoUrl != null &&
             (finalPhotoUrl.startsWith('/') ||
                 finalPhotoUrl.startsWith('file://'))) {
@@ -154,9 +145,23 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           finalPhotoUrl = await ref.getDownloadURL();
         }
 
-        // 빈 문자열 '' 은 기본 프사(제거)를 의미합니다
+        // 2. 빈 문자열 '' 은 기본 프사(제거)를 의미합니다
         await userProvider
             .updatePhotoUrl(finalPhotoUrl == '' ? null : finalPhotoUrl);
+
+        // 3. 저장까지 끝났으면 예전 프사를 지운다 (용량 절약)
+        final previousPhotoUrl = currentUser?.photoUrl;
+        if (previousPhotoUrl != null &&
+            previousPhotoUrl.contains('firebasestorage.googleapis.com')) {
+          try {
+            await FirebaseStorage.instance
+                .refFromURL(previousPhotoUrl)
+                .delete();
+          } catch (e) {
+            // 삭제 실패하더라도 (이미 없거나 권한문제 등) 진행은 계속되도록 catch 처리
+            debugPrint('Failed to delete old profile photo: $e');
+          }
+        }
       }
 
       // 닉네임이 실제로 변경되었을 때만 업데이트 (null과 빈 문자열 동일 취급)
