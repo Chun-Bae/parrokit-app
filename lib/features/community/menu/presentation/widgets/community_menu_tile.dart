@@ -106,6 +106,12 @@ Color _iconColorOf(BuildContext context, String colorKey) {
 }
 
 Color _backgroundColorOf(BuildContext context, String colorKey) {
+  // 연한 파스텔(라이트 값)만 있어서 다크에서 밝은 사각형이 줄줄이 떴다.
+  // 다크에서는 아이콘 색을 옅게 깐다.
+  if (Theme.of(context).brightness == Brightness.dark &&
+      const {'board', 'question', 'vote'}.contains(colorKey)) {
+    return _iconColorOf(context, colorKey).withValues(alpha: 0.16);
+  }
   switch (colorKey) {
     case 'board':
       return AppColors.communityBoardAccentSoft;
