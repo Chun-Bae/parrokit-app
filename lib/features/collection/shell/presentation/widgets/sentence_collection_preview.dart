@@ -851,12 +851,19 @@ class _PackCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.xl)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            // 배경을 흰색으로 고정해 두면 다크에서 글자(흰색)가 묻혀 빈 알약만
+            // 보였다. 표면색을 깔고 그 위 글자색을 쓴다. 라이트에서는 전과 같다.
             Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(AppRadius.xl)),
-                child: Text('공식', style: context.texts.labelSmall)),
+                child: Text('공식',
+                    style: context.texts.labelSmall.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface))),
             Icon(pack.icon, size: 23, color: context.collectionTokens.skyInk),
           ]),
           const Spacer(),
