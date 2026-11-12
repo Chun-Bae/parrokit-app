@@ -3,13 +3,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ENFORCE_APP_CHECK} from "./appCheck";
 import {captionCost} from "./pricing";
-import {
-  ledgerExists,
-  readWallet,
-  requestIdOf,
-  writeWallet,
-} from "./wallet";
-import * as admin from "firebase-admin";
+import {applyLedger, requestIdOf} from "./wallet";
 import {defineSecret} from "firebase-functions/params";
 import {getStorage} from "firebase-admin/storage";
 import {promises as fs} from "fs";
@@ -80,6 +74,21 @@ export const generateCaptions = onCall(
     const input = parseCaptionRequest(request.data);
     validateCaptionRequest(uid, input);
 
+    // 새 앱(serverCharge: true)은 만들기 전에 값 전체를 깎는다. 패롯이
+    // 모자라면 여기서 멈춘다. 전에는 다 만든 뒤 가진 만큼만 깎아서, 패롯이
+    // 0이면 자막을 공짜로 받을 수 있었다. 만들지 못하면 돌려준다.
+    const serverCharge = request.data?.serverCharge === true;
+    const requestId = requestIdOf(request.data?.requestId);
+    const cost = serverCharge ? captionCost(input.durationMs) : 0;
+    if (cost > 0) {
+      await applyLedger(uid, {parrots: -cost}, {
+        key: `caption_${requestId}`,
+        reason: "caption",
+        meta: {durationMs: input.durationMs},
+      });
+    }
+    let produced = false;
+
     const bucket = getStorage().bucket();
     const file = bucket.file(input.storagePath);
     const tempPath = join(
@@ -116,7 +125,8 @@ export const generateCaptions = onCall(
       );
 
       if (asrSegments.length === 0) {
-        return {segments: []};
+        await refundCaption(uid, requestId, cost);
+        return {segments: [], chargedParrots: 0};
       }
 
       const segments = await buildCaptionSegments(apiKey, asrSegments);
@@ -124,11 +134,12 @@ export const generateCaptions = onCall(
         "[Captioning][DEBUG] final segments",
         JSON.stringify(segments)
       );
-      const chargedParrots = request.data?.serverCharge === true ?
-        await chargeCaption(uid, input.durationMs, request.data?.requestId) :
-        0;
-      return {segments, chargedParrots};
+      produced = true;
+      return {segments, chargedParrots: cost};
     } catch (error) {
+      if (!produced) {
+        await refundCaption(uid, requestId, cost);
+      }
       if (error instanceof HttpsError) {
         throw error;
       }
@@ -478,39 +489,23 @@ function stringValue(value: unknown): string {
 }
 
 /**
- * 자막이 만들어진 뒤 깎는다. 앱이 하던 대로, 패롯이 모자라면 가진 만큼만
- * 깎고 자막은 그대로 준다. 새 앱(serverCharge: true)만 여기로 온다.
- * 길이는 앱이 보낸 durationMs다(최대 5분으로 막혀 있다).
+ * 깎아 둔 자막 값을 돌려준다. 실패해도 응답은 계속 보낸다.
  * @param {string} uid 사용자
- * @param {number} durationMs 영상 길이
- * @param {unknown} requestId 앱이 보낸 요청 id
- * @return {Promise<number>} 실제로 깎은 패롯
+ * @param {string} requestId 요청 id
+ * @param {number} cost 깎은 패롯
  */
-async function chargeCaption(
+async function refundCaption(
   uid: string,
-  durationMs: number,
-  requestId: unknown
-): Promise<number> {
-  const cost = captionCost(durationMs);
-  if (cost <= 0) return 0;
-  const key = `caption_${requestIdOf(requestId)}`;
+  requestId: string,
+  cost: number
+): Promise<void> {
+  if (cost <= 0) return;
   try {
-    return await admin.firestore().runTransaction(async (tx) => {
-      const wallet = await readWallet(tx, uid);
-      if (await ledgerExists(tx, wallet, key)) return 0;
-      const charge = Math.min(wallet.parrots, cost);
-      if (charge <= 0) return 0;
-      writeWallet(tx, wallet, {parrots: -charge}, {
-        key,
-        reason: "caption",
-        meta: {durationMs, cost},
-      });
-      return charge;
+    await applyLedger(uid, {parrots: cost}, {
+      key: `caption_${requestId}_refund`,
+      reason: "caption_refund",
     });
-  } catch (error) {
-    // 자막은 이미 만들어졌다. 깎지 못한 것은 기록만 남기고 결과는 준다.
-    console.error("[Captioning] 패롯 차감 실패", error);
-    return 0;
+  } catch (refundError) {
+    console.error("[Captioning] 환불 실패", refundError);
   }
 }
-

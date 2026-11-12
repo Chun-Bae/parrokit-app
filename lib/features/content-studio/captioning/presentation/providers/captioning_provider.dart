@@ -209,6 +209,15 @@ class CaptioningProvider extends ChangeNotifier
       return;
     }
 
+    // 패롯이 모자라면 시작하지 않는다. 서버도 같은 값으로 먼저 깎고, 모자라면
+    // 거절한다. 전에는 가진 만큼만 깎고 만들어 줘서 0패롯이면 공짜였다.
+    final cost = captionParrotCost(durationMs);
+    if (userProvider.coins < cost) {
+      showToast('패롯이 부족합니다. (필요 $cost / 보유 ${userProvider.coins})');
+      _setSttState(SttProcessState.idle);
+      return;
+    }
+
     try {
       // Step 2: 음성 인식 (STT)
       _setSttState(SttProcessState.transcribing);
@@ -447,4 +456,11 @@ class CaptioningProvider extends ChangeNotifier
     }
     super.dispose();
   }
+}
+
+/// 자동 자막 가격. 10초에 1패롯, 올림. functions/src/pricing.ts의 captionCost와 같다.
+int captionParrotCost(int durationMs) {
+  final seconds = (durationMs / 1000).ceil();
+  if (seconds <= 0) return 0;
+  return (seconds + 9) ~/ 10;
 }
