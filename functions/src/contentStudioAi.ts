@@ -1065,6 +1065,12 @@ export const generateTts = onCall(
     try {
       return await generateTtsFlow(request.data);
     } catch (error: any) {
+      // 안쪽에서 던진 HttpsError를 그대로 보낸다. 전에는 전부 aborted로
+      // 다시 포장해서, "지원하지 않는 엔진"이나 "로그인이 필요합니다"가
+      // 앱에서는 같은 오류로 보였다.
+      if (error instanceof HttpsError) {
+        throw error;
+      }
       console.error("TTS Wrapper Error:", error);
       throw new HttpsError(
         "aborted",
@@ -1088,8 +1094,15 @@ export const listTtsVoices = onCall(async (request) => {
     const [result] = await client.listVoices({languageCode});
     return {voices: result.voices};
   } catch (error: any) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
     console.error("Google Cloud TTS listVoices Error:", error);
-    throw new Error(error.message || "Failed to list Google TTS voices");
+    // 전에는 평범한 Error를 던져서 앱에는 internal로만 보였다.
+    throw new HttpsError(
+      "unavailable",
+      error.message || "Failed to list Google TTS voices"
+    );
   }
 });
 
@@ -1106,6 +1119,9 @@ export const listElevenLabsVoices = onCall(
       const response = await client.voices.getAll();
       return {voices: response.voices};
     } catch (error: any) {
+      if (error instanceof HttpsError) {
+        throw error;
+      }
       console.error("ElevenLabs listVoices Error:", error);
       throw new HttpsError(
         "internal",

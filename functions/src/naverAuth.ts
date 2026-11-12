@@ -64,6 +64,13 @@ export const createNaverCustomToken = functions.https.onCall(
 
       return {customToken};
     } catch (error) {
+      // 안쪽에서 던진 HttpsError를 그대로 보낸다. 전에는 네이버 인증
+      // 실패(unauthenticated)와 인자 누락(invalid-argument)까지 전부
+      // internal로 덮여서, 앱은 "다시 시도"와 "로그인을 다시" 중 무엇을
+      // 안내해야 하는지 구분할 수 없었다.
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
       console.error("Error creating Naver custom token:", error);
       throw new functions.https.HttpsError(
         "internal",
