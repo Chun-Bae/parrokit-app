@@ -178,7 +178,14 @@ class _Segment extends StatelessWidget {
                         icon,
                         const SizedBox(width: AppSpacing.xs + 2),
                       ],
-                      Flexible(child: label),
+                      // 칸이 좁으면 두 줄로 꺾이지 않게 한 줄 그대로 줄인다
+                      // (질문 필터 다섯 칸을 375pt 폰에서 볼 때).
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: label,
+                        ),
+                      ),
                       if (lock != null) ...[
                         const SizedBox(width: AppSpacing.xs),
                         lock,

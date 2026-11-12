@@ -84,7 +84,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
       final canLoadMore = provider.hasMorePosts && !provider.isLoading;
       return AppEmptyState(
         icon: Icons.live_help_outlined,
-        title: '해당 조건의 질문이 없습니다.',
+        title: widget.selectedFilter == '전체'
+            ? '아직 질문이 없어요.'
+            : '해당 조건의 질문이 없습니다.',
         description: '다른 조건을 골라 보거나 직접 질문해 보세요.',
         actionLabel: canLoadMore ? '이전 글 더 보기' : null,
         onAction: canLoadMore ? () => loadMorePostsFrom(context) : null,
