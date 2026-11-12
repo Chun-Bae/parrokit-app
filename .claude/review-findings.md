@@ -1286,6 +1286,20 @@ UPDATE가 WHERE 없이 모든 클립을 'local'로 덮어쓴 뒤 그 값으로 �
 > **크기:** 큼. 함수 5~6개, 앱 호출부 8곳, 규칙, 콘솔 설정 둘. 결제가 걸려 있어 실제
 > 결제 샌드박스로 확인해야 한다.
 
+> **1단계 끝(2026-11-12, 로컬 커밋, 함수 배포 전).**
+> - 함수: `wallet.ts`(장부·멱등 키, `exchangeCurrency`), `questions.ts`(`createQuestion`,
+>   `acceptAnswer`), `pricing.ts`(앱과 같은 가격표). `generateTts`·`generateVideo`·
+>   `generateCaptions`는 `serverCharge: true`일 때만 깎는다(옛 앱 이중 차감 방지).
+>   영상은 요청 실패 시 바로, 생성 실패 시 상태 조회에서 환불한다.
+>   테스트: `functions`에서 `npm run test:wallet`(에뮬레이터, 9개).
+> - 앱: 환전·질문·채택은 새 함수를 부르고, TTS·영상·자막은 `serverCharge`를 보내며
+>   `addCoins(-cost)`를 지웠다.
+> - 함께 고친 버그: 영상 모델이 `model`로만 가서 늘 Lite로 만들어지던 것, 캐시된 TTS를
+>   다시 꺼내도 패롯이 깎이던 것.
+> - **순서:** 함수 배포가 먼저다. 이 앱이 옛 함수에 붙으면 환전·질문·채택이 실패한다.
+> - **아직 열려 있는 것:** 광고·결제 지급(2·3단계), 규칙 잠금과 강제 업데이트(4단계).
+>   그 전까지는 `serverCharge`를 빼고 부르거나 문서를 직접 쓰면 여전히 우회된다.
+
 ### 네이버 이메일이 이미 다른 계정에 있으면 로그인이 영영 안 된다
 `createUser`가 `auth/email-already-exists`로 실패한다. 구글로 먼저 가입한
 사람이 네이버로 로그인하면 이 경우다. 계정을 합칠지, 이메일 없이 만들지
