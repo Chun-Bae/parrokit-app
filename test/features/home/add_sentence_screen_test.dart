@@ -100,7 +100,7 @@ void main() {
             assist: _UsageAssist(dailyLimit: 3, remainingToday: 2))));
     await tester.pump();
     expect(find.byKey(const ValueKey('usage-count')), findsOneWidget);
-    expect(find.text('1 / 3'), findsOneWidget);
+    expect(find.text('오늘 1/3회 사용'), findsOneWidget);
     expect(find.textContaining('남았어요'), findsNothing);
   });
 
@@ -113,7 +113,7 @@ void main() {
     await tester.enterText(
         find.byKey(const ValueKey('sentence-text')), 'Hello');
     await tester.pump();
-    expect(find.text('3 / 3'), findsOneWidget);
+    expect(find.text('오늘 3/3회 사용'), findsOneWidget);
     expect(
         tester
             .widget<FilledButton>(find.byKey(const ValueKey('auto-fill-now')))

@@ -292,7 +292,8 @@ class _AutoFillCard extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         if (used != null && limit != null)
-          Text('$used / $limit',
+          // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
+          Text('오늘 $used/$limit회 사용',
               key: const ValueKey('usage-count'),
               style: context.texts.bodyMedium.copyWith(
                   color: exhausted ? colors.error : colors.onSurfaceVariant))
