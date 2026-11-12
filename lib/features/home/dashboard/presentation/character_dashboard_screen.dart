@@ -267,6 +267,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     accountId: accountId,
                     language: language,
                     refreshToken: totalPracticed,
+                    compact: newDesign,
                     onViewAll: () => context.go(AppRoutes.collectionPath),
                   ),
                   if (!newDesign) ...[

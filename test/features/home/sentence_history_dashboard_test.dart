@@ -33,4 +33,35 @@ void main() {
     expect(find.text('Hello there!'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets('새 디자인(compact)은 최근 문장을 3개까지만 보여주고 추천 문장은 뺀다',
+      (tester) async {
+    await tester.runAsync(() async {
+      for (var i = 1; i <= 5; i++) {
+        await SentenceActivityStore.incrementPractice(
+            'guest', 'basic-en-00$i');
+      }
+    });
+    Widget build(bool compact) => MaterialApp(
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: SentenceHistoryDashboard(
+                    accountId: 'guest', language: '영어', compact: compact))));
+
+    const texts = ['Hello there!', 'How was your day?', 'Can I get a coffee?', 'Nice to meet you.', 'Thank you so much.'];
+    int shown() => texts.where((t) => find.text(t).evaluate().isNotEmpty).length;
+
+    await tester.pumpWidget(build(false));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump();
+    expect(shown(), greaterThan(3));
+
+    await tester.pumpWidget(build(true));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump();
+    expect(find.text('최근 연습한 문장'), findsOneWidget);
+    expect(find.text('따라 말해보면 좋은 문장'), findsNothing);
+    expect(shown(), 3);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

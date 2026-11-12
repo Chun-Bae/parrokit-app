@@ -18,7 +18,13 @@ class SentenceHistoryDashboard extends StatefulWidget {
     required this.language,
     this.refreshToken = 0,
     this.onViewAll,
+    this.compact = false,
   });
+
+  /// 새 디자인 홈. 숫자 3개, 친밀도 막대, 최근 문장 3개만 보여주고 시도·성공률
+  /// 줄과 "따라 말해보면 좋은 문장"은 뺀다. 전에는 한 카드에 일곱 덩어리가
+  /// 있어서 홈이 길어졌다. 나머지는 "전체 보기"에서 본다.
+  final bool compact;
 
   final String accountId;
   final String language;
@@ -101,13 +107,16 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
       decoration: BoxDecoration(
         color: palette.surface,
         borderRadius: BorderRadius.circular(AppRadius.xxl),
-        boxShadow: [
-          BoxShadow(
-            color: palette.shadow.withValues(alpha: 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        // 새 디자인은 그림자 없이 바탕색만으로 나눈다.
+        boxShadow: widget.compact
+            ? null
+            : [
+                BoxShadow(
+                  color: palette.shadow.withValues(alpha: 0.07),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -132,7 +141,7 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
                       .copyWith(color: muted, height: 1.5)))
         else ...[
           _Stats(data: data),
-          if (practice case final log? when !log.isEmpty) ...[
+          if (practice case final log? when !log.isEmpty && !widget.compact) ...[
             const SizedBox(height: 10),
             _AttemptLine(log: log),
           ],
@@ -141,12 +150,13 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
           if (data.recent.isNotEmpty) ...[
             const SizedBox(height: 20),
             const _SectionTitle('최근 연습한 문장'),
-            for (final item in data.recent)
+            for (final item
+                in widget.compact ? data.recent.take(3) : data.recent)
               _HistoryRow(
                   item: item,
                   bestScore: practice?.bestScores[item.sentence.id]),
           ],
-          if (data.needsWork.isNotEmpty) ...[
+          if (data.needsWork.isNotEmpty && !widget.compact) ...[
             const SizedBox(height: 16),
             const _SectionTitle('따라 말해보면 좋은 문장'),
             for (final item in data.needsWork)
