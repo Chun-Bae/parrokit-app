@@ -20,7 +20,7 @@
 - [x] A4 네이버 토큰 발급 앱 확인 조사
 - [x] A5 App Check 준비 (enforce 끄고)
 - [x] A6 패롯·크래커 서버 이전 설계 문서
-- [ ] A7 네이버 이메일 중복 선택지 정리
+- [x] A7 네이버 이메일 중복 선택지 정리
 - [ ] A8 작업 중 본 확실한 버그 (발견하는 대로 아래에 적는다)
 - [x] 투표 종료 스케줄러: 2차 보류에 "의도한 설계, 유지" 표시
 
@@ -89,3 +89,4 @@
 - A4: 조사만. OIDC id_token(aud 검사)이 정석. 앱·함수 동시 배포가 필요해 보류. review-findings.md에 적었다
 - A5 `800ffb60`: 함수 쪽 스위치만(false). 앱 패키지는 FlutterFire 전체 업그레이드가 필요해 넣지 않았다. 순서는 review-findings.md
 - A6: 설계만 review-findings.md에. 같은 경로의 확실한 버그 둘은 고쳤다: `0c594a3b`(캐시 크래커 덮어쓰기), `2e11e91d`(Apple 기본 잔액)
+- A7: 선택지 넷(A~D)과 추천(C 다음 D)을 review-findings.md에
