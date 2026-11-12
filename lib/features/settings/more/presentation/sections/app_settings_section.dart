@@ -10,8 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/state/provider/theme_provider.dart';
-import '../widgets/card_container.dart';
-import '../widgets/section_title.dart';
 import '../widgets/theme_tile.dart';
 
 /// 앱 설정 섹션.
@@ -20,24 +18,19 @@ class AppSettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle('앱'),
-        const SizedBox(height: 10),
-        CardContainer(
-          child: Column(
-            children: [
-              ThemeTile(
-                value: context.watch<ThemeProvider>().themeMode,
-                onChanged: (mode) {
-                  context.read<ThemeProvider>().setTheme(mode);
-                },
-              ),
-            ],
+    // 카드 테두리·그림자·여백 없이 목록으로 붙인다.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          ThemeTile(
+            value: context.watch<ThemeProvider>().themeMode,
+            onChanged: (mode) {
+              context.read<ThemeProvider>().setTheme(mode);
+            },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -40,15 +40,12 @@ class DeleteAccountSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: () => _confirm(context),
-        child: Text(
-          '회원탈퇴',
-          style: context.texts.labelMedium.copyWith(
-              color:
-                  Theme.of(context).colorScheme.error.withValues(alpha: 0.6)),
-        ),
+    return TextButton(
+      onPressed: () => _confirm(context),
+      child: Text(
+        '회원탈퇴',
+        style: context.texts.labelMedium.copyWith(
+            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.6)),
       ),
     );
   }

@@ -1,36 +1,27 @@
 // ============================================================================
-// lib/features/more/presentation/more_screen.dart
+// lib/features/settings/more/presentation/more_screen.dart
 // ============================================================================
 //
-// [역할]
-// 설정/더보기 화면.
+// 더보기 화면.
 //
-// [레이어]
-// Presentation Layer - View
-//
-// [구성 요소]
-// - AccountSection: 계정 섹션
-// - PlayerSettingsSection: 플레이어 설정
-// - ShortsSettingsSection: 쇼츠 설정
-// - AppSettingsSection: 앱 설정
-// - PaymentSection: 결제 섹션
-// - BackupSection: 백업 섹션
-// - InfoSection: 정보 섹션
+// 위에서부터 프로필 한 줄, 지갑(패롯·크래커와 광고·환전), 데이터(백업·복원·
+// 보관 영상·임시 파일 + 저장 용량), 앱 설정, 정보, 맨 아래 로그아웃·회원탈퇴.
+// 전에는 섹션마다 큰 제목과 설명문이 붙어 글이 많았다. 기능은 그대로 두고
+// 제목은 작은 머리말로, 설명은 ? 버튼과 시트로 옮겼다. 목록은 카드 없이
+// 붙여서 가는 선으로만 나눈다.
 // ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'sections/account_section.dart';
-import 'sections/ad_reward_section.dart';
-import 'sections/exchange_section.dart';
 import 'sections/app_settings_section.dart';
-import 'sections/backup_section.dart';
-import 'sections/cache_section.dart';
-import 'sections/logout_section.dart';
+import 'sections/data_section.dart';
 import 'sections/delete_account_section.dart';
 import 'sections/info_section.dart';
-import 'sections/remote_storage_section.dart';
-import 'sections/storage_section.dart';
+import 'sections/logout_section.dart';
+import 'sections/wallet_section.dart';
+import 'widgets/hairline_divider.dart';
 
 /// 설정/더보기 화면.
 class MoreScreen extends StatelessWidget {
@@ -49,56 +40,61 @@ class MoreScreen extends StatelessWidget {
             vertical: AppSpacing.md,
           ).copyWith(bottom: AppSpacing.xxl),
           children: [
+            Text('더보기', style: context.texts.headlineMedium),
             const SizedBox(height: AppSpacing.md),
-
-            // 계정
             const AccountSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 광고 보기
-            const AdRewardSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 환전소
-            const ExchangeSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // // 결제 (광고 제거 + 코인 충전 + 구매 내역)
-            // const PaymentSection(),
-            // const SizedBox(height: AppSpacing.sectionGap),
-
-            // 앱 설정
+            const SizedBox(height: AppSpacing.md),
+            const WalletSection(),
+            const _GroupLabel('데이터'),
+            const DataSection(),
+            const _GroupLabel('앱'),
             const AppSettingsSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 백업
-            const BackupSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 저장 공간
-            const StorageSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 원격 저장소
-            const RemoteStorageSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 캐시 관리
-            const CacheSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 정보
+            const _GroupLabel('정보'),
             const InfoSection(),
-            const SizedBox(height: AppSpacing.sectionGap),
-
-            // 로그아웃
-            const LogoutSection(),
-
-            // 회원탈퇴
-            const DeleteAccountSection(),
+            const HairlineDivider(),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const LogoutSection(),
+                Text('·',
+                    style: context.texts.labelMedium
+                        .copyWith(color: t.colorScheme.onSurfaceVariant)),
+                const DeleteAccountSection(),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 묶음 위의 작은 머리말. 카드 없이 목록이 이어지므로 위에 가는 선을 그어
+/// 묶음을 나눈다.
+class _GroupLabel extends StatelessWidget {
+  const _GroupLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.md),
+        const HairlineDivider(),
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.md),
+          child: Text(
+            text,
+            style: context.texts.labelLarge.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

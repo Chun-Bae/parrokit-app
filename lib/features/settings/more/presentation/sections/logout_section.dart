@@ -68,17 +68,13 @@ class LogoutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: () => _confirmLogout(context),
-        child: Text(
-          '로그아웃',
-          style: context.texts.labelMedium.copyWith(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.6)),
-        ),
+    return TextButton(
+      onPressed: () => _confirmLogout(context),
+      child: Text(
+        '로그아웃',
+        style: context.texts.labelMedium.copyWith(
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
       ),
     );
   }

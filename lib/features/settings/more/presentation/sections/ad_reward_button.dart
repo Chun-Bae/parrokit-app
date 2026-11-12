@@ -8,17 +8,20 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 광고 보고 코인 받기 섹션.
+/// 광고 보고 패롯 받기 버튼. 지갑 카드 안에 들어간다.
 ///
-/// 자체적으로 광고 로드/시청/보상 처리. more_screen에서 독립적으로 사용.
-class AdRewardSection extends StatefulWidget {
-  const AdRewardSection({super.key});
+/// 광고 로드·시청·보상·쿨다운을 스스로 처리한다.
+class AdRewardButton extends StatefulWidget {
+  const AdRewardButton({super.key, required this.style});
+
+  /// 지갑 카드의 다른 버튼과 모양을 맞추려고 밖에서 받는다.
+  final ButtonStyle style;
 
   @override
-  State<AdRewardSection> createState() => _AdRewardSectionState();
+  State<AdRewardButton> createState() => _AdRewardButtonState();
 }
 
-class _AdRewardSectionState extends State<AdRewardSection> {
+class _AdRewardButtonState extends State<AdRewardButton> {
   static const _cooldown = Duration(minutes: 3);
   static const _prefKey = 'ad_reward_last_time';
 
@@ -88,7 +91,7 @@ class _AdRewardSectionState extends State<AdRewardSection> {
           return;
         }
 
-        showToast('코인 $coins개를 받았어요!');
+        showToast('패롯 $coins개를 받았어요!');
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(_prefKey, DateTime.now().millisecondsSinceEpoch);
@@ -110,56 +113,34 @@ class _AdRewardSectionState extends State<AdRewardSection> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final isCooldown = _remaining != null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '패롯 받기',
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '광고를 시청하면 패롯 ${AdService.rewardCoins}개를 받을 수 있어요. '
-          '패롯이 있으면 자막 생성을 이용할 수 있어요.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: cs.onSurface.withValues(alpha: 0.7),
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdService().isRewardedAdReadyListenable,
+      builder: (context, isAdReady, _) {
+        return FilledButton.icon(
+          style: widget.style,
+          onPressed: (isCooldown || !isAdReady) ? null : _onWatchAd,
+          icon: isCooldown
+              ? const Icon(Icons.timer_outlined, size: 18)
+              : !isAdReady
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.play_circle_outline_rounded, size: 18),
+          label: Text(
+            isCooldown
+                ? _formatRemaining(_remaining!)
+                : !isAdReady
+                    ? '광고 준비 중'
+                    : '광고 보고 +${AdService.rewardCoins}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ValueListenableBuilder<bool>(
-            valueListenable: AdService().isRewardedAdReadyListenable,
-            builder: (context, isAdReady, _) {
-              return OutlinedButton.icon(
-                onPressed: (isCooldown || !isAdReady) ? null : _onWatchAd,
-                icon: isCooldown
-                    ? const Icon(Icons.timer_outlined, size: 18)
-                    : !isAdReady
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.play_circle_outline_rounded,
-                            size: 18),
-                label: Text(
-                  isCooldown
-                      ? _formatRemaining(_remaining!)
-                      : !isAdReady
-                          ? '광고 준비 중...'
-                          : '광고 보고 패롯 ${AdService.rewardCoins}개 받기',
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
