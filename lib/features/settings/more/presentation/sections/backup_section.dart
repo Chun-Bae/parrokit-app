@@ -30,7 +30,7 @@ class BackupSection extends StatelessWidget {
           child: Column(
             children: [
               NavTile(
-                icon: Icons.privacy_tip_outlined,
+                icon: Icons.settings_backup_restore_rounded,
                 title: '불러오기',
                 onTap: () async {
                   await showDialog(
@@ -46,7 +46,7 @@ class BackupSection extends StatelessWidget {
               ),
               const HairlineDivider(),
               NavTile(
-                icon: Icons.mail_outline,
+                icon: Icons.save_alt_rounded,
                 title: '저장하기',
                 onTap: () async {
                   await showDialog(
