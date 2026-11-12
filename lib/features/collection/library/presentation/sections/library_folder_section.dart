@@ -1111,7 +1111,10 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         if (!isSelectionMode)
           Positioned(
             right: 16,
-            bottom: 16,
+            // 16만 주면 떠 있는 탭바 뒤에 깔려서 버튼이 유리 너머로 흐리게
+            // 비치기만 하고 눌리지 않았다. AppShell이 extendBody라 탭바가
+            // 덮는 높이는 MediaQuery의 아래쪽 여백으로 들어온다.
+            bottom: MediaQuery.paddingOf(context).bottom + 16,
             child: Builder(
               builder: (fabCtx) {
                 final colorScheme = Theme.of(fabCtx).colorScheme;
