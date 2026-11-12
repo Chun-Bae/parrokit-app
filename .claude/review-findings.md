@@ -740,3 +740,73 @@ Future는 await할 때마다 같은 실패를 돌려주므로, 한 번 넘어지
 - `SentenceAffinity`는 `isMax => next == null`로 정의해서, `!isMax`일 때
   `next!`가 항상 안전하다. 불변식이 타입으로 지켜진다.
 - `learning_language_picker`의 검색 컨트롤러는 `dispose`에서 닫는다.
+
+## 묶음 12 — 앱 셸·라우터·인프라 (`lib/core/{app,infrastructure,content,speech}`)
+
+### 고친 것
+
+**49. 백업이 DB 없이 "완료"될 수 있었다** — 이번 리뷰 전체에서 가장 위험한 것
+`BackupService._doCompress`가 파일을 읽다 실패하면 빈 catch로 넘기면서,
+manifest에는 그 파일이 들어간 것처럼 적었다. 그래서:
+1. DB를 못 읽으면 zip에 DB 없이 백업이 "완료"된다
+2. manifest에는 DB가 있다고 적혀 있다
+3. 복원하면 `Missing file from archive`로 실패한다
+
+**백업이 쓸모없다는 걸 복원하는 순간에야 알게 된다.** 보통 그때는 원본이 없다.
+- DB를 못 읽으면 백업 자체를 실패시킨다.
+- 미디어 한 장 못 읽는 건 넘어가되 **실제로 담은 것만** manifest에 적는다.
+- 앞뒤가 안 맞는 곳도 있었다: 읽기 실패는 삼키면서, 바로 아래 manifest를
+  만들 때 부르는 `file.lengthSync()` 실패는 안 잡혀서 백업 전체가 넘어갔다.
+- 바이트를 이미 들고 있으므로 sha256도 그걸로 계산한다(파일을 두 번 안 읽는다).
+
+**50. SSO 로그인 실패가 배포 뒤에 보이지 않았다**
+카카오는 `catch (e) { return null; }` 한 줄이라 **기록이 아예 없었고**,
+네이버·애플은 `debugPrint`만 했다. `debugPrint`는 Crashlytics로 안 간다.
+`AppLogger.e`로 바꿨다. 사용자가 직접 취소한 경우는 오류가 아니므로
+카카오(`PlatformException` code `CANCELED`)와 애플
+(`SignInWithAppleAuthorizationException.canceled`)은 구분해서 `d`로 뺐다.
+네이버는 취소를 구분할 방법을 못 찾아 전부 `e`로 올린다.
+
+**51. 로그아웃 실패가 공급자별로 기록되지 않았다**
+`signOut`이 네이버·카카오·구글·Firebase를 차례로 부르는데 넷 다 빈 catch였다.
+하나가 실패해도 계속하는 건 맞다 — 로그아웃은 사용자가 나가겠다는 것이다.
+다만 특히 Firebase 로그아웃이 실패하면 로컬은 비워지는데 세션은 남는다.
+동작은 그대로 두고 공급자 이름과 함께 기록만 남긴다.
+
+**52. 광고 ID가 비면 조용히 광고가 꺼졌다**
+`.env`에 `ADMOB_*` 키가 없으면 빈 문자열이 되고 `load()`가 그냥 돌아간다.
+**배포 빌드에서 키 하나가 빠지면 광고 수익이 0인 채로 아무도 모른다.**
+비면 `AppLogger.e`로 남긴다(release에서는 Crashlytics까지 간다).
+
+**53. 배포 빌드에서 라우터 진단 로그가 켜져 있었다**
+`debugLogDiagnostics: true`가 고정이라 화면을 옮길 때마다 경로를 기기 로그에
+찍는다. 글 id·클립 id가 그대로 섞여 나간다. `!kReleaseMode`로 바꿨다.
+
+### 보류 — 판단이 필요하다
+
+**퍼. 인트로 화면이 통째로 빠져 있다**
+`buildAppRouter(seenIntro: ...)`는 인자를 받기만 하고 쓰지 않는다. 주석에는
+"인트로를 봤는지에 따라 초기 경로 결정"이라고 적혀 있지만 `initialLocation`은
+늘 대시보드다. `/intro` 경로 상수와 `isOnIntro` 가드는 있는데 **그 경로의
+`GoRoute`가 없어서 아무도 갈 수 없다.** `IntroPrefs.hasSeen()` 결과는
+bootstrap에서 읽어서 버려진다. 인트로를 붙일 생각이면 자리가 그대로 있고,
+안 붙일 생각이면 `IntroPrefs`까지 지울 수 있다. 기능 판단이라 주석만 고쳤다.
+
+**허. "임시 보관 파일 삭제"가 편집 중인 영상도 지운다**
+`CacheService.clearCache()`가 `getTemporaryDirectory()`를 통째로 지운다.
+거기에는 `FileStagingService`가 쓰는 `video_staging` 폴더도 들어 있다.
+클립을 만들다 말고 더보기에서 캐시를 지우면 올려 둔 영상이 사라진다.
+화면 문구는 "앱이 잠깐 보관해 둔 파일들"이라 틀린 말은 아니지만,
+작업 중인 파일은 캐시가 아니다. `video_staging`만 빼는 게 맞아 보이는데
+그러면 그만큼 용량이 안 줄어든다. 어느 쪽인지는 제품 판단이다.
+
+### 깨끗했던 것 — 눈여겨볼 만한 곳
+
+- **`google_drive_storage_service.dart`(896줄)에 `catch`가 하나도 없다.**
+  전부 `StateError`를 한국어 메시지와 함께 던지고 `AppLogger`로 남긴다.
+  이번 리뷰에서 본 파일 중 오류 처리가 가장 잘 되어 있다.
+- 백업의 **복원** 쪽은 손댈 데가 없었다. 경로 탈출 검사(`..`와 절대경로),
+  sha256 검증, 실패 시 임시 폴더 정리, 교체 전 기존 DB 백업까지 있다.
+- `lib/core/content`는 11개 테스트 파일이 붙어 있다. 리포에서 가장 촘촘하다.
+- `sentence_transfer.dart`는 파싱 실패를 삼키지 않고 한국어 `FormatException`
+  으로 바꿔 던진다.
