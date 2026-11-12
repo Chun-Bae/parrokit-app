@@ -203,6 +203,18 @@ class _Stat extends StatelessWidget {
   }
 }
 
+/// 친밀도 단계 글자색. 막대·점에 쓰는 [masteryColor]는 옅어서, 흰 카드 위
+/// 글자로 쓰면 "익히는 중"(A8CBE8)의 대비가 약 1.7:1밖에 안 됐다. 같은
+/// 계열에서 글자로 읽히는 진한 색을 쓴다.
+Color masteryTextColor(BuildContext context, SentenceMastery mastery) {
+  final palette = HomeTokens.of(context);
+  return switch (mastery) {
+    SentenceMastery.fresh => palette.muted,
+    SentenceMastery.learning => palette.primary,
+    SentenceMastery.familiar => palette.good,
+  };
+}
+
 Color masteryColor(BuildContext context, SentenceMastery mastery) {
   final palette = HomeTokens.of(context);
   return switch (mastery) {
@@ -321,11 +333,8 @@ class _HistoryRow extends StatelessWidget {
                         .copyWith(color: palette.muted)),
               ])),
           Text(item.mastery.label,
-              style: context.texts.labelSmall.copyWith(
-                  color:
-                      masteryColor(context, item.mastery) == palette.mastery[0]
-                          ? palette.muted
-                          : masteryColor(context, item.mastery))),
+              style: context.texts.labelSmall
+                  .copyWith(color: masteryTextColor(context, item.mastery))),
         ]));
   }
 }
