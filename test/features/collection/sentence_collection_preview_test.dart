@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
@@ -19,6 +18,11 @@ late FirestoreSharedSentenceRepository repo;
 
 Widget app() => MaterialApp(
     home: Scaffold(body: SentenceCollectionPreview(repository: repo)));
+
+/// 둘러보기 전용 화면. 공유 문장 목록과 저장·좋아요 버튼이 여기 있다.
+Widget exploreApp() => MaterialApp(
+    home: Scaffold(
+        body: SentenceCollectionPreview(repository: repo, exploreOnly: true)));
 
 /// 다른 사람이 공유한 문장 하나를 서버에 넣어 둔다.
 Future<void> seedShared() => seedSentence(
@@ -57,7 +61,6 @@ Widget urlApp(String csv, {Future<Uint8List> Function(Uri)? fetcher}) =>
 
 void main() {
   setUp(() {
-    AppConfig.sentenceExplore = true;
     SharedPreferences.setMockInitialValues({});
     firestore = FakeFirebaseFirestore();
     repo = FirestoreSharedSentenceRepository(firestore: firestore);
@@ -84,7 +87,7 @@ void main() {
 
   testWidgets('저장한 공유 문장은 카드에 내 문장 표시가 붙는다', (tester) async {
     await seedShared();
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Could I get this to go?'), 300,
         scrollable: find.byType(Scrollable).first);
@@ -102,7 +105,7 @@ void main() {
 
   testWidgets('공개가 취소되면 둘러보기 목록에서 바로 사라진다', (tester) async {
     await seedShared();
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     expect(find.text('Could I get this to go?', skipOffstage: false),
         findsOneWidget);
@@ -114,7 +117,7 @@ void main() {
 
   testWidgets('새로고침 버튼으로 새로 공유된 문장을 불러온다', (tester) async {
     await seedShared();
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     await seedSentence(firestore, 'my-new',
         ownerId: 'kai',
@@ -135,7 +138,7 @@ void main() {
 
   testWidgets('둘러보기에서 저장한 문장이 내 문장에 나타난다', (tester) async {
     await seedShared();
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Could I get this to go?'), 300,
         scrollable: find.byType(Scrollable).first);
@@ -145,12 +148,11 @@ void main() {
     await tester.pumpAndSettle();
     expect((await MySentenceStore.load('guest')).length, 1);
 
-    await tester.scrollUntilVisible(find.text('내 문장'), -300,
-        scrollable: find.byType(Scrollable).first);
-    await tester.tap(find.text('내 문장'));
+    // 내 문장은 보관함 문장 탭에 있다.
+    await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     expect(find.text('Could I get this to go?', skipOffstage: false),
-        findsOneWidget);
+        findsWidgets);
   });
 
   testWidgets('문장 상세 시트의 마이크 버튼을 눌러도 안전하다', (tester) async {
@@ -192,7 +194,7 @@ void main() {
 
   testWidgets('둘러보기에는 공유된 문장만 작성자와 함께 나온다', (tester) async {
     await seedShared();
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     expect(find.textContaining('기본'), findsNothing);
     expect(find.text('Hello there!'), findsNothing);
@@ -202,7 +204,7 @@ void main() {
   });
 
   testWidgets('공유된 문장이 없으면 안내한다', (tester) async {
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
         find.byKey(const ValueKey('shared-message')), 300,
@@ -212,7 +214,7 @@ void main() {
 
   testWidgets('둘러보기 문장을 누르면 상세가 열리고 저장 전에는 루틴·공유 항목이 없다', (tester) async {
     await seedShared();
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Could I get this to go?'), 300,
         scrollable: find.byType(Scrollable).first);
@@ -508,11 +510,25 @@ void main() {
       visibility: 'public',
       importCount: 7,
     );
-    await tester.pumpWidget(app());
+    await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('See you around!'), 300,
         scrollable: find.byType(Scrollable).first);
     expect(find.byKey(const ValueKey('shared-import-count')), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
+  });
+
+  testWidgets('문장 탭은 둘러보기 한 줄과 내 문장을 함께 보여준다', (tester) async {
+    await seedShared();
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    // 둘러보기 한 줄에 공유 문장이 보이고, 전체 버튼이 있다.
+    expect(find.text('Could I get this to go?'), findsOneWidget);
+    expect(find.byKey(const ValueKey('open-explore')), findsOneWidget);
+    // 예전 "내 문장 / 둘러보기" 전환과 앵무새 배너는 없다.
+    expect(find.text('앵무새가 말할 문장'), findsNothing);
+    await tester.scrollUntilVisible(find.text('Hello there!'), 300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('Hello there!'), findsOneWidget);
   });
 }

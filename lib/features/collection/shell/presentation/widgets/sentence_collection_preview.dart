@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/content/sentence_url_import.dart';
@@ -20,6 +19,7 @@ import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'clip_sentence_matches_section.dart';
+import '../sentence_explore_screen.dart';
 import 'sentence_import_method_dialog.dart';
 import 'sentence_import_sheet.dart';
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
@@ -27,14 +27,17 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
-import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
-import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
-      {super.key, this.repository, this.urlFetcher});
+      {super.key, this.repository, this.urlFetcher, this.exploreOnly = false});
+
+  /// true면 둘러보기 전용 화면(SentenceExploreScreen)으로 그린다.
+  /// false면 보관함 문장 탭: 위에 둘러보기 한 줄, 아래 내 문장 목록.
+  /// 전에는 한 화면 안에서 "내 문장 / 둘러보기" 탭으로 바꿔 봤다.
+  final bool exploreOnly;
 
   /// 주소에서 파일을 내려받는 함수. 비우면 실제로 내려받는다.
   final Future<Uint8List> Function(Uri uri)? urlFetcher;
@@ -48,7 +51,10 @@ class SentenceCollectionPreview extends StatefulWidget {
 }
 
 class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
-  bool explore = AppConfig.sentenceExplore;
+  bool get explore => widget.exploreOnly;
+
+  /// 둘러보기 화면의 공유 문장 정렬. true면 좋아요 순, false면 최신 순.
+  bool sortPopular = true;
   String language = '영어';
   String category = '전체';
   String accountId = 'guest';
@@ -566,9 +572,12 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       ...mine.where((item) => item.language == language).toList().reversed,
       ...basicSentences,
     ];
-    final visibleShared = category == '전체'
-        ? shared
-        : shared.where((item) => item.topic == category).toList();
+    final visibleShared = (category == '전체'
+        ? [...shared]
+        : shared.where((item) => item.topic == category).toList());
+    if (explore && sortPopular) {
+      visibleShared.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+    }
     final routineCount = mySentences
         .where((item) => activities[item.id]?.routineEnabled ?? true)
         .length;
@@ -579,36 +588,35 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           key: const PageStorageKey('sentence-collection-preview'),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
           children: [
-            _ViewSwitch(
-                explore: explore,
-                onChanged: (value) {
-                  setState(() => explore = value);
-                  AppConfig.sentenceExplore = value;
-                  AppConfig.saveToPrefs();
-                }),
-            const SizedBox(height: 16),
-            LearningLanguagePicker(
-              value: language,
-              onChanged: (value) {
-                setState(() => language = value);
-                loadShared();
-              },
-            ),
-            const SizedBox(height: 12),
+            // 학습 언어는 따로 한 줄을 쓰지 않고 주제 칩 맨 앞에 둔다.
             SizedBox(
-              height: 36,
+              height: 40,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
+                itemCount: categories.length + 1,
                 separatorBuilder: (_, __) => const SizedBox(width: 7),
                 itemBuilder: (context, index) {
-                  final item = categories[index];
-                  return ChoiceChip(
-                      label: Text(item),
-                      selected: category == item,
-                      showCheckmark: false,
-                      visualDensity: VisualDensity.compact,
-                      onSelected: (_) => setState(() => category = item));
+                  if (index == 0) {
+                    return Center(
+                      child: LearningLanguagePicker(
+                        compact: true,
+                        value: language,
+                        onChanged: (value) {
+                          setState(() => language = value);
+                          loadShared();
+                        },
+                      ),
+                    );
+                  }
+                  final item = categories[index - 1];
+                  return Center(
+                    child: ChoiceChip(
+                        label: Text(item),
+                        selected: category == item,
+                        showCheckmark: false,
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (_) => setState(() => category = item)),
+                  );
                 },
               ),
             ),
@@ -619,8 +627,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                   subtitle: '계속 추가되는 문장 묶음',
                   // 전체 목록 화면이 아직 없다. 누르면 아무 일도 일어나지
                   // 않아서 비활성으로 둔다.
-                  trailing: const TextButton(
-                      onPressed: null, child: Text('전체'))),
+                  trailing:
+                      const TextButton(onPressed: null, child: Text('전체'))),
               const SizedBox(height: 10),
               SizedBox(
                 height: 148,
@@ -639,11 +647,28 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
               _SectionTitle(
                   title: '공유된 문장',
                   subtitle: '다른 사람이 공유한 문장을 저장해서 연습해요',
-                  trailing: IconButton(
-                      key: const ValueKey('refresh-shared'),
-                      tooltip: '새로고침',
-                      onPressed: sharedLoading ? null : refreshExplore,
-                      icon: const Icon(Icons.refresh_rounded))),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    for (final (popular, label) in [
+                      (true, '인기'),
+                      (false, '최신')
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: ChoiceChip(
+                          label: Text(label),
+                          selected: sortPopular == popular,
+                          showCheckmark: false,
+                          visualDensity: VisualDensity.compact,
+                          onSelected: (_) =>
+                              setState(() => sortPopular = popular),
+                        ),
+                      ),
+                    IconButton(
+                        key: const ValueKey('refresh-shared'),
+                        tooltip: '새로고침',
+                        onPressed: sharedLoading ? null : refreshExplore,
+                        icon: const Icon(Icons.refresh_rounded)),
+                  ])),
               const SizedBox(height: 10),
               if (sharedLoading)
                 const Padding(
@@ -675,78 +700,78 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                       ),
                     )),
             ] else ...[
-              _SectionTitle(
-                  title: '앵무새가 말할 문장',
-                  subtitle: '지금 활성화된 문장을 빠르게 연습해요',
-                  trailing: IconButton.filledTonal(
-                      tooltip: '문장 추가',
-                      onPressed: addMySentence,
-                      icon: const Icon(Icons.add_rounded))),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                    color: colors.primaryContainer.withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(AppRadius.xl)),
-                child: Row(children: [
-                  CircleAvatar(
-                      backgroundColor: context.tokens.surface,
-                      child: const Icon(Icons.record_voice_over_rounded)),
-                  const SizedBox(width: 14),
-                  Expanded(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                        Text('앵무새가 말할 문장 $routineCount개',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 4),
-                        Text('홈 앵무새가 순서대로 말해줘요',
-                            style: context.texts.bodySmall),
-                      ])),
-                ]),
+              _ExploreStrip(
+                sentences: ([...visibleShared]
+                      ..sort((a, b) => b.likeCount.compareTo(a.likeCount)))
+                    .take(8)
+                    .toList(),
+                loading: sharedLoading,
+                failed: sharedFailed,
+                onOpen: openCommunityDetails,
+                onViewAll: () => openSentenceExplore(context),
               ),
               const SizedBox(height: 24),
-              _SectionTitle(
-                  title: '내 문장',
-                  subtitle: '최근 추가한 순서',
-                  trailing: PopupMenuButton<String>(
-                    tooltip: '가져오기·내보내기',
-                    icon: const Icon(Icons.more_horiz_rounded),
-                    onSelected: (value) => switch (value) {
-                      'script' => addFromScript(),
-                      'import' => importSentences(),
-                      'xlsx' => exportMySentences(xlsx: true),
-                      _ => exportMySentences(xlsx: false),
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                          value: 'script',
-                          child: ListTile(
-                              leading: Icon(Icons.content_paste_rounded),
-                              title: Text('스크립트 붙여넣어 문장 만들기'))),
-                      PopupMenuItem(
-                          value: 'import',
-                          child: ListTile(
-                              leading: Icon(Icons.file_download_outlined),
-                              title: Text('CSV·엑셀에서 가져오기'))),
-                      PopupMenuItem(
-                          value: 'csv',
-                          child: ListTile(
-                              leading: Icon(Icons.file_upload_outlined),
-                              title: Text('CSV로 내보내기'))),
-                      PopupMenuItem(
-                          value: 'xlsx',
-                          child: ListTile(
-                              leading: Icon(Icons.table_chart_outlined),
-                              title: Text('엑셀(xlsx)로 내보내기'))),
-                    ],
-                  )),
-              const SizedBox(height: 10),
+              Row(children: [
+                Text('내 문장', style: context.texts.titleLarge),
+                const SizedBox(width: 6),
+                Text('${mySentences.length}',
+                    style: context.texts.titleMedium
+                        .copyWith(color: colors.onSurfaceVariant)),
+                const Spacer(),
+                // 전에는 "앵무새가 말할 문장 n개" 큰 배너가 따로 있었다.
+                Tooltip(
+                  message: '홈 앵무새가 순서대로 말해줘요',
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.record_voice_over_rounded,
+                        size: 16, color: colors.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text('앵무새 $routineCount',
+                        style: context.texts.labelMedium
+                            .copyWith(color: colors.onSurfaceVariant)),
+                  ]),
+                ),
+                IconButton(
+                    tooltip: '문장 추가',
+                    onPressed: addMySentence,
+                    icon: const Icon(Icons.add_rounded)),
+                PopupMenuButton<String>(
+                  tooltip: '가져오기·내보내기',
+                  icon: const Icon(Icons.more_horiz_rounded),
+                  onSelected: (value) => switch (value) {
+                    'script' => addFromScript(),
+                    'import' => importSentences(),
+                    'xlsx' => exportMySentences(xlsx: true),
+                    _ => exportMySentences(xlsx: false),
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                        value: 'script',
+                        child: ListTile(
+                            leading: Icon(Icons.content_paste_rounded),
+                            title: Text('스크립트 붙여넣어 문장 만들기'))),
+                    PopupMenuItem(
+                        value: 'import',
+                        child: ListTile(
+                            leading: Icon(Icons.file_download_outlined),
+                            title: Text('CSV·엑셀에서 가져오기'))),
+                    PopupMenuItem(
+                        value: 'csv',
+                        child: ListTile(
+                            leading: Icon(Icons.file_upload_outlined),
+                            title: Text('CSV로 내보내기'))),
+                    PopupMenuItem(
+                        value: 'xlsx',
+                        child: ListTile(
+                            leading: Icon(Icons.table_chart_outlined),
+                            title: Text('엑셀(xlsx)로 내보내기'))),
+                  ],
+                ),
+              ]),
+              const SizedBox(height: 4),
               ...List.generate(mySentences.length, (index) {
                 final sentence = mySentences[index];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: EdgeInsets.zero,
                   child: _MySentenceTile(
                     sentence: sentence,
                     accountId: accountId,
@@ -794,23 +819,6 @@ class _ImportProgressDialog extends StatelessWidget {
             ),
           ),
         ),
-      );
-}
-
-class _ViewSwitch extends StatelessWidget {
-  const _ViewSwitch({required this.explore, required this.onChanged});
-
-  final bool explore;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) => AppSegmentedTabs(
-        selectedIndex: explore ? 1 : 0,
-        onChanged: (index) => onChanged(index == 1),
-        segments: const [
-          AppSegment(label: '내 문장'),
-          AppSegment(label: '둘러보기'),
-        ],
       );
 }
 
@@ -1074,70 +1082,176 @@ class _MySentenceTile extends StatelessWidget {
         authorName: authorName,
       );
 
-  /// 최고 단계 카드의 연한 황금 그라데이션 배경. 터치 물결이 그 위에 그려지도록 Ink를 쓴다.
-  Widget _goldBackground(BuildContext context, bool maxed, Widget child) =>
-      !maxed
-          ? child
-          : Ink(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: context.collectionTokens.goldBackground,
-                ),
-              ),
-              child: child,
-            );
-
   @override
   Widget build(BuildContext context) {
-    final maxed = affinityOf(activity).isMax;
-    final card = Material(
-      color: maxed ? Colors.transparent : Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(maxed ? 15.5 : 17),
-        side: maxed
-            ? BorderSide.none
-            : BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: _goldBackground(
-        context,
-        maxed,
-        ListTile(
-          onTap: () => openDetails(context),
-          title: Text(
-            sentence.text,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+    final colors = Theme.of(context).colorScheme;
+    final affinity = affinityOf(activity);
+    final maxed = affinity.isMax;
+    final (_, levelColor) = affinityChipColors(affinity.level);
+    // 카드 테두리 없이 줄로 붙인다. 친밀도는 해석 옆의 작은 점과 글자로.
+    // 최고 단계만 연한 황금빛 배경을 깐다.
+    final row = InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      onTap: () => openDetails(context),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        child: Row(children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(sentence.text,
+                    style: context.texts.bodyLarge.copyWith(
+                        color: colors.onSurface, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 3),
+                Row(children: [
+                  Flexible(
+                    child: Text(sentence.translation,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.texts.bodySmall
+                            .copyWith(color: colors.onSurfaceVariant)),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                        color: levelColor, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 4),
+                  Text('Lv.${affinity.level} ${affinity.name}',
+                      style:
+                          context.texts.labelSmall.copyWith(color: levelColor)),
+                ]),
+              ],
+            ),
           ),
-          subtitle: Text(sentence.translation, maxLines: 1),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _MasteryBadge(
-                  mastery: masteryOf(activity), affinity: affinityOf(activity)),
-              const Icon(Icons.chevron_right_rounded),
-            ],
-          ),
-        ),
+          Icon(Icons.chevron_right_rounded,
+              color: colors.onSurface.withValues(alpha: 0.35)),
+        ]),
       ),
     );
-    if (!maxed) return card;
-    // 친밀도 최고 단계는 금색 그라데이션 테두리와 연한 황금빛 배경으로 표시한다.
+    if (!maxed) return row;
     return Container(
       key: const ValueKey('sentence-card-gold'),
-      padding: const EdgeInsets.all(1.5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: context.collectionTokens.goldBorder,
+          colors: context.collectionTokens.goldBackground,
         ),
       ),
-      child: card,
+      child: row,
+    );
+  }
+}
+
+/// 문장 탭 맨 위의 둘러보기 한 줄. 좋아요가 많은 공유 문장 몇 개와 "전체".
+class _ExploreStrip extends StatelessWidget {
+  const _ExploreStrip({
+    required this.sentences,
+    required this.loading,
+    required this.failed,
+    required this.onOpen,
+    required this.onViewAll,
+  });
+
+  final List<SharedSentence> sentences;
+  final bool loading;
+  final bool failed;
+  final ValueChanged<SharedSentence> onOpen;
+  final VoidCallback onViewAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final muted =
+        context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Text('둘러보기', style: context.texts.titleLarge),
+          const Spacer(),
+          TextButton(
+            key: const ValueKey('open-explore'),
+            onPressed: onViewAll,
+            child: const Text('전체'),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        if (loading)
+          const SizedBox(
+              height: 92,
+              child: Center(
+                  child: SizedBox.square(
+                      dimension: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.4))))
+        else if (failed || sentences.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+                failed
+                    ? '공유된 문장을 불러오지 못했어요.'
+                    : '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.',
+                style: muted),
+          )
+        else
+          SizedBox(
+            height: 92,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: sentences.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final item = sentences[index];
+                return Material(
+                  color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    onTap: () => onOpen(item),
+                    child: Container(
+                      width: 220,
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.text,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.texts.bodyMedium.copyWith(
+                                  color: colors.onSurface,
+                                  fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 2),
+                          Text(item.translation,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: muted),
+                          const Spacer(),
+                          Row(children: [
+                            Icon(
+                                item.liked
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                size: 14,
+                                color: colors.onSurfaceVariant),
+                            const SizedBox(width: 3),
+                            Text('${item.likeCount} · ${item.topic}',
+                                style: context.texts.labelSmall
+                                    .copyWith(color: colors.onSurfaceVariant)),
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
