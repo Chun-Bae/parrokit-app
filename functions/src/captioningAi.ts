@@ -2,6 +2,14 @@
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ENFORCE_APP_CHECK} from "./appCheck";
+import {captionCost} from "./pricing";
+import {
+  ledgerExists,
+  readWallet,
+  requestIdOf,
+  writeWallet,
+} from "./wallet";
+import * as admin from "firebase-admin";
 import {defineSecret} from "firebase-functions/params";
 import {getStorage} from "firebase-admin/storage";
 import {promises as fs} from "fs";
@@ -116,7 +124,10 @@ export const generateCaptions = onCall(
         "[Captioning][DEBUG] final segments",
         JSON.stringify(segments)
       );
-      return {segments};
+      const chargedParrots = request.data?.serverCharge === true ?
+        await chargeCaption(uid, input.durationMs, request.data?.requestId) :
+        0;
+      return {segments, chargedParrots};
     } catch (error) {
       if (error instanceof HttpsError) {
         throw error;
@@ -465,3 +476,41 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
+
+/**
+ * 자막이 만들어진 뒤 깎는다. 앱이 하던 대로, 패롯이 모자라면 가진 만큼만
+ * 깎고 자막은 그대로 준다. 새 앱(serverCharge: true)만 여기로 온다.
+ * 길이는 앱이 보낸 durationMs다(최대 5분으로 막혀 있다).
+ * @param {string} uid 사용자
+ * @param {number} durationMs 영상 길이
+ * @param {unknown} requestId 앱이 보낸 요청 id
+ * @return {Promise<number>} 실제로 깎은 패롯
+ */
+async function chargeCaption(
+  uid: string,
+  durationMs: number,
+  requestId: unknown
+): Promise<number> {
+  const cost = captionCost(durationMs);
+  if (cost <= 0) return 0;
+  const key = `caption_${requestIdOf(requestId)}`;
+  try {
+    return await admin.firestore().runTransaction(async (tx) => {
+      const wallet = await readWallet(tx, uid);
+      if (await ledgerExists(tx, wallet, key)) return 0;
+      const charge = Math.min(wallet.parrots, cost);
+      if (charge <= 0) return 0;
+      writeWallet(tx, wallet, {parrots: -charge}, {
+        key,
+        reason: "caption",
+        meta: {durationMs, cost},
+      });
+      return charge;
+    });
+  } catch (error) {
+    // 자막은 이미 만들어졌다. 깎지 못한 것은 기록만 남기고 결과는 준다.
+    console.error("[Captioning] 패롯 차감 실패", error);
+    return 0;
+  }
+}
+

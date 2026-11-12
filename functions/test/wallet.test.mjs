@@ -180,3 +180,39 @@ test("작성자가 아니거나 내 답변이면 채택할 수 없다", async ()
   );
   assert.deepEqual(await balance("answerer"), {parrots: 0, crackers: 10});
 });
+
+const {ttsCost, videoCost, captionCost} = require("../lib/pricing.js");
+
+test("가격은 앱의 표와 같다", () => {
+  // tts_google_models.dart: 100자에 1패롯, 올림, 최소 1
+  assert.equal(ttsCost({text: "a".repeat(1), provider: "google"}), 1);
+  assert.equal(ttsCost({text: "a".repeat(101), provider: "google"}), 2);
+  // tts_elevenlabs_models.dart
+  assert.equal(ttsCost({text: "a".repeat(40), provider: "elevenlabs"}), 2);
+  assert.equal(
+    ttsCost({text: "a".repeat(40), provider: "elevenlabs", modelId: "eleven_turbo_v2_5"}),
+    1
+  );
+  // tts_gemini_models.dart
+  assert.equal(ttsCost({text: "a".repeat(120), provider: "gemini"}), 1);
+  assert.equal(
+    ttsCost({text: "a".repeat(120), provider: "gemini", modelId: "gemini-2.5-pro-preview-tts"}),
+    2
+  );
+  // 모르는 모델은 그 엔진에서 가장 비싼 값
+  assert.equal(
+    ttsCost({text: "a".repeat(120), provider: "gemini", modelId: "made-up"}),
+    2
+  );
+  assert.equal(ttsCost({text: "", provider: "google"}), 0);
+  // video_generation_models.dart
+  assert.equal(videoCost("veo-3.1-lite-generate-preview", "720p", 8), 88);
+  assert.equal(videoCost("veo-3.1-fast-generate-preview", "1080p", 8), 208);
+  assert.equal(videoCost("veo-3.1-generate-preview", "720p", 4), 344);
+  assert.equal(videoCost("unknown", "720p", 4), 344);
+  // captioning_provider.dart: 10초에 1패롯, 올림
+  assert.equal(captionCost(1), 1);
+  assert.equal(captionCost(10000), 1);
+  assert.equal(captionCost(10001), 2);
+  assert.equal(captionCost(0), 0);
+});

@@ -1,4 +1,6 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {applyLedger, requestIdOf} from "./wallet";
+import {ttsCost, videoCost} from "./pricing";
 import {ENFORCE_APP_CHECK, appCheckOptions} from "./appCheck";
 import {defineSecret} from "firebase-functions/params";
 import * as admin from "firebase-admin";
@@ -377,6 +379,28 @@ async function createVideoGenerationRecord(params: {
   });
 
   return generationId;
+}
+
+/**
+ * 영상 생성에 깎은 패롯을 돌려준다. 실패해도 영상 처리는 계속한다.
+ * @param {string} uid 사용자
+ * @param {string} generationId 영상 생성 기록 id
+ * @param {number} parrots 돌려줄 패롯
+ */
+async function refundVideo(
+  uid: string,
+  generationId: string,
+  parrots: number
+): Promise<void> {
+  try {
+    await applyLedger(uid, {parrots}, {
+      key: `video_${generationId}_refund`,
+      reason: "video_refund",
+      meta: {generationId},
+    });
+  } catch (refundError) {
+    console.error("[Video] 환불 실패", generationId, refundError);
+  }
 }
 
 /**
@@ -1060,13 +1084,43 @@ export const generateTts = onCall(
     // 주소만 알면 로그인하지 않고도 호출할 수 있었다. 패롯 차감은 앱에서만
     // 하므로 외부에서 직접 부르면 요금은 그대로 나가고 아무것도 차감되지
     // 않는다. 같은 파일의 generateVideo와 같은 검사를 둔다.
-    if (!request.auth?.uid) {
+    const uid = request.auth?.uid;
+    if (!uid) {
       throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
     }
 
+    // 새 앱은 serverCharge: true를 보내고 스스로 깎지 않는다. 옛 앱은
+    // 이 값 없이 부르고 끝난 뒤 직접 깎으므로, 여기서도 깎으면 두 번
+    // 빠진다. 옛 앱이 사라지면 이 분기를 없애고 항상 깎는다.
+    const charge = request.data?.serverCharge === true ?
+      ttsCost(request.data ?? {}) :
+      0;
+    const requestId = requestIdOf(request.data?.requestId);
+    if (charge > 0) {
+      await applyLedger(uid, {parrots: -charge}, {
+        key: `tts_${requestId}`,
+        reason: "tts",
+        meta: {
+          provider: request.data?.provider ?? "google",
+          modelId: request.data?.modelId ?? null,
+          length: String(request.data?.text ?? "").length,
+        },
+      });
+    }
+
     try {
-      return await generateTtsFlow(request.data);
+      const result = await generateTtsFlow(request.data);
+      return {...result, chargedParrots: charge};
     } catch (error: any) {
+      // 만들지 못했으면 깎은 패롯을 돌려준다.
+      if (charge > 0) {
+        await applyLedger(uid, {parrots: charge}, {
+          key: `tts_${requestId}_refund`,
+          reason: "tts_refund",
+        }).catch((refundError) =>
+          console.error("[TTS] 환불 실패", refundError)
+        );
+      }
       // 안쪽에서 던진 HttpsError를 그대로 보낸다. 전에는 전부 aborted로
       // 다시 포장해서, "지원하지 않는 엔진"이나 "로그인이 필요합니다"가
       // 앱에서는 같은 오류로 보였다.
@@ -1138,6 +1192,8 @@ export const generateVideo = onCall(
   {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     let generationId: string | null = null;
+    let chargedUid: string | null = null;
+    let chargedParrots = 0;
 
     try {
       const uid = request.auth?.uid;
@@ -1177,6 +1233,35 @@ export const generateVideo = onCall(
         aspectRatio: aspectRatio || "16:9",
         durationSeconds: targetDurationSeconds,
       });
+
+      // 새 앱(serverCharge: true)만 여기서 깎는다. 옛 앱은 완성된 뒤 직접
+      // 깎는다. 실패하면 아래 catch나 상태 조회에서 돌려준다.
+      if (request.data?.serverCharge === true) {
+        const cost = videoCost(
+          targetModel,
+          targetResolution,
+          targetDurationSeconds
+        );
+        if (cost > 0) {
+          await applyLedger(uid, {parrots: -cost}, {
+            key: `video_${generationId}`,
+            reason: "video",
+            meta: {
+              generationId,
+              modelId: targetModel,
+              resolution: targetResolution,
+              durationSeconds: targetDurationSeconds,
+            },
+          });
+          chargedUid = uid;
+          chargedParrots = cost;
+          await admin
+            .firestore()
+            .collection(VIDEO_COLLECTION)
+            .doc(generationId)
+            .update({chargedParrots: cost});
+        }
+      }
       console.log(
         "[Video] Requesting video generation. " +
         `modelId=${modelId || "default"} targetModel=${targetModel} ` +
@@ -1206,8 +1291,11 @@ export const generateVideo = onCall(
           updatedAt: admin.firestore.Timestamp.now(),
         });
 
-      return {operationName: operation.name};
+      return {operationName: operation.name, chargedParrots};
     } catch (error: any) {
+      if (chargedUid && generationId && chargedParrots > 0) {
+        await refundVideo(chargedUid, generationId, chargedParrots);
+      }
       if (typeof generationId === "string" && generationId.length > 0) {
         await admin
           .firestore()
@@ -1384,6 +1472,13 @@ export const getVideoOperationStatus = onCall(
             );
           }
         }
+      }
+
+      // 서버에서 깎았는데 만들지 못했으면 돌려준다. 장부 키가 같아서
+      // 상태를 여러 번 조회해도 한 번만 돌려준다.
+      const charged = Number(generationData?.chargedParrots ?? 0);
+      if (done && error && charged > 0 && docSnapshot) {
+        await refundVideo(uid, docSnapshot.id, charged);
       }
 
       return {
