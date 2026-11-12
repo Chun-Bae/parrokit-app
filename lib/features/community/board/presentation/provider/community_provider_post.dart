@@ -59,8 +59,7 @@ extension CommunityProviderPost on CommunityProvider {
 
   /// 다음 페이지를 이어 읽는다. 더 없으면 아무것도 하지 않는다.
   ///
-  /// 지금 이 메서드를 부르는 화면은 없다. 게시판·질문·투표 목록에 스크롤
-  /// 끝 감지를 붙이면 그때부터 21번째 글 이후가 보인다.
+  /// 게시판·질문·투표 목록이 post_list_paging.dart를 통해 부른다.
   Future<void> loadMorePosts() async {
     if (_isLoading || !_hasMorePosts) return;
     await fetchPosts();

@@ -12,6 +12,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/post_list_paging.dart';
 
 // ─── VoteScreen ────────────────────────────────────────────────────────────────
 class VoteScreen extends StatefulWidget {
@@ -80,10 +81,15 @@ class _VoteScreenState extends State<VoteScreen> {
     }
 
     if (posts.isEmpty) {
-      return const AppEmptyState(
+      final canLoadMore = provider.hasMorePosts && !provider.isLoading;
+      return AppEmptyState(
         icon: Icons.how_to_vote_outlined,
         title: '진행 중인 투표가 없습니다.',
         description: '새 투표를 만들면 여기에 올라와요.',
+        actionLabel: canLoadMore ? '이전 글 더 보기' : null,
+        onAction: canLoadMore
+            ? () => loadMorePostsFrom(context, after: _syncAfterLoadMore)
+            : null,
       );
     }
 
@@ -114,6 +120,11 @@ class _VoteScreenState extends State<VoteScreen> {
     await _syncVoteState(
         loadVotedPosts: widget.selectedFilter == CommunityFilters.vote[2]);
   }
+
+  /// 다음 페이지가 붙은 뒤 새 투표 글의 내 선택·추천·스크랩 상태를 맞춘다.
+  /// 안 하면 이미 투표한 글이 안 한 것처럼 보인다.
+  Future<void> _syncAfterLoadMore() => _syncVoteState(
+      loadVotedPosts: widget.selectedFilter == CommunityFilters.vote[2]);
 
   Future<void> _syncVoteState({required bool loadVotedPosts}) async {
     if (!mounted) return;
@@ -165,6 +176,18 @@ class _VoteScreenState extends State<VoteScreen> {
                         .onSurface
                         .withValues(alpha: 0.45))),
             const SizedBox(height: 28),
+            // 읽어 온 페이지를 다 넘겼을 뿐 더 오래된 투표가 남아 있을 수 있다.
+            // 이어 읽으면 새 카드가 뒤에 붙으니 지금 자리에서 계속 넘기면 된다.
+            if (provider.hasMorePosts) ...[
+              FilledButton(
+                onPressed: provider.isLoading
+                    ? null
+                    : () =>
+                        loadMorePostsFrom(context, after: _syncAfterLoadMore),
+                child: const Text('이전 투표 더 보기'),
+              ),
+              const SizedBox(height: 8),
+            ],
             OutlinedButton(
               onPressed: () => setState(() {
                 _currentCardIndex = 0;
@@ -278,54 +301,60 @@ class _VoteScreenState extends State<VoteScreen> {
   // ── 한눈에 보기 (리스트) ─────────────────────────────────────────────────────
   Widget _buildListView(List<Post> posts, {Key? key}) {
     final provider = context.watch<CommunityProvider>();
-    return ListView.builder(
+    return PostListPaging(
       key: key,
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-      itemCount: posts.length,
-      itemBuilder: (context, i) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: GestureDetector(
-          onTap: () {
-            context.push(AppRoutes.communityVoteViewPathOf(posts[i].id));
-          },
-          child: VoteCard(
-            item: posts[i],
-            selectedOption:
-                context.watch<CommunityProvider>().myVotes[posts[i].id],
-            showResult: _showResultsByPostId[posts[i].id] ?? false,
-            showToggleResultButton: false,
-            enablePostActions: true,
-            isPostLiked: provider.isPostLiked(posts[i].id),
-            isPostScrapped: provider.isPostScrapped(posts[i].id),
-            onTogglePostLike: () {
-              final user = context.read<UserProvider>().currentUser;
-              if (user == null) return;
-              context
-                  .read<CommunityProvider>()
-                  .toggleLike(posts[i].id, user.id);
-            },
-            onTogglePostScrap: () {
-              final user = context.read<UserProvider>().currentUser;
-              if (user == null) return;
-              context
-                  .read<CommunityProvider>()
-                  .toggleScrap(posts[i].id, user.id);
-            },
-            showMoreButton: false,
-            onSelect: (idx) {
-              _submitVote(
-                postId: posts[i].id,
-                optionIndex: idx,
-              );
-            },
-            onToggleResult: () => setState(() {
-              final postId = posts[i].id;
-              _showResultsByPostId[postId] =
-                  !(_showResultsByPostId[postId] ?? false);
-            }),
-          ),
-        ),
+      onLoadedMore: _syncAfterLoadMore,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        itemCount: posts.length + 1,
+        itemBuilder: (context, i) => i == posts.length
+            ? PostListFooter(onLoadedMore: _syncAfterLoadMore)
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    context
+                        .push(AppRoutes.communityVoteViewPathOf(posts[i].id));
+                  },
+                  child: VoteCard(
+                    item: posts[i],
+                    selectedOption:
+                        context.watch<CommunityProvider>().myVotes[posts[i].id],
+                    showResult: _showResultsByPostId[posts[i].id] ?? false,
+                    showToggleResultButton: false,
+                    enablePostActions: true,
+                    isPostLiked: provider.isPostLiked(posts[i].id),
+                    isPostScrapped: provider.isPostScrapped(posts[i].id),
+                    onTogglePostLike: () {
+                      final user = context.read<UserProvider>().currentUser;
+                      if (user == null) return;
+                      context
+                          .read<CommunityProvider>()
+                          .toggleLike(posts[i].id, user.id);
+                    },
+                    onTogglePostScrap: () {
+                      final user = context.read<UserProvider>().currentUser;
+                      if (user == null) return;
+                      context
+                          .read<CommunityProvider>()
+                          .toggleScrap(posts[i].id, user.id);
+                    },
+                    showMoreButton: false,
+                    onSelect: (idx) {
+                      _submitVote(
+                        postId: posts[i].id,
+                        optionIndex: idx,
+                      );
+                    },
+                    onToggleResult: () => setState(() {
+                      final postId = posts[i].id;
+                      _showResultsByPostId[postId] =
+                          !(_showResultsByPostId[postId] ?? false);
+                    }),
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -489,7 +518,6 @@ class VoteCard extends StatelessWidget {
     this.onMorePressed,
     this.showMoreButton = true,
   });
-
 
   @override
   Widget build(BuildContext context) {

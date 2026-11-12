@@ -5,6 +5,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/post_list_paging.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -78,10 +79,15 @@ class _QuestionScreenState extends State<QuestionScreen> {
     }
 
     if (questionPosts.isEmpty) {
-      return const AppEmptyState(
+      // "답변 대기중"·"채택 완료"는 읽어 온 페이지에서 거른 것이라, 이 페이지에
+      // 맞는 질문이 없어도 더 오래된 질문에는 있을 수 있다.
+      final canLoadMore = provider.hasMorePosts && !provider.isLoading;
+      return AppEmptyState(
         icon: Icons.live_help_outlined,
         title: '해당 조건의 질문이 없습니다.',
         description: '다른 조건을 골라 보거나 직접 질문해 보세요.',
+        actionLabel: canLoadMore ? '이전 글 더 보기' : null,
+        onAction: canLoadMore ? () => loadMorePostsFrom(context) : null,
       );
     }
 
@@ -89,23 +95,29 @@ class _QuestionScreenState extends State<QuestionScreen> {
       onRefresh: () => context
           .read<CommunityProvider>()
           .fetchPosts(postType: 'question', refresh: true),
-      child: ListView.separated(
-        padding: const EdgeInsets.only(bottom: 80), // Fab space
-        itemCount: questionPosts.length,
-        separatorBuilder: (context, index) => Divider(
-          color: context.tokens.disabled,
-          thickness: 8,
+      child: PostListPaging(
+        child: ListView.separated(
+          padding: const EdgeInsets.only(bottom: 80), // Fab space
+          itemCount: questionPosts.length + 1,
+          separatorBuilder: (context, index) =>
+              index == questionPosts.length - 1
+                  ? const SizedBox.shrink()
+                  : Divider(
+                      color: context.tokens.disabled,
+                      thickness: 8,
+                    ),
+          itemBuilder: (context, index) {
+            if (index == questionPosts.length) return const PostListFooter();
+            return GestureDetector(
+              onTap: () {
+                context.push(AppRoutes.communityQuestionViewPathOf(
+                    questionPosts[index].id));
+              },
+              behavior: HitTestBehavior.opaque,
+              child: _buildFeedItem(questionPosts[index], provider),
+            );
+          },
         ),
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              context.push(AppRoutes.communityQuestionViewPathOf(
-                  questionPosts[index].id));
-            },
-            behavior: HitTestBehavior.opaque,
-            child: _buildFeedItem(questionPosts[index], provider),
-          );
-        },
       ),
     );
   }
