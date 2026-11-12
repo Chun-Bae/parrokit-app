@@ -116,8 +116,12 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             body: const AppEmptyState(
               icon: Icons.video_library_outlined,
-              title: '아직 등록된 클립이 없어요.',
-              description: '보관함에서 클립을 추가하면 여기에서 이어서 볼 수 있어요.',
+              // 쇼츠는 기기·서버 클립만 읽는다(ShortsRepository). Google Drive
+              // 클립만 있는 사람에게 '클립을 추가하면'이라고 하면 이미 추가했는데
+              // 왜 안 나오는지 알 수 없다.
+              title: '쇼츠로 볼 클립이 없어요.',
+              description: '기기나 서버에 저장한 클립이 여기에 나와요.\n'
+                  'Google Drive 클립은 아직 쇼츠에 나오지 않아요.',
             ),
           );
         }
