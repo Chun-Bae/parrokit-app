@@ -10,20 +10,17 @@ import '../app_database.dart';
 /// - 다대다 매핑을 위한 GroupCollections 테이블 생성
 /// - clip 원본/캐시 스키마 생성
 /// - Collections에 storageMode, remoteId 컬럼 추가
-/// - 기존에 로컬/서버/gdrive 클립이 섞여 있던 콜렉션을 storageMode별로 분리
-///   (같은 이름의 콜렉션/그룹을 목적지 storageMode에서 찾거나 새로 만들고,
-///   그 모드의 클립들을 재배정)
+/// - 클립마다 파일 크기를 재서 storageBytes에 채움
 ///
-/// 주의 — 마지막 항목(storageMode별 분리)은 실제로 한 번도 실행되지 않는다.
-/// 아래 UPDATE가 WHERE 없이 모든 클립의 storage_mode를 'local'로 덮어쓴 뒤에
-/// 그 값을 읽어 모드를 가르기 때문에, distinctModes는 늘 {'local'}이고
-/// `if (... == 'local') continue;`에서 전부 빠진다. 그래서 분리 루프와 그
-/// 뒤의 빈 콜렉션 정리까지 도달하지 않는다.
+/// 전에는 "로컬·서버·gdrive 클립이 섞인 콜렉션을 storageMode별로 분리"하는
+/// 64줄이 더 있었다. 그 코드는 한 번도 실행되지 않았다. 아래 UPDATE가 WHERE
+/// 없이 모든 클립의 storage_mode를 'local'로 덮어쓴 다음 그 값을 읽어 모드를
+/// 갈랐기 때문에, 콜렉션마다 distinctModes가 늘 {'local'}이고
+/// `if (distinctModes.single == 'local') continue;`에서 전부 빠졌다. 분리
+/// 루프와 그 뒤의 빈 콜렉션 정리, 전용 헬퍼 둘까지 도달한 적이 없다.
 ///
-/// v2에는 클립별 storageMode 컬럼 자체가 없었으니(이 마이그레이션이 추가한다)
-/// v2 클립은 모두 로컬이고, 가를 것이 애초에 없었던 것으로 보인다. 지우지
-/// 않고 남겨 둔다 — 이미 사용자 기기에서 돌아간 마이그레이션이라, 판단은
-/// 이 코드를 쓴 사람이 하는 게 맞다.
+/// v2에는 클립별 storageMode 컬럼 자체가 없었다. 이 마이그레이션이 그걸
+/// 추가한다. 그러니 v2 클립은 모두 로컬이고 가를 것이 애초에 없었다.
 Future<void> migrateV2ToV3(Migrator m, AppDatabase db) async {
   await m.createTable(db.groups);
   await m.createTable(db.groupCollections);
@@ -61,106 +58,4 @@ Future<void> migrateV2ToV3(Migrator m, AppDatabase db) async {
       ClipsCompanion(storageBytes: Value(bytes)),
     );
   }
-
-  final collections = await db.select(db.collections).get();
-  final emptiedCollectionIds = <int>{};
-
-  for (final collection in collections) {
-    final clipsInCollection = await (db.select(db.clips)
-          ..where((c) => c.collectionId.equals(collection.id)))
-        .get();
-    if (clipsInCollection.isEmpty) continue;
-
-    final distinctModes = clipsInCollection.map((c) => c.storageMode).toSet();
-    if (distinctModes.length == 1 && distinctModes.single == 'local') {
-      continue;
-    }
-
-    for (final mode in distinctModes.where((mode) => mode != 'local')) {
-      final destCollectionId =
-          await _findOrCreateCollection(db, collection.name, mode);
-
-      await (db.update(db.clips)
-            ..where(
-              (c) =>
-                  c.collectionId.equals(collection.id) &
-                  c.storageMode.equals(mode),
-            ))
-          .write(ClipsCompanion(collectionId: Value(destCollectionId)));
-
-      final groupLinks = await (db.select(db.groupCollections)
-            ..where((gc) => gc.collectionId.equals(collection.id)))
-          .get();
-      for (final link in groupLinks) {
-        final sourceGroup = await (db.select(db.groups)
-              ..where((g) => g.id.equals(link.groupId))
-              ..limit(1))
-            .getSingleOrNull();
-        if (sourceGroup == null) continue;
-
-        final destGroupId =
-            await _findOrCreateGroup(db, sourceGroup.name, mode);
-        await db.into(db.groupCollections).insert(
-              GroupCollectionsCompanion.insert(
-                groupId: destGroupId,
-                collectionId: destCollectionId,
-              ),
-              mode: InsertMode.insertOrIgnore,
-            );
-      }
-    }
-
-    final remaining = await (db.select(db.clips)
-          ..where((c) => c.collectionId.equals(collection.id)))
-        .get();
-    if (remaining.isEmpty) {
-      emptiedCollectionIds.add(collection.id);
-    }
-  }
-
-  if (emptiedCollectionIds.isNotEmpty) {
-    await (db.delete(db.groupCollections)
-          ..where((gc) => gc.collectionId.isIn(emptiedCollectionIds)))
-        .go();
-    await (db.delete(db.collections)
-          ..where((c) => c.id.isIn(emptiedCollectionIds)))
-        .go();
-  }
-}
-
-Future<int> _findOrCreateCollection(
-  AppDatabase db,
-  String name,
-  String storageMode,
-) async {
-  final existing = await (db.select(db.collections)
-        ..where(
-          (c) => c.name.equals(name) & c.storageMode.equals(storageMode),
-        )
-        ..limit(1))
-      .getSingleOrNull();
-  if (existing != null) return existing.id;
-  return db.into(db.collections).insert(
-        CollectionsCompanion.insert(
-          name: name,
-          storageMode: Value(storageMode),
-        ),
-      );
-}
-
-Future<int> _findOrCreateGroup(
-  AppDatabase db,
-  String name,
-  String storageMode,
-) async {
-  final existing = await (db.select(db.groups)
-        ..where(
-          (g) => g.name.equals(name) & g.storageMode.equals(storageMode),
-        )
-        ..limit(1))
-      .getSingleOrNull();
-  if (existing != null) return existing.id;
-  return db.into(db.groups).insert(
-        GroupsCompanion.insert(name: name, storageMode: Value(storageMode)),
-      );
 }
