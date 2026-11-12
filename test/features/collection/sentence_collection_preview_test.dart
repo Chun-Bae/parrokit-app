@@ -9,6 +9,7 @@ import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
+import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/sentence_seed.dart';
@@ -530,5 +531,49 @@ void main() {
     await tester.scrollUntilVisible(find.text('Hello there!'), 300,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('Hello there!'), findsOneWidget);
+  });
+
+  /// 이 문장 줄 안의 동작 버튼. 동작 칸은 모든 줄 뒤에 깔려 있어서 줄로 좁힌다.
+  Finder rowAction(String sentence, String label) => find.descendant(
+      of: find.ancestor(
+          of: find.text(sentence), matching: find.byType(SwipeActionTile)),
+      matching: find.text(label));
+
+  testWidgets('내 문장을 밀면 앵무새 끄기와 삭제를 할 수 있다', (tester) async {
+    await MySentenceStore.add('guest',
+        language: '영어', text: 'Swipe me', translation: '밀어 봐');
+    final id = MySentenceStore.idFor('영어', 'Swipe me');
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Swipe me'), 300,
+        scrollable: find.byType(Scrollable).first);
+
+    await tester.drag(find.text('Swipe me'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(rowAction('Swipe me', '앵무새 끄기'));
+    await tester.pumpAndSettle();
+    expect((await SentenceActivityStore.load('guest', id)).routineEnabled,
+        isFalse);
+
+    await tester.drag(find.text('Swipe me'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    expect(rowAction('Swipe me', '앵무새 켜기'), findsOneWidget);
+    await tester.tap(rowAction('Swipe me', '삭제'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '삭제'));
+    await tester.pumpAndSettle();
+    expect((await MySentenceStore.load('guest')).any((s) => s.id == id),
+        isFalse);
+  });
+
+  testWidgets('기본 문장은 밀어도 삭제가 없다', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Hello there!'), 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.drag(find.text('Hello there!'), const Offset(-200, 0));
+    await tester.pumpAndSettle();
+    expect(rowAction('Hello there!', '앵무새 끄기'), findsOneWidget);
+    expect(rowAction('Hello there!', '삭제'), findsNothing);
   });
 }

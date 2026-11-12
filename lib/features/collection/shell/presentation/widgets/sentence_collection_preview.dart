@@ -19,6 +19,7 @@ import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'clip_sentence_matches_section.dart';
+import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
 import '../sentence_explore_screen.dart';
 import 'sentence_import_method_dialog.dart';
 import 'sentence_import_sheet.dart';
@@ -52,6 +53,8 @@ class SentenceCollectionPreview extends StatefulWidget {
 
 class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   bool get explore => widget.exploreOnly;
+
+  final _swipeKeys = <String, GlobalKey<SwipeActionTileState>>{};
 
   /// 둘러보기 화면의 공유 문장 정렬. true면 좋아요 순, false면 최신 순.
   bool sortPopular = true;
@@ -779,6 +782,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                         activities[sentence.id] ?? const SentenceActivity(),
                     repository: repository,
                     authorName: authorName,
+                    swipeKey: _swipeKeys.putIfAbsent(
+                        sentence.id, GlobalKey<SwipeActionTileState>.new),
                   ),
                 );
               }),
@@ -1066,7 +1071,8 @@ class _MySentenceTile extends StatelessWidget {
     required this.activity,
     required this.repository,
     required this.authorName,
-  });
+    required GlobalKey<SwipeActionTileState> swipeKey,
+  }) : _swipeKey = swipeKey;
 
   final DefaultConversationSentence sentence;
   final String accountId;
@@ -1074,12 +1080,154 @@ class _MySentenceTile extends StatelessWidget {
   final SharedSentenceRepository? repository;
   final String authorName;
 
+  /// 밀어서 연 동작 칸을 버튼을 누른 뒤 닫으려고 부모가 문장마다 하나씩 준다.
+  final GlobalKey<SwipeActionTileState> _swipeKey;
+
   Future<void> openDetails(BuildContext context) => showSentenceDetails(
         context,
         sentence: sentence,
         accountId: accountId,
         repository: repository,
         authorName: authorName,
+      );
+
+  bool get _isMine => sentence.id.startsWith('my-');
+
+  /// 둘러보기에 공유할 수 있는 문장. 상세 시트의 canPublish와 같은 기준.
+  bool get _canPublish =>
+      _isMine &&
+      repository != null &&
+      accountId != 'guest' &&
+      (sentence.authorId.isEmpty || sentence.authorId == accountId);
+
+  void _toast(BuildContext context, String message) =>
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+
+  Future<void> _toggleRoutine(BuildContext context) async {
+    final next = !activity.routineEnabled;
+    try {
+      await SentenceActivityStore.setRoutineEnabled(
+          accountId, sentence.id, next);
+      if (context.mounted) {
+        _toast(context, next ? '앵무새가 이 문장을 말해요.' : '앵무새 순서에서 뺐어요.');
+      }
+    } catch (_) {
+      if (context.mounted) _toast(context, '루틴 설정을 저장하지 못했어요.');
+    }
+  }
+
+  /// 공유 중이면 취소를, 아니면 공유를 묻고 처리한다. 문구는 상세 시트와 같다.
+  Future<void> _togglePublish(BuildContext context) async {
+    final repo = repository!;
+    if (authorName.trim().isEmpty) {
+      _toast(context, '닉네임을 먼저 설정해주세요.');
+      return;
+    }
+    bool published;
+    try {
+      published = await repo.isPublished(sentenceId: sentence.id);
+    } catch (_) {
+      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해주세요.');
+      return;
+    }
+    if (!context.mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(published ? '공유를 취소할까요?' : '둘러보기에 공유할까요?'),
+        content: Text(published
+            ? '둘러보기에서 사라지고 좋아요 수와 가져간 수도 함께 사라져요.\n'
+                '이미 가져간 사람의 문장은 그대로 남아요. 내 문장함에는 계속 있어요.'
+            : '공개되는 것: 문장, 뜻, 발음, 작성자 "$authorName"\n'
+                '공개되지 않는 것: 들은 횟수, 연습 기록, 친밀도, 메모\n\n'
+                '언제든 공유를 취소할 수 있어요. 하루에 '
+                '${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(published ? '그대로 두기' : '취소')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(published ? '공유 취소' : '공유')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      if (published) {
+        await repo.unpublish(sentenceId: sentence.id);
+      } else {
+        await repo.publish(sentenceId: sentence.id, authorName: authorName);
+      }
+      if (context.mounted) {
+        _toast(context, published ? '공유를 취소했어요.' : '둘러보기에 공유했어요.');
+      }
+    } on ShareLimitReachedException catch (e) {
+      if (context.mounted) _toast(context, '$e 내일 다시 공유해주세요.');
+    } catch (_) {
+      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
+  Future<void> _remove(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('내 문장에서 삭제할까요?'),
+        content: const Text('삭제하면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요. '
+            '둘러보기에 공유 중이었다면 거기서도 사라져요.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소')),
+          FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('삭제')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await MySentenceStore.remove(accountId, sentence.id);
+    } catch (_) {
+      if (context.mounted) _toast(context, '삭제하지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
+  Widget _swipeAction(
+    BuildContext context, {
+    required Color color,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) =>
+      Expanded(
+        child: Material(
+          color: color,
+          child: InkWell(
+            onTap: () {
+              _swipeKey.currentState?.close();
+              onTap();
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(height: 2),
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        context.texts.labelSmall.copyWith(color: Colors.white)),
+              ],
+            ),
+          ),
+        ),
       );
 
   @override
@@ -1092,7 +1240,10 @@ class _MySentenceTile extends StatelessWidget {
     // 최고 단계만 연한 황금빛 배경을 깐다.
     final row = InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
-      onTap: () => openDetails(context),
+      // 밀어서 동작 칸이 열려 있으면 누를 때 닫기만 한다. 상세는 열지 않는다.
+      onTap: () => (_swipeKey.currentState?.isOpen ?? false)
+          ? _swipeKey.currentState!.close()
+          : openDetails(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
         child: Row(children: [
@@ -1132,18 +1283,48 @@ class _MySentenceTile extends StatelessWidget {
         ]),
       ),
     );
-    if (!maxed) return row;
-    return Container(
-      key: const ValueKey('sentence-card-gold'),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: context.collectionTokens.goldBackground,
-        ),
-      ),
-      child: row,
+    final body = !maxed
+        ? row
+        : Container(
+            key: const ValueKey('sentence-card-gold'),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: context.collectionTokens.goldBackground,
+              ),
+            ),
+            child: row,
+          );
+    final colors2 = Theme.of(context).colorScheme;
+    // 밀면 앵무새 켜기/끄기 · 공유 · 삭제. 기본 문장은 앵무새만.
+    final actions = <Widget>[
+      _swipeAction(context,
+          color: colors2.primary,
+          icon: activity.routineEnabled
+              ? Icons.voice_over_off_rounded
+              : Icons.record_voice_over_rounded,
+          label: activity.routineEnabled ? '앵무새 끄기' : '앵무새 켜기',
+          onTap: () => _toggleRoutine(context)),
+      if (_canPublish)
+        _swipeAction(context,
+            color: colors2.tertiary,
+            icon: Icons.public_rounded,
+            label: '공유',
+            onTap: () => _togglePublish(context)),
+      if (_isMine)
+        _swipeAction(context,
+            color: colors2.error,
+            icon: Icons.delete_outline_rounded,
+            label: '삭제',
+            onTap: () => _remove(context)),
+    ];
+    return SwipeActionTile(
+      key: _swipeKey,
+      actionWidth: 84.0 * actions.length,
+      actions: actions,
+      child: body,
     );
   }
 }

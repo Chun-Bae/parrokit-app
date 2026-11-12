@@ -29,6 +29,9 @@ class SwipeActionTileState extends State<SwipeActionTile>
 
   bool _open = false;
 
+  /// 동작 칸이 열려 있는지. 열린 줄을 누르면 닫기만 하려고 밖에서 본다.
+  bool get isOpen => _open;
+
   void _snap(bool open) {
     setState(() => _open = open);
     if (open) {
