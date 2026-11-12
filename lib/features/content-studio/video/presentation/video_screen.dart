@@ -1,4 +1,3 @@
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
@@ -931,7 +930,6 @@ class _VideoWarningBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -964,36 +962,16 @@ class _VideoWarningBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // 새 디자인: 같은 말을 하던 세 줄(제목 아래 문장 + 두 점)을 한
-                // 줄로 줄인다. 책임 안내는 그대로 둔다.
-                if (AppConfig.newDesign)
-                  Text(
-                    '스크립트가 길면 영상에 다 들어가지 않을 수 있어요. 짧게 써 주세요.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
-                    ),
-                  )
-                else ...[
-                  Text(
-                    '스크립트가 영상에 전부 들어가지 않을 수 있습니다.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
+                // 같은 말을 하던 세 줄(문장 + 두 점)을 한 줄로 줄였다(4차).
+                // 책임 안내는 그대로 둔다.
+                Text(
+                  '스크립트가 길면 영상에 다 들어가지 않을 수 있어요. 짧게 써 주세요.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
                   ),
-                  const SizedBox(height: 8),
-                  _VideoWarningPoint(
-                    text: '영상 길이와 스크립트 길이는 너무 길지 않도록 적절하게 설정해 주세요.',
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 4),
-                  _VideoWarningPoint(
-                    text: '스크립트가 자연스럽게 반영될 수 있도록 간결하게 작성해 주세요.',
-                    isDark: isDark,
-                  ),
-                ],
+                ),
                 const SizedBox(height: 8),
                 Text(
                   '의도와 다르게 생성된 동영상에 대한 책임은 사용자에게 있습니다.',
@@ -1007,42 +985,6 @@ class _VideoWarningBanner extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _VideoWarningPoint extends StatelessWidget {
-  const _VideoWarningPoint({
-    required this.text,
-    required this.isDark,
-  });
-
-  final String text;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '•',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context.tokens.textPrimary,
-                fontWeight: FontWeight.w900,
-              ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ),
-      ],
     );
   }
 }

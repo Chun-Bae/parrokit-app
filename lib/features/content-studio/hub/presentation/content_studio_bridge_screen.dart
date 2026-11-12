@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -17,10 +16,8 @@ class ContentStudioBridgeScreen extends StatelessWidget {
     final surface =
         isDark ? context.tokens.surfaceContainer : colorScheme.surface;
     final border = context.tokens.dividerSubtle;
-    final secondaryText = context.tokens.textSecondary;
-    // 새 디자인: 세 줄이 카드처럼 생겼는데 눌러도 아무 일이 없었다. 줄을 누르면
-    // 그 탭으로 바로 가고, 같은 말을 하던 부제와 '시작하기' 버튼은 숨긴다.
-    final newDesign = AppConfig.newDesign;
+    // 세 줄이 카드처럼 생겼는데 눌러도 아무 일이 없었다. 줄을 누르면 그 탭으로
+    // 바로 간다. 같은 말을 하던 부제와 '시작하기' 버튼은 없앴다(4차).
     void openTab(int index) =>
         context.go('${AppRoutes.contentStudioHubPath}?tab=$index');
 
@@ -70,64 +67,38 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                           color: colorScheme.onSurface,
                         ),
                       ),
-                      if (!newDesign) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          '자막 편집, TTS, 영상 제작 흐름을 한 곳에서 이어서 작업하세요.',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            height: 1.45,
-                            color: secondaryText,
-                          ),
-                        ),
-                      ],
-                      SizedBox(height: newDesign ? 24 : 32),
+                      const SizedBox(height: 24),
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-captioning'),
                         icon: Icons.subtitles_rounded,
                         title: '자막',
-                        description: newDesign
-                            ? '영상에 자막을 달아 클립으로 저장해요'
-                            : '클립을 불러오고 제목, 태그, 세그먼트를 정리합니다.',
+                        description: '영상에 자막을 달아 클립으로 저장해요',
                         borderColor: border,
-                        onTap: newDesign ? () => openTab(0) : null,
+                        onTap: () => openTab(0),
                       ),
                       const SizedBox(height: 12),
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-tts'),
                         icon: Icons.graphic_eq_rounded,
                         title: 'TTS',
-                        description: newDesign
-                            ? '문장을 읽어 주는 음성을 만들어요'
-                            : '대본 기반 음성 제작 흐름을 준비합니다.',
+                        description: '문장을 읽어 주는 음성을 만들어요',
                         borderColor: border,
-                        onTap: newDesign ? () => openTab(1) : null,
+                        onTap: () => openTab(1),
                       ),
                       const SizedBox(height: 12),
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-video'),
                         icon: Icons.movie_creation_rounded,
                         title: 'Video',
-                        description: newDesign
-                            ? '대본으로 짧은 영상을 만들어요'
-                            : '영상 제작 도구로 결과물을 확장합니다.',
+                        description: '대본으로 짧은 영상을 만들어요',
                         borderColor: border,
-                        onTap: newDesign ? () => openTab(2) : null,
+                        onTap: () => openTab(2),
                       ),
                       const SizedBox(height: 24),
                     ],
                   ),
                 ),
               ),
-              if (!newDesign)
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: FilledButton.icon(
-                    onPressed: () => context.go(AppRoutes.contentStudioHubPath),
-                    icon: const Icon(Icons.arrow_forward_rounded),
-                    label: const Text('시작하기'),
-                  ),
-                ),
             ],
           ),
         ),
