@@ -1,5 +1,5 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_naver_login/flutter_naver_login.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_naver_login/interface/types/naver_login_result.dart';
@@ -48,7 +48,7 @@ class NaverSsoService {
       return userCredential;
       
     } catch (e) {
-      debugPrint("Naver SSO Error: $e");
+      AppLogger.e('[SSO][Naver] 로그인 실패', error: e);
       return null;
     }
   }
@@ -57,7 +57,7 @@ class NaverSsoService {
     try {
       await FlutterNaverLogin.logOut();
     } catch (e) {
-      debugPrint("Naver SignOut Error: $e");
+      AppLogger.w('[SSO][Naver] 로그아웃 실패: $e');
     }
   }
 }

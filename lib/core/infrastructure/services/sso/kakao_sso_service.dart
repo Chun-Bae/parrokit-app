@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:flutter/services.dart';
@@ -46,7 +47,14 @@ class KakaoSsoService {
         accessToken: token.accessToken,
       );
     } catch (e) {
-      // 로그인 취소 혹은 에러 발생
+      // 전에는 아무 기록 없이 null만 돌려줬다. 카카오 로그인이 막혀도
+      // 배포 뒤에는 흔적이 하나도 안 남는다.
+      // 사용자가 직접 취소한 건 오류가 아니므로 구분한다.
+      if (e is PlatformException && e.code == 'CANCELED') {
+        AppLogger.d('[SSO][Kakao] 사용자가 로그인을 취소했다');
+        return null;
+      }
+      AppLogger.e('[SSO][Kakao] 로그인 실패', error: e);
       return null;
     }
   }
@@ -56,7 +64,8 @@ class KakaoSsoService {
     try {
       await UserApi.instance.logout();
     } catch (error) {
-      // 이미 로그아웃 되어있거나 에러 발생 시 무시
+      // 이미 로그아웃되어 있으면 여기로 온다. 막는 건 아니지만 남겨는 둔다.
+      AppLogger.w('[SSO][Kakao] 로그아웃 실패: $error');
     }
   }
 }

@@ -1,7 +1,7 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AppleSsoService {
@@ -62,7 +62,15 @@ class AppleSsoService {
 
       return userCredential;
     } catch (e) {
-      debugPrint("Apple SSO Error: $e");
+      // 사용자가 직접 취소한 건 오류가 아니다. 나머지는 로그인이 막힌
+      // 것이므로 Crashlytics까지 올린다 — 전에는 debugPrint라 배포 뒤에
+      // 로그인 실패가 아예 보이지 않았다.
+      if (e is SignInWithAppleAuthorizationException &&
+          e.code == AuthorizationErrorCode.canceled) {
+        AppLogger.d('[SSO][Apple] 사용자가 로그인을 취소했다');
+        return null;
+      }
+      AppLogger.e('[SSO][Apple] 로그인 실패', error: e);
       return null;
     }
   }
