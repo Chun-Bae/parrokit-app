@@ -561,3 +561,57 @@ Provider를 결제 시작 전에 잡아 두고, 지급은 화면 수명과 무�
   실패마다 `AppLogger`를 남긴다. 리포에서 가장 꼼꼼하게 쓰인 Provider다.
 - 알림 저장소의 `markAsRead`·`deleteNotification`은 트랜잭션 안에서
   `isRead`를 먼저 보고 안 읽은 것만 카운터를 줄인다. 이중 차감이 안 난다.
+
+## 묶음 9 — TTS (`lib/features/content-studio/tts`)
+
+### 고친 것
+
+**39. 캐시 키가 32비트 해시라 다른 글의 음성이 나올 수 있었다** — 이 묶음에서 가장 큰 것
+`TtsRemoteDataSource.generateTts`가 결과를 임시 폴더에 캐시하는데, 파일명을
+파라미터 문자열의 `String.hashCode`로 만들었다. 32비트라 서로 다른 스크립트가
+같은 값이 될 수 있다. 그러면 캐시 히트로 판단해서 **다른 글의 음성을 돌려준다.**
+패롯을 내고 엉뚱한 음성을 받는데 왜 그런지 알 방법이 없다.
+`sha256` 앞 32자로 바꿨다. `crypto`는 이미 의존성에 있었다.
+
+**40. 보이스 목록 조회가 겹치면 옛 결과가 이겼다**
+언어 고르기 시트가 `updateLanguage` 직후 `fetchAvailableVoices`를 `await` 없이
+부른다. 빠르게 두 번 고르면 늦게 끝난 쪽이 이긴다. 다른 언어의 보이스 목록이
+뜰 뿐 아니라, 뒤따르는 "현재 voiceId가 목록에 없으면 초기화" 때문에 **방금 고른
+보이스가 지워진다.** 요청 번호로 막았다.
+
+**41. 보이스 미리듣기도 겹치면 엉뚱한 음성이 났다**
+재생 버튼은 그 보이스가 로딩 중일 때만 꺼져서, A를 누른 직후 B를 누를 수 있다.
+A가 늦게 끝나면 화면에는 B가 재생 중으로 표시되는데 A 음성이 나온다.
+`_previewLoadingVoiceId`가 이미 들고 있는 값으로 막았다 (새 필드 없음).
+
+**42. 패롯 차감 실패가 조용했다**
+`generateTts`가 성공한 뒤 `userProvider.addCoins(-cost)`를 기다리지 않았다.
+차감이 실패하면 사용자는 음성을 받고 패롯은 안 깎인 채로 흔적이 없다.
+앞서 고친 결제·광고 보상은 사용자가 손해 보는 쪽이었고 이건 앱이 손해 보는
+쪽이다. 결과는 이미 손에 들어갔으니 되돌리지 않고 기록만 남긴다.
+
+### 보류 — 판단이 필요하다
+
+**버. 저장한 문장의 id도 32비트 해시다**
+`my_sentence_store.dart`의 `idFor`가
+`'my-$language-${text.trim().hashCode.toUnsigned(32)}'`를 문서 id로 쓴다.
+같은 문장을 두 번 저장하면 합쳐지게 하려는 의도는 분명하지만, **서로 다른
+문장이 같은 id가 되면 하나가 다른 하나를 덮어쓴다.** 저장한 문장이 사라지는
+것이다. 1000문장이면 확률이 1e-4 언저리로 낮지만 0은 아니다.
+TTS 캐시와 달리 여기는 id가 사용자 데이터의 신원이라, 바꾸면 이미 저장된
+문장이 전부 끊긴다. 새 id로 쓰면서 옛 id도 읽는 이행 절차가 필요하고
+그건 설계 판단이라 손대지 않았다.
+
+### 보안 쪽으로 확인한 것
+
+- API 키가 앱에 없다. TTS는 전부 Firebase Functions(`generateTts`,
+  `listTtsVoices`, `listElevenLabsVoices`)를 거친다.
+- 리포 전체에서 `AppLogger`에 키·토큰·비밀번호 값이 들어가는 자리는 없다.
+
+### 깨끗했던 것
+
+- `TtsProvider`는 엔진별 설정을 `GoogleTtsSettings`·`ElevenLabsTtsSettings`·
+  `GeminiTtsSettings`로 나눠 들고 있어서 값이 서로 새지 않는다.
+- 미리듣기 `AudioPlayer`는 시트 `dispose`에서 닫는다.
+- 입력 240자 제한은 `TextField(maxLength: 240)`이 실제로 막고 있어서,
+  Provider 쪽 `if (newText.length <= 240)` 가드는 도달하지 않는 방어선이다.
