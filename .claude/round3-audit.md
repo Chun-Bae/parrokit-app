@@ -42,8 +42,8 @@
 - [x] 홈 대시보드 (character_dashboard_screen, learning_hub_screen)
 - [x] 학습 무대 (stage_preview_screen, add_sentence_screen)
 - [ ] 최근 (recent_screen)
-- [ ] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
-- [ ] 클립 라이브러리 (library_screen, clip_discover_screen)
+- [x] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
+- [x] 클립 라이브러리 (library_screen, clip_discover_screen)
 - [ ] 클립 플레이어·쇼츠 (clip_player_screen, shorts_screen)
 - [ ] 커뮤니티 셸 + 게시판 목록 (community_shell_screen, board_screen)
 - [ ] 게시글 보기·쓰기 (board_view_screen, board_write_screen)
@@ -127,3 +127,13 @@
 - 말하기 설정 시트를 연 채로 외형을 바꾸면 시트만 이전 외형으로 남는다. 다시 열면 맞다. 드물어서 기록만
 - C: `feature-proposals.md` 작성. 버튼 11개 안 + 새 기능 8개 + 상위 5
 - 최근 화면은 클립이 없어 빈 상태만 볼 수 있다. 다음 반복에서 빈 상태만 확인
+
+### 반복 3 (2026-11-12)
+- `a2e342e9` **보관함 클립 탭 메뉴 버튼이 탭바 뒤에 깔려 못 누르던 것**. 그룹·컬렉션·클립 메뉴로 가는 유일한 길이었다
+- `68fb29a7` 이어보기 빈 문구 '등록된 클립이 없어요' → '아직 본 클립이 없어요'
+- `7ddec2cb` 클립 배너가 목록을 안 열었을 때 '클립 0개'라고 하던 것
+- `25a23ac2` '콜렉션'/'컬렉션' 표기 섞임 → '컬렉션'
+- 안건 추가: 홈 '지금 뜨는 문장'이 하드코딩된 가짜 데이터(가짜 사용자·좋아요, LIVE 배지). feature-proposals.md 2-0, 상위 목록 0번
+- 메모리의 FAB 결정("보관함은 Positioned로 괜찮다")이 틀렸던 것을 메모리에서 고쳤다
+- 최근 화면(recent): 실제 시청 기록이 없어 빈 상태만 볼 수 있다. 남은 화면 돌 때 같이 본다
+- 다음: 클립 플레이어·쇼츠 → 커뮤니티 셸·게시판 → 더보기 → 콘텐츠 제작
