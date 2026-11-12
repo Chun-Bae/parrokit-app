@@ -49,6 +49,21 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
       key: const PageStorageKey('word-collection-preview'),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
       children: [
+        // 단어 탭은 아직 예시 데이터로 그린 미리보기다. 내 단어로 오해하지
+        // 않게 새 디자인에서는 맨 위에 한 줄로 알린다.
+        if (AppConfig.newDesign) ...[
+          Row(children: [
+            Icon(Icons.info_outline_rounded,
+                size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('예시 화면이에요. 단어 모으기는 준비 중이에요.',
+                  style: context.texts.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            ),
+          ]),
+          const SizedBox(height: 12),
+        ],
         _ViewSwitch(
           explore: explore,
           onChanged: (value) {
@@ -226,13 +241,13 @@ class _ReviewSummary extends StatelessWidget {
               ],
             ),
           ),
-          FilledButton.tonal(onPressed: _noop, child: Text('시작')),
+          // 복습 흐름이 아직 없다. 빈 함수를 달면 누를 수 있는 모양인데
+          // 아무 일도 없으므로 3차(bebc45d2)의 다른 버튼처럼 비활성으로 둔다.
+          const FilledButton.tonal(onPressed: null, child: Text('시작')),
         ],
       ),
     );
   }
-
-  static void _noop() {}
 }
 
 class _SectionTitle extends StatelessWidget {
