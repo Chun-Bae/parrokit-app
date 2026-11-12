@@ -84,7 +84,7 @@ class EmptyState extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '자막을 생성할 영상을 추가해주세요',
+                        '자막을 붙일 영상이나 음성을 골라요',
                         style: context.texts.labelMedium
                             .copyWith(color: cs.onSurfaceVariant),
                       ),

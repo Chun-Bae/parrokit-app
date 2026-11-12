@@ -111,7 +111,7 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: showAppBar
             ? ContentStudioAppBar(
-                title: '편집',
+                title: vm.clipId != null ? '클립 편집' : '새 클립',
                 coins: userProvider.coins,
                 onBack: () => _showExitConfirmation(context, vm),
                 backgroundColor: Theme.of(context).colorScheme.surface,
@@ -198,6 +198,11 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
   Future<void> _showExitConfirmation(
       BuildContext context, CaptioningProvider vm) async {
     if (vm.isSttProcessing) return;
+    // 아무것도 안 했으면 잃을 것이 없으니 묻지 않고 닫는다.
+    if (vm.isUntouchedNew) {
+      await _close(context, null);
+      return;
+    }
     final result = await showExitConfirmSheet(context);
     if (result == true && context.mounted) {
       await _close(context, null);

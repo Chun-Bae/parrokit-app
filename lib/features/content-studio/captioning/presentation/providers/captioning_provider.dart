@@ -126,6 +126,17 @@ class CaptioningProvider extends ChangeNotifier
   final durationCtl = TextEditingController();
   final tagsCtl = TextEditingController();
 
+  /// 새 클립 화면에서 아직 아무것도 고르거나 입력하지 않았는지.
+  /// 이때는 나갈 때 "입력한 내용이 삭제된다" 확인 창을 띄우지 않는다.
+  /// 편집 모드는 불러오기가 끝나야 [isEdit]가 켜지므로 [clipId]로 판단한다.
+  bool get isUntouchedNew =>
+      clipId == null &&
+      picked == null &&
+      titleCtl.text.trim().isEmpty &&
+      tagsCtl.text.trim().isEmpty &&
+      tags.isEmpty &&
+      collectionNameCtl.text.trim() == (initialCollectionName ?? '').trim();
+
   // 저장 후 닫기 플래그
   bool _shouldClose = false;
   bool get shouldClose => _shouldClose;
