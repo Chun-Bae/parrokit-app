@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/navigation/app_bottom_navbar.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/storage_transfer_sheet.dart';
 import 'package:provider/provider.dart';
@@ -69,7 +70,9 @@ class AppShell extends StatelessWidget {
               ? _buildCollectionSelectionBar(context)
               : AppBottomNavBar(
                   currentIndex: currentIndex,
-                  onTap: (i) => _onTabTap(context, i),
+                  onTap: (i) => _onTabTap(context, i,
+                      currentIndex: currentIndex,
+                      currentPath: GoRouterState.of(context).uri.path),
                 ),
     );
   }
@@ -181,8 +184,24 @@ class AppShell extends StatelessWidget {
     );
   }
 
-  /// 탭 선택 시 네비게이션
-  void _onTabTap(BuildContext context, int index) {
+  static const _tabRootPaths = [
+    AppRoutes.explorePath,
+    AppRoutes.communityPath,
+    AppRoutes.dashboardPath,
+    AppRoutes.collectionPath,
+    AppRoutes.morePath,
+  ];
+
+  /// 탭 선택 시 네비게이션.
+  ///
+  /// 이미 그 탭의 첫 화면에 있으면 화면을 다시 만들지 않고 [TabReselect]로
+  /// 알려 맨 위로 스크롤하게 한다. 하위 화면이면 아래 go로 첫 화면에 간다.
+  void _onTabTap(BuildContext context, int index,
+      {required int currentIndex, required String currentPath}) {
+    if (index == currentIndex && currentPath == _tabRootPaths[index]) {
+      TabReselect.instance.fire(index);
+      return;
+    }
     switch (index) {
       case 0:
         context.go(AppRoutes.explorePath);

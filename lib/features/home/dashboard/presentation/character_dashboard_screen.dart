@@ -1,3 +1,4 @@
+import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -49,6 +50,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
   void initState() {
     super.initState();
     scrollController = ScrollController()..addListener(handleScroll);
+    TabReselect.instance.addListener(_onTabReselected);
     AppConfig.newDesignListenable.addListener(_onDesignChanged);
     // 홈 첫 진입에서 한 번 팁을 보여준다 (예전에는 클래식 대시보드가 띄웠다).
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,6 +65,11 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
   void handleScroll() {
     final next = scrollController.hasClients && scrollController.offset > 360;
     if (next != showScrollToTop) setState(() => showScrollToTop = next);
+  }
+
+  /// 홈에서 홈 탭을 다시 누르면 맨 위로.
+  void _onTabReselected() {
+    if (TabReselect.instance.lastIndex == 2) scrollToTop();
   }
 
   Future<void> scrollToTop() async {
@@ -188,6 +195,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
   @override
   void dispose() {
     AppConfig.newDesignListenable.removeListener(_onDesignChanged);
+    TabReselect.instance.removeListener(_onTabReselected);
     scrollController
       ..removeListener(handleScroll)
       ..dispose();

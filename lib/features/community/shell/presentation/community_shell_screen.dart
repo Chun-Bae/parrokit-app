@@ -1,3 +1,4 @@
+import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
@@ -48,6 +49,18 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
     _tabController = TabController(length: 3, vsync: this)
       ..addListener(_onTabChanged);
     _outerScrollController.addListener(_checkHeaderVisibility);
+    TabReselect.instance.addListener(_onTabReselected);
+  }
+
+  /// 커뮤니티에서 커뮤니티 탭을 다시 누르면 위 머리 부분이 다시 보이게 올린다.
+  void _onTabReselected() {
+    if (TabReselect.instance.lastIndex != 1) return;
+    if (!_outerScrollController.hasClients) return;
+    _outerScrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _onTabChanged() {
@@ -66,6 +79,7 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
 
   @override
   void dispose() {
+    TabReselect.instance.removeListener(_onTabReselected);
     _tabController.removeListener(_onTabChanged);
     _outerScrollController.removeListener(_checkHeaderVisibility);
     _outerScrollController.dispose();
