@@ -204,12 +204,25 @@ class ClipPlayerViewModel extends ChangeNotifier
       _appBarTitle = (_clip?.title ?? '').isNotEmpty ? _clip!.title : '재생';
       notifyListeners();
     } catch (e) {
+      // _initVideo가 컨트롤러를 만든 뒤 initialize()에서 넘어졌을 수 있다.
+      // 그대로 두면 오류 화면을 띄워 둔 내내 네이티브 플레이어를 붙잡고 있다.
+      _disposeController();
       _errorMessage = e.toString();
       _isLoading = false;
       _clip = null;
       _segments = const [];
       notifyListeners();
     }
+  }
+
+  /// 컨트롤러를 놓는다. 초기화에 성공했는지와 무관하게 부를 수 있다.
+  void _disposeController() {
+    final controller = _controller;
+    if (controller == null) return;
+    _controller = null;
+    _isInitialized = false;
+    controller.removeListener(_onTick);
+    controller.dispose();
   }
 
   Future<void> _initVideo() async {
@@ -288,10 +301,11 @@ class ClipPlayerViewModel extends ChangeNotifier
       });
     }
 
-    if (_isInitialized && _controller != null) {
-      _controller!.removeListener(_onTick);
-      _controller!.dispose();
-    }
+    // 전에는 `_isInitialized && _controller != null`일 때만 놓았다. 파일이
+    // 깨졌거나 없어서 initialize()가 던지면, 또는 초기화가 끝나기 전에
+    // 사용자가 뒤로 가면 _isInitialized가 false라 컨트롤러를 영영 안 놓았다.
+    // 네이티브 플레이어가 그대로 남는다.
+    _disposeController();
 
     disposeUiMixin();
     super.dispose();
