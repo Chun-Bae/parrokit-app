@@ -112,11 +112,8 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            '연습한 문장이 많을수록 날짜가 진해져요.',
-            style: context.texts.bodySmall.copyWith(color: muted),
-          ),
+          // "연습한 문장이 많을수록 날짜가 진해져요" 부제는 아래 범례(적게~완료)와
+          // 같은 말이라 지웠다.
           const SizedBox(height: 16),
           Row(
             children: [

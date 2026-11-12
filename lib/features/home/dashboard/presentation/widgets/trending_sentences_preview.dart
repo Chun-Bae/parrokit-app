@@ -295,11 +295,8 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
             ),
           ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          '다른 사람들이 공유한 문장을 좋아요 순으로 보여줘요',
-          style: context.texts.bodySmall.copyWith(color: muted),
-        ),
+        // "다른 사람들이 공유한 문장을 좋아요 순으로 보여줘요" 부제는 제목 옆
+        // '인기' 표시와 같은 말이라 지웠다.
         const SizedBox(height: 12),
         if (loading)
           SizedBox(
