@@ -104,7 +104,7 @@ class RecentClipCard extends StatelessWidget {
                     vertical: 8,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   foregroundColor: cs.primary,
                 ),

@@ -187,14 +187,14 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                   child: Material(
                     color: levels[level].withValues(alpha: future ? 0.4 : 1),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       side: BorderSide(
                         color: chosen || current ? ink : Colors.transparent,
                         width: chosen ? 2 : 1,
                       ),
                     ),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       onTap:
                           future ? null : () => setState(() => selected = date),
                       child: Center(
@@ -244,7 +244,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                       margin: const EdgeInsets.only(right: 3),
                       decoration: BoxDecoration(
                         color: color,
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
                       ),
                     ),
                   ),

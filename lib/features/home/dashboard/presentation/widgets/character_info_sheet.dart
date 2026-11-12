@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -47,7 +48,7 @@ class CharacterInfoSheet extends StatelessWidget {
     Widget detail(IconData icon, String title, String value) => Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-              color: tile, borderRadius: BorderRadius.circular(18)),
+              color: tile, borderRadius: BorderRadius.circular(AppRadius.lg)),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
@@ -110,7 +111,7 @@ class CharacterInfoSheet extends StatelessWidget {
                 LinearProgressIndicator(
                     value: experience / 100,
                     minHeight: 10,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     color: green,
                     backgroundColor: tile),
                 const SizedBox(height: 20),
@@ -150,7 +151,8 @@ class CharacterInfoSheet extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                      color: tile, borderRadius: BorderRadius.circular(14)),
+                      color: tile,
+                      borderRadius: BorderRadius.circular(AppRadius.md)),
                   child: Text(
                       '미리보기 정보예요. 레벨·경험치는 예시이며 실제 학습 기록이나 자동 전투 능력치와 연결되지 않아요.',
                       style: context.texts.labelSmall

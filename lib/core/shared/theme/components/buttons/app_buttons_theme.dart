@@ -86,7 +86,8 @@ TextButtonThemeData appTextButtonTheme(ColorScheme cs, {required bool isDark}) {
         EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       ),
       shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md)),
       ),
       foregroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {

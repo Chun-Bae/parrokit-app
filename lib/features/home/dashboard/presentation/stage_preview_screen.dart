@@ -1557,7 +1557,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                       return Material(
                           color:
                               selected ? palette.goodSoft : palette.surfaceSoft,
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: CheckboxListTile(
                               dense: true,
                               value: selected,

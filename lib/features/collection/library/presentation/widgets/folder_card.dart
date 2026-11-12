@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
@@ -31,14 +32,12 @@ class FolderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     // 상태별 색상
-    final Color? iconColor = isAddCard 
-        ? cs.primary 
-        : (deleteMode ? cs.error : null);
-    final Color? textColor = isAddCard 
-        ? cs.primary 
-        : (deleteMode ? cs.error : null);
+    final Color? iconColor =
+        isAddCard ? cs.primary : (deleteMode ? cs.error : null);
+    final Color? textColor =
+        isAddCard ? cs.primary : (deleteMode ? cs.error : null);
     final Color borderColor = isAddCard
         ? cs.primary.withValues(alpha: 0.5)
         : (deleteMode ? cs.error : cs.outlineVariant);
@@ -72,13 +71,13 @@ class FolderCard extends StatelessWidget {
     }
 
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
       onLongPress: (deleteMode || isAddCard) ? null : onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: borderColor,
             width: borderWidth,

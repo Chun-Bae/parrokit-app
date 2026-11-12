@@ -241,7 +241,7 @@ class _SentenceImportMethodDialogState
         key: const ValueKey('import-format-sample'),
         decoration: BoxDecoration(
           border: Border.all(color: colors.outlineVariant),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         clipBehavior: Clip.antiAlias,
         child: Table(
@@ -272,11 +272,11 @@ class _SentenceImportMethodDialogState
         key: const ValueKey('import-sample-image'),
         onTap: _showSampleImage,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(color: colors.outlineVariant),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Image.asset('assets/help/import_sample.png',
                 fit: BoxFit.fitWidth),

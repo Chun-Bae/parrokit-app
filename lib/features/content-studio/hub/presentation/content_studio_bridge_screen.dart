@@ -44,7 +44,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                         height: 56,
                         decoration: BoxDecoration(
                           color: context.tokens.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Icon(
                           Icons.auto_awesome_rounded,

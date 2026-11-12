@@ -6,6 +6,7 @@
 // 기기 안에 남겨둘 저장 공간을 조절하는 섹션.
 // ============================================================================
 
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -48,7 +49,7 @@ class _StorageSectionState extends State<StorageSection> {
             const SizedBox(height: 10),
             CardContainer(
               child: InkWell(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 onTap: () {
                   context.pushNamed(AppRoutes.storageCacheManagement);
                 },

@@ -81,9 +81,9 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
                 button: true,
                 child: Material(
                   color: selected ? accent : surface,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     onTap: () => setState(() => mode = index),
                     child: Padding(
                       padding: const EdgeInsets.all(18),
@@ -151,7 +151,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
               foregroundColor: palette.onAccent,
               minimumSize: const Size.fromHeight(56),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18)),
+                  borderRadius: BorderRadius.circular(AppRadius.lg)),
             ),
             icon: const Icon(Icons.play_arrow_rounded),
             label: Text(mode == 0 ? '따라 말할 영상 고르기' : '반복해서 들을 영상 고르기',

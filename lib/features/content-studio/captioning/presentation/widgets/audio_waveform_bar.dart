@@ -787,7 +787,7 @@ class _OverlayHandle extends StatelessWidget {
                 height: 7,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
               ),
             ),

@@ -50,7 +50,7 @@ class MetadataInputsSection extends StatelessWidget {
                 alignment: Alignment.topLeft,
                 child: Material(
                   elevation: 4,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: ConstrainedBox(
                     constraints:
                         const BoxConstraints(maxHeight: 280, minWidth: 240),

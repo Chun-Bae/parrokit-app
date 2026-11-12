@@ -200,7 +200,7 @@ class _NestPreviewState extends State<NestPreview>
                 foregroundColor: ink,
                 side: BorderSide(color: palette.border),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18)),
+                    borderRadius: BorderRadius.circular(AppRadius.lg)),
               ),
             ),
             const SizedBox(height: 8),

@@ -227,7 +227,7 @@ class _SentenceCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 10, 9),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: palette.shadow.withValues(alpha: 0.08),

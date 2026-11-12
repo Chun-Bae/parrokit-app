@@ -1121,7 +1121,7 @@ class _MySentenceTile extends StatelessWidget {
       key: const ValueKey('sentence-card-gold'),
       padding: const EdgeInsets.all(1.5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1774,7 +1774,7 @@ class _ActivityCountCard extends StatelessWidget {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: colors.surfaceContainerHighest.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

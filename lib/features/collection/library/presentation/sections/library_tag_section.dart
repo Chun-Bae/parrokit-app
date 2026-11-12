@@ -120,7 +120,7 @@ class LibraryTagSection extends StatelessWidget {
                         alignment: Alignment.topLeft,
                         child: Material(
                           elevation: 4,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: SizedBox(
                             width: 410,
                             child: ConstrainedBox(

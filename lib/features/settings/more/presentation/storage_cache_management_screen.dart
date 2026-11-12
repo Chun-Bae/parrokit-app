@@ -205,7 +205,7 @@ class _StorageCacheManagementScreenState
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cs.tertiaryContainer.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: cs.tertiary.withValues(alpha: 0.2)),
       ),
       child: Text(
@@ -232,7 +232,7 @@ class _StorageCacheManagementScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: Container(
                   width: 72,
                   height: 72,

@@ -399,7 +399,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                             padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
                             decoration: BoxDecoration(
                               color: panelBg,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,7 +671,7 @@ class _TipBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: tokens.primarySoft,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         'TIP',

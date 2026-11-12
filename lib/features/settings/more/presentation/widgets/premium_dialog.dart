@@ -70,7 +70,7 @@ Future<void> showPremiumDialog(
                   backgroundColor: cs.primary,
                   foregroundColor: cs.onPrimary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   side: BorderSide(color: cs.outlineVariant),
                   textStyle: buttonTextStyle,
@@ -91,7 +91,7 @@ Future<void> showPremiumDialog(
                     minimumSize: const Size.fromHeight(buttonHeight),
                     padding: buttonPadding,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     side: BorderSide(color: cs.outlineVariant),
                     foregroundColor: cs.onSurface,
@@ -113,7 +113,7 @@ Future<void> showPremiumDialog(
                   minimumSize: const Size.fromHeight(buttonHeight),
                   padding: buttonPadding,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   foregroundColor: cs.primary,
                   textStyle: buttonTextStyle,

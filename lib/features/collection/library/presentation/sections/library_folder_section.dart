@@ -78,7 +78,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: cs.outlineVariant.withValues(alpha: 0.35),
           ),
@@ -223,7 +223,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: cs.outlineVariant.withValues(alpha: 0.35),
         ),
@@ -335,7 +335,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: cs.outlineVariant.withValues(alpha: 0.35),
           ),
