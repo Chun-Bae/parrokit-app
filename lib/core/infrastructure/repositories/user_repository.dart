@@ -600,10 +600,26 @@ class UserRepository {
   /// - 로컬 캐시 삭제
   Future<void> deleteAccount() async {
     final uid = _authService.currentUser?.uid;
+    final nickname = _userPrefs.loadUser()?.displayName;
+
     if (uid != null) {
       await _firebaseUserService.deleteUserDocument(uid: uid);
     }
+
+    // Auth 계정 삭제가 먼저다. 여기서 던지면(흔한 건 requires-recent-login)
+    // 아래로 내려가지 않으므로 닉네임 선점은 그대로 남는다. 계정이 살아 있는데
+    // 닉네임만 빼앗기는 일은 생기지 않는다.
     await _authService.deleteAccount();
+
+    if (uid != null) {
+      try {
+        await _firebaseUserService.releaseNickname(uid: uid, nickname: nickname);
+      } catch (e) {
+        // 여기서 실패해도 탈퇴 자체는 끝났다. 닉네임만 남는다.
+        AppLogger.w('[UserRepository] 닉네임 선점 해제 실패 nickname=$nickname: $e');
+      }
+    }
+
     await _userPrefs.clear();
   }
 

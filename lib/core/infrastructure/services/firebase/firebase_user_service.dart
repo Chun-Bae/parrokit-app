@@ -261,6 +261,28 @@ class FirebaseUserService {
     await _firestore.collection('users').doc(uid).delete();
   }
 
+  /// 닉네임 선점을 푼다. 내가 쓰던 것일 때만 지운다.
+  ///
+  /// 탈퇴할 때 이걸 안 하면 nicknames 문서가 영영 남는다. isNicknameAvailable은
+  /// 그 문서가 있는지만 보므로, **탈퇴한 계정의 닉네임은 아무도 다시 쓸 수 없다.**
+  /// 본인이 다시 가입해도 못 쓴다.
+  Future<void> releaseNickname({
+    required String uid,
+    required String? nickname,
+  }) async {
+    if (nickname == null || nickname.isEmpty) return;
+
+    final ref = _firestore.collection('nicknames').doc(nickname);
+    final snap = await ref.get();
+    if (!snap.exists) return;
+
+    // 남이 이미 가져간 닉네임이면 건드리지 않는다.
+    final ownerUid = snap.data()?['uid'] as String?;
+    if (ownerUid != null && ownerUid != uid) return;
+
+    await ref.delete();
+  }
+
   Future<AppUser?> loadUserDocumentByNickname(String nickname) async {
     if (nickname.isEmpty) return null;
 
