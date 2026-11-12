@@ -27,7 +27,7 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 | 11 | 공용 위젯·테마 | `lib/core/shared` | 41 | 완료 (고침 3, 보류 4) |
 | 12 | 앱 셸·라우터·인프라 | `lib/core/{app,infrastructure,content,speech}` | 51 | 완료 (고침 5, 보류 2) |
 | 13 | 설정·더보기 | `lib/features/settings` | 37 | 완료 (고침 6, 보류 1) |
-| 14 | 인증 | `lib/features/auth` | 4 | 대기 |
+| 14 | 인증 | `lib/features/auth` | 4 | 완료 (고침 2, UI 미확인) |
 
 ## 함께 처리할 남은 일 (어젯밤 UI 작업에서 넘어온 것)
 
@@ -45,3 +45,27 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 
 인증 네 화면(로그인·회원가입·비밀번호 찾기·온보딩)은 로그인 상태라 시뮬레이터로 못 띄운다.
 묶음 14는 코드 리뷰만 하고 UI 확인은 미확인으로 남긴다.
+
+
+## 끝
+
+14개 묶음을 다 돌았다. 결과는 `.claude/review-findings.md`에 있고,
+맨 아래 "정리 — 네가 판단할 것만"에 보류 항목을 급한 순서로 모아 뒀다.
+
+- 고친 것 57개
+- 커밋 114개, **푸시 안 함**
+- `flutter analyze` 깨끗
+- `flutter test` 188개 → 209개, 전부 통과
+- 새로 붙인 테스트 파일 3개
+  - `test/data/local/dao/collections_dao_test.dart`
+  - `test/features/content-studio/captioning/file_staging_service_test.dart`
+  - `test/features/community/notification/data/repositories/community_notification_repository_impl_test.dart`
+  - (`post_usecases_test.dart`에도 회귀 테스트 하나를 더했다)
+
+### 눈으로 못 본 화면
+
+인증 네 화면(로그인·회원가입·비밀번호 찾기·온보딩)은 로그인 상태라 띄우지
+못했다. 코드만 봤고, 고친 둘은 모두 "삼키던 예외를 잡아 안내한다"뿐이라
+기존 성공 경로는 건드리지 않았다.
+클립이 0개라 보관함 재생·쇼츠·자막 편집기도 못 열었다. 그쪽 수정은 전부
+코드 검토로만 했고, 그렇다고 해당 절에 적어 뒀다.
