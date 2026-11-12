@@ -1171,6 +1171,18 @@ UPDATE가 WHERE 없이 모든 클립을 'local'로 덮어쓴 뒤 그 값으로 �
 > 할 일: 네이버 개발자센터 문서에서 (1) `/nid/me`의 id가 앱별인지, (2)
 > `flutter_naver_login`이 id_token을 주는지 확인한 뒤 OIDC로 옮길지 정한다.
 
+> **확인 끝(2026-11-12). 계정 탈취 위험은 없어서 코드는 그대로 둔다.**
+> - (1) 네이버 공식 문서(회원 프로필 조회 API, `naver/naver-openapi-guide`의
+>   `ko/login/profile/profile.md`)가 `response/id`를 "애플리케이션당 유니크한
+>   일련번호값"이라고 적고 있다. 다른 앱에 발급된 토큰으로 `/nid/me`를 부르면 그 앱용
+>   id가 나오므로, 우리 앱의 기존 `naver:<id>` 계정과 겹치지 않는다. 남의 계정에
+>   들어가는 일은 없다. 남는 위험은 다른 앱 운영자가 자기 사용자 토큰으로 이 앱에
+>   새 계정을 만들 수 있다는 것뿐이다.
+> - (2) `flutter_naver_login` 2.1.1의 `NaverToken`에는 accessToken·refreshToken·
+>   expiresAt·tokenType만 있고 id_token이 없다. OIDC로 옮기려면 로그인 패키지를
+>   바꾸거나 직접 구현해야 해서, 남은 위험에 비해 크다.
+> - 우선순위를 "출시 전 필수"에서 "나중"으로 내린다.
+
 ### App Check이 없다
 모든 Cloud Function이 `enforceAppCheck` 없이 열려 있다. 인증을 붙였으니
 아무나는 못 부르지만, 계정 하나만 있으면 앱 밖에서 무제한으로 부를 수 있다.
