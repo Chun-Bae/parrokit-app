@@ -236,7 +236,17 @@ async function saveNotification(payload: NotificationPayload): Promise<void> {
       return;
     }
 
-    transaction.set(docRef, notificationData, {merge: true});
+    // 이미 있는 알림에 isRead:false, readAt:null, createdAt을 다시 쓰고
+    // 있었다. Cloud Functions는 같은 이벤트를 두 번 보낼 수 있고, 투표
+    // 종료는 보내는 중에 끊기면 다음 차례에 전부 다시 보낸다. 그러면
+    // 사용자가 이미 읽은 알림이 안 읽음으로 되돌아가는데, 이 길에서는
+    // unreadNotificationCount를 올리지 않으므로 뱃지 숫자와 실제 안 읽은
+    // 개수가 어긋난다. 다시 보낼 때는 보이는 내용만 갱신한다.
+    const redeliverable = {...notificationData};
+    delete redeliverable.isRead;
+    delete redeliverable.readAt;
+    delete redeliverable.createdAt;
+    transaction.set(docRef, redeliverable, {merge: true});
   });
 }
 
