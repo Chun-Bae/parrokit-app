@@ -29,9 +29,23 @@ part 'community_provider_user_action.dart';
 part '../../../question/presentation/provider/community_provider_question.dart';
 
 class CommunityProvider with ChangeNotifier {
-  final CommunityRepository _repository = CommunityRepository();
-  final CommunityImageService _imageService = CommunityImageService();
-  final FirebaseUserService _userService = FirebaseUserService();
+  /// 셋 다 안 주면 평소처럼 실제 Firebase에 붙는 것을 만든다.
+  ///
+  /// 받게 바꾼 이유는 테스트다. 전에는 필드에서 바로 만들었고, 그 안에서
+  /// FirebaseFirestore.instance를 즉시 읽어서 테스트에서 이 Provider를
+  /// 만들기만 해도 `[core/no-app]`으로 터졌다. 그래서 낙관적 업데이트를
+  /// 되돌리는 코드에 테스트를 붙일 수 없었다.
+  CommunityProvider({
+    CommunityRepository? repository,
+    CommunityImageService? imageService,
+    FirebaseUserService? userService,
+  })  : _repository = repository ?? CommunityRepository(),
+        _imageService = imageService ?? CommunityImageService(),
+        _userService = userService ?? FirebaseUserService();
+
+  final CommunityRepository _repository;
+  final CommunityImageService _imageService;
+  final FirebaseUserService _userService;
 
   late final AddPostUseCase addPostUseCase = AddPostUseCase(_repository, _imageService);
   late final EditPostUseCase editPostUseCase = EditPostUseCase(_repository, _imageService);
