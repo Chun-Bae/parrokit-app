@@ -98,8 +98,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('환전소', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('환전소', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -171,6 +170,24 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
+              // 자주 쓰는 수량을 눌러 바로 채운다. 전에는 숫자를 직접 쳐야 했고,
+              // 크래커는 1000 단위라 틀리기 쉬웠다.
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final (label, value) in _quickAmounts(
+                      _isParrotsToCrackers ? user.parrots : user.crackers))
+                    ActionChip(
+                      label: Text(label),
+                      onPressed: value <= 0
+                          ? null
+                          : () => setState(() {
+                                _amountController.text = '$value';
+                              }),
+                    ),
+                ],
+              ),
               const SizedBox(height: 16),
 
               // 예상 결과
@@ -188,7 +205,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                           size: 18, color: context.tokens.info),
                       const SizedBox(width: 8),
                       Text(
-                        '예상 획득량: $expectedAmount ${_isParrotsToCrackers ? '크래커' : '패롯'}',
+                        '받을 양: ${NumberFormat.decimalPattern('ko').format(expectedAmount)} ${_isParrotsToCrackers ? '크래커' : '패롯'}',
                         style: TextStyle(
                             color: context.tokens.info,
                             fontWeight: FontWeight.w600),
@@ -219,7 +236,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                       )
                     : Text(
                         '환전하기',
-                        style: context.texts.titleMedium,
+                        // 테마 글자색이 버튼의 흰 글자를 덮어 파란 바탕에 검은 글자가 됐다
+                        style: context.texts.titleMedium.copyWith(
+                          color: inputAmount > 0
+                              ? theme.colorScheme.onPrimary
+                              : null,
+                        ),
                       ),
               ),
             ],
@@ -227,6 +249,20 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         ),
       ),
     );
+  }
+
+  /// 빠른 수량 칩. 패롯은 1·5·10·전부, 크래커는 1,000 단위로 1,000·5,000·
+  /// 10,000·전부(1,000 단위로 내림). 가진 것보다 많으면 누를 수 없다.
+  List<(String, int)> _quickAmounts(int balance) {
+    final format = NumberFormat.decimalPattern('ko');
+    final steps =
+        _isParrotsToCrackers ? const [1, 5, 10] : const [1000, 5000, 10000];
+    final all = _isParrotsToCrackers ? balance : (balance ~/ 1000) * 1000;
+    return [
+      for (final step in steps)
+        (format.format(step), step <= balance ? step : 0),
+      ('전부', all),
+    ];
   }
 
   Widget _buildBalanceItem(String title, int amount, Color color) {
