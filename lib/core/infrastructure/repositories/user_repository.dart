@@ -1,6 +1,7 @@
 // lib/services/auth_repository.dart (지금은 한 파일 안에 두고, 나중에 분리해도 됨)
 
 // firebase_auth accessed via FirebaseAuthService
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/local/prefs/user_prefs.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_auth_service.dart';
@@ -570,23 +571,27 @@ class UserRepository {
   /// - Firebase 에서 로그아웃
   /// - 로컬에 저장된 유저 정보를 모두 삭제합니다.
   Future<void> signOut() async {
-    try {
-      await _naverSsoService.signOut();
-    } catch (_) {}
-    
-    try {
-      await _kakaoSsoService.signOut();
-    } catch (_) {}
-    
-    try {
-      await _googleSsoService.signOut();
-    } catch (_) {}
-    
-    try {
-      await _authService.signOut();
-    } catch (_) {}
-    
+    // 네 곳 모두 하나가 실패해도 나머지를 계속 진행한다. 로그아웃은 사용자가
+    // 나가겠다는 것이라, 어느 공급자 하나 때문에 막히면 안 된다. 다만 전에는
+    // 전부 빈 catch여서 무엇이 실패했는지 흔적이 없었다.
+    //
+    // 특히 _authService(Firebase)가 실패하면 로컬은 비워지는데 Firebase 세션은
+    // 남는다. 그래도 비우는 쪽이 맞지만, 그 일이 일어났다는 건 남겨야 한다.
+    await _signOutQuietly('naver', _naverSsoService.signOut);
+    await _signOutQuietly('kakao', _kakaoSsoService.signOut);
+    await _signOutQuietly('google', _googleSsoService.signOut);
+    await _signOutQuietly('firebase', _authService.signOut);
+
     await _userPrefs.clear();
+  }
+
+  Future<void> _signOutQuietly(
+      String provider, Future<void> Function() signOut) async {
+    try {
+      await signOut();
+    } catch (e) {
+      AppLogger.w('[UserRepository] 로그아웃 실패 provider=$provider: $e');
+    }
   }
 
   /// 회원탈퇴.
