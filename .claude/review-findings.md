@@ -615,3 +615,67 @@ TTS 캐시와 달리 여기는 id가 사용자 데이터의 신원이라, 바꾸
 - 미리듣기 `AudioPlayer`는 시트 `dispose`에서 닫는다.
 - 입력 240자 제한은 `TextField(maxLength: 240)`이 실제로 막고 있어서,
   Provider 쪽 `if (newText.length <= 240)` 가드는 도달하지 않는 방어선이다.
+
+## 묶음 10 — 챗봇·영상·허브 (`chat-bot`, `video`, `hub`)
+
+### 고친 것
+
+**43. 콘텐츠 제작 Provider 셋에 dispose 가드가 없었다** — 이 묶음에서 가장 큰 것
+`TtsProvider`, `VideoProvider`, `ChatBotProvider`는 `content_studio_hub_screen`에서
+만들어진다. 앱 루트가 아니라 **화면마다** 만들어지고 화면을 떠나면 실제로
+dispose된다. 그런데 셋 다 비동기 작업이 끝난 뒤 `notifyListeners`를 부른다.
+TTS는 몇 초, 영상은 5초마다 폴링이고 몇 분 걸린다. 그 사이에 화면을 떠나면
+dispose 뒤에 불린다.
+**debug 빌드에서는 `ChangeNotifier`의 assert에 걸려 빨간 화면이 뜨고, release
+에서는 조용히 넘어간다.** 사용자 피해는 없고 개발 중에만 터져서 더 늦게 보인다.
+`notifyListeners`를 덮어써서 dispose 뒤에는 그냥 돌아가게 했다.
+묶음 1에서 "루트 Provider라 지금은 문제가 안 된다"고 보류했던 항목인데,
+화면마다 만드는 Provider에서는 실제로 걸린다.
+
+**44. 영상 내려받기가 끊기면 반쯤 쓰인 파일이 남았다**
+`prepareGeneratedVideoForCaptioning`이 생성된 영상을 임시 폴더로 내려받는다.
+끊기면 반쯤 쓰인 mp4가 그대로 남는다. 영상이라 작지 않고 아무도 가리키지
+않는다. `HttpClient`도 닫지 않아 연결이 정리되지 않았다. 둘 다 고쳤다.
+
+**45. 영상 생성 뒤 패롯 차감 실패가 조용했다**
+TTS와 같은 종류. 기다리고 실패하면 기록을 남긴다.
+
+### 보류 — 판단이 필요하다
+
+**서. 오류 로그 39곳이 Crashlytics에 안 간다**
+`AppLogger.e`는 release에서 `FirebaseCrashlytics.recordError`를 부른다.
+`debugPrint`는 안 부른다. 그런데 아직 `debugPrint`를 쓰는 자리가 11개 파일
+39곳 있다. **그 실패들은 배포 뒤에 보이지 않는다.**
+
+| 파일 | 횟수 |
+|------|------|
+| `chat-bot/presentation/chat_bot_provider.dart` | 9 |
+| `chat-bot/presentation/widgets/chat_bot_sheet.dart` | 7 |
+| `core/speech/phrase_recognizer.dart` | 7 |
+| `core/content/cloud_sentence_assist.dart` | 4 |
+| `chat-bot/data/repositories/ai_chat_repository_impl.dart` | 3 |
+| `community/shell/data/services/community_image_service.dart` | 2 |
+| `core/infrastructure/services/sso/naver_sso_service.dart` | 2 |
+| `core/infrastructure/services/cache_service.dart` | 2 |
+| 나머지 3개 파일 | 각 1 |
+
+기계적으로 바꿀 수는 있지만 자리마다 `w`가 맞는지 `e`가 맞는지 다르고,
+전부 `e`로 바꾸면 Crashlytics로 가는 양이 확 는다. 어느 선까지 올릴지는
+판단이라 손대지 않았다. 챗봇(19곳)과 SSO(3곳)부터 보는 걸 권한다 —
+돈과 로그인이 걸린 자리다.
+
+**어. 영상 생성 폴링에 시간 제한이 없다**
+`_startPolling`이 5초마다 `done`을 묻는데 멈추는 조건이 `done`과 예외뿐이다.
+백엔드 작업이 끝났다고 보고하지 않으면 영원히 돈다. 화면을 떠나면
+`dispose`가 타이머를 끊으므로 무한정은 아니지만, 사용자가 화면을 열어 둔
+채 기다리면 과금되는 Cloud Function을 계속 부른다. 상한을 몇 분으로 둘지는
+Veo 쪽 응답 시간을 알아야 정할 수 있어서 손대지 않았다.
+
+### 깨끗했던 것
+
+- `VideoProvider`는 `_pollingTimer`와 `_recentRefreshTimer`를 `dispose`에서
+  둘 다 끊는다.
+- `veo31ModelById`는 `orElse`가 있고, 비용 계산도 `durationSeconds <= 0`을
+  먼저 막는다.
+- 1080p가 8초만 지원하는 제약이 `isDurationLocked`와 `updateResolution`
+  양쪽에 들어가 있어서 설정이 어긋나지 않는다.
