@@ -100,7 +100,7 @@ class _GroupCollectionManagerModalState
     await clipProvider.updateGroupsForCollection(
         _selectedCollectionIdForTabB!, _checkedGroupIdsForTabB.toList());
     if (mounted) {
-      showToast('콜렉션 매핑이 저장되었습니다.');
+      showToast('컬렉션 매핑이 저장되었습니다.');
     }
   }
 
@@ -123,7 +123,7 @@ class _GroupCollectionManagerModalState
               const TabBar(
                 tabs: [
                   Tab(text: '그룹 기준'),
-                  Tab(text: '콜렉션 기준'),
+                  Tab(text: '컬렉션 기준'),
                 ],
               ),
               Expanded(
@@ -209,7 +209,7 @@ class _GroupCollectionManagerModalState
           padding: const EdgeInsets.all(16.0),
           child: DropdownButtonFormField<int>(
             decoration: const InputDecoration(
-              labelText: '대상 콜렉션 선택',
+              labelText: '대상 컬렉션 선택',
               border: OutlineInputBorder(),
             ),
             initialValue: _selectedCollectionIdForTabB,
@@ -255,7 +255,7 @@ class _GroupCollectionManagerModalState
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _saveTabB,
-              child: const Text('콜렉션에 저장'),
+              child: const Text('컬렉션에 저장'),
             ),
           ),
         ),

@@ -436,11 +436,11 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   Future<bool> deleteCollectionById(int collectionId) async {
     if (_isStorageTransferRunning) return false;
 
-    startStorageTransfer(0, '콜렉션을 지우고 있어요', title: '삭제하는 중');
+    startStorageTransfer(0, '컬렉션을 지우고 있어요', title: '삭제하는 중');
 
     try {
       final success = await super.deleteCollectionById(collectionId);
-      endStorageTransfer(message: '콜렉션을 지웠어요');
+      endStorageTransfer(message: '컬렉션을 지웠어요');
       return success;
     } catch (e, st) {
       AppLogger.e(
@@ -450,7 +450,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '콜렉션을 지우지 못했어요. 잠시 후 다시 시도해 주세요.';
+      _storageTransferError = '컬렉션을 지우지 못했어요. 잠시 후 다시 시도해 주세요.';
       notifyListeners();
       return false;
     }

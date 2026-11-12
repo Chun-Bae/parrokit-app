@@ -543,7 +543,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              isAtGroupRoot ? '그룹 메뉴' : '콜렉션 메뉴',
+              isAtGroupRoot ? '그룹 메뉴' : '컬렉션 메뉴',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -552,7 +552,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             Text(
               isAtGroupRoot
                   ? '그룹을 추가하거나 그룹 관리로 이동할 수 있어요.'
-                  : '콜렉션을 추가하거나 삭제 모드로 들어갈 수 있어요.',
+                  : '컬렉션을 추가하거나 삭제 모드로 들어갈 수 있어요.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),
@@ -560,7 +560,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             const SizedBox(height: 12),
             ListTile(
               leading: Icon(Icons.add_rounded, color: cs.primary),
-              title: Text(isAtGroupRoot ? '그룹 추가' : '콜렉션 추가'),
+              title: Text(isAtGroupRoot ? '그룹 추가' : '컬렉션 추가'),
               onTap: () => Navigator.pop(context, 'add'),
             ),
             ListTile(
@@ -570,7 +570,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             ListTile(
               leading: Icon(Icons.settings_suggest_rounded, color: cs.primary),
-              title: const Text('그룹/콜렉션 관리'),
+              title: const Text('그룹/컬렉션 관리'),
               onTap: () => Navigator.pop(context, 'manage'),
             ),
             const SizedBox(height: 8),
@@ -623,7 +623,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('그룹 삭제'),
-        content: Text("'$name' 그룹을 삭제할까요?\n(그룹 내 콜렉션과 클립은 삭제되지 않습니다)"),
+        content: Text("'$name' 그룹을 삭제할까요?\n(그룹 내 컬렉션과 클립은 삭제되지 않습니다)"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -895,7 +895,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
 
     if (clipProvider.selectedGroupId != null) {
       if (clipProvider.selectedGroupId == -1) {
-        selectedGroupName = '모든 콜렉션';
+        selectedGroupName = '모든 컬렉션';
         crumbs.add(selectedGroupName);
       } else {
         final grp = clipProvider.groups.cast<dynamic>().firstWhere(
@@ -965,7 +965,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
               final List<Widget> contentSlivers;
               if (isAtGroupRoot) {
                 final gridItems = [
-                  '모든 콜렉션',
+                  '모든 컬렉션',
                   ...clipProvider.groups
                       .map((g) => (g as dynamic).name as String)
                 ];
@@ -1125,7 +1125,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                       : Icons.more_horiz_rounded,
                   label: isAtClipList
                       ? '클립 메뉴'
-                      : (isAtGroupRoot ? '그룹 메뉴' : '콜렉션 메뉴'),
+                      : (isAtGroupRoot ? '그룹 메뉴' : '컬렉션 메뉴'),
                   onTap: isAtClipList
                       ? () => _showClipFabMenu(
                             fabCtx,
