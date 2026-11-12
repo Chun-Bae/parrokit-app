@@ -157,6 +157,10 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            // padding을 안 주면 GridView가 MediaQuery의 위쪽 안전 영역(노치
+            // 높이)을 제 여백으로 넣는다. 요일 줄 아래에 빈 줄 하나만큼 틈이
+            // 생겼던 이유다.
+            padding: EdgeInsets.zero,
             itemCount: cells,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
