@@ -8,6 +8,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -152,27 +153,27 @@ class AccountSection extends StatelessWidget {
                         // 패롯 뱃지
                         _StatusBadge(
                           icon: Icons.auto_awesome_rounded,
-                          label: '${user?.parrots ?? 0} 패롯',
+                          label: '${_count.format(user?.parrots ?? 0)} 패롯',
                           color: AppColors.parrotCurrency,
                           backgroundColor:
                               AppColors.parrotCurrency.withValues(alpha: 0.1),
                           onHelpTap: () => _showCurrencyInfo(
                             context,
                             '패롯(Parrot)이란?',
-                            '앱 내에서 사용되는 프리미엄 재화입니다.\n질문에 채택되거나 스토어에서 충전하여 획득할 수 있습니다.',
+                            '앱 안에서 쓰는 프리미엄 재화입니다.\n광고를 보거나 충전해서 얻고, 자막·음성·영상을 만들 때 씁니다.',
                           ),
                         ),
                         // 크래커 뱃지
                         _StatusBadge(
                           icon: Icons.cookie_rounded,
-                          label: '${user?.crackers ?? 0} 크래커',
+                          label: '${_count.format(user?.crackers ?? 0)} 크래커',
                           color: AppColors.crackerCurrency,
                           backgroundColor:
                               AppColors.crackerCurrency.withValues(alpha: 0.1),
                           onHelpTap: () => _showCurrencyInfo(
                             context,
                             '크래커(Cracker)란?',
-                            '앱 내 활동을 통해 얻을 수 있는 활동 재화입니다.\n질문을 올릴 때 보상으로 제공할 수 있습니다.',
+                            '커뮤니티에서 쓰는 활동 재화입니다.\n질문을 올릴 때 보상으로 걸 수 있고, 내 답변이 채택되면 받습니다.',
                           ),
                         ),
                       ],
@@ -266,3 +267,7 @@ class _StatusBadge extends StatelessWidget {
     return badgeContent;
   }
 }
+
+/// 잔액 표시용. 전에는 '45900 크래커'처럼 쉼표가 없었고, 바로 아래
+/// 환전소 설명은 '1,000 크래커'라 같은 화면에서 숫자 모양이 달랐다.
+final _count = NumberFormat.decimalPattern('ko');
