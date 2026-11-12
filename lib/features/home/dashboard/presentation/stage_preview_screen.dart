@@ -1593,6 +1593,12 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                   child: FilledButton(
                       style: FilledButton.styleFrom(
                           backgroundColor: active,
+                          // 다크의 good(7FC2AE)은 밝은 민트라 흰 글자 대비가
+                          // 2:1밖에 안 됐다. 다크에서는 배경색 글자를 쓴다.
+                          foregroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? palette.background
+                                  : Colors.white,
                           minimumSize: const Size.fromHeight(48)),
                       onPressed: () => Navigator.pop(context),
                       child: const Text('적용',
