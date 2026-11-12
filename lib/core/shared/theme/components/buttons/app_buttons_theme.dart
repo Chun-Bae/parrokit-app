@@ -91,7 +91,11 @@ TextButtonThemeData appTextButtonTheme(ColorScheme cs, {required bool isDark}) {
       ),
       foregroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return cs.surface.withValues(alpha: 0.38);
+          // onSurface다. 전에는 surface였는데, 그건 버튼이 놓인 배경과 같은
+          // 색이라 비활성 TextButton의 글자가 배경에 묻혀 아예 보이지 않았다.
+          // 버튼이 사라진 것처럼 보이고, 자리만 남는다. 같은 파일의 나머지
+          // 세 버튼 테마는 모두 onSurface를 쓰고 있다.
+          return cs.onSurface.withValues(alpha: 0.38);
         }
         if (states.contains(WidgetState.pressed)) {
           return cs.primary.withValues(alpha: 0.90);
