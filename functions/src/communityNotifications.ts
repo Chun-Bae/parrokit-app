@@ -6,6 +6,10 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 
 const db = admin.firestore();
 
+// 투표 종료 알림을 한 번에 몇 명씩 보낼지. 한 명마다 트랜잭션 하나와
+// 조회 하나, 발송 하나가 들어간다.
+const FANOUT_CHUNK_SIZE = 50;
+
 const boardTypeLabelMap: Record<string, string> = {
   board: "일반",
   question: "질문",
@@ -158,28 +162,38 @@ export const onVoteEndNotification = onSchedule(
         `[CommunityNotification][VoteEnd] dispatch postId=${postId} title=${postTitle} endAt=${voteEndTime?.toISOString() ?? "unknown"} voters=${votersSnapshot.size}`
       );
 
-      await Promise.all(
-        votersSnapshot.docs.map(async (doc) => {
-          const userId = doc.ref.parent.parent?.id;
-          if (!userId) return;
+      // 전에는 참여자 전원을 하나의 Promise.all에 넣었다. 한 명마다
+      // 트랜잭션 하나와 유저 문서 조회 하나, 발송 하나가 들어가므로
+      // 참여자가 많은 투표에서는 수천 개의 요청이 한꺼번에 나간다.
+      // 같은 문서를 동시에 건드려 트랜잭션이 서로 밀리고, 함수가 시간
+      // 제한에 걸리면 그 투표는 보낸 표시가 남지 않아 다음 차례에
+      // 처음부터 다시 보낸다. 한 번에 FANOUT_CHUNK_SIZE명씩 끊어서 돈다.
+      const voterIds = votersSnapshot.docs
+        .map((doc) => doc.ref.parent.parent?.id)
+        .filter((userId): userId is string => !!userId);
 
-          const payload = buildVoteEndNotification({
-            recipientUserId: userId,
-            boardType: "vote",
-            postId,
-            actorId: "system",
-            title: "투표가 종료되었어요.",
-            body: `${postTitle} 결과를 확인해 보세요.`,
-            routePath,
-          });
+      for (let i = 0; i < voterIds.length; i += FANOUT_CHUNK_SIZE) {
+        const chunk = voterIds.slice(i, i + FANOUT_CHUNK_SIZE);
+        await Promise.all(
+          chunk.map(async (userId) => {
+            const payload = buildVoteEndNotification({
+              recipientUserId: userId,
+              boardType: "vote",
+              postId,
+              actorId: "system",
+              title: "투표가 종료되었어요.",
+              body: `${postTitle} 결과를 확인해 보세요.`,
+              routePath,
+            });
 
-          await saveNotification(payload);
-          await safeSendPushNotification(payload);
-          console.log(
-            `[CommunityNotification][VoteEnd] sent recipient=${userId} postId=${postId}`
-          );
-        }),
-      );
+            await saveNotification(payload);
+            await safeSendPushNotification(payload);
+            console.log(
+              `[CommunityNotification][VoteEnd] sent recipient=${userId} postId=${postId}`
+            );
+          }),
+        );
+      }
 
       await postDoc.ref.set(
         {
