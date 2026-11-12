@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/block/presentation/providers/block_provider.dart';
@@ -133,13 +134,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
               child: blockProvider.isLoading && blockProvider.blockedUsers.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : blockProvider.blockedUsers.isEmpty
-                      ? Center(
-                          child: Text(
-                            '아직 차단한 사용자가 없어요.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                          ),
+                      // 다른 목록 화면과 같은 빈 화면 모양을 쓴다.
+                      ? const AppEmptyState(
+                          icon: Icons.block_rounded,
+                          title: '아직 차단한 사용자가 없어요.',
+                          description: '차단하면 그 사람의 글과 댓글이 보이지 않아요.',
                         )
                       : RefreshIndicator(
                           onRefresh: () => context.read<BlockProvider>().loadBlockedUsers(),
