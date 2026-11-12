@@ -1,4 +1,5 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {ENFORCE_APP_CHECK, appCheckOptions} from "./appCheck";
 import {defineSecret} from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import {getStorage} from "firebase-admin/storage";
@@ -992,6 +993,7 @@ export const generateTtsFlow = ai.defineFlow(
 // 4. 앱(Flutter)에서 호출할 수 있도록 Firebase Functions로 내보내기
 export const generateChatbotResponse = onCall(
   {
+    enforceAppCheck: ENFORCE_APP_CHECK,
     timeoutSeconds: 180,
   },
   async (request) => {
@@ -1036,7 +1038,7 @@ export const generateChatbotResponse = onCall(
 
 // 챗봇을 실제로 호출하지 않고, 오늘 사용량만 조회하기 위한 엔드포인트.
 // 시트를 열 때 이걸 먼저 호출해서 "오늘 X/30"을 정확히 표시한다.
-export const getChatbotUsage = onCall(async (request) => {
+export const getChatbotUsage = onCall(appCheckOptions, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
     throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
@@ -1052,7 +1054,7 @@ export const getChatbotUsage = onCall(async (request) => {
 });
 
 export const generateTts = onCall(
-  {secrets: [elevenLabsApiKey, geminiApiKey]},
+  {secrets: [elevenLabsApiKey, geminiApiKey], ...appCheckOptions},
   async (request) => {
     // 인증 검사가 없었다. 이 함수는 ElevenLabs와 Gemini 유료 API를 부르는데,
     // 주소만 알면 로그인하지 않고도 호출할 수 있었다. 패롯 차감은 앱에서만
@@ -1081,7 +1083,7 @@ export const generateTts = onCall(
 );
 
 // 5. 구글 Cloud TTS 보이스 목록 불러오기 (프론트엔드 동적 렌더링용)
-export const listTtsVoices = onCall(async (request) => {
+export const listTtsVoices = onCall(appCheckOptions, async (request) => {
   // Google Cloud TTS의 listVoices도 과금 대상 호출이다. 인증을 요구한다.
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
@@ -1107,7 +1109,7 @@ export const listTtsVoices = onCall(async (request) => {
 });
 
 export const listElevenLabsVoices = onCall(
-  {secrets: [elevenLabsApiKey]},
+  {secrets: [elevenLabsApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     // ElevenLabs API 키를 쓰는 호출이다. 인증을 요구한다.
     if (!request.auth?.uid) {
@@ -1133,7 +1135,7 @@ export const listElevenLabsVoices = onCall(
 
 // 6. 비디오 생성 (Veo 3.1)
 export const generateVideo = onCall(
-  {secrets: [geminiApiKey]},
+  {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     let generationId: string | null = null;
 
@@ -1232,7 +1234,7 @@ export const generateVideo = onCall(
 
 // 7. 비디오 생성 상태 확인 (폴링용)
 export const getVideoOperationStatus = onCall(
-  {secrets: [geminiApiKey]},
+  {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     try {
       const uid = request.auth?.uid;
@@ -1401,7 +1403,7 @@ export const getVideoOperationStatus = onCall(
 );
 
 export const listVideoGenerations = onCall(
-  {secrets: [geminiApiKey]},
+  {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     try {
       const uid = request.auth?.uid;

@@ -1,8 +1,10 @@
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {ENFORCE_APP_CHECK} from "./appCheck";
 
 // HTTP 콜러블 함수: Flutter에서 넘겨준 Access Token을 검증하고 Custom Token을 반환합니다.
 export const createNaverCustomToken = functions.https.onCall(
+  {enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     const {accessToken} = request.data;
 

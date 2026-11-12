@@ -1,4 +1,5 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {ENFORCE_APP_CHECK} from "./appCheck";
 import * as admin from "firebase-admin";
 import {genkit, z} from "genkit";
 import {vertexAI} from "@genkit-ai/google-genai";
@@ -207,7 +208,7 @@ async function transliterate(language: string, hangul: string) {
 // 실패한 요청은 횟수에서 빼지 않는다.
 export const suggestSentenceInfo = onCall(
   // 코드 전체(챗봇, TTS 등)를 함께 불러와서 기본 256MiB로는 모자란다.
-  {timeoutSeconds: 60, memory: "512MiB"},
+  {timeoutSeconds: 60, memory: "512MiB", enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) {

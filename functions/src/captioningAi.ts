@@ -1,6 +1,7 @@
 /* eslint-disable require-jsdoc */
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {ENFORCE_APP_CHECK} from "./appCheck";
 import {defineSecret} from "firebase-functions/params";
 import {getStorage} from "firebase-admin/storage";
 import {promises as fs} from "fs";
@@ -57,6 +58,7 @@ interface OpenAiErrorBody {
 
 export const generateCaptions = onCall(
   {
+    enforceAppCheck: ENFORCE_APP_CHECK,
     secrets: [openaiApiKey],
     timeoutSeconds: 540,
     memory: "1GiB",
