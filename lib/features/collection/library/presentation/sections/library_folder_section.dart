@@ -703,63 +703,69 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final clipProvider = context.read<ClipProvider>();
     var submitting = false;
 
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) {
-          Future<void> handleSubmit() async {
-            if (submitting) return;
-            final name = ctl.text.trim();
-            if (name.isEmpty || name == initialText) {
-              Navigator.pop(ctx);
-              return;
-            }
-            final exists = await clipProvider.isNameExists(name);
-            if (exists) {
-              showToast('이미 같은 이름의 그룹이나 컬렉션이 존재합니다.');
-              return;
-            }
-            setState(() => submitting = true);
-            try {
-              await onSubmit(name);
-              if (ctx.mounted) Navigator.pop(ctx);
-            } catch (_) {
-              if (ctx.mounted) {
-                setState(() => submitting = false);
+    // 이 컨트롤러는 화면이 아니라 이 함수가 주인이다. 전에는 놓지 않아서
+    // 그룹·컬렉션을 만들거나 이름을 바꿀 때마다 하나씩 쌓였다.
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setState) {
+            Future<void> handleSubmit() async {
+              if (submitting) return;
+              final name = ctl.text.trim();
+              if (name.isEmpty || name == initialText) {
+                Navigator.pop(ctx);
+                return;
               }
-              showToast('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+              final exists = await clipProvider.isNameExists(name);
+              if (exists) {
+                showToast('이미 같은 이름의 그룹이나 컬렉션이 존재합니다.');
+                return;
+              }
+              setState(() => submitting = true);
+              try {
+                await onSubmit(name);
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (_) {
+                if (ctx.mounted) {
+                  setState(() => submitting = false);
+                }
+                showToast('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+              }
             }
-          }
 
-          return AlertDialog(
-            title: Text(title),
-            content: TextField(
-              controller: ctl,
-              autofocus: true,
-              enabled: !submitting,
-              decoration: InputDecoration(hintText: hint),
-              onSubmitted: (_) => handleSubmit(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: submitting ? null : () => Navigator.pop(ctx),
-                child: const Text('취소'),
+            return AlertDialog(
+              title: Text(title),
+              content: TextField(
+                controller: ctl,
+                autofocus: true,
+                enabled: !submitting,
+                decoration: InputDecoration(hintText: hint),
+                onSubmitted: (_) => handleSubmit(),
               ),
-              TextButton(
-                onPressed: submitting ? null : handleSubmit,
-                child: submitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(submitLabel),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.pop(ctx),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: submitting ? null : handleSubmit,
+                  child: submitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(submitLabel),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    } finally {
+      ctl.dispose();
+    }
   }
 
   Future<void> _showDeleteCollectionDialog(
