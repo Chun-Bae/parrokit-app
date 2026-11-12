@@ -102,6 +102,12 @@ class CommunityNotificationRepositoryImpl
     }
   }
 
+  /// Firestore WriteBatch 한 번에 담을 수 있는 쓰기 개수 상한.
+  ///
+  /// 넘기면 commit이 통째로 거절된다. 알림이 쌓인 사용자가 "전체 읽음"이나
+  /// "전체 삭제"를 영영 못 하게 되므로 나눠서 보낸다.
+  static const int _maxBatchWrites = 500;
+
   @override
   Future<void> markAllAsRead(String userId) async {
     if (userId.isEmpty) return;
@@ -111,20 +117,28 @@ class CommunityNotificationRepositoryImpl
           .where('isRead', isEqualTo: false)
           .get();
 
-      if (unreadSnapshot.docs.isEmpty) return;
+      final docs = unreadSnapshot.docs;
+      if (docs.isEmpty) return;
 
-      final batch = _firestore.batch();
-      for (final doc in unreadSnapshot.docs) {
-        batch.set(doc.reference, {
-          'isRead': true,
-          'readAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+      for (var i = 0; i < docs.length; i += _maxBatchWrites) {
+        final end = (i + _maxBatchWrites).clamp(0, docs.length);
+        final batch = _firestore.batch();
+        for (final doc in docs.sublist(i, end)) {
+          batch.set(doc.reference, {
+            'isRead': true,
+            'readAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+        await batch.commit();
       }
-      batch.set(_userDoc(userId), {
+
+      // 카운터는 전부 성공한 뒤에 0으로 맞춘다. 중간에 실패하면 카운터가
+      // 실제보다 많은 쪽으로 남는데, 적은 쪽으로 남는 것보다 낫다 —
+      // 음수가 되면 배지가 아예 안 보인다.
+      await _userDoc(userId).set({
         'unreadNotificationCount': 0,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      await batch.commit();
     } catch (e) {
       AppLogger.e(
         '[CommunityNotification][Repository] markAllAsRead failed userId=$userId',
@@ -174,17 +188,22 @@ class CommunityNotificationRepositoryImpl
 
     try {
       final snapshot = await _collection(userId).get();
-      if (snapshot.docs.isEmpty) return;
+      final docs = snapshot.docs;
+      if (docs.isEmpty) return;
 
-      final batch = _firestore.batch();
-      for (final doc in snapshot.docs) {
-        batch.delete(doc.reference);
+      for (var i = 0; i < docs.length; i += _maxBatchWrites) {
+        final end = (i + _maxBatchWrites).clamp(0, docs.length);
+        final batch = _firestore.batch();
+        for (final doc in docs.sublist(i, end)) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
       }
-      batch.set(_userDoc(userId), {
+
+      await _userDoc(userId).set({
         'unreadNotificationCount': 0,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      await batch.commit();
     } catch (e) {
       AppLogger.e(
         '[CommunityNotification][Repository] deleteAllNotifications failed userId=$userId',
