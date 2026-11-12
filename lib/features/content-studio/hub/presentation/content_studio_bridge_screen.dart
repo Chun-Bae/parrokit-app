@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -17,6 +18,11 @@ class ContentStudioBridgeScreen extends StatelessWidget {
         isDark ? context.tokens.surfaceContainer : colorScheme.surface;
     final border = context.tokens.dividerSubtle;
     final secondaryText = context.tokens.textSecondary;
+    // 새 디자인: 세 줄이 카드처럼 생겼는데 눌러도 아무 일이 없었다. 줄을 누르면
+    // 그 탭으로 바로 가고, 같은 말을 하던 부제와 '시작하기' 버튼은 숨긴다.
+    final newDesign = AppConfig.newDesign;
+    void openTab(int index) =>
+        context.go('${AppRoutes.contentStudioHubPath}?tab=$index');
 
     // 뒤로가기를 다른 화면처럼 앱바에 둔다. 전에는 본문 안에 IconButton을
     // 넣어서, 다른 화면보다 오른쪽·아래로 16pt쯤 들어간 자리에 있었다.
@@ -64,49 +70,64 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                           color: colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '자막 편집, TTS, 영상 제작 흐름을 한 곳에서 이어서 작업하세요.',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          height: 1.45,
-                          color: secondaryText,
+                      if (!newDesign) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          '자막 편집, TTS, 영상 제작 흐름을 한 곳에서 이어서 작업하세요.',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            height: 1.45,
+                            color: secondaryText,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
+                      ],
+                      SizedBox(height: newDesign ? 24 : 32),
                       _BridgeFeatureRow(
+                        key: const ValueKey('studio-open-captioning'),
                         icon: Icons.subtitles_rounded,
                         title: '자막',
-                        description: '클립을 불러오고 제목, 태그, 세그먼트를 정리합니다.',
+                        description: newDesign
+                            ? '영상에 자막을 달아 클립으로 저장해요'
+                            : '클립을 불러오고 제목, 태그, 세그먼트를 정리합니다.',
                         borderColor: border,
+                        onTap: newDesign ? () => openTab(0) : null,
                       ),
                       const SizedBox(height: 12),
                       _BridgeFeatureRow(
+                        key: const ValueKey('studio-open-tts'),
                         icon: Icons.graphic_eq_rounded,
                         title: 'TTS',
-                        description: '대본 기반 음성 제작 흐름을 준비합니다.',
+                        description: newDesign
+                            ? '문장을 읽어 주는 음성을 만들어요'
+                            : '대본 기반 음성 제작 흐름을 준비합니다.',
                         borderColor: border,
+                        onTap: newDesign ? () => openTab(1) : null,
                       ),
                       const SizedBox(height: 12),
                       _BridgeFeatureRow(
+                        key: const ValueKey('studio-open-video'),
                         icon: Icons.movie_creation_rounded,
                         title: 'Video',
-                        description: '영상 제작 도구로 결과물을 확장합니다.',
+                        description: newDesign
+                            ? '대본으로 짧은 영상을 만들어요'
+                            : '영상 제작 도구로 결과물을 확장합니다.',
                         borderColor: border,
+                        onTap: newDesign ? () => openTab(2) : null,
                       ),
                       const SizedBox(height: 24),
                     ],
                   ),
                 ),
               ),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: FilledButton.icon(
-                  onPressed: () => context.go(AppRoutes.contentStudioHubPath),
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('시작하기'),
+              if (!newDesign)
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: FilledButton.icon(
+                    onPressed: () => context.go(AppRoutes.contentStudioHubPath),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('시작하기'),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -117,10 +138,12 @@ class ContentStudioBridgeScreen extends StatelessWidget {
 
 class _BridgeFeatureRow extends StatelessWidget {
   const _BridgeFeatureRow({
+    super.key,
     required this.icon,
     required this.title,
     required this.description,
     required this.borderColor,
+    this.onTap,
   });
 
   final IconData icon;
@@ -128,13 +151,16 @@ class _BridgeFeatureRow extends StatelessWidget {
   final String description;
   final Color borderColor;
 
+  /// 있으면 줄 전체를 누를 수 있고 오른쪽에 화살표가 붙는다.
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final secondaryText = context.tokens.textSecondary;
 
-    return Container(
+    final row = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -168,7 +194,20 @@ class _BridgeFeatureRow extends StatelessWidget {
               ],
             ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right_rounded, color: secondaryText),
+          ],
         ],
+      ),
+    );
+    if (onTap == null) return row;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: row,
       ),
     );
   }

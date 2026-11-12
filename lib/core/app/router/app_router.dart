@@ -397,7 +397,13 @@ ShellRoute get _shellRoute => ShellRoute(
             name: AppRoutes.contentStudioHub,
             transitionDuration: const Duration(milliseconds: 280),
             reverseTransitionDuration: const Duration(milliseconds: 240),
-            child: const ContentStudioHubScreen(initialIndex: 0),
+            // 콘텐츠 제작 첫 화면에서 고른 탭(?tab=0~2)으로 연다. 없으면 0.
+            child: ContentStudioHubScreen(
+              initialIndex: (int.tryParse(
+                          state.uri.queryParameters['tab'] ?? '') ??
+                      0)
+                  .clamp(0, 2),
+            ),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
               final slide = Tween<Offset>(
