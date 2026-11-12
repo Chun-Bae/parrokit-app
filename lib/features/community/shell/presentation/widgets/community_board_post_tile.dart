@@ -11,9 +11,14 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 class CommunityBoardPostTile extends StatelessWidget {
   final Post post;
 
+  /// 글마다 붙는 분류 칩. 분류를 골라 거른 목록에서는 모든 글이 같은 분류라
+  /// 같은 칩이 줄마다 반복된다. 그때는 숨긴다.
+  final bool showCategory;
+
   const CommunityBoardPostTile({
     super.key,
     required this.post,
+    this.showCategory = true,
   });
 
   @override
@@ -36,21 +41,23 @@ class CommunityBoardPostTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-              ),
-              child: Text(
-                post.category,
-                style: textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+            if (showCategory) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: Text(
+                  post.category,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
+            ],
             Text(
               post.title,
               style: textTheme.titleMedium?.copyWith(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/features/community/shell/presentation/widgets/community_board_post_tile.dart';
 import 'package:provider/provider.dart';
@@ -63,7 +64,11 @@ class _BoardScreenState extends State<BoardScreen> {
                   : Divider(color: colorScheme.outlineVariant, height: 1),
           itemBuilder: (context, index) {
             if (index == filteredPosts.length) return const PostListFooter();
-            return CommunityBoardPostTile(post: filteredPosts[index]);
+            return CommunityBoardPostTile(
+              post: filteredPosts[index],
+              showCategory:
+                  widget.selectedFilter == CommunityFilters.defaultBoard,
+            );
           },
         ),
       ),
