@@ -1,0 +1,47 @@
+# 4차 레퍼런스 조사
+
+로그인 없이 볼 수 있는 자료만 봤다. 특정 앱의 생김새·브랜드·그림·문구는 가져오지 않고, 왜 사람에게 도움이 되는지가 분명한 패턴만 적는다.
+
+## 1. 홈과 하루 학습
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| 홈 한가운데에 "오늘 할 일" 하나 | 무엇을 할지 고르는 부담이 없다. 끝내면 오늘 목표가 채워져 다음 날 다시 올 이유가 생긴다 | [Fluent Forever 도움말](https://help.fluent-forever.com/hc/en-us/articles/40520654921243), [Fluently 홈 개편 글](https://torbenziegler.github.io/Fluently/blog/why-fluently-home-is-now-built-for-momentum) | 홈 무대 바로 아래 "오늘의 따라 말하기" 큰 버튼 하나. 지금은 "학습하러 가기"가 두 번째 화면 높이에 있다 |
+| 진행이 메뉴를 뒤지지 않아도 보임 | 얼마나 했는지 보이면 계속하게 된다 | [Fluently 개편 글](https://torbenziegler.github.io/Fluently/blog/the-big-fluently-relaunch-what-s-new-and-why-we-rebuilt-it) | 오늘 목표 진행(3/5)을 무대 위 한 줄로 |
+| 연속 학습일은 쓰되 주인공이 되지 않게 | 숫자가 커지면 학습보다 숫자를 지키는 게 목적이 된다는 비판이 있다 | [Mobbin 859개 스트릭 연구](https://mobbin.com/blog/streaks-are-about-losing-a-study-of-859-streak-designs), [Duolingo 스트릭 글](https://making.duolingo.com/how-streaks-keep-duolingo-learners-committed-to-their-language-goals) | 캘린더 카드의 작은 숫자 정도로. 홈 상단 배지로 키우지 않는다 |
+
+## 2. 말하기(따라 말하기·섀도잉)
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| 문장 단위로 끊고, 한 문장 듣기 → 바로 따라 하기 | 한 번에 하나만 하면 된다 | [Shadowing Master](https://apps.apple.com/be/app/shadowing-master/id6751806807), [Shadowfy](https://apps.apple.com/app/id6786404437) | 무대의 "따라 말하기"와 플레이어 구간 반복 |
+| 듣기 → 따라 하기 모드와 동시에 말하기 모드 구분 | 수준에 맞게 고를 수 있다 | [English Shadowing: Speak Pro](https://apps.apple.com/us/app/id6746413897) | 학습 허브의 학습 방법 두 칸 |
+| 녹음 후 원문과 바로 비교, 속도 늦추기 | 내 발음 차이를 스스로 들을 수 있다 | 위 앱들 소개 | 무대 따라 말하기 결과 화면(지금은 점수만) |
+
+## 3. 아이콘과 글자
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| 아이콘에는 글자를 붙인다. 글자 없는 아이콘은 자주 쓰는 사람의 것 | 처음 쓰는 사람은 아이콘만으로 뜻을 모른다. 글자를 붙인 뒤 사용성이 크게 좋아진 사례(Outlook·Office) | [NN/g 아이콘 사용성](https://www.nngroup.com/articles/icon-usability/), [CXL 아이콘 테스트](https://cxl.com/blog/icon-usability-testing/), [Microsoft 블로그](https://blogs.msdn.microsoft.com/jensenh/the-importance-of-labels) | **홈 무대의 글자 없는 아이콘 18개.** 자주 쓰는 3~4개만 글자 붙여 남기고 나머지는 "더 보기" 시트로 |
+
+## 4. 글과 설명
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| 설명이 필요 없는 디자인 | 설명문은 읽히지 않는다. 화면 자체가 할 일을 보여줘야 한다 | [Toss Simplicity](https://blog.toss.im/article/simplicity4_), [토스 UX 라이팅 인터뷰](https://toss.im/tossfeed/article/uxwriter-interview) | 섹션마다 붙은 부제 설명, 시작할 때 뜨는 긴 안내 창 |
+| 쉬운 말, 한 사람 같은 말투 | 화면마다 말투가 다르면 다른 앱 같다 | 같은 출처 | 버튼·토스트 문구 통일 |
+
+## 5. 커뮤니티 Q&A
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| "질문하기"가 주 입구 | 학습자는 물어보러 온다 | [HiNative 소개](https://apps.apple.com/app/id923920480), [리뷰](https://www.alllanguageresources.com/hinative/) | 질문 탭의 글쓰기 버튼을 "질문하기"로 |
+| 답하면 보상 | 답하는 사람이 있어야 굴러간다 | 같은 출처 | 크래커 채택 보상(이미 있음)을 질문 목록에 크게 |
+| 음성으로 묻고 답하기 | 발음은 글로 물을 수 없다 | 같은 출처 | 비활성 '음성' 버튼(안건 7~10번) |
+
+## 6. 영상 속 문장 모으기
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| 자막 한 줄을 문맥과 함께 저장 | 나중에 장면과 같이 떠올린다 | [Language Reactor 내보내기](https://languagereactor.com/help/export), [리뷰](https://www.mezzoguild.com/language-reactor-review/) | 플레이어 자막 → 내 문장 저장(이미 있음), 문장 상세의 "이 문장이 나오는 클립" |
+| 단어 단위가 아니라 구절 단위 저장 요청이 많다 | 실제로는 표현 단위로 기억한다 | [LingQ 포럼](https://forum.lingq.com/t/the-best-way-to-save-and-review-phrases-in-lingq-%F0%9F%9A%80/1190466) | 단어 탭 설계 때 참고 |
