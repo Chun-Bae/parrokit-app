@@ -158,7 +158,9 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
             const Spacer(),
             TextButton(
               onPressed: widget.onViewAll,
-              child: const Text('더 보기'),
+              // 바로 위 "내 문장 기록"의 '전체 보기'와 같은 말, 같은 색으로 맞춘다.
+              // 전에는 이것만 앱 기본 파랑이라 홈의 하늘색 계열 사이에서 튀었다.
+              child: Text('전체 보기', style: TextStyle(color: muted)),
             ),
           ],
         ),
