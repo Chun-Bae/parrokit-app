@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -98,7 +99,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     return Scaffold(
       appBar: AppBar(
         title:
-            const Text('코인 환전소', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('환전소', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -236,7 +237,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 .copyWith(color: context.tokens.textTertiary)),
         const SizedBox(height: 4),
         Text(
-          '$amount',
+          NumberFormat.decimalPattern('ko').format(amount),
           style: context.texts.headlineSmall.copyWith(color: color),
         ),
       ],

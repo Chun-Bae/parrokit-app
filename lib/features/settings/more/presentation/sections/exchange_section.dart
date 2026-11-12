@@ -15,7 +15,7 @@ class ExchangeSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '코인 환전소',
+          '환전소',
           style: theme.textTheme.titleMedium
               ?.copyWith(fontWeight: FontWeight.w700),
         ),
