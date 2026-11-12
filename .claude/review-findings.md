@@ -1217,6 +1217,63 @@ UPDATE가 WHERE 없이 모든 클립을 'local'로 덮어쓴 뒤 그 값으로 �
 규칙에서 그 두 필드의 클라이언트 쓰기를 아예 막아야 한다. 결제 서버 검증과
 같은 작업이다.
 
+> **3차: 설계만 적었다. 이 항목의 코드는 바꾸지 않았다.** 다만 같은 경로에서 확실한
+> 버그 둘은 고쳤다: 캐시된 크래커가 서버를 덮어쓰던 것(`0c594a3b`), Apple 첫 로그인의
+> 잔액 기본값(`2e11e91d`).
+>
+> **지금 잔액이 바뀌는 곳 (전부 앱이 직접 쓴다)**
+>
+> | 경로 | 위치 | 서버 검증 |
+> |---|---|---|
+> | 광고 보상 +패롯 | `ad_reward_section.dart` → `addCoins` | 없음. 광고를 봤다는 증거 없이 지급 |
+> | 결제 +패롯 | `payment_section.dart`·`coin_store_section.dart` → `addCoins` | 없음. RevenueCat 콜백을 앱이 믿고 지급 |
+> | TTS·영상·자막 −패롯 | 각 provider → `addCoins(-cost)` | 없음. 함수는 돈을 안 깎는다. 앱을 고치면 무료 |
+> | 환전 패롯↔크래커 | `exchangeCurrency` 트랜잭션 | 앱 안 트랜잭션. 잔액 확인은 있지만 앱이 쓴다 |
+> | 질문 등록 −크래커 | `addQuestion` 트랜잭션 | 앱 안 트랜잭션 |
+> | 답변 채택 +크래커(남의 문서) | `acceptAnswer` 트랜잭션 | 규칙이 "올리는 것만" 허용. **아무나 남의 크래커를 무제한 올릴 수 있다** |
+> | 챗봇 | `generateChatbotResponse` | 서버가 일일 횟수를 센다. 이것만 서버에 있다 |
+>
+> **목표:** `users/{uid}`의 `parrots`·`crackers`·`coins`는 Cloud Function(Admin SDK)만
+> 쓴다. 규칙에서 클라이언트 쓰기를 막는다.
+>
+> **함수 설계**
+> 1. 공용 `applyLedger(uid, {parrots, crackers}, reason, idempotencyKey)`:
+>    트랜잭션 안에서 잔액 확인 → 증감 → `users/{uid}/wallet_ledger/{idempotencyKey}`에
+>    기록. 같은 키가 이미 있으면 아무것도 하지 않고 지금 잔액을 돌려준다(재시도 안전)
+> 2. 유료 기능은 함수 안에서 깎는다: `generateTts`·`generateVideo`·`generateCaptions`가
+>    외부 API를 부르기 **전에** 차감하고, 실패하면 같은 함수가 환불 기록을 남긴다.
+>    영상은 비동기라 `getVideoOperationStatus`에서 최종 실패를 확인했을 때 환불한다
+> 3. 결제: RevenueCat 웹훅(`onRequest`, Authorization 헤더의 공유 비밀 확인) 또는
+>    `verifyPurchase` 콜러블이 RevenueCat REST API로 거래를 조회한 뒤 지급.
+>    멱등 키는 store transaction id
+> 4. 광고: AdMob 서버 측 확인(SSV) 콜백을 `onRequest`로 받는다. Google 공개키로 서명을
+>    확인하고 `custom_data`에 uid를 싣는다. 멱등 키는 `transaction_id`. 하루 횟수
+>    제한도 여기서 센다(지금 쿨다운은 앱에만 있다)
+> 5. `exchangeCurrency`, `createQuestion`, `acceptAnswer`를 콜러블로 옮긴다.
+>    `acceptAnswer`는 질문 작성자인지, 이미 채택됐는지, 보상 액수가 질문 문서의
+>    `rewardCrackers`와 같은지 서버가 확인한다
+>
+> **규칙 변경 (함수와 새 앱이 다 퍼진 뒤 마지막에)**
+> ```
+> allow update: if isOwner(userId)
+>   && !request.resource.data.diff(resource.data).affectedKeys()
+>        .hasAny(['parrots', 'crackers', 'coins']);
+> allow create: if isOwner(userId)
+>   && request.resource.data.get('parrots', 0) == 0
+>   && request.resource.data.get('crackers', 0) == 0;
+> ```
+> 남의 크래커를 올리는 두 번째 조건은 지운다.
+>
+> **순서 (거꾸로 하면 옛 앱이 깨진다)**
+> 1. 함수 배포(새 콜러블·웹훅 추가, 기존 동작은 그대로)
+> 2. 앱이 새 콜러블을 쓰게 바꿔 출시. 앱의 `addCoins` 직접 쓰기 제거
+> 3. RevenueCat 웹훅, AdMob SSV 콘솔 설정
+> 4. 옛 버전 사용 비율이 충분히 줄면 강제 업데이트(최소 버전)를 걸고 규칙 배포
+> 5. `test_rules`에 "자기 잔액을 못 바꾼다", "남의 크래커를 못 올린다" 테스트 추가
+>
+> **크기:** 큼. 함수 5~6개, 앱 호출부 8곳, 규칙, 콘솔 설정 둘. 결제가 걸려 있어 실제
+> 결제 샌드박스로 확인해야 한다.
+
 ### 네이버 이메일이 이미 다른 계정에 있으면 로그인이 영영 안 된다
 `createUser`가 `auth/email-already-exists`로 실패한다. 구글로 먼저 가입한
 사람이 네이버로 로그인하면 이 경우다. 계정을 합칠지, 이메일 없이 만들지
