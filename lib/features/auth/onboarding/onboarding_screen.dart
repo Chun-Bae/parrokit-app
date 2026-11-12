@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
@@ -40,14 +41,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
 
-    final isAvailable =
-        await context.read<UserProvider>().isNicknameAvailable(nickname);
-    setState(() {
-      _isNicknameAvailable = isAvailable;
-      _hasCheckedNickname = true;
-      _nicknameCheckMessage =
-          isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
-    });
+    // 프로필 수정 화면과 같은 모양으로 맞춘다. 전에는 try도 mounted 검사도
+    // 없었다. 네트워크가 흔들리면 예외가 비동기로 사라져 아무 안내도 안 뜨고,
+    // 확인을 누른 뒤 뒤로 가면 사라진 화면에 setState가 불려 터진다.
+    try {
+      final isAvailable =
+          await context.read<UserProvider>().isNicknameAvailable(nickname);
+      if (!mounted) return;
+      setState(() {
+        _isNicknameAvailable = isAvailable;
+        _hasCheckedNickname = true;
+        _nicknameCheckMessage =
+            isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
+      });
+    } catch (e) {
+      AppLogger.e('[Auth] 닉네임 중복 확인 실패', error: e);
+      if (!mounted) return;
+      setState(() {
+        _isNicknameAvailable = false;
+        _hasCheckedNickname = false;
+        _nicknameCheckMessage = '닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.';
+      });
+    }
   }
 
   Future<void> _onSubmit() async {
