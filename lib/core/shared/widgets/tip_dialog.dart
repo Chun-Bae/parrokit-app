@@ -12,33 +12,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
-const _prefKey = 'editor_tip_dismissed_date';
+/// 자동으로 한 번 보여줬는지. 전에는 "오늘 하루 보지 않기"를 누르기 전까지
+/// 홈 탭에 들어올 때마다 떠서, 탭을 오갈 때마다 화면을 막았다.
+const _seenKey = 'tip_dialog_auto_shown_v1';
 
-/// 오늘 이미 다이얼로그를 닫았는지 확인합니다.
+/// 아직 자동으로 보여준 적이 없으면 true.
 Future<bool> shouldShowTip() async {
   final prefs = await SharedPreferences.getInstance();
-  final dismissed = prefs.getString(_prefKey);
-  final today = _todayString();
-  return dismissed != today;
+  return prefs.getBool(_seenKey) != true;
 }
 
-/// 오늘 하루 보지 않기 상태를 저장합니다.
-Future<void> dismissTipForToday() async {
+Future<void> _markTipShown() async {
   final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_prefKey, _todayString());
+  await prefs.setBool(_seenKey, true);
 }
 
-String _todayString() {
-  final now = DateTime.now();
-  return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-}
-
-/// 에디터 진입 안내 다이얼로그를 표시합니다.
+/// 이용 안내 다이얼로그를 표시합니다.
 ///
-/// [force]: true이면 오늘 하루 보지 않기 여부와 관계없이 무조건 표시합니다.
-/// 도움말 버튼 등에서 명시적으로 호출할 때 사용하세요.
+/// 자동 호출은 설치 뒤 처음 한 번만 보여준다. [force]가 true면(더보기 >
+/// 도움말) 언제든 보여준다.
 Future<void> showTipDialog(BuildContext context, {bool force = false}) async {
-  if (!force && !await shouldShowTip()) return;
+  if (!force) {
+    if (!await shouldShowTip()) return;
+    await _markTipShown();
+  }
   if (!context.mounted) return;
 
   await showDialog<void>(
@@ -107,23 +104,13 @@ class _TipDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // 버튼 영역
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('닫기'),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                FilledButton(
-                  onPressed: () async {
-                    await dismissTipForToday();
-                    if (context.mounted) Navigator.of(context).pop();
-                  },
-                  child: const Text('오늘 하루 보지 않기'),
-                ),
-              ],
+            // 버튼 영역. 처음 한 번만 자동으로 뜨므로 "오늘 하루 보지 않기"는 뺐다.
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('확인'),
+              ),
             ),
           ],
         ),
