@@ -139,6 +139,17 @@ class ShortsProvider extends ChangeNotifier {
   void removeItems(int count) {
     if (count <= 0 || count > _shorts.length) return;
     _shorts.removeRange(0, count);
+
+    // prefetchNextBatch는 "이 길이에서는 이미 당겨왔다"를 _lastPrefetchAtLength로
+    // 기억한다. 여기서 길이가 줄어드는 건 미리 불러왔기 때문이 아니라 앞 배치를
+    // 버렸기 때문이므로, 그 기억은 더 이상 맞지 않는다. 지우지 않으면
+    // 줄어든 길이가 마침 기억된 값과 같을 때 다음 배치를 영영 못 불러온다.
+    //
+    // 실제로 그렇게 됐다. 10개 로드 → 5번에서 당겨서 20개 → 10번에서 앞 10개
+    // 버리면 길이가 다시 10인데 _lastPrefetchAtLength도 10이다. 그 뒤로는
+    // 무한 스크롤이 멈추고 같은 10개만 돌았다.
+    _lastPrefetchAtLength = -1;
+
     notifyListeners();
   }
 
