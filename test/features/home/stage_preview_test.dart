@@ -210,6 +210,19 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('문장 설정 창의 +는 창을 닫고 문장 추가 화면을 연다', (tester) async {
+    await openPreview(tester);
+    await tapTooltip(tester, '문장 설정');
+    await tester.pump(const Duration(milliseconds: 400));
+    final add = find.byKey(const ValueKey('phrase-settings-add'));
+    expect(add, findsOneWidget);
+    await tester.tap(add);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(add, findsNothing);
+    expect(find.byKey(const ValueKey('sentence-language')), findsOneWidget);
+  });
+
   testWidgets('문장 추가 화면에서 원문, 뜻, 발음을 저장해 바로 보여준다', (tester) async {
     await openPreview(tester);
     await tester.tap(find.byKey(const ValueKey('add-phrase')));

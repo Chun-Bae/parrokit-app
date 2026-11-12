@@ -798,7 +798,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     syncPlayback();
   }
 
-  Future<void> showPhraseSettings() => showDialog<void>(
+  Future<void> showPhraseSettings() async {
+    final action = await showDialog<String>(
         context: context,
         builder: (context) => _PhraseSettingsDialog(
           initialLanguage: widget.language,
@@ -811,6 +812,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
           ],
         ),
       );
+    // 창의 + 버튼은 창을 닫고 왼쪽 '문장 추가'와 같은 흐름을 연다.
+    if (action == _PhraseSettingsDialog.addAction && mounted) {
+      await addPhrase();
+    }
+  }
 
   Future<void> showHelp() => showDialog<void>(
       context: context, builder: (context) => const _HomeHelpDialog());
@@ -1542,6 +1548,9 @@ class _PhraseSettingsDialog extends StatefulWidget {
   final Map<String, List<String>> phrasesByLanguage;
   final List<String> customPhrases;
 
+  /// + 버튼으로 닫을 때 돌려주는 값.
+  static const addAction = 'add';
+
   @override
   State<_PhraseSettingsDialog> createState() => _PhraseSettingsDialogState();
 }
@@ -1581,7 +1590,9 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
           child: Column(children: [
             Row(children: [
               Expanded(
-                  child: Text('말하기 설정',
+                  // 여는 버튼 이름과 맞춘다. 예전 제목 '말하기 설정'은 옆 버튼
+                  // (말하기 간격 설정) 이름과 같아 헷갈렸다.
+                  child: Text('문장 설정',
                       style: context.texts.headlineSmall.copyWith(color: ink))),
               IconButton(
                   tooltip: '닫기',
@@ -1651,12 +1662,13 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                     })),
             const SizedBox(height: 14),
             Row(children: [
-              // 문장 추가 흐름이 이 시트에 연결되어 있지 않다. 칠해진
-              // 버튼이라 가장 누르라고 말하는 모양인데 누르면 아무 일도
-              // 일어나지 않으므로 비활성으로 둔다.
+              // 예전에는 연결이 없어 비활성이었다. 창을 닫고 무대의
+              // '문장 추가' 흐름을 연다(showPhraseSettings가 받는다).
               IconButton.filledTonal(
+                  key: const ValueKey('phrase-settings-add'),
                   tooltip: '문장 추가',
-                  onPressed: null,
+                  onPressed: () => Navigator.pop(
+                      context, _PhraseSettingsDialog.addAction),
                   icon: const Icon(Icons.add_rounded)),
               const SizedBox(width: 10),
               Expanded(
