@@ -206,7 +206,9 @@ class Post {
   static DateTime? _parseDateTime(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
+    // 서버 함수가 쓴 시각은 UTC(끝에 Z)다. 앱이 쓴 시각은 시간대 없는 현지
+    // 시각이다. 둘 다 현지 시각으로 맞춰 둔다.
+    if (value is String) return DateTime.tryParse(value)?.toLocal();
     if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
     return null;
   }

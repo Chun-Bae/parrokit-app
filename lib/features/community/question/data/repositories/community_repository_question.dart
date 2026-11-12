@@ -1,45 +1,33 @@
 part of '../../../shell/data/repositories/community_repository.dart';
 
+/// 질문 등록과 답변 채택은 크래커가 오가서 서버 함수(createQuestion,
+/// acceptAnswer)로 한다. 전에는 앱이 트랜잭션으로 자기 크래커를 깎고,
+/// 채택할 때 답변자의 크래커를 직접 올렸다. 그래서 규칙이 "남의 크래커를
+/// 올리는 것"을 열어 둬야 했다.
 mixin CommunityRepositoryQuestion {
-  FirebaseFirestore get _firestore;
+  FirebaseFunctions get _functions;
 
+  /// [requiredCrackers]는 [post]의 rewardCrackers와 같다. 서버는 글의 값을 쓴다.
   Future<Post> addQuestion(Post post, String userId, int requiredCrackers) async {
     try {
-      final userRef = _firestore.collection('users').doc(userId);
-      final docRef = post.id.isEmpty
-          ? _firestore.collection('posts').doc()
-          : _firestore.collection('posts').doc(post.id);
-
-      final newPost = post.copyWith(
-        id: docRef.id,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      await _firestore.runTransaction((transaction) async {
-        final userSnapshot = await transaction.get(userRef);
-        if (!userSnapshot.exists) {
-          throw Exception('유저 정보를 찾을 수 없습니다.');
-        }
-
-        final userData = userSnapshot.data()!;
-        final currentCrackers = (userData['crackers'] as num?)?.toInt() ?? 0;
-        if (currentCrackers < requiredCrackers) {
-          throw Exception('보유한 크래커가 부족합니다.');
-        }
-
-        transaction.update(userRef, {
-          'crackers': FieldValue.increment(-requiredCrackers),
-        });
-        transaction.set(docRef, newPost.toJson());
-      });
-
-      return newPost;
-    } catch (e) {
-      throw Exception('질문 등록에 실패했습니다: $e');
+      final json = post.copyWith(rewardCrackers: requiredCrackers).toJson();
+      // 서버는 시간대가 없는 문자열을 UTC로 읽는다. 마감 시각이 9시간
+      // 밀리지 않게 UTC로 보낸다.
+      if (post.expireAt != null) {
+        json['expireAt'] = post.expireAt!.toUtc().toIso8601String();
+      }
+      final result = await _functions
+          .httpsCallable('createQuestion')
+          .call({'post': json});
+      final data = Map<String, dynamic>.from(result.data as Map);
+      return Post.fromJson(Map<String, dynamic>.from(data['post'] as Map));
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(e.message ?? '질문 등록에 실패했습니다.');
     }
   }
 
+  /// 보상 액수와 답변자는 서버가 질문 글과 댓글에서 읽는다.
+  /// [answererId]와 [rewardCrackers]는 예전 호출 모양을 맞추려고 남겨 둔다.
   Future<void> acceptAnswer({
     required String postId,
     required String commentId,
@@ -47,45 +35,12 @@ mixin CommunityRepositoryQuestion {
     required int rewardCrackers,
   }) async {
     try {
-      final postRef = _firestore.collection('posts').doc(postId);
-      final commentRef = postRef.collection('comments').doc(commentId);
-      final answererRef = _firestore.collection('users').doc(answererId);
-
-      await _firestore.runTransaction((transaction) async {
-        final postSnapshot = await transaction.get(postRef);
-        if (!postSnapshot.exists) {
-          throw Exception('게시글을 찾을 수 없습니다.');
-        }
-
-        final postData = postSnapshot.data()!;
-        if (postData['questionStatus'] == 'resolved') {
-          throw Exception('이미 채택이 완료된 질문입니다.');
-        }
-        if (postData['questionStatus'] == 'expired') {
-          throw Exception('마감 기한이 지난 질문입니다.');
-        }
-
-        final answererSnapshot = await transaction.get(answererRef);
-
-        transaction.update(postRef, {
-          'questionStatus': 'resolved',
-          'acceptedCommentId': commentId,
-          'updatedAt': DateTime.now().toIso8601String(),
-        });
-
-        transaction.update(commentRef, {
-          'isAccepted': true,
-          'updatedAt': DateTime.now().toIso8601String(),
-        });
-
-        if (answererSnapshot.exists) {
-          transaction.update(answererRef, {
-            'crackers': FieldValue.increment(rewardCrackers),
-          });
-        }
+      await _functions.httpsCallable('acceptAnswer').call({
+        'postId': postId,
+        'commentId': commentId,
       });
-    } catch (e) {
-      throw Exception('답변 채택에 실패했습니다: $e');
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception(e.message ?? '답변 채택에 실패했습니다.');
     }
   }
 }

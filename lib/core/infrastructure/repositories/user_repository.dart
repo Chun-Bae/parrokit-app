@@ -526,12 +526,18 @@ class UserRepository {
     final uid = _authService.currentUser?.uid;
     if (uid == null) throw Exception('로그인이 필요합니다.');
 
-    await _firebaseUserService.exchangeCurrency(
-      uid: uid,
-      amountToDeduct: amountToDeduct,
-      amountToAdd: amountToAdd,
+    // 받을 양은 서버가 환율로 정한다. amountToAdd는 화면 표시용이다.
+    final balance = await _firebaseUserService.exchangeCurrency(
+      amount: amountToDeduct,
       isParrotsToCrackers: isParrotsToCrackers,
     );
+    final current = _userPrefs.loadUser();
+    if (current != null) {
+      await _userPrefs.saveUser(current.copyWith(
+        parrots: balance.parrots,
+        crackers: balance.crackers,
+      ));
+    }
   }
 
   /// 닉네임(DisplayName)을 업데이트합니다.

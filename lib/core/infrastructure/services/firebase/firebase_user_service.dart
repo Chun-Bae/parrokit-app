@@ -2,16 +2,25 @@
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:uuid/uuid.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/migrations/coins_to_parrots_migration.dart';
 
 class FirebaseUserService {
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions? _functions;
   final CoinsToParrotsMigration _coinsToParrotsMigration;
 
-  FirebaseUserService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
+  FirebaseUserService({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _functions = functions,
         _coinsToParrotsMigration = CoinsToParrotsMigration();
+
+  /// 테스트에서 Firestore만 넣어 만들 때 Functions를 미리 잡지 않도록 늦게 연다.
+  FirebaseFunctions get _callables => _functions ?? FirebaseFunctions.instance;
 
   Future<void> initUserDocument({
     required String uid,
@@ -66,45 +75,29 @@ class FirebaseUserService {
     });
   }
 
-  Future<void> exchangeCurrency({
-    required String uid,
-    required int amountToDeduct,
-    required int amountToAdd,
+  /// 패롯과 크래커를 바꾼다. 환율과 잔액 확인은 서버(exchangeCurrency 함수)가
+  /// 한다. 전에는 앱이 빼는 양과 넣는 양을 정해 직접 썼다.
+  /// [amount]는 빼는 쪽의 수량이다.
+  Future<({int parrots, int crackers})> exchangeCurrency({
+    required int amount,
     required bool isParrotsToCrackers,
   }) async {
-    final userRef = _firestore.collection('users').doc(uid);
-    
-    await _firestore.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userRef);
-      if (!snapshot.exists) {
-        throw Exception('유저 정보를 찾을 수 없습니다.');
-      }
-      
-      final data = snapshot.data()!;
-      int currentParrots = (data['parrots'] as num?)?.toInt() ?? 0;
-      int currentCrackers = (data['crackers'] as num?)?.toInt() ?? 0;
-      
-      if (isParrotsToCrackers) {
-        if (currentParrots < amountToDeduct) {
-          throw Exception('보유하신 패롯이 부족합니다.');
-        }
-        currentParrots -= amountToDeduct;
-        currentCrackers += amountToAdd;
-      } else {
-        if (currentCrackers < amountToDeduct) {
-          throw Exception('보유하신 크래커가 부족합니다.');
-        }
-        currentCrackers -= amountToDeduct;
-        currentParrots += amountToAdd;
-      }
-      
-      transaction.update(userRef, {
-        'parrots': currentParrots,
-        'coins': FieldValue.delete(),
-        'crackers': currentCrackers,
-        'updatedAt': FieldValue.serverTimestamp(),
+    try {
+      final result = await _callables.httpsCallable('exchangeCurrency').call({
+        'direction':
+            isParrotsToCrackers ? 'parrotsToCrackers' : 'crackersToParrots',
+        'amount': amount,
+        'requestId': const Uuid().v4(),
       });
-    });
+      final data = Map<String, dynamic>.from(result.data as Map);
+      return (
+        parrots: (data['parrots'] as num).toInt(),
+        crackers: (data['crackers'] as num).toInt(),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      // 서버 문구("보유하신 패롯이 부족합니다." 등)를 화면에 그대로 보여준다.
+      throw Exception(e.message ?? '환전하지 못했어요. 다시 시도해주세요.');
+    }
   }
 
   Future<void> updateUserPhoto({
