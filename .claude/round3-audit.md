@@ -90,3 +90,16 @@
 - A5 `800ffb60`: 함수 쪽 스위치만(false). 앱 패키지는 FlutterFire 전체 업그레이드가 필요해 넣지 않았다. 순서는 review-findings.md
 - A6: 설계만 review-findings.md에. 같은 경로의 확실한 버그 둘은 고쳤다: `0c594a3b`(캐시 크래커 덮어쓰기), `2e11e91d`(Apple 기본 잔액)
 - A7: 선택지 넷(A~D)과 추천(C 다음 D)을 review-findings.md에
+
+### B 보류: 시뮬레이터로 볼 수 없어서 커밋하지 않은 UI 변경
+지금 실제 데이터에 질문·투표 글이 하나도 없어서 아래 화면은 열 수 없다. 글을 하나씩
+만들면 확인할 수 있지만 실제 커뮤니티에 쓰지 않기로 했다.
+
+- **글 공감 아이콘 통일.** 커뮤니티 메뉴는 "글 공감 = 엄지, 댓글 좋아요 = 하트"로 나눈다
+  (`community_menu_section_factory.dart`). 게시판은 그대로인데 나머지가 어긋난다.
+  - `vote_screen.dart` VoteCard: 글 공감이 하트(`Icons.favorite`), 눌렀을 때 `danger` 빨강
+    → `Icons.thumb_up`/`thumb_up_outlined`, 눌렀을 때 `tokens.primary` (게시판과 같게)
+  - `question_screen.dart` 목록의 공감 수: 하트 → `Icons.thumb_up_outlined`
+  - `question_view_screen.dart` 질문 상세의 공감 버튼: 번개(`Icons.bolt`) → 엄지
+- `question_view_screen.dart`의 공감·스크랩이 로그아웃 상태면 uid `''`로 호출한다.
+  `users//likes`가 되어 예외가 난다. 게시판처럼 로그인 안내 토스트를 띄우는 게 맞다
