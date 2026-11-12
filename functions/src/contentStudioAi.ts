@@ -1241,6 +1241,23 @@ export const getVideoOperationStatus = onCall(
       }
 
       const docSnapshot = await findVideoGenerationDocument(uid, operationName);
+
+      // 내 기록에 없는 operationName이면 여기서 멈춘다. 전에는 기록이
+      // 없어도 그냥 Gemini에 물어봤다. operationName만 알면 남이 만든
+      // 영상의 주소를 받을 수 있었고, 아무 이름이나 넣어도 유료 호출이
+      // 나갔다.
+      //
+      // generateVideo는 Gemini를 부르기 전에 기록을 먼저 만들고
+      // operationName을 채운 뒤에야 앱에 돌려준다. 그 update가 실패하면
+      // 같은 try에서 잡혀 이름이 앱까지 가지 않는다. 그래서 "앱이 아는
+      // operationName인데 기록에는 없다"는 경우는 없다.
+      if (!docSnapshot) {
+        throw new HttpsError(
+          "permission-denied",
+          "해당 영상 생성 요청을 찾을 수 없습니다."
+        );
+      }
+
       let done = false;
       let videoUri = null;
       let error = null;
