@@ -256,6 +256,24 @@ class TtsProvider extends ChangeNotifier {
     }
   }
 
+  /// 이 Provider는 콘텐츠 제작 화면에서 만들어지고 화면을 떠나면 dispose된다.
+  /// 생성·조회가 도는 중에 떠나면 dispose 뒤에 notifyListeners가 불린다.
+  /// debug 빌드에서는 ChangeNotifier의 assert에 걸려 빨간 화면이 뜨고,
+  /// release에서는 조용히 넘어간다. 개발 중에만 터지는 종류라 더 늦게 보인다.
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   void clearGeneratedAudio() {
     _generatedFilePath = null;
     notifyListeners();
