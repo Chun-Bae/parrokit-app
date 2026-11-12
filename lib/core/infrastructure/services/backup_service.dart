@@ -13,7 +13,7 @@ import 'dart:convert';
 import 'dart:typed_data' show Uint8List;
 import 'dart:io' show File, Directory, Platform;
 
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, visibleForTesting;
 import 'package:archive/archive_io.dart';
 import 'package:archive/archive.dart' as a;
 import 'package:crypto/crypto.dart';
@@ -32,7 +32,9 @@ import 'package:parrokit/features/settings/more/presentation/widgets/backup_prog
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Isolate에 전달할 압축 작업 파라미터.
-class _CompressParams {
+///
+/// 테스트에서 [BackupService.compressBackup]을 직접 부르려고 공개했다.
+class BackupCompressParams {
   final String zipPath;
   final String? dbPath;
   final String dbRelativePath;
@@ -41,7 +43,7 @@ class _CompressParams {
   final String mediaRelativeDir;
   final String timestamp;
 
-  const _CompressParams({
+  const BackupCompressParams({
     required this.zipPath,
     required this.dbPath,
     required this.dbRelativePath,
@@ -162,8 +164,8 @@ class BackupService {
 
     // compute()로 별도 Isolate에서 압축 실행
     await compute(
-      _doCompress,
-      _CompressParams(
+      compressBackup,
+      BackupCompressParams(
         zipPath: backupZipPath,
         dbPath: await db.exists() ? db.path : null,
         dbRelativePath: dbRelativePath,
@@ -208,7 +210,11 @@ class BackupService {
   ///
   /// 그래서 DB를 못 읽으면 백업 자체를 실패시킨다. 미디어 파일 하나를 못
   /// 읽는 건 넘어가되, 실제로 담은 것만 manifest에 적는다.
-  static void _doCompress(_CompressParams params) {
+  ///
+  /// 파일 선택창 없이 압축만 부를 수 있게 공개했다. 전에는 private static이라
+  /// 위 버그에 회귀 테스트를 붙일 수 없었다.
+  @visibleForTesting
+  static void compressBackup(BackupCompressParams params) {
     final encoder = ZipFileEncoder();
     encoder.create(params.zipPath);
 
