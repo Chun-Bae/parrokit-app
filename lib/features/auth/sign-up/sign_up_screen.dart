@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -91,6 +92,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         default:
           showToast('오류가 발생했습니다: ${e.message}');
       }
+    } catch (e) {
+      // FirebaseAuthException만 잡고 있었다. 계정은 만들어졌는데 Firestore
+      // 문서 쓰기가 실패하는 식의 예외는 아무 데도 안 잡혀서 토스트조차 안
+      // 뜬다. 사용자 눈에는 가입 버튼이 먹통인 것으로 보인다.
+      AppLogger.e('[Auth] 이메일 회원가입 실패', error: e);
+      if (!mounted) return;
+      showToast('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
     }
   }
 

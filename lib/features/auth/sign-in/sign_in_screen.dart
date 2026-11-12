@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -54,6 +55,14 @@ class _SignInScreenState extends State<SignInScreen> {
         default:
           showToast('오류가 발생했습니다: ${e.message}');
       }
+    } catch (e) {
+      // FirebaseAuthException만 잡고 있었다. Firestore 쓰기 실패나 타임아웃처럼
+      // 다른 예외가 나면 아무 데도 안 잡혀서 토스트도 안 뜬다. 사용자 눈에는
+      // 버튼을 눌러도 아무 일이 없는 것으로 보인다. SSO 경로는 이미 이렇게
+      // 일반 catch를 두고 있다.
+      AppLogger.e('[Auth] 이메일 로그인 실패', error: e);
+      if (!mounted) return;
+      showToast('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
     }
   }
 
