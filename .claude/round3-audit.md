@@ -39,7 +39,7 @@
 - [ ] 영상 위 UI 토큰 (onVideo 등)
 
 ### B1 화면 (많이 쓰는 순)
-- [ ] 홈 대시보드 (character_dashboard_screen, learning_hub_screen)
+- [~] 홈 대시보드 (character_dashboard_screen, learning_hub_screen) — 1차 돌았다. learning_hub 미확인
 - [ ] 학습 무대 (stage_preview_screen, add_sentence_screen)
 - [ ] 최근 (recent_screen)
 - [ ] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
@@ -103,3 +103,13 @@
   - `question_view_screen.dart` 질문 상세의 공감 버튼: 번개(`Icons.bolt`) → 엄지
 - `question_view_screen.dart`의 공감·스크랩이 로그아웃 상태면 uid `''`로 호출한다.
   `users//likes`가 되어 예외가 난다. 게시판처럼 로그인 안내 토스트를 띄우는 게 맞다
+
+### B 진행 (2026-11-12)
+- `ab098286` 문장팩 '공식' 배지 다크 대비 (보관함)
+- `c41ca080` 홈 '익히는 중' 글자 대비 1.7:1 → 진한 같은 계열
+- `28ed787b` 홈 섹션 링크 '더 보기'(앱 파랑) → '전체 보기'(홈 muted)
+- `06168ee1` 학습 캘린더 빈 줄 (GridView가 안전 영역을 여백으로 넣음)
+- 브랜드색: 홈만 청록·하늘 계열(`HomeTokens` 주석에 의도가 적혀 있음), 나머지는 토스 파랑.
+  하나로 합칠지는 사용자가 정할 일이라 바꾸지 않았다. 최종 요약의 "정할 것"에 넣는다
+- 맨 위로 버튼이 스크롤 위치에 따라 '전체 보기' 위에 겹친다. 메모리의 확인된 결정
+  ("떠 있는 버튼 아래로 내용이 지나가는 건 정상")에 따라 그대로 둔다
