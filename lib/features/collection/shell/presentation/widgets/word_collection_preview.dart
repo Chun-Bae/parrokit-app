@@ -50,8 +50,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
       children: [
         // 단어 탭은 아직 예시 데이터로 그린 미리보기다. 내 단어로 오해하지
-        // 않게 새 디자인에서는 맨 위에 한 줄로 알린다.
-        if (AppConfig.newDesign) ...[
+        // 않게 맨 위에 한 줄로 알린다. 5차 6번에서 실제 기능으로 바꾸며 지운다.
+        ...[
           Row(children: [
             Icon(Icons.info_outline_rounded,
                 size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),

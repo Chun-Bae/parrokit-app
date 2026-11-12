@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -28,7 +27,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
     final accent = palette.accent;
 
     Widget destination(
-        IconData icon, String title, String subtitle, String? path) {
+        IconData icon, String title, String subtitle, String path) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Material(
@@ -39,16 +38,13 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
                 borderRadius: BorderRadius.circular(AppRadius.xl)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            leading: Icon(icon, color: path == null ? muted : ink),
+            leading: Icon(icon, color: ink),
             title: Text(title,
                 style: TextStyle(color: ink, fontWeight: FontWeight.w700)),
             subtitle: Text(subtitle,
                 style: context.texts.bodySmall.copyWith(color: muted)),
-            trailing: path == null
-                ? Text('준비 중',
-                    style: context.texts.bodySmall.copyWith(color: muted))
-                : Icon(Icons.arrow_forward_rounded, color: muted),
-            onTap: path == null ? null : () => context.push(path),
+            trailing: Icon(Icons.arrow_forward_rounded, color: muted),
+            onTap: () => context.push(path),
           ),
         ),
       );
@@ -164,14 +160,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
               '짧은 영상을 넘기며 마음에 드는 표현 찾기', AppRoutes.explorePath),
           destination(Icons.video_library_outlined, '동영상별로 보기',
               '보관함에서 영상과 학습 클립 찾아보기', AppRoutes.collectionPath),
-          // 눌러도 아무 일 없는 '준비 중' 줄은 새 디자인에서 숨긴다.
-          ValueListenableBuilder<bool>(
-            valueListenable: AppConfig.newDesignListenable,
-            builder: (context, newDesign, _) => newDesign
-                ? const SizedBox.shrink()
-                : destination(Icons.people_outline_rounded, '함께 나눈 영상 보기',
-                    '내가 공유하거나 다른 사람이 공유한 영상', null),
-          ),
+          // 눌러도 아무 일 없던 '함께 나눈 영상 보기(준비 중)' 줄은 지웠다(4차).
         ],
       ),
     );

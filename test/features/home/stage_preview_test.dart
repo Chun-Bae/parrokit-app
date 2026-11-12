@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -72,11 +71,8 @@ const complete = ValueKey('complete-repeat');
 const microphone = ValueKey('preview-microphone');
 
 void main() {
-  // 아래 테스트들은 개편 전 무대(글자 없는 아이콘 줄)를 본다. 새 디자인은
-  // 맨 아래 별도 테스트에서 본다.
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    AppConfig.newDesign = false;
   });
   testWidgets('자동 반복은 XP를 주거나 응답 UI를 띄우지 않는다', (tester) async {
     await openPreview(tester);
@@ -336,7 +332,7 @@ void main() {
   testWidgets('설정의 말하기 간격 슬라이더 값이 저장된다', (tester) async {
     await openPreview(tester);
     await tester.pump();
-    await tapTooltip(tester, '설정');
+    await tapTooltip(tester, '말하기 설정');
     await tester.pump();
     expect(find.text('1.5초'), findsWidgets);
     final slider =
@@ -402,7 +398,7 @@ void main() {
   testWidgets('설정에서 들은 횟수 기록을 끄면 저장된다', (tester) async {
     await openPreview(tester);
     await tester.pump();
-    await tapTooltip(tester, '설정');
+    await tapTooltip(tester, '말하기 설정');
     await tester.pump();
     final toggle = find.byKey(const ValueKey('count-listen-switch'));
     expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
@@ -506,8 +502,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('새 디자인 무대는 글자 달린 조작 줄을 쓰고 준비 중 버튼은 숨긴다', (tester) async {
-    AppConfig.newDesign = true;
+  testWidgets('무대는 글자 달린 조작 줄을 쓰고 준비 중 버튼은 없다', (tester) async {
     await openPreview(tester);
     await tester.pump();
     // 아이콘 아래 글자가 보인다.
@@ -524,6 +519,5 @@ void main() {
     expect(find.text('재생'), findsOneWidget);
     // 말하기 설정은 왼쪽 줄로 옮겼다.
     expect(find.byTooltip('말하기 설정'), findsOneWidget);
-    AppConfig.newDesign = false;
   });
 }

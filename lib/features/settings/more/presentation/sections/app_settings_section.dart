@@ -32,19 +32,6 @@ class AppSettingsSection extends StatelessWidget {
             },
           ),
           ValueListenableBuilder<bool>(
-            valueListenable: AppConfig.newDesignListenable,
-            builder: (context, value, _) => SwitchTile(
-              icon: Icons.auto_awesome_outlined,
-              title: '새 디자인',
-              subtitle: '개편한 화면을 써요. 끄면 예전 화면으로 돌아가요',
-              value: value,
-              onChanged: (next) {
-                AppConfig.newDesign = next;
-                AppConfig.saveToPrefs();
-              },
-            ),
-          ),
-          ValueListenableBuilder<bool>(
             valueListenable: AppConfig.newClipLibraryListenable,
             builder: (context, value, _) => SwitchTile(
               icon: Icons.video_library_outlined,

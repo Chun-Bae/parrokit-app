@@ -27,11 +27,6 @@ class AppConfig {
       ValueNotifier<bool>(true);
   static bool get newClipLibrary => newClipLibraryListenable.value;
 
-  /// 4차 개편 화면을 쓸지. 끄면 개편 전 화면으로 돌아간다. 더보기 > 앱 > "새 디자인".
-  static final ValueNotifier<bool> newDesignListenable =
-      ValueNotifier<bool>(true);
-  static bool get newDesign => newDesignListenable.value;
-  static set newDesign(bool value) => newDesignListenable.value = value;
   static set newClipLibrary(bool value) =>
       newClipLibraryListenable.value = value;
 
@@ -53,7 +48,6 @@ class AppConfig {
     wordExplore = p.getBool('wordExplore') ?? false;
     libraryTab = (p.getInt('libraryTab') ?? 0).clamp(0, 2);
     newClipLibrary = p.getBool('newClipLibrary') ?? true;
-    newDesign = p.getBool('newDesign') ?? true;
     localKeepSpaceBytes =
         p.getInt('localKeepSpaceBytes') ?? _defaultLocalKeepSpaceBytes;
   }
@@ -72,7 +66,6 @@ class AppConfig {
     await p.setBool('wordExplore', wordExplore);
     await p.setInt('libraryTab', libraryTab);
     await p.setBool('newClipLibrary', newClipLibrary);
-    await p.setBool('newDesign', newDesign);
     await p.setInt('localKeepSpaceBytes', localKeepSpaceBytes);
   }
 }
