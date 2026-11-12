@@ -19,3 +19,4 @@ export * from "./sentenceAssist";
 
 export * from "./wallet";
 export * from "./questions";
+export * from "./adReward";

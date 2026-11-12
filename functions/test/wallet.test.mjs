@@ -216,3 +216,69 @@ test("가격은 앱의 표와 같다", () => {
   assert.equal(captionCost(10001), 2);
   assert.equal(captionCost(0), 0);
 });
+
+const {generateKeyPairSync, sign} = require("node:crypto");
+const {verifyRewardQuery, creditReward, AD_REWARD_PARROTS, SERVER_CREDIT_TAG} =
+  require("../lib/adReward.js");
+
+/** AdMob처럼 서명한 콜백 쿼리를 만든다. */
+function signedQuery(privateKey, fields, keyId = "1234") {
+  const message = new URLSearchParams(fields).toString();
+  const signature = sign("sha256", Buffer.from(message), {key: privateKey, dsaEncoding: "der"})
+    .toString("base64url");
+  return `${message}&signature=${signature}&key_id=${keyId}`;
+}
+
+const adKeys = (() => {
+  const {publicKey, privateKey} = generateKeyPairSync("ec", {namedCurve: "prime256v1"});
+  return {
+    privateKey,
+    keys: new Map([["1234", publicKey.export({type: "spki", format: "pem"})]]),
+  };
+})();
+
+const adFields = (overrides = {}) => ({
+  ad_network: "5450213213286189855",
+  ad_unit: "1234567890",
+  custom_data: SERVER_CREDIT_TAG,
+  reward_amount: "3",
+  reward_item: "parrot",
+  timestamp: "1700000000000",
+  transaction_id: "tx123abc",
+  user_id: "a",
+  ...overrides,
+});
+
+test("AdMob 서명이 맞으면 값을 돌려주고, 틀리거나 바뀌면 거절한다", () => {
+  const query = signedQuery(adKeys.privateKey, adFields());
+  const ok = verifyRewardQuery(query, adKeys.keys);
+  assert.equal(ok.userId, "a");
+  assert.equal(ok.transactionId, "tx123abc");
+  // user_id를 바꿔치기하면 서명이 맞지 않는다
+  assert.equal(verifyRewardQuery(query.replace("user_id=a", "user_id=b"), adKeys.keys), null);
+  // 모르는 키
+  assert.equal(verifyRewardQuery(signedQuery(adKeys.privateKey, adFields(), "999"), adKeys.keys), null);
+  // 서명 없음
+  assert.equal(verifyRewardQuery(new URLSearchParams(adFields()).toString(), adKeys.keys), null);
+});
+
+test("광고 보상은 credit-v1일 때만, 거래마다 한 번만 지급한다", async () => {
+  await user("a").set({parrots: 1, crackers: 0});
+  const reward = verifyRewardQuery(signedQuery(adKeys.privateKey, adFields()), adKeys.keys);
+  assert.equal(await creditReward(reward), true);
+  assert.equal(await creditReward(reward), false);
+  assert.deepEqual(await balance("a"), {parrots: 1 + AD_REWARD_PARROTS, crackers: 0});
+
+  // 확인만 하는 단계(verify-only)와 user_id 없는 콜백은 지급하지 않는다
+  const verifyOnly = verifyRewardQuery(
+    signedQuery(adKeys.privateKey, adFields({custom_data: "verify-only", transaction_id: "tx2"})),
+    adKeys.keys);
+  assert.equal(await creditReward(verifyOnly), false);
+  const noUser = {...reward, userId: "", transactionId: "tx3"};
+  assert.equal(await creditReward(noUser), false);
+  // 없는 사용자에게 문서를 만들지 않는다
+  const ghost = {...reward, userId: "ghost", transactionId: "tx4"};
+  assert.equal(await creditReward(ghost), false);
+  assert.equal((await user("ghost").get()).exists, false);
+  assert.deepEqual(await balance("a"), {parrots: 1 + AD_REWARD_PARROTS, crackers: 0});
+});

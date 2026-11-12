@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart'
     show kReleaseMode, ValueNotifier, ValueListenable;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
@@ -48,8 +49,17 @@ class AdService {
   static final AdService _instance = AdService._internal();
   factory AdService() => _instance;
 
-  /// 광고 1회당 지급 코인
+  /// 광고 1회당 지급 패롯. 서버(functions/src/adReward.ts)의 AD_REWARD_PARROTS와 같다.
   static const int rewardCoins = 3;
+
+  /// 광고 보상을 서버가 지급하는지.
+  ///
+  /// false(지금): 광고에 uid와 "verify-only"를 실어 보내 서버가 AdMob 서명만
+  /// 확인하고 기록한다. 지급은 앱이 한다.
+  /// true: "credit-v1"을 보내고 앱은 지급하지 않는다. 서버가 AdMob 확인을 받고
+  /// 지급한다. AdMob 콘솔에 콜백 URL을 넣고 로그로 콜백이 오는 것을 본 뒤에만
+  /// 켠다. 순서는 functions/src/adReward.ts 머리말에 있다.
+  static const bool serverCreditsReward = false;
 
   final _InterstitialAdController _interstitial = _InterstitialAdController();
   final _RewardedAdController _rewarded = _RewardedAdController();
@@ -191,11 +201,30 @@ class _RewardedAdController {
       return;
     }
 
-    _ad!.show(
-      onUserEarnedReward: (ad, reward) {
-        onRewarded(AdService.rewardCoins);
-      },
-    );
+    final ad = _ad!;
     _ad = null;
+    // AdMob 서버 측 확인(SSV) 콜백에 누구의 광고인지 싣는다. 로그인하지 않았으면
+    // 싣지 않는다(서버는 user_id 없는 콜백에 지급하지 않는다).
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final options = uid == null
+        ? null
+        : ServerSideVerificationOptions(
+            userId: uid,
+            customData:
+                AdService.serverCreditsReward ? 'credit-v1' : 'verify-only',
+          );
+    Future<void> showAd() => ad.show(
+          onUserEarnedReward: (ad, reward) {
+            onRewarded(AdService.rewardCoins);
+          },
+        );
+    if (options == null) {
+      showAd();
+      return;
+    }
+    ad.setServerSideOptions(options).catchError((Object error) {
+      // 못 실어도 광고는 보여준다. 확인 기록만 빠진다.
+      AppLogger.e('[Ads][Rewarded] SSV 옵션 설정 실패', error: error);
+    }).whenComplete(showAd);
   }
 }

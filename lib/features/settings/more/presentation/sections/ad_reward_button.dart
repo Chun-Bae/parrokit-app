@@ -83,15 +83,20 @@ class _AdRewardButtonState extends State<AdRewardButton> {
         // 보상 지급에 `if (!mounted) return;`이 걸려 있었다. 사용자가 광고를
         // 끝까지 봤는데 그 사이 화면을 떠났으면 코인을 못 받았다. 지급과
         // 쿨다운 기록은 화면 수명과 상관없이 한다.
-        try {
-          await userProvider.addCoins(coins);
-        } catch (e) {
-          AppLogger.e('[AdReward] 광고 보상 지급 실패 coins=$coins', error: e);
-          showToast('광고 보상 지급에 실패했어요. 잠시 후 다시 시도해 주세요.');
-          return;
+        if (AdService.serverCreditsReward) {
+          // 서버가 AdMob 확인을 받고 지급한다. 잔액은 사용자 문서 구독으로
+          // 곧 바뀐다.
+          showToast('패롯 $coins개를 곧 받아요!');
+        } else {
+          try {
+            await userProvider.addCoins(coins);
+          } catch (e) {
+            AppLogger.e('[AdReward] 광고 보상 지급 실패 coins=$coins', error: e);
+            showToast('광고 보상 지급에 실패했어요. 잠시 후 다시 시도해 주세요.');
+            return;
+          }
+          showToast('패롯 $coins개를 받았어요!');
         }
-
-        showToast('패롯 $coins개를 받았어요!');
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(_prefKey, DateTime.now().millisecondsSinceEpoch);
