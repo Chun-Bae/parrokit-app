@@ -1,3 +1,4 @@
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -157,12 +158,17 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             24 + kStudioSwitchBarSpace,
           ),
           children: [
-            const TtsStudioHero(
-              icon: Icons.graphic_eq_rounded,
-              title: '텍스트를 자연스러운 음성으로',
-              description: '스크립트와 보이스 톤을 정하면 학습 클립용 음성 파일을 만들 수 있습니다.',
-            ),
-            const SizedBox(height: AppSpacing.sectionGap),
+            // 새 디자인: 앱바 'TTS 생성'과 콘텐츠 제작 첫 화면이 이미 무엇을
+            // 하는지 말하므로 큰 소개 상자는 숨기고 스크립트 입력부터 보인다.
+            if (!AppConfig.newDesign) ...[
+              const TtsStudioHero(
+                icon: Icons.graphic_eq_rounded,
+                title: '텍스트를 자연스러운 음성으로',
+                description:
+                    '스크립트와 보이스 톤을 정하면 학습 클립용 음성 파일을 만들 수 있습니다.',
+              ),
+              const SizedBox(height: AppSpacing.sectionGap),
+            ],
             TtsPanel(
               title: '스크립트',
               trailing: Text(
