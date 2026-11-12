@@ -36,7 +36,9 @@ class CommunityNotificationChip extends StatelessWidget {
       case 'vote':
         return '투표';
       default:
-        return '일반';
+        // 커뮤니티 탭 이름이 '게시판'이다. 전에는 '일반'이라 게시판 카테고리
+        // (자유·추천해요·꿀팁…)에 없는 이름이 칩에 붙었다.
+        return '게시판';
     }
   }
 }
