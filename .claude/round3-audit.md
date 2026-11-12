@@ -45,11 +45,11 @@
 - [x] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
 - [x] 클립 라이브러리 (library_screen, clip_discover_screen)
 - [x] 클립 플레이어·쇼츠 (clip_player_screen, shorts_screen)
-- [ ] 커뮤니티 셸 + 게시판 목록 (community_shell_screen, board_screen)
+- [x] 커뮤니티 셸 + 게시판 목록 (community_shell_screen, board_screen)
 - [ ] 게시글 보기·쓰기 (board_view_screen, board_write_screen)
 - [ ] 질문 목록·보기·쓰기
 - [ ] 투표 목록·보기·쓰기
-- [ ] 활동·알림·메뉴·차단 (activity, notification, menu, blocked_users)
+- [x] 활동·알림·메뉴·차단 (activity, notification, menu, blocked_users)
 - [x] 더보기 (more_screen)
 - [ ] 프로필 편집·환전·저장공간·웹문서
 - [ ] 콘텐츠 제작 허브·브리지
@@ -153,3 +153,16 @@
 - `coin_package_card.dart:93` '총 n코인 (기본 + 보너스)'
 
 다음: 커뮤니티 셸·게시글 보기 → 활동·알림·메뉴·차단 → 프로필 편집·저장공간 → 콘텐츠 제작
+
+### 반복 5 (2026-11-12)
+- `29a58d7f` 알림 칩 '일반' → '게시판'
+- `99813053` 서버 알림 문구 '일반에 새 댓글' → '게시판에 새 댓글' (**배포 전**. 이미 저장된 알림은 그대로)
+- `59a6888f` 커뮤니티 메뉴 아이콘 타일 다크 대응
+- `9d6b523c` 차단 목록 빈 화면을 AppEmptyState로
+- 알림 화면에 처음 들어갈 때 iOS 알림 권한 창이 떴다. 개인정보 쪽으로 보수적인 Don't Allow를 골랐다.
+  시뮬레이터 앱의 권한이고 실제 계정 설정은 아니다
+- B 보류: 활동 카드의 '일반' 칩도 '게시판'으로 바꿀 곳(`activity_card.dart:134`). 활동 기록이 없어
+  화면으로 못 봐서 되돌렸다
+- 메뉴 제목은 '일반 게시판'이다. 탭 이름 '게시판'과 다르지만 둘 다 말이 되어 그대로 둔다
+- 게시글 보기·쓰기, 질문·투표 화면은 조회수가 오르거나 글이 없어 이번에 더 보지 않았다
+- 다음: 콘텐츠 제작 허브·자막·TTS·영상 → 프로필 편집·저장공간·웹문서 → 오프라인 → auth(코드만) → 마무리
