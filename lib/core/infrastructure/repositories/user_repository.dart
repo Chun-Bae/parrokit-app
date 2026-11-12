@@ -468,17 +468,20 @@ class UserRepository {
       return null;
     }
 
-    final updated = current.addCoins(delta).copyWith(updatedAt: DateTime.now());
-
-    // 1) 로컬 저장
-    await _userPrefs.saveUser(updated);
-
-    // 2) Firestore 갱신 (예시 코드)
-    await _firebaseUserService.updateUserEconomy(
-      uid: updated.id,
-      parrots: updated.parrots,
-      crackers: updated.crackers,
+    // 서버 값 기준으로 바꾸고, 서버가 돌려준 값으로 캐시를 맞춘다. 전에는
+    // 캐시 값을 먼저 바꿔 저장한 뒤 그 패롯·크래커를 서버에 통째로 썼다.
+    // 그러면 캐시가 옛 값일 때 서버에서 생긴 크래커 변화가 지워졌고, 서버
+    // 쓰기가 실패해도 캐시에는 바뀐 값이 남았다.
+    final balances = await _firebaseUserService.addParrots(
+      uid: current.id,
+      delta: delta,
     );
+    final updated = current.copyWith(
+      parrots: balances.parrots,
+      crackers: balances.crackers,
+      updatedAt: DateTime.now(),
+    );
+    await _userPrefs.saveUser(updated);
 
     return updated;
   }

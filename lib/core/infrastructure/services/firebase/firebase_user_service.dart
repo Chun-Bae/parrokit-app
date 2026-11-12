@@ -39,16 +39,30 @@ class FirebaseUserService {
     return snap.data();
   }
 
-  Future<void> updateUserEconomy({
+  /// 서버에 있는 패롯에 [delta]를 더하고, 반영된 뒤의 패롯·크래커를 돌려준다.
+  ///
+  /// 전에는 updateUserEconomy가 앱에 캐시된 패롯·크래커 값을 서버에 그대로
+  /// 덮어썼다. 크래커는 다른 경로로도 바뀐다. 질문을 올리면 서버 트랜잭션이
+  /// 깎고, 남이 내 답변을 채택하면 서버에서 올라간다. 그 변화가 캐시에 반영되기
+  /// 전에 광고 보상이나 결제로 패롯이 바뀌면, 옛 크래커 값이 서버를 덮어써서
+  /// 받은 보상이 사라지거나 쓴 크래커가 되살아났다. 이제 패롯만 서버 값 기준으로
+  /// 바꾸고 크래커는 건드리지 않는다.
+  Future<({int parrots, int crackers})> addParrots({
     required String uid,
-    required int parrots,
-    required int crackers,
+    required int delta,
   }) async {
-    await _firestore.collection('users').doc(uid).update({
-      'parrots': parrots,
-      'coins': FieldValue.delete(),
-      'crackers': crackers,
-      'lastPurchaseAt': FieldValue.serverTimestamp(),
+    final ref = _firestore.collection('users').doc(uid);
+    return _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(ref);
+      final data = snapshot.data() ?? const <String, dynamic>{};
+      final parrots = ((data['parrots'] as num?)?.toInt() ?? 0) + delta;
+      final crackers = (data['crackers'] as num?)?.toInt() ?? 0;
+      transaction.update(ref, {
+        'parrots': parrots,
+        'coins': FieldValue.delete(),
+        'lastPurchaseAt': FieldValue.serverTimestamp(),
+      });
+      return (parrots: parrots, crackers: crackers);
     });
   }
 
