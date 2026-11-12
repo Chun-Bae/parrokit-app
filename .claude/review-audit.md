@@ -26,7 +26,7 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 | 10 | 챗봇·영상·허브 | `lib/features/content-studio/{chat-bot,video,hub,shared}` | 32 | 완료 (고침 3, 보류 2) |
 | 11 | 공용 위젯·테마 | `lib/core/shared` | 41 | 완료 (고침 3, 보류 4) |
 | 12 | 앱 셸·라우터·인프라 | `lib/core/{app,infrastructure,content,speech}` | 51 | 완료 (고침 5, 보류 2) |
-| 13 | 설정·더보기 | `lib/features/settings` | 37 | 돈 경로만 먼저 함 (고침 3) |
+| 13 | 설정·더보기 | `lib/features/settings` | 37 | 완료 (고침 6, 보류 1) |
 | 14 | 인증 | `lib/features/auth` | 4 | 대기 |
 
 ## 함께 처리할 남은 일 (어젯밤 UI 작업에서 넘어온 것)
