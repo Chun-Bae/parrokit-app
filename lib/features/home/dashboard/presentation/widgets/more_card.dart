@@ -44,9 +44,12 @@ class MoreCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: subtle),
         ),
+        // 이어보기(시청 기록)가 비었다는 뜻이다. 클립이 있어도 아직 본 적이
+        // 없으면 여기 온다. 전에는 '등록된 클립이 없어요'라서, 바로 아래
+        // 모음집에 클립이 있는데도 클립이 없다고 말했다.
         child: Center(
           child: Text(
-            '아직 등록된 클립이 없어요',
+            '아직 본 클립이 없어요',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: textSecondary,
                   fontWeight: FontWeight.w600,
