@@ -139,30 +139,27 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                 top: false,
                 child: Stack(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 108),
-                      child: PageView(
-                        controller: _pageController,
-                        physics: _isSwipeEnabled
-                            ? const BouncingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        onPageChanged: (index) {
-                          if (_selectedIndex == index) return;
-                          setState(() => _selectedIndex = index);
-                        },
-                        children: [
-                          _StudioPageSlot(
-                            child: CaptioningScreen(
-                              showAppBar: false,
-                              onClose: (_) async => context.go(
-                                AppRoutes.dashboardPath,
-                              ),
+                    PageView(
+                      controller: _pageController,
+                      physics: _isSwipeEnabled
+                          ? const BouncingScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      onPageChanged: (index) {
+                        if (_selectedIndex == index) return;
+                        setState(() => _selectedIndex = index);
+                      },
+                      children: [
+                        _StudioPageSlot(
+                          child: CaptioningScreen(
+                            showAppBar: false,
+                            onClose: (_) async => context.go(
+                              AppRoutes.dashboardPath,
                             ),
                           ),
-                          _StudioPageSlot(child: TtsScreen()),
-                          _StudioPageSlot(child: VideoScreen()),
-                        ],
-                      ),
+                        ),
+                        _StudioPageSlot(child: TtsScreen()),
+                        _StudioPageSlot(child: VideoScreen()),
+                      ],
                     ),
                     Positioned(
                       left: 0,

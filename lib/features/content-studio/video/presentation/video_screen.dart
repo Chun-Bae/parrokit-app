@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -143,7 +144,7 @@ class _VideoScreenState extends State<VideoScreen> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            24,
+            24 + kStudioSwitchBarSpace,
           ),
           children: [
             const _VideoWarningBanner(),

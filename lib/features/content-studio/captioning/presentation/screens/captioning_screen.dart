@@ -11,6 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
 import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -121,7 +122,8 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
           child: Stack(
             children: [
               ListView(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding:
+                    const EdgeInsets.only(bottom: 16 + kStudioSwitchBarSpace),
                 children: [
                   FileSection(vm: vm),
                   const SizedBox(height: 16),

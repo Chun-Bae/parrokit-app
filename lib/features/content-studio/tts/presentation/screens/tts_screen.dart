@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:provider/provider.dart';
@@ -153,7 +154,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            24,
+            24 + kStudioSwitchBarSpace,
           ),
           children: [
             const TtsStudioHero(
