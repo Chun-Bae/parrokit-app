@@ -1176,6 +1176,41 @@ UPDATE가 WHERE 없이 모든 클립을 'local'로 덮어쓴 뒤 그 값으로 �
 아무나는 못 부르지만, 계정 하나만 있으면 앱 밖에서 무제한으로 부를 수 있다.
 영상·TTS·챗봇은 호출당 요금이 나간다.
 
+> **3차: 함수 쪽만 준비했다(`800ffb60`). 앱 쪽은 넣지 않았다.**
+>
+> 함수: `functions/src/appCheck.ts`의 `ENFORCE_APP_CHECK` 하나가 콜러블 11개의
+> `enforceAppCheck`를 정한다. 지금은 `false`라 이대로 배포해도 아무것도 바뀌지 않는다.
+>
+> 앱에 넣지 않은 이유: `firebase_app_check`를 지금 잠긴 FlutterFire 버전
+> (firebase_core 4.9.0)에 맞출 수 없다. 0.4.3 이하는 `fake_cloud_firestore`와 충돌하고,
+> 0.4.4 이상을 넣으면 firebase_core가 4.15로, firestore·auth·messaging·storage·
+> crashlytics가 모두 함께 올라간다(잠금 파일 24개 패키지). 앱 전체의 네이티브
+> 의존성이 바뀌는 일이라 "준비만"의 범위를 넘는다고 봤다.
+>
+> 켜는 순서:
+> 1. FlutterFire를 한 번에 올린다: `flutter pub add firebase_app_check` (다른 Firebase
+>    패키지가 함께 올라간다). iOS `pod install`, 전체 테스트, 실기기 확인을 한다
+> 2. `lib/core/app/bootstrap/steps/firebase_step.dart`의 `Firebase.initializeApp` 바로 뒤:
+>    ```dart
+>    await FirebaseAppCheck.instance.activate(
+>      providerAndroid: kReleaseMode
+>          ? const AndroidPlayIntegrityProvider()
+>          : const AndroidDebugProvider(),
+>      providerApple: kReleaseMode
+>          ? const AppleAppAttestWithDeviceCheckFallbackProvider()
+>          : const AppleDebugProvider(),
+>    );
+>    ```
+>    (패키지 버전에 따라 매개변수 이름이 `androidProvider`/`appleProvider`일 수 있다)
+> 3. iOS: Xcode에서 App Attest capability를 켠다. Android: Play Console 앱 무결성 연결
+> 4. Firebase 콘솔 > App Check에서 iOS·Android 앱을 등록한다. 개발용 디버그 토큰도 등록
+> 5. 그 앱 버전을 배포하고, 콘솔의 App Check 지표에서 "확인된 요청" 비율이 충분히
+>    오를 때까지 기다린다. 옛 버전 사용자는 토큰이 없다
+> 6. `ENFORCE_APP_CHECK = true`로 바꿔 함수를 배포한다
+> 7. (선택) Firestore·Storage도 콘솔에서 App Check 적용을 켠다
+>
+> 순서를 거꾸로 하면(6을 먼저) 옛 앱과 등록 안 된 앱의 모든 함수 호출이 거절된다.
+
 ### 패롯과 크래커를 앱이 직접 쓴다
 규칙상 자기 user 문서는 통째로 쓸 수 있다. 즉 사용자가 자기 패롯·크래커를
 원하는 값으로 바꿀 수 있다. 막으려면 지급·차감을 Cloud Function으로 옮기고,
