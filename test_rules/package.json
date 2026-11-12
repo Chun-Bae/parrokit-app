@@ -1,0 +1,14 @@
+{
+  "name": "parrokit-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "firestore.rules\uc640 storage.rules\uc758 \ubcf4\uc548 \uaddc\uce59 \ud14c\uc2a4\ud2b8. \uc5d0\ubbac\ub808\uc774\ud130 \uc704\uc5d0\uc11c \ub3c8\ub2e4.",
+  "scripts": {
+    "test": "firebase --project=parrokit-rules-test emulators:exec --only firestore,storage \"node --test --test-concurrency=1\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0",
+    "firebase-tools": "^13.29.1"
+  }
+}
