@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -18,9 +20,14 @@ class TtsRemoteDataSource {
     ElevenLabsVoiceSettings? elevenLabsSettings,
   }) async {
     // 1. 캐시키 생성 (파라미터 조합)
-    final cacheKeyData = '${text}_${language}_${provider.name}_${voiceId}_${modelId}_${speakingRate}_${pitch}_${elevenLabsSettings?.toJson()}';
-    // 간단하게 해시코드를 파일명으로 사용 (음수 부호 제거)
-    final cacheKey = cacheKeyData.hashCode.toString().replaceAll('-', 'M');
+    final cacheKeyData =
+        '${text}_${language}_${provider.name}_${voiceId}_${modelId}_${speakingRate}_${pitch}_${elevenLabsSettings?.toJson()}';
+    // sha256으로 줄여서 파일명으로 쓴다. 전에는 String.hashCode를 썼는데
+    // 그건 32비트라 서로 다른 스크립트가 같은 값이 될 수 있다. 그러면
+    // 캐시 히트로 판단해서 **다른 글의 음성**을 돌려준다. 돈을 내고 쓰는
+    // 기능이라 조용히 틀리면 안 된다.
+    final cacheKey =
+        sha256.convert(utf8.encode(cacheKeyData)).toString().substring(0, 32);
     
     final tempDir = await getTemporaryDirectory();
     final ext = provider == TtsProviderType.google ? 'mp3' : 'wav';
