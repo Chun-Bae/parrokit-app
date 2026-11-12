@@ -9,6 +9,7 @@ import 'package:parrokit/features/settings/more/presentation/widgets/editable_av
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -159,7 +160,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 .delete();
           } catch (e) {
             // 삭제 실패하더라도 (이미 없거나 권한문제 등) 진행은 계속되도록 catch 처리
-            debugPrint('Failed to delete old profile photo: $e');
+            AppLogger.w('[Profile] 옛 프로필 사진 삭제 실패: $e');
           }
         }
       }

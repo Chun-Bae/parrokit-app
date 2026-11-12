@@ -4,6 +4,7 @@ import '../domain/entities/ai_chat_message.dart';
 import '../domain/usecases/send_chat_message_usecase.dart';
 import '../data/data_sources/ai_chat_remote_data_source.dart';
 import '../data/repositories/ai_chat_repository_impl.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 class ChatBotProvider extends ChangeNotifier {
   late final SendChatMessageUseCase _sendMessageUseCase;
@@ -50,7 +51,8 @@ class ChatBotProvider extends ChangeNotifier {
       _remainingChatsToday = usage.remainingToday;
       _dailyChatLimit = usage.dailyLimit;
     } catch (e) {
-      debugPrint('[Chatbot][Provider] Failed to fetch daily usage error=$e');
+      // 남은 횟수를 못 읽어도 대화는 할 수 있다.
+      AppLogger.w('[Chatbot][Provider] 남은 횟수 조회 실패: $e');
     } finally {
       _isUsageLoading = false;
       notifyListeners();
@@ -206,7 +208,7 @@ class ChatBotProvider extends ChangeNotifier {
       _dailyChatLimit = aiResponse.dailyLimit ?? _dailyChatLimit;
       _messages.insert(0, aiResponse.copyWith(chatbotMode: _chatbotMode));
     } catch (e) {
-      debugPrint('[Chatbot][Provider] Send message failed error=$e');
+      AppLogger.e('[Chatbot][Provider] 메시지 전송 실패', error: e);
       final message = e is FirebaseFunctionsException &&
               e.message != null &&
               e.message!.trim().isNotEmpty

@@ -15,8 +15,8 @@
 
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 class CacheService {
   CacheService._();
@@ -38,7 +38,8 @@ class CacheService {
       }
       return totalSize;
     } catch (e) {
-      debugPrint('Cache size calc error: $e');
+      // 용량을 못 읽으면 더보기 화면에 잘못된 수치가 뜬다.
+      AppLogger.e('[Cache] 용량 계산 실패', error: e);
       return 0;
     }
   }
@@ -53,7 +54,8 @@ class CacheService {
         await tempDir.create();
       }
     } catch (e) {
-      debugPrint('Clear cache error: $e');
+      // 사용자가 캐시 삭제를 눌렀는데 아무 일도 일어나지 않은 경우다.
+      AppLogger.e('[Cache] 캐시 삭제 실패', error: e);
       // 일부 파일 삭제 실패는 무시 (시스템 파일 등)
     }
   }

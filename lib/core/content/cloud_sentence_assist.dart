@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
 import 'sentence_assist.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 /// 서버 함수 `suggestSentenceInfo`(Gemini 2.5 Flash-Lite)를 부르는 도우미.
 /// 두 기능이 같은 하루 횟수를 나눠 쓰고, 남은 횟수는 응답으로 받는다.
@@ -24,7 +25,7 @@ class CloudSentenceAssist implements SentenceAssist {
       await _call({'mode': 'status'});
     } catch (e) {
       // 횟수를 못 읽어도 기능 자체는 쓸 수 있으니 조용히 넘어간다.
-      debugPrint('[assist] status failed: $e');
+      AppLogger.w('[assist] 남은 횟수 조회 실패: $e');
     }
   }
 
@@ -35,7 +36,7 @@ class CloudSentenceAssist implements SentenceAssist {
           .httpsCallable('suggestSentenceInfo');
     } catch (e) {
       // Firebase가 준비되지 않았으면 서버를 부를 수 없다.
-      debugPrint('[assist] unavailable: $e');
+      AppLogger.w('[assist] Firebase 준비 안 됨: $e');
       throw const SentenceAssistUnavailable();
     }
     try {
@@ -50,7 +51,10 @@ class CloudSentenceAssist implements SentenceAssist {
       debugPrint('[assist] ${data['mode']} ok, remaining=$_remainingToday');
       return map;
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('[assist] ${data['mode']} failed: ${e.code} ${e.message}');
+      // 아래에서 코드별로 typed exception으로 바꿔 화면까지 전달한다.
+      // 한도 초과처럼 예상되는 것도 섞여 있어 w로 남긴다.
+      AppLogger.w(
+          '[assist] ${data['mode']} 실패: ${e.code} ${e.message}');
       switch (e.code) {
         case 'resource-exhausted':
           _remainingToday = 0;

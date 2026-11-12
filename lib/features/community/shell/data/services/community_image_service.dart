@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 class CommunityImageService {
   Future<String?> uploadImageToStorage(
@@ -28,8 +28,11 @@ class CommunityImageService {
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;
-    } catch (e) {
-      debugPrint('Error uploading image: $e');
+    } catch (e, stack) {
+      // 전에는 debugPrint였다. 올리기가 실패하면 이 함수는 null을 돌려주고,
+      // 호출부는 그 이미지만 빼고 글을 등록한다. 사용자에게도 아무 말이
+      // 없으므로 배포 뒤에는 실패했다는 사실조차 알 수 없었다.
+      AppLogger.e('[Community][Image] 업로드 실패', error: e, stackTrace: stack);
       return null;
     }
   }
@@ -50,7 +53,9 @@ class CommunityImageService {
       await ref.delete();
       return true;
     } catch (e) {
-      debugPrint('Error deleting image: $e');
+      // 올려 둔 이미지를 치우다 실패한 것이라 흐름을 막지 않는다.
+      // 파일만 남으므로 w로 남긴다.
+      AppLogger.w('[Community][Image] 삭제 실패: $e');
       return false;
     }
   }

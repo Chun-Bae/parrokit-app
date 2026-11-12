@@ -1,6 +1,7 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 /// 따라 말하기용 음성 인식. 테스트에서 바꿔 끼울 수 있게 인터페이스로 둔다.
 bool get _isIos => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
@@ -45,8 +46,8 @@ class SpeechToTextRecognizer implements PhraseRecognizer {
           if (status == 'done' || status == 'notListening') _onDone?.call(null);
         },
         onError: (error) {
-          debugPrint(
-              '[stt] error: ${error.errorMsg} (permanent: ${error.permanent})');
+          AppLogger.w(
+              '[stt] 오류: ${error.errorMsg} (permanent: ${error.permanent})');
           _onDone?.call(error.errorMsg);
         },
       );
@@ -88,7 +89,7 @@ class SpeechToTextRecognizer implements PhraseRecognizer {
       ));
       debugPrint('[stt] audio session: playAndRecord');
     } catch (e) {
-      debugPrint('[stt] audio session failed: $e');
+      AppLogger.w('[stt] 오디오 세션 설정 실패: $e');
     }
   }
 
