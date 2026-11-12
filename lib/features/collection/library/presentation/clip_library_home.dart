@@ -39,7 +39,13 @@ class ClipLibraryHome extends StatefulWidget {
   State<ClipLibraryHome> createState() => _ClipLibraryHomeState();
 }
 
-class _ClipLibraryHomeState extends State<ClipLibraryHome> {
+class _ClipLibraryHomeState extends State<ClipLibraryHome>
+    with AutomaticKeepAliveClientMixin {
+  /// 보관함 탭을 옆으로 넘겼다 돌아올 때마다 새로 만들어지며 로딩 표시가
+  /// 깜빡였다. 화면을 살려 둔다.
+  @override
+  bool get wantKeepAlive => true;
+
   static const _all = '전체';
 
   List<ClipItem> _clips = [];
@@ -180,6 +186,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final provider = context.watch<ClipProvider>();
     final recents = context.watch<ClipActivityProvider>().recent6;
 

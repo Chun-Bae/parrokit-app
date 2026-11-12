@@ -32,6 +32,7 @@ class AppSegmentedTabs extends StatelessWidget {
     required this.selectedIndex,
     required this.onChanged,
     this.stacked = false,
+    this.position,
   });
 
   final List<AppSegment> segments;
@@ -41,27 +42,74 @@ class AppSegmentedTabs extends StatelessWidget {
   /// true면 아이콘을 라벨 위에 쌓는다. 보관함 상단 탭처럼 칸이 높을 때 쓴다.
   final bool stacked;
 
+  /// 선택 표시의 연속 위치(0 ~ 칸 수-1). TabBarView를 손가락으로 끌 때
+  /// 컨트롤러의 animation.value를 넘기면 표시가 손가락을 따라 움직인다.
+  /// 비우면 [selectedIndex]로 미끄러지듯 옮겨 간다.
+  final double? position;
+
+  static const _slide = Duration(milliseconds: 240);
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final count = segments.length;
+    // 전에는 칸마다 배경을 따로 켜고 꺼서, 바뀔 때 옛 칸이 사라지고 새 칸이
+    // 나타나는 깜빡임으로 보였다. 이제 표시 하나가 칸 사이를 미끄러진다.
+    final target = (position ?? selectedIndex.toDouble())
+        .clamp(0.0, (count - 1).toDouble());
+    final follow = position != null;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
         color: tokens.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Row(
-        children: [
-          for (var i = 0; i < segments.length; i++)
-            Expanded(
-              child: _Segment(
-                segment: segments[i],
-                selected: i == selectedIndex,
-                stacked: stacked,
-                onTap: () => onChanged(i),
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth / count;
+          final indicator = DecoratedBox(
+            decoration: BoxDecoration(
+              color: tokens.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-        ],
+          );
+          return Stack(
+            children: [
+              if (follow)
+                Positioned(
+                  left: target * width,
+                  top: 0,
+                  bottom: 0,
+                  width: width,
+                  child: indicator,
+                )
+              else
+                AnimatedPositioned(
+                  duration: _slide,
+                  curve: Curves.easeOutCubic,
+                  left: target * width,
+                  top: 0,
+                  bottom: 0,
+                  width: width,
+                  child: indicator,
+                ),
+              Row(
+                children: [
+                  for (var i = 0; i < count; i++)
+                    Expanded(
+                      child: _Segment(
+                        segment: segments[i],
+                        selected: i == selectedIndex,
+                        stacked: stacked,
+                        onTap: () => onChanged(i),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -99,13 +147,8 @@ class _Segment extends StatelessWidget {
         ? Icon(Icons.lock_rounded, size: 14, color: foreground)
         : null;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        color: selected ? tokens.surface : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
+    // 배경은 AppSegmentedTabs의 미끄러지는 표시가 그린다.
+    return SizedBox(
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadius.md),

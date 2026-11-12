@@ -140,7 +140,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  const SentenceCollectionPreview(),
+                  const _KeepAlive(child: SentenceCollectionPreview()),
                   // 새 클립 화면(폴더 + 모든 클립). 더보기 > 앱에서 끄면 예전 화면.
                   ValueListenableBuilder<bool>(
                     valueListenable: AppConfig.newClipLibraryListenable,
@@ -153,7 +153,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                             hideControls: isCollectionSelectionMode,
                           ),
                   ),
-                  const WordCollectionPreview(),
+                  const _KeepAlive(child: WordCollectionPreview()),
                 ],
               ),
             ),
@@ -236,6 +236,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           selectedIndex: (_tabController.animation?.value ??
                   _tabController.index.toDouble())
               .round(),
+          position: _tabController.animation?.value,
           onChanged: _tabController.animateTo,
           segments: const [
             AppSegment(icon: Icons.format_quote_rounded, label: '문장'),
@@ -475,5 +476,28 @@ class _AddMaterialTile extends StatelessWidget {
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right_rounded),
     );
+  }
+}
+
+/// TabBarView는 화면 밖으로 넘긴 탭을 버리고 돌아올 때 새로 만든다. 그때마다
+/// 목록을 다시 읽으며 깜빡여서, 보관함 탭들은 살려 둔다.
+class _KeepAlive extends StatefulWidget {
+  const _KeepAlive({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAlive> createState() => _KeepAliveState();
+}
+
+class _KeepAliveState extends State<_KeepAlive>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
