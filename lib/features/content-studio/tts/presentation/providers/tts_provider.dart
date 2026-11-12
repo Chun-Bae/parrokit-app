@@ -235,7 +235,14 @@ class TtsProvider extends ChangeNotifier {
       _generatedFilePath = path;
 
       if (cost > 0) {
-        userProvider.addCoins(-cost);
+        // 차감을 기다리지 않고 넘어가고 있었다. 실패하면 사용자는 음성을
+        // 받고 패롯은 안 깎인 채로 흔적도 안 남는다. 결과는 이미 손에
+        // 들어갔으니 되돌리지는 않되, 기록은 남긴다.
+        try {
+          await userProvider.addCoins(-cost);
+        } catch (e) {
+          AppLogger.e('[TTS][Provider] 패롯 차감 실패 cost=$cost', error: e);
+        }
         showToast('음성 생성 완료! ($cost패롯 소모)');
       }
     } catch (e) {
