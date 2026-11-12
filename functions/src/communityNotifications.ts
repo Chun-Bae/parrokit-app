@@ -262,7 +262,7 @@ async function safeSendPushNotification(payload: NotificationPayload): Promise<v
 
     if (tokens.length === 0) return;
 
-    await admin.messaging().sendEachForMulticast({
+    const result = await admin.messaging().sendEachForMulticast({
       tokens,
       notification: {
         title: payload.title,
@@ -280,8 +280,50 @@ async function safeSendPushNotification(payload: NotificationPayload): Promise<v
         actorDisplayName: payload.actorDisplayName ?? "",
       },
     });
+
+    await pruneDeadTokens(payload.recipientUserId, tokens, result);
   } catch (error) {
     console.error("[CommunityNotification][FCM] send failed", error);
+  }
+}
+
+// 앱을 지우거나 토큰이 바뀌면 옛 토큰은 영영 쓸 수 없게 된다. 앱은 자기
+// 토큰만 arrayRemove할 수 있으므로, 못 쓰게 된 토큰은 아무도 치우지
+// 않고 fcmTokens에 계속 쌓인다. 쌓인 만큼 매번 발송 대상에 들어가고
+// 전부 실패한다. 발송 결과에서 등록이 끊긴 토큰만 골라 지운다.
+async function pruneDeadTokens(
+  recipientUserId: string,
+  tokens: string[],
+  result: admin.messaging.BatchResponse,
+): Promise<void> {
+  const deadTokens = result.responses
+    .map((response, index) => {
+      if (response.success) return null;
+      const code = response.error?.code;
+      // invalid-argument는 토큰이 아니라 보낸 내용이 잘못됐을 때도 나온다.
+      // 그걸로 지우면 멀쩡한 토큰을 날린다. 토큰 자체가 끊긴 두 코드만 본다.
+      if (
+        code === "messaging/registration-token-not-registered" ||
+        code === "messaging/invalid-registration-token"
+      ) {
+        return tokens[index];
+      }
+      return null;
+    })
+    .filter((token): token is string => token !== null);
+
+  if (deadTokens.length === 0) return;
+
+  console.log(
+    `[CommunityNotification][FCM] pruning dead tokens recipient=${recipientUserId} count=${deadTokens.length}`
+  );
+
+  try {
+    await db.collection("users").doc(recipientUserId).update({
+      fcmTokens: admin.firestore.FieldValue.arrayRemove(...deadTokens),
+    });
+  } catch (error) {
+    console.error("[CommunityNotification][FCM] prune failed", error);
   }
 }
 
