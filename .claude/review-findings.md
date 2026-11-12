@@ -852,3 +852,35 @@ Cloud Function에서 정리해야 한다. 둘 다 설계 판단이라 손대지 
   실패 시 서버에서 유저를 다시 읽어 롤백까지 되어 있다.
 - `backup_progress_dialog`는 콜백마다 `mounted`를 본다.
 - 이 묶음에 삼킨 예외는 한 곳뿐이었다.
+
+## 묶음 14 — 인증 (`lib/features/auth`)
+
+**이 네 화면은 로그인 상태라 시뮬레이터로 못 봤다. 코드만 봤다.**
+고친 것은 둘 다 "삼키던 예외를 잡아 안내한다"뿐이라 기존 성공 경로는
+건드리지 않았다.
+
+### 고친 것
+
+**56. 이메일 로그인·회원가입·비밀번호 찾기가 조용히 실패했다**
+세 화면 모두 `on FirebaseAuthException`만 잡고 일반 catch가 없었다.
+Firestore 문서 쓰기 실패, 타임아웃(`loadUserDocument`에 5초 제한이 있다),
+그 밖의 예외는 아무 데도 안 잡혀 비동기 오류로 사라진다. 토스트도 안 뜨고
+화면도 그대로다. **사용자 눈에는 버튼이 먹통인 것으로 보인다.**
+같은 파일의 SSO 네 경로(구글·카카오·네이버·애플)는 이미 일반 catch를 두고
+있었다. 이메일 경로 셋만 빠져 있었다.
+
+**57. 닉네임 중복 확인이 조용히 실패하거나 사라진 화면을 건드렸다**
+회원가입과 온보딩의 `_checkNickname`이 await 결과를 바로 `setState`에 넣었다.
+try도 `mounted` 검사도 없다. 네트워크가 흔들리면 아무 안내가 없고, 확인을
+누른 뒤 뒤로 가면 사라진 화면에 `setState`가 불려 터진다.
+**`analyze`는 이걸 못 잡는다** — `use_build_context_synchronously`는
+`BuildContext`를 보지 `setState`를 보지 않고, `context.read`는 await 전에
+끝나기 때문이다. 프로필 수정 화면에 이미 있던 모양(try/catch + mounted)으로
+맞췄다. 실패하면 `_hasCheckedNickname`도 false로 되돌린다 — 확인 안 된
+닉네임으로 가입이 진행되면 안 된다.
+
+### 깨끗했던 것
+
+- 네 화면 모두 컨트롤러를 `dispose`에서 닫는다.
+- SSO 네 경로는 처음부터 `FirebaseAuthException`과 일반 예외를 나눠 받고 있다.
+
