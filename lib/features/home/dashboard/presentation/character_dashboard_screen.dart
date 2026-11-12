@@ -257,12 +257,17 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     style: FilledButton.styleFrom(
                       backgroundColor: palette.accent,
                       foregroundColor: palette.onAccent,
+                      // 앱 테마가 버튼 아이콘 색을 따로 정해서, 같이 지정하지
+                      // 않으면 파란 배경 위에 어두운 아이콘이 남는다.
+                      iconColor: palette.onAccent,
                       minimumSize: const Size.fromHeight(58),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.xl)),
                     ),
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text('학습하러 가기', style: context.texts.titleMedium),
+                    label: Text('학습하러 가기',
+                        style: context.texts.titleMedium
+                            .copyWith(color: palette.onAccent)),
                   ),
                   const SizedBox(height: 8),
                   Center(

@@ -149,6 +149,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: accent,
               foregroundColor: palette.onAccent,
+              iconColor: palette.onAccent,
               minimumSize: const Size.fromHeight(56),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.lg)),

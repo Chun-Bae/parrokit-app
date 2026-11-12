@@ -854,7 +854,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                           .copyWith(color: palette.ink))),
               Text('Lv.$level',
                   style:
-                      context.texts.titleMedium.copyWith(color: palette.good)),
+                      context.texts.titleMedium.copyWith(color: palette.primary)),
               const SizedBox(width: 6),
               Semantics(
                   label: '도움말',
@@ -875,7 +875,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                 child: LinearProgressIndicator(
                     value: (totalXp % 10) / 10,
                     minHeight: 5,
-                    color: palette.good,
+                    color: palette.primary,
                     backgroundColor: palette.surfaceAlt)),
             const SizedBox(height: 6),
             Align(
@@ -1303,7 +1303,7 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
   @override
   Widget build(BuildContext context) {
     final palette = HomeTokens.of(context);
-    final active = palette.good;
+    final active = palette.primary;
     final idle = palette.muted;
     final letters = widget.phrase.characters.toList();
     final highlighted = (score * letters.length).floor();
@@ -1336,7 +1336,7 @@ class _SpeechWavePreviewState extends State<_SpeechWavePreview> {
                 tooltip: listening ? '음성 인식 중지' : '따라 말하기 시작',
                 onPressed: widget.enabled ? toggleListening : null,
                 style: IconButton.styleFrom(
-                    backgroundColor: listening ? active : palette.goodSoft,
+                    backgroundColor: listening ? active : palette.primary.withValues(alpha: 0.12),
                     foregroundColor: listening ? palette.surface : active),
                 icon:
                     Icon(listening ? Icons.stop_rounded : Icons.mic_rounded))),
@@ -1500,7 +1500,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
     final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
-    final active = palette.good;
+    final active = palette.primary;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
       shape: RoundedRectangleBorder(
@@ -1556,7 +1556,7 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                       final selected = enabled.contains(phrase);
                       return Material(
                           color:
-                              selected ? palette.goodSoft : palette.surfaceSoft,
+                              selected ? palette.primary.withValues(alpha: 0.12) : palette.surfaceSoft,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           child: CheckboxListTile(
                               dense: true,
@@ -1670,7 +1670,7 @@ class _HomeHelpDialog extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 8, bottom: 6),
                       child: Text(title,
                           style: context.texts.labelMedium
-                              .copyWith(color: palette.good))),
+                              .copyWith(color: palette.primary))),
                   for (final (icon, name, desc) in items)
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1730,11 +1730,11 @@ class _GameMenuButton extends StatelessWidget {
           message: label,
           excludeFromSemantics: true,
           child: Material(
-            color: selected ? palette.good : palette.surface,
+            color: selected ? palette.primary : palette.surface,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 side: BorderSide(
-                    color: selected ? palette.good : palette.border)),
+                    color: selected ? palette.primary : palette.border)),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
                 onTap: onTap,

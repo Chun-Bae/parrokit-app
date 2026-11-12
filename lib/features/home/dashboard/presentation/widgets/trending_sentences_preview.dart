@@ -499,9 +499,9 @@ class _SentenceCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 11,
-                backgroundColor: palette.goodSoft,
+                backgroundColor: palette.primary.withValues(alpha: 0.12),
                 child:
-                    Icon(Icons.person_rounded, size: 14, color: palette.good),
+                    Icon(Icons.person_rounded, size: 14, color: palette.primary),
               ),
               const SizedBox(width: 6),
               Expanded(
