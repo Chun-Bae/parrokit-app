@@ -16,3 +16,6 @@ export * from "./communityNotifications";
 export * from "./contentStudioAi";
 export * from "./captioningAi";
 export * from "./sentenceAssist";
+
+export * from "./wallet";
+export * from "./questions";
