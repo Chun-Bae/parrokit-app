@@ -26,7 +26,11 @@ class ClipListView extends StatelessWidget {
     this.selectedClipIds = const <int>{},
     this.onToggleSelection,
     this.resolveThumb,
+    this.showHeader = true,
   });
+
+  /// 위에 '클립' 제목을 붙일지. 새 클립 화면은 자기 제목이 있어 끈다.
+  final bool showHeader;
 
   final List<ClipItem> items;
   final ValueChanged<ClipItem> onOpen;
@@ -282,17 +286,18 @@ class ClipListView extends StatelessWidget {
 
     return [
       // ✅ 헤더는 고정 (애니메이션 X)
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          child: Text(
-            '클립',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+      if (showHeader)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: Text(
+              '클립',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
           ),
         ),
-      ),
 
       // ✅ 로딩 시엔 스켈레톤만
       if (loading)

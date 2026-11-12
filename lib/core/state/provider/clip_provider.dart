@@ -1098,6 +1098,11 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     }
   }
 
+  /// 저장위치 하나의 보이는 컬렉션. 새 클립 탭이 위치마다 불러 이름으로 합친다.
+  Future<List<Collection>> fetchVisibleCollectionsFor(String storageMode) {
+    return _collectionRepository.getAllVisibleCollections(storageMode);
+  }
+
   /// 모든 콜렉션 조회 (관리 모달용, 현재 활성 저장위치 탭 기준)
   Future<List<Collection>> fetchAllCollections() async {
     return _collectionRepository.getAllVisibleCollections(_activeStorageMode);

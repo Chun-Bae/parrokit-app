@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/library/presentation/clip_library_home.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -150,11 +151,17 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 controller: _tabController,
                 children: [
                   const SentenceCollectionPreview(),
-                  _buildClipPage(
-                    context,
-                    clipProvider,
-                    tagProvider,
-                    hideControls: isCollectionSelectionMode,
+                  // 새 클립 화면(폴더 + 모든 클립). 더보기 > 앱에서 끄면 예전 화면.
+                  ValueListenableBuilder<bool>(
+                    valueListenable: AppConfig.newClipLibraryListenable,
+                    builder: (context, useNew, _) => useNew
+                        ? const ClipLibraryHome()
+                        : _buildClipPage(
+                            context,
+                            clipProvider,
+                            tagProvider,
+                            hideControls: isCollectionSelectionMode,
+                          ),
                   ),
                   const WordCollectionPreview(),
                 ],
