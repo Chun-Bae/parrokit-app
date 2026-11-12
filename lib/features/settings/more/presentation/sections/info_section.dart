@@ -51,7 +51,8 @@ class _InfoSectionState extends State<InfoSection> {
                 icon: Icons.info_outline,
                 title: '앱 정보',
                 subtitle: _versionLabel,
-                onTap: () {},
+                // 버전을 보여주는 줄이고 갈 곳이 없다. onTap을 빼면 눌리는
+                // 느낌이 사라진다.
                 showArrow: false,
               ),
               const HairlineDivider(),

@@ -1581,9 +1581,12 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                     })),
             const SizedBox(height: 14),
             Row(children: [
+              // 문장 추가 흐름이 이 시트에 연결되어 있지 않다. 칠해진
+              // 버튼이라 가장 누르라고 말하는 모양인데 누르면 아무 일도
+              // 일어나지 않으므로 비활성으로 둔다.
               IconButton.filledTonal(
                   tooltip: '문장 추가',
-                  onPressed: () {},
+                  onPressed: null,
                   icon: const Icon(Icons.add_rounded)),
               const SizedBox(width: 10),
               Expanded(

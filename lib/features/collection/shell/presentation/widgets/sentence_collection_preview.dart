@@ -617,8 +617,10 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
               _SectionTitle(
                   title: 'Parrokit 제공',
                   subtitle: '계속 추가되는 문장 묶음',
-                  trailing:
-                      TextButton(onPressed: () {}, child: const Text('전체'))),
+                  // 전체 목록 화면이 아직 없다. 누르면 아무 일도 일어나지
+                  // 않아서 비활성으로 둔다.
+                  trailing: const TextButton(
+                      onPressed: null, child: Text('전체'))),
               const SizedBox(height: 10),
               SizedBox(
                 height: 148,

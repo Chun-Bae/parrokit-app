@@ -277,7 +277,9 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: () {},
+                    // 글별 알림 설정이 아직 없다. 누르면 아무 일도 일어나지
+                    // 않아서 비활성으로 둔다.
+                    onPressed: null,
                     icon:
                         const Icon(Icons.notifications_off_outlined, size: 24),
                   ),

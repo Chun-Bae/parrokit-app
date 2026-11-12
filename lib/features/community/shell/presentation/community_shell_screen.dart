@@ -158,8 +158,10 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
           Row(
             children: [
               IconButton(
-                icon: Icon(Icons.search, color: colorScheme.onSurface),
-                onPressed: () {},
+                // 검색 화면이 아직 없다. 누르면 아무 일도 일어나지 않아서
+                // 비활성으로 둔다.
+                icon: const Icon(Icons.search),
+                onPressed: null,
               ),
               Consumer<UserProvider>(
                 builder: (context, userProvider, _) {

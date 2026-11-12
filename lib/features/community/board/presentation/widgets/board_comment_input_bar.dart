@@ -70,9 +70,10 @@ class BoardCommentInputBar extends StatelessWidget {
             child: Row(
               children: [
                 IconButton(
-                  onPressed: () {},
+                  // 댓글에 사진을 붙이는 기능이 아직 없다. 누르면 아무 일도
+                  // 일어나지 않아서 비활성으로 둔다.
+                  onPressed: null,
                   icon: const Icon(Icons.photo_outlined, size: 32),
-                  color: context.tokens.textTertiary,
                 ),
                 const SizedBox(width: 6),
                 Expanded(

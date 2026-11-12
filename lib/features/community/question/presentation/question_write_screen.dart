@@ -284,21 +284,24 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.image_outlined, color: tokens.primary),
-                    onPressed: () {},
+                  // 이미지·음성·링크·태그 네 가지 모두 아직 동작이 없다.
+                  // 누르면 아무 일도 일어나지 않아서 비활성으로 둔다.
+                  // Icon에 색을 직접 주면 비활성 색이 먹지 않으므로 뺀다.
+                  const IconButton(
+                    icon: Icon(Icons.image_outlined),
+                    onPressed: null,
                   ),
-                  IconButton(
-                    icon: Icon(Icons.mic_none_rounded, color: tokens.primary),
-                    onPressed: () {},
+                  const IconButton(
+                    icon: Icon(Icons.mic_none_rounded),
+                    onPressed: null,
                   ),
-                  IconButton(
-                    icon: Icon(Icons.link_rounded, color: tokens.primary),
-                    onPressed: () {},
+                  const IconButton(
+                    icon: Icon(Icons.link_rounded),
+                    onPressed: null,
                   ),
-                  IconButton(
-                    icon: Icon(Icons.tag_rounded, color: tokens.primary),
-                    onPressed: () {},
+                  const IconButton(
+                    icon: Icon(Icons.tag_rounded),
+                    onPressed: null,
                   ),
                   const Spacer(),
                   // Character Counter Text

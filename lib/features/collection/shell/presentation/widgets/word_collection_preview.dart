@@ -278,7 +278,9 @@ class _WordCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {},
+        // 단어 상세가 아직 없다. onTap을 null로 두면 눌리는 느낌(물결)이
+        // 사라져서, 누를 수 있는 것처럼 보이지 않는다.
+        onTap: null,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
           child: Column(
