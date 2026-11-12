@@ -82,6 +82,14 @@ abstract class SharedSentenceRepository {
     int limit = 30,
   });
 
+  /// 좋아요가 많은 순으로 [language] 문장을 가져온다. 같으면 가져간 사람이 많은 순, 그다음 최신순이다.
+  /// 홈 "인기 공유 문장"이 쓴다.
+  Future<List<SharedSentence>> popular({
+    required String language,
+    required String viewerId,
+    int limit = 5,
+  });
+
   /// 내 문장을 둘러보기에 공개한다. 이미 공개돼 있으면 작성자 닉네임만 갱신한다.
   /// 새로 공개할 때는 하루 한도([dailyShareLimit])를 쓰고, 넘으면 [ShareLimitReachedException]을 던진다.
   /// 공개를 취소했다가 다시 공개해도 한도를 다시 쓴다.
@@ -147,26 +155,50 @@ class FirestoreSharedSentenceRepository implements SharedSentenceRepository {
     required String viewerId,
     int limit = 30,
   }) async {
-    // 공개 여부와 언어를 같음 조건으로만 걸어 별도 복합 인덱스 없이 읽고, 최신순 정렬은 앱에서 한다.
-    // 공유 문장이 아주 많아지면 createdAt 인덱스를 만들어 서버에서 정렬하는 쪽으로 바꾼다.
+    final items = (await _fetch(language, viewerId))..sort(_newestFirst);
+    return items.take(limit).toList(growable: false);
+  }
+
+  @override
+  Future<List<SharedSentence>> popular({
+    required String language,
+    required String viewerId,
+    int limit = 5,
+  }) async {
+    final items = (await _fetch(language, viewerId))
+      ..sort((a, b) {
+        final likes = b.likeCount.compareTo(a.likeCount);
+        if (likes != 0) return likes;
+        final imports = b.importCount.compareTo(a.importCount);
+        if (imports != 0) return imports;
+        return _newestFirst(a, b);
+      });
+    return items.take(limit).toList(growable: false);
+  }
+
+  /// 공개 여부와 언어를 같음 조건으로만 걸어 별도 복합 인덱스 없이 읽고, 정렬은 앱에서 한다.
+  /// 공유 문장이 [_fetchLimit]보다 많아지면 createdAt·likeCount 인덱스를 만들어 서버에서
+  /// 정렬하는 쪽으로 바꾼다.
+  Future<List<SharedSentence>> _fetch(String language, String viewerId) async {
     final snapshot = await _shared
         .where('visibility', isEqualTo: SentenceCloudStore.public)
         .where('language', isEqualTo: language)
         .limit(_fetchLimit)
         .get();
     final likedIds = await _likedIds(viewerId);
-    final items = [
+    return [
       for (final doc in snapshot.docs)
         _fromDoc(doc.id, doc.data(), liked: likedIds.contains(doc.id)),
-    ]..sort((a, b) {
-        final left = a.createdAt, right = b.createdAt;
-        if (left == null && right == null) return 0;
-        // 방금 올려 서버 시각이 아직 없는 문장은 가장 위에 둔다.
-        if (left == null) return -1;
-        if (right == null) return 1;
-        return right.compareTo(left);
-      });
-    return items.take(limit).toList(growable: false);
+    ];
+  }
+
+  static int _newestFirst(SharedSentence a, SharedSentence b) {
+    final left = a.createdAt, right = b.createdAt;
+    if (left == null && right == null) return 0;
+    // 방금 올려 서버 시각이 아직 없는 문장은 가장 위에 둔다.
+    if (left == null) return -1;
+    if (right == null) return 1;
+    return right.compareTo(left);
   }
 
   Future<Set<String>> _likedIds(String viewerId) async {

@@ -99,4 +99,24 @@ void main() {
     await repo.unpublish(sentenceId: 'my-1');
     expect(SharedSentenceRepository.revision.value, before + 2);
   });
+
+  test('인기순은 좋아요, 가져간 수, 최신 순으로 정렬하고 개수를 자른다', () async {
+    final now = DateTime.now();
+    await seedSentence(firestore, 'a', visibility: 'public', likeCount: 1);
+    await seedSentence(firestore, 'b',
+        visibility: 'public', likeCount: 5, text: 'B');
+    await seedSentence(firestore, 'c',
+        visibility: 'public', likeCount: 1, importCount: 3, text: 'C');
+    await seedSentence(firestore, 'd',
+        visibility: 'public',
+        likeCount: 1,
+        text: 'D',
+        createdAt: now.add(const Duration(minutes: 1)));
+    await seedSentence(firestore, 'private', likeCount: 99, text: 'P');
+    await seedSentence(firestore, 'ja',
+        visibility: 'public', likeCount: 50, language: '일본어', text: 'J');
+
+    final top = await repo.popular(language: '영어', viewerId: 'v', limit: 3);
+    expect(top.map((e) => e.id), ['b', 'c', 'd']);
+  });
 }

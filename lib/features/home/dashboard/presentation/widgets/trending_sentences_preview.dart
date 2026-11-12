@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'package:parrokit/core/content/default_conversation_sentences.dart';
+import 'package:parrokit/core/content/my_sentence_store.dart';
+import 'package:parrokit/core/content/sentence_activity_store.dart';
+import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
 
+/// 홈의 "인기 공유 문장". 보관함 둘러보기에 공개된 문장 중 좋아요가 많은 것을 보여준다.
+/// 전에는 코드에 박힌 예시 문장과 가짜 사용자·좋아요 수였다.
 class TrendingSentencesPreview extends StatefulWidget {
   const TrendingSentencesPreview({
     super.key,
     required this.language,
     required this.onViewAll,
+    this.repository,
   });
 
   final String language;
   final VoidCallback onViewAll;
+
+  /// 공개 문장 저장소. 비우면 Firestore를 쓴다.
+  final SharedSentenceRepository? repository;
 
   @override
   State<TrendingSentencesPreview> createState() =>
@@ -20,107 +32,224 @@ class TrendingSentencesPreview extends StatefulWidget {
 }
 
 class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
-  final liked = <int>{0};
-  final saved = <int>{};
+  static const _limit = 5;
 
-  static const english = [
-    _TrendingSentence(
-      sentence: 'You’ve got this.',
-      translation: '넌 할 수 있어.',
-      author: 'dailybird',
-      topic: '응원',
-      likes: 284,
-      age: '방금',
-    ),
-    _TrendingSentence(
-      sentence: 'I’m just looking around.',
-      translation: '그냥 둘러보는 중이에요.',
-      author: 'Mina',
-      topic: '쇼핑',
-      likes: 193,
-      age: '3분 전',
-    ),
-    _TrendingSentence(
-      sentence: 'That works for me.',
-      translation: '저는 그렇게 해도 좋아요.',
-      author: 'Joon',
-      topic: '일상',
-      likes: 167,
-      age: '8분 전',
-    ),
-  ];
+  String? accountId;
+  List<SharedSentence> items = [];
+  List<DefaultConversationSentence> mine = [];
+  bool loading = true;
+  bool failed = false;
+  SharedSentenceRepository? _repository;
 
-  static const japanese = [
-    _TrendingSentence(
-      sentence: '無理しないでね。',
-      translation: '무리하지 마.',
-      author: 'haru',
-      topic: '응원',
-      likes: 241,
-      age: '방금',
-    ),
-    _TrendingSentence(
-      sentence: 'ちょっと考えさせて。',
-      translation: '조금 생각하게 해줘.',
-      author: 'sora',
-      topic: '일상',
-      likes: 188,
-      age: '5분 전',
-    ),
-    _TrendingSentence(
-      sentence: 'また連絡するね。',
-      translation: '또 연락할게.',
-      author: 'yuki',
-      topic: '약속',
-      likes: 152,
-      age: '11분 전',
-    ),
-  ];
+  SharedSentenceRepository? get repository {
+    if (_repository != null) return _repository;
+    try {
+      return _repository =
+          widget.repository ?? FirestoreSharedSentenceRepository();
+    } catch (_) {
+      // Firebase가 준비되지 않았으면 섹션을 숨긴다.
+      return null;
+    }
+  }
 
-  static const chinese = [
-    _TrendingSentence(
-      sentence: '慢慢来，别着急。',
-      translation: '천천히 해, 서두르지 마.',
-      author: 'xiaoyu',
-      topic: '응원',
-      likes: 226,
-      age: '방금',
-    ),
-    _TrendingSentence(
-      sentence: '我再想一想。',
-      translation: '조금 더 생각해 볼게.',
-      author: 'lin',
-      topic: '일상',
-      likes: 174,
-      age: '4분 전',
-    ),
-    _TrendingSentence(
-      sentence: '下次再联系。',
-      translation: '다음에 다시 연락하자.',
-      author: 'momo',
-      topic: '약속',
-      likes: 149,
-      age: '9분 전',
-    ),
-  ];
+  bool get signedIn => accountId != null && accountId != 'guest';
 
-  List<_TrendingSentence> get items => switch (widget.language) {
-        '일본어' => japanese,
-        '중국어' => chinese,
-        _ => english,
-      };
+  @override
+  void initState() {
+    super.initState();
+    SharedSentenceRepository.revision.addListener(reloadQuietly);
+    SentenceActivityStore.revision.addListener(reloadMine);
+  }
 
-  void showPracticeMessage(String sentence) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('“$sentence” 연습 연결은 다음 단계에서 붙일게요.'),
-        duration: const Duration(seconds: 2),
-      ),
+  @override
+  void dispose() {
+    SharedSentenceRepository.revision.removeListener(reloadQuietly);
+    SentenceActivityStore.revision.removeListener(reloadMine);
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant TrendingSentencesPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.language != widget.language && accountId != null) load();
+  }
+
+  void reloadQuietly() {
+    if (accountId != null) load(silent: true);
+  }
+
+  Future<void> reloadMine() async {
+    final requested = accountId;
+    if (requested == null) return;
+    try {
+      final list = await MySentenceStore.load(requested);
+      if (!mounted || requested != accountId) return;
+      setState(() => mine = list);
+    } catch (_) {/* 저장 표시만 못 바꾼다. */}
+  }
+
+  Future<void> load({bool silent = false}) async {
+    final repo = repository;
+    final requestedLanguage = widget.language;
+    final requestedAccount = accountId!;
+    if (repo == null) {
+      setState(() {
+        loading = false;
+        failed = true;
+      });
+      return;
+    }
+    if (!silent) {
+      setState(() {
+        loading = true;
+        failed = false;
+      });
+    }
+    try {
+      final list = await repo.popular(
+        language: requestedLanguage,
+        viewerId: signedIn ? requestedAccount : '',
+        limit: _limit,
+      );
+      if (!mounted ||
+          requestedLanguage != widget.language ||
+          requestedAccount != accountId) {
+        return;
+      }
+      setState(() {
+        items = list;
+        loading = false;
+        failed = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      // 새로고침에 실패하면 보던 목록은 그대로 둔다.
+      if (silent && items.isNotEmpty) return;
+      setState(() {
+        loading = false;
+        failed = true;
+      });
+    }
+  }
+
+  void toast(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+          content: Text(message), duration: const Duration(seconds: 2)));
+  }
+
+  void replace(SharedSentence sentence, SharedSentence next) => setState(() {
+        items = [
+          for (final item in items)
+            if (item.id == sentence.id) next else item,
+        ];
+      });
+
+  /// 좋아요를 바로 반영하고, 저장에 실패하면 되돌린다.
+  Future<void> toggleLike(SharedSentence sentence) async {
+    final repo = repository;
+    if (repo == null || !signedIn) {
+      toast('로그인 후 좋아요를 누를 수 있어요.');
+      return;
+    }
+    final liked = !sentence.liked;
+    final next = sentence.copyWith(
+      liked: liked,
+      likeCount: sentence.likeCount + (liked ? 1 : -1),
     );
+    replace(sentence, next);
+    try {
+      await repo.setLiked(
+          sharedId: sentence.id, viewerId: accountId!, liked: liked);
+    } catch (_) {
+      if (!mounted) return;
+      replace(next, sentence);
+      toast('좋아요를 저장하지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
+  /// 이 공개 문장과 같은 내 문장. 보관함 둘러보기와 같은 기준으로 찾는다.
+  DefaultConversationSentence? savedCopyOf(SharedSentence sentence) {
+    for (final item in mine) {
+      if (item.id == sentence.id ||
+          item.sourceSharedId == sentence.id ||
+          (item.language == sentence.language &&
+              item.text.trim() == sentence.text.trim())) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  bool isMine(SharedSentence sentence) =>
+      signedIn && sentence.authorId == accountId;
+
+  /// 내 문장에 저장하거나 뺀다. 보관함 둘러보기의 저장 버튼과 같은 동작이다.
+  Future<void> toggleSave(SharedSentence sentence) async {
+    final account = accountId;
+    if (account == null) return;
+    final saved = savedCopyOf(sentence);
+    try {
+      if (saved != null) {
+        if (isMine(sentence)) {
+          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해주세요.');
+          return;
+        }
+        await MySentenceStore.remove(account, saved.id);
+        await reloadMine();
+        if (mounted) toast('내 문장에서 뺐어요.');
+        return;
+      }
+      final added = await MySentenceStore.add(
+        account,
+        language: sentence.language,
+        text: sentence.text,
+        translation: sentence.translation,
+        pronunciation: sentence.pronunciation,
+        topic: sentence.topic,
+        author: sentence.authorName,
+        authorId: sentence.authorId,
+        sourceSharedId: sentence.id,
+      );
+      if (added) await countImport(sentence);
+      await reloadMine();
+      if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
+    } catch (_) {
+      if (mounted) toast('저장하지 못했어요. 다시 시도해주세요.');
+    }
+  }
+
+  /// 가져간 사람 수를 올린다. 세지 못해도 저장은 그대로 둔다.
+  Future<void> countImport(SharedSentence sentence) async {
+    final repo = repository;
+    if (repo == null || !signedIn || isMine(sentence)) return;
+    try {
+      final counted =
+          await repo.recordImport(sharedId: sentence.id, viewerId: accountId!);
+      if (!counted || !mounted) return;
+      final current = items.where((item) => item.id == sentence.id);
+      if (current.isEmpty) return;
+      replace(current.first,
+          current.first.copyWith(importCount: current.first.importCount + 1));
+    } catch (_) {/* 가져간 수만 못 올린다. */}
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentAccount =
+        context.watch<UserProvider?>()?.currentUser?.id ?? 'guest';
+    if (currentAccount != accountId) {
+      accountId = currentAccount;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || accountId != currentAccount) return;
+        load();
+        reloadMine();
+      });
+    }
+    // Firebase가 없으면(테스트 등) 섹션 자체를 그리지 않는다.
+    if (repository == null) return const SizedBox.shrink();
+
     final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
@@ -139,10 +268,10 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.circle, size: 7, color: palette.like),
-                  const SizedBox(width: 5),
+                  Icon(Icons.favorite_rounded, size: 11, color: palette.like),
+                  const SizedBox(width: 4),
                   Text(
-                    'LIVE',
+                    '인기',
                     style: context.texts.labelSmall
                         .copyWith(color: palette.likeInk),
                   ),
@@ -150,53 +279,131 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '지금 뜨는 문장',
-              style: context.texts.headlineSmall
-                  .copyWith(color: ink, letterSpacing: -0.4),
+            Flexible(
+              child: Text(
+                '공유 문장',
+                overflow: TextOverflow.ellipsis,
+                style: context.texts.headlineSmall
+                    .copyWith(color: ink, letterSpacing: -0.4),
+              ),
             ),
             const Spacer(),
             TextButton(
               onPressed: widget.onViewAll,
               // 바로 위 "내 문장 기록"의 '전체 보기'와 같은 말, 같은 색으로 맞춘다.
-              // 전에는 이것만 앱 기본 파랑이라 홈의 하늘색 계열 사이에서 튀었다.
               child: Text('전체 보기', style: TextStyle(color: muted)),
             ),
           ],
         ),
         const SizedBox(height: 2),
         Text(
-          '사람들이 지금 저장하고 있는 표현이에요',
+          '다른 사람들이 공유한 문장을 좋아요 순으로 보여줘요',
           style: context.texts.bodySmall.copyWith(color: muted),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 210,
-          child: ListView.separated(
-            clipBehavior: Clip.none,
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final isLiked = liked.contains(index);
-              final isSaved = saved.contains(index);
-              return _SentenceCard(
-                item: item,
-                liked: isLiked,
-                saved: isSaved,
-                onLike: () => setState(() {
-                  isLiked ? liked.remove(index) : liked.add(index);
-                }),
-                onSave: () => setState(() {
-                  isSaved ? saved.remove(index) : saved.add(index);
-                }),
-                onPractice: () => showPracticeMessage(item.sentence),
-              );
-            },
+        if (loading)
+          SizedBox(
+            height: 120,
+            child: Center(
+              child: SizedBox.square(
+                dimension: 22,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.4, color: palette.primary),
+              ),
+            ),
+          )
+        else if (failed)
+          _NoticeCard(
+            icon: Icons.cloud_off_rounded,
+            title: '공유된 문장을 불러오지 못했어요',
+            actionLabel: '다시 시도',
+            onAction: load,
+          )
+        else if (items.isEmpty)
+          _NoticeCard(
+            icon: Icons.ios_share_rounded,
+            title: '아직 공유된 ${widget.language} 문장이 없어요',
+            body: '보관함에서 내 문장을 공유하면 여기에 나와요.',
+            actionLabel: '보관함으로',
+            onAction: widget.onViewAll,
+          )
+        else
+          SizedBox(
+            height: 196,
+            child: ListView.separated(
+              clipBehavior: Clip.none,
+              scrollDirection: Axis.horizontal,
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _SentenceCard(
+                  item: item,
+                  saved: savedCopyOf(item) != null,
+                  onLike: () => toggleLike(item),
+                  onSave: () => toggleSave(item),
+                );
+              },
+            ),
           ),
-        ),
       ],
+    );
+  }
+}
+
+/// 비어 있거나 불러오지 못했을 때 카드 자리를 채운다.
+class _NoticeCard extends StatelessWidget {
+  const _NoticeCard({
+    required this.icon,
+    required this.title,
+    required this.actionLabel,
+    required this.onAction,
+    this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? body;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = HomeTokens.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 22, color: palette.muted),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: context.texts.titleMedium
+                        .copyWith(color: palette.ink)),
+                if (body != null) ...[
+                  const SizedBox(height: 2),
+                  Text(body!,
+                      style: context.texts.bodySmall
+                          .copyWith(color: palette.muted)),
+                ],
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onAction,
+            child: Text(actionLabel,
+                style: TextStyle(color: palette.primary)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -204,25 +411,33 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
 class _SentenceCard extends StatelessWidget {
   const _SentenceCard({
     required this.item,
-    required this.liked,
     required this.saved,
     required this.onLike,
     required this.onSave,
-    required this.onPractice,
   });
 
-  final _TrendingSentence item;
-  final bool liked;
+  final SharedSentence item;
   final bool saved;
   final VoidCallback onLike;
   final VoidCallback onSave;
-  final VoidCallback onPractice;
+
+  /// 공유한 시각을 "방금·n분 전·n시간 전·n일 전·M월 d일"로 줄인다.
+  static String ageOf(DateTime? at, DateTime now) {
+    if (at == null) return '방금';
+    final diff = now.difference(at);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
+    if (diff.inDays < 1) return '${diff.inHours}시간 전';
+    if (diff.inDays < 7) return '${diff.inDays}일 전';
+    return '${at.month}월 ${at.day}일';
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = HomeTokens.of(context);
     final ink = palette.ink;
     final muted = palette.muted;
+    final author = item.authorName.trim().isEmpty ? '익명' : item.authorName;
 
     return Container(
       width: 284,
@@ -243,26 +458,31 @@ class _SentenceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: palette.surfaceAlt,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                ),
-                child: Text(
-                  item.topic,
-                  style:
-                      context.texts.labelSmall.copyWith(color: palette.inkSoft),
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceAlt,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                  ),
+                  child: Text(
+                    item.topic,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.texts.labelSmall
+                        .copyWith(color: palette.inkSoft),
+                  ),
                 ),
               ),
-              const Spacer(),
-              Text(item.age,
+              const SizedBox(width: 8),
+              Text(ageOf(item.createdAt, DateTime.now()),
                   style: context.texts.labelSmall.copyWith(color: muted)),
             ],
           ),
           const SizedBox(height: 13),
           Text(
-            item.sentence,
+            item.text,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: context.texts.titleLarge.copyWith(color: ink, height: 1.25),
@@ -284,26 +504,29 @@ class _SentenceCard extends StatelessWidget {
                     Icon(Icons.person_rounded, size: 14, color: palette.good),
               ),
               const SizedBox(width: 6),
-              Text('@${item.author}',
-                  style: context.texts.labelSmall.copyWith(color: muted)),
-              const Spacer(),
+              Expanded(
+                child: Text(author,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.texts.labelSmall.copyWith(color: muted)),
+              ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: '좋아요',
                 onPressed: onLike,
                 icon: Icon(
-                  liked
+                  item.liked
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   size: 20,
-                  color: liked ? palette.like : muted,
+                  color: item.liked ? palette.like : muted,
                 ),
               ),
-              Text('${item.likes + (liked ? 1 : 0)}',
+              Text('${item.likeCount}',
                   style: context.texts.labelSmall.copyWith(color: muted)),
               IconButton(
                 visualDensity: VisualDensity.compact,
-                tooltip: '저장',
+                tooltip: saved ? '내 문장에서 빼기' : '내 문장에 저장',
                 onPressed: onSave,
                 icon: Icon(
                   saved
@@ -313,35 +536,10 @@ class _SentenceCard extends StatelessWidget {
                   color: saved ? palette.primary : muted,
                 ),
               ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: '연습에 추가',
-                onPressed: onPractice,
-                icon: Icon(Icons.record_voice_over_rounded,
-                    size: 20, color: palette.primary),
-              ),
             ],
           ),
         ],
       ),
     );
   }
-}
-
-class _TrendingSentence {
-  const _TrendingSentence({
-    required this.sentence,
-    required this.translation,
-    required this.author,
-    required this.topic,
-    required this.likes,
-    required this.age,
-  });
-
-  final String sentence;
-  final String translation;
-  final String author;
-  final String topic;
-  final int likes;
-  final String age;
 }
