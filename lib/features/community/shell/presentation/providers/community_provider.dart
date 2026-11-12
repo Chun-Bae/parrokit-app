@@ -100,7 +100,15 @@ class CommunityProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  /// 한 번에 읽어 오는 글 수.
+  static const int postsPageSize = 20;
+
   DocumentSnapshot? _lastDocument;
+
+  bool _hasMorePosts = true;
+
+  /// 다음 페이지가 남아 있는지. 마지막 페이지를 읽으면 false가 된다.
+  bool get hasMorePosts => _hasMorePosts;
 
   List<Comment> _currentPostComments = [];
   List<Comment> get currentPostComments => _currentPostComments;
@@ -147,6 +155,7 @@ class CommunityProvider with ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _lastDocument = null;
+    _hasMorePosts = true;
     _currentPostComments.clear();
     _likedCommentIds.clear();
     _replyingTo = null;

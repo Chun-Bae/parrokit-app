@@ -18,6 +18,7 @@ extension CommunityProviderPost on CommunityProvider {
 
     if (refresh) {
       _lastDocument = null;
+      _hasMorePosts = true;
       _posts.clear();
       _userCache.clear();
     }
@@ -27,20 +28,26 @@ extension CommunityProviderPost on CommunityProvider {
     _notifyListenersSafe();
 
     try {
-      final fetchedPosts = await _repository.getPosts(
+      final page = await _repository.getPosts(
         postType: _currentPostType,
-        limit: 20,
+        limit: CommunityProvider.postsPageSize,
         startAfter: _lastDocument,
       );
-      _posts.addAll(
-        fetchedPosts.where((post) => !_blockedUserIds.contains(post.authorId)),
-      );
+
+      // 전에는 커서를 받아 둘 곳이 없어서 _lastDocument가 끝까지 null이었다.
+      // 그래서 startAfter도 늘 null이고, 최신 20개를 넘어가는 글은 볼
+      // 방법이 없었다. 더 읽으려고 refresh 없이 다시 불러도 같은 20개가
+      // 한 번 더 쌓였다.
+      _lastDocument = page.lastDocument ?? _lastDocument;
+      _hasMorePosts = page.hasMore;
+
+      final visiblePosts = page.posts
+          .where((post) => !_blockedUserIds.contains(post.authorId))
+          .toList();
+      _posts.addAll(visiblePosts);
 
       await _fetchMissingUsers(
-        fetchedPosts
-            .where((post) => !_blockedUserIds.contains(post.authorId))
-            .map((p) => p.authorId)
-            .whereType<String>(),
+        visiblePosts.map((p) => p.authorId).whereType<String>(),
       );
     } catch (e) {
       _errorMessage = e.toString();
@@ -48,6 +55,15 @@ extension CommunityProviderPost on CommunityProvider {
       _isLoading = false;
       _notifyListenersSafe();
     }
+  }
+
+  /// 다음 페이지를 이어 읽는다. 더 없으면 아무것도 하지 않는다.
+  ///
+  /// 지금 이 메서드를 부르는 화면은 없다. 게시판·질문·투표 목록에 스크롤
+  /// 끝 감지를 붙이면 그때부터 21번째 글 이후가 보인다.
+  Future<void> loadMorePosts() async {
+    if (_isLoading || !_hasMorePosts) return;
+    await fetchPosts();
   }
 
   Future<void> fetchPostDetails(String postId) async {

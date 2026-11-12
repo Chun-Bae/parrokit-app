@@ -9,10 +9,10 @@ import 'dart:io' as _i9;
 import 'package:cloud_firestore/cloud_firestore.dart' as _i7;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
-import 'package:parrokit/data/models/comment.dart' as _i3;
+import 'package:parrokit/data/models/comment.dart' as _i4;
 import 'package:parrokit/data/models/post.dart' as _i2;
 import 'package:parrokit/features/community/shell/data/repositories/community_repository.dart'
-    as _i4;
+    as _i3;
 import 'package:parrokit/features/community/shell/data/services/community_image_service.dart'
     as _i8;
 
@@ -41,8 +41,18 @@ class _FakePost_0 extends _i1.SmartFake implements _i2.Post {
         );
 }
 
-class _FakeComment_1 extends _i1.SmartFake implements _i3.Comment {
-  _FakeComment_1(
+class _FakePostPage_1 extends _i1.SmartFake implements _i3.PostPage {
+  _FakePostPage_1(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeComment_2 extends _i1.SmartFake implements _i4.Comment {
+  _FakeComment_2(
     Object parent,
     Invocation parentInvocation,
   ) : super(
@@ -55,7 +65,7 @@ class _FakeComment_1 extends _i1.SmartFake implements _i3.Comment {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockCommunityRepository extends _i1.Mock
-    implements _i4.CommunityRepository {
+    implements _i3.CommunityRepository {
   MockCommunityRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -127,7 +137,7 @@ class MockCommunityRepository extends _i1.Mock
       ) as _i5.Future<void>);
 
   @override
-  _i5.Future<List<_i2.Post>> getPosts({
+  _i5.Future<_i3.PostPage> getPosts({
     String? postType = 'board',
     int? limit = 10,
     _i7.DocumentSnapshot<Object?>? startAfter,
@@ -142,23 +152,34 @@ class MockCommunityRepository extends _i1.Mock
             #startAfter: startAfter,
           },
         ),
-        returnValue: _i5.Future<List<_i2.Post>>.value(<_i2.Post>[]),
-      ) as _i5.Future<List<_i2.Post>>);
+        returnValue: _i5.Future<_i3.PostPage>.value(_FakePostPage_1(
+          this,
+          Invocation.method(
+            #getPosts,
+            [],
+            {
+              #postType: postType,
+              #limit: limit,
+              #startAfter: startAfter,
+            },
+          ),
+        )),
+      ) as _i5.Future<_i3.PostPage>);
 
   @override
-  _i5.Future<List<_i3.Comment>> getComments(String? postId) =>
+  _i5.Future<List<_i4.Comment>> getComments(String? postId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getComments,
           [postId],
         ),
-        returnValue: _i5.Future<List<_i3.Comment>>.value(<_i3.Comment>[]),
-      ) as _i5.Future<List<_i3.Comment>>);
+        returnValue: _i5.Future<List<_i4.Comment>>.value(<_i4.Comment>[]),
+      ) as _i5.Future<List<_i4.Comment>>);
 
   @override
-  _i5.Future<_i3.Comment> addComment(
+  _i5.Future<_i4.Comment> addComment(
     String? postId,
-    _i3.Comment? comment,
+    _i4.Comment? comment,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -168,7 +189,7 @@ class MockCommunityRepository extends _i1.Mock
             comment,
           ],
         ),
-        returnValue: _i5.Future<_i3.Comment>.value(_FakeComment_1(
+        returnValue: _i5.Future<_i4.Comment>.value(_FakeComment_2(
           this,
           Invocation.method(
             #addComment,
@@ -178,7 +199,7 @@ class MockCommunityRepository extends _i1.Mock
             ],
           ),
         )),
-      ) as _i5.Future<_i3.Comment>);
+      ) as _i5.Future<_i4.Comment>);
 
   @override
   _i5.Future<void> deleteComment(
