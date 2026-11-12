@@ -69,6 +69,13 @@ class AddPostUseCase {
       snippet: content.length > 50 ? '${content.substring(0, 50)}...' : content,
     );
 
-    await _repository.addPost(newPost);
+    // 글 저장이 엎어지면 방금 올린 이미지는 아무도 가리키지 않는다.
+    // Storage에 남아 용량만 먹으므로 치우고 던진다.
+    try {
+      await _repository.addPost(newPost);
+    } catch (_) {
+      await _imageService.deleteImagesQuietly(uploadedUrls);
+      rethrow;
+    }
   }
 }

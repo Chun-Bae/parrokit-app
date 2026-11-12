@@ -68,6 +68,14 @@ class AddQuestionUseCase {
       questionStatus: 'waiting',
     );
 
-    await _repository.addQuestion(newPost, authorId, rewardCrackers);
+    // 글 저장이 엎어지면 방금 올린 이미지는 아무도 가리키지 않는다.
+    // Storage에 남아 용량만 먹으므로 치우고 던진다. 질문 글은 크래커가
+    // 모자라면 저장 트랜잭션이 거절하는데, 그게 드문 경우도 아니다.
+    try {
+      await _repository.addQuestion(newPost, authorId, rewardCrackers);
+    } catch (_) {
+      await _imageService.deleteImagesQuietly(uploadedUrls);
+      rethrow;
+    }
   }
 }
