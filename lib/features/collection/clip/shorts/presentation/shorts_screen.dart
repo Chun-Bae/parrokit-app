@@ -114,14 +114,19 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
           // 영상이 없을 때는 레터박스 검정 대신 보통 화면색을 쓴다.
           return Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
-            body: const AppEmptyState(
+            body: AppEmptyState(
               icon: Icons.video_library_outlined,
               // 쇼츠는 기기·서버 클립만 읽는다(ShortsRepository). Google Drive
-              // 클립만 있는 사람에게 '클립을 추가하면'이라고 하면 이미 추가했는데
-              // 왜 안 나오는지 알 수 없다.
-              title: '쇼츠로 볼 클립이 없어요.',
-              description: '기기나 서버에 저장한 클립이 여기에 나와요.\n'
-                  'Google Drive 클립은 아직 쇼츠에 나오지 않아요.',
+              // 클립만 있는 사람도 왜 안 나오는지 알 수 있게 '만'을 남긴다.
+              // 설명은 한 줄로 줄이고, 바로 클립을 만들 수 있게 버튼을 둔다.
+              title: '쇼츠로 볼 클립이 없어요',
+              description: '기기나 서버에 저장한 클립만 나와요',
+              actionLabel: '클립 추가하기',
+              onAction: () async {
+                await context.pushNamed(AppRoutes.clipsCreate);
+                if (!context.mounted) return;
+                await context.read<ShortsProvider>().refresh();
+              },
             ),
           );
         }
