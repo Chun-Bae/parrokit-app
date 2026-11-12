@@ -10,6 +10,7 @@
 // ============================================================================
 
 import 'dart:convert';
+import 'dart:typed_data' show Uint8List;
 import 'dart:io' show File, Directory, Platform;
 
 import 'package:flutter/foundation.dart' show compute;
@@ -195,24 +196,42 @@ class BackupService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// 별도 Isolate에서 실행되는 압축 로직.
+  ///
+  /// 전에는 파일을 읽다 실패하면 빈 catch로 넘기고, manifest에는 그 파일이
+  /// 들어간 것처럼 적었다. 그래서 이런 일이 생겼다.
+  ///
+  /// - DB를 못 읽으면 zip에 DB 없이 백업이 "완료"된다. 사용자는 성공했다고
+  ///   믿고 원본을 지울 수도 있다.
+  /// - manifest는 DB가 있다고 적혀 있으니, 나중에 복원할 때
+  ///   `Missing file from archive`로 실패한다. **백업이 쓸모없다는 걸 복원하는
+  ///   순간에야 알게 된다.** 보통 그때는 원본이 이미 없다.
+  ///
+  /// 그래서 DB를 못 읽으면 백업 자체를 실패시킨다. 미디어 파일 하나를 못
+  /// 읽는 건 넘어가되, 실제로 담은 것만 manifest에 적는다.
   static void _doCompress(_CompressParams params) {
     final encoder = ZipFileEncoder();
     encoder.create(params.zipPath);
 
+    final entries = <Map<String, dynamic>>[];
+
     // DB 추가
     if (params.dbPath != null) {
       final dbFile = File(params.dbPath!);
+      final Uint8List bytes;
       try {
-        final bytes = dbFile.readAsBytesSync();
-        final archiveFile = a.ArchiveFile(
-          params.dbRelativePath,
-          bytes.length,
-          bytes,
-        );
-        encoder.addArchiveFile(archiveFile);
-      } catch (_) {
-        // DB 파일 읽기 실패 시 무시하거나 에러 처리
+        bytes = dbFile.readAsBytesSync();
+      } catch (e) {
+        encoder.closeSync();
+        throw StateError('백업할 데이터베이스를 읽지 못했습니다: $e');
       }
+      encoder.addArchiveFile(
+        a.ArchiveFile(params.dbRelativePath, bytes.length, bytes),
+      );
+      entries.add({
+        'path': params.dbRelativePath,
+        'sha256': sha256.convert(bytes).toString(),
+        'bytes': bytes.length,
+      });
     }
 
     // Media 추가
@@ -226,41 +245,24 @@ class BackupService {
         final inZip =
             p.join(params.mediaRelativeDir, rel).replaceAll('\\', '/');
 
-        if (file.existsSync()) {
-          // 대용량 파일일 수 있지만, 확실한 저장을 위해 바이트로 읽음
-          final bytes = file.readAsBytesSync();
-          final archiveFile = a.ArchiveFile(inZip, bytes.length, bytes);
-          encoder.addArchiveFile(archiveFile);
-        }
+        if (!file.existsSync()) continue;
+
+        // 대용량 파일일 수 있지만, 확실한 저장을 위해 바이트로 읽음
+        final bytes = file.readAsBytesSync();
+        encoder.addArchiveFile(a.ArchiveFile(inZip, bytes.length, bytes));
+
+        // 실제로 담은 것만 적는다. 전에는 담기 실패한 파일도 manifest에
+        // 들어가서 복원이 "Missing file from archive"로 넘어졌다.
+        entries.add({
+          'path': inZip,
+          'sha256': sha256.convert(bytes).toString(),
+          'bytes': bytes.length,
+        });
       } catch (_) {
-        // 파일 처리 실패 시 무시
+        // 미디어 파일 하나를 못 읽어도 나머지는 백업한다. manifest에 안 적으니
+        // 복원할 때 없는 파일을 찾지 않는다.
+        continue;
       }
-    }
-
-    // manifest 생성
-    final entries = <Map<String, dynamic>>[];
-
-    if (params.dbPath != null) {
-      final dbFile = File(params.dbPath!);
-      entries.add({
-        'path': params.dbRelativePath,
-        'sha256': _sha256OfFileSync(dbFile),
-        'bytes': dbFile.lengthSync(),
-      });
-    }
-
-    for (final filePath in params.filePaths) {
-      final file = File(filePath);
-      final inZipPath = p.joinAll([
-        params.mediaRelativeDir,
-        p.relative(filePath, from: params.mediaPath)
-      ]).replaceAll('\\', '/');
-
-      entries.add({
-        'path': inZipPath,
-        'sha256': _sha256OfFileSync(file),
-        'bytes': file.lengthSync(),
-      });
     }
 
     final manifest = {
@@ -278,14 +280,6 @@ class BackupService {
         a.ArchiveFile('manifest.json', manifestBytes.length, manifestBytes));
 
     encoder.close();
-  }
-
-  /// 별도 Isolate에서 사용하는 동기적 SHA256 계산.
-  static String _sha256OfFileSync(File f) {
-    if (!f.existsSync()) return '';
-    final bytes = f.readAsBytesSync();
-    final digest = sha256.convert(bytes);
-    return digest.toString();
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
