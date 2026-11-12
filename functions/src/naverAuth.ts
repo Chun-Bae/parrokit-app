@@ -47,13 +47,33 @@ export const createNaverCustomToken = functions.https.onCall(
       } catch (error: unknown) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((error as any).code === "auth/user-not-found") {
-          // 첫 가입 유저 생성
-          await admin.auth().createUser({
-            uid: uid,
-            email: naverUser.email,
-            displayName: naverUser.name || naverUser.nickname,
-            photoURL: naverUser.profile_image,
-          });
+          try {
+            // 첫 가입 유저 생성
+            await admin.auth().createUser({
+              uid: uid,
+              email: naverUser.email,
+              displayName: naverUser.name || naverUser.nickname,
+              photoURL: naverUser.profile_image,
+            });
+          } catch (createError: unknown) {
+            // 같은 계정으로 두 번 동시에 로그인하면 양쪽 다 user-not-found를
+            // 보고 둘 다 createUser를 부른다. 늦은 쪽은 실패하는데, 그건
+            // 원하던 결과(계정이 있다)가 이미 이루어진 것이므로 그대로
+            // 넘어간다. 전에는 이게 "Failed to create custom token."이 되어
+            // 로그인이 실패했다.
+            //
+            // auth/email-already-exists는 다른 상황이다. 같은 이메일이 이미
+            // 다른 로그인 방식의 계정에 붙어 있다는 뜻이고, 그건 계정을
+            // 합칠지 말지 정해야 하는 문제라 여기서 삼키지 않는다.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const code = (createError as any).code;
+            if (code !== "auth/uid-already-exists") {
+              throw createError;
+            }
+            console.warn(
+              `[NaverAuth] createUser raced, continuing uid=${uid} code=${code}`
+            );
+          }
         } else {
           throw error;
         }
