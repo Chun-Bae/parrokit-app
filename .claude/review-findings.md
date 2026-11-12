@@ -389,3 +389,62 @@ Provider를 결제 시작 전에 잡아 두고, 지급은 화면 수명과 무�
 `visualDensity: compact`라 44pt 미만), 못 채우면 `TextButton.icon`(라벨
 '목표 설정')이 된다. 같은 동작인데 모양도 글자도 바뀐다. 어느 쪽으로
 맞출지는 디자인·문구 판단이다.
+
+## 묶음 6 — 보관함 (`lib/features/collection`)
+
+### 고친 것
+
+**27. 쇼츠 무한 스크롤이 한 바퀴 뒤 멈췄다** — 이 묶음에서 가장 큰 것
+`prefetchNextBatch`는 "이 길이에서는 이미 당겨왔다"를 `_lastPrefetchAtLength`로
+기억하고 같으면 건너뛴다. 그런데 `removeItems`가 그 기억을 지우지 않았다.
+
+- 10개 로드 → 5번 장면에서 당겨서 20개. `_lastPrefetchAtLength = 10`
+- 10번 장면에 닿으면 화면이 앞 10개를 버리고 0번으로 점프. 길이가 다시 10
+- 이제 길이(10)와 기억(10)이 같아서 prefetch가 늘 건너뛴다
+- `itemCount`가 10이라 10번 장면에 다시 닿을 수도 없다
+
+첫 한 바퀴를 돌고 나면 새 클립을 영영 안 불러오고 같은 10개만 돈다.
+`removeItems`에서 기억을 지운다.
+
+**28. 초기화에 실패한 영상 컨트롤러를 놓지 않았다**
+`ClipPlayerViewModel.dispose`가 `_isInitialized && _controller != null`일 때만
+놓았다. `_initVideo`는 컨트롤러를 먼저 만들고 `initialize()`를 기다린다. 파일이
+깨졌거나 없어서 거기서 던지면, 또는 초기화 중에 사용자가 뒤로 가면
+`_isInitialized`가 false인데 컨트롤러는 살아 있다. 네이티브 플레이어가 남는다.
+이 앱은 서버·클라우드 클립을 내려받아 재생하니 드문 경우가 아니다.
+`loadClip`의 catch에서도 놓는다.
+
+**29. 태그 필터 조회가 겹치면 묵은 결과가 이겼다**
+`applyNow`는 들어오는 쪽이 셋이다(디바운스, `showAll`, `startWatching`).
+느린 조회가 나중에 끝나면 방금 고른 필터 결과를 예전 결과가 덮는다.
+요청 번호로 막고, 로딩 표시를 내리는 것도 가장 최근 요청만 하게 했다.
+
+**30. 이름 입력 대화상자의 컨트롤러를 놓지 않았다**
+`_showNameEntryDialog`의 `TextEditingController`가 지역 변수인데 해제가 없다.
+그룹·컬렉션 추가와 이름 변경 네 곳에서 쓰니 손댈 때마다 하나씩 쌓인다.
+
+### 보류 — 판단이 필요하다
+
+**거. 클립 내용이 바뀌어도 목록이 안 바뀔 수 있다**
+`applyNow`의 `_sameIds`와 `library_tag_section`의 `Selector.shouldRebuild`가
+둘 다 **클립 id만** 비교한다. DB watch는 바뀐 클립을 `_cache`에서 빼지만
+`applyNow`를 다시 부르지는 않고 `notifyListeners()`만 한다. 목록 위젯은
+`resultsVersion`만 select하므로 그 알림으로는 안 그려진다.
+즉 **제목을 고친 클립이 태그 필터가 걸린 목록에서는 옛 제목으로 남을 수 있다.**
+다만 폴더 화면은 `clipProvider.clipItems`라는 다른 경로를 쓰고, 지금 클립이
+0개라 재현해 보지 못했다. id만 비교하는 건 불필요한 리빌드를 줄이려는
+의도가 분명해서, 내용까지 비교하도록 바꾸면 그 의도를 뒤집는다. 손대지 않았다.
+
+**너. `ShortsRepository`를 가짜로 바꿀 수 없다**
+`ShortsProvider`가 구체 타입을 받고, 그 안에서 `FirebaseAuth.instance`를 읽는다.
+27번 버그는 테스트로 잡기 딱 좋은 종류인데 넣지 못했다. 인터페이스로 빼는 건
+구조 변경이라 혼자 정하지 않았다.
+
+### 깨끗했던 것
+
+- 타이머·구독 해제가 전부 되어 있다 (`memoTimer`, `_overlayTimer`, `_debounce`,
+  `_clipsSub`/`_segmentsSub`/`_clipTagsSub`).
+- 삼킨 예외 네 곳 중 셋이 "왜 넘어가도 되는지" 주석을 달고 있다.
+- `vote_write_screen`의 투표 항목 컨트롤러는 추가·삭제·dispose가 전부 맞다.
+- 가장 큰 파일(`sentence_collection_preview.dart`, 2064줄)은 테스트가
+  스무 개 가까이 붙어 있다.
