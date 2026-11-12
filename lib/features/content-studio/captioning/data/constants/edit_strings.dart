@@ -16,7 +16,7 @@ class EditStrings {
 
   // 컬렉션 섹션
   static const collectionLabel = '컬렉션 *';
-  static const collectionHint = '폴더명을 입력해주세요.';
+  static const collectionHint = '컬렉션 이름을 입력해주세요.';
 
   // 클립 제목 섹션
   static const clipTitleLabel = '클립 제목 *';
