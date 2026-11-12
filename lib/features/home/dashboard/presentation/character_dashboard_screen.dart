@@ -17,6 +17,8 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'widgets/study_garden_preview.dart';
 import 'widgets/sentence_history_dashboard.dart';
 import 'widgets/today_practice_summary.dart';
+import 'widgets/today_start_bar.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -47,10 +49,15 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
   void initState() {
     super.initState();
     scrollController = ScrollController()..addListener(handleScroll);
+    AppConfig.newDesignListenable.addListener(_onDesignChanged);
     // 홈 첫 진입에서 한 번 팁을 보여준다 (예전에는 클래식 대시보드가 띄웠다).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) showTipDialog(context);
     });
+  }
+
+  void _onDesignChanged() {
+    if (mounted) setState(() {});
   }
 
   void handleScroll() {
@@ -180,6 +187,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
 
   @override
   void dispose() {
+    AppConfig.newDesignListenable.removeListener(_onDesignChanged);
     scrollController
       ..removeListener(handleScroll)
       ..dispose();
@@ -195,6 +203,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     final palette = HomeTokens.of(context);
     final background = palette.background;
     final muted = palette.muted;
+    final newDesign = AppConfig.newDesign;
     // 앱 테마를 통째로 갈아끼우지 않고 파생시킨다. 테마를 새로 만들면
     // AppTheme이 정의한 컴포넌트 테마(버튼·다이얼로그·입력 등)와 색 토큰이
     // 이 화면 안에서 전부 사라진다.
@@ -234,6 +243,14 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                       nickname: user?.displayName ?? '나',
                       accountId: accountId,
                       onPracticeCompleted: recordCompletedSentence),
+                  // 새 디자인: 오늘 목표와 학습 시작을 무대 바로 아래에.
+                  if (newDesign) ...[
+                    TodayStartBar(
+                      completed: practiceCounts[dateKey(DateTime.now())] ?? 0,
+                      goal: dailyGoal,
+                      onStart: () => context.push(AppRoutes.learningHubPath),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   Row(children: [
                     LearningLanguagePicker(
@@ -252,29 +269,31 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     refreshToken: totalPracticed,
                     onViewAll: () => context.go(AppRoutes.collectionPath),
                   ),
-                  const SizedBox(height: 14),
-                  FilledButton.icon(
-                    onPressed: () => context.push(AppRoutes.learningHubPath),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: palette.accent,
-                      foregroundColor: palette.onAccent,
-                      // 앱 테마가 버튼 아이콘 색을 따로 정해서, 같이 지정하지
-                      // 않으면 파란 배경 위에 어두운 아이콘이 남는다.
-                      iconColor: palette.onAccent,
-                      minimumSize: const Size.fromHeight(58),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.xl)),
+                  if (!newDesign) ...[
+                    const SizedBox(height: 14),
+                    FilledButton.icon(
+                      onPressed: () => context.push(AppRoutes.learningHubPath),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: palette.accent,
+                        foregroundColor: palette.onAccent,
+                        // 앱 테마가 버튼 아이콘 색을 따로 정해서, 같이 지정하지
+                        // 않으면 파란 배경 위에 어두운 아이콘이 남는다.
+                        iconColor: palette.onAccent,
+                        minimumSize: const Size.fromHeight(58),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.xl)),
+                      ),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text('학습하러 가기',
+                          style: context.texts.titleMedium
+                              .copyWith(color: palette.onAccent)),
                     ),
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text('학습하러 가기',
-                        style: context.texts.titleMedium
-                            .copyWith(color: palette.onAccent)),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                      child: Text('따라 말하기부터 반복 듣기까지, 내 방식대로',
-                          style:
-                              context.texts.bodySmall.copyWith(color: muted))),
+                    const SizedBox(height: 8),
+                    Center(
+                        child: Text('따라 말하기부터 반복 듣기까지, 내 방식대로',
+                            style: context.texts.bodySmall
+                                .copyWith(color: muted))),
+                  ],
                   const SizedBox(height: 30),
                   TrendingSentencesPreview(
                     language: language,
