@@ -1,10 +1,52 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      // 로그인한 사용자만 이미지 업로드 가능, 누구나 읽기 가능
+
+    // 쓰기는 자기 폴더 안에서만 할 수 있다.
+    //
+    // 전에는 모든 경로에 `allow write: if request.auth != null` 하나였다.
+    // 로그인한 사람은 누구나 남의 프로필 사진과 글 사진, 올려 둔 클립을
+    // 덮어쓰거나 지울 수 있었고, 아무 경로에나 파일을 올릴 수 있었다.
+    //
+    // 앱이 올리는 경로는 두 갈래뿐이다.
+    // - users/{uid}/...        프로필 사진, 글 사진, 클립 영상과 썸네일
+    // - caption-inputs/{uid}/  자동 자막에 넣을 원본
+    //
+    // 읽기는 전과 같이 열어 둔다. 글 사진은 다운로드 URL로 보여주는데 그
+    // URL은 규칙을 거치지 않으므로, 읽기를 좁혀도 공개 범위는 그대로이면서
+    // 앱이 자기 파일을 직접 참조하는 경로만 깨질 수 있다.
+    //
+    // Cloud Functions가 users/{uid}/content-studio/videos/ 에 쓰는 영상은
+    // Admin SDK로 올라가므로 이 규칙을 거치지 않는다.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // 한 파일당 상한. 용량 전체 한도는 앱에서만 세고 있어서, 여기서는
+    // 터무니없는 한 방만 막는다.
+    function isReasonableSize() {
+      return request.resource == null
+        || request.resource.size < 512 * 1024 * 1024;
+    }
+
+    match /users/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isOwner(userId) && isReasonableSize();
+    }
+
+    match /caption-inputs/{userId}/{allPaths=**} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isReasonableSize();
+    }
+
+    // 위 두 갈래 밖은 닫는다.
+    //
+    // 여기에 `allow read: if true`를 두면 규칙이 OR로 합쳐지므로
+    // caption-inputs의 "올린 사람만 읽는다"가 무력화된다. 앱이 Storage를
+    // 직접 참조하는 경로는 users/와 caption-inputs/뿐이고, 글 사진은
+    // 다운로드 URL로 보여주는데 그 URL은 규칙을 거치지 않는다.
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
