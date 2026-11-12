@@ -74,7 +74,10 @@ mixin CommunityRepositoryVote {
         }
       }
       return myVotes;
-    } catch (_) {
+    } catch (e) {
+      // 실패하면 "아직 투표 안 함"으로 보인다. 그 상태로 누르면 서버가
+      // "이미 투표한 게시글입니다"로 거절해서 사용자가 영문을 모른다.
+      AppLogger.w('[CommunityRepository] 내 투표 기록 불러오기 실패 userId=$userId: $e');
       return myVotes;
     }
   }
@@ -87,7 +90,8 @@ mixin CommunityRepositoryVote {
           .collection('voted_posts')
           .get();
       return snapshot.docs.map((doc) => doc.id).toList();
-    } catch (_) {
+    } catch (e) {
+      AppLogger.w('[CommunityRepository] 투표한 글 목록 불러오기 실패 userId=$userId: $e');
       return const [];
     }
   }
