@@ -153,14 +153,28 @@ class TtsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 보이스 목록 조회 요청 번호. 언어를 바꾸면 올라간다.
+  int _voicesRequestId = 0;
+
   Future<void> fetchAvailableVoices() async {
     if (_providerType != TtsProviderType.google) return;
+
+    final requestId = ++_voicesRequestId;
+    final requestedLanguage = _language;
 
     _isLoadingVoices = true;
     notifyListeners();
 
     try {
-      final voices = await _useCase.repository.listVoices(_language);
+      final voices = await _useCase.repository.listVoices(requestedLanguage);
+
+      // 기다리는 동안 언어가 또 바뀌었으면 이 목록은 버린다. 언어 고르기
+      // 시트는 updateLanguage 직후 이 함수를 await 없이 부르므로, 빠르게
+      // 두 번 고르면 늦게 끝난 옛 조회가 이긴다. 그러면 다른 언어의 보이스
+      // 목록이 뜰 뿐 아니라, 아래 "목록에 없으면 초기화"가 멀쩡히 고른
+      // 보이스를 지워 버린다.
+      if (requestId != _voicesRequestId) return;
+
       _availableVoices = voices;
 
       // 언어가 바뀌었는데 현재 선택된 voiceId가 새 언어 목록에 없다면 초기화
@@ -172,10 +186,13 @@ class TtsProvider extends ChangeNotifier {
       }
     } catch (e) {
       AppLogger.e('[TTS][Provider] Failed to load voices', error: e);
+      if (requestId != _voicesRequestId) return;
       _availableVoices = [];
     } finally {
-      _isLoadingVoices = false;
-      notifyListeners();
+      if (requestId == _voicesRequestId) {
+        _isLoadingVoices = false;
+        notifyListeners();
+      }
     }
   }
 
