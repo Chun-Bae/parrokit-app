@@ -511,3 +511,53 @@ Provider를 결제 시작 전에 잡아 두고, 지급은 화면 수명과 무�
 - `acceptAnswer`의 크래커 보상, `addQuestion`의 크래커 차감은 전부
   `runTransaction` 안에서 상태와 잔액을 먼저 확인한다.
 - 삼킨 예외가 이 묶음에는 투표 저장소 두 곳뿐이었다.
+
+## 묶음 8 — 커뮤니티 알림·활동·메뉴·차단
+
+### 고친 것
+
+**35. 알림이 500개를 넘으면 전체 읽음·전체 삭제가 영영 실패했다** — 이 묶음에서 가장 큰 것
+`markAllAsRead`와 `deleteAllNotifications`가 알림 전부를 `WriteBatch` 하나에
+담았다. Firestore WriteBatch는 한 번에 500개까지다. 넘으면 commit이 통째로
+거절되므로, 알림이 쌓인 사용자는 매번 "실패했어요" 토스트만 본다. 알림을
+자동으로 정리하는 코드도 없으니 오래 쓰면 닿는 수다.
+500개씩 나눠 보내고, 안 읽은 수를 0으로 맞추는 건 전부 성공한 뒤에 한다.
+테스트 6개를 넣었다 (501개·1001개로 경계를 넘긴다).
+
+**36. 닉네임 선점이 남의 것을 덮어쓸 수 있었다**
+`updateUserDisplayName`이 `WriteBatch`를 썼다. 배치는 읽지 않고 쓰기만 하므로
+"이미 남이 쓰는 닉네임인지"를 볼 수 없다. 화면이 미리 `isNicknameAvailable`로
+확인하지만 확인과 저장 사이가 벌어져 있어서, 그 사이에 다른 사람이 선점하면
+`batch.set`이 그대로 덮어썼다. `nicknames` 컬렉션을 두는 목적이 무너진다.
+`runTransaction`으로 먼저 읽고 다른 uid가 쓰고 있으면 던진다.
+덧붙여 `oldNickname == newNickname`일 때 배치가 `set` 다음 `delete`를 같은
+문서에 보내서 방금 쓴 자기 선점을 지웠다. 그것도 막았다.
+
+**37. 프로필 사진을 올리기 전에 예전 사진을 지웠다**
+`_saveProfile`이 ①예전 프사 삭제 → ②새 사진 업로드 → ③저장 순서였다.
+②나 ③이 실패하면 예전 사진은 사라졌고 새 사진은 반영되지 않는다. 사용자가
+프로필 사진을 통째로 잃는다. 네트워크가 흔들릴 때 실제로 걸린다.
+올리고, 저장하고, 저장이 끝난 뒤에 지운다. 묶음 7의 글 수정과 같은 종류다.
+
+**38. 활동 목록도 늦게 끝난 조회를 받아들였다**
+`_loadPage`를 `fetchActivities`(초기화)와 `loadMore`(다음 쪽)에서 부르는데,
+`loadMore`만 자기 중복을 막는다. loadMore가 도는 중에 다른 활동 유형 탭으로
+넘어가면 늦게 끝난 옛 조회가 새 목록 뒤에 엉뚱한 항목을 붙이고 커서까지
+덮어썼다. 요청 번호로 막았다.
+
+### 눈에 띈 것
+
+**페이징이 되는 곳과 안 되는 곳이 한 리포 안에 있다**
+`ActivityProvider`는 `_nextCursor`를 `page.nextCursor`로 제대로 갱신하고
+`hasMore`도 추적한다. 반면 `CommunityProvider`의 글 목록(묶음 7 "더" 항목)은
+`_lastDocument`가 선언만 돼 있고 값이 들어가지 않는다. 똑같은 기능인데
+한쪽은 완성돼 있고 한쪽은 절반이다. 글 목록을 고칠 때 활동 쪽을 본보기로
+쓰면 된다.
+
+### 깨끗했던 것
+
+- 이 묶음에는 삼킨 예외도, `orElse` 없는 `firstWhere`도 없었다.
+- `CommunityNotificationProvider`는 `_isActive && hasListeners` 가드를 두고
+  실패마다 `AppLogger`를 남긴다. 리포에서 가장 꼼꼼하게 쓰인 Provider다.
+- 알림 저장소의 `markAsRead`·`deleteNotification`은 트랜잭션 안에서
+  `isRead`를 먼저 보고 안 읽은 것만 카운터를 줄인다. 이중 차감이 안 난다.

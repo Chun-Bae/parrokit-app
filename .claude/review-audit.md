@@ -21,7 +21,7 @@ feature 단위로 묶고, 파일 수와 최근 3개월 변경 빈도를 함께 �
 | 5 | 홈 | `lib/features/home` | 31 | 완료 (고칠 것 없음, 보류 1) |
 | 6 | 보관함 | `lib/features/collection` | 54 | 완료 (고침 4, 보류 2) |
 | 7 | 커뮤니티 글·질문·투표 | `lib/features/community/{board,question,vote,shared}` | 32 | 완료 (고침 4, 보류 3) |
-| 8 | 커뮤니티 알림·활동·메뉴·차단 | `lib/features/community/{notification,activity,menu,block}` | 42 | 대기 |
+| 8 | 커뮤니티 알림·활동·메뉴·차단 | `lib/features/community/{notification,activity,menu,block}` | 42 | 완료 (고침 4) |
 | 9 | TTS | `lib/features/content-studio/tts` | 25 | 대기 |
 | 10 | 챗봇·영상·허브 | `lib/features/content-studio/{chat-bot,video,hub,shared}` | 32 | 대기 |
 | 11 | 공용 위젯·테마 | `lib/core/shared` | 41 | 대기 |
