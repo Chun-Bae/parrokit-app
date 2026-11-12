@@ -477,10 +477,11 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
             ko: vm.currentSegment.trans,
           ),
 
-        // 풀스크린 토글
+        // 풀스크린 토글. 자막이 영상 아래쪽에 깔리므로 위쪽에 둔다. 전에는
+        // 오른쪽 아래라서 긴 자막의 마지막 글자 위에 아이콘이 겹쳤다.
         Positioned(
-          right: 12,
-          bottom: 12,
+          right: 4,
+          top: 4,
           child: AnimatedOpacity(
             opacity: vm.overlayVisible ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 250),
