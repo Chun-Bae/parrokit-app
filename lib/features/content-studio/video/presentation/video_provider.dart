@@ -169,8 +169,9 @@ class VideoProvider extends ChangeNotifier {
     _isExportingForCaptioning = true;
     notifyListeners();
 
+    final client = HttpClient();
+    File? partialFile;
     try {
-      final client = HttpClient();
       final request = await client.getUrl(Uri.parse(source));
       final response = await request.close();
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -181,17 +182,28 @@ class VideoProvider extends ChangeNotifier {
       final file = File(
         '${tempDir.path}/parrokit_caption_video_${DateTime.now().millisecondsSinceEpoch}.mp4',
       );
+      partialFile = file;
       final sink = file.openWrite();
       await response.pipe(sink);
       await sink.close();
+      partialFile = null;
       return file.path;
     } catch (e, stack) {
       AppLogger.e('[VideoProvider][ExportToCaptioning] error reason=$e',
           error: e, stackTrace: stack);
+      // 내려받다 끊기면 반쯤 쓰인 mp4가 임시 폴더에 남는다. 영상 파일이라
+      // 작지 않고, 아무도 가리키지 않는다.
+      if (partialFile != null) {
+        try {
+          if (await partialFile.exists()) await partialFile.delete();
+        } catch (_) {}
+      }
       _errorMessage = '캡션 편집기로 보낼 영상을 준비하지 못했습니다.';
       notifyListeners();
       return null;
     } finally {
+      // HttpClient는 닫아 줘야 연결이 정리된다.
+      client.close();
       _isExportingForCaptioning = false;
       notifyListeners();
     }
@@ -302,7 +314,14 @@ class VideoProvider extends ChangeNotifier {
                 '[VideoProvider][Polling] success videoUri=${result['videoUri']}');
             _generatedFilePath = result['videoUri'];
             if (_pendingCost > 0) {
-              userProvider.addCoins(-_pendingCost);
+              // 차감을 기다리지 않고 넘어가고 있었다. 실패하면 사용자는
+              // 영상을 받고 패롯은 안 깎인 채로 흔적이 안 남는다.
+              try {
+                await userProvider.addCoins(-_pendingCost);
+              } catch (e) {
+                AppLogger.e('[VideoProvider] 패롯 차감 실패 cost=$_pendingCost',
+                    error: e);
+              }
               showToast('영상 생성 완료! ($_pendingCost패롯 소모)');
             }
             _pendingCost = 0;
