@@ -348,7 +348,9 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           subtitle: '앱 서버에 저장된 파일과 정보',
           usageText:
               '${_formatBytes(serverUsed)} / ${_formatBytes(serverTotal)}',
-          color: Theme.of(context).colorScheme.secondary,
+          // secondary(primarySoft)는 라이트의 흰 카드 위에서 아이콘이 거의
+          // 안 보였다. 막대와 아이콘 모두 브랜드 파랑으로 맞춘다.
+          color: Theme.of(context).colorScheme.primary,
           progress: serverProgress,
         ),
         const SizedBox(height: AppSpacing.sm),
