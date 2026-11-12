@@ -32,7 +32,7 @@ class IapProvider extends ChangeNotifier {
       final info = await Purchases.getCustomerInfo();
       _applyCustomerInfo(info);
     } catch (e) {
-      AppLogger.e('[IAP] init error: $e');
+      AppLogger.e('[IAP] 초기 구매 정보 조회 실패', error: e);
     }
 
     Purchases.addCustomerInfoUpdateListener(_applyCustomerInfo);
@@ -55,7 +55,7 @@ class IapProvider extends ChangeNotifier {
       final info = await Purchases.restorePurchases();
       _applyCustomerInfo(info);
     } catch (e) {
-      AppLogger.e('[IAP] restorePurchases error: $e');
+      AppLogger.e('[IAP] 구매 복원 실패', error: e);
     }
   }
 

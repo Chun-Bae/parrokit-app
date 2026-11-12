@@ -327,7 +327,7 @@ class UserProvider extends ChangeNotifier {
       );
     } catch (e) {
       // 롤백 (실패 시 데이터베이스에서 유저 정보를 다시 가져와 복구)
-      AppLogger.e('[UserProvider] Exchange failed: $e');
+      AppLogger.e('[UserProvider] 환전 실패', error: e);
       await reloadFirebaseUser();
       rethrow;
     } finally {

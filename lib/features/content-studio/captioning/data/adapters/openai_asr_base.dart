@@ -81,7 +81,7 @@ abstract class OpenAIAsrBase implements ASRPort {
       AppLogger.w('FFmpeg 플러그인 없음. 원본 사용. $e');
       return normalized;
     } catch (e) {
-      AppLogger.e('FFmpeg 예외. 원본 사용. $e');
+      AppLogger.e('FFmpeg 예외. 원본 사용.', error: e);
       return normalized;
     }
   }
