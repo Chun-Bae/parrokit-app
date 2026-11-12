@@ -19,9 +19,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/storag
 
 import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
-import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
-import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
@@ -133,16 +131,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               isSelectionMode: isClipSelectionMode,
             ),
             if (!isClipSelectionMode) ...[
-              _buildOverview(
-                context,
-                // 클립 목록을 연 상태일 때만 그 목록의 개수다. 그룹·콜렉션을
-                // 고르는 단계에서는 clipItems가 비어 있어서, 클립이 있어도
-                // '클립 0개를 보관 중이에요'라고 말했다.
-                clipProvider.selectedCollectionId == null
-                    ? null
-                    : clipProvider.clipItems.length,
-              ),
-              const SizedBox(height: 14),
+              // 탭 위 설명 배너는 뺐다. 칸만 차지했다(사용자 요청).
+              const SizedBox(height: 4),
               _buildCollectionTabs(context),
               const SizedBox(height: 8),
             ],
@@ -230,84 +220,6 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildOverview(BuildContext context, int? clipCount) {
-    final tints = context.collectionTokens;
-    final pages = [
-      (
-        icon: Icons.format_quote_rounded,
-        title: '모아둔 문장을 바로 연습해요',
-        detail: '공식 문장팩과 사람들이 공유한 표현을 둘러보세요',
-        color: tints.mint,
-        ink: tints.mintInk,
-      ),
-      (
-        icon: Icons.video_library_rounded,
-        title: clipCount == null
-            ? '영상 클립을 모아 보관해요'
-            : '클립 $clipCount개를 보관 중이에요',
-        detail: '영상의 장면과 문장을 함께 기억할 수 있어요',
-        color: tints.sky,
-        ink: tints.skyInk,
-      ),
-      (
-        icon: Icons.spellcheck_rounded,
-        title: '문장에서 만난 단어를 모아요',
-        detail: '따로 외우기보다 실제 표현과 함께 복습해요',
-        color: tints.cream,
-        ink: tints.creamInk,
-      ),
-    ];
-    final page = pages[_tabController.index];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        child: Container(
-          key: ValueKey(_tabController.index),
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 17, 16, 17),
-          decoration: BoxDecoration(
-            color: page.color,
-            borderRadius: BorderRadius.circular(AppRadius.xxl),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: tints.tintSurface.withValues(alpha: 0.82),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(page.icon, color: page.ink),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      page.title,
-                      style: context.texts.titleMedium
-                          .copyWith(letterSpacing: -0.3, color: page.ink),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      page.detail,
-                      style: context.texts.bodySmall
-                          .copyWith(color: tints.tintLabel, height: 1.35),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
