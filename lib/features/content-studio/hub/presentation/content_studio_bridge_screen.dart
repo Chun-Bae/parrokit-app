@@ -18,11 +18,24 @@ class ContentStudioBridgeScreen extends StatelessWidget {
     final border = context.tokens.dividerSubtle;
     final secondaryText = context.tokens.textSecondary;
 
+    // 뒤로가기를 다른 화면처럼 앱바에 둔다. 전에는 본문 안에 IconButton을
+    // 넣어서, 다른 화면보다 오른쪽·아래로 16pt쯤 들어간 자리에 있었다.
     return Scaffold(
       backgroundColor: surface,
+      appBar: AppBar(
+        backgroundColor: surface,
+        leading: IconButton(
+          tooltip: '뒤로',
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(AppRoutes.dashboardPath),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        ),
+      ),
       body: SafeArea(
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: Column(
             children: [
               Expanded(
@@ -30,15 +43,6 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        onPressed: () => context.canPop()
-                            ? context.pop()
-                            : context.go(AppRoutes.dashboardPath),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      const SizedBox(height: 28),
                       Container(
                         width: 56,
                         height: 56,
