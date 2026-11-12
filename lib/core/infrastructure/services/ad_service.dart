@@ -6,21 +6,40 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 /// 환경에 따라 광고 ID를 반환한다.
+///
+/// .env에 키가 없으면 빈 문자열이 되고, load()가 조용히 돌아간다. 그러면
+/// 광고가 아예 안 나오는데 오류도 안 뜬다. 배포 빌드에서 키 하나가 빠지면
+/// 광고 수익이 0인 채로 아무도 모른다. 그래서 비면 기록을 남긴다.
 String _resolveAdUnitId({
   required String androidProd,
   required String iosProd,
   required String androidTest,
   required String iosTest,
 }) {
+  final String key;
   if (kReleaseMode) {
-    if (Platform.isAndroid) return dotenv.env[androidProd] ?? '';
-    if (Platform.isIOS) return dotenv.env[iosProd] ?? '';
-    return '';
+    if (Platform.isAndroid) {
+      key = androidProd;
+    } else if (Platform.isIOS) {
+      key = iosProd;
+    } else {
+      return '';
+    }
   } else {
-    if (Platform.isAndroid) return dotenv.env[androidTest] ?? '';
-    if (Platform.isIOS) return dotenv.env[iosTest] ?? '';
-    return '';
+    if (Platform.isAndroid) {
+      key = androidTest;
+    } else if (Platform.isIOS) {
+      key = iosTest;
+    } else {
+      return '';
+    }
   }
+
+  final id = dotenv.env[key] ?? '';
+  if (id.isEmpty) {
+    AppLogger.e('[Ads] 광고 ID가 비어 있다. .env에 $key 가 없다.');
+  }
+  return id;
 }
 
 /// 광고 서비스
