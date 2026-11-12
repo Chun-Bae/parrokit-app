@@ -44,13 +44,13 @@
 - [ ] 최근 (recent_screen)
 - [x] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
 - [x] 클립 라이브러리 (library_screen, clip_discover_screen)
-- [ ] 클립 플레이어·쇼츠 (clip_player_screen, shorts_screen)
+- [x] 클립 플레이어·쇼츠 (clip_player_screen, shorts_screen)
 - [ ] 커뮤니티 셸 + 게시판 목록 (community_shell_screen, board_screen)
 - [ ] 게시글 보기·쓰기 (board_view_screen, board_write_screen)
 - [ ] 질문 목록·보기·쓰기
 - [ ] 투표 목록·보기·쓰기
 - [ ] 활동·알림·메뉴·차단 (activity, notification, menu, blocked_users)
-- [ ] 더보기 (more_screen)
+- [x] 더보기 (more_screen)
 - [ ] 프로필 편집·환전·저장공간·웹문서
 - [ ] 콘텐츠 제작 허브·브리지
 - [ ] 자막 만들기 (captioning_screen)
@@ -137,3 +137,19 @@
 - 메모리의 FAB 결정("보관함은 Positioned로 괜찮다")이 틀렸던 것을 메모리에서 고쳤다
 - 최근 화면(recent): 실제 시청 기록이 없어 빈 상태만 볼 수 있다. 남은 화면 돌 때 같이 본다
 - 다음: 클립 플레이어·쇼츠 → 커뮤니티 셸·게시판 → 더보기 → 콘텐츠 제작
+
+### 반복 4 (2026-11-12)
+- `f39b2e8c` 플레이어 전체 화면 버튼이 자막 끝 글자에 겹치던 것 → 영상 오른쪽 위로
+- `254820d5` 쇼츠 빈 화면: Drive 클립은 쇼츠에 안 나온다는 것을 말함. 넣을지는 안건 2-9
+- `fc52fa44` 백업 아이콘(방패·편지 → 되돌리기·저장)
+- `7c8956b8` 잔액 쉼표, 패롯 설명이 '질문 채택으로 획득'이라던 오류
+- `3cd92101` '코인 환전소' → '환전소', 환전소 잔액 쉼표
+
+**B 보류: 볼 수 없어 커밋 안 함 — 남은 '코인' 문구.** 광고를 끝까지 보거나 실제 결제를 해야
+나오는 토스트·카드라 시뮬레이터로 확인할 수 없다. 패롯으로 바꾸면 된다.
+- `ad_reward_section.dart:91` '코인 $coins개를 받았어요!' (설명은 '패롯 3개'라 앞뒤가 다르다)
+- `payment_section.dart:59,60,171,175` '코인 충전', '보너스 코인', '코인 지급에 실패', '코인이 충전됐어요'
+- `coin_store_section.dart:51,63,77,83` 같은 문구
+- `coin_package_card.dart:93` '총 n코인 (기본 + 보너스)'
+
+다음: 커뮤니티 셸·게시글 보기 → 활동·알림·메뉴·차단 → 프로필 편집·저장공간 → 콘텐츠 제작
