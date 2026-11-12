@@ -11,7 +11,9 @@ const db = admin.firestore();
 const FANOUT_CHUNK_SIZE = 50;
 
 const boardTypeLabelMap: Record<string, string> = {
-  board: "일반",
+  // 앱의 커뮤니티 탭 이름과 맞춘다. 전에는 "일반"이라 알림이 "일반에 새
+  // 댓글이 달렸어요"가 됐는데 게시판에는 그런 카테고리가 없다.
+  board: "게시판",
   question: "질문",
   vote: "투표",
 };
