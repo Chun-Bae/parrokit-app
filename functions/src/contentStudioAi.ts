@@ -1054,6 +1054,14 @@ export const getChatbotUsage = onCall(async (request) => {
 export const generateTts = onCall(
   {secrets: [elevenLabsApiKey, geminiApiKey]},
   async (request) => {
+    // 인증 검사가 없었다. 이 함수는 ElevenLabs와 Gemini 유료 API를 부르는데,
+    // 주소만 알면 로그인하지 않고도 호출할 수 있었다. 패롯 차감은 앱에서만
+    // 하므로 외부에서 직접 부르면 요금은 그대로 나가고 아무것도 차감되지
+    // 않는다. 같은 파일의 generateVideo와 같은 검사를 둔다.
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    }
+
     try {
       return await generateTtsFlow(request.data);
     } catch (error: any) {
@@ -1068,6 +1076,11 @@ export const generateTts = onCall(
 
 // 5. 구글 Cloud TTS 보이스 목록 불러오기 (프론트엔드 동적 렌더링용)
 export const listTtsVoices = onCall(async (request) => {
+  // Google Cloud TTS의 listVoices도 과금 대상 호출이다. 인증을 요구한다.
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+  }
+
   try {
     const client = new textToSpeech.TextToSpeechClient();
     const languageCode = request.data?.languageCode; // 선택적 파라미터
@@ -1082,7 +1095,12 @@ export const listTtsVoices = onCall(async (request) => {
 
 export const listElevenLabsVoices = onCall(
   {secrets: [elevenLabsApiKey]},
-  async () => {
+  async (request) => {
+    // ElevenLabs API 키를 쓰는 호출이다. 인증을 요구한다.
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    }
+
     try {
       const client = new ElevenLabsClient({apiKey: elevenLabsApiKey.value()});
       const response = await client.voices.getAll();
