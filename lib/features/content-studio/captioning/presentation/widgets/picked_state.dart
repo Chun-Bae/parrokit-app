@@ -678,7 +678,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                 Navigator.pop(context);
                 widget.onRemove();
               },
-              style: FilledButton.styleFrom(backgroundColor: cs.error),
+              style: FilledButton.styleFrom(
+                  backgroundColor: cs.error, foregroundColor: cs.onError),
               child: const Text('지우기'),
             ),
           ],

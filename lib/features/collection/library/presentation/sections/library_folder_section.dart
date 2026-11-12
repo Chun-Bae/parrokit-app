@@ -630,7 +630,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             child: const Text('취소'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: cs.error),
+            style: FilledButton.styleFrom(
+                backgroundColor: cs.error, foregroundColor: cs.onError),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('삭제'),
           ),
@@ -793,7 +794,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             child: const Text('취소'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: cs.error),
+            style: FilledButton.styleFrom(
+                backgroundColor: cs.error, foregroundColor: cs.onError),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('삭제'),
           ),

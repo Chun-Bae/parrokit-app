@@ -47,6 +47,7 @@ Future<bool?> showContentStudioExitConfirmSheet(BuildContext context) {
                     child: FilledButton(
                       style: FilledButton.styleFrom(
                         backgroundColor: cs.error,
+                        foregroundColor: cs.onError,
                       ),
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const Text('나가기'),
