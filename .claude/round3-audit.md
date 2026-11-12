@@ -40,7 +40,7 @@
 
 ### B1 화면 (많이 쓰는 순)
 - [x] 홈 대시보드 (character_dashboard_screen, learning_hub_screen)
-- [ ] 학습 무대 (stage_preview_screen, add_sentence_screen)
+- [x] 학습 무대 (stage_preview_screen, add_sentence_screen)
 - [ ] 최근 (recent_screen)
 - [ ] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
 - [ ] 클립 라이브러리 (library_screen, clip_discover_screen)
@@ -60,8 +60,8 @@
 - [ ] auth 네 화면 (코드만, UI 미확인)
 
 ## C. 기능 안건
-- [ ] feature-proposals.md 만들기
-- [ ] 비활성 버튼 11개 각각의 안
+- [x] feature-proposals.md 만들기
+- [x] 비활성 버튼 11개 각각의 안
 - [ ] 마무리 정리 (상위 5개)
 
 ## 기록
@@ -119,3 +119,11 @@
 - B0 남은 토대: AppCard, AppSheet, AppSectionHeader, 영상 위 UI 토큰
 - C: feature-proposals.md 아직 안 만듦
 - 시뮬레이터 외형은 다크, 앱 테마 설정은 "시스템"(원래 값). 끝나면 라이트로 돌린다
+
+### 반복 2 (2026-11-12)
+- `9ebb3dd8` 다크 말하기 설정 '적용' 버튼 대비 2.05 → 9.3
+- `c5c4e701` 문장 추가 횟수 '0 / 3' → '오늘 0/3회 사용'
+- 2차 미확인이던 말하기 설정 시트의 비활성 `+`를 라이트·다크로 확인했다
+- 말하기 설정 시트를 연 채로 외형을 바꾸면 시트만 이전 외형으로 남는다. 다시 열면 맞다. 드물어서 기록만
+- C: `feature-proposals.md` 작성. 버튼 11개 안 + 새 기능 8개 + 상위 5
+- 최근 화면은 클립이 없어 빈 상태만 볼 수 있다. 다음 반복에서 빈 상태만 확인
