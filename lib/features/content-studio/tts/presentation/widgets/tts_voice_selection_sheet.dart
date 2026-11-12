@@ -147,6 +147,13 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     setState(() => _previewLoadingVoiceId = voiceId);
     final path = await widget.provider.previewGoogleVoice(voiceId);
     if (!mounted) return;
+
+    // 재생 버튼은 "그 보이스가 로딩 중일 때"만 꺼진다. 그래서 A를 누른 뒤
+    // 바로 B를 누를 수 있고, 두 생성이 겹친다. A가 늦게 끝나면 B가 재생 중
+    // 표시된 채로 A 음성이 나온다. 기다리는 동안 다른 보이스를 눌렀으면
+    // 이 결과는 버린다.
+    if (_previewLoadingVoiceId != voiceId) return;
+
     setState(() => _previewLoadingVoiceId = null);
 
     if (path == null) {
