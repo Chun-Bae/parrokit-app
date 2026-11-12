@@ -60,8 +60,14 @@ class ActivityProvider extends ChangeNotifier {
     await _loadPage();
   }
 
+  /// 조회 요청 번호. 탭이나 필터를 바꾸면 올라간다.
+  /// 앞선 조회가 늦게 끝나도 새 목록에 섞이지 않게 하려는 것이다.
+  int _loadRequestId = 0;
+
   Future<void> _loadPage({bool reset = false}) async {
     if (_userId == null || _boardType == null || _activityType == null) return;
+
+    final requestId = ++_loadRequestId;
 
     _isLoading = true;
     _isLoadingMore = !reset;
@@ -76,6 +82,12 @@ class ActivityProvider extends ChangeNotifier {
         limit: _pageSize,
         startAfter: _nextCursor,
       );
+
+      // 기다리는 동안 탭이 바뀌었으면 이 결과는 버린다. loadMore가 도는 중에
+      // 사용자가 다른 활동 유형으로 넘어가면, 늦게 끝난 옛 조회가 새 목록
+      // 뒤에 엉뚱한 항목을 붙이고 커서까지 덮어쓴다.
+      if (requestId != _loadRequestId) return;
+
       if (reset) {
         _activities = page.items;
       } else {
@@ -84,11 +96,14 @@ class ActivityProvider extends ChangeNotifier {
       _hasMore = page.hasMore;
       _nextCursor = page.nextCursor;
     } catch (e) {
+      if (requestId != _loadRequestId) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      _isLoadingMore = false;
-      notifyListeners();
+      if (requestId == _loadRequestId) {
+        _isLoading = false;
+        _isLoadingMore = false;
+        notifyListeners();
+      }
     }
   }
 }
