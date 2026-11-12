@@ -15,6 +15,8 @@ class GenerateTtsUseCase {
     double? speakingRate,
     double? pitch,
     ElevenLabsVoiceSettings? elevenLabsSettings,
+    bool serverCharge = false,
+    void Function(int chargedParrots)? onCharged,
   }) async {
     TtsValidator.validateText(text);
     return repository.generateTts(
@@ -26,6 +28,8 @@ class GenerateTtsUseCase {
       speakingRate: speakingRate,
       pitch: pitch,
       elevenLabsSettings: elevenLabsSettings,
+      serverCharge: serverCharge,
+      onCharged: onCharged,
     );
   }
 }

@@ -33,8 +33,13 @@ class VideoRemoteDataSource {
         'aspectRatio': ratio,
         'duration': duration,
         'model': model,
+        // 서버는 modelId를 읽는다. 전에는 model만 보내서 무엇을 골라도
+        // 서버 기본값(Lite)으로 만들어졌다.
+        'modelId': model,
         'resolution': resolution,
         'debug': debug,
+        // 패롯은 서버가 깎는다. 실패하면 서버가 돌려준다.
+        'serverCharge': true,
       });
 
       final operationName = result.data['operationName'] as String;

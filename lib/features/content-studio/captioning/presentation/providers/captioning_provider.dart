@@ -209,10 +209,6 @@ class CaptioningProvider extends ChangeNotifier
       return;
     }
 
-    // 1) 코인 사용
-    final cost = _calculateCoinCost(durationMs);
-    final int coinsToUse = userProvider.coins.clamp(0, cost);
-
     try {
       // Step 2: 음성 인식 (STT)
       _setSttState(SttProcessState.transcribing);
@@ -236,11 +232,12 @@ class CaptioningProvider extends ChangeNotifier
         // UI에 세그먼트 채우기
         _fillSegmentsFromDraft(result.segments);
 
-        // 코인 차감 (STT 성공 후에만)
-        if (coinsToUse > 0) {
-          userProvider.addCoins(-coinsToUse);
+        // 패롯은 서버(generateCaptions)가 자막을 만든 뒤 깎았다. 모자라면
+        // 가진 만큼만 깎는다. 잔액은 사용자 문서 구독으로 반영된다.
+        final charged = result.coinCost;
+        if (charged > 0) {
           Future.delayed(const Duration(milliseconds: 400), () {
-            showToast('자막 생성 완료! ($coinsToUse패롯 소모)');
+            showToast('자막 생성 완료! ($charged패롯 소모)');
           });
         } else {
           Future.delayed(const Duration(milliseconds: 400), () {
@@ -304,12 +301,6 @@ class CaptioningProvider extends ChangeNotifier
         ko: seg.ko,
       );
     }
-  }
-
-  int _calculateCoinCost(int durationMs) {
-    final seconds = (durationMs / 1000).ceil();
-    if (seconds <= 0) return 0;
-    return ((seconds + 9) ~/ 10);
   }
 
   // ─────────────────────────────────────────────────────────────────

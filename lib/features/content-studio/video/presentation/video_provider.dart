@@ -321,15 +321,9 @@ class VideoProvider extends ChangeNotifier {
             AppLogger.i(
                 '[VideoProvider][Polling] success videoUri=${result['videoUri']}');
             _generatedFilePath = result['videoUri'];
+            // 패롯은 생성 요청 때 서버(generateVideo)가 이미 깎았다.
+            // 생성이 실패하면 서버가 상태 조회에서 돌려준다.
             if (_pendingCost > 0) {
-              // 차감을 기다리지 않고 넘어가고 있었다. 실패하면 사용자는
-              // 영상을 받고 패롯은 안 깎인 채로 흔적이 안 남는다.
-              try {
-                await userProvider.addCoins(-_pendingCost);
-              } catch (e) {
-                AppLogger.e('[VideoProvider] 패롯 차감 실패 cost=$_pendingCost',
-                    error: e);
-              }
               showToast('영상 생성 완료! ($_pendingCost패롯 소모)');
             }
             _pendingCost = 0;

@@ -98,10 +98,13 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
         'storagePath': storagePath,
         'engine': 'whisper',
         'durationMs': durationMs,
+        // 패롯은 서버가 자막을 만든 뒤 깎는다. 모자라면 가진 만큼만 깎는다.
+        'serverCharge': true,
+        'requestId': requestId,
       });
 
       final segments = _parseSegments(result.data['segments']);
-      final coinCost = _calculateCoinCost(durationMs);
+      final coinCost = (result.data['chargedParrots'] as num?)?.toInt() ?? 0;
       return DraftResult(segments: segments, coinCost: coinCost);
     } on FirebaseFunctionsException catch (e) {
       throw RemoteCaptionDraftException(_messageForFunctionsError(e));
@@ -170,11 +173,5 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
         ko: (item['ko'] ?? '').toString(),
       );
     }).toList(growable: false);
-  }
-
-  int _calculateCoinCost(int durationMs) {
-    final seconds = (durationMs / 1000).ceil();
-    if (seconds <= 0) return 0;
-    return ((seconds + 9) ~/ 10);
   }
 }

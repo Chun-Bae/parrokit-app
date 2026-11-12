@@ -213,7 +213,10 @@ class TtsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      var charged = 0;
       final path = await _useCase.call(
+        serverCharge: true,
+        onCharged: (value) => charged = value,
         text: _text,
         language: _language,
         provider: _providerType,
@@ -234,17 +237,10 @@ class TtsProvider extends ChangeNotifier {
           '[TTS][Provider] generateTts success path_length=${path.length}');
       _generatedFilePath = path;
 
-      if (cost > 0) {
-        // 차감을 기다리지 않고 넘어가고 있었다. 실패하면 사용자는 음성을
-        // 받고 패롯은 안 깎인 채로 흔적도 안 남는다. 결과는 이미 손에
-        // 들어갔으니 되돌리지는 않되, 기록은 남긴다.
-        try {
-          await userProvider.addCoins(-cost);
-        } catch (e) {
-          AppLogger.e('[TTS][Provider] 패롯 차감 실패 cost=$cost', error: e);
-        }
-        showToast('음성 생성 완료! ($cost패롯 소모)');
-      }
+      // 패롯은 서버(generateTts)가 만들기 전에 깎고, 실패하면 돌려준다.
+      // 잔액은 사용자 문서 구독으로 화면에 반영된다. 기기에 캐시된 음성을
+      // 다시 꺼낸 경우는 서버를 부르지 않아 깎이지 않는다.
+      showToast(charged > 0 ? '음성 생성 완료! ($charged패롯 소모)' : '음성 생성 완료!');
     } catch (e) {
       AppLogger.e(
           '[TTS][Provider] generateTts failed provider=${_providerType.name}',

@@ -16,6 +16,8 @@ class TtsGenerationRepositoryImpl implements TtsGenerationRepository {
     double? speakingRate,
     double? pitch,
     ElevenLabsVoiceSettings? elevenLabsSettings,
+    bool serverCharge = false,
+    void Function(int chargedParrots)? onCharged,
   }) async {
     return remoteDataSource.generateTts(
       text: text, 
@@ -26,6 +28,8 @@ class TtsGenerationRepositoryImpl implements TtsGenerationRepository {
       speakingRate: speakingRate,
       pitch: pitch,
       elevenLabsSettings: elevenLabsSettings,
+      serverCharge: serverCharge,
+      onCharged: onCharged,
     );
   }
 

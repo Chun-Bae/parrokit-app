@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -18,6 +19,8 @@ class TtsRemoteDataSource {
     double? speakingRate,
     double? pitch,
     ElevenLabsVoiceSettings? elevenLabsSettings,
+    bool serverCharge = false,
+    void Function(int chargedParrots)? onCharged,
   }) async {
     // 1. 캐시키 생성 (파라미터 조합)
     final cacheKeyData =
@@ -53,7 +56,10 @@ class TtsRemoteDataSource {
         if (speakingRate != null) 'speakingRate': speakingRate,
         if (pitch != null) 'pitch': pitch,
         if (elevenLabsSettings != null) 'elevenLabsSettings': elevenLabsSettings.toJson(),
+        if (serverCharge) 'serverCharge': true,
+        if (serverCharge) 'requestId': const Uuid().v4(),
       });
+      onCharged?.call((response.data['chargedParrots'] as num?)?.toInt() ?? 0);
       AppLogger.i('[TTS][Repository] generateTts success');
 
       // 4. 결과 저장
