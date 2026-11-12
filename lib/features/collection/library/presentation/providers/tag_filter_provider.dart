@@ -133,10 +133,18 @@ class TagFilterProvider extends ChangeNotifier {
   /// 현재 필터 설정([activeTagNames])에 맞춰 데이터를 즉시 로드하고 상태를 갱신합니다.
   ///
   /// 캐싱된 데이터가 있다면 활용하고, 없다면 새로 로드([fetchItemsForCurrentFilter])합니다.
+  /// applyNow 요청 번호. 들어오는 쪽이 셋이라(디바운스, showAll, startWatching)
+  /// 겹칠 수 있다. 느린 조회가 나중에 끝나서 새 필터 결과를 덮지 않게 한다.
+  int _applyRequestId = 0;
+
   Future<void> applyNow() async {
+    final requestId = ++_applyRequestId;
     _setLoading(true);
     try {
       final next = await fetchItemsForCurrentFilter();
+
+      // 내가 기다리는 동안 더 새 요청이 들어왔으면 이 결과는 버린다.
+      if (requestId != _applyRequestId) return;
 
       // ✅ 결과가 이전과 동일하면 알림/교체 생략
       if (_sameIds(_items, next)) return;
@@ -146,7 +154,7 @@ class TagFilterProvider extends ChangeNotifier {
 
       notifyListeners();
     } finally {
-      _setLoading(false);
+      if (requestId == _applyRequestId) _setLoading(false);
     }
   }
 
