@@ -10,6 +10,7 @@
 // Core Layer > Router
 // ============================================================================
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -57,14 +58,21 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// GoRouter 빌더.
 ///
-/// [seenIntro]: 인트로를 봤는지 여부에 따라 초기 경로 결정.
+/// 주의 — [seenIntro]는 **지금 쓰이지 않는다.** 주석에는 초기 경로를 정한다고
+/// 적혀 있지만 `initialLocation`은 늘 대시보드이고, `_handleRedirect`도
+/// 인트로로 보내지 않는다. `/intro` 경로 상수는 있는데 그 경로의 `GoRoute`가
+/// 없어서 아무도 갈 수 없다. 즉 인트로 화면이 통째로 빠져 있고,
+/// `IntroPrefs.hasSeen()` 결과는 bootstrap에서 읽어 버려지고 있다.
+/// 인자를 지우면 인트로를 다시 붙일 자리가 사라지므로 그대로 두고 적어만 둔다.
 GoRouter buildAppRouter({
   required bool seenIntro,
   required UserProvider userProvider,
 }) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    debugLogDiagnostics: true,
+    // 배포 빌드에서는 끈다. 켜 두면 이동할 때마다 경로를 기기 로그에 찍는데,
+    // 글 id·클립 id 같은 값이 그대로 섞여 나간다.
+    debugLogDiagnostics: !kReleaseMode,
     initialLocation: AppRoutes.dashboardPath,
     redirect: _handleRedirect,
     refreshListenable: userProvider.routerRefreshNotifier,
