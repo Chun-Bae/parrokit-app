@@ -29,12 +29,20 @@ class VideoProvider extends ChangeNotifier {
     CheckVideoOperationUseCase? checkOperationUseCase,
     ListRecentVideoGenerationsUseCase? listRecentUseCase,
   }) {
-    final repository = VideoGenerationRepositoryImpl(VideoRemoteDataSource());
-    _generateUseCase = generateUseCase ?? GenerateVideoUseCase(repository);
-    _checkOperationUseCase =
-        checkOperationUseCase ?? CheckVideoOperationUseCase(repository);
-    _listRecentUseCase =
-        listRecentUseCase ?? ListRecentVideoGenerationsUseCase(repository);
+    // 저장소는 정말 필요할 때만 만든다. 전에는 use case 셋을 다 넘겨도
+    // 여기서 VideoRemoteDataSource를 무조건 만들었고, 그게
+    // FirebaseFunctions.instance를 즉시 읽어서 테스트에서 이 Provider를
+    // 만들 수 없었다.
+    VideoGenerationRepositoryImpl? repository;
+    VideoGenerationRepositoryImpl repositoryOrCreate() =>
+        repository ??= VideoGenerationRepositoryImpl(VideoRemoteDataSource());
+
+    _generateUseCase =
+        generateUseCase ?? GenerateVideoUseCase(repositoryOrCreate());
+    _checkOperationUseCase = checkOperationUseCase ??
+        CheckVideoOperationUseCase(repositoryOrCreate());
+    _listRecentUseCase = listRecentUseCase ??
+        ListRecentVideoGenerationsUseCase(repositoryOrCreate());
   }
 
   String _dialogue = '';

@@ -5,7 +5,11 @@ import 'package:parrokit/core/shared/utils/app_logger.dart';
 import '../../domain/models/video_generation_models.dart';
 
 class VideoRemoteDataSource {
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  /// 안 주면 FirebaseFunctions.instance를 쓴다.
+  VideoRemoteDataSource({FirebaseFunctions? functions})
+      : _functions = functions ?? FirebaseFunctions.instance;
+
+  final FirebaseFunctions _functions;
 
   Future<String> generateVideo({
     required String dialogue,
