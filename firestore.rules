@@ -2,6 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    // 이 쓰기가 바꾸는 필드가 주어진 하나뿐인지.
+    function changesOnly(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+    // 수가 1만큼 오르거나 내렸는지. 추천·스크랩처럼 켜고 끄는 값에 쓴다.
+    function steppedBy(field, allowDecrease) {
+      let before = resource.data.get(field, 0);
+      let after = request.resource.data.get(field, 0);
+      return after - before == 1 || (allowDecrease && before - after == 1);
+    }
+
     // 하루 공유 한도(10개). 날짜는 한국 시간 기준이고 앱의 share_quota 문서 id와 같은 형식이다.
     function shareDayKey() {
       let t = request.time + duration.value(9, 'h');
@@ -21,27 +38,34 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create, delete: if request.auth != null && request.auth.uid == userId;
+      // 두 번째 조건은 질문 답변 채택(acceptAnswer)이 답변자의 크래커를
+      // 올려 주기 위한 것이다. 전에는 값에 아무 제한이 없어서, 로그인한
+      // 사람이 남의 크래커를 0으로 만들 수도 있었다. 올리는 쪽만 둔다.
+      //
+      // 자기 문서는 여전히 통째로 쓸 수 있으므로, 본인이 자기 크래커와
+      // 패롯을 임의로 올리는 것은 이 규칙으로 막지 못한다. 그건 지급을
+      // 서버로 옮겨야 하는 문제다.
       allow update: if request.auth != null && (
         request.auth.uid == userId ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['crackers'])
+        (changesOnly(['crackers'])
+          && request.resource.data.crackers > resource.data.crackers)
       );
       
-      // 유저별 작성/스크랩 권한
+      // 내가 누른 추천·스크랩·댓글 좋아요·투표 기록.
+      // 전에는 네 컬렉션 모두 read, write가 if true였다. 로그인하지 않아도
+      // 남의 기록을 읽고 지울 수 있었다. 앱은 언제나 자기 uid 아래만
+      // 읽고 쓴다(toggleLike, toggleScrap, toggleCommentLike, votePost).
       match /likes/{postId} {
-        allow read: if true;
-        allow write: if true;
+        allow read, write: if isOwner(userId);
       }
       match /scraps/{postId} {
-        allow read: if true;
-        allow write: if true;
+        allow read, write: if isOwner(userId);
       }
-
-      // 방금 새로 추가된 댓글 좋아요 권한
       match /comment_likes/{commentId} {
-        allow read, write: if true;
+        allow read, write: if isOwner(userId);
       }
       match /voted_posts/{postId} {
-        allow read, write: if true;
+        allow read, write: if isOwner(userId);
       }
 
       // 둘러보기 문장에 내가 누른 좋아요
@@ -148,46 +172,111 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
-    // 디바이스 토큰 관리
+    // 디바이스 토큰 관리.
+    //
+    // 앱에서 이 컬렉션을 쓰는 코드는 없다. FCM 토큰은 users 문서의
+    // fcmTokens 배열에 들어간다. 전에는 "date가 다르면" 통과하는 길이
+    // 있어서, 로그인한 누구나 남의 문서를 덮어쓸 수 있었다. 쓰는 곳이
+    // 없으니 주인만으로 좁힌다.
     match /devices/{deviceId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && (
-          resource == null
-          || resource.data.date != request.resource.data.date
-          || resource.data.userId == request.auth.uid
-        );
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
     }
 
-    // 게시글 및 댓글 권한
+    // 게시글과 댓글.
+    //
+    // 전에는 posts와 그 하위가 전부 read, write가 if true였다. 로그인하지
+    // 않은 누구나 아무 글이나 고치고 지울 수 있었다. 아래는 앱이 실제로
+    // 하는 쓰기만 허용한다.
+    //
+    // - 글: 작성자가 만들고 고치고 지운다.
+    // - 수: 조회수·추천수·스크랩수·댓글수는 남이 올린다. 한 번에 한 필드,
+    //   한 칸씩만 움직인다.
+    // - 투표: voteOptions는 같은 요청에서 내 voters 문서가 새로 생길 때만
+    //   바꿀 수 있다. voters 문서는 한 사람당 하나뿐이고 고칠 수 없으므로,
+    //   한 사람이 같은 글에 두 번 투표할 수 없다.
     match /posts/{postId} {
-      allow read: if true; 
-      allow write: if true; 
-      
-      match /comments/{commentId} {
-        allow read: if true;
-        allow write: if true;
+      function isAuthor() {
+        return isSignedIn() && resource.data.authorId == request.auth.uid;
       }
 
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isAuthor();
+      allow update: if isAuthor()
+        || (isSignedIn() && changesOnly(['viewCount'])
+            && steppedBy('viewCount', false))
+        || (isSignedIn() && changesOnly(['likeCount'])
+            && steppedBy('likeCount', true))
+        || (isSignedIn() && changesOnly(['scrapCount'])
+            && steppedBy('scrapCount', true))
+        || (isSignedIn() && changesOnly(['commentCount'])
+            && steppedBy('commentCount', true))
+        || (isSignedIn() && changesOnly(['voteOptions'])
+            && !exists(/databases/$(database)/documents/posts/$(postId)/voters/$(request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/posts/$(postId)/voters/$(request.auth.uid)));
+
+      match /comments/{commentId} {
+        function isCommentAuthor() {
+          return isSignedIn() && resource.data.authorId == request.auth.uid;
+        }
+        function isPostAuthor() {
+          return isSignedIn()
+            && get(/databases/$(database)/documents/posts/$(postId)).data.authorId
+               == request.auth.uid;
+        }
+
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid;
+        // 앱은 댓글을 지우지 않고 status를 'deleted'로 바꾼다.
+        allow delete: if false;
+        allow update: if (isCommentAuthor()
+              && changesOnly(['status', 'content', 'updatedAt']))
+          // 답변 채택은 질문을 쓴 사람이 남의 댓글에 표시한다.
+          || (isPostAuthor() && changesOnly(['isAccepted', 'updatedAt']))
+          || (isSignedIn() && changesOnly(['likeCount'])
+              && steppedBy('likeCount', true));
+      }
+
+      // 투표한 사람. 문서 id가 투표자의 uid다.
       match /voters/{voterId} {
-        allow read: if true;
-        allow write: if true;
+        allow read: if isSignedIn();
+        allow create: if isOwner(voterId);
+        // 한 번 투표하면 바꾸거나 지울 수 없다.
+        allow update, delete: if false;
       }
     }
 
     // collectionGroup 쿼리 허용 (내가 쓴 댓글 활동 조회용)
     match /{path=**}/comments/{commentId} {
-      allow read: if true;
+      allow read: if isSignedIn();
     }
     // collectionGroup 쿼리 허용 (투표 참여 내역 조회용)
     match /{path=**}/voters/{voterId} {
-      allow read: if true;
+      allow read: if isSignedIn();
     }
 
-    // 전역 닉네임 유일성 체크 (기존 추가본)
+    // 전역 닉네임 선점. 문서 내용은 {uid, createdAt}이다.
+    //
+    // 읽기는 열어 둔다. 이메일 회원가입 화면은 계정을 만들기 전에 닉네임
+    // 중복을 확인하므로, 그때는 로그인 상태가 아니다.
+    //
+    // 쓰기는 전에 "로그인한 사람"이면 통과였다. 그래서 남이 쓰는 닉네임
+    // 문서를 덮어쓰거나 지워서 가져갈 수 있었다. 앱의 트랜잭션은 주인을
+    // 확인하지만, 규칙으로도 막는다.
     match /nicknames/{nickname} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
   }
 }
