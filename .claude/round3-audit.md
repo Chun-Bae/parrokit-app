@@ -39,7 +39,7 @@
 - [ ] 영상 위 UI 토큰 (onVideo 등)
 
 ### B1 화면 (많이 쓰는 순)
-- [~] 홈 대시보드 (character_dashboard_screen, learning_hub_screen) — 1차 돌았다. learning_hub 미확인
+- [x] 홈 대시보드 (character_dashboard_screen, learning_hub_screen)
 - [ ] 학습 무대 (stage_preview_screen, add_sentence_screen)
 - [ ] 최근 (recent_screen)
 - [ ] 보관함 셸 + 문장·단어 (collection_shell_screen, sentence/word_collection_preview)
@@ -113,3 +113,9 @@
   하나로 합칠지는 사용자가 정할 일이라 바꾸지 않았다. 최종 요약의 "정할 것"에 넣는다
 - 맨 위로 버튼이 스크롤 위치에 따라 '전체 보기' 위에 겹친다. 메모리의 확인된 결정
   ("떠 있는 버튼 아래로 내용이 지나가는 건 정상")에 따라 그대로 둔다
+
+### 다음 반복이 이어서 할 것
+- B1 다음 화면: 학습 무대(stage_preview_screen, add_sentence_screen) → 최근 → 보관함…
+- B0 남은 토대: AppCard, AppSheet, AppSectionHeader, 영상 위 UI 토큰
+- C: feature-proposals.md 아직 안 만듦
+- 시뮬레이터 외형은 다크, 앱 테마 설정은 "시스템"(원래 값). 끝나면 라이트로 돌린다
