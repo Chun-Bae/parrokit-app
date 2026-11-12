@@ -20,14 +20,14 @@ Future<bool?> showContentStudioExitConfirmSheet(BuildContext context) {
               ),
               const SizedBox(height: 16),
               Text(
-                '콘텐츠 스튜디오를 종료하시겠습니까?',
+                '콘텐츠 제작에서 나갈까요?',
                 style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                '지금 나가면 현재 탭에서 하던 작업은 이어서 볼 수 없습니다.',
+                '지금 나가면 이 탭에서 하던 작업은 이어서 볼 수 없어요.',
                 style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                       color: cs.onSurface.withValues(alpha: 0.7),
                     ),
