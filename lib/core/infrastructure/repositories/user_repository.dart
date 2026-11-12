@@ -665,8 +665,10 @@ class UserRepository {
       email: fbUser.email ?? serverUser?.email ?? existingLocal?.email ?? '',
       photoUrl:
           fbUser.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 20,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 1000,
+      // 다른 로그인 경로와 같이 0에서 시작한다. 전에는 Apple만 20·1000이라,
+      // 서버 문서는 0인데 첫 화면에 없는 패롯·크래커가 보였다.
+      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
+      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
       unreadNotificationCount: unreadCount,
       blockedUserIds:
           serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
