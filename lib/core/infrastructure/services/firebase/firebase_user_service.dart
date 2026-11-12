@@ -111,31 +111,45 @@ class FirebaseUserService {
     // 닉네임 관리를 위해 기존 메서드 업그레이드
     if (newNickname == null || newNickname.isEmpty) return;
     
-    // Batch 를 이용해 유저 문서와 닉네임 레지스트리를 동시 업데이트
-    final batch = _firestore.batch();
-    
-    // 1. 유저 문서 업데이트 (lastNicknameChangedAt 기록)
     final userRef = _firestore.collection('users').doc(uid);
-    batch.update(userRef, {
-      'displayName': newNickname,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'lastNicknameChangedAt': FieldValue.serverTimestamp(),
-    });
-    
-    // 2. 새 닉네임 선점 (nicknames 컬렉션)
     final newNickRef = _firestore.collection('nicknames').doc(newNickname);
-    batch.set(newNickRef, {
-      'uid': uid,
-      'createdAt': FieldValue.serverTimestamp(),
+
+    // 트랜잭션으로 묶는다. 전에는 WriteBatch였는데, 배치는 읽지 않고 쓰기만
+    // 하므로 "이미 남이 쓰는 닉네임인지"를 볼 수 없었다. 화면이 미리
+    // isNicknameAvailable로 확인하긴 하지만, 그 사이에 다른 사람이 같은
+    // 닉네임을 선점하면 batch.set이 그대로 덮어썼다. nicknames 컬렉션은
+    // 중복을 막으려고 두는 것인데 그 목적이 무너진다.
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(newNickRef);
+      if (existing.exists) {
+        final ownerUid = existing.data()?['uid'] as String?;
+        // 내 닉네임을 그대로 다시 저장하는 건 통과시킨다.
+        if (ownerUid != null && ownerUid != uid) {
+          throw Exception('이미 사용 중인 닉네임이에요.');
+        }
+      }
+
+      // 1. 유저 문서 업데이트 (lastNicknameChangedAt 기록)
+      transaction.update(userRef, {
+        'displayName': newNickname,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastNicknameChangedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. 새 닉네임 선점 (nicknames 컬렉션)
+      transaction.set(newNickRef, {
+        'uid': uid,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3. 기존 닉네임 해제 (nicknames 컬렉션)
+      if (oldNickname != null &&
+          oldNickname.isNotEmpty &&
+          oldNickname != newNickname) {
+        transaction
+            .delete(_firestore.collection('nicknames').doc(oldNickname));
+      }
     });
-    
-    // 3. 기존 닉네임 해제 (nicknames 컬렉션)
-    if (oldNickname != null && oldNickname.isNotEmpty) {
-      final oldNickRef = _firestore.collection('nicknames').doc(oldNickname);
-      batch.delete(oldNickRef);
-    }
-    
-    await batch.commit();
   }
 
   Future<void> blockUser({
