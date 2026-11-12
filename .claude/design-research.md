@@ -45,3 +45,18 @@
 |---|---|---|---|
 | 자막 한 줄을 문맥과 함께 저장 | 나중에 장면과 같이 떠올린다 | [Language Reactor 내보내기](https://languagereactor.com/help/export), [리뷰](https://www.mezzoguild.com/language-reactor-review/) | 플레이어 자막 → 내 문장 저장(이미 있음), 문장 상세의 "이 문장이 나오는 클립" |
 | 단어 단위가 아니라 구절 단위 저장 요청이 많다 | 실제로는 표현 단위로 기억한다 | [LingQ 포럼](https://forum.lingq.com/t/the-best-way-to-save-and-review-phrases-in-lingq-%F0%9F%9A%80/1190466) | 단어 탭 설계 때 참고 |
+
+## 7. 영상 플레이어 조작 (반복 8)
+
+| 패턴 | 왜 도움이 되나 | 출처 | 우리 앱에 쓸 곳 |
+|---|---|---|---|
+| 한 줄 반복과 느리게를 손 닿는 곳에 | 학습자가 가장 자주 쓰는 두 동작이다. 한 줄을 다시 듣고 늦춰 듣는다 | [Lingopie 도구 소개](https://lingopie.com/blog/a-deep-dive-to-lingopie-tools/), [Lingopie 도움말](https://help.lingopie.com/support/solutions/articles/150000076263-how-to-use-video-features) | 우리 플레이어는 이미 '반복'과 속도 버튼이 아래 줄에 있다 |
+| 자막 한 줄 끝마다 자동 멈춤 | 듣고 바로 따라 말할 틈을 준다(섀도잉) | 같은 출처, [FluentU 리뷰의 Lingopie 설명](https://www.fluentu.com/blog/reviews/lingopie-review/) | 플레이어에 "한 줄씩 멈춤" 토글 후보. 기능 추가라 안건 |
+| 자막 목록을 눌러 그 줄로, 여러 줄을 묶어 반복 | 자막 줄이 곧 탐색 단위가 된다. 끊긴 자막을 한 문장으로 묶으면 더 자연스럽다 | [DualPiP 학습 모드 글](https://www.rabbitpair.com/en/blog/dualpip-learning-mode-ab-loop-guide) | 클립 상세의 구간 목록. 지금은 이전/다음 구간 버튼만 |
+| 글자 붙은 아이콘이 더 잘 맞춘다 | 안드로이드 앱 아이콘 190개 연구에서 글자 있으면 88%, 없으면 60%가 뜻을 맞췄다 | [UserTesting 아이콘 글](https://www.usertesting.com/blog/user-friendly-ui-icons/) | 3번 표(NN/g)와 같은 결론. 이전·재생·다음처럼 누구나 아는 것만 글자 없이 |
+| 큰 앱도 글자를 뺐다가 비판받는다 | 유튜브 안드로이드 플레이어 시험에서 버튼 글자를 빼자 "상황에 따라 다른 버튼은 기호만으로 알기 어렵다"는 지적 | [Gadget Hacks 기사](https://android.gadgethacks.com/news/youtube-android-app-redesign-strips-labels-buries-key-buttons/) | 우리 토글 줄의 글자는 유지한다 |
+
+우리 플레이어 점검(clip_player_screen.dart):
+- 이전·재생·다음은 글자 없는 아이콘인데 누구나 아는 것이라 그대로 둔다
+- 구간/전체재생, 반복, 자막, 백그라운드, 속도는 이미 글자 달린 알약 버튼이다
+- 헷갈리는 점 하나: '구간/전체재생' 버튼은 글자가 지금 상태를 바꿔 보여주고(구간일 때 '구간', 전체일 때 '전체재생'), 켜짐 색은 전체일 때만 든다. 누르면 무엇이 되는지가 아니라 지금 무엇인지를 보여주는데 색과 글자가 따로 논다. 세그먼트 두 칸(구간 | 전체)으로 바꾸면 분명하다. 클립이 Drive 클립뿐이라 지금 시뮬레이터에서 재생 화면을 확인할 수 없어 보류
