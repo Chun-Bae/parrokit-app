@@ -1149,6 +1149,28 @@ UPDATE가 WHERE 없이 모든 클립을 'local'로 덮어쓴 뒤 그 값으로 �
 `naver:<id>` 계정에 로그인할 수 있다는 뜻이다. 네이버 API로 이걸 확인할
 방법이 있는지부터 알아봐야 한다.
 
+> **3차: 조사만 했다. 코드는 그대로다.** 확실한 방법을 공식 문서로 확인하지 못했다.
+>
+> 알아낸 것:
+> - 네이버는 OIDC를 지원한다. `https://nid.naver.com/.well-known/openid-configuration`
+>   (직접 받아 봤다)에 `jwks_uri: https://nid.naver.com/oauth2/jwks`,
+>   `id_token_signing_alg_values_supported: RS256`, `claims_supported`에 `aud`·`azp`가
+>   있다. **id_token을 받아서 서명과 `aud == 우리 client_id`를 확인하는 게 정석적인
+>   해결이다.** 다만 엔드포인트가 지금 앱이 쓰는 `/oauth2.0/` 계열이 아니라 새
+>   `/oauth2/` 계열이고, 쓰고 있는 `flutter_naver_login` 2.1.1이 id_token을 돌려주는지
+>   확인되지 않았다. 앱과 함수를 함께 바꾸고 함께 배포해야 해서 지금은 손대지 않는다.
+> - `https://openapi.naver.com/v1/nid/verify`는 존재한다(토큰 없이 부르면 401).
+>   응답에 발급 앱(client_id)이 들어 있다는 공식 문서는 찾지 못했다. 문서로 확인되지
+>   않은 응답 모양에 인증을 걸 수는 없어서 쓰지 않았다.
+> - 위험의 크기는 `/nid/me`의 `id`가 앱마다 다른 값인지에 달려 있다. discovery 문서의
+>   `subject_types_supported`가 `pairwise`라서 앱마다 다를 가능성이 높다. 그렇다면
+>   다른 앱의 토큰으로는 **기존 사용자 계정이 아니라 새 계정**이 생길 뿐이다. 남의
+>   계정을 빼앗는 일은 없고, 다른 앱 운영자가 자기 사용자 토큰으로 이 앱 계정을 대신
+>   만들 수 있는 정도다. 이것도 문서로 확인한 것은 아니다.
+>
+> 할 일: 네이버 개발자센터 문서에서 (1) `/nid/me`의 id가 앱별인지, (2)
+> `flutter_naver_login`이 id_token을 주는지 확인한 뒤 OIDC로 옮길지 정한다.
+
 ### App Check이 없다
 모든 Cloud Function이 `enforceAppCheck` 없이 열려 있다. 인증을 붙였으니
 아무나는 못 부르지만, 계정 하나만 있으면 앱 밖에서 무제한으로 부를 수 있다.
