@@ -80,4 +80,11 @@ void main() {
     expect(fakeCommunityComments('real-post'), isEmpty);
     expect(firestore.dump(), FakeFirebaseFirestore().dump());
   });
+
+  test('가짜 질문의 답은 그 질문에 맞는다', () {
+    String firstAnswer(String id) =>
+        fakeCommunityComments('$fakePostPrefix$id').first.content;
+    expect(firstAnswer('question-2'), contains('out'));
+    expect(firstAnswer('question-1'), contains('I’m good'));
+  });
 }

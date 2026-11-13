@@ -156,11 +156,18 @@ List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
     c(
         '1',
         '앵무',
-        type == 'question'
-            ? '“I’m good”이 조금 더 편한 말이에요. fine은 상황에 따라 무뚝뚝하게 들릴 수 있어요.'
-            : '저도 해 보고 있어요! 꾸준히가 제일 어렵네요.',
+        // 질문마다 맞는 답을 둔다(예전엔 모든 질문에 1번 질문의 답이 달렸다).
+        switch (postId) {
+          '${fakePostPrefix}question-2' =>
+            '끊지 말고 "피겨라웃"처럼 이어서 읽어 보세요. out의 t는 거의 안 들려요.',
+          '${fakePostPrefix}question-3' =>
+            '처음 만난 사람이나 가게에서는 です·ます가 무난해요. 친해지면 반말로 바꿔요.',
+          _ when type == 'question' =>
+            '“I’m good”이 조금 더 편한 말이에요. fine은 상황에 따라 무뚝뚝하게 들릴 수 있어요.',
+          _ => '저도 해 보고 있어요! 꾸준히가 제일 어렵네요.',
+        },
         likes: 4,
-        // 채택 답변은 해결된 질문(2번)에만 둔다. 목록의 '답변 대기중'과 맞춘다.
+        // 채택 답변은 해결된 질문(2번)에만 둔다. 목록의 '답변 대기'와 맞춘다.
         accepted: postId == '${fakePostPrefix}question-2',
         ago: 3),
     c('2', '테스트', '고마워요, 바로 해 볼게요.', parent: '1', replyTo: '앵무', ago: 2),

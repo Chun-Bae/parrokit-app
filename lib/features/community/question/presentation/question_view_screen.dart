@@ -287,7 +287,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
         onPressed: () => Navigator.maybePop(context),
       ),
       title: Text(
-        '질문 스레드',
+        // 예전 제목 '질문 스레드'는 낯선 말이었다(5차).
+        '질문',
         style: context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
       ),
       bottom: PreferredSize(
@@ -401,29 +402,35 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   ],
                 ),
               ),
+              // 목록과 같은 말로 보상의 뜻을 붙인다(5차). 예전엔 '🍪 50'만 있어
+              // 무슨 숫자인지 알 수 없었다. 채택이 끝났으면 흐리게.
               if (question.rewardCrackers > 0)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: context.tokens.primarySoft,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                        color: context.tokens.primary.withValues(alpha: 0.35)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CurrencyIcon(Currency.cracker, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${question.rewardCrackers}',
-                        style: context.texts.labelMedium
-                            .copyWith(color: context.tokens.primary),
+                Builder(builder: (context) {
+                  final resolved = question.questionStatus == 'resolved';
+                  return Container(
+                    key: const ValueKey('question-detail-reward'),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: resolved
+                          ? colorScheme.surfaceContainerHigh
+                          : context.tokens.primarySoft,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    child: CurrencyAmount(
+                      Currency.cracker,
+                      question.rewardCrackers,
+                      prefix: resolved ? '채택 ' : '답하면 ',
+                      iconSize: 16,
+                      style: context.texts.labelMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: resolved
+                            ? colorScheme.onSurfaceVariant
+                            : context.tokens.primary,
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }),
               const SizedBox(width: 4),
               IconButton(
                 tooltip: '질문 옵션',
