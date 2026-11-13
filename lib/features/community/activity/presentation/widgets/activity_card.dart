@@ -131,7 +131,8 @@ class ActivityCard extends StatelessWidget {
         textColor = isDark
             ? colorScheme.onPrimaryContainer
             : AppColors.communityBoardAccent;
-        label = '일반';
+        // 커뮤니티 탭 이름이 '게시판'이다. 알림 칩과 같은 이름으로 맞춘다(예전 '일반').
+        label = '게시판';
         break;
     }
 
