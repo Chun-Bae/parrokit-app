@@ -182,12 +182,9 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
           ),
           Row(
             children: [
-              IconButton(
-                // 검색 화면이 아직 없다. 누르면 아무 일도 일어나지 않아서
-                // 비활성으로 둔다.
-                icon: const Icon(Icons.search),
-                onPressed: null,
-              ),
+              // 검색 버튼은 뺐다(5차). 검색 화면이 아직 없어 흐린 아이콘만 있었고,
+              // 눌러도 아무 일이 없어 고장 난 것처럼 보였다(원칙 5 "안 되는 건
+              // 보이지 않게"). 검색을 만들면 여기에 다시 둔다.
               Consumer<UserProvider>(
                 builder: (context, userProvider, _) {
                   final unreadCount = userProvider.unreadNotificationCount;
