@@ -124,6 +124,17 @@
 - 홈 무대 조작 줄을 길게 누르면 "이전 문장", "재생 순서: 순서대로"처럼 뜻을 끝까지 보여준다 (7ec6db96)
 
 ## 배포 필요 (사용자가 직접)
+- **Firestore 규칙 (단어 예문 여러 개, 29404fb3)** — 아직 배포 안 됨. 배포 전에는 예문을 여러 개 넣은 단어가 서버에 저장되지 않고 이 기기에만 남는다(잃지는 않음)
+  ```
+  npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126
+  ```
+
+### 2026-11-14 07:00 배포 완료 (내가 돌림, Deploy complete 확인)
+- functions: generateTts, generateChatbotResponse, onCommunityCommentCreated, onVoteEndNotification
+- firestore:rules (신고 reports, 내 단어 words)
+- 함수 로그에 오류 없음. 아래 항목들은 이때 처리된 것이다
+
+#### 예전 목록(처리됨)
 - **함수 generateTts (Gemini TTS 모델 교체, c347a629) — 11월 17일 전에** 배포해야 한다. 그 뒤로는 예전 모델 호출이 실패한다. 챗봇 교체와 한 번에:
   ```
   npx -y firebase-tools@latest deploy --only functions:generateTts,functions:generateChatbotResponse --project parrokit-45126
@@ -774,3 +785,12 @@
 - 사용자 요청: 시뮬레이터 화면 캡처가 쌓이면 지울 것(554개 161MB → 20개 4.7MB). 기억에 남김
 - 7번: 문장 탭 앵무새 수·빈 둘러보기 전체 보기(070663c2). 라이트·다크 확인, 테마 라이트로 되돌림
 - 전체 482개 통과, analyze 깨끗. 디스크 8.1GB
+
+## 반복 119 (06:41~08:35)
+- 사용자가 깨어 있어 요청이 이어짐. 파이어베이스 배포를 대신 실행(함수 4개 + 규칙, Deploy complete 확인, 로그 오류 없음)
+- 영상 만들기 입구 숨김(2cfc254c): kVideoStudioEnabled 하나로 보관함 추가 시트·콘텐츠 제작 첫 화면·전환 버튼·허브 탭을 함께 가림. 챗봇이 영상 탭을 열려 하면 안내만
+- 바텀시트: 뒤 어두운 막 제거(2cfc254c), 29개 파일을 showAppSheet 하나로 모음(29404fb3). 탭 바 위에 떠 있는 카드로 뜬다
+- 단어 예문 여러 개(29404fb3, 최대 5개). 예전 형식도 읽는다. **규칙 배포 필요**
+- 시뮬레이터 찌꺼기 정리 스킬 추가. Dead 컨테이너 25GB 지움(디스크 90GB로 회복). 화면 캡처 554개 → 20개
+- **막힌 것**: 가져오기 시트만 공통 함수로 못 바꿨다. 바꾸면 중첩 내비게이터 회귀 테스트가 pumpAndSettle에서 멈춘다(진행 창이 안 닫히는 것으로 보임). 바깥 꾸밈을 빼도 멈춰서 showModalBottomSheet에 넘기는 설정 차이로 좁혔지만 어느 것인지는 못 찾음. 예전 설정 그대로 두고 주석에 적음
+- 전체 488개 통과, analyze 깨끗. 라이트·다크 확인, 테마 라이트로 되돌림
