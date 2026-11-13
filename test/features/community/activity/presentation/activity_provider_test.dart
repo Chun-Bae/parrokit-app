@@ -157,4 +157,16 @@ void main() {
     expect(provider.error, isNull);
     expect(provider.isLoading, isFalse);
   });
+
+  test('불러오는 중에 화면을 닫아도 오류 없이 끝난다', () async {
+    final loading = fetch('written');
+    var notified = 0;
+    provider.addListener(() => notified++);
+
+    provider.dispose();
+    repository.complete('written', ['w1']);
+    await loading;
+
+    expect(notified, 0);
+  });
 }

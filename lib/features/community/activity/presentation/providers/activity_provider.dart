@@ -60,6 +60,22 @@ class ActivityProvider extends ChangeNotifier {
     await _loadPage();
   }
 
+  /// 화면을 닫아 dispose된 뒤인지. 불러오는 중에 뒤로 가면 끝난 뒤 해제된
+  /// notifier를 알려 디버그에서 오류가 났다(5차).
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   /// 조회 요청 번호. 탭이나 필터를 바꾸면 올라간다.
   /// 앞선 조회가 늦게 끝나도 새 목록에 섞이지 않게 하려는 것이다.
   int _loadRequestId = 0;
