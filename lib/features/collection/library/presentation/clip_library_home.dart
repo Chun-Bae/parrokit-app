@@ -47,6 +47,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   List<ClipItem> _clips = [];
   /// 맨 위 폴더들.
   List<ClipFolder> _folders = [];
+  Map<String, ClipFolder> _byPath = {};
   bool _loading = true;
   bool _loadingNow = false;
   bool _reloadAgain = false;
@@ -128,12 +129,15 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
           for (final c in collectionLists.expand((c) => c)) (c.id, c.name),
         ],
         counts,
+        // '새 폴더'로 만든 빈 폴더도 보인다(5차).
+        keepEmpty: true,
       );
 
       if (!mounted) return;
       setState(() {
         _clips = clips;
         _folders = folders;
+        _byPath = byPath;
         _loading = false;
         if (_openFolder != null) {
           // 클립을 옮기거나 지워 폴더가 사라졌으면 남아 있는 가장 가까운 위로 간다.
@@ -198,15 +202,35 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         '?collectionName=${Uri.encodeComponent(path)}',
       );
 
-  /// 지금 폴더 안(맨 위면 맨 위)에 새 폴더를 만든다.
+  /// 지금 폴더 안(맨 위면 맨 위)에 새 폴더를 만든다. 예전엔 이름을 받은 뒤
+  /// 클립 만들기로 넘어가 첫 클립을 저장해야 폴더가 생겼다(5차, 사용자 요청으로
+  /// 폴더만 만든다). 폴더는 기기(로컬)에 만들고, 다른 위치의 클립도 같은 이름이면
+  /// 이 폴더에 함께 보인다.
   Future<void> _newFolder() async {
     final parent = _openFolder;
-    final name = await showNewFolderDialog(context, parentName: parent?.name);
+    final name = await showNewFolderDialog(context,
+        parentName: parent?.name, createsNow: true);
     if (!mounted || name == null) return;
-    final path = parent == null ? name : '${parent.path}/$name';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("'$name' 폴더에 넣을 첫 클립을 만들어요. 저장하면 폴더가 생겨요.")));
-    _createClipIn(path);
+    final path = normalizeFolderPath(
+        parent == null ? name : '${parent.path}/$name');
+    final messenger = ScaffoldMessenger.of(context);
+    if (_byPath.containsKey(path)) {
+      messenger.showSnackBar(
+          SnackBar(content: Text("'$name' 폴더가 이미 있어요.")));
+      return;
+    }
+    final provider = _clipProvider ?? context.read<ClipProvider>();
+    try {
+      await provider.libraryEntitySyncCoordinator
+          .createCollection(path, ClipStorageConstants.storageModeLocal);
+    } catch (e) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('폴더를 만들지 못했어요. 다시 시도해 주세요.')));
+      return;
+    }
+    await _load();
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(content: Text("'$name' 폴더를 만들었어요.")));
   }
 
   @override

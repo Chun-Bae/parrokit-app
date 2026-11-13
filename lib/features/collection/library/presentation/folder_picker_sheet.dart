@@ -25,10 +25,15 @@ Future<String?> showFolderPicker(
 
 /// 새 폴더 이름을 받는다. '/'는 경로 구분이라 쓸 수 없다. [parentName]이 있으면
 /// 그 안에 만든다는 것을 제목으로 알려준다.
-Future<String?> showNewFolderDialog(BuildContext context, {String? parentName}) =>
+///
+/// [createsNow]면 '만들기'를 누르는 대로 폴더가 생긴다(보관함의 '새 폴더').
+/// 아니면 클립 만들기의 폴더 고르기처럼 첫 클립을 저장할 때 생긴다.
+Future<String?> showNewFolderDialog(BuildContext context,
+        {String? parentName, bool createsNow = false}) =>
     showDialog<String>(
       context: context,
-      builder: (_) => _NewFolderDialog(parentName: parentName),
+      builder: (_) =>
+          _NewFolderDialog(parentName: parentName, createsNow: createsNow),
     );
 
 class _FolderPickerSheet extends StatefulWidget {
@@ -149,9 +154,10 @@ class _FolderPickerSheetState extends State<_FolderPickerSheet> {
 }
 
 class _NewFolderDialog extends StatefulWidget {
-  const _NewFolderDialog({this.parentName});
+  const _NewFolderDialog({this.parentName, this.createsNow = false});
 
   final String? parentName;
+  final bool createsNow;
 
   @override
   State<_NewFolderDialog> createState() => _NewFolderDialogState();
@@ -192,7 +198,7 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
           labelText: '폴더 이름',
           errorText: _error,
           // 글자 수 표시와 한 줄을 나눠 쓰므로 짧게.
-          helperText: '첫 클립을 넣으면 생겨요',
+          helperText: widget.createsNow ? null : '첫 클립을 넣으면 생겨요',
         ),
       ),
       actions: [

@@ -84,4 +84,22 @@ void main() {
       expect(byPath['여행/일본']!.totalCount, 1);
     });
   });
+
+  test('keepEmpty면 클립 없는 폴더(보관함 새 폴더)도 트리에 남는다', () {
+    final (roots, byPath) = buildFolderTree(
+      [(1, '여행'), (2, '여행/일본'), (3, '단어장')],
+      {3: 2},
+      keepEmpty: true,
+    );
+    expect(roots.map((f) => f.name), ['단어장', '여행']);
+    expect(byPath['여행/일본']!.totalCount, 0);
+    expect(byPath['여행']!.children.single.name, '일본');
+
+    // 기본은 예전처럼 빈 폴더를 뺀다.
+    final (pruned, _) = buildFolderTree(
+      [(1, '여행'), (3, '단어장')],
+      {3: 2},
+    );
+    expect(pruned.map((f) => f.name), ['단어장']);
+  });
 }

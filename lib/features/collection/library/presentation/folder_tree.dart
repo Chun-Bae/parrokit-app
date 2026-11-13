@@ -43,11 +43,13 @@ String normalizeFolderPath(String name) => name
     .join('/');
 
 /// 맨 위 폴더 목록(이름 순)과 경로 → 폴더 표를 만든다. 클립이 하나도 없는
-/// 폴더(하위까지)는 뺀다. 빈 컬렉션은 앱이 정리하므로 보여줄 것이 없다.
+/// 폴더(하위까지)는 뺀다. [keepEmpty]면 빈 폴더도 둔다(보관함에서 '새 폴더'로
+/// 폴더만 만들 수 있게 된 뒤로는 빈 폴더도 사용자가 만든 것이다, 5차).
 (List<ClipFolder>, Map<String, ClipFolder>) buildFolderTree(
   Iterable<(int, String)> collections,
-  Map<int, int> clipCountByCollection,
-) {
+  Map<int, int> clipCountByCollection, {
+  bool keepEmpty = false,
+}) {
   final byPath = <String, ClipFolder>{};
 
   ClipFolder ensure(String path) {
@@ -70,7 +72,7 @@ String normalizeFolderPath(String name) => name
   }
 
   void prune(List<ClipFolder> list) {
-    list.removeWhere((f) => f.totalCount == 0);
+    if (!keepEmpty) list.removeWhere((f) => f.totalCount == 0);
     list.sort((a, b) => a.name.compareTo(b.name));
     for (final f in list) {
       prune(f.children);
@@ -79,6 +81,6 @@ String normalizeFolderPath(String name) => name
 
   final roots = byPath.values.where((f) => f.parent == null).toList();
   prune(roots);
-  byPath.removeWhere((_, f) => f.totalCount == 0);
+  if (!keepEmpty) byPath.removeWhere((_, f) => f.totalCount == 0);
   return (roots, byPath);
 }
