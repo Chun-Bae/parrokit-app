@@ -82,9 +82,18 @@ class ClipLoadService {
       filePath: resolvedFilePath,
     );
 
+    // 저장할 때 영상을 바꾸지 않았으면 DB에 있던 경로를 그대로 둔다. 예전엔
+    // 재생용 절대경로(resolvedFilePath)를 넘겨 저장이 그 값을 DB에 썼고, 앱을
+    // 다시 설치·업데이트해 앱 폴더 경로가 바뀌면 '로컬 파일을 찾을 수 없습니다'가
+    // 됐다(5차). 서버·Drive 클립은 빈 값 그대로다.
+    final stored = await (clipProvider.db.select(clipProvider.db.clips)
+          ..where((c) => c.id.equals(clipId))
+          ..limit(1))
+        .getSingleOrNull();
+
     return LoadClipResult(
       formData: formData,
-      mode: EditMode(clipId: clipId, existingFilePath: resolvedFilePath),
+      mode: EditMode(clipId: clipId, existingFilePath: stored?.filePath ?? ''),
       rawSegments: clipView.segments,
     );
   }

@@ -283,21 +283,29 @@ class ClipRepositoryImpl implements ClipRepository {
             .findOrCreate(collectionName.trim(), prevClip.storageMode);
         newCollectionId = col.id;
       }
+      // 영상을 바꾸지 않은 편집이면 파일 경로·원본 경로·크기를 건드리지 않는다.
+      // (서버·Drive 클립은 경로가 빈 값이라, 덮으면 크기가 0이 된다.)
+      final keepsFile = filePath == prevClip.filePath;
       final thumbnailPath = await thumbnailDatasource.ensureThumbnailFile(
         clipId: clipId,
-        videoPath: filePath,
+        videoPath:
+            keepsFile ? (prevClip.sourceFilePath ?? prevClip.filePath) : filePath,
         existingThumbnailPath: prevClip.thumbnailFilePath,
       );
+      final storageBytes =
+          keepsFile ? null : await ClipPathUtils.fileSizeFor(filePath);
 
       // 클립 갱신
       await (db.update(db.clips)..where((c) => c.id.equals(clipId))).write(
         ClipsCompanion(
           collectionId: Value(newCollectionId),
           title: Value(clipTitle),
-          filePath: Value(filePath),
-          sourceFilePath: Value(filePath),
+          filePath: keepsFile ? const Value.absent() : Value(filePath),
+          sourceFilePath: keepsFile ? const Value.absent() : Value(filePath),
           thumbnailFilePath: Value(thumbnailPath),
-          storageBytes: Value(await ClipPathUtils.fileSizeFor(filePath)),
+          storageBytes: storageBytes == null
+              ? const Value.absent()
+              : Value(storageBytes),
           durationMs: Value(durationMs),
           storageMode:
               storageMode == null ? const Value.absent() : Value(storageMode),

@@ -35,8 +35,8 @@ class ClipSaveService {
     String relPath;
     if (mode is EditMode &&
         mode.existingFilePath != null &&
-        mode.existingFilePath!.isNotEmpty &&
         !staging.isInStaging(stagedFilePath)) {
+      // 영상을 바꾸지 않은 편집: DB에 있던 경로 그대로(서버·Drive 클립은 빈 값).
       relPath = mode.existingFilePath!;
     } else {
       relPath = await staging.finalize(stagedFilePath);
