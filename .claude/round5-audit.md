@@ -746,3 +746,9 @@
 - 디스크 1.2GB. 앱 입력 한도와 firestore.rules 비교: 글·댓글은 규칙에 길이 제한이 없고 단어만 있음. 단어 추가 입력칸 maxLength는 규칙과 같지만, 문장에서 저장하면 미리 채운 예문과 번역(입력칸 없음)이 규칙을 넘을 수 있었음 → 저장할 때 자름(7f2bf3cb)
 - 이미 기기에만 남은 긴 단어는 그대로(다음에 올리는 길은 없음 — 지금도 목록엔 보임)
 - 전체 479개 통과, analyze 깨끗
+
+## 반복 114 (06:07~)
+- 디스크 1.2GB. 코드 변경 없음(찾은 문제 없음)
+- 신고(reports) 규칙과 앱 필드·값 일치(테스트 이미 있음). 공유 문장(sentences) 규칙엔 길이 제한 없음
+- 복합 색인이 필요한 쿼리 3개(posts postType+createdAt, 내 활동 posts·comments authorId+postType+createdAt). 색인 파일은 저장소에 없고 콘솔에서 관리 → 커뮤니티가 지금 돌고 있어 이미 있음
+- functions/service-account.json: .gitignore에 있고 기록에도 한 번도 안 들어감(확인)
