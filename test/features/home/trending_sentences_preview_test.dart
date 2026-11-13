@@ -84,4 +84,23 @@ void main() {
         tester.getTopRight(find.widgetWithText(TextButton, '전체 보기')).dx;
     expect(buttonRight, closeTo(screenRight, 1));
   });
+
+  testWidgets('공유 문장이 없을 때 보관함으로는 보관함 쪽 콜백을 부른다', (tester) async {
+    var library = 0, explore = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: TrendingSentencesPreview(
+            language: '일본어',
+            onViewAll: () => explore++,
+            onOpenLibrary: () => library++,
+            repository: repo,
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('보관함으로'));
+    expect((library, explore), (1, 0));
+  });
 }

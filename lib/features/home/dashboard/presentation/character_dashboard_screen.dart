@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 import 'package:parrokit/features/collection/shell/presentation/sentence_explore_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -263,12 +264,20 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     language: language,
                     refreshToken: totalPracticed,
                     compact: true,
-                    onViewAll: () => context.go(AppRoutes.collectionPath),
+                    // 문장 기록이라 보관함 문장 탭을 연다(마지막에 본 탭이 아니라, 5차).
+                    onViewAll: () {
+                      CollectionShellScreen.openTab(0);
+                      context.go(AppRoutes.collectionPath);
+                    },
                   ),
                   const SizedBox(height: 30),
                   TrendingSentencesPreview(
                     language: language,
                     onViewAll: () => openSentenceExplore(context),
+                    onOpenLibrary: () {
+                      CollectionShellScreen.openTab(0);
+                      context.go(AppRoutes.collectionPath);
+                    },
                   ),
                   const SizedBox(height: 30),
                   StudyGardenPreview(

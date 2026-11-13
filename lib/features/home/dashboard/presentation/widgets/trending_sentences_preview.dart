@@ -17,11 +17,16 @@ class TrendingSentencesPreview extends StatefulWidget {
     super.key,
     required this.language,
     required this.onViewAll,
+    this.onOpenLibrary,
     this.repository,
   });
 
   final String language;
   final VoidCallback onViewAll;
+
+  /// 공유 문장이 없을 때 '보관함으로' 버튼. 내 문장을 공유하러 보관함 문장 탭으로
+  /// 간다. 예전엔 비어 있는 둘러보기(onViewAll)를 열었다(5차). 비우면 onViewAll.
+  final VoidCallback? onOpenLibrary;
 
   /// 공개 문장 저장소. 비우면 Firestore를 쓴다.
   final SharedSentenceRepository? repository;
@@ -323,7 +328,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
             title: '아직 공유된 ${widget.language} 문장이 없어요',
             body: '보관함에서 내 문장을 공유하면 여기에 나와요.',
             actionLabel: '보관함으로',
-            onAction: widget.onViewAll,
+            onAction: widget.onOpenLibrary ?? widget.onViewAll,
           )
         else
           SizedBox(

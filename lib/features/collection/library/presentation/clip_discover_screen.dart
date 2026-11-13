@@ -19,6 +19,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -164,7 +165,10 @@ class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
                   queryParameters: {'clipId': clipId.toString()},
                 ),
                 onTapMore: () => context.push(AppRoutes.recentsPath),
-                onTapLibrary: () => context.goNamed(AppRoutes.collection),
+                onTapLibrary: () {
+                  CollectionShellScreen.openTab(1);
+                  context.goNamed(AppRoutes.collection);
+                },
               ),
             ),
 
@@ -200,6 +204,7 @@ class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
         queryParameters: {'clipId': clipId.toString()},
       );
     } else {
+      CollectionShellScreen.openTab(1);
       context.go(AppRoutes.collectionPath);
     }
   }
