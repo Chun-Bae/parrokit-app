@@ -9,6 +9,7 @@
 //
 // [레이어]
 // Presentation Layer > Screens
+import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
@@ -497,12 +498,11 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             targetDisplayName: comment.authorNickname,
           ),
         if (!isMyComment)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: widget.voteId,
+            commentId: comment.id,
+            targetAuthorId: comment.authorId,
           ),
       ],
     );
@@ -553,12 +553,10 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             targetDisplayName: vote.authorNickname,
           ),
         if (!isMyPost)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: vote.id,
+            targetAuthorId: vote.authorId,
           ),
       ],
     );

@@ -291,6 +291,35 @@ service cloud.firestore {
     // 쓰기는 전에 "로그인한 사람"이면 통과였다. 그래서 남이 쓰는 닉네임
     // 문서를 덮어쓰거나 지워서 가져갈 수 있었다. 앱의 트랜잭션은 주인을
     // 확인하지만, 규칙으로도 막는다.
+    // 커뮤니티 신고(5차). 예전에는 앱의 '신고'가 토스트만 띄우고 아무것도
+    // 남기지 않았다. 로그인한 사람이 자기 이름으로만 남길 수 있고, 아무도 읽거나
+    // 고치거나 지울 수 없다(운영자는 콘솔에서 본다). 필드와 값은 앱
+    // community_report_repository.dart와 같다.
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(
+             ['reporterId', 'targetType', 'postId', 'commentId',
+              'targetAuthorId', 'reason', 'createdAt'])
+        && request.resource.data.keys().hasAll(
+             ['reporterId', 'targetType', 'postId', 'targetAuthorId',
+              'reason', 'createdAt'])
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.targetType in ['post', 'comment']
+        && request.resource.data.reason in ['spam', 'abuse', 'sexual', 'other']
+        && request.resource.data.postId is string
+        && request.resource.data.postId.size() > 0
+        && request.resource.data.postId.size() <= 128
+        && request.resource.data.targetAuthorId is string
+        && request.resource.data.targetAuthorId.size() <= 128
+        && (request.resource.data.targetType == 'post'
+            ? !('commentId' in request.resource.data)
+            : (request.resource.data.commentId is string
+               && request.resource.data.commentId.size() > 0
+               && request.resource.data.commentId.size() <= 128))
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+
     match /nicknames/{nickname} {
       allow read: if true;
       allow create: if isSignedIn()

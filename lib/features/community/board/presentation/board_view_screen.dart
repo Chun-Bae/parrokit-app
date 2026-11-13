@@ -127,6 +127,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       isMyComment: isMyComment,
       blockedUserId: comment.authorId,
       blockedUserDisplayName: comment.authorNickname,
+      postId: comment.postId,
+      commentId: comment.id,
       onDelete: () async {
         final provider = context.read<CommunityProvider>();
         final colorScheme = Theme.of(context).colorScheme;

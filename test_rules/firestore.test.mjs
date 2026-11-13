@@ -21,6 +21,9 @@ import {
   increment,
   runTransaction,
   writeBatch,
+  addDoc,
+  collection,
+  serverTimestamp,
 } from "firebase/firestore";
 import { makeTestEnv, seed, post, comment } from "./helpers.mjs";
 
@@ -401,4 +404,45 @@ test("단어 주인을 다른 사람으로 바꿀 수 없다", async () => {
   await seed(testEnv, (db) => setDoc(doc(db, "words/w6"), word()));
   await assertSucceeds(updateDoc(doc(alice(), "words/w6"), { meaning: "해결하다" }));
   await assertFails(updateDoc(doc(alice(), "words/w6"), { ownerId: "bob" }));
+});
+
+// ---------------------------------------------------------------- reports (5차 신고)
+const report = (over = {}) => ({
+  reporterId: "alice",
+  targetType: "post",
+  postId: "p1",
+  targetAuthorId: "bob",
+  reason: "spam",
+  createdAt: serverTimestamp(),
+  ...over,
+});
+
+test("로그인한 사람은 자기 이름으로 글·댓글을 신고할 수 있다", async () => {
+  await assertSucceeds(addDoc(collection(alice(), "reports"), report()));
+  await assertSucceeds(addDoc(collection(alice(), "reports"),
+    report({ targetType: "comment", commentId: "c1", reason: "abuse" })));
+});
+
+test("남의 이름으로, 로그인 없이 신고할 수 없다", async () => {
+  await assertFails(addDoc(collection(bob(), "reports"), report()));
+  await assertFails(addDoc(collection(stranger(), "reports"), report()));
+});
+
+test("정해진 사유·종류·필드 밖의 신고는 막는다", async () => {
+  await assertFails(addDoc(collection(alice(), "reports"), report({ reason: "boring" })));
+  await assertFails(addDoc(collection(alice(), "reports"), report({ targetType: "user" })));
+  await assertFails(addDoc(collection(alice(), "reports"), report({ extra: 1 })));
+  await assertFails(addDoc(collection(alice(), "reports"), report({ postId: "" })));
+  // 댓글 신고는 commentId가 있어야 하고, 글 신고에는 없어야 한다.
+  await assertFails(addDoc(collection(alice(), "reports"), report({ targetType: "comment" })));
+  await assertFails(addDoc(collection(alice(), "reports"), report({ commentId: "c1" })));
+});
+
+test("신고는 아무도 읽거나 고치거나 지울 수 없다", async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "reports/r1"), { reporterId: "alice", postId: "p1" });
+  });
+  await assertFails(getDoc(doc(alice(), "reports/r1")));
+  await assertFails(updateDoc(doc(alice(), "reports/r1"), { reason: "other" }));
+  await assertFails(deleteDoc(doc(alice(), "reports/r1")));
 });

@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
@@ -214,12 +215,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             targetDisplayName: question.authorNickname,
           ),
         if (!isMyPost)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: question.id,
+            targetAuthorId: question.authorId,
           ),
       ],
     );
@@ -254,12 +253,11 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             targetDisplayName: answer.authorNickname,
           ),
         if (!isMyComment)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: question.id,
+            commentId: answer.id,
+            targetAuthorId: answer.authorId,
           ),
       ],
     );

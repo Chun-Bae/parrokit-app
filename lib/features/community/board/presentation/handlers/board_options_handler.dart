@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/data/models/post.dart';
@@ -11,6 +12,8 @@ class BoardOptionsHandler {
     required String blockedUserId,
     required String? blockedUserDisplayName,
     required Future<bool> Function() onDelete,
+    required String postId,
+    required String commentId,
   }) async {
     await showCommunityOptionsSheet(
       context: context,
@@ -34,12 +37,11 @@ class BoardOptionsHandler {
             targetDisplayName: blockedUserDisplayName,
           ),
         if (!isMyComment)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: postId,
+            commentId: commentId,
+            targetAuthorId: blockedUserId,
           ),
       ],
     );
@@ -87,12 +89,10 @@ class BoardOptionsHandler {
             targetDisplayName: post.authorNickname,
           ),
         if (!isMyPost)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: post.id,
+            targetAuthorId: post.authorId,
           ),
       ],
     );

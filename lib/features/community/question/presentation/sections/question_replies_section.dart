@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -284,12 +285,11 @@ class QuestionRepliesSection extends StatelessWidget {
             targetDisplayName: answer.authorNickname,
           ),
         if (!isMyComment)
-          CommunityOptionAction(
-            label: '신고',
-            icon: Icons.report_outlined,
-            onTap: () async {
-              showToast('신고가 접수되었습니다.');
-            },
+          buildCommunityReportAction(
+            context: context,
+            postId: question.id,
+            commentId: answer.id,
+            targetAuthorId: answer.authorId,
           ),
       ],
     );
