@@ -258,7 +258,8 @@ class _ReviewSummary extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('오늘 다시 볼 단어 $count개', style: context.texts.titleMedium),
             const SizedBox(height: 2),
-            Text('뜻을 떠올리고 예문을 소리 내어 말해요',
+            // 복습 창에는 말하기가 없다. 실제로 하는 일(뜻 떠올리고 알았는지 고르기)대로(5차).
+            Text('뜻을 떠올려 보고 알았는지 골라요',
                 style: context.texts.bodySmall
                     .copyWith(color: colors.onSurfaceVariant)),
           ]),

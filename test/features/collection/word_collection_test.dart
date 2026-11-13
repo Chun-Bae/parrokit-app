@@ -85,6 +85,7 @@ void main() {
     expect(find.text('nuance'), findsOneWidget);
     expect(find.text('미묘한 차이'), findsOneWidget);
     expect(find.text('오늘 다시 볼 단어 1개'), findsOneWidget);
+    expect(find.text('뜻을 떠올려 보고 알았는지 골라요'), findsOneWidget);
     expect((await MyWordStore.load('guest')).single.word, 'nuance');
   });
 
