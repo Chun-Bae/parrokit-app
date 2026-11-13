@@ -18,8 +18,12 @@ class ContentStudioBridgeScreen extends StatelessWidget {
     final border = context.tokens.dividerSubtle;
     // 세 줄이 카드처럼 생겼는데 눌러도 아무 일이 없었다. 줄을 누르면 그 탭으로
     // 바로 간다. 같은 말을 하던 부제와 '시작하기' 버튼은 없앴다(4차).
+    //
+    // go로 열면 쌓인 화면(보관함 등)이 사라져서, 허브에서 나가면 늘 홈으로
+    // 갔다(4차 발견). 이 첫 화면만 허브로 바꿔 끼워, 허브에서 나가면 들어오기
+    // 전 화면으로 돌아간다(5차).
     void openTab(int index) =>
-        context.go('${AppRoutes.contentStudioHubPath}?tab=$index');
+        context.pushReplacement('${AppRoutes.contentStudioHubPath}?tab=$index');
 
     // 뒤로가기를 다른 화면처럼 앱바에 둔다. 전에는 본문 안에 IconButton을
     // 넣어서, 다른 화면보다 오른쪽·아래로 16pt쯤 들어간 자리에 있었다.

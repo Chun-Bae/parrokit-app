@@ -74,7 +74,17 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     final router = GoRouter.of(context);
     final shouldExit = await showContentStudioExitConfirmSheet(context);
     if (shouldExit != true) return;
-    router.go(AppRoutes.dashboardPath);
+    _leave(router);
+  }
+
+  /// 콘텐츠 제작을 나간다. 들어온 화면이 쌓여 있으면 그리로 돌아가고(보관함의 +
+  /// 로 들어왔으면 보관함), 없으면 홈으로 간다. 예전엔 늘 홈으로 갔다(5차).
+  void _leave(GoRouter router) {
+    if (router.canPop()) {
+      router.pop();
+    } else {
+      router.go(AppRoutes.dashboardPath);
+    }
   }
 
   @override
@@ -152,9 +162,8 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                         _StudioPageSlot(
                           child: CaptioningScreen(
                             showAppBar: false,
-                            onClose: (_) async => context.go(
-                              AppRoutes.dashboardPath,
-                            ),
+                            onClose: (_) async =>
+                                _leave(GoRouter.of(context)),
                           ),
                         ),
                         _StudioPageSlot(child: TtsScreen()),
