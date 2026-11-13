@@ -380,7 +380,9 @@ class ClipListView extends StatelessWidget {
                         _buildSwipeAction(
                           color: context.tokens.warning,
                           icon: Icons.swap_horiz_rounded,
-                          label: '전환',
+                          // '전환'은 무엇을 바꾸는지 몰랐다(5차). 시트 제목
+                          // '저장 위치 바꾸기'에 맞춘다.
+                          label: '옮기기',
                           onTap: () => _showStorageModeSheet(
                             context,
                             item,

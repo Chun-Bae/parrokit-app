@@ -15,6 +15,8 @@
 // Presentation Layer - ViewModel
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'dart:io' show File;
 import 'dart:typed_data';
 
@@ -222,12 +224,24 @@ class ClipPlayerViewModel extends ChangeNotifier
       // _initVideo가 컨트롤러를 만든 뒤 initialize()에서 넘어졌을 수 있다.
       // 그대로 두면 오류 화면을 띄워 둔 내내 네이티브 플레이어를 붙잡고 있다.
       _disposeController();
-      _errorMessage = e.toString();
+      // 예외 원문을 보였다(5차). 원문은 로그로.
+      AppLogger.e('클립 열기 실패', error: e);
+      _errorMessage = userErrorMessage(e,
+          fallback: '클립을 열지 못했어요. 영상 파일이 지워졌거나 아직 받지 못했을 수 있어요.');
       _isLoading = false;
       _clip = null;
       _segments = const [];
       notifyListeners();
     }
+  }
+
+  /// 편집 화면에서 돌아온 뒤 바뀐 제목·구간·영상을 다시 읽는다(5차). 쓰던
+  /// 컨트롤러를 먼저 놓아 플레이어가 둘 붙잡히지 않게 한다.
+  Future<void> reloadAfterEdit() async {
+    _disposeController();
+    _isLoading = true;
+    notifyListeners();
+    await loadClip();
   }
 
   /// 컨트롤러를 놓는다. 초기화에 성공했는지와 무관하게 부를 수 있다.

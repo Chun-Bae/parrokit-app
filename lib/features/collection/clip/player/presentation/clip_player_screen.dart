@@ -16,6 +16,8 @@
 
 import 'dart:math' as math;
 
+import 'package:go_router/go_router.dart';
+import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
@@ -177,6 +179,25 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
               elevation: 0,
               foregroundColor: fg,
               title: Text(vm.appBarTitle),
+              // 플레이어에서 바로 고친다(5차). 예전엔 목록에서 밀어야만 '편집'이
+              // 보여서, 보다가 고칠 데를 찾으면 나갔다가 다시 찾아야 했다.
+              actions: [
+                if (vm.clip != null)
+                  IconButton(
+                    key: const ValueKey('player-edit'),
+                    tooltip: '편집',
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () async {
+                      vm.controller?.pause();
+                      final changed = await context.push<bool>(
+                          '${AppRoutes.clipsPath}/${AppRoutes.clipsEditPath}'
+                          '?clipId=${widget.clipId}');
+                      if (changed == true && context.mounted) {
+                        await vm.reloadAfterEdit();
+                      }
+                    },
+                  ),
+              ],
             ),
       body: vm.isFullscreen
           ? _buildFullscreenBody(context, vm, isLight)

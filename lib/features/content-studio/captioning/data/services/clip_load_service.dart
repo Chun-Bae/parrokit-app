@@ -10,6 +10,7 @@
 // ============================================================================
 
 import 'package:parrokit/core/state/provider/clip_provider.dart';
+import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_detail_query_datasource.dart';
 import 'package:parrokit/data/local/app_database.dart' as db;
 import 'package:parrokit/features/content-studio/captioning/domain/models/clip_form_data.dart';
 import 'package:parrokit/features/content-studio/captioning/domain/models/edit_mode.dart';
@@ -37,35 +38,25 @@ class ClipLoadService {
 
   /// 클립 ID로 편집 데이터를 로드합니다.
   Future<LoadClipResult> loadForEdit(int clipId) async {
-    // 클립 조회
-    final db.Clip clip;
-    try {
-      clip = clipProvider.clips.firstWhere((c) => c.id == clipId);
-    } catch (_) {
-      throw Exception('편집할 클립을 찾을 수 없습니다.');
-    }
-
-    // 컬렉션 이름 조회 (collectionId가 있는 경우)
-    String? collectionName;
-    if (clip.collectionId != null) {
-      final collection =
-          clipProvider.collections.cast<db.Collection?>().firstWhere(
-                (c) => c?.id == clip.collectionId,
-                orElse: () => null,
-              );
-      collectionName = collection?.name;
-    }
-
-    // 태그 조회
-    final tagList = (clipProvider.tagsByClip[clipId] ?? const <db.Tag>[])
-        .map((t) => t.name)
-        .toList();
-
-    // 세그먼트 조회
+    // 예전에는 clipProvider.clips·collections·tagsByClip(예전 보관함 화면이
+    // 고른 폴더에서만 채우는 목록)에서 찾았다. 새 보관함·플레이어에서 열면
+    // 이 목록이 비어 있어 '편집할 클립을 찾을 수 없습니다'로 늘 실패했다(5차).
+    // DB에서 직접 읽는다.
     final clipView = await clipProvider.fetchClipById(clipId);
     if (clipView == null) {
       throw Exception('편집할 클립을 찾을 수 없습니다.');
     }
+    final clip = clipView.clip;
+
+    String? collectionName;
+    final collectionId = clip.collectionId;
+    if (collectionId != null) {
+      collectionName =
+          (await clipProvider.db.collectionsDao.findById(collectionId))?.name;
+    }
+
+    final tagList =
+        await ClipDetailQueryDatasource(clipProvider.db).tagNamesForClip(clipId);
 
     // SegmentInput으로 변환
     final segmentInputs = clipView.segments
