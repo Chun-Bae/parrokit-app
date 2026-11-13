@@ -100,7 +100,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     final appBarTitle = switch (_selectedIndex) {
       0 => '편집',
       1 => 'TTS 생성',
-      _ => 'Video 생성',
+      _ => '영상 생성',
     };
 
     return MultiProvider(

@@ -438,7 +438,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               _AddMaterialTile(
                 icon: Icons.spellcheck_rounded,
                 title: '단어 추가',
-                subtitle: '문장 속 표현을 따로 표시해요',
+                // 예전 '문장 속 표현을 따로 표시해요'는 단어 탭이 예시 화면이던 때 말(5차).
+                subtitle: '단어와 뜻을 저장하고 복습해요',
                 // 클립과 같은 이유로 단어 추가 창을 바로 연다.
                 onTap: () {
                   Navigator.pop(sheetContext);

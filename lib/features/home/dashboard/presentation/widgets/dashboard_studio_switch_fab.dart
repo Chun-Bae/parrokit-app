@@ -97,7 +97,8 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
                   onTap: () => _handleTap(1),
                 ),
                 _StudioSwitchItem(
-                  title: 'Video',
+                  // 옆 칸 '자막'처럼 한글로(5차). 예전 'Video'.
+                  title: '영상',
                   icon: Icons.movie_creation_rounded,
                   isSelected: widget.selectedIndex == 2,
                   selectedText: selectedText,

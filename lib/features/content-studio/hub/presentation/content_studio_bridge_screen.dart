@@ -93,7 +93,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-video'),
                         icon: Icons.movie_creation_rounded,
-                        title: 'Video',
+                        title: '영상',
                         description: '대본으로 짧은 영상을 만들어요',
                         borderColor: border,
                         onTap: () => openTab(2),
