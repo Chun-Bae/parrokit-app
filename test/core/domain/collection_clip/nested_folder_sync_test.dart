@@ -1,6 +1,9 @@
 // 폴더 안의 폴더(이름 경로 '여행/일본', b073544f)가 서버(Firestore)에서 받아올 때
 // 그대로 돌아오는지 본다(5차 9번). 저장 형식은 바꾸지 않았으므로, 기존 경로
 // (collectionName → collections.name)만으로 트리가 다시 만들어져야 한다.
+import 'dart:io';
+
+import 'package:archive/archive.dart';
 import 'package:drift/native.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,12 +12,15 @@ import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_detai
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_firestore_metadata_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_remote_library_sync_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_source_ref_datasource.dart';
+import 'package:parrokit/core/domain/collection_clip/data/datasources/collection_group_mirror_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/library_entity_remote_sync_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/library_entity_sync_coordinator.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/remote_doc_id_resolver.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:parrokit/core/infrastructure/services/backup_service.dart';
 import 'package:parrokit/data/local/app_database.dart';
+import 'package:path/path.dart' as p;
 import 'package:parrokit/features/collection/library/presentation/folder_tree.dart';
 
 void main() {
@@ -169,5 +175,96 @@ void main() {
     ).pullServerClips(uid);
     final names = (await other.select(other.collections).get()).map((c) => c.name);
     expect(names, ['여행/일본']);
+  });
+
+  test('앱 백업(zip)에 넣었다 꺼내도 폴더 경로 이름이 그대로다', () async {
+    final root = Directory.systemTemp.createTempSync('nested_folder_backup');
+    addTearDown(() => root.deleteSync(recursive: true));
+    final dbFile = File(p.join(root.path, 'app.db'));
+    final fileDb = AppDatabase.withExecutor(NativeDatabase(dbFile));
+    for (final name in ['여행', '여행/일본', '여행/일본/오사카', '일상회화']) {
+      await fileDb.collectionsDao.findOrCreate(name, 'local');
+    }
+    await fileDb.close();
+
+    final media = Directory(p.join(root.path, 'media'))..createSync();
+    final zipPath = p.join(root.path, 'backup.zip');
+    BackupService.compressBackup(BackupCompressParams(
+      zipPath: zipPath,
+      dbPath: dbFile.path,
+      dbRelativePath: 'db/app.db',
+      mediaPath: media.path,
+      filePaths: const [],
+      mediaRelativeDir: 'media',
+      timestamp: '2026-11-13T00:00:00.000',
+    ));
+
+    final zip = ZipDecoder().decodeBytes(File(zipPath).readAsBytesSync());
+    final restored = File(p.join(root.path, 'restored.db'))
+      ..writeAsBytesSync(zip.findFile('db/app.db')!.content as List<int>);
+    final restoredDb = AppDatabase.withExecutor(NativeDatabase(restored));
+    addTearDown(restoredDb.close);
+    final names =
+        (await restoredDb.select(restoredDb.collections).get()).map((c) => c.name);
+    expect(names, containsAll(['여행', '여행/일본', '여행/일본/오사카', '일상회화']));
+  });
+
+  LibraryEntitySyncCoordinator coordinatorFor(AppDatabase target) {
+    final meta = ClipFirestoreMetadataDatasource(target, firestore: firestore);
+    final drive = GoogleDriveStorageService();
+    return LibraryEntitySyncCoordinator(
+        target, LibraryEntityRemoteSyncDatasource(meta, drive), RemoteDocIdResolver());
+  }
+
+  group('폴더 이름 바꾸기', () {
+    test('경로 계산', () {
+      String? r(String name, String from, String to) =>
+          LibraryEntitySyncCoordinator.renamedFolderPath(name, from, to);
+      expect(r('여행/일본', '여행', '여행2'), '여행2/일본');
+      expect(r('여행/일본/오사카', '여행/일본', '일본'), '일본/오사카');
+      expect(r(' 여행 / 일본 ', '여행', '여행2'), '여행2/일본');
+      expect(r('여행', '여행', '여행2'), isNull); // 자기 자신은 따로 바꾼다
+      expect(r('여행가방', '여행', '여행2'), isNull); // 앞글자만 같은 다른 폴더
+      expect(r('여행/일본', '여행', '여행'), isNull);
+    });
+
+    test('위 폴더 이름을 바꾸면 하위 폴더가 따라오고, 다른 위치·다른 폴더는 그대로', () async {
+      final trip = await db.collectionsDao.findOrCreate('여행', 'local');
+      await db.collectionsDao.findOrCreate('여행/일본', 'local');
+      await db.collectionsDao.findOrCreate('여행/일본/오사카', 'local');
+      await db.collectionsDao.findOrCreate('여행가방', 'local');
+      // 다른 저장 위치의 같은 경로는 이 화면(위치별 폴더)에서 바꾸지 않는다.
+      await db.collectionsDao.findOrCreate('여행/일본', 'gdrive');
+
+      await coordinatorFor(db).renameCollection(trip.id, '해외여행');
+
+      final local = (await db.select(db.collections).get())
+          .where((c) => c.storageMode == 'local')
+          .map((c) => c.name)
+          .toSet();
+      expect(local, {'해외여행', '해외여행/일본', '해외여행/일본/오사카', '여행가방'});
+      final drive = (await db.select(db.collections).get())
+          .where((c) => c.storageMode == 'gdrive')
+          .map((c) => c.name);
+      expect(drive, ['여행/일본']);
+    });
+  });
+
+  test('클립을 다른 저장 위치로 옮기면 폴더 경로 이름이 따라간다', () async {
+    final server = await db.collectionsDao.findOrCreate('여행/일본', 'server');
+    final mirror = CollectionGroupMirrorDatasource(db, coordinatorFor(db));
+    // 목적지에 같은 이름이 없으면 같은 경로 이름으로 만든다(로컬은 원격 없음).
+    final newId = await mirror.mirrorCollectionForClip(
+      currentCollectionId: server.id,
+      destinationStorageMode: 'local',
+    );
+    final created = await db.collectionsDao.findById(newId!);
+    expect(created!.name, '여행/일본');
+    expect(created.storageMode, 'local');
+    // 다시 옮기면 같은 폴더를 쓴다.
+    expect(
+        await mirror.mirrorCollectionForClip(
+            currentCollectionId: server.id, destinationStorageMode: 'local'),
+        newId);
   });
 }

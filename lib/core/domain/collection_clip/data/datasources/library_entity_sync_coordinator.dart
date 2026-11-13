@@ -108,9 +108,47 @@ class LibraryEntitySyncCoordinator {
     }
   }
 
+  /// 폴더 안의 폴더(이름 경로 '여행/일본', 5차)를 위해, 이름을 바꾸면 같은 저장
+  /// 위치에서 그 경로 아래에 있는 폴더 이름 앞부분도 함께 바꾼다. 예전에는 '여행'을
+  /// '여행2'로 바꾸면 '여행/일본'이 남아 폴더가 둘로 갈라졌다. 저장 형식은 그대로고
+  /// 바뀌는 것은 이름 값뿐이며, 원격 동기화는 폴더마다 원래 경로를 탄다.
   Future<void> renameCollection(int id, String newName) async {
     final collection = await db.collectionsDao.findById(id);
     if (collection == null) return;
+    final children = <(int, String)>[];
+    for (final other in await db.collectionsDao.fetchAll()) {
+      if (other.id == id || other.storageMode != collection.storageMode) {
+        continue;
+      }
+      final renamed = renamedFolderPath(other.name, collection.name, newName);
+      if (renamed != null) children.add((other.id, renamed));
+    }
+    await _renameOne(collection, newName);
+    for (final (childId, childName) in children) {
+      final child = await db.collectionsDao.findById(childId);
+      if (child != null) await _renameOne(child, childName);
+    }
+  }
+
+  /// [name]이 [oldPath] 아래 폴더면 [newPath] 아래로 옮긴 이름, 아니면 null.
+  /// 경로 비교는 칸마다 앞뒤 공백을 뗀 모양으로 한다. 예:
+  /// renamedFolderPath('여행/일본', '여행', '여행2') == '여행2/일본'
+  static String? renamedFolderPath(String name, String oldPath, String newPath) {
+    String norm(String v) => v
+        .split('/')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .join('/');
+    final from = norm(oldPath);
+    final to = norm(newPath);
+    final current = norm(name);
+    if (from.isEmpty || to.isEmpty || from == to) return null;
+    if (!current.startsWith('$from/')) return null;
+    return '$to${current.substring(from.length)}';
+  }
+
+  Future<void> _renameOne(Collection collection, String newName) async {
+    final id = collection.id;
     await db.collectionsDao.updateName(id, newName);
     final remoteId = collection.remoteId;
     if (remoteId != null) {
