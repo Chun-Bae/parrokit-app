@@ -54,6 +54,10 @@ abstract class ClipRepository {
   /// "그룹 내 모든 클립" 가상 뷰에서 사용합니다.
   Future<List<Clip>> getVisibleClipsForCollections(List<int> collectionIds);
 
+  /// 지금 계정에서 보이는 모든 클립(저장 위치·폴더 무관). 문장 상세의
+  /// '이 문장이 나오는 클립' 검색에 쓴다.
+  Future<List<Clip>> getAllVisibleClips();
+
   /// 특정 저장위치의 모든 클립(콜렉션 소속 여부 무관)을 반환합니다.
   /// "모든 클립" 가상 뷰에서 사용합니다.
   Future<List<Clip>> getVisibleClipsForStorageMode(String storageMode);

@@ -59,6 +59,9 @@ class ClipRepositoryImpl implements ClipRepository {
   }
 
   @override
+  Future<List<Clip>> getAllVisibleClips() => sourceRefDatasource.visibleClips();
+
+  @override
   Future<List<Clip>> getVisibleClipsForCollections(
     List<int> collectionIds,
   ) async {
