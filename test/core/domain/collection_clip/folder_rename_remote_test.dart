@@ -1,6 +1,7 @@
 // 폴더 이름 바꾸기가 서버를 거쳐 다른 기기로 퍼지는지 본다(5차 9번).
 // 기기 둘이 같은 Firestore(가짜)를 쓰고, 한쪽에서 바꾼 이름이 다른 쪽 pull로
 // 들어오는지 확인한다. 저장 형식(collections 문서의 name)은 그대로다.
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -74,6 +75,40 @@ void main() {
     await b.pullServer(uid);
     final groups = (await dbB.select(dbB.groups).get()).map((g) => g.name);
     expect(groups, ['영어 회화']);
+  });
+
+  test('한 기기에서 지운 빈 폴더는 다른 기기에서도 정리되고 다시 살아나지 않는다',
+      () async {
+    final japan = await a.createCollection('여행/일본', 'server');
+    await a.createCollection('여행/미국', 'server');
+    await b.pullServer(uid);
+    expect(await names(dbB), {'여행/일본', '여행/미국'});
+
+    await a.deleteCollection(japan.id);
+    await (dbA.delete(dbA.collections)..where((c) => c.id.equals(japan.id)))
+        .go();
+
+    await b.pullServer(uid);
+    await b.reconcileServerAfterClips(uid);
+    expect(await names(dbB), {'여행/미국'});
+    // 다시 받아도 지운 폴더가 돌아오지 않는다.
+    await b.pullServer(uid);
+    expect(await names(dbB), {'여행/미국'});
+  });
+
+  test('다른 기기에 클립이 남아 있는 폴더는 지우지 않고 다음 정리로 미룬다', () async {
+    final japan = await a.createCollection('여행/일본', 'server');
+    await b.pullServer(uid);
+    final local = (await dbB.select(dbB.collections).get()).single;
+    await dbB.into(dbB.clips).insert(ClipsCompanion.insert(
+        title: '오사카',
+        filePath: '',
+        durationMs: 1000,
+        collectionId: Value(local.id)));
+
+    await a.deleteCollection(japan.id);
+    await b.reconcileServerAfterClips(uid);
+    expect(await names(dbB), {'여행/일본'});
   });
 
   test('로그인하지 않았으면 서버에 쓰지 않는다', () async {
