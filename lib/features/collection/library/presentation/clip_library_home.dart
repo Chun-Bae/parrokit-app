@@ -14,6 +14,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -266,7 +267,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       await _load();
       if (!mounted) return;
       setState(() => _openFolder = _byPath[newPath]);
-      messenger.showSnackBar(SnackBar(content: Text("'$name'(으)로 바꿨어요.")));
+      messenger.showSnackBar(SnackBar(content: Text("${euro("'$name'")} 바꿨어요.")));
     } else if (action == 'delete') {
       final ok = await showDialog<bool>(
         context: context,
@@ -555,7 +556,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                 key: const ValueKey('folder-up'),
                 tooltip: folder.parent == null
                     ? '모든 클립으로'
-                    : '${folder.parent!.name}(으)로',
+                    : euro(folder.parent!.name),
                 onPressed: () => _enterFolder(folder.parent),
                 icon: const Icon(Icons.arrow_back_rounded),
               ),

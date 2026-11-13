@@ -113,7 +113,7 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
     await MyWordStore.remove(accountId, word.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("'${word.word}'를 지웠어요.")));
+        SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
   }
 
   @override
@@ -398,7 +398,7 @@ Future<void> showWordDetails(
       onDelete: () async {
         await MyWordStore.remove(accountId, word.id);
         messenger?.showSnackBar(
-            SnackBar(content: Text("'${word.word}'를 지웠어요.")));
+            SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
       },
     ),
   );

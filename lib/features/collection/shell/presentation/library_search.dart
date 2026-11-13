@@ -233,7 +233,7 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
     } else if (query.trim().isEmpty) {
       body = Text('내 문장·단어와 클립 제목·자막에서 찾아요.', style: muted);
     } else if (results.isEmpty) {
-      body = Text("'${query.trim()}'이(가) 들어간 항목이 없어요.",
+      body = Text("'${query.trim()}' 검색 결과가 없어요.",
           key: const ValueKey('library-search-empty'), style: muted);
     } else {
       body = ListView(
