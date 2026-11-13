@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/domain/collection_clip/data/repositories/group_repository_impl.dart';
 import 'package:parrokit/data/local/app_database.dart';
 
 void main() {
@@ -71,6 +73,59 @@ void main() {
 
       expect(await db.collectionsDao.fetchAll(), isEmpty);
       expect(await db.select(db.groupCollections).get(), isEmpty);
+    });
+    test('클립이 남아 있으면 지우지 않는다', () async {
+      final collection =
+          await db.collectionsDao.findOrCreate('여행', 'local');
+      await db.into(db.clips).insert(ClipsCompanion.insert(
+          title: 'c',
+          filePath: '',
+          durationMs: 1000,
+          collectionId: Value(collection.id)));
+
+      await db.collectionsDao.pruneIfEmpty(collection.id);
+
+      expect((await db.collectionsDao.fetchAll()).map((c) => c.name), ['여행']);
+      expect(await db.select(db.clips).get(), hasLength(1));
+    });
+  });
+
+  group('GroupRepositoryImpl.deleteGroupById', () {
+    test('그룹과 연결만 지우고 안의 콜렉션·클립은 남긴다', () async {
+      final repo = GroupRepositoryImpl(db);
+      final collection =
+          await db.collectionsDao.findOrCreate('여행', 'local');
+      await db.into(db.clips).insert(ClipsCompanion.insert(
+          title: 'c',
+          filePath: '',
+          durationMs: 1000,
+          collectionId: Value(collection.id)));
+      final groupId = await db.groupsDao.insertGroup('올해', 'local');
+      final otherGroup = await db.groupsDao.insertGroup('작년', 'local');
+      for (final g in [groupId, otherGroup]) {
+        await db.into(db.groupCollections).insert(
+              GroupCollectionsCompanion.insert(
+                  groupId: g, collectionId: collection.id),
+            );
+      }
+
+      await repo.deleteGroupById(groupId);
+
+      expect((await repo.getAllGroups('local')).map((g) => g.name), ['작년']);
+      final links = await db.select(db.groupCollections).get();
+      expect(links.map((l) => l.groupId), [otherGroup]);
+      expect(await db.collectionsDao.fetchAll(), hasLength(1));
+      expect(await db.select(db.clips).get(), hasLength(1));
+    });
+
+    test('그룹 목록은 이름 순이고 저장 방식별로 나뉜다', () async {
+      final repo = GroupRepositoryImpl(db);
+      await db.groupsDao.insertGroup('나', 'local');
+      await db.groupsDao.insertGroup('가', 'local');
+      await db.groupsDao.insertGroup('다', 'server');
+
+      expect((await repo.getAllGroups('local')).map((g) => g.name), ['가', '나']);
+      expect((await repo.getAllGroups('server')).map((g) => g.name), ['다']);
     });
   });
 }
