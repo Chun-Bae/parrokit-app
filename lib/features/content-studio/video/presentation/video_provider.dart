@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 
 import '../data/data_sources/video_remote_data_source.dart';
@@ -295,7 +296,10 @@ class VideoProvider extends ChangeNotifier {
     } catch (e, stack) {
       AppLogger.e('[VideoProvider][Generate] error reason=$e',
           error: e, stackTrace: stack);
-      _errorMessage = e.toString();
+      // 예외 원문(영어, 서버 모델 이름 등)을 그대로 보였다(5차). 서버는 시작에
+      // 실패하면 깎은 패롯을 돌려준다.
+      _errorMessage = userErrorMessage(e,
+          fallback: '영상을 만들지 못했어요. 쓴 패롯은 돌려드려요. 잠시 뒤 다시 시도해 주세요.');
       _isGenerating = false;
       _pendingCost = 0;
       notifyListeners();
@@ -315,7 +319,8 @@ class VideoProvider extends ChangeNotifier {
           if (result['error'] != null) {
             AppLogger.e(
                 '[VideoProvider][Polling] error reason=${result['error']}');
-            _errorMessage = result['error'].toString();
+            // 생성 중 실패. 서버가 상태 조회에서 패롯을 돌려준다.
+            _errorMessage = '영상을 만들지 못했어요. 쓴 패롯은 돌려드려요.';
             _pendingCost = 0;
           } else {
             AppLogger.i(
@@ -336,7 +341,8 @@ class VideoProvider extends ChangeNotifier {
         AppLogger.e('[VideoProvider][Polling] error reason=$e',
             error: e, stackTrace: stack);
         timer.cancel();
-        _errorMessage = 'Polling failed: $e';
+        _errorMessage = userErrorMessage(e,
+            fallback: '만드는 중인 영상의 상태를 확인하지 못했어요. 잠시 뒤 최근 영상에서 확인해 주세요.');
         _isGenerating = false;
         _pendingCost = 0;
         notifyListeners();
