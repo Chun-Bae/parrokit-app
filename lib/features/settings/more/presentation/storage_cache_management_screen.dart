@@ -106,7 +106,7 @@ class _StorageCacheManagementScreenState
           ),
         ),
         content: Text(
-          '이 클립은 원격 저장본은 유지한 채, 기기 안의 보관 파일만 지웁니다.\n\n로컬 저장본은 이 화면에서 삭제되지 않습니다.',
+          '원본은 서버나 Google Drive에 그대로 있고, 기기에 받아 둔 파일만 지워요. 다음에 볼 때 다시 받아요.',
           style: theme.textTheme.bodyMedium?.copyWith(
             height: 1.5,
             color: theme.colorScheme.onSurfaceVariant,
@@ -180,7 +180,7 @@ class _StorageCacheManagementScreenState
           ),
           const SizedBox(height: 10),
           Text(
-            '여기서는 서버나 Google Drive에 있는 원본은 그대로 두고, 기기 안의 보관 파일만 지울 수 있어요.',
+            '서버나 Google Drive에 있는 원본은 그대로 두고, 기기에 받아 둔 파일만 지워요. 기기에만 있는 \'로컬\' 클립은 여기 없어요.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                   height: 1.45,
@@ -194,26 +194,6 @@ class _StorageCacheManagementScreenState
                 ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildWarning(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.tertiaryContainer.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: cs.tertiary.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        '로컬 저장본은 표시되지 않습니다. 이 화면은 원격 클립의 기기 보관분만 정리합니다.',
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.45,
-            ),
       ),
     );
   }
@@ -290,7 +270,8 @@ class _StorageCacheManagementScreenState
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.delete_outline_rounded, size: 18),
-                  label: const Text('캐시 삭제'),
+                  // '캐시'는 앱 안쪽 말이라 무엇이 지워지는지 알기 어려웠다(5차).
+                  label: const Text('기기에서 지우기'),
                 ),
               ),
             ],
@@ -324,8 +305,8 @@ class _StorageCacheManagementScreenState
             children: [
               _buildTopSummary(context),
               const SizedBox(height: AppSpacing.md),
-              _buildWarning(context),
-              const SizedBox(height: AppSpacing.md),
+              // 위 카드와 같은 말을 분홍 상자로 한 번 더 하던 안내는 뺐다(5차).
+              // '로컬 클립은 여기 없다'는 말은 위 카드 설명에 합쳤다.
               if (_isLoading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 48),
