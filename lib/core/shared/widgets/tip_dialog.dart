@@ -84,13 +84,15 @@ class _TipDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // 안내 항목 2
+            // 안내 항목 2. 예전 문구는 '이 기기에만 저장돼요'였는데 지금은 서버·
+            // Google Drive에도 둘 수 있어 틀린 말이 됐다(5차). 사라질 수 있는 건
+            // '로컬' 클립뿐이고, 옮기는 방법을 함께 알려 준다.
             _TipItem(
               icon: Icons.save_alt_rounded,
               color: cs.error,
-              title: '동영상 백업 필수',
+              title: '로컬 클립은 백업해 두세요',
               body:
-                  '편집한 동영상은 이 기기에만 저장돼요. 앱 삭제 또는 기기 초기화 시 영구적으로 삭제될 수 있으니 반드시 백업해 두세요.',
+                  "'로컬'에 둔 클립은 이 기기에만 있어서 앱을 지우거나 기기를 초기화하면 사라져요. 오래 둘 클립은 '저장 위치 바꾸기'로 서버나 Google Drive에 옮기거나, 더보기의 백업으로 내보내 두세요.",
             ),
             const SizedBox(height: AppSpacing.md),
 
