@@ -27,6 +27,18 @@ import 'package:parrokit/core/shared/theme/app_spacing.dart';
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
 
+  /// 다른 화면에서 보관함의 특정 탭(0 문장, 1 클립, 2 단어)을 열어 달라고 할 때 쓴다.
+  /// 예전엔 마지막에 본 탭이 그대로 열려, 학습하기의 '영상 고르기'가 단어 탭으로
+  /// 가곤 했다(5차). 보관함이 이미 떠 있어도 이 값을 보고 탭을 바꾼다.
+  static final ValueNotifier<int?> requestedTab = ValueNotifier<int?>(null);
+
+  /// [tab]을 열도록 요청한다. 다음에 보관함이 만들어질 때도 이 탭으로 시작한다.
+  static void openTab(int tab) {
+    AppConfig.libraryTab = tab;
+    requestedTab.value = null;
+    requestedTab.value = tab;
+  }
+
   @override
   State<CollectionShellScreen> createState() => _CollectionShellScreenState();
 }
@@ -47,6 +59,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       initialIndex: AppConfig.libraryTab,
     );
     _tabController.addListener(_handleTabChanged);
+    CollectionShellScreen.requestedTab.addListener(_handleTabRequest);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -58,6 +71,12 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       clipProvider.startWatchingDistinctTags();
       await clipProvider.setActiveStorageMode(_storageMode);
     });
+  }
+
+  void _handleTabRequest() {
+    final tab = CollectionShellScreen.requestedTab.value;
+    if (tab == null || !mounted || tab == _tabController.index) return;
+    _tabController.animateTo(tab);
   }
 
   void _handleTabChanged() {
@@ -74,6 +93,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
 
   @override
   void dispose() {
+    CollectionShellScreen.requestedTab.removeListener(_handleTabRequest);
     _tabController.removeListener(_handleTabChanged);
     _tabController.dispose();
     super.dispose();

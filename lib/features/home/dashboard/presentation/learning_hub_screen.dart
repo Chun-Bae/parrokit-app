@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
@@ -57,7 +58,12 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             subtitle: Text(subtitle,
                 style: context.texts.bodySmall.copyWith(color: muted)),
             trailing: Icon(Icons.arrow_forward_rounded, color: muted),
-            onTap: () => context.push(path),
+            onTap: () {
+              if (path == AppRoutes.collectionPath) {
+                CollectionShellScreen.openTab(1);
+              }
+              context.push(path);
+            },
           ),
         ),
       );
@@ -155,6 +161,8 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             key: const ValueKey('study-start'),
             onPressed: () async {
               await applyStudyMode(mode);
+              // 영상을 고르는 곳이라 클립 탭을 연다(마지막에 본 탭이 아니라).
+              CollectionShellScreen.openTab(1);
               if (context.mounted) context.push(AppRoutes.collectionPath);
             },
             style: FilledButton.styleFrom(
