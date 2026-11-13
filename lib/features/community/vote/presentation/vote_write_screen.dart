@@ -14,6 +14,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/draft_pop_scope.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -44,6 +45,12 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
 
   // 만료일 선택 (기본 3일)
   int _selectedExpirationDays = 3;
+
+  /// 무엇이든 적었으면 나갈 때 묻는다.
+  bool get _hasDraft =>
+      _titleController.text.trim().isNotEmpty ||
+      _contentController.text.trim().isNotEmpty ||
+      _optionControllers.any((c) => c.text.trim().isNotEmpty);
 
   bool get _isValid {
     if (_titleController.text.trim().isEmpty) return false;
@@ -248,7 +255,9 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final addOptionBorder =
         colorScheme.outlineVariant.withValues(alpha: isDark ? 0.60 : 0.72);
 
-    return Scaffold(
+    return DraftPopScope(
+      hasDraft: _hasDraft,
+      child: Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
@@ -503,6 +512,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

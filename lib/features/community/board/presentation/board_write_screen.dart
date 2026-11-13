@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -43,6 +44,20 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
 
   bool get _hasTitle => _titleController.text.trim().isNotEmpty;
   bool get _hasContent => _contentController.text.trim().isNotEmpty;
+  /// 새 글은 무엇이든 적었으면, 고치는 글은 원래와 달라졌으면 나갈 때 묻는다.
+  bool get _hasDraft {
+    final edit = widget.editPost;
+    if (edit == null) {
+      return _hasTitle || _hasContent || _tags.isNotEmpty || _selectedImages.isNotEmpty;
+    }
+    return _titleController.text != edit.title ||
+        _contentController.text != edit.content ||
+        _selectedBoardTopic != edit.category ||
+        _selectedImages.isNotEmpty ||
+        _existingImageUrls.length != edit.imageUrls.length ||
+        _tags.join('\n') != edit.tags.join('\n');
+  }
+
   bool get _canComplete =>
       _hasTitle && _hasContent && _selectedBoardTopic != null;
 
@@ -220,7 +235,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
 
     // 2. 결과 처리
     if (success && mounted) {
-      Navigator.maybePop(context); // 글쓰기 화면 닫고 메인으로 돌아가기
+      // 저장했으니 쓰던 내용 확인(DraftPopScope)을 거치지 않고 바로 닫는다.
+      Navigator.pop(context);
     } else if (mounted && provider.errorMessage != null) {
       showToast(provider.errorMessage!);
     }
@@ -249,7 +265,9 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     final contentFieldHeight =
         _hasContent ? contentBaseHeight + tipAreaHeight : contentBaseHeight;
 
-    return Stack(
+    return DraftPopScope(
+      hasDraft: _hasDraft,
+      child: Stack(
       children: [
         Scaffold(
           backgroundColor: colorScheme.surface,
@@ -661,6 +679,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
             ),
           ),
       ],
+    ),
     );
   }
 }

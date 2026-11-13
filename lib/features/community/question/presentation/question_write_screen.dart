@@ -11,6 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -37,6 +38,10 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
   int _rewardCrackers = 100;
   int _deadlineDays = 3;
   bool _isSubmitting = false;
+
+  bool get _hasDraft =>
+      _titleController.text.trim().isNotEmpty ||
+      _contentController.text.trim().isNotEmpty;
 
   bool get _isValid =>
       _titleController.text.trim().isNotEmpty &&
@@ -114,7 +119,9 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     final valueTextStyle =
         context.texts.titleMedium.copyWith(color: context.tokens.textPrimary);
 
-    return Scaffold(
+    return DraftPopScope(
+      hasDraft: _hasDraft,
+      child: Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
@@ -305,6 +312,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
