@@ -32,8 +32,14 @@ class LibraryEntitySyncCoordinator {
   LibraryEntitySyncCoordinator(
     this.db,
     this.remoteSyncDatasource,
-    this.remoteDocIdResolver,
-  );
+    this.remoteDocIdResolver, {
+    String? Function()? currentUid,
+  }) : _currentUid =
+            currentUid ?? (() => fb.FirebaseAuth.instance.currentUser?.uid);
+
+  /// 지금 로그인한 계정 uid. 테스트에서 FirebaseAuth 없이 서버 경로를 돌리려고
+  /// 바꿔 끼울 수 있다(5차 9번). 앱에서는 기본값(FirebaseAuth)을 쓴다.
+  final String? Function() _currentUid;
 
   static const _kindGroups = 'groups';
   static const _kindCollections = 'collections';
@@ -346,7 +352,14 @@ class LibraryEntitySyncCoordinator {
     required String storageMode,
   }) async {
     final byRemoteId = await db.groupsDao.findByRemoteId(remoteId);
-    if (byRemoteId != null) return (byRemoteId.id, false);
+    if (byRemoteId != null) {
+      // 다른 기기에서 이름을 바꿨으면 서버 이름을 따른다(5차 9번). 예전엔
+      // 이미 받은 그룹은 이름을 그대로 둬서 바꾼 이름이 퍼지지 않았다.
+      if (byRemoteId.name != name) {
+        await db.groupsDao.updateName(byRemoteId.id, name);
+      }
+      return (byRemoteId.id, false);
+    }
 
     final unsynced = await db.groupsDao.findByNameAndStorageMode(name, storageMode);
     if (unsynced != null && unsynced.remoteId == null) {
@@ -364,7 +377,14 @@ class LibraryEntitySyncCoordinator {
     required String storageMode,
   }) async {
     final byRemoteId = await db.collectionsDao.findByRemoteId(remoteId);
-    if (byRemoteId != null) return (byRemoteId.id, false);
+    if (byRemoteId != null) {
+      // 폴더(컬렉션)도 같다. '여행' → '해외여행'이면 하위 '여행/일본'도 서버에서
+      // 각자 바뀐 이름으로 오므로 여기서 하나씩 맞춰진다.
+      if (byRemoteId.name != name) {
+        await db.collectionsDao.updateName(byRemoteId.id, name);
+      }
+      return (byRemoteId.id, false);
+    }
 
     final unsynced = await db.collectionsDao.findByNameAndStorageMode(name, storageMode);
     if (unsynced != null && unsynced.remoteId == null) {
@@ -397,7 +417,7 @@ class LibraryEntitySyncCoordinator {
     required Map<String, dynamic> fields,
   }) async {
     if (storageMode == ClipStorageConstants.storageModeServer) {
-      final uid = fb.FirebaseAuth.instance.currentUser?.uid;
+      final uid = _currentUid();
       if (uid == null) return;
       await remoteSyncDatasource.upsertServerEntity(
         uid: uid,
@@ -420,7 +440,7 @@ class LibraryEntitySyncCoordinator {
     required String remoteId,
   }) async {
     if (storageMode == ClipStorageConstants.storageModeServer) {
-      final uid = fb.FirebaseAuth.instance.currentUser?.uid;
+      final uid = _currentUid();
       if (uid == null) return;
       await remoteSyncDatasource.deleteServerEntity(uid: uid, kind: kind, remoteId: remoteId);
     } else if (storageMode == ClipStorageConstants.storageModeGoogleDrive) {
