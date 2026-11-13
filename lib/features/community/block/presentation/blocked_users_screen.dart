@@ -110,15 +110,23 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                FilledButton(
-                  onPressed: blockProvider.isLoading ? null : _handleBlock,
-                  child: blockProvider.isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('차단'),
+                // 빈 칸에서 눌러도 아무 반응이 없었다(5차). 닉네임을 넣어야 켜진다.
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _identifierController,
+                  builder: (context, value, _) => FilledButton(
+                    key: const ValueKey('block-submit'),
+                    onPressed:
+                        blockProvider.isLoading || value.text.trim().isEmpty
+                            ? null
+                            : _handleBlock,
+                    child: blockProvider.isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('차단'),
+                  ),
                 ),
               ],
             ),

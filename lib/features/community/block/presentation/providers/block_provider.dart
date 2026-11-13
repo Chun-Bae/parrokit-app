@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/features/community/block/data/repositories/block_repository_impl.dart';
@@ -47,8 +49,9 @@ class BlockProvider extends ChangeNotifier {
       _blockedUsers
         ..clear()
         ..addAll(users);
-    } catch (e) {
-      _errorMessage = e.toString();
+    } catch (e, st) {
+      AppLogger.e('차단 목록 불러오기 실패', error: e, stackTrace: st);
+      _errorMessage = userErrorMessage(e, fallback: '차단 목록을 불러오지 못했어요.');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -99,8 +102,10 @@ class BlockProvider extends ChangeNotifier {
       );
       await loadBlockedUsers();
       return true;
-    } catch (e) {
-      _errorMessage = e.toString();
+    } catch (e, st) {
+      // 예외 원문(e.toString())을 토스트에 그대로 띄웠다(5차).
+      AppLogger.e('차단·차단 해제 실패', error: e, stackTrace: st);
+      _errorMessage = userErrorMessage(e, fallback: '처리하지 못했어요. 다시 시도해 주세요.');
       return false;
     } finally {
       _isLoading = false;
@@ -139,8 +144,10 @@ class BlockProvider extends ChangeNotifier {
       );
       await loadBlockedUsers();
       return true;
-    } catch (e) {
-      _errorMessage = e.toString();
+    } catch (e, st) {
+      // 예외 원문(e.toString())을 토스트에 그대로 띄웠다(5차).
+      AppLogger.e('차단·차단 해제 실패', error: e, stackTrace: st);
+      _errorMessage = userErrorMessage(e, fallback: '처리하지 못했어요. 다시 시도해 주세요.');
       return false;
     } finally {
       _isLoading = false;
@@ -172,8 +179,10 @@ class BlockProvider extends ChangeNotifier {
       );
       await loadBlockedUsers();
       return true;
-    } catch (e) {
-      _errorMessage = e.toString();
+    } catch (e, st) {
+      // 예외 원문(e.toString())을 토스트에 그대로 띄웠다(5차).
+      AppLogger.e('차단·차단 해제 실패', error: e, stackTrace: st);
+      _errorMessage = userErrorMessage(e, fallback: '처리하지 못했어요. 다시 시도해 주세요.');
       return false;
     } finally {
       _isLoading = false;
