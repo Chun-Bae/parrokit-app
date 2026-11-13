@@ -2,6 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/notification/domain/entities/community_notification_item.dart';
 import 'community_notification_chip.dart';
 
+/// 예전 서버 문구의 게시판 이름을 지금 이름으로 바꿔 보여준다.
+///
+/// 서버 함수는 99813053에서 '일반' → '게시판'으로 고쳤지만, 그 전에 만들어져
+/// 저장된 알림은 "일반에 새 댓글이 달렸어요"를 그대로 들고 있다. 탭과 칩은
+/// '게시판'이라 같은 알림 안에서 이름이 달라 보였다. 저장된 값은 건드리지 않고
+/// 보여줄 때만 바꾼다. 게시판 글 알림에서만, 서버가 쓰던 꼴('일반에 ', '일반의 ')만
+/// 바꾼다(닉네임 등 다른 곳의 '일반'은 그대로).
+String displayNotificationText(String text, String boardType) {
+  if (boardType != 'board') return text;
+  return text.replaceAll('일반에 ', '게시판에 ').replaceAll('일반의 ', '게시판의 ');
+}
+
 class CommunityNotificationTile extends StatelessWidget {
   final CommunityNotificationItem item;
   final VoidCallback onTap;
@@ -38,7 +50,10 @@ class CommunityNotificationTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            item.title.isEmpty ? '새 알림' : item.title,
+                            item.title.isEmpty
+                                ? '새 알림'
+                                : displayNotificationText(
+                                    item.title, item.boardType),
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: item.isRead ? FontWeight.w500 : FontWeight.w700,
                               color: colorScheme.onSurface,
@@ -51,7 +66,7 @@ class CommunityNotificationTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      item.body,
+                      displayNotificationText(item.body, item.boardType),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
