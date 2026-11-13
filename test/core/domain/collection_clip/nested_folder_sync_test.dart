@@ -12,6 +12,10 @@ import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_detai
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_firestore_metadata_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_remote_library_sync_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_source_ref_datasource.dart';
+import 'package:parrokit/core/domain/collection_clip/data/repositories/clip_repository_impl.dart';
+import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_thumbnail_datasource.dart';
+import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_item_query_datasource.dart';
+import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_file_sync_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/collection_group_mirror_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/library_entity_remote_sync_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/library_entity_sync_coordinator.dart';
@@ -266,5 +270,43 @@ void main() {
         await mirror.mirrorCollectionForClip(
             currentCollectionId: server.id, destinationStorageMode: 'local'),
         newId);
+  });
+
+  test('하위 폴더의 마지막 클립을 지우면 그 폴더만 정리되고 위·옆 폴더는 남는다', () async {
+    final drive = GoogleDriveStorageService();
+    final sourceRef = ClipSourceRefDatasource(db, drive);
+    final thumbs = ClipThumbnailDatasource(db, sourceRef, drive);
+    final repo = ClipRepositoryImpl(
+      db: db,
+      sourceRefDatasource: sourceRef,
+      thumbnailDatasource: thumbs,
+      fileSyncDatasource: ClipFileSyncDatasource(db, sourceRef, drive),
+      itemQueryDatasource: ClipItemQueryDatasource(db, sourceRef, thumbs),
+      firestoreMetadataDatasource:
+          ClipFirestoreMetadataDatasource(db, firestore: firestore),
+      libraryEntitySyncCoordinator: coordinatorFor(db),
+    );
+    Future<int> clipIn(String folder) async {
+      final c = await db.collectionsDao.findOrCreate(folder, 'local');
+      return db.into(db.clips).insert(ClipsCompanion.insert(
+            collectionId: Value(c.id),
+            title: folder,
+            filePath: '',
+            durationMs: 1000,
+          ));
+    }
+
+    await clipIn('여행');
+    final osaka = await clipIn('여행/일본/오사카');
+    await clipIn('여행/일본');
+    await clipIn('여행/중국');
+
+    expect(await repo.deleteClipById(osaka), isTrue);
+
+    final names = (await db.select(db.collections).get()).map((c) => c.name).toSet();
+    expect(names, {'여행', '여행/일본', '여행/중국'});
+    final (roots, byPath) = await treeFromDb();
+    expect(roots.single.totalCount, 3);
+    expect(byPath['여행/일본']!.children, isEmpty);
   });
 }
