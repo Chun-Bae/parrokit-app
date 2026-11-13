@@ -201,8 +201,30 @@ GoRouter buildAppRouter({
 // ─────────────────────────────────────────────────────────────────────────────
 
 String? _handleRedirect(BuildContext context, GoRouterState state) {
-  final uri = state.uri;
-  final loc = uri.toString();
+  final user = Provider.of<UserProvider>(context, listen: false);
+  return authRedirectFor(
+    location: state.uri.toString(),
+    loggedIn: user.isLoggedIn,
+    hasNickname: user.currentUser?.displayName?.isNotEmpty ?? false,
+  );
+}
+
+/// 화면 이동 가드. [location]으로 가려 할 때 보낼 곳, 그대로 두면 null.
+///
+/// 판단만 떼어 낸 것으로 동작은 예전 _handleRedirect와 같다(5차 8번: 테스트를
+/// 붙이려고 뺐다).
+/// 1. '/'는 홈(대시보드)으로.
+/// 2. 로그인 전에는 로그인·소개 화면 말고는 로그인 화면으로.
+/// 3. 로그인했는데 닉네임이 없으면 온보딩으로, 닉네임이 있는데 온보딩·로그인
+///    화면에 있으면 홈으로.
+/// 4. '/auth'만 치면 로그인 화면으로.
+@visibleForTesting
+String? authRedirectFor({
+  required String location,
+  required bool loggedIn,
+  required bool hasNickname,
+}) {
+  final loc = location;
 
   // 0) 앱 루트('/') → 대시보드로
   if (loc == '/') {
@@ -210,18 +232,15 @@ String? _handleRedirect(BuildContext context, GoRouterState state) {
   }
 
   // 2) Auth guard
-  final user = Provider.of<UserProvider>(context, listen: false);
   final isOnAuth = loc.startsWith(AppRoutes.authPath);
   final isOnIntro = loc.startsWith(AppRoutes.introPath);
 
-  if (!user.isLoggedIn && !isOnAuth && !isOnIntro) {
+  if (!loggedIn && !isOnAuth && !isOnIntro) {
     return '${AppRoutes.authPath}/${AppRoutes.signInPath}';
   }
 
   // 3) 닉네임 체크 방어막 (로그인 상태)
-  if (user.isLoggedIn) {
-    final hasNickname = user.currentUser?.displayName != null &&
-        user.currentUser!.displayName!.isNotEmpty;
+  if (loggedIn) {
     final isOnOnboarding = loc == AppRoutes.onboardingPath;
 
     // 닉네임이 없는데 온보딩 화면이 아니면 -> 강제로 온보딩 이동
