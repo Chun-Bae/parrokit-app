@@ -86,18 +86,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
 
   static const categories = ['전체', '일상', '여행', '카페', '감정', '회사', '학교'];
 
-  /// 문장팩 목록. 카드 배경이 밝기에 따라 달라져서 context가 필요하다.
-  static List<_SentencePack> packsOf(BuildContext context) {
-    final tints = context.collectionTokens;
-    return [
-      _SentencePack(
-          '카페에서 바로 쓰는 말', '8문장 · 입문', Icons.local_cafe_rounded, tints.cream),
-      _SentencePack(
-          '짧은 일상 반응', '12문장 · 초급', Icons.chat_bubble_rounded, tints.mint),
-      _SentencePack('여행 첫날 표현', '10문장 · 초급', Icons.luggage_rounded, tints.sky),
-    ];
-  }
-
   @override
   void initState() {
     super.initState();
@@ -626,28 +614,13 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
             ),
             const SizedBox(height: 24),
             if (explore) ...[
-              // 흐린 '전체' 버튼은 뺐다(5차). 전체 목록 화면이 없어 눌러도
-              // 아무 일이 없었다(원칙 5). 화면이 생기면 trailing으로 붙인다.
-              const _SectionTitle(
-                  title: 'Parrokit 제공', subtitle: '계속 추가되는 문장 묶음'),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 148,
-                child: Builder(builder: (context) {
-                  final packs = packsOf(context);
-                  return ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: packs.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (context, index) =>
-                        _PackCard(pack: packs[index]),
-                  );
-                }),
-              ),
-              const SizedBox(height: 28),
+              // 'Parrokit 제공' 문장 묶음 카드 셋은 뺐다(5차). '8문장 · 입문'처럼
+              // 보였지만 내용이 없는 자리표시라 눌러도 아무 일이 없었다(원칙 5).
+              // 실제 묶음이 생기면 이 자리에 다시 붙인다.
               _SectionTitle(
                   title: '공유된 문장',
-                  subtitle: '다른 사람이 공유한 문장을 저장해서 연습해요',
+                  // 오른쪽 인기·최신 칩에 밀려 '연습해/요'로 꺾여서 줄였다(5차).
+                  subtitle: '저장해서 내 문장으로 연습해요',
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     for (final (popular, label) in [
                       (true, '인기'),
@@ -846,48 +819,6 @@ class _SectionTitle extends StatelessWidget {
         ])),
         if (trailing != null) trailing!,
       ]);
-}
-
-class _PackCard extends StatelessWidget {
-  const _PackCard({required this.pack});
-
-  final _SentencePack pack;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 174,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-            color: pack.color,
-            borderRadius: BorderRadius.circular(AppRadius.xl)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            // 배경을 흰색으로 고정해 두면 다크에서 글자(흰색)가 묻혀 빈 알약만
-            // 보였다. 표면색을 깔고 그 위 글자색을 쓴다. 라이트에서는 전과 같다.
-            Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surface
-                        .withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(AppRadius.xl)),
-                child: Text('공식',
-                    style: context.texts.labelSmall.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface))),
-            Icon(pack.icon, size: 23, color: context.collectionTokens.skyInk),
-          ]),
-          const Spacer(),
-          Text(pack.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: context.texts.bodyLarge),
-          const SizedBox(height: 5),
-          Text(pack.detail,
-              style: context.texts.labelSmall
-                  .copyWith(color: context.collectionTokens.tintLabel)),
-        ]),
-      );
 }
 
 class _SentenceCard extends StatelessWidget {
@@ -2122,14 +2053,6 @@ class _ActivityCountCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SentencePack {
-  const _SentencePack(this.title, this.detail, this.icon, this.color);
-  final String title;
-  final String detail;
-  final IconData icon;
-  final Color color;
 }
 
 class _SharedMessage extends StatelessWidget {
