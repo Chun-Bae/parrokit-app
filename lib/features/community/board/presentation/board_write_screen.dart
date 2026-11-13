@@ -262,6 +262,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                   child: Row(
                     children: [
                       IconButton(
+                        tooltip: '닫기',
                         onPressed: () => Navigator.maybePop(context),
                         icon: Icon(Icons.close,
                             size: 34, color: colorScheme.onSurface),

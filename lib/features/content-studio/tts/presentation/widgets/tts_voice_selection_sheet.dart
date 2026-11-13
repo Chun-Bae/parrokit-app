@@ -310,6 +310,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
                             ),
                           ),
                           leading: IconButton(
+                            tooltip: '목소리 미리 듣기',
                             onPressed: isLoading
                                 ? null
                                 : () => _onPreviewTap(entry.voiceId),

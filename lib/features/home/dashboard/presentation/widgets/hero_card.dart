@@ -108,6 +108,7 @@ class HeroCard extends StatelessWidget {
 
           // 화살표 버튼
           IconButton(
+            tooltip: '열기',
             onPressed: onTap,
             icon: const Icon(Icons.arrow_forward_rounded),
             splashRadius: 22,

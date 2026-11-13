@@ -260,6 +260,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
               context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
         leading: IconButton(
+          tooltip: '닫기',
           onPressed: () => Navigator.maybePop(context),
           icon:
               Icon(Icons.close_rounded, size: 28, color: colorScheme.onSurface),
@@ -448,6 +449,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                               ),
                               if (_optionControllers.length > 2)
                                 IconButton(
+                                  tooltip: '항목 빼기',
                                   icon: Icon(
                                       Icons.remove_circle_outline_rounded,
                                       color: context.tokens.danger,

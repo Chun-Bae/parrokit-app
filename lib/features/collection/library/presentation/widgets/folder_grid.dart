@@ -50,6 +50,7 @@ class FolderGrid extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w800)),
               if (onToggleView != null)
                 IconButton(
+                  tooltip: isGridView ? '목록으로 보기' : '격자로 보기',
                   onPressed: onToggleView,
                   icon: Icon(isGridView
                       ? Icons.view_list_rounded

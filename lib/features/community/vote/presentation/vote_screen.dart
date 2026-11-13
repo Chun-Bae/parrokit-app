@@ -594,6 +594,7 @@ class VoteCard extends StatelessWidget {
                 const Spacer(),
                 if (showMoreButton)
                   IconButton(
+                    tooltip: '투표 옵션',
                     icon: const Icon(Icons.more_vert_rounded, size: 22),
                     color: cs.onSurfaceVariant,
                     onPressed: onMorePressed,

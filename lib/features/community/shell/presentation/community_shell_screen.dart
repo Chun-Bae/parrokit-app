@@ -193,6 +193,7 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                     clipBehavior: Clip.none,
                     children: [
                       IconButton(
+                        tooltip: '알림',
                         icon: Icon(Icons.notifications_none,
                             color: colorScheme.onSurface),
                         onPressed: () =>
@@ -225,6 +226,7 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                 },
               ),
               IconButton(
+                tooltip: '커뮤니티 메뉴',
                 icon: Icon(Icons.menu, color: colorScheme.onSurface),
                 onPressed: () => context.push(AppRoutes.communityMenuPath),
               ),

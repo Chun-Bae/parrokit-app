@@ -53,6 +53,7 @@ class _CommunityNotificationScreenState
             elevation: 0,
             centerTitle: true,
             leading: IconButton(
+              tooltip: '뒤로',
               onPressed: () => Navigator.of(context).pop(),
               icon: Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -76,6 +77,7 @@ class _CommunityNotificationScreenState
                     size: 24, color: context.tokens.textPrimary),
               ),
               IconButton(
+                tooltip: '알림 옵션',
                 onPressed: provider.hasNotifications
                     ? () => _showNotificationActionsSheet(context, provider)
                     : null,

@@ -247,6 +247,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                   child: IgnorePointer(
                     ignoring: !vm.overlayVisible,
                     child: IconButton(
+                      tooltip: '전체 화면 끝내기',
                       icon: const Icon(Icons.fullscreen_exit),
                       color: Colors.white,
                       onPressed: vm.toggleFullscreen,
@@ -270,6 +271,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                       return Transform.rotate(
                         angle: isPortrait ? math.pi / 2 : 0.0,
                         child: IconButton(
+                          tooltip: '전체 화면 닫기',
                           icon: const Icon(Icons.close),
                           color: Colors.white,
                           onPressed: vm.toggleFullscreen,
@@ -490,6 +492,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
             child: IgnorePointer(
               ignoring: !vm.overlayVisible,
               child: IconButton(
+                tooltip: vm.isFullscreen ? '전체 화면 끝내기' : '전체 화면',
                 icon: Icon(
                   vm.isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
                 ),

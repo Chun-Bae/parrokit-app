@@ -126,6 +126,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
               context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
         leading: IconButton(
+          tooltip: '닫기',
           onPressed: () => Navigator.maybePop(context),
           icon: Icon(
             Icons.close_rounded,

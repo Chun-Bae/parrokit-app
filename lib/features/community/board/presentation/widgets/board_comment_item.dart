@@ -224,6 +224,7 @@ class BoardCommentItem extends StatelessWidget {
           ),
           if (!isDeleted && !isBlocked)
             IconButton(
+              tooltip: '댓글 옵션',
               onPressed: onMore,
               icon: Icon(Icons.more_vert_rounded,
                   color: context.tokens.textDisabled, size: 20),

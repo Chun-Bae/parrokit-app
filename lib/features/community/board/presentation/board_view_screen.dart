@@ -273,6 +273,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
               child: Row(
                 children: [
                   IconButton(
+                    tooltip: '뒤로',
                     onPressed: () => Navigator.maybePop(context),
                     icon:
                         const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
@@ -281,6 +282,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                   // 글별 알림 끄기 버튼은 뺐다(5차). 기능이 없어 흐린 종 아이콘만
                   // 있었고, 글자도 없어 무엇인지 알 수 없었다(원칙 3·5).
                   IconButton(
+                    tooltip: '글 옵션',
                     onPressed: () => _showPostOptionsSheet(post),
                     icon: const Icon(Icons.more_vert_rounded, size: 24),
                   ),

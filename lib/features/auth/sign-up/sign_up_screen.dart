@@ -127,6 +127,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: context.tokens.textPrimary),
           onPressed: () => context.pop(),

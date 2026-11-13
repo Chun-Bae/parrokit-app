@@ -34,6 +34,7 @@ class AvatarSelectionSheet extends StatelessWidget {
               ),
               const Spacer(),
               IconButton(
+                tooltip: '닫기',
                 icon: const Icon(Icons.close),
                 onPressed: () => context.pop(),
               ),

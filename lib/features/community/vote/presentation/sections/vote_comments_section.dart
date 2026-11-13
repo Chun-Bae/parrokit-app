@@ -155,6 +155,7 @@ class VoteCommentsSection extends StatelessWidget {
                       if (!isBlocked) ...[
                         const SizedBox(width: 4),
                         IconButton(
+                          tooltip: '댓글 옵션',
                           icon: const Icon(Icons.more_vert_rounded, size: 18),
                           color: context.tokens.textTertiary,
                           onPressed: () =>

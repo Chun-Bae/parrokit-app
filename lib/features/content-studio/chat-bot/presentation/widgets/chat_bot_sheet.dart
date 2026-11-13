@@ -644,6 +644,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                 ),
                         ),
                         child: IconButton(
+                          tooltip: '보내기',
                           icon: Icon(
                             Icons.send_rounded,
                             color: _hasText

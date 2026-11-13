@@ -171,6 +171,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
+          tooltip: '뒤로',
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: colorScheme.onSurface, size: 20),
           onPressed: () => Navigator.maybePop(context),
@@ -379,6 +380,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       if (!isBlocked) ...[
                         const SizedBox(width: 4),
                         IconButton(
+                          tooltip: '댓글 옵션',
                           icon: const Icon(Icons.more_vert_rounded, size: 18),
                           color: colorScheme.onSurfaceVariant,
                           onPressed: () => _showCommentOptionsSheet(comment),
@@ -654,6 +656,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
+                  tooltip: '보내기',
                   icon: Icon(
                     Icons.send_rounded,
                     color: _canSubmitComment

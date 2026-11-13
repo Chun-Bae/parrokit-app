@@ -113,6 +113,7 @@ class VoteStickyCommentBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
+                  tooltip: '보내기',
                   icon: Icon(
                     Icons.send_rounded,
                     color: canSubmit

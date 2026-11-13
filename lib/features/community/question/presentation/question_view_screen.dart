@@ -281,6 +281,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
+        tooltip: '뒤로',
         icon: Icon(Icons.arrow_back_ios_new_rounded,
             color: colorScheme.onSurface, size: 20),
         onPressed: () => Navigator.maybePop(context),
@@ -425,6 +426,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 ),
               const SizedBox(width: 4),
               IconButton(
+                tooltip: '질문 옵션',
                 icon: const Icon(Icons.more_vert_rounded),
                 color: colorScheme.onSurfaceVariant,
                 onPressed: () => _showQuestionOptionsSheet(question),
@@ -655,6 +657,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                               .copyWith(color: colorScheme.onSurfaceVariant)),
                       const SizedBox(width: 4),
                       IconButton(
+                        tooltip: '답변 옵션',
                         icon: const Icon(Icons.more_vert_rounded, size: 18),
                         color: colorScheme.onSurfaceVariant,
                         onPressed: () =>
@@ -714,6 +717,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       Row(
                         children: [
                           IconButton(
+                            tooltip: '좋아요',
                               icon: Icon(
                                   // 답변(댓글) 좋아요는 하트(투표 댓글과 같게).
                                   provider.likedCommentIds.contains(answer.id)
@@ -740,6 +744,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                   color: colorScheme.onSurfaceVariant)),
                           const SizedBox(width: 12),
                           IconButton(
+                            tooltip: '답글 쓰기',
                             icon: Icon(Icons.mode_comment_outlined,
                                 size: 18, color: context.tokens.textSecondary),
                             onPressed: () {
