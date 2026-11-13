@@ -65,4 +65,11 @@ void main() {
     expect(shown(), 3);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  test('최고 점수 꼬리말은 0%면 붙이지 않는다', () {
+    expect(bestScoreLabel(null), '');
+    expect(bestScoreLabel(0), '');
+    expect(bestScoreLabel(0.004), '');
+    expect(bestScoreLabel(0.86), ' · 최고 86%');
+  });
 }

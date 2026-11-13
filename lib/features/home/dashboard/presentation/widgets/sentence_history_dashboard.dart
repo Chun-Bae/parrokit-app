@@ -320,7 +320,7 @@ class _HistoryRow extends StatelessWidget {
         ? '들은 ${item.activity.listenCount}회 · 따라 말하기 ${item.activity.practiceCount}회'
         : '${last == null ? '' : '${relativeDayLabel(DateTime.now(), last)} · '}'
             '따라 말하기 ${item.activity.practiceCount}회'
-            '${bestScore == null ? '' : ' · 최고 ${(bestScore! * 100).round()}%'}';
+            '${bestScoreLabel(bestScore)}';
     return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(children: [
@@ -350,4 +350,13 @@ class _HistoryRow extends StatelessWidget {
                   .copyWith(color: masteryTextColor(context, item.mastery))),
         ]));
   }
+}
+
+/// 최근 문장 줄의 최고 점수 꼬리말. 점수가 0이면(아무것도 알아듣지 못한 시도만
+/// 있으면) 실패처럼 보이는 '최고 0%' 대신 붙이지 않는다(5차).
+@visibleForTesting
+String bestScoreLabel(double? bestScore) {
+  if (bestScore == null) return '';
+  final percent = (bestScore * 100).round();
+  return percent <= 0 ? '' : ' · 최고 $percent%';
 }
