@@ -1288,7 +1288,8 @@ class _ExploreStrip extends StatelessWidget {
           TextButton(
             key: const ValueKey('open-explore'),
             onPressed: onViewAll,
-            child: const Text('전체'),
+            // 바로 위 카테고리 칩 '전체'와 같은 말이라 헷갈렸다. 홈과 같은 말로(5차).
+            child: const Text('전체 보기'),
           ),
         ]),
         const SizedBox(height: 6),
@@ -1880,7 +1881,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 Expanded(
                   child: _ActivityCountCard(
                     icon: Icons.headphones_rounded,
-                    label: '내가 들음',
+                    // 홈 '내 문장 기록'과 같은 말·단위로(5차). 예전 '0번 내가 들음'.
+                    label: '듣기',
                     count: activity.listenCount,
                     loading: loading,
                   ),
@@ -1889,7 +1891,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 Expanded(
                   child: _ActivityCountCard(
                     icon: Icons.mic_rounded,
-                    label: '내가 연습함',
+                    label: '따라 말하기',
                     count: activity.practiceCount,
                     loading: loading,
                   ),
@@ -2040,7 +2042,7 @@ class _ActivityCountCard extends StatelessWidget {
           Icon(icon, size: 20, color: colors.primary),
           const SizedBox(height: 12),
           Text(
-            loading ? '—' : '$count번',
+            loading ? '—' : '$count회',
             style: context.texts.headlineSmall,
           ),
           const SizedBox(height: 3),

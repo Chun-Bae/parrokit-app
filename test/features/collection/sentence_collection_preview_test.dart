@@ -231,8 +231,8 @@ void main() {
     // 저장하지 않은 남의 문장에는 내 친밀도·들은 횟수·연습 기록이 보이지 않는다.
     expect(find.byKey(const ValueKey('private-section')), findsNothing);
     expect(find.byKey(const ValueKey('sentence-affinity')), findsNothing);
-    expect(find.text('내가 들음'), findsNothing);
-    expect(find.text('내가 연습함'), findsNothing);
+    expect(find.text('듣기'), findsNothing);
+    expect(find.text('따라 말하기'), findsNothing);
     // 대신 내 문장으로 가져오는 버튼이 보이고, 누르면 저장된다.
     expect(find.byKey(const ValueKey('save-shared-sentence')), findsOneWidget);
     await tester
@@ -277,7 +277,7 @@ void main() {
     expect(find.byKey(const ValueKey('like-sentence')), findsOneWidget);
     expect(find.text('홈 말하기 루틴'), findsOneWidget);
     expect(find.byKey(const ValueKey('private-section')), findsOneWidget);
-    expect(find.text('내가 들음'), findsOneWidget);
+    expect(find.text('듣기'), findsOneWidget);
     // 기본 문장은 내가 등록한 문장이 아니라 공유할 수 없고, 이유를 알려준다.
     expect(find.byKey(const ValueKey('publish-sentence')), findsNothing);
     await tester
