@@ -451,14 +451,26 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   _addWord(context);
                 },
               ),
+              // TTS·영상 만들기는 예전엔 '콘텐츠 제작' 한 줄 안에 숨어 있어 없어진
+              // 줄 알았다(5차, 사용자 의견). 바로 보이게 따로 둔다. 자막 만들기는
+              // 위 '클립 추가'와 같은 화면이다. 허브 안에서 세 탭을 오갈 수 있고,
+              // push로 열어 나가면 보관함으로 돌아온다.
               _AddMaterialTile(
-                icon: Icons.auto_awesome_rounded,
-                title: '콘텐츠 제작',
-                subtitle: '자막, TTS, 영상을 직접 만들어요',
+                icon: Icons.graphic_eq_rounded,
+                title: 'TTS 음성 만들기',
+                subtitle: '문장을 읽어 주는 음성을 만들어요',
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  // push로 열어야 뒤로가기가 보관함으로 돌아온다.
-                  context.push(AppRoutes.contentStudioBridgePath);
+                  context.push('${AppRoutes.contentStudioHubPath}?tab=1');
+                },
+              ),
+              _AddMaterialTile(
+                icon: Icons.movie_creation_outlined,
+                title: '영상 만들기',
+                subtitle: '대본으로 짧은 영상을 만들어요',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push('${AppRoutes.contentStudioHubPath}?tab=2');
                 },
               ),
             ],
