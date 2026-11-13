@@ -9,6 +9,7 @@ import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
+import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -81,7 +82,23 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
   @override
   Widget build(BuildContext context) {
     final muted = HomeTokens.of(context).muted;
-    return Scaffold(
+    // 원문·뜻·발음 중 하나라도 적었으면 나갈 때 묻는다(5차). 예전엔 뒤로 한 번에
+    // 사라졌다. 추가에 성공하면 Navigator.pop으로 바로 닫혀 묻지 않는다.
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        controller.text,
+        controller.translation,
+        controller.pronunciation,
+      ]),
+      builder: (context, child) => DraftPopScope(
+        hasDraft: [
+          controller.text,
+          controller.translation,
+          controller.pronunciation,
+        ].any((c) => c.text.trim().isNotEmpty),
+        child: child!,
+      ),
+      child: Scaffold(
       appBar: AppBar(title: const Text('문장 추가')),
       // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
       bottomNavigationBar: SafeArea(
@@ -174,6 +191,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

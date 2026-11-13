@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/theme/app_theme.dart';
-import 'package:parrokit/features/community/shared/presentation/widgets/draft_pop_scope.dart';
+import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 
 void main() {
   Future<void> openWriter(WidgetTester tester, {required bool hasDraft}) async {

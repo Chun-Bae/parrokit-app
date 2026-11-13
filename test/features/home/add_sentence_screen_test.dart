@@ -120,4 +120,37 @@ void main() {
             .onPressed,
         isNull);
   });
+
+  testWidgets('원문을 적고 뒤로 가면 버릴지 묻고, 비어 있으면 바로 닫힌다', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+        builder: (context) => TextButton(
+          onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                  builder: (_) => const AddSentenceScreen(language: '영어'))),
+          child: const Text('열기'),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('쓰던 내용을 버릴까요?'), findsNothing);
+    expect(find.text('열기'), findsOneWidget);
+
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('sentence-text')), 'Hello');
+    await tester.pump();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('쓰던 내용을 버릴까요?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('draft-discard')));
+    await tester.pumpAndSettle();
+    expect(find.text('열기'), findsOneWidget);
+  });
 }

@@ -11,7 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:parrokit/features/community/shared/presentation/widgets/draft_pop_scope.dart';
+import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';

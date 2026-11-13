@@ -27,7 +27,7 @@ Future<bool> confirmDiscardDraft(BuildContext context) async {
   return discard ?? false;
 }
 
-/// 커뮤니티 글쓰기 화면(게시판·질문·투표)을 감싼다. 쓰던 내용이 있으면 닫기(X)·
+/// 글쓰기 화면(커뮤니티 게시판·질문·투표, 문장 추가)을 감싼다. 쓰던 내용이 있으면 닫기(X)·
 /// 뒤로·밀어서 닫기 때 한 번 묻는다(5차). 예전엔 X 한 번에 쓰던 글이 사라졌다.
 ///
 /// 저장에 성공해 닫을 때는 Navigator.pop을 바로 부른다(이 확인을 거치지 않는다).
