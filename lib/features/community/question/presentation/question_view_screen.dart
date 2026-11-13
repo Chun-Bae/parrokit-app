@@ -661,10 +661,39 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               children: [
                 Row(
                   children: [
-                    Text(isBlocked ? '차단한 사용자' : answererName,
-                        style: context.texts.bodyLarge
-                            .copyWith(color: colorScheme.onSurface)),
-                    const Spacer(),
+                    // 긴 닉네임이 시간·메뉴를 밀어내지 않게 줄인다. 이름과 표시를
+                    // 한 Expanded에 넣어 시간·메뉴는 오른쪽 끝에 둔다.
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                                isBlocked ? '차단한 사용자' : answererName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.texts.bodyLarge
+                                    .copyWith(color: colorScheme.onSurface)),
+                          ),
+                          // 질문한 사람이 단 답글인지 알 수 없었다(5차). 게시판·
+                          // 투표의 '작성자'처럼 표시한다.
+                          if (!isBlocked &&
+                              answer.authorId == question.authorId) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              key: ValueKey('question-asker-${answer.id}'),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                  color: context.tokens.primarySoft,
+                                  borderRadius: BorderRadius.circular(6)),
+                              child: Text('질문자',
+                                  style: context.texts.labelSmall
+                                      .copyWith(color: context.tokens.primary)),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                     if (!isBlocked) ...[
                       Text(formatCommunityTimeAgo(answer.createdAt),
                           style: context.texts.bodySmall

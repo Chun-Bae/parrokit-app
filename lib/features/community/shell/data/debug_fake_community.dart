@@ -144,7 +144,10 @@ List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
           int ago = 1}) =>
       Comment(
         id: '$postId-c$id',
-        authorId: '${fakePostPrefix}author-$who',
+        // '테스트'는 글쓴이와 같은 사람이다(작성자·질문자 표시 확인용).
+        authorId: who == '테스트'
+            ? '${fakePostPrefix}author'
+            : '${fakePostPrefix}author-$who',
         authorNickname: who,
         content: text,
         parentId: parent == null ? null : '$postId-c$parent',
