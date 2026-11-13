@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -414,7 +415,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('🍪', style: context.texts.bodySmall),
+                      const CurrencyIcon(Currency.cracker, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${question.rewardCrackers}',

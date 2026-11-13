@@ -5,9 +5,9 @@
 // 두 재화 설명은 ? 버튼 하나로 모았다.
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -72,16 +72,14 @@ class WalletSection extends StatelessWidget {
             children: [
               Expanded(
                 child: _Balance(
-                  icon: Icons.auto_awesome_rounded,
-                  color: AppColors.parrotCurrency,
+                  currency: Currency.parrot,
                   label: '패롯',
                   value: _count.format(user?.parrots ?? 0),
                 ),
               ),
               Expanded(
                 child: _Balance(
-                  icon: Icons.cookie_rounded,
-                  color: AppColors.crackerCurrency,
+                  currency: Currency.cracker,
                   label: '크래커',
                   value: _count.format(user?.crackers ?? 0),
                 ),
@@ -124,14 +122,12 @@ class WalletSection extends StatelessWidget {
 
 class _Balance extends StatelessWidget {
   const _Balance({
-    required this.icon,
-    required this.color,
+    required this.currency,
     required this.label,
     required this.value,
   });
 
-  final IconData icon;
-  final Color color;
+  final Currency currency;
   final String label;
   final String value;
 
@@ -143,7 +139,7 @@ class _Balance extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: color),
+            CurrencyIcon(currency, size: 16),
             const SizedBox(width: 4),
             Text(label,
                 style: context.texts.labelMedium

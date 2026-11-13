@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -286,10 +287,11 @@ class _QuestionScreenState extends State<QuestionScreen> {
                               : context.tokens.primarySoft,
                           borderRadius: BorderRadius.circular(AppRadius.full),
                         ),
-                        child: Text(
-                          isResolved
-                              ? '채택 🍪 ${question.rewardCrackers}'
-                              : '답하면 🍪 ${question.rewardCrackers}',
+                        child: CurrencyAmount(
+                          Currency.cracker,
+                          question.rewardCrackers,
+                          prefix: isResolved ? '채택 ' : '답하면 ',
+                          iconSize: 18,
                           style: context.texts.labelLarge.copyWith(
                             fontWeight: FontWeight.w800,
                             color: isResolved

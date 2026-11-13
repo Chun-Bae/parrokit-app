@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 
 class ContentStudioAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -47,10 +47,8 @@ class ContentStudioAppBar extends StatelessWidget
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(width: 10),
-              Text(
-                '🦜',
-                style: context.texts.titleLarge,
-              ),
+              // 남은 패롯. 예전엔 🦜 이모지라 앱의 패롯 그림과 달랐다.
+              const CurrencyIcon(Currency.parrot, size: 22),
               const SizedBox(width: 5),
               Text(
                 '$coins',

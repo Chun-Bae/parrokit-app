@@ -11,6 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -229,9 +230,13 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('보상 크래커 🍪',
-                                  style: context.texts.titleMedium
-                                      .copyWith(color: colorScheme.onSurface)),
+                              Row(children: [
+                                Text('보상 크래커',
+                                    style: context.texts.titleMedium.copyWith(
+                                        color: colorScheme.onSurface)),
+                                const SizedBox(width: 6),
+                                const CurrencyIcon(Currency.cracker, size: 20),
+                              ]),
                               Text('$_rewardCrackers', style: valueTextStyle),
                             ],
                           ),

@@ -159,6 +159,7 @@ flutter:
     - assets/logos/pa_logo.png
     - assets/icons/
     - assets/badges/
+    - assets/currency/
     - assets/help/
     - assets/intros/
 

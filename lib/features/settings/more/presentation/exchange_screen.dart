@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
@@ -268,9 +269,15 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   Widget _buildBalanceItem(String title, int amount, Color color) {
     return Column(
       children: [
-        Text(title,
-            style: context.texts.labelMedium
-                .copyWith(color: context.tokens.textTertiary)),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          CurrencyIcon(
+              title == '패롯' ? Currency.parrot : Currency.cracker,
+              size: 16),
+          const SizedBox(width: 4),
+          Text(title,
+              style: context.texts.labelMedium
+                  .copyWith(color: context.tokens.textTertiary)),
+        ]),
         const SizedBox(height: 4),
         Text(
           NumberFormat.decimalPattern('ko').format(amount),
