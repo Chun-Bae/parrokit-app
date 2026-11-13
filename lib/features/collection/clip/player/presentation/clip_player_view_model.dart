@@ -196,10 +196,16 @@ class ClipPlayerViewModel extends ChangeNotifier
     loadClip();
   }
 
+  /// 화면을 닫아 dispose된 뒤인지. 로드 중에 뒤로 가면 await 뒤 코드가 이어
+  /// 돌아서, 닫힌 화면에 네이티브 플레이어를 새로 만들어 놓지 못하고 남기거나
+  /// dispose된 notifier를 다시 알렸다(5차).
+  bool _disposed = false;
+
   /// 클립 데이터 로드.
   Future<void> loadClip() async {
     try {
       final payload = await clipProvider.fetchClipById(clipId);
+      if (_disposed) return;
 
       if (payload == null) {
         _errorMessage = '클립을 찾을 수 없습니다.';
@@ -215,12 +221,14 @@ class ClipPlayerViewModel extends ChangeNotifier
       _segments = payload.segments;
 
       await _initVideo();
+      if (_disposed) return;
 
       _isLoading = false;
       _isInitialized = true;
       _appBarTitle = (_clip?.title ?? '').isNotEmpty ? _clip!.title : '재생';
       notifyListeners();
     } catch (e) {
+      if (_disposed) return; // dispose가 컨트롤러를 이미 놓았다.
       // _initVideo가 컨트롤러를 만든 뒤 initialize()에서 넘어졌을 수 있다.
       // 그대로 두면 오류 화면을 띄워 둔 내내 네이티브 플레이어를 붙잡고 있다.
       _disposeController();
@@ -258,18 +266,27 @@ class ClipPlayerViewModel extends ChangeNotifier
     if (_clip == null) return;
 
     final resolvedPath = await resolvedSourcePath();
-    _controller = VideoPlayerController.file(File(resolvedPath));
+    if (_disposed) return;
+    final controller = VideoPlayerController.file(File(resolvedPath));
+    _controller = controller;
 
-    await _controller!.initialize();
-    await _controller!.setLooping(false);
-    await _controller!.setPlaybackSpeed(_playbackRate);
+    // 기다리는 사이 dispose나 다시 읽기가 이 컨트롤러를 놓았으면 그만둔다.
+    bool released() => _disposed || !identical(_controller, controller);
+
+    await controller.initialize();
+    if (released()) return;
+    await controller.setLooping(false);
+    if (released()) return;
+    await controller.setPlaybackSpeed(_playbackRate);
+    if (released()) return;
 
     if (_segments.isNotEmpty) {
       _segIndex = _segIndex.clamp(0, _segments.length - 1);
-      await _controller!.seekTo(Duration(milliseconds: currentSegment.startMs));
+      await controller.seekTo(Duration(milliseconds: currentSegment.startMs));
+      if (released()) return;
     }
 
-    _controller!.addListener(_onTick);
+    controller.addListener(_onTick);
   }
 
   void _onTick() {
@@ -328,6 +345,7 @@ class ClipPlayerViewModel extends ChangeNotifier
 
   @override
   void dispose() {
+    _disposed = true;
     if (_isBackground) {
       BgAudio.instance.ensureAudioHandler().then((h) async {
         try {
