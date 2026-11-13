@@ -1899,13 +1899,17 @@ class _LabeledControl extends StatelessWidget {
                 child: Icon(icon, size: 22, color: iconColor),
               ),
               const SizedBox(height: 4),
-              Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.texts.labelSmall.copyWith(
-                      color: selected ? palette.primary : palette.muted,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.w500)),
+              // 큰 글자 설정에서 '따라 …', '순서…'로 잘렸다(5차). 잘라 내는 대신
+              // 칸에 맞게 줄여 낱말 전체를 보인다.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(label,
+                    maxLines: 1,
+                    style: context.texts.labelSmall.copyWith(
+                        color: selected ? palette.primary : palette.muted,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500)),
+              ),
             ]),
           ),
         ),

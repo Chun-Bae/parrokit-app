@@ -174,13 +174,17 @@ class _AdRewardButtonState extends State<AdRewardButton> {
             AdRewardButtonState.ready =>
               const Icon(Icons.play_circle_outline_rounded, size: 18),
           },
-          label: Text(
-            adRewardButtonLabel(state,
-                coins: AdService.rewardCoins,
-                cooldownText:
-                    isCooldown ? _formatRemaining(_remaining!) : ''),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          // 큰 글자 설정에서 '광고 보고 …'로 잘려 받을 패롯 수가 안 보였다(5차).
+          // 한 줄을 지키며 칸에 맞게 줄인다.
+          label: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              adRewardButtonLabel(state,
+                  coins: AdService.rewardCoins,
+                  cooldownText:
+                      isCooldown ? _formatRemaining(_remaining!) : ''),
+              maxLines: 1,
+            ),
           ),
         );
       },
