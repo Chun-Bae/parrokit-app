@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 10분마다 예약된 세션 루프(사실상 연속). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- **Gemini TTS**: 11월 17일 종료되는 2.5·3.1 프리뷰 TTS 모델 → gemini-3.8-flash-tts / flash-lite-tts. 서버가 예전 id를 대체 모델로 바꿔 부름 (c347a629)
 - 콘텐츠 제작 챗봇: Vertex에서 2026-10-20 종료된 gemini-2.5-flash → gemini-3.1-flash-lite(문장 도우미와 같은 모델) (dbc34531)
 - **커뮤니티 신고가 실제로 남음**: 8곳의 '신고'가 토스트만 띄우고 아무것도 안 남기던 것 → 사유 고르기 + reports 컬렉션 기록 + 규칙 (bd30360e)
 - 차단 사용자 관리: 빈 칸 '차단' 버튼 끔, 실패 토스트 예외 원문 → 안내 (3db86df3)
@@ -58,6 +59,10 @@
 - 홈 무대 조작 줄을 길게 누르면 "이전 문장", "재생 순서: 순서대로"처럼 뜻을 끝까지 보여준다 (7ec6db96)
 
 ## 배포 필요 (사용자가 직접)
+- **함수 generateTts (Gemini TTS 모델 교체, c347a629) — 11월 17일 전에** 배포해야 한다. 그 뒤로는 예전 모델 호출이 실패한다. 챗봇 교체와 한 번에:
+  ```
+  npx -y firebase-tools@latest deploy --only functions:generateTts,functions:generateChatbotResponse --project parrokit-45126
+  ```
 - **함수 generateChatbotResponse (챗봇 모델 교체, dbc34531)** — 배포 전에는 종료된 모델을 불러 챗봇이 실패할 가능성이 높다(최근 호출 로그가 없어 실패를 직접 보지는 못함). build·lint 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:generateChatbotResponse --project parrokit-45126
@@ -347,5 +352,11 @@
 ## 반복 48 (18:28~)
 - 토스트만 띄우는 가짜 동작을 더 찾음: 챗봇의 잠긴 Pro 모델 하나(잠금 표시와 안내가 있어 그대로)
 - 그러다 챗봇이 Vertex에서 종료된 gemini-2.5-flash를 쓰는 것을 발견 → 3.1 Flash-Lite로(dbc34531). 앱 모델 이름 표시도. 실제 챗봇 호출은 비용 때문에 안 함
-- 참고: TTS 모델 목록의 gemini-2.5-*-preview-tts도 2.5 계열이다. Gemini API 쪽(GEMINI_API_KEY)이라 Vertex 종료와 다를 수 있어 이번엔 건드리지 않음 → 안건(확인 필요)
+- 참고: TTS 모델 목록의 gemini-2.5-*-preview-tts도 2.5 계열 → 반복 49에서 확인하니 11-17 종료라 옮김(c347a629)
 - 362 통과, 함수 테스트 3 통과
+
+## 반복 49 (18:37~)
+- 8번 성격(외부 의존 점검): Gemini API 지원 중단 표(aistudio.google.com/docs/deprecations)에서 앱의 TTS 모델 셋이 2026-11-17(4일 뒤) 종료로 확인 → 3.8 Flash TTS로 옮김(c347a629)
+- 서버가 예전 id를 받아도 대체 모델로 부르게(resolveGeminiTtsModel), 가격도 같은 값으로. 함수 테스트 3, 앱 테스트 2(가격표 앱·서버 일치 포함). 364 통과
+- 미확인: 새 모델에서 목소리(Aoede 등) 그대로인지, 실제 생성(비용). 가격 단계(Lite 120, Flash 60)는 예전 단계에 맞춘 것이라 사용자가 확인하면 좋다
+- 같은 표: gemini-3.1-flash-lite(문장 도우미·챗봇)는 2027-05-07 종료 예정. 당장은 괜찮다
