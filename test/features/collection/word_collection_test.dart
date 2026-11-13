@@ -1,10 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/content/word_review_store.dart';
 import 'package:parrokit/core/shared/theme/app_theme.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_collection_preview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class FakeAssist implements SentenceAssist {
+  FakeAssist({this.translation = '미묘한 차이', this.quota = false});
+  final String translation;
+  final bool quota;
+  final calls = <String>[];
+
+  @override
+  int? get remainingToday => 2;
+  @override
+  int? get dailyLimit => 3;
+  @override
+  Future<void> refreshUsage() async {}
+  @override
+  Future<SentenceSuggestion> suggest(
+      {required String language, required String text}) async {
+    calls.add('$language:$text');
+    if (quota) throw const SentenceAssistQuotaExceeded();
+    return SentenceSuggestion(translation: translation, pronunciation: '');
+  }
+
+  @override
+  Future<String?> transliterate(
+          {required String language, required String hangul}) async =>
+      null;
+}
+
+Future<void> openAddSheet(WidgetTester tester, FakeAssist assist) async {
+  await tester.pumpWidget(MaterialApp(
+    theme: AppTheme.light,
+    home: Scaffold(
+      body: AddWordSheet(accountId: 'guest', language: '영어', assist: assist),
+    ),
+  ));
+  await tester.pump();
+}
 
 Future<void> openWordTab(WidgetTester tester) async {
   tester.view.physicalSize = const Size(440, 956);
@@ -79,5 +116,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('figure out'), findsNothing);
     expect(await MyWordStore.load('guest'), isEmpty);
+  });
+
+  testWidgets('뜻 채우기는 단어를 적어야 누를 수 있고 서버 뜻으로 채운다', (tester) async {
+    final assist = FakeAssist();
+    await openAddSheet(tester, assist);
+    final fill = find.byKey(const ValueKey('fill-word-meaning'));
+    expect(tester.widget<IconButton>(fill).onPressed, isNull);
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
+    await tester.pump();
+    await tester.tap(fill);
+    await tester.pumpAndSettle();
+    expect(assist.calls, ['영어:nuance']);
+    expect(find.text('미묘한 차이'), findsOneWidget);
+  });
+
+  testWidgets('이미 적은 뜻은 덮지 않고, 횟수를 다 쓰면 안내한다', (tester) async {
+    final assist = FakeAssist(quota: true);
+    await openAddSheet(tester, assist);
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
+    await tester.enterText(find.byKey(const ValueKey('word-meaning')), '내 뜻');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('fill-word-meaning')));
+    await tester.pumpAndSettle();
+    expect(find.text('내 뜻'), findsOneWidget);
+    expect(find.textContaining('오늘 자동 채우기를 모두 썼어요'), findsOneWidget);
   });
 }

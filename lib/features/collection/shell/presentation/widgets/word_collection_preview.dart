@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/content/word_review_store.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -470,11 +472,16 @@ class AddWordSheet extends StatefulWidget {
     this.example = '',
     this.exampleTranslation = '',
     this.sourceSentenceId = '',
+    this.assist,
   });
 
   final String accountId;
   final String language;
   final String initialWord;
+
+  /// 뜻 채우기. 문장 추가의 '뜻·발음 채우기'와 같은 서버 호출(suggestSentenceInfo)을
+  /// 쓰고 하루 횟수도 함께 쓴다. 안 주면 서버를 부르는 기본값.
+  final SentenceAssist? assist;
 
   /// 문장 상세에서 열면 그 문장이 예문으로 미리 들어간다.
   final String example;
@@ -489,7 +496,39 @@ class _AddWordSheetState extends State<AddWordSheet> {
   late final _word = TextEditingController(text: widget.initialWord);
   final _meaning = TextEditingController();
   late final _example = TextEditingController(text: widget.example);
+  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
   bool saving = false;
+  bool filling = false;
+
+  /// 단어의 뜻을 서버에 물어 채운다. 이미 적은 뜻은 덮지 않는다.
+  Future<void> fillMeaning() async {
+    final word = _word.text.trim();
+    if (word.isEmpty || filling) return;
+    setState(() => filling = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final suggestion =
+          await _assist.suggest(language: widget.language, text: word);
+      final meaning = suggestion.translation?.trim() ?? '';
+      if (!mounted) return;
+      if (meaning.isEmpty) {
+        messenger.showSnackBar(
+            const SnackBar(content: Text('뜻을 찾지 못했어요. 직접 적어 주세요.')));
+      } else if (_meaning.text.trim().isEmpty) {
+        _meaning.text = meaning;
+      }
+    } on SentenceAssistQuotaExceeded {
+      messenger.showSnackBar(const SnackBar(
+          content: Text('오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.')));
+    } on SentenceAssistUnavailable catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.reason)));
+    } catch (_) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('뜻을 채우지 못했어요. 직접 적어 주세요.')));
+    } finally {
+      if (mounted) setState(() => filling = false);
+    }
+  }
 
   @override
   void initState() {
@@ -555,8 +594,26 @@ class _AddWordSheetState extends State<AddWordSheet> {
                 key: const ValueKey('word-meaning'),
                 controller: _meaning,
                 maxLength: 200,
-                decoration: const InputDecoration(
-                    labelText: '뜻 (선택)', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  labelText: '뜻 (선택)',
+                  border: const OutlineInputBorder(),
+                  // 단어를 적으면 뜻을 자동으로 채울 수 있다.
+                  suffixIcon: filling
+                      ? const Padding(
+                          padding: EdgeInsets.all(14),
+                          child: SizedBox.square(
+                              dimension: 18,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2)),
+                        )
+                      : IconButton(
+                          key: const ValueKey('fill-word-meaning'),
+                          tooltip: '뜻 채우기',
+                          onPressed:
+                              _word.text.trim().isEmpty ? null : fillMeaning,
+                          icon: const Icon(Icons.auto_awesome_rounded),
+                        ),
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
