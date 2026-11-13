@@ -37,7 +37,7 @@ const List<TtsLanguage> supportedTtsLanguages = [
     mlKitCode: 'zh',
     ttsCode: 'cmn-CN',
     displayName: '중국어 (cmn-CN)',
-    previewText: '你好,很高兴认识你。',
+    previewText: '你好，很高兴认识你。',
   ),
   TtsLanguage(
     mlKitCode: 'es',
