@@ -23,7 +23,8 @@ void main() {
     });
     await tester.pump();
     expect(find.text('1회'), findsOneWidget);
-    expect(find.text('들은 횟수'), findsOneWidget);
+    expect(find.text('듣기'), findsOneWidget);
+    expect(find.text('연습한 문장'), findsOneWidget);
 
     await tester.runAsync(() async {
       await SentenceActivityStore.incrementPractice('guest', 'basic-en-001');

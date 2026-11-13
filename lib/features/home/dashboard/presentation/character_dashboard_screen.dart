@@ -21,7 +21,6 @@ import 'widgets/today_practice_summary.dart';
 import 'widgets/today_start_bar.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
-import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 /// 앱 홈 화면. 앵무새 무대([StagePreviewScreen])를 맨 위에 품고,
 /// 연습 기록과 추천 문장, 학습 잔디를 함께 보여준다.
@@ -202,7 +201,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     final isDark = HomeTokens.isDark(context);
     final palette = HomeTokens.of(context);
     final background = palette.background;
-    final muted = palette.muted;
     // 앱 테마를 통째로 갈아끼우지 않고 파생시킨다. 테마를 새로 만들면
     // AppTheme이 정의한 컴포넌트 테마(버튼·다이얼로그·입력 등)와 색 토큰이
     // 이 화면 안에서 전부 사라진다.
@@ -255,9 +253,9 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                       compact: true,
                       onChanged: (value) => setState(() => language = value),
                     ),
-                    const Spacer(),
-                    Text('누적 $totalPracticed문장',
-                        style: context.texts.bodySmall.copyWith(color: muted)),
+                    // 예전엔 오른쪽에 '누적 N문장'이 있었다. 모든 언어 합계인데 언어
+                    // 고르기 옆이라 고른 언어의 숫자처럼 보였고, 아래 학습 기록에도
+                    // 같은 숫자가 있어 뺐다(5차).
                   ]),
                   const SizedBox(height: 16),
                   SentenceHistoryDashboard(

@@ -188,9 +188,12 @@ class _Stats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(children: [
-        _Stat(label: '익힌 문장', value: '${data.practicedCount}'),
+        // 한 번이라도 연습하거나 들은 문장 수. 예전 '익힌 문장'은 바로 아래 '익숙함 0'과
+        // 어긋나 보였다(5차).
+        _Stat(label: '연습한 문장', value: '${data.practicedCount}'),
         _Stat(label: '따라 말하기', value: '${data.totalPractice}회'),
-        _Stat(label: '들은 횟수', value: '${data.totalListen}회'),
+        // '따라 말하기'와 짝을 맞춘다(예전 '들은 횟수', 5차).
+        _Stat(label: '듣기', value: '${data.totalListen}회'),
       ]);
 }
 
