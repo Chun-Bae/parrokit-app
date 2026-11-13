@@ -5,7 +5,15 @@ extension CommunityProviderComment on CommunityProvider {
 
   // 특정 게시글의 댓글 목록 가져오기 (현재 로그인된 유저 ID도 받아와서 좋아요 상태 셋팅)
   Future<void> fetchComments(String postId, {String? currentUserId}) async {
-    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+    // 가짜 글(개발 빌드 전용)은 서버를 부르지 않고 가짜 댓글을 보여준다.
+    if (isFakePost(postId)) {
+      _currentPostComments
+        ..clear()
+        ..addAll(fakeCommunityComments(postId));
+      _replyingTo = null;
+      _notifyListenersSafe();
+      return;
+    }
 
     _errorMessage = null;
     _currentPostComments.clear();

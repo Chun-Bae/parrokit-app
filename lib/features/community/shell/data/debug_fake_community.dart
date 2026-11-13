@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/vote_option.dart';
 
@@ -121,4 +122,48 @@ List<Post> fakeCommunityPosts(String postType, {DateTime? now}) {
             at: ago(26)),
       ];
   }
+}
+
+/// 가짜 글의 댓글. 글 상세·댓글 화면을 확인하려고 둔다. 답글과 채택된 답변을 섞는다.
+List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
+  if (!isFakePost(postId)) return const [];
+  final base = now ?? DateTime.now();
+  final type = postId.contains('-question-')
+      ? 'question'
+      : postId.contains('-vote-')
+          ? 'vote'
+          : 'board';
+  Comment c(String id, String who, String text,
+          {String? parent,
+          String? replyTo,
+          int likes = 0,
+          bool accepted = false,
+          int ago = 1}) =>
+      Comment(
+        id: '$postId-c$id',
+        authorId: '${fakePostPrefix}author-$who',
+        authorNickname: who,
+        content: text,
+        parentId: parent == null ? null : '$postId-c$parent',
+        replyToNickname: replyTo,
+        postId: postId,
+        postType: type,
+        likeCount: likes,
+        isAccepted: accepted,
+        createdAt: base.subtract(Duration(hours: ago)),
+      );
+  return [
+    c(
+        '1',
+        '앵무',
+        type == 'question'
+            ? '“I’m good”이 조금 더 편한 말이에요. fine은 상황에 따라 무뚝뚝하게 들릴 수 있어요.'
+            : '저도 해 보고 있어요! 꾸준히가 제일 어렵네요.',
+        likes: 4,
+        // 채택 답변은 해결된 질문(2번)에만 둔다. 목록의 '답변 대기중'과 맞춘다.
+        accepted: postId == '${fakePostPrefix}question-2',
+        ago: 3),
+    c('2', '테스트', '고마워요, 바로 해 볼게요.', parent: '1', replyTo: '앵무', ago: 2),
+    c('3', '봄', '저는 하루 다섯 문장씩 하고 있어요.', likes: 1, ago: 1),
+  ];
 }

@@ -626,13 +626,10 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
             ),
             const SizedBox(height: 24),
             if (explore) ...[
-              _SectionTitle(
-                  title: 'Parrokit 제공',
-                  subtitle: '계속 추가되는 문장 묶음',
-                  // 전체 목록 화면이 아직 없다. 누르면 아무 일도 일어나지
-                  // 않아서 비활성으로 둔다.
-                  trailing:
-                      const TextButton(onPressed: null, child: Text('전체'))),
+              // 흐린 '전체' 버튼은 뺐다(5차). 전체 목록 화면이 없어 눌러도
+              // 아무 일이 없었다(원칙 5). 화면이 생기면 trailing으로 붙인다.
+              const _SectionTitle(
+                  title: 'Parrokit 제공', subtitle: '계속 추가되는 문장 묶음'),
               const SizedBox(height: 10),
               SizedBox(
                 height: 148,

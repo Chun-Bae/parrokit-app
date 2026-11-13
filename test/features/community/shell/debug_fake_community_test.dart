@@ -58,4 +58,24 @@ void main() {
     await provider.toggleScrap('q1', '');
     expect(firestore.dump(), before);
   });
+
+  test('가짜 글의 댓글은 서버를 부르지 않고 답글과 채택 답변을 섞어 준다', () async {
+    final firestore = FakeFirebaseFirestore();
+    final provider = CommunityProvider(
+      repository: CommunityRepository(firestore: firestore),
+      userService: FirebaseUserService(firestore: firestore),
+    );
+    final questions = fakeCommunityPosts('question');
+    // 채택 답변은 해결된 질문에만 있다(목록의 '답변 대기중'과 맞춘다).
+    final waiting = questions.firstWhere((p) => p.questionStatus == 'waiting');
+    await provider.fetchComments(waiting.id, currentUserId: 'u1');
+    expect(provider.currentPostComments.where((c) => c.isAccepted), isEmpty);
+    final q = questions.firstWhere((p) => p.questionStatus == 'resolved').id;
+    await provider.fetchComments(q, currentUserId: 'u1');
+    expect(provider.currentPostComments, hasLength(3));
+    expect(provider.currentPostComments.where((c) => c.isAccepted), hasLength(1));
+    expect(provider.currentPostComments.where((c) => c.parentId != null), hasLength(1));
+    expect(fakeCommunityComments('real-post'), isEmpty);
+    expect(firestore.dump(), FakeFirebaseFirestore().dump());
+  });
 }

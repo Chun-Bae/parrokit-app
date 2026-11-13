@@ -289,33 +289,15 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
-                  // 이미지·음성·링크·태그 네 가지 모두 아직 동작이 없다.
-                  // 누르면 아무 일도 일어나지 않아서 비활성으로 둔다.
-                  // Icon에 색을 직접 주면 비활성 색이 먹지 않으므로 뺀다.
-                  const IconButton(
-                    icon: Icon(Icons.image_outlined),
-                    onPressed: null,
-                  ),
-                  const IconButton(
-                    icon: Icon(Icons.mic_none_rounded),
-                    onPressed: null,
-                  ),
-                  const IconButton(
-                    icon: Icon(Icons.link_rounded),
-                    onPressed: null,
-                  ),
-                  const IconButton(
-                    icon: Icon(Icons.tag_rounded),
-                    onPressed: null,
-                  ),
+                  // 이미지·음성·링크·태그 버튼은 뺐다(5차). 넷 다 동작이 없어
+                  // 흐린 아이콘만 있었다(원칙 5). 글자 수만 남긴다.
                   const Spacer(),
-                  // Character Counter Text
-                  if (_contentController.text.isNotEmpty)
-                    Text(
-                      '${_contentController.text.length}자',
-                      style: context.texts.labelMedium.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.75)),
-                    ),
+                  // 아이콘이 빠져 빈 줄이 되지 않게 글자 수는 0자부터 늘 보인다.
+                  Text(
+                    '${_contentController.text.length}자',
+                    style: context.texts.labelMedium.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.75)),
+                  ),
                 ],
               ),
             ),

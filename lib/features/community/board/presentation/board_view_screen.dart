@@ -276,13 +276,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                         const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
                   ),
                   const Spacer(),
-                  IconButton(
-                    // 글별 알림 설정이 아직 없다. 누르면 아무 일도 일어나지
-                    // 않아서 비활성으로 둔다.
-                    onPressed: null,
-                    icon:
-                        const Icon(Icons.notifications_off_outlined, size: 24),
-                  ),
+                  // 글별 알림 끄기 버튼은 뺐다(5차). 기능이 없어 흐린 종 아이콘만
+                  // 있었고, 글자도 없어 무엇인지 알 수 없었다(원칙 3·5).
                   IconButton(
                     onPressed: () => _showPostOptionsSheet(post),
                     icon: const Icon(Icons.more_vert_rounded, size: 24),

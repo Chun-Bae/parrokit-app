@@ -488,22 +488,23 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           ),
           Divider(
               height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
+          // 아이콘만 있던 세 버튼에 글자를 붙였다(5차). 말풍선이 '답글 쓰기'인지
+          // 알기 어려웠고, 게시판 상세는 '공감'·'스크랩'처럼 글자가 있다.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              IconButton(
-                icon: Icon(Icons.mode_comment_outlined,
-                    size: 20, color: context.tokens.textSecondary),
+              _QuestionAction(
+                icon: Icons.mode_comment_outlined,
+                label: '답글 쓰기',
+                active: false,
                 onPressed: () =>
                     FocusScope.of(context).requestFocus(_replyFocusNode),
               ),
-              IconButton(
+              _QuestionAction(
                 // 글 공감은 엄지(예전엔 번개였다). 게시판과 같게.
-                icon: Icon(isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                    size: 22,
-                    color: isLiked
-                        ? context.tokens.primary
-                        : context.tokens.textSecondary),
+                icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                label: '유용해요',
+                active: isLiked,
                 // 로그아웃 상태면 빈 uid로 부르지 않고 안내한다(게시판과 같게).
                 // 예전에는 users//likes 경로가 되어 예외가 났다.
                 onPressed: () {
@@ -516,15 +517,12 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       .toggleLike(question.id, currentUser.id);
                 },
               ),
-              IconButton(
-                icon: Icon(
-                    isBookmarked
-                        ? Icons.bookmark
-                        : Icons.bookmark_border_rounded,
-                    size: 20,
-                    color: isBookmarked
-                        ? context.tokens.primary
-                        : context.tokens.textSecondary),
+              _QuestionAction(
+                icon: isBookmarked
+                    ? Icons.bookmark
+                    : Icons.bookmark_border_rounded,
+                label: '스크랩',
+                active: isBookmarked,
                 onPressed: () {
                   if (currentUser == null) {
                     showToast('로그인이 필요합니다.');
@@ -865,6 +863,35 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 질문 상세의 글 아래 버튼. 아이콘과 글자를 함께 둔다. 눌린 상태면 주색.
+class _QuestionAction extends StatelessWidget {
+  const _QuestionAction({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        active ? context.tokens.primary : context.tokens.textSecondary;
+    return TextButton.icon(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(foregroundColor: color),
+      icon: Icon(icon, size: 20, color: color),
+      label: Text(label,
+          style: context.texts.labelLarge
+              .copyWith(color: color, fontWeight: FontWeight.w600)),
     );
   }
 }
