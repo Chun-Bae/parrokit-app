@@ -10,7 +10,19 @@ extension CommunityProviderPost on CommunityProvider {
   }
 
   Future<void> fetchPosts({String? postType, bool refresh = false}) async {
-    if (_isLoading) return;
+    final request = postType == null ? _postTypeRequest : ++_postTypeRequest;
+    if (_isLoading) {
+      // 한 탭 목록을 읽는 중에 다른 탭(게시판·질문·투표)으로 바꾸면 예전엔
+      // 이 요청을 버려서, 새 탭에 이전 탭 글만 남아 '글이 없다'로 보였다(5차).
+      // 다른 종류를 부탁받았으면 지금 읽기가 끝나길 기다렸다가 읽고, 그 사이
+      // 더 새 요청이 오면 이 요청은 그만둔다.
+      if (postType == null || postType == _currentPostType) return;
+      while (_isLoading) {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        if (request != _postTypeRequest) return;
+      }
+    }
+    if (postType != null && request != _postTypeRequest) return;
 
     if (postType != null) {
       _currentPostType = postType;

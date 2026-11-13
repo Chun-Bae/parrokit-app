@@ -151,6 +151,10 @@ class CommunityProvider with ChangeNotifier {
 
   String _currentPostType = 'board';
 
+  /// 종류(게시판·질문·투표)를 정해 부른 fetchPosts마다 1씩 늘린다. 다른 종류를
+  /// 읽는 중에 기다리던 요청이 그 사이 더 새 요청이 왔는지 보는 데 쓴다.
+  int _postTypeRequest = 0;
+
   /// 이름에 Safe가 붙어 있지만 여기서는 아무것도 막지 않는다. 그냥
   /// notifyListeners()다. 커뮤니티 기능 전체에서 쉰 곳 넘게 부른다.
   ///
