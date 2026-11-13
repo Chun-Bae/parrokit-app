@@ -183,6 +183,7 @@ class _FileSectionState extends State<FileSection> {
 
   Future<void> _stopInline() async {
     await _vp?.pause();
+    if (!mounted) return;
     setState(() {
       _vpReady = false;
     });

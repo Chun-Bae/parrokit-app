@@ -719,6 +719,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                 return;
               }
               final exists = await clipProvider.isNameExists(name);
+              if (!ctx.mounted) return;
               if (exists) {
                 showToast('이미 같은 이름의 그룹이나 컬렉션이 존재합니다.');
                 return;

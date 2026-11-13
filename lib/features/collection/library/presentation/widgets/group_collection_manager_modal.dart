@@ -70,6 +70,7 @@ class _GroupCollectionManagerModalState
   Future<void> _loadTabASelections(int groupId) async {
     final clipProvider = context.read<ClipProvider>();
     final collectionIds = await clipProvider.getCollectionIdsForGroup(groupId);
+    if (!mounted) return;
     setState(() {
       _checkedCollectionIdsForTabA = collectionIds.toSet();
     });
@@ -78,6 +79,7 @@ class _GroupCollectionManagerModalState
   Future<void> _loadTabBSelections(int collectionId) async {
     final clipProvider = context.read<ClipProvider>();
     final groupIds = await clipProvider.getGroupIdsForCollection(collectionId);
+    if (!mounted) return;
     setState(() {
       _checkedGroupIdsForTabB = groupIds.toSet();
     });

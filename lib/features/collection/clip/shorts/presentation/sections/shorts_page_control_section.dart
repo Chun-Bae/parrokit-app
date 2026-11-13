@@ -87,6 +87,7 @@ class _ShortsPageControlSectionState extends State<ShortsPageControlSection> {
                 },
                 onChangeEnd: (v) async {
                   await widget.onSeek(v);
+                  if (!mounted) return;
                   setState(() {
                     _isDragging = false;
                     _dragProgress = null;
