@@ -310,7 +310,7 @@ class TtsProvider extends ChangeNotifier {
             .firstWhere((m) => m.id == id, orElse: () => elevenLabsModels.first)
             .charsPerParrot;
       case TtsProviderType.gemini:
-        final id = _gemini.modelId ?? 'gemini-2.5-flash-preview-tts';
+        final id = _gemini.modelId ?? defaultGeminiTtsModelId;
         return geminiModels
             .firstWhere((m) => m.id == id, orElse: () => geminiModels.first)
             .charsPerParrot;

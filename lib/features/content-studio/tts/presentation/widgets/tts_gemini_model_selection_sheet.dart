@@ -56,8 +56,9 @@ class TtsGeminiModelSelectionSheet extends StatelessWidget {
               itemBuilder: (context, index) {
                 final model = geminiModels[index];
                 final isSelected = provider.modelId == model.id ||
+                    // 예전엔 'gemini-2.5-flash'와 비교해 기본 모델에 체크가 안 붙었다.
                     (provider.modelId == null &&
-                        model.id == 'gemini-2.5-flash');
+                        model.id == defaultGeminiTtsModelId);
 
                 return ListTile(
                   title: Text(

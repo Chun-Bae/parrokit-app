@@ -368,7 +368,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                   (m) =>
                                       m.id ==
                                       (provider.modelId ??
-                                          'gemini-2.5-flash-preview-tts'),
+                                          defaultGeminiTtsModelId),
                                   orElse: () => geminiModels.first,
                                 )
                                 .name,

@@ -10,6 +10,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "test:notify": "npm run build && node --test test/notificationPrefs.test.mjs",
+    "test:pricing": "npm run build && node --test test/pricing.test.mjs",
     "test:wallet": "npm run build && npx -y firebase-tools@latest --project=demo-parrokit emulators:exec --only firestore \"node --test test/wallet.test.mjs\""
   },
   "engines": {

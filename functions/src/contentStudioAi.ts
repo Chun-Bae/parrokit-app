@@ -1,6 +1,6 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {applyLedger, requestIdOf} from "./wallet";
-import {ttsCost, videoCost} from "./pricing";
+import {resolveGeminiTtsModel, ttsCost, videoCost} from "./pricing";
 import {ENFORCE_APP_CHECK, appCheckOptions} from "./appCheck";
 import {defineSecret} from "firebase-functions/params";
 import * as admin from "firebase-admin";
@@ -893,7 +893,8 @@ export const generateTtsFlow = ai.defineFlow(
           apiKey: geminiApiKey.value(),
         });
 
-        const targetModel = input.modelId || "gemini-2.5-flash-preview-tts";
+        // 예전 TTS 모델은 2026-11-17 종료라 대체 모델로 바꿔 부른다(5차).
+        const targetModel = resolveGeminiTtsModel(input.modelId);
         const targetVoice = input.voiceId || "Aoede";
 
         // 텍스트가 짧거나 인사말처럼 보이면 모델이 답변을 생성하려 시도하는

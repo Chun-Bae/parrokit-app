@@ -17,12 +17,35 @@ const ELEVENLABS_CHARS_PER_PARROT: Record<string, number> = {
 };
 const ELEVENLABS_DEFAULT_MODEL = "eleven_multilingual_v2";
 
+// Gemini API의 예전 TTS 모델 셋(2.5 Flash·2.5 Pro·3.1 Flash 프리뷰)은
+// 2026-11-17에 종료된다(ai.google.dev 지원 중단 표). 대체 모델 둘만 쓴다(5차).
+// 가격 단계는 예전과 맞췄다: Lite는 예전 2.5 Flash(120), Flash는 3.1 Flash(60).
 const GEMINI_TTS_CHARS_PER_PARROT: Record<string, number> = {
-  "gemini-2.5-flash-preview-tts": 120,
-  "gemini-3.1-flash-tts-preview": 60,
-  "gemini-2.5-pro-preview-tts": 60,
+  "gemini-3.8-flash-lite-tts": 120,
+  "gemini-3.8-flash-tts": 60,
 };
-const GEMINI_TTS_DEFAULT_MODEL = "gemini-2.5-flash-preview-tts";
+const GEMINI_TTS_DEFAULT_MODEL = "gemini-3.8-flash-tts";
+
+// 예전 앱이 보내는 종료된 id는 비슷한 대체 모델로 바꿔 부른다.
+const GEMINI_TTS_LEGACY: Record<string, string> = {
+  "gemini-2.5-flash-preview-tts": "gemini-3.8-flash-lite-tts",
+  "gemini-3.1-flash-tts-preview": "gemini-3.8-flash-tts",
+  "gemini-2.5-pro-preview-tts": "gemini-3.8-flash-tts",
+};
+
+/**
+ * 실제로 부를 Gemini TTS 모델. 아는 모델이면 그대로, 종료된 예전 id면 대체
+ * 모델, 모르는 값이면 기본 모델. 가격도 이 결과로 매긴다.
+ * @param {unknown} modelId 앱이 보낸 모델 id
+ * @return {string} 부를 모델 id
+ */
+export function resolveGeminiTtsModel(modelId: unknown): string {
+  if (typeof modelId !== "string" || modelId.length === 0) {
+    return GEMINI_TTS_DEFAULT_MODEL;
+  }
+  if (modelId in GEMINI_TTS_CHARS_PER_PARROT) return modelId;
+  return GEMINI_TTS_LEGACY[modelId] ?? GEMINI_TTS_DEFAULT_MODEL;
+}
 
 /**
  * 앱이 모르는 모델 id가 오면 그 엔진에서 가장 비싼 값으로 받는다.
@@ -53,9 +76,10 @@ export function ttsCost(input: {
     );
     break;
   case "gemini":
+    // 서버가 실제로 부르는 모델 값으로 받는다(resolveGeminiTtsModel).
     rate = charsPerParrot(
       GEMINI_TTS_CHARS_PER_PARROT,
-      modelId || GEMINI_TTS_DEFAULT_MODEL
+      resolveGeminiTtsModel(modelId)
     );
     break;
   default:
