@@ -1586,7 +1586,18 @@ class _HomeHelpDialog extends StatelessWidget {
 
   // 4차에서 무대 버튼을 정리한 뒤의 모양에 맞춘다. 예전에는 지운 준비 중
   // 버튼(캐릭터 정보, 꾸미기, 쇼츠 학습 등)까지 설명하고 있었다.
+  // 도움말 버튼이 레벨 옆에 있는데 레벨·XP 설명이 없었다(5차). 맨 위에 둔다.
   static const _sections = <(String, List<(IconData, String, String)>)>[
+    (
+      '레벨',
+      [
+        (
+          Icons.trending_up_rounded,
+          'XP와 레벨',
+          '따라 말하기를 하면 점수만큼 XP가 쌓여요(100점이면 1 XP). 10 XP마다 레벨이 올라요.'
+        ),
+      ]
+    ),
     (
       '왼쪽 버튼',
       [

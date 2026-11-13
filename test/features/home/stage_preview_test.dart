@@ -438,6 +438,14 @@ void main() {
     expect(log.single.score, isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+  testWidgets('레벨 옆 도움말에 XP와 레벨 설명이 있다', (tester) async {
+    await openPreview(tester);
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('home-help')));
+    await tester.pump();
+    expect(find.text('XP와 레벨'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   testWidgets('말하기 설정에서 듣기 횟수 기록을 끄면 저장된다', (tester) async {
     await openPreview(tester);
     await tester.pump();
