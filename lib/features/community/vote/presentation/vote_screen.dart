@@ -284,10 +284,12 @@ class _VoteScreenState extends State<VoteScreen> {
             },
           ),
         ),
+        // 넘기기 버튼은 왼쪽에 둔다. 가운데에 두면 오른쪽 아래 '투표 만들기'
+        // 버튼이 다음(>) 버튼을 가렸다.
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               _NavButton(
                 icon: Icons.arrow_back_ios_new_rounded,
@@ -296,7 +298,7 @@ class _VoteScreenState extends State<VoteScreen> {
                     ? () => setState(() => _currentCardIndex--)
                     : null,
               ),
-              const SizedBox(width: 36),
+              const SizedBox(width: 16),
               _NavButton(
                 icon: Icons.arrow_forward_ios_rounded,
                 enabled: _currentCardIndex < posts.length,

@@ -100,11 +100,22 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
       // 동일하게 세이프에어리어(bottomInset)만큼만 띄웁니다.
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
+        // 질문·투표 탭에서는 고르는 시트 없이 그 글쓰기로 바로 간다. 질문
+        // 탭에 와서 '글쓰기'를 누르면 게시판·질문·투표를 다시 골라야 했다.
+        // 게시판 탭은 지금처럼 시트를 연다(5차 결정).
         child: ExpandableActionFab(
           isExtended: _isFabExtended,
           icon: Icons.add,
-          label: '글쓰기',
-          onTap: () => showCommunityWriteBottomSheet(context),
+          label: switch (_currentIndex) {
+            1 => '질문하기',
+            2 => '투표 만들기',
+            _ => '글쓰기',
+          },
+          onTap: () => switch (_currentIndex) {
+            1 => context.push(AppRoutes.communityQuestionWritePath),
+            2 => context.push(AppRoutes.communityVoteWritePath),
+            _ => showCommunityWriteBottomSheet(context),
+          },
           backgroundColor: AppColors.communityBoardAccent,
           foregroundColor: colorScheme.onPrimary,
           boxShadow: [
