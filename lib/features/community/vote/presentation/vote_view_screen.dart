@@ -177,7 +177,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
           onPressed: () => Navigator.maybePop(context),
         ),
         title: Text(
-          '투표 상세 토론',
+          // 예전 '투표 상세 토론'. 게시판·질문 상세와 같이 짧게(5차).
+          '투표',
           style:
               context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
@@ -241,7 +242,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                     child: Text(
-                      '토론 & 의견 (${provider.currentPostComments.length})',
+                      // 게시판 상세와 같은 말('댓글 3'). 예전 '토론 & 의견 (3)'.
+                      '댓글 ${provider.currentPostComments.length}',
                       style: context.texts.titleMedium
                           .copyWith(color: colorScheme.onSurface),
                     ),
@@ -253,7 +255,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 40.0),
                       child: Center(
                         child: Text(
-                          '첫 의견을 작성해 투표 토론에 참여해보세요!',
+                          '첫 댓글을 남겨 보세요.',
                           style: context.texts.bodyMedium
                               .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
@@ -641,7 +643,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       onChanged: (_) => setState(() {}),
                       onSubmitted: (_) => _submitComment(),
                       decoration: InputDecoration(
-                        hintText: '투표 의견 남기기...',
+                        hintText: '댓글 남기기',
                         fillColor: colorScheme.surfaceContainerHigh,
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
