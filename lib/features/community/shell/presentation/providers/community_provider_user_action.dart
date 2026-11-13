@@ -29,6 +29,8 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> loadUserActions(String postId, {String? userId}) async {
+    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+
     _isCurrentPostLiked = false;
     _isCurrentPostScrapped = false;
     _notifyListenersSafe();
@@ -48,6 +50,8 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> incrementViewCount(String postId, {String? userId}) async {
+    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+
     try {
       final incremented = await incrementViewCountUseCase.execute(postId, userId: userId);
       if (incremented) {
@@ -64,6 +68,8 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> toggleLike(String postId, String userId) async {
+    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+
     _errorMessage = null;
     final originalState = _postLikedStates[postId] ?? _isCurrentPostLiked;
     final targetState = !originalState;
@@ -97,6 +103,8 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> toggleScrap(String postId, String userId) async {
+    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+
     _errorMessage = null;
     final originalState = _postScrappedStates[postId] ?? _isCurrentPostScrapped;
     final targetState = !originalState;

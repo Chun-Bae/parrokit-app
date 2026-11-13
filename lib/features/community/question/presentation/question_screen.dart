@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/post_list_paging.dart';
+import 'question_filter.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -64,19 +65,9 @@ class _QuestionScreenState extends State<QuestionScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // 1. postType이 'question'인 것만 먼저 필터링
-    var questionPosts =
-        provider.posts.where((p) => p.postType == 'question').toList();
-
-    // 2. 선택된 탭(필터)에 따라 한 번 더 필터링
-    if (widget.selectedFilter == '채택 완료') {
-      questionPosts =
-          questionPosts.where((p) => p.questionStatus == 'resolved').toList();
-    } else if (widget.selectedFilter == '답변 대기중') {
-      // 대기중이거나 만료된 것도 아직 채택 안 된 상태이므로 묶어서 보여주거나 필터링 가능. 일단 'waiting' 상태만
-      questionPosts =
-          questionPosts.where((p) => p.questionStatus == 'waiting').toList();
-    }
+    // 질문만 골라 필터에 맞게 거르고 정렬한다(question_filter.dart).
+    final questionPosts =
+        questionsForFilter(provider.posts, widget.selectedFilter);
 
     if (questionPosts.isEmpty) {
       // "답변 대기중"·"채택 완료"는 읽어 온 페이지에서 거른 것이라, 이 페이지에

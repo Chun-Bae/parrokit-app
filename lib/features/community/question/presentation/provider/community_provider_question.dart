@@ -50,6 +50,8 @@ extension CommunityProviderQuestion on CommunityProvider {
     required String answererId,
     required int rewardCrackers,
   }) async {
+    if (isFakePost(postId)) return false; // 가짜 글은 서버에 쓰지 않는다
+
     _isLoading = true;
     _errorMessage = null;
     _notifyListenersSafe();

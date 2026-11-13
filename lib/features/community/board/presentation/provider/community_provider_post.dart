@@ -23,6 +23,15 @@ extension CommunityProviderPost on CommunityProvider {
       _userCache.clear();
     }
 
+    // 개발 빌드에서 가짜 커뮤니티를 켰으면 서버 대신 가짜 글을 보여준다.
+    if (kFakeCommunity) {
+      _posts = fakeCommunityPosts(_currentPostType);
+      _hasMorePosts = false;
+      _isLoading = false;
+      _notifyListenersSafe();
+      return;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     _notifyListenersSafe();
@@ -139,6 +148,8 @@ extension CommunityProviderPost on CommunityProvider {
     required String authorId,
     void Function(int current, int total, double progress)? onImageProgress,
   }) async {
+    if (isFakePost(postId)) return false; // 가짜 글은 서버에 쓰지 않는다
+
     _isLoading = true;
     _errorMessage = null;
     _notifyListenersSafe();
@@ -181,6 +192,8 @@ extension CommunityProviderPost on CommunityProvider {
   }
 
   Future<bool> deletePost(String postId) async {
+    if (isFakePost(postId)) return false; // 가짜 글은 서버에 쓰지 않는다
+
     _isLoading = true;
     _errorMessage = null;
     _notifyListenersSafe();

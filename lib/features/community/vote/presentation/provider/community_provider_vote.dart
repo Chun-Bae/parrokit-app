@@ -38,6 +38,8 @@ extension CommunityProviderVote on CommunityProvider {
 
   // 투표하기 (낙관적 UI 업데이트 포함)
   Future<bool> votePost(String postId, int optionIndex, String userId) async {
+    if (isFakePost(postId)) return false; // 가짜 글은 서버에 쓰지 않는다
+
     _isLoading = true;
     _errorMessage = null;
     final previousOption = myVotes[postId];
