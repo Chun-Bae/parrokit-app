@@ -19,4 +19,21 @@ void main() {
     expect(speechMatchScore('こんにちは', 'こんにちは'), 1);
     expect(speechMatchScore('你好吗', '你好'), closeTo(2 / 3, 0.001));
   });
+
+  test('상관없는 긴 말은 목표 글자가 흩어져 있어도 통과하지 않는다', () {
+    expect(
+        speechMatchScore(
+            'Thank you', 'I think the food was okay and you know it'),
+        lessThan(speechPassScore));
+    expect(
+        speechMatchScore(
+            'Hello there!', 'well hello everyone out there in the theater'),
+        lessThan(speechPassScore));
+  });
+
+  test('조금 덧붙여 말한 것은 그대로 통과한다', () {
+    expect(speechMatchScore('Nice to meet you.', 'nice to meet you too'), 1);
+    expect(speechMatchScore('Can I get a coffee?', 'can I get a coffee please'),
+        1);
+  });
 }

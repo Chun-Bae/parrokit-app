@@ -19,11 +19,19 @@ int _commonLength(List<int> a, List<int> b) {
 
 /// 들은 문장이 목표 문장을 얼마나 따라 했는지 0~1로 돌려준다.
 /// 순서를 지킨 공통 글자 수(LCS)를 목표 길이로 나눈다.
+///
+/// 들은 말이 목표보다 훨씬 길면 깎는다. 글자 단위 LCS라 긴 말에는 목표 글자가
+/// 순서대로 흩어져 들어 있기 쉬워서, 'Thank you'에 'I think the food was okay
+/// and you know it'이 0.88로 통과했다(5차). 목표의 1.5배 + 2글자까지는 덧붙인
+/// 말('… too', '… please')로 보고 그대로 둔다.
 double speechMatchScore(String target, String heard) {
   final a = normalizeForMatch(target).runes.toList();
   final b = normalizeForMatch(heard).runes.toList();
   if (a.isEmpty || b.isEmpty) return 0;
-  return _commonLength(a, b) / a.length;
+  final coverage = _commonLength(a, b) / a.length;
+  final allowed = a.length * 1.5 + 2;
+  final penalty = b.length <= allowed ? 1.0 : allowed / b.length;
+  return coverage * penalty;
 }
 
 /// 두 문장이 얼마나 같은 문장인지 0~1로 돌려준다. 어느 쪽이 길어도 같은 값이다.
