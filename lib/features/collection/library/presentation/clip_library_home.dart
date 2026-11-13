@@ -202,6 +202,103 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         '?collectionName=${Uri.encodeComponent(path)}',
       );
 
+  /// 열린 폴더의 이름 바꾸기·지우기.
+  Future<void> _manageFolder(ClipFolder folder) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            key: const ValueKey('folder-rename'),
+            leading: const Icon(Icons.drive_file_rename_outline_rounded),
+            title: const Text('이름 바꾸기'),
+            subtitle: folder.children.isEmpty
+                ? null
+                : const Text('안의 폴더도 함께 옮겨져요'),
+            onTap: () => Navigator.pop(sheetContext, 'rename'),
+          ),
+          ListTile(
+            key: const ValueKey('folder-delete'),
+            // 클립이 있어 못 지울 때는 빨간색 대신 흐리게 둔다.
+            leading: Icon(Icons.delete_outline_rounded,
+                color: folder.totalCount == 0
+                    ? Theme.of(sheetContext).colorScheme.error
+                    : null),
+            title: Text('폴더 지우기',
+                style: folder.totalCount == 0
+                    ? TextStyle(
+                        color: Theme.of(sheetContext).colorScheme.error)
+                    : null),
+            subtitle: Text(folder.totalCount == 0
+                ? '빈 폴더예요'
+                : '클립 ${folder.totalCount}개를 먼저 옮기거나 지워야 해요'),
+            enabled: folder.totalCount == 0,
+            onTap: () => Navigator.pop(sheetContext, 'delete'),
+          ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+    if (!mounted || action == null) return;
+    final provider = _clipProvider ?? context.read<ClipProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    if (action == 'rename') {
+      final name =
+          await showRenameFolderDialog(context, currentName: folder.name);
+      if (!mounted || name == null) return;
+      final parent = folder.parent;
+      final newPath =
+          normalizeFolderPath(parent == null ? name : '${parent.path}/$name');
+      if (_byPath.containsKey(newPath)) {
+        messenger.showSnackBar(
+            SnackBar(content: Text("'$name' 폴더가 이미 있어요.")));
+        return;
+      }
+      try {
+        await provider.renameFolderPath(folder.path, newPath);
+      } catch (_) {
+        messenger.showSnackBar(const SnackBar(
+            content: Text('이름을 바꾸지 못했어요. 다시 시도해 주세요.')));
+        return;
+      }
+      await _load();
+      if (!mounted) return;
+      setState(() => _openFolder = _byPath[newPath]);
+      messenger.showSnackBar(SnackBar(content: Text("'$name'(으)로 바꿨어요.")));
+    } else if (action == 'delete') {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text("'${folder.name}' 폴더를 지울까요?"),
+          content: const Text('빈 폴더라 클립은 지워지지 않아요.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('취소')),
+            FilledButton(
+                key: const ValueKey('folder-delete-confirm'),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('지우기')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+      final deleted = await provider.deleteEmptyFolderPath(folder.path);
+      if (!mounted) return;
+      if (!deleted) {
+        messenger.showSnackBar(const SnackBar(
+            content: Text('폴더에 클립이 있어 지우지 않았어요.')));
+        return;
+      }
+      setState(() => _openFolder = folder.parent);
+      await _load();
+      messenger.showSnackBar(
+          SnackBar(content: Text("'${folder.name}' 폴더를 지웠어요.")));
+    }
+  }
+
   /// 지금 폴더 안(맨 위면 맨 위)에 새 폴더를 만든다. 예전엔 이름을 받은 뒤
   /// 클립 만들기로 넘어가 첫 클립을 저장해야 폴더가 생겼다(5차, 사용자 요청으로
   /// 폴더만 만든다). 폴더는 기기(로컬)에 만들고, 다른 위치의 클립도 같은 이름이면
@@ -477,6 +574,14 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                 tooltip: '이 폴더에 클립 추가',
                 onPressed: () => _createClipIn(folder.path),
                 icon: const Icon(Icons.video_call_outlined),
+              ),
+              // 새 보관함에는 폴더 이름 바꾸기·지우기가 없어 예전 화면으로
+              // 돌아가야 했다(5차).
+              IconButton(
+                key: const ValueKey('folder-manage'),
+                tooltip: '폴더 관리',
+                onPressed: () => _manageFolder(folder),
+                icon: const Icon(Icons.more_horiz_rounded),
               ),
             ],
           ),

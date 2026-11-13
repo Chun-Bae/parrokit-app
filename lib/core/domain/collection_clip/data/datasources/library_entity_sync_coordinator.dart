@@ -136,6 +136,57 @@ class LibraryEntitySyncCoordinator {
     }
   }
 
+  /// 폴더 경로 [oldPath]와 그 아래 폴더를 저장 위치와 상관없이 [newPath]로
+  /// 바꾼다(새 보관함의 '이름 바꾸기', 5차). 같은 경로의 폴더가 위치마다 따로
+  /// 있거나, '여행'이 '여행/일본'으로만 있는(자기 컬렉션이 없는) 경우도 함께
+  /// 바뀐다. 원격 동기화는 폴더마다 원래 경로를 탄다. 바꾼 개수를 돌려준다.
+  Future<int> renameFolderPath(String oldPath, String newPath) async {
+    var count = 0;
+    for (final collection in await db.collectionsDao.fetchAll()) {
+      final renamed = _normPath(collection.name) == _normPath(oldPath)
+          ? _normPath(newPath)
+          : renamedFolderPath(collection.name, oldPath, newPath);
+      if (renamed == null || renamed == collection.name) continue;
+      await _renameOne(collection, renamed);
+      count++;
+    }
+    return count;
+  }
+
+  /// [path] 폴더와 그 아래 폴더가 모두 비어 있으면(클립 0개) 지운다. 하나라도
+  /// 클립이 있으면 아무것도 지우지 않고 false. 원격 문서도 함께 지운다(5차).
+  Future<bool> deleteEmptyFolderPath(String path) async {
+    final target = _normPath(path);
+    final matches = [
+      for (final c in await db.collectionsDao.fetchAll())
+        if (_normPath(c.name) == target ||
+            _normPath(c.name).startsWith('$target/'))
+          c,
+    ];
+    for (final c in matches) {
+      final hasClip = await (db.select(db.clips)
+            ..where((clip) => clip.collectionId.equals(c.id))
+            ..limit(1))
+          .getSingleOrNull();
+      if (hasClip != null) return false;
+    }
+    for (final c in matches) {
+      await deleteCollection(c.id);
+      await (db.delete(db.groupCollections)
+            ..where((gc) => gc.collectionId.equals(c.id)))
+          .go();
+      await (db.delete(db.collections)..where((row) => row.id.equals(c.id)))
+          .go();
+    }
+    return true;
+  }
+
+  static String _normPath(String v) => v
+      .split('/')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .join('/');
+
   /// [name]이 [oldPath] 아래 폴더면 [newPath] 아래로 옮긴 이름, 아니면 null.
   /// 경로 비교는 칸마다 앞뒤 공백을 뗀 모양으로 한다. 예:
   /// renamedFolderPath('여행/일본', '여행', '여행2') == '여행2/일본'

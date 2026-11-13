@@ -36,6 +36,15 @@ Future<String?> showNewFolderDialog(BuildContext context,
           _NewFolderDialog(parentName: parentName, createsNow: createsNow),
     );
 
+/// 폴더 이름 바꾸기. [currentName]을 채워 열고 새 이름(마지막 칸)을 돌려준다.
+Future<String?> showRenameFolderDialog(BuildContext context,
+        {required String currentName}) =>
+    showDialog<String>(
+      context: context,
+      builder: (_) =>
+          _NewFolderDialog(initialName: currentName, renaming: true),
+    );
+
 class _FolderPickerSheet extends StatefulWidget {
   const _FolderPickerSheet({required this.existingNames, this.selected});
 
@@ -154,17 +163,24 @@ class _FolderPickerSheetState extends State<_FolderPickerSheet> {
 }
 
 class _NewFolderDialog extends StatefulWidget {
-  const _NewFolderDialog({this.parentName, this.createsNow = false});
+  const _NewFolderDialog({
+    this.parentName,
+    this.createsNow = false,
+    this.initialName,
+    this.renaming = false,
+  });
 
   final String? parentName;
   final bool createsNow;
+  final String? initialName;
+  final bool renaming;
 
   @override
   State<_NewFolderDialog> createState() => _NewFolderDialogState();
 }
 
 class _NewFolderDialogState extends State<_NewFolderDialog> {
-  final _controller = TextEditingController();
+  late final _controller = TextEditingController(text: widget.initialName);
 
   @override
   void dispose() {
@@ -175,7 +191,11 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
   String? get _error =>
       _controller.text.contains('/') ? "'/'는 쓸 수 없어요" : null;
 
-  bool get _valid => _controller.text.trim().isNotEmpty && _error == null;
+  bool get _valid =>
+      _controller.text.trim().isNotEmpty &&
+      _error == null &&
+      // 이름 바꾸기에서 그대로면 할 일이 없다.
+      !(widget.renaming && _controller.text.trim() == widget.initialName);
 
   void _submit() {
     if (_valid) Navigator.pop(context, _controller.text.trim());
@@ -184,9 +204,11 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.parentName == null
-          ? '새 폴더'
-          : "'${widget.parentName}' 안에 새 폴더"),
+      title: Text(widget.renaming
+          ? '폴더 이름 바꾸기'
+          : widget.parentName == null
+              ? '새 폴더'
+              : "'${widget.parentName}' 안에 새 폴더"),
       content: TextField(
         key: const ValueKey('new-folder-name'),
         controller: _controller,
@@ -198,7 +220,9 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
           labelText: '폴더 이름',
           errorText: _error,
           // 글자 수 표시와 한 줄을 나눠 쓰므로 짧게.
-          helperText: widget.createsNow ? null : '첫 클립을 넣으면 생겨요',
+          helperText: widget.createsNow || widget.renaming
+              ? null
+              : '첫 클립을 넣으면 생겨요',
         ),
       ),
       actions: [
@@ -207,7 +231,7 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
         FilledButton(
           key: const ValueKey('confirm-new-folder'),
           onPressed: _valid ? _submit : null,
-          child: const Text('만들기'),
+          child: Text(widget.renaming ? '바꾸기' : '만들기'),
         ),
       ],
     );

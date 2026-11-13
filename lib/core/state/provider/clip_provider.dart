@@ -976,6 +976,19 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   }
 
   /// 콜렉션 이름 변경 후 목록 갱신. 원격에 동기화된 콜렉션이면 원격도 갱신.
+  /// 새 보관함의 폴더 이름 바꾸기(경로 단위, 하위 폴더 함께). 5차.
+  Future<void> renameFolderPath(String oldPath, String newPath) async {
+    await _libraryEntitySyncCoordinator.renameFolderPath(oldPath, newPath);
+    notifyListeners();
+  }
+
+  /// 새 보관함의 빈 폴더 지우기. 클립이 남아 있으면 false.
+  Future<bool> deleteEmptyFolderPath(String path) async {
+    final ok = await _libraryEntitySyncCoordinator.deleteEmptyFolderPath(path);
+    if (ok) notifyListeners();
+    return ok;
+  }
+
   Future<void> renameCollection(int id, String name) async {
     await _libraryEntitySyncCoordinator.renameCollection(id, name);
     await selectGroup(selectedGroupId);
