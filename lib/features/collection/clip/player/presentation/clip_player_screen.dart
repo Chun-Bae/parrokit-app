@@ -558,99 +558,93 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
             ),
           ]),
 
-          // 토글 버튼들
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 구간/전체: 예전에는 알약 하나가 글자('구간'/'전체재생')와 켜짐
-                // 색(전체일 때만)을 따로 바꿔 지금 무엇인지 헷갈렸다. 두 칸으로
-                // 나눠 지금 고른 쪽만 칠한다.
-                IgnorePointer(
-                  ignoring: vm.isBackground,
-                  child: Opacity(
-                    opacity: vm.isBackground ? 0.4 : 1.0,
-                    child: _ScopeSwitch(
-                      full: vm.scope == PlayScope.full,
-                      onChanged: (full) {
-                        if (full != (vm.scope == PlayScope.full)) {
-                          vm.toggleScope();
-                        }
-                      },
-                      isLight: isLight,
-                    ),
+          // 토글 버튼들. 예전엔 가로 한 줄 스크롤이라 '백그라운드'가 잘리고
+          // 속도 버튼은 화면 밖이라 있는 줄도 몰랐다(5차). 넘치면 다음 줄로.
+          Wrap(
+            key: const ValueKey('player-toggles'),
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              // 구간/전체: 예전에는 알약 하나가 글자('구간'/'전체재생')와 켜짐
+              // 색(전체일 때만)을 따로 바꿔 지금 무엇인지 헷갈렸다. 두 칸으로
+              // 나눠 지금 고른 쪽만 칠한다.
+              IgnorePointer(
+                ignoring: vm.isBackground,
+                child: Opacity(
+                  opacity: vm.isBackground ? 0.4 : 1.0,
+                  child: _ScopeSwitch(
+                    full: vm.scope == PlayScope.full,
+                    onChanged: (full) {
+                      if (full != (vm.scope == PlayScope.full)) {
+                        vm.toggleScope();
+                      }
+                    },
+                    isLight: isLight,
                   ),
                 ),
-                const SizedBox(width: 8),
-                // 한 줄씩 멈춤은 전체 재생에서만 뜻이 있다(구간 재생은 줄 끝에서
-                // 반복하거나 멈춘다). 구간일 때는 흐리게 두고 누를 수 없다.
-                IgnorePointer(
-                  ignoring: vm.isBackground || vm.scope != PlayScope.full,
-                  child: Opacity(
-                    opacity: vm.isBackground || vm.scope != PlayScope.full
-                        ? 0.4
-                        : 1.0,
-                    child: TogglePill(
-                      key: const ValueKey('pause-each-line'),
-                      icon: Icons.pause_circle_outline_rounded,
-                      label: '한 줄씩 멈춤',
-                      active: vm.pauseEachLine,
-                      onTap: vm.togglePauseEachLine,
-                      isLight: isLight,
-                    ),
+              ),
+              // 한 줄씩 멈춤은 전체 재생에서만 뜻이 있다(구간 재생은 줄 끝에서
+              // 반복하거나 멈춘다). 구간일 때는 흐리게 두고 누를 수 없다.
+              IgnorePointer(
+                ignoring: vm.isBackground || vm.scope != PlayScope.full,
+                child: Opacity(
+                  opacity:
+                      vm.isBackground || vm.scope != PlayScope.full ? 0.4 : 1.0,
+                  child: TogglePill(
+                    key: const ValueKey('pause-each-line'),
+                    icon: Icons.pause_circle_outline_rounded,
+                    label: '한 줄씩 멈춤',
+                    active: vm.pauseEachLine,
+                    onTap: vm.togglePauseEachLine,
+                    isLight: isLight,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IgnorePointer(
-                  ignoring: vm.isBackground,
-                  child: Opacity(
-                    opacity: vm.isBackground ? 0.4 : 1.0,
-                    child: TogglePill(
-                      icon: Icons.repeat_rounded,
-                      label: '반복',
-                      active: vm.loopSegment,
-                      onTap: vm.toggleLoop,
-                      isLight: isLight,
-                    ),
+              ),
+              IgnorePointer(
+                ignoring: vm.isBackground,
+                child: Opacity(
+                  opacity: vm.isBackground ? 0.4 : 1.0,
+                  child: TogglePill(
+                    icon: Icons.repeat_rounded,
+                    label: '반복',
+                    active: vm.loopSegment,
+                    onTap: vm.toggleLoop,
+                    isLight: isLight,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IgnorePointer(
-                  ignoring: vm.isBackground,
-                  child: Opacity(
-                    opacity: vm.isBackground ? 0.4 : 1.0,
-                    child: TogglePill(
-                      icon: Icons.subtitles_rounded,
-                      label: '자막',
-                      active: vm.showSubtitles,
-                      onTap: vm.toggleSubtitles,
-                      isLight: isLight,
-                    ),
+              ),
+              IgnorePointer(
+                ignoring: vm.isBackground,
+                child: Opacity(
+                  opacity: vm.isBackground ? 0.4 : 1.0,
+                  child: TogglePill(
+                    icon: Icons.subtitles_rounded,
+                    label: '자막',
+                    active: vm.showSubtitles,
+                    onTap: vm.toggleSubtitles,
+                    isLight: isLight,
                   ),
                 ),
-                const SizedBox(width: 8),
-                TogglePill(
-                  icon: Icons.headphones_rounded,
-                  label: '백그라운드',
-                  active: vm.isBackground,
-                  onTap: vm.toggleAudioOnlyMode,
-                  isLight: isLight,
-                ),
-                const SizedBox(width: 8),
-                IgnorePointer(
-                  ignoring: vm.isBackground,
-                  child: Opacity(
-                    opacity: vm.isBackground ? 0.4 : 1.0,
-                    child: SpeedMenu(
-                      value: vm.playbackRate,
-                      onSelected: vm.setPlaybackRate,
-                      isLight: isLight,
-                    ),
+              ),
+              TogglePill(
+                icon: Icons.headphones_rounded,
+                label: '백그라운드',
+                active: vm.isBackground,
+                onTap: vm.toggleAudioOnlyMode,
+                isLight: isLight,
+              ),
+              IgnorePointer(
+                ignoring: vm.isBackground,
+                child: Opacity(
+                  opacity: vm.isBackground ? 0.4 : 1.0,
+                  child: SpeedMenu(
+                    value: vm.playbackRate,
+                    onSelected: vm.setPlaybackRate,
+                    isLight: isLight,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

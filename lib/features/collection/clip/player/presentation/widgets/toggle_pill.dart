@@ -43,7 +43,9 @@ class TogglePill extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.full),
           border: border != null ? Border.all(color: border, width: 0.8) : null,
         ),
+        // 내용만큼만 차지한다. 줄바꿈되는 줄(Wrap)에 들어가도 가로로 늘지 않게.
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: fg, size: 18),
             const SizedBox(width: 6),
