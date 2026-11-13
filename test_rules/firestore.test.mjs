@@ -363,3 +363,42 @@ test("남의 디바이스 문서를 덮어쓸 수 없다", async () => {
 });
 
 assert.ok(true);
+
+// ---------------------------------------------------------------- words (5차 내 단어)
+
+const word = (fields = {}) => ({
+  ownerId: "alice",
+  language: "영어",
+  word: "figure out",
+  meaning: "알아내다",
+  example: "We'll figure it out together.",
+  exampleTranslation: "같이 해결해 보자.",
+  sourceSentenceId: "",
+  topic: "내 단어",
+  createdAt: new Date(),
+  ...fields,
+});
+
+test("내 단어는 본인 것만 만들고 읽고 지울 수 있다", async () => {
+  await assertSucceeds(setDoc(doc(alice(), "words/w1"), word()));
+  await assertSucceeds(getDoc(doc(alice(), "words/w1")));
+  await assertFails(getDoc(doc(bob(), "words/w1")));
+  await assertFails(deleteDoc(doc(bob(), "words/w1")));
+  await assertSucceeds(deleteDoc(doc(alice(), "words/w1")));
+});
+
+test("남의 이름으로 단어를 만들거나 로그인 없이 쓸 수 없다", async () => {
+  await assertFails(setDoc(doc(bob(), "words/w2"), word({ ownerId: "alice" })));
+  await assertFails(setDoc(doc(stranger(), "words/w3"), word()));
+});
+
+test("빈 단어나 너무 긴 단어는 저장할 수 없다", async () => {
+  await assertFails(setDoc(doc(alice(), "words/w4"), word({ word: "" })));
+  await assertFails(setDoc(doc(alice(), "words/w5"), word({ word: "a".repeat(81) })));
+});
+
+test("단어 주인을 다른 사람으로 바꿀 수 없다", async () => {
+  await seed(testEnv, (db) => setDoc(doc(db, "words/w6"), word()));
+  await assertSucceeds(updateDoc(doc(alice(), "words/w6"), { meaning: "해결하다" }));
+  await assertFails(updateDoc(doc(alice(), "words/w6"), { ownerId: "bob" }));
+});

@@ -172,6 +172,28 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
+    // 내 단어(5차). 본인만 읽고 쓴다. 공개·둘러보기는 없다.
+    // 목록 조회는 where('ownerId', '==', 내 uid)로 해야 한다.
+    match /words/{wordId} {
+      function validWord(d) {
+        return d.ownerId == request.auth.uid
+          && d.word is string && d.word.size() > 0 && d.word.size() <= 80
+          && d.language is string && d.language.size() <= 20
+          && d.get('meaning', '') is string && d.get('meaning', '').size() <= 200
+          && d.get('example', '') is string && d.get('example', '').size() <= 300
+          && d.get('exampleTranslation', '') is string
+          && d.get('exampleTranslation', '').size() <= 300
+          && d.get('sourceSentenceId', '') is string
+          && d.get('topic', '') is string && d.get('topic', '').size() <= 40;
+      }
+      allow read, delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+      allow create: if request.auth != null && validWord(request.resource.data);
+      allow update: if request.auth != null
+        && resource.data.ownerId == request.auth.uid
+        && validWord(request.resource.data);
+    }
+
     // 디바이스 토큰 관리.
     //
     // 앱에서 이 컬렉션을 쓰는 코드는 없다. FCM 토큰은 users 문서의

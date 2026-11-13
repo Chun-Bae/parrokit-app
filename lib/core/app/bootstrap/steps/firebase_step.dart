@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/app/config/firebase_options.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
+import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/word_cloud_store.dart';
 import 'package:parrokit/core/content/sentence_cloud_store.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
@@ -18,6 +20,9 @@ Future<void> initFirebase() async {
     ).timeout(const Duration(seconds: 8));
     // 로그인한 사용자의 내 문장은 Firestore에 보관한다.
     MySentenceStore.cloud = SentenceCloudStore();
+    // 내 단어도 같은 방식. words 규칙이 배포되기 전에는 저장이 실패하고
+    // MyWordStore가 이 기기에 남긴다.
+    MyWordStore.cloud = FirestoreWordCloud();
     AppLogger.i('[Bootstrap][Firebase] success');
   } catch (e) {
     AppLogger.e('[Bootstrap][Firebase] failed', error: e);
