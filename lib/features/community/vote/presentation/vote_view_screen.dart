@@ -451,7 +451,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                             _focusCommentInput();
                           },
                           child: Text(
-                            '답글 달기',
+                            '답글 쓰기',
                             style: context.texts.bodySmall
                                 .copyWith(color: colorScheme.onSurfaceVariant),
                           ),

@@ -224,7 +224,7 @@ class VoteCommentsSection extends StatelessWidget {
                             provider.setReplyingTo(comment);
                             onFocusCommentInput();
                           },
-                          child: Text('답글 달기',
+                          child: Text('답글 쓰기',
                               style: context.texts.bodySmall.copyWith(
                                   color: context.tokens.textTertiary)),
                         ),

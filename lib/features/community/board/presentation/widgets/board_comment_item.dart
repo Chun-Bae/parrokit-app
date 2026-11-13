@@ -211,7 +211,7 @@ class BoardCommentItem extends StatelessWidget {
                             Icon(Icons.chat_bubble_outline,
                                 size: 16, color: context.tokens.textDisabled),
                             SizedBox(width: 4),
-                            Text('답글쓰기',
+                            Text('답글 쓰기',
                                 style: context.texts.labelMedium.copyWith(
                                     color: context.tokens.textDisabled)),
                           ],
