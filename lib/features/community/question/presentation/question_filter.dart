@@ -1,18 +1,21 @@
 import 'package:parrokit/data/models/post.dart';
+import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 
 /// 질문 탭 필터(CommunityFilters.question)에 맞춰 질문을 거르고 정렬한다.
 ///
 /// 서버 조회 순서(최신순)는 그대로 두고, 이미 불러온 질문 안에서만 다시
 /// 정렬한다. 서버 정렬에는 Firestore 인덱스 배포가 필요해서다(5차 결정).
-/// 예전에는 '화제의 질문'·'오래된 질문'이 아무것도 바꾸지 않아 '전체'와 같았다.
+/// 예전에는 '화제의 질문'·'오래된 질문'(지금 '공감 순'·'오래된 순')이 아무것도
+/// 바꾸지 않아 '전체'와 같았다.
 List<Post> questionsForFilter(List<Post> posts, String filter) {
   final questions = posts.where((p) => p.postType == 'question').toList();
-  switch (filter) {
-    case '채택 완료':
+  // 이름이 아니라 CommunityFilters.question의 순서로 고른다(이름이 바뀌어도 그대로).
+  switch (CommunityFilters.question.indexOf(filter)) {
+    case 1: // 채택 완료
       return questions.where((p) => p.questionStatus == 'resolved').toList();
-    case '답변 대기중':
+    case 2: // 답변 대기
       return questions.where((p) => p.questionStatus == 'waiting').toList();
-    case '화제의 질문':
+    case 3: // 공감 순
       // 공감 많은 순, 같으면 댓글 많은 순, 그다음 최신 순.
       return questions
         ..sort((a, b) {
@@ -22,7 +25,7 @@ List<Post> questionsForFilter(List<Post> posts, String filter) {
           if (byComment != 0) return byComment;
           return _newestFirst(a, b);
         });
-    case '오래된 질문':
+    case 4: // 오래된 순
       // 작성 시각이 없는 글은 맨 뒤로.
       return questions
         ..sort((a, b) {

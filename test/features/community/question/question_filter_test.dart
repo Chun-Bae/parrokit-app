@@ -46,13 +46,13 @@ void main() {
     ]);
   });
 
-  test('채택 완료와 답변 대기중은 상태로 거른다', () {
+  test('채택 완료와 답변 대기는 상태로 거른다', () {
     expect(ids(questionsForFilter(posts, '채택 완료')), ['old-many']);
-    expect(ids(questionsForFilter(posts, '답변 대기중')), isNot(contains('old-many')));
+    expect(ids(questionsForFilter(posts, '답변 대기')), isNot(contains('old-many')));
   });
 
-  test('화제의 질문은 공감 많은 순, 같으면 댓글 많은 순', () {
-    expect(ids(questionsForFilter(posts, '화제의 질문')), [
+  test('공감 순은 공감 많은 순, 같으면 댓글 많은 순', () {
+    expect(ids(questionsForFilter(posts, '공감 순')), [
       'old-many',
       'new-popular',
       'mid-tie-more-comments',
@@ -61,8 +61,8 @@ void main() {
     ]);
   });
 
-  test('오래된 질문은 작성 순, 날짜 없는 글은 맨 뒤', () {
-    expect(ids(questionsForFilter(posts, '오래된 질문')), [
+  test('오래된 순은 작성 순, 날짜 없는 글은 맨 뒤', () {
+    expect(ids(questionsForFilter(posts, '오래된 순')), [
       'old-many',
       'mid-tie-more-comments',
       'mid-tie-less-comments',
@@ -73,7 +73,7 @@ void main() {
 
   test('원래 목록은 건드리지 않는다', () {
     final before = ids(posts);
-    questionsForFilter(posts, '화제의 질문');
+    questionsForFilter(posts, '공감 순');
     expect(ids(posts), before);
   });
 }

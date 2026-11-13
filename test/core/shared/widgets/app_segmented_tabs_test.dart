@@ -10,6 +10,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
+    // 예전 질문 필터 이름(가장 긴 경우)으로 본다.
     const labels = ['전체', '채택 완료', '답변 대기중', '화제의 질문', '오래된 질문'];
     await tester.pumpWidget(
       MaterialApp(

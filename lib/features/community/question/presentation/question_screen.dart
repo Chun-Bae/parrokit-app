@@ -71,7 +71,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         questionsForFilter(provider.posts, widget.selectedFilter);
 
     if (questionPosts.isEmpty) {
-      // "답변 대기중"·"채택 완료"는 읽어 온 페이지에서 거른 것이라, 이 페이지에
+      // "답변 대기"·"채택 완료"는 읽어 온 페이지에서 거른 것이라, 이 페이지에
       // 맞는 질문이 없어도 더 오래된 질문에는 있을 수 있다.
       final canLoadMore = provider.hasMorePosts && !provider.isLoading;
       return AppEmptyState(
@@ -133,7 +133,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
     final isResolved = question.questionStatus == 'resolved';
     final isExpired = question.questionStatus == 'expired';
 
-    String statusText = '답변 대기중';
+    String statusText = '답변 대기';
     Color statusColor = context.tokens.primary;
     Color statusBgColor = context.tokens.primarySoft;
 
