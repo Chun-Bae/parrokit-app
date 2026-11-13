@@ -20,6 +20,7 @@ import 'content_studio_app_bar.dart';
 import 'widgets/content_studio_exit_confirm_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class ContentStudioHubScreen extends StatefulWidget {
   const ContentStudioHubScreen({
@@ -35,6 +36,7 @@ class ContentStudioHubScreen extends StatefulWidget {
 
 class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   late final PageController _pageController;
+
   /// 마지막 탭 번호. 영상 만들기를 숨기면 TTS(1)가 끝이다.
   static int get _lastIndex => kVideoStudioEnabled ? 2 : 1;
 
@@ -180,8 +182,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                         _StudioPageSlot(
                           child: CaptioningScreen(
                             showAppBar: false,
-                            onClose: (_) async =>
-                                _leave(GoRouter.of(context)),
+                            onClose: (_) async => _leave(GoRouter.of(context)),
                           ),
                         ),
                         _StudioPageSlot(child: TtsScreen()),
@@ -368,14 +369,8 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   }
 
   void _showSettingsSheet(BuildContext context) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {

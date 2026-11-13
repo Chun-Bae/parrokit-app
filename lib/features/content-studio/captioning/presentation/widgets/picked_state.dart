@@ -17,6 +17,7 @@ import '../../domain/utils/timecode_service.dart';
 import '../models/edit_state.dart';
 import 'video_picker_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class PickedState extends StatefulWidget {
   const PickedState({
@@ -550,10 +551,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
     final scrollController =
         FixedExtentScrollController(initialItem: initialIndex);
 
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (context) {
         final cs = Theme.of(context).colorScheme;
         return SafeArea(
@@ -610,10 +609,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
     final scrollController =
         FixedExtentScrollController(initialItem: initialIndex);
 
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (context) {
         final cs = Theme.of(context).colorScheme;
         return SafeArea(

@@ -10,15 +10,14 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// 편집 종료 확인 바텀시트를 표시합니다.
 ///
 /// [true]를 반환하면 나가기, [false]를 반환하면 계속 편집.
 Future<bool?> showExitConfirmSheet(BuildContext context) {
-  return showModalBottomSheet<bool>(
+  return showAppSheet<bool>(
     context: context,
-    useRootNavigator: true,
-    showDragHandle: true,
     builder: (ctx) {
       final cs = Theme.of(ctx).colorScheme;
       return SafeArea(

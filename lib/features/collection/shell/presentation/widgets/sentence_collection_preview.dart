@@ -31,6 +31,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -978,12 +979,8 @@ Future<void> showSentenceDetails(
   Future<void> Function(bool liked)? onSharedLike,
   Future<void> Function()? onSaveShared,
 }) =>
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
       builder: (context) => _SentenceDetailSheet(
         sentence: sentence,
         accountId: accountId,
@@ -1724,10 +1721,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   /// 이 문장의 단어를 내 단어로 저장한다. 문장이 예문으로 붙는다(5차 6번).
   /// [word]가 비어 있으면 직접 입력.
   Future<void> saveWord(String word) async {
-    final result = await showModalBottomSheet(
+    final result = await showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (_) => AddWordSheet(
         accountId: widget.accountId,
         language: widget.sentence.language,

@@ -22,7 +22,7 @@ const _other = DefaultConversationSentence(
   pronunciation: '오하요 고자이마스',
   topic: '인사',
 );
-const _word = MyWord(
+final _word = MyWord(
     id: 'w1',
     language: '영어',
     word: 'meet',
@@ -43,7 +43,7 @@ ClipSegmentRef _segment(int clipId, String title, String original,
 
 final _data = LibrarySearchData(
   sentences: const [_sentence, _other],
-  words: const [_word],
+  words: [_word],
   clips: const [(1, '여행 영어'), (2, '드라마 장면')],
   segments: [
     _segment(1, '여행 영어', 'Where is the station?', '역이 어디예요?'),

@@ -24,6 +24,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'nest_preview.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 enum _SpeakingMode { automatic, repeat }
 
@@ -643,11 +644,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     if (!hasSpeakablePhrase) return;
     final list = phrases;
     final current = phraseIndex % list.length;
-    final picked = await showModalBottomSheet<int>(
+    final picked = await showAppSheet<int>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (context) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.6,
@@ -807,22 +805,21 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
           .catchError((_) => false));
     }
     final action = await showDialog<String>(
-        context: context,
-        builder: (context) => _PhraseSettingsDialog(
-          accountId: widget.accountId,
-          initialLanguage: widget.language,
-          mySentences: mySentences,
-          initialEnabled: {
-            for (final sentence in [
-              for (final language in availableLearningLanguages)
-                ...defaultSentencesFor(language.label),
-              ...mySentences,
-            ])
-              sentence.id:
-                  activities[sentence.id]?.routineEnabled ?? true,
-          },
-        ),
-      );
+      context: context,
+      builder: (context) => _PhraseSettingsDialog(
+        accountId: widget.accountId,
+        initialLanguage: widget.language,
+        mySentences: mySentences,
+        initialEnabled: {
+          for (final sentence in [
+            for (final language in availableLearningLanguages)
+              ...defaultSentencesFor(language.label),
+            ...mySentences,
+          ])
+            sentence.id: activities[sentence.id]?.routineEnabled ?? true,
+        },
+      ),
+    );
     // 창의 + 버튼은 창을 닫고 왼쪽 '문장 추가'와 같은 흐름을 연다.
     if (action == _PhraseSettingsDialog.addAction && mounted) {
       await addPhrase();
@@ -986,61 +983,61 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
             // 4차에서 아래 글자 달린 조작 줄로 바꾸며 지웠다.
           ])),
       Padding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
-          child: Row(children: [
-            _LabeledControl(
-                key: const ValueKey('mode-repeat'),
-                label: '따라 말하기',
-                tooltip: mode == _SpeakingMode.repeat
-                    ? '따라 말하기 모드 끄기'
-                    : '따라 말하기 모드 켜기',
-                icon: Icons.record_voice_over_rounded,
-                selected: mode == _SpeakingMode.repeat,
-                onTap: () => changeMode(mode == _SpeakingMode.repeat
-                    ? _SpeakingMode.automatic
-                    : _SpeakingMode.repeat)),
-            _LabeledControl(
-                label: '듣기',
-                tooltip: listenMode ? '듣기 모드 끄기' : '듣기 모드 켜기',
-                icon: Icons.headphones_rounded,
-                selected: listenMode,
-                onTap: () => setListenMode(!listenMode)),
-            _LabeledControl(
-                key: const ValueKey('previous-phrase'),
-                label: '이전',
-                tooltip: '이전 문장',
-                icon: Icons.skip_previous_rounded,
-                onTap: () => skipPhrase(forward: false)),
-            _LabeledControl(
-                label: paused ? '재생' : '멈춤',
-                tooltip: paused ? '말하기 재개' : '말하기 일시 정지',
-                icon: paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                emphasized: true,
-                onTap: () {
-                  setState(() => paused = !paused);
-                  syncPlayback();
-                }),
-            _LabeledControl(
-                key: const ValueKey('next-phrase'),
-                label: '다음',
-                tooltip: '다음 문장',
-                icon: Icons.skip_next_rounded,
-                onTap: () => skipPhrase(forward: true)),
-            _LabeledControl(
-                key: const ValueKey('play-order'),
-                label: playOrder.label,
-                tooltip: '재생 순서: ${playOrder.label}',
-                icon: playOrder.icon,
-                selected: playOrder != _PlayOrder.sequential,
-                onTap: () => setState(() => playOrder = playOrder.next)),
-            _LabeledControl(
-                key: const ValueKey('phrase-list-button'),
-                label: '목록',
-                tooltip: '문장 목록',
-                icon: Icons.queue_music_rounded,
-                onTap: pickPhrase),
-          ]),
-        ),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 14),
+        child: Row(children: [
+          _LabeledControl(
+              key: const ValueKey('mode-repeat'),
+              label: '따라 말하기',
+              tooltip: mode == _SpeakingMode.repeat
+                  ? '따라 말하기 모드 끄기'
+                  : '따라 말하기 모드 켜기',
+              icon: Icons.record_voice_over_rounded,
+              selected: mode == _SpeakingMode.repeat,
+              onTap: () => changeMode(mode == _SpeakingMode.repeat
+                  ? _SpeakingMode.automatic
+                  : _SpeakingMode.repeat)),
+          _LabeledControl(
+              label: '듣기',
+              tooltip: listenMode ? '듣기 모드 끄기' : '듣기 모드 켜기',
+              icon: Icons.headphones_rounded,
+              selected: listenMode,
+              onTap: () => setListenMode(!listenMode)),
+          _LabeledControl(
+              key: const ValueKey('previous-phrase'),
+              label: '이전',
+              tooltip: '이전 문장',
+              icon: Icons.skip_previous_rounded,
+              onTap: () => skipPhrase(forward: false)),
+          _LabeledControl(
+              label: paused ? '재생' : '멈춤',
+              tooltip: paused ? '말하기 재개' : '말하기 일시 정지',
+              icon: paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+              emphasized: true,
+              onTap: () {
+                setState(() => paused = !paused);
+                syncPlayback();
+              }),
+          _LabeledControl(
+              key: const ValueKey('next-phrase'),
+              label: '다음',
+              tooltip: '다음 문장',
+              icon: Icons.skip_next_rounded,
+              onTap: () => skipPhrase(forward: true)),
+          _LabeledControl(
+              key: const ValueKey('play-order'),
+              label: playOrder.label,
+              tooltip: '재생 순서: ${playOrder.label}',
+              icon: playOrder.icon,
+              selected: playOrder != _PlayOrder.sequential,
+              onTap: () => setState(() => playOrder = playOrder.next)),
+          _LabeledControl(
+              key: const ValueKey('phrase-list-button'),
+              label: '목록',
+              tooltip: '문장 목록',
+              icon: Icons.queue_music_rounded,
+              onTap: pickPhrase),
+        ]),
+      ),
       if (awaitingResponse || mode == _SpeakingMode.repeat)
         Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
@@ -1573,8 +1570,8 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
                   key: const ValueKey('phrase-settings-add'),
                   style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48)),
-                  onPressed: () => Navigator.pop(
-                      context, _PhraseSettingsDialog.addAction),
+                  onPressed: () =>
+                      Navigator.pop(context, _PhraseSettingsDialog.addAction),
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('문장 추가')),
             ),
@@ -1611,11 +1608,7 @@ class _HomeHelpDialog extends StatelessWidget {
           '앵무새 목소리를 켜고 끕니다. 듣기와 함께 켜져 있어야 문장을 읽어줘요.'
         ),
         (Icons.add_comment_rounded, '문장 추가', '내가 연습할 문장을 직접 추가합니다.'),
-        (
-          Icons.tune_rounded,
-          '문장 설정',
-          '앵무새가 말할 문장을 고릅니다. 체크하면 바로 반영돼요.'
-        ),
+        (Icons.tune_rounded, '문장 설정', '앵무새가 말할 문장을 고릅니다. 체크하면 바로 반영돼요.'),
         (Icons.settings_rounded, '말하기 설정', '말하기 간격과 듣기 횟수 기록 여부를 정합니다.'),
       ]
     ),
@@ -1722,8 +1715,7 @@ class _GameMenuButton extends StatelessWidget {
                 onTap: onTap,
                 child: Stack(alignment: Alignment.center, children: [
                   Icon(icon,
-                      size: 23,
-                      color: selected ? Colors.white : palette.muted),
+                      size: 23, color: selected ? Colors.white : palette.muted),
                   if (badge)
                     Positioned(
                         key: const ValueKey('menu-badge'),
@@ -1890,46 +1882,46 @@ class _LabeledControl extends StatelessWidget {
       child: Tooltip(
         message: tooltip ?? label,
         child: Semantics(
-        button: true,
-        selected: selected,
-        label: tooltip ?? label,
-        excludeSemantics: true,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 32,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: emphasized
-                      ? palette.primary
-                      : selected
-                          ? palette.primary.withValues(alpha: 0.12)
-                          : palette.surface,
-                  border: active ? null : Border.all(color: palette.border),
+          button: true,
+          selected: selected,
+          label: tooltip ?? label,
+          excludeSemantics: true,
+          child: InkResponse(
+            onTap: onTap,
+            radius: 32,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: emphasized
+                        ? palette.primary
+                        : selected
+                            ? palette.primary.withValues(alpha: 0.12)
+                            : palette.surface,
+                    border: active ? null : Border.all(color: palette.border),
+                  ),
+                  child: Icon(icon, size: 22, color: iconColor),
                 ),
-                child: Icon(icon, size: 22, color: iconColor),
-              ),
-              const SizedBox(height: 4),
-              // 큰 글자 설정에서 '따라 …', '순서…'로 잘렸다(5차). 잘라 내는 대신
-              // 칸에 맞게 줄여 낱말 전체를 보인다.
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(label,
-                    maxLines: 1,
-                    style: context.texts.labelSmall.copyWith(
-                        color: selected ? palette.primary : palette.muted,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500)),
-              ),
-            ]),
+                const SizedBox(height: 4),
+                // 큰 글자 설정에서 '따라 …', '순서…'로 잘렸다(5차). 잘라 내는 대신
+                // 칸에 맞게 줄여 낱말 전체를 보인다.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label,
+                      maxLines: 1,
+                      style: context.texts.labelSmall.copyWith(
+                          color: selected ? palette.primary : palette.muted,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w500)),
+                ),
+              ]),
+            ),
           ),
         ),
-      ),
       ),
     );
   }

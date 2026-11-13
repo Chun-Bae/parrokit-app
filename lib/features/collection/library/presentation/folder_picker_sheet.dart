@@ -3,6 +3,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 import 'folder_tree.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// 폴더 고르기. 폴더 경로('여행/일본')는 저장 방식일 뿐이라 사용자가 '/'를 직접
 /// 칠 일이 없게 한다(5차, 사용자 의견). 있는 폴더를 트리로 보여주고 눌러서 고르며,
@@ -12,11 +13,8 @@ Future<String?> showFolderPicker(
   required Iterable<String> existingNames,
   String? selected,
 }) =>
-    showModalBottomSheet<String>(
+    showAppSheet<String>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => _FolderPickerSheet(
         existingNames: existingNames.toList(),
         selected: selected == null ? null : normalizeFolderPath(selected),
@@ -126,8 +124,8 @@ class _FolderPickerSheetState extends State<_FolderPickerSheet> {
 
     return SafeArea(
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.7),
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -188,8 +186,7 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
     super.dispose();
   }
 
-  String? get _error =>
-      _controller.text.contains('/') ? "'/'는 쓸 수 없어요" : null;
+  String? get _error => _controller.text.contains('/') ? "'/'는 쓸 수 없어요" : null;
 
   bool get _valid =>
       _controller.text.trim().isNotEmpty &&
@@ -220,9 +217,8 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
           labelText: '폴더 이름',
           errorText: _error,
           // 글자 수 표시와 한 줄을 나눠 쓰므로 짧게.
-          helperText: widget.createsNow || widget.renaming
-              ? null
-              : '첫 클립을 넣으면 생겨요',
+          helperText:
+              widget.createsNow || widget.renaming ? null : '첫 클립을 넣으면 생겨요',
         ),
       ),
       actions: [

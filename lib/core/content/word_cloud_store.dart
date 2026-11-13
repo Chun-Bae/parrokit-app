@@ -26,10 +26,15 @@ class FirestoreWordCloud implements WordCloud {
           language: doc.data()['language'] as String? ?? '',
           word: doc.data()['word'] as String? ?? '',
           meaning: doc.data()['meaning'] as String? ?? '',
-          example: doc.data()['example'] as String? ?? '',
-          exampleTranslation:
-              doc.data()['exampleTranslation'] as String? ?? '',
-          sourceSentenceId: doc.data()['sourceSentenceId'] as String? ?? '',
+          // 예전 문서는 예문이 하나였다(example·exampleTranslation).
+          examples: parseWordExamples(
+            doc.data()['examples'],
+            legacyText: doc.data()['example'] as String? ?? '',
+            legacyTranslation:
+                doc.data()['exampleTranslation'] as String? ?? '',
+            legacySentenceId:
+                doc.data()['sourceSentenceId'] as String? ?? '',
+          ),
           topic: doc.data()['topic'] as String? ?? '내 단어',
           addedAt: (doc.data()['createdAt'] as Timestamp?)?.toDate() ??
               DateTime.now(),
@@ -54,9 +59,11 @@ class FirestoreWordCloud implements WordCloud {
       'language': word.language,
       'word': word.word,
       'meaning': word.meaning,
+      // 첫 예문은 예전 이름으로도 쓴다(예전 앱과 서버 규칙이 이 이름을 본다).
       'example': word.example,
       'exampleTranslation': word.exampleTranslation,
       'sourceSentenceId': word.sourceSentenceId,
+      'examples': [for (final e in word.examples) e.toJson()],
       'topic': word.topic,
       'createdAt': FieldValue.serverTimestamp(),
     });

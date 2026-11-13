@@ -257,7 +257,7 @@ void main() {
     expect(find.byKey(const ValueKey('pick-word-there')), findsOneWidget);
     await tester.tap(chip);
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('word-example')), findsOneWidget);
+    expect(find.byKey(const ValueKey('word-example-0')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('save-word')));
     await tester.pumpAndSettle();
     final saved = (await MyWordStore.load('guest')).single;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 Future<String?> showStorageTransferSheet(
   BuildContext context, {
@@ -19,15 +20,8 @@ Future<String?> showStorageTransferSheet(
   final isServerLocked =
       ClipStorageConstants.isServerStorageLockedForCurrentUser();
 
-  return showModalBottomSheet<String>(
+  return showAppSheet<String>(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: cs.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
-    ),
-    clipBehavior: Clip.antiAlias,
     builder: (sheetContext) => SafeArea(
       top: false,
       child: StatefulBuilder(

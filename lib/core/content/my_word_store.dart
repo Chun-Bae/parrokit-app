@@ -3,32 +3,98 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// 단어의 예문 하나. 같은 단어를 여러 문장에서 만나므로 여러 개를 둔다(5차).
+@immutable
+class WordExample {
+  const WordExample({
+    required this.text,
+    this.translation = '',
+    this.sourceSentenceId = '',
+  });
+
+  /// 예문 원문.
+  final String text;
+
+  /// 예문 뜻. 없으면 빈 값.
+  final String translation;
+
+  /// 문장에서 저장했으면 그 문장 id. 단어를 지워도 문장은 그대로다.
+  final String sourceSentenceId;
+
+  bool get isEmpty => text.trim().isEmpty;
+
+  Map<String, Object> toJson() => {
+        'text': text,
+        'translation': translation,
+        'sourceSentenceId': sourceSentenceId,
+      };
+
+  static WordExample? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final text = json['text'];
+    if (text is! String || text.trim().isEmpty) return null;
+    String at(String key) => json[key] is String ? json[key] as String : '';
+    return WordExample(
+      text: text,
+      translation: at('translation'),
+      sourceSentenceId: at('sourceSentenceId'),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is WordExample &&
+      other.text == text &&
+      other.translation == translation &&
+      other.sourceSentenceId == sourceSentenceId;
+
+  @override
+  int get hashCode => Object.hash(text, translation, sourceSentenceId);
+}
+
 /// 내 단어 하나. 문장에서 건졌으면 그 문장을 예문으로 함께 둔다.
 @immutable
 class MyWord {
-  const MyWord({
+  MyWord({
     required this.id,
     required this.language,
     required this.word,
     this.meaning = '',
-    this.example = '',
-    this.exampleTranslation = '',
-    this.sourceSentenceId = '',
+    String example = '',
+    String exampleTranslation = '',
+    String sourceSentenceId = '',
+    List<WordExample>? examples,
     this.topic = '내 단어',
     this.addedAt,
-  });
+  }) : examples = examples ??
+            // 예전처럼 예문 하나만 넘기는 곳이 많아 그대로 받는다.
+            (example.trim().isEmpty
+                ? const []
+                : [
+                    WordExample(
+                      text: example,
+                      translation: exampleTranslation,
+                      sourceSentenceId: sourceSentenceId,
+                    )
+                  ]);
 
   final String id;
   final String language;
   final String word;
   final String meaning;
 
-  /// 예문. 문장에서 저장했으면 그 문장 원문.
-  final String example;
-  final String exampleTranslation;
+  /// 예문 목록. 비어 있을 수 있다.
+  final List<WordExample> examples;
 
-  /// 문장에서 저장했으면 그 문장 id. 단어를 지워도 문장은 그대로다.
-  final String sourceSentenceId;
+  /// 첫 예문. 예전 저장 방식과 화면을 그대로 두려고 남긴다.
+  String get example => examples.isEmpty ? '' : examples.first.text;
+  String get exampleTranslation =>
+      examples.isEmpty ? '' : examples.first.translation;
+
+  /// 문장에서 저장했으면 그 문장 id.
+  String get sourceSentenceId =>
+      examples.isEmpty ? '' : examples.first.sourceSentenceId;
+
   final String topic;
   final DateTime? addedAt;
 
@@ -37,9 +103,12 @@ class MyWord {
         'language': language,
         'word': word,
         'meaning': meaning,
+        // 예전 형식(예문 하나)도 함께 쓴다. 예전 앱이 읽을 수 있고 서버 규칙도
+        // 이 이름을 본다.
         'example': example,
         'exampleTranslation': exampleTranslation,
         'sourceSentenceId': sourceSentenceId,
+        'examples': [for (final e in examples) e.toJson()],
         'topic': topic,
         if (addedAt != null) 'addedAt': addedAt!.millisecondsSinceEpoch,
       };
@@ -56,14 +125,43 @@ class MyWord {
       language: language,
       word: word,
       meaning: text('meaning'),
-      example: text('example'),
-      exampleTranslation: text('exampleTranslation'),
-      sourceSentenceId: text('sourceSentenceId'),
+      // 예전 형식은 예문이 하나였다. examples가 없으면 그 하나를 쓴다.
+      examples: parseWordExamples(
+        json['examples'],
+        legacyText: text('example'),
+        legacyTranslation: text('exampleTranslation'),
+        legacySentenceId: text('sourceSentenceId'),
+      ),
       topic: text('topic').isEmpty ? '내 단어' : text('topic'),
       addedAt:
           added is int ? DateTime.fromMillisecondsSinceEpoch(added) : null,
     );
   }
+}
+
+/// 저장된 예문 목록을 읽는다. [raw]가 없거나 비어 있으면 예전 형식(예문 하나)을
+/// 쓴다. 두 형식이 섞여 있어도 읽을 수 있어야 해서 한곳에 모아 둔다.
+List<WordExample> parseWordExamples(
+  Object? raw, {
+  String legacyText = '',
+  String legacyTranslation = '',
+  String legacySentenceId = '',
+}) {
+  if (raw is List) {
+    final parsed = [
+      for (final item in raw)
+        if (WordExample.fromJson(item) case final e?) e,
+    ];
+    if (parsed.isNotEmpty) return parsed;
+  }
+  if (legacyText.trim().isEmpty) return const [];
+  return [
+    WordExample(
+      text: legacyText,
+      translation: legacyTranslation,
+      sourceSentenceId: legacySentenceId,
+    )
+  ];
 }
 
 /// 로그인한 사용자의 단어를 서버(Firestore `words`)에 두는 쪽. 테스트에서
@@ -163,6 +261,7 @@ class MyWordStore {
     String example = '',
     String exampleTranslation = '',
     String sourceSentenceId = '',
+    List<WordExample>? examples,
     String topic = '내 단어',
     DateTime? now,
   }) async {
@@ -176,15 +275,20 @@ class MyWordStore {
     // 저장하면 예문·번역에 긴 문장이 그대로 들어가 규칙에 걸렸고, 그 단어는
     // 서버에 못 올라가 이 기기에만 남았다(5차). 입력칸 maxLength는 미리 채운
     // 글을 줄이지 않는다.
+    final given = examples ??
+        [
+          WordExample(
+            text: example,
+            translation: exampleTranslation,
+            sourceSentenceId: sourceSentenceId,
+          )
+        ];
     final entry = MyWord(
       id: idFor(language, trimmed),
       language: language,
       word: clipToLength(trimmed, wordMaxLength),
       meaning: clipToLength(meaning.trim(), meaningMaxLength),
-      example: clipToLength(example.trim(), exampleMaxLength),
-      exampleTranslation:
-          clipToLength(exampleTranslation.trim(), exampleMaxLength),
-      sourceSentenceId: sourceSentenceId,
+      examples: clipWordExamples(given),
       topic: clipToLength(topic, topicMaxLength),
       addedAt: now ?? DateTime.now(),
     );
@@ -224,6 +328,21 @@ const int wordMaxLength = 80;
 const int meaningMaxLength = 200;
 const int exampleMaxLength = 300;
 const int topicMaxLength = 40;
+
+/// 한 단어에 둘 수 있는 예문 수. 서버에 올리는 양을 묶어 두려고 정한다.
+const int examplesMaxCount = 5;
+
+/// 빈 예문을 버리고, 길이와 개수를 한도 안으로 줄인다.
+List<WordExample> clipWordExamples(List<WordExample> examples) => [
+      for (final e in examples)
+        if (!e.isEmpty)
+          WordExample(
+            text: clipToLength(e.text.trim(), exampleMaxLength),
+            translation:
+                clipToLength(e.translation.trim(), exampleMaxLength),
+            sourceSentenceId: e.sourceSentenceId,
+          ),
+    ].take(examplesMaxCount).toList();
 
 /// [text]를 UTF-16 길이 [max] 안으로 자른다. 이모지 같은 두 칸짜리 글자를
 /// 반으로 자르지 않는다.

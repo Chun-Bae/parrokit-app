@@ -95,6 +95,7 @@ void main() {
         'example',
         'exampleTranslation',
         'sourceSentenceId',
+        'examples',
         'topic',
         'createdAt',
       },

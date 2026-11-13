@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 void showVideoPickerSheet({
   required BuildContext context,
@@ -10,10 +11,8 @@ void showVideoPickerSheet({
   final theme = Theme.of(context);
   final cs = theme.colorScheme;
 
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
     builder: (context) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),

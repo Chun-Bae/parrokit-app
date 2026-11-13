@@ -27,6 +27,7 @@ import '../widgets/group_collection_manager_modal.dart';
 import '../widgets/clip_list_view.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// [역할]
 /// 라이브러리의 '폴더' 탭 UI 섹션.
@@ -509,18 +510,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     BuildContext context, {
     required Widget child,
   }) {
-    final cs = Theme.of(context).colorScheme;
-
-    return showModalBottomSheet<T>(
+    return showAppSheet<T>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
-      ),
-      clipBehavior: Clip.antiAlias,
       builder: (sheetContext) => SafeArea(
         top: false,
         child: Padding(
@@ -588,17 +579,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         setState(() => _deleteMode = true);
       } else if (value == 'manage') {
         final clipProvider = context.read<ClipProvider>();
-        final cs = Theme.of(context).colorScheme;
-        showModalBottomSheet(
+        showAppSheet(
           context: context,
-          useRootNavigator: true,
-          isScrollControlled: true,
-          backgroundColor: cs.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
-          ),
-          clipBehavior: Clip.antiAlias,
           builder: (_) => GroupCollectionManagerModal(
             initialGroupId: clipProvider.selectedGroupId == -1
                 ? null

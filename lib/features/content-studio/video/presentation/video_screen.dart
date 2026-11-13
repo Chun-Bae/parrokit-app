@@ -19,6 +19,7 @@ import 'package:parrokit/features/content-studio/chat-bot/presentation/widgets/c
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:parrokit/features/content-studio/video/presentation/video_provider.dart';
 import 'package:parrokit/features/content-studio/video/presentation/widgets/video_model_selection_sheet.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class VideoScreen extends StatefulWidget {
   const VideoScreen({super.key});
@@ -68,11 +69,8 @@ class _VideoScreenState extends State<VideoScreen> {
   }
 
   Future<void> _openVideoRecommendationFlow() async {
-    final selection = await showModalBottomSheet<_VideoRecommendationSelection>(
+    final selection = await showAppSheet<_VideoRecommendationSelection>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => const _VideoRecommendationFilterSheet(
         languages: _recommendationLanguages,
         situations: _recommendationSituations,
@@ -288,11 +286,8 @@ class _VideoScreenState extends State<VideoScreen> {
                     title: '영상 모델',
                     value: veo31ModelById(provider.model).name,
                     onTap: () {
-                      showModalBottomSheet(
+                      showAppSheet(
                         context: context,
-                        useRootNavigator: true,
-                        backgroundColor: Colors.transparent,
-                        isScrollControlled: true,
                         builder: (context) =>
                             VideoModelSelectionSheet(provider: provider),
                       );

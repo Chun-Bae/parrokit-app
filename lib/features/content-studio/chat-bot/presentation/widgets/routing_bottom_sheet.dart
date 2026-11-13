@@ -3,6 +3,7 @@ import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
   final theme = Theme.of(context);
@@ -10,11 +11,8 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
   final bg = isDark ? context.tokens.surfaceContainer : context.tokens.surface;
   final borderCol = context.tokens.divider;
 
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
     builder: (modalContext) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),

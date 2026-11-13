@@ -13,6 +13,7 @@ import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class BoardWriteScreen extends StatefulWidget {
   final Post? editPost;
@@ -44,11 +45,15 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
 
   bool get _hasTitle => _titleController.text.trim().isNotEmpty;
   bool get _hasContent => _contentController.text.trim().isNotEmpty;
+
   /// 새 글은 무엇이든 적었으면, 고치는 글은 원래와 달라졌으면 나갈 때 묻는다.
   bool get _hasDraft {
     final edit = widget.editPost;
     if (edit == null) {
-      return _hasTitle || _hasContent || _tags.isNotEmpty || _selectedImages.isNotEmpty;
+      return _hasTitle ||
+          _hasContent ||
+          _tags.isNotEmpty ||
+          _selectedImages.isNotEmpty;
     }
     return _titleController.text != edit.title ||
         _contentController.text != edit.content ||
@@ -77,13 +82,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
   void _showBoardTopicSheet() {
     final blue600 = AppTokens.of(context).primary;
 
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
         return SafeArea(
@@ -268,123 +268,93 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     return DraftPopScope(
       hasDraft: _hasDraft,
       child: Stack(
-      children: [
-        Scaffold(
-          backgroundColor: colorScheme.surface,
-          resizeToAvoidBottomInset: true,
-          body: SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 18, 18, 10),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        tooltip: '닫기',
-                        onPressed: () => Navigator.maybePop(context),
-                        icon: Icon(Icons.close,
-                            size: 34, color: colorScheme.onSurface),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            _isEditMode ? '게시글 수정' : '게시글 작성',
-                            style: context.texts.titleLarge
-                                .copyWith(color: colorScheme.onSurface),
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _canComplete ? _submitPost : null,
-                        child: context.watch<CommunityProvider>().isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : Text(
-                                _isEditMode ? '수정' : '완료',
-                                style: context.texts.titleLarge.copyWith(
-                                    color: _canComplete
-                                        ? tokens.primary
-                                        : tokens.disabled),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(height: 1, thickness: 1, color: lineColor),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Scaffold(
+            backgroundColor: colorScheme.surface,
+            resizeToAvoidBottomInset: true,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 18, 18, 10),
+                    child: Row(
                       children: [
-                        InkWell(
-                          onTap: _showBoardTopicSheet,
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _selectedBoardTopic ?? '주제를 선택해주세요.',
-                                  style: context.texts.titleLarge
-                                      .copyWith(color: colorScheme.onSurface),
+                        IconButton(
+                          tooltip: '닫기',
+                          onPressed: () => Navigator.maybePop(context),
+                          icon: Icon(Icons.close,
+                              size: 34, color: colorScheme.onSurface),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              _isEditMode ? '게시글 수정' : '게시글 작성',
+                              style: context.texts.titleLarge
+                                  .copyWith(color: colorScheme.onSurface),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _canComplete ? _submitPost : null,
+                          child: context.watch<CommunityProvider>().isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(
+                                  _isEditMode ? '수정' : '완료',
+                                  style: context.texts.titleLarge.copyWith(
+                                      color: _canComplete
+                                          ? tokens.primary
+                                          : tokens.disabled),
                                 ),
-                                const SizedBox(width: 8),
-                                Icon(Icons.keyboard_arrow_down_rounded,
-                                    size: 32, color: colorScheme.onSurface),
-                              ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(height: 1, thickness: 1, color: lineColor),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: _showBoardTopicSheet,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _selectedBoardTopic ?? '주제를 선택해주세요.',
+                                    style: context.texts.titleLarge
+                                        .copyWith(color: colorScheme.onSurface),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(Icons.keyboard_arrow_down_rounded,
+                                      size: 32, color: colorScheme.onSurface),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Divider(
-                              height: 1, thickness: 1, color: lineColor),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 20, 32, 0),
-                          child: TextField(
-                            controller: _titleController,
-                            onChanged: (_) => setState(() {}),
-                            decoration: InputDecoration(
-                              hintText: '제목을 입력하세요.',
-                              hintStyle: context.texts.headlineSmall
-                                  .copyWith(color: mutedText),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              errorBorder: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            style: context.texts.headlineSmall
-                                .copyWith(color: tokens.textPrimary),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Divider(
+                                height: 1, thickness: 1, color: lineColor),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 18, 32, 0),
-                          child: SizedBox(
-                            height: contentFieldHeight,
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 32, 0),
                             child: TextField(
-                              controller: _contentController,
+                              controller: _titleController,
                               onChanged: (_) => setState(() {}),
-                              minLines: null,
-                              maxLines: null,
-                              expands: true,
-                              textAlignVertical: TextAlignVertical.top,
                               decoration: InputDecoration(
-                                hintText:
-                                    // 본문 '#자막 #쉐도잉…' 예시는 뺐다(5차). 본문의 #은
-                                    // 태그로 읽지 않아서, 쓰면 태그가 붙는 줄 알았다.
-                                    // 태그 예시는 아래 태그 칸으로 옮겼다.
-                                    '쉐도잉에 도움이 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.',
-                                hintStyle: context.texts.titleMedium.copyWith(
-                                    height: 1.6, color: tokens.textDisabled),
+                                hintText: '제목을 입력하세요.',
+                                hintStyle: context.texts.headlineSmall
+                                    .copyWith(color: mutedText),
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -392,294 +362,333 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 disabledBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                               ),
-                              style: context.texts.titleLarge.copyWith(
-                                  height: 1.6, color: tokens.textPrimary),
+                              style: context.texts.headlineSmall
+                                  .copyWith(color: tokens.textPrimary),
                             ),
                           ),
-                        ),
-                        if (!_hasContent) ...[
-                          const SizedBox(height: 20),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
+                            padding: const EdgeInsets.fromLTRB(16, 18, 32, 0),
+                            child: SizedBox(
+                              height: contentFieldHeight,
+                              child: TextField(
+                                controller: _contentController,
+                                onChanged: (_) => setState(() {}),
+                                minLines: null,
+                                maxLines: null,
+                                expands: true,
+                                textAlignVertical: TextAlignVertical.top,
+                                decoration: InputDecoration(
+                                  hintText:
+                                      // 본문 '#자막 #쉐도잉…' 예시는 뺐다(5차). 본문의 #은
+                                      // 태그로 읽지 않아서, 쓰면 태그가 붙는 줄 알았다.
+                                      // 태그 예시는 아래 태그 칸으로 옮겼다.
+                                      '쉐도잉에 도움이 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.',
+                                  hintStyle: context.texts.titleMedium.copyWith(
+                                      height: 1.6, color: tokens.textDisabled),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                style: context.texts.titleLarge.copyWith(
+                                    height: 1.6, color: tokens.textPrimary),
+                              ),
+                            ),
+                          ),
+                          if (!_hasContent) ...[
+                            const SizedBox(height: 20),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Row(
+                                children: [
+                                  _TipBadge(),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      '쉐도잉 학습과 영상 자막 활용 경험을 나눠보세요',
+                                      style: context.texts.bodyMedium.copyWith(
+                                          color:
+                                              isDark ? Colors.white : tipBlue),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding:
+                                  const EdgeInsets.fromLTRB(18, 20, 18, 20),
+                              decoration: BoxDecoration(
+                                color: panelBg,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _TipBullet(
+                                    text:
+                                        '영상 자막 자동 생성, 쉐도잉 팁, 학습 루틴을 자유롭게 공유해요.',
+                                    forceWhite: isDark,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _TipBullet(
+                                    text:
+                                        '외국어 표현, 추천 콘텐츠, 발음 연습 경험처럼 학습에 도움이 되는 이야기를 나눠요.',
+                                    forceWhite: isDark,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _TipBullet(
+                                    text:
+                                        '저작권을 침해하거나 학습 커뮤니티 성격에 맞지 않는 글은 제한될 수 있어요.',
+                                    forceWhite: isDark,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 등록된 태그 칩들을 보여주는 횡스크롤 영역
+                  if (_tags.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _tags
+                              .map((tag) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: InputChip(
+                                      label: Text('#$tag'),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _tags.remove(tag);
+                                        });
+                                      },
+                                      backgroundColor: tokens.primarySoft,
+                                      deleteIconColor: tokens.primary,
+                                      labelStyle: TextStyle(
+                                        color: tokens.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                        side: const BorderSide(
+                                            color: Colors.transparent),
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                    ),
+
+                  // 태그 입력창 (활성화 시에만 보임)
+                  if (_isTagInputActive)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: panelBg,
+                        border: Border(top: BorderSide(color: lineColor)),
+                      ),
+                      child: TextField(
+                        controller: _tagController,
+                        focusNode: _tagFocusNode,
+                        decoration: InputDecoration(
+                          hintText: '예: 쉐도잉, 미드추천 (엔터로 추가)',
+                          hintStyle: context.texts.bodyLarge
+                              .copyWith(color: tokens.textDisabled),
+                          border: InputBorder.none,
+                          isDense: true,
+                          suffixText:
+                              '${_tags.length}/${PostValidator.maxTags}',
+                          suffixStyle: context.texts.labelMedium
+                              .copyWith(color: tokens.textDisabled),
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (val) {
+                          final text = val.trim();
+                          if (text.isNotEmpty && !_tags.contains(text)) {
+                            if (text.length > PostValidator.maxTagLength) {
+                              showToast(
+                                  '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.');
+                              return;
+                            }
+                            if (_tags.length >= PostValidator.maxTags) {
+                              showToast('태그는 최대 20개까지만 등록할 수 있습니다.');
+                              return;
+                            }
+
+                            setState(() {
+                              _tags.add(text);
+                            });
+                            _tagController.clear();
+                            _tagFocusNode.requestFocus(); // 계속 입력할 수 있도록 포커스 유지
+                          }
+                        },
+                      ),
+                    ),
+                  if (_existingImageUrls.isNotEmpty ||
+                      _selectedImages.isNotEmpty)
+                    Container(
+                      height: 100, // 잘림 방지를 위해 높이 증가
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      margin: const EdgeInsets.only(top: 16, bottom: 16),
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none, // 스크롤 시 잘림 방지
+                        itemCount:
+                            _existingImageUrls.length + _selectedImages.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 6), // 우측 패딩을 고려하여 간격 축소
+                        itemBuilder: (context, index) {
+                          final bool isExisting =
+                              index < _existingImageUrls.length;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 10, right: 10),
+                            child: Stack(
+                              clipBehavior: Clip.none,
                               children: [
-                                _TipBadge(),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    '쉐도잉 학습과 영상 자막 활용 경험을 나눠보세요',
-                                    style: context.texts.bodyMedium.copyWith(
-                                        color: isDark ? Colors.white : tipBlue),
+                                ClipRRect(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.sm),
+                                  child: isExisting
+                                      ? Image.network(
+                                          _existingImageUrls[index],
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          File(_selectedImages[index -
+                                                  _existingImageUrls.length]
+                                              .path),
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                                Positioned(
+                                  top: -8,
+                                  right: -8,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isExisting) {
+                                          _existingImageUrls.removeAt(index);
+                                        } else {
+                                          _selectedImages.removeAt(index -
+                                              _existingImageUrls.length);
+                                        }
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.scrim
+                                            .withValues(alpha: 0.55),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: colorScheme.onPrimary,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
+                          );
+                        },
+                      ),
+                    ),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: lineColor)),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(28, 16, 28, 18),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            final int currentCount = _existingImageUrls.length +
+                                _selectedImages.length;
+                            final int remainingSlot = 5 - currentCount;
+                            if (remainingSlot <= 0) {
+                              showToast('사진은 최대 5장까지만 첨부할 수 있습니다.');
+                              return;
+                            }
+
+                            List<XFile>? images;
+                            try {
+                              images = await _picker.pickMultiImage(
+                                limit: remainingSlot, // 갤러리 자체에서 선택 개수 제한
+                                requestFullMetadata:
+                                    false, // 아이클라우드 및 메타데이터 로드 실패 버그 우회용
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              showToast(
+                                  '지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.');
+                              return;
+                            }
+                            if (images.isEmpty) return;
+
+                            setState(() {
+                              _selectedImages.addAll(images!);
+                            });
+                          },
+                          child: _BottomTool(
+                              icon: Icons.image_outlined,
+                              label:
+                                  '사진 (${_existingImageUrls.length + _selectedImages.length}/5)'),
+                        ),
+                        const SizedBox(width: 28),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isTagInputActive = !_isTagInputActive;
+                              if (_isTagInputActive) {
+                                _tagFocusNode.requestFocus();
+                              }
+                            });
+                          },
+                          child: _BottomTool(
+                            icon: Icons.tag_rounded,
+                            label: '태그',
+                            isActive: _isTagInputActive,
                           ),
-                          const SizedBox(height: 14),
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
-                            decoration: BoxDecoration(
-                              color: panelBg,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _TipBullet(
-                                  text: '영상 자막 자동 생성, 쉐도잉 팁, 학습 루틴을 자유롭게 공유해요.',
-                                  forceWhite: isDark,
-                                ),
-                                const SizedBox(height: 14),
-                                _TipBullet(
-                                  text:
-                                      '외국어 표현, 추천 콘텐츠, 발음 연습 경험처럼 학습에 도움이 되는 이야기를 나눠요.',
-                                  forceWhite: isDark,
-                                ),
-                                const SizedBox(height: 14),
-                                _TipBullet(
-                                  text:
-                                      '저작권을 침해하거나 학습 커뮤니티 성격에 맞지 않는 글은 제한될 수 있어요.',
-                                  forceWhite: isDark,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
-                ),
-                // 등록된 태그 칩들을 보여주는 횡스크롤 영역
-                if (_tags.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: _tags
-                            .map((tag) => Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: InputChip(
-                                    label: Text('#$tag'),
-                                    onDeleted: () {
-                                      setState(() {
-                                        _tags.remove(tag);
-                                      });
-                                    },
-                                    backgroundColor: tokens.primarySoft,
-                                    deleteIconColor: tokens.primary,
-                                    labelStyle: TextStyle(
-                                      color: tokens.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      side: const BorderSide(
-                                          color: Colors.transparent),
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-
-                // 태그 입력창 (활성화 시에만 보임)
-                if (_isTagInputActive)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: panelBg,
-                      border: Border(top: BorderSide(color: lineColor)),
-                    ),
-                    child: TextField(
-                      controller: _tagController,
-                      focusNode: _tagFocusNode,
-                      decoration: InputDecoration(
-                        hintText: '예: 쉐도잉, 미드추천 (엔터로 추가)',
-                        hintStyle: context.texts.bodyLarge
-                            .copyWith(color: tokens.textDisabled),
-                        border: InputBorder.none,
-                        isDense: true,
-                        suffixText: '${_tags.length}/${PostValidator.maxTags}',
-                        suffixStyle: context.texts.labelMedium
-                            .copyWith(color: tokens.textDisabled),
-                      ),
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (val) {
-                        final text = val.trim();
-                        if (text.isNotEmpty && !_tags.contains(text)) {
-                          if (text.length > PostValidator.maxTagLength) {
-                            showToast(
-                                '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.');
-                            return;
-                          }
-                          if (_tags.length >= PostValidator.maxTags) {
-                            showToast('태그는 최대 20개까지만 등록할 수 있습니다.');
-                            return;
-                          }
-
-                          setState(() {
-                            _tags.add(text);
-                          });
-                          _tagController.clear();
-                          _tagFocusNode.requestFocus(); // 계속 입력할 수 있도록 포커스 유지
-                        }
-                      },
-                    ),
-                  ),
-                if (_existingImageUrls.isNotEmpty || _selectedImages.isNotEmpty)
-                  Container(
-                    height: 100, // 잘림 방지를 위해 높이 증가
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    margin: const EdgeInsets.only(top: 16, bottom: 16),
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none, // 스크롤 시 잘림 방지
-                      itemCount:
-                          _existingImageUrls.length + _selectedImages.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 6), // 우측 패딩을 고려하여 간격 축소
-                      itemBuilder: (context, index) {
-                        final bool isExisting =
-                            index < _existingImageUrls.length;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 10, right: 10),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.sm),
-                                child: isExisting
-                                    ? Image.network(
-                                        _existingImageUrls[index],
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.file(
-                                        File(_selectedImages[index -
-                                                _existingImageUrls.length]
-                                            .path),
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
-                              Positioned(
-                                top: -8,
-                                right: -8,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      if (isExisting) {
-                                        _existingImageUrls.removeAt(index);
-                                      } else {
-                                        _selectedImages.removeAt(
-                                            index - _existingImageUrls.length);
-                                      }
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.scrim
-                                          .withValues(alpha: 0.55),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 16,
-                                      color: colorScheme.onPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: lineColor)),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(28, 16, 28, 18),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () async {
-                          final int currentCount = _existingImageUrls.length +
-                              _selectedImages.length;
-                          final int remainingSlot = 5 - currentCount;
-                          if (remainingSlot <= 0) {
-                            showToast('사진은 최대 5장까지만 첨부할 수 있습니다.');
-                            return;
-                          }
-
-                          List<XFile>? images;
-                          try {
-                            images = await _picker.pickMultiImage(
-                              limit: remainingSlot, // 갤러리 자체에서 선택 개수 제한
-                              requestFullMetadata:
-                                  false, // 아이클라우드 및 메타데이터 로드 실패 버그 우회용
-                            );
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            showToast('지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.');
-                            return;
-                          }
-                          if (images.isEmpty) return;
-
-                          setState(() {
-                            _selectedImages.addAll(images!);
-                          });
-                        },
-                        child: _BottomTool(
-                            icon: Icons.image_outlined,
-                            label:
-                                '사진 (${_existingImageUrls.length + _selectedImages.length}/5)'),
-                      ),
-                      const SizedBox(width: 28),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isTagInputActive = !_isTagInputActive;
-                            if (_isTagInputActive) {
-                              _tagFocusNode.requestFocus();
-                            }
-                          });
-                        },
-                        child: _BottomTool(
-                          icon: Icons.tag_rounded,
-                          label: '태그',
-                          isActive: _isTagInputActive,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        if (_isImageUploading)
-          Container(
-            color: colorScheme.scrim.withValues(alpha: 0.5),
-            child: const Center(
-              child: CircularProgressIndicator(),
+          if (_isImageUploading)
+            Container(
+              color: colorScheme.scrim.withValues(alpha: 0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
             ),
-          ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 }

@@ -4,15 +4,11 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 void showCommunityWriteBottomSheet(BuildContext context) {
-  showModalBottomSheet<void>(
+  showAppSheet<void>(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
-    ),
     builder: (context) {
       final colorScheme = Theme.of(context).colorScheme;
       return SafeArea(

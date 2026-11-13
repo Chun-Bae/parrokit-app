@@ -28,6 +28,7 @@ import 'package:parrokit/data/models/clip_item.dart';
 import 'folder_picker_sheet.dart';
 import 'folder_tree.dart';
 import 'widgets/clip_list_view.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class ClipLibraryHome extends StatefulWidget {
   const ClipLibraryHome({super.key});
@@ -46,6 +47,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   static const _all = '전체';
 
   List<ClipItem> _clips = [];
+
   /// 맨 위 폴더들.
   List<ClipFolder> _folders = [];
   Map<String, ClipFolder> _byPath = {};
@@ -205,19 +207,16 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
 
   /// 열린 폴더의 이름 바꾸기·지우기.
   Future<void> _manageFolder(ClipFolder folder) async {
-    final action = await showModalBottomSheet<String>(
+    final action = await showAppSheet<String>(
       context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
             key: const ValueKey('folder-rename'),
             leading: const Icon(Icons.drive_file_rename_outline_rounded),
             title: const Text('이름 바꾸기'),
-            subtitle: folder.children.isEmpty
-                ? null
-                : const Text('안의 폴더도 함께 옮겨져요'),
+            subtitle:
+                folder.children.isEmpty ? null : const Text('안의 폴더도 함께 옮겨져요'),
             onTap: () => Navigator.pop(sheetContext, 'rename'),
           ),
           ListTile(
@@ -229,8 +228,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                     : null),
             title: Text('폴더 지우기',
                 style: folder.totalCount == 0
-                    ? TextStyle(
-                        color: Theme.of(sheetContext).colorScheme.error)
+                    ? TextStyle(color: Theme.of(sheetContext).colorScheme.error)
                     : null),
             subtitle: Text(folder.totalCount == 0
                 ? '빈 폴더예요'
@@ -253,21 +251,21 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       final newPath =
           normalizeFolderPath(parent == null ? name : '${parent.path}/$name');
       if (_byPath.containsKey(newPath)) {
-        messenger.showSnackBar(
-            SnackBar(content: Text("'$name' 폴더가 이미 있어요.")));
+        messenger.showSnackBar(SnackBar(content: Text("'$name' 폴더가 이미 있어요.")));
         return;
       }
       try {
         await provider.renameFolderPath(folder.path, newPath);
       } catch (_) {
-        messenger.showSnackBar(const SnackBar(
-            content: Text('이름을 바꾸지 못했어요. 다시 시도해 주세요.')));
+        messenger.showSnackBar(
+            const SnackBar(content: Text('이름을 바꾸지 못했어요. 다시 시도해 주세요.')));
         return;
       }
       await _load();
       if (!mounted) return;
       setState(() => _openFolder = _byPath[newPath]);
-      messenger.showSnackBar(SnackBar(content: Text("${euro("'$name'")} 바꿨어요.")));
+      messenger
+          .showSnackBar(SnackBar(content: Text("${euro("'$name'")} 바꿨어요.")));
     } else if (action == 'delete') {
       final ok = await showDialog<bool>(
         context: context,
@@ -289,14 +287,14 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       final deleted = await provider.deleteEmptyFolderPath(folder.path);
       if (!mounted) return;
       if (!deleted) {
-        messenger.showSnackBar(const SnackBar(
-            content: Text('폴더에 클립이 있어 지우지 않았어요.')));
+        messenger.showSnackBar(
+            const SnackBar(content: Text('폴더에 클립이 있어 지우지 않았어요.')));
         return;
       }
       setState(() => _openFolder = folder.parent);
       await _load();
-      messenger.showSnackBar(
-          SnackBar(content: Text("'${folder.name}' 폴더를 지웠어요.")));
+      messenger
+          .showSnackBar(SnackBar(content: Text("'${folder.name}' 폴더를 지웠어요.")));
     }
   }
 
@@ -309,12 +307,11 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
     final name = await showNewFolderDialog(context,
         parentName: parent?.name, createsNow: true);
     if (!mounted || name == null) return;
-    final path = normalizeFolderPath(
-        parent == null ? name : '${parent.path}/$name');
+    final path =
+        normalizeFolderPath(parent == null ? name : '${parent.path}/$name');
     final messenger = ScaffoldMessenger.of(context);
     if (_byPath.containsKey(path)) {
-      messenger.showSnackBar(
-          SnackBar(content: Text("'$name' 폴더가 이미 있어요.")));
+      messenger.showSnackBar(SnackBar(content: Text("'$name' 폴더가 이미 있어요.")));
       return;
     }
     final provider = _clipProvider ?? context.read<ClipProvider>();

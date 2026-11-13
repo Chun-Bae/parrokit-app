@@ -25,6 +25,11 @@ Future<SentenceImportResult?> showSentenceImportSheet(
   required Future<String?> Function(ImportedSentence item) addOne,
   required Future<void> Function(String id) removeOne,
 }) =>
+    // 다른 시트와 달리 공통 showAppSheet를 쓰지 않는다. 이 시트는 가져오는
+    // 동안 루트에 진행 창을 띄웠다 닫는데, 공통 시트로 바꾸면 중첩 내비게이터
+    // 안에서 진행 창이 닫히지 않고 남았다(회귀 테스트가 멈춤). 원인을 찾기
+    // 전까지 예전 설정을 그대로 둔다. 화면은 거의 전체 높이라 탭 바와 겹치는
+    // 문제는 적다.
     showModalBottomSheet<SentenceImportResult>(
       context: context,
       useRootNavigator: true,

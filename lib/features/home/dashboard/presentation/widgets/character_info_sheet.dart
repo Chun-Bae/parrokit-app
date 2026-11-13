@@ -1,6 +1,7 @@
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 Future<void> showCharacterInfoSheet(
   BuildContext context, {
@@ -9,11 +10,8 @@ Future<void> showCharacterInfoSheet(
   required int completedQuests,
   required int totalQuests,
 }) {
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
     builder: (context) => CharacterInfoSheet(
       language: language,
       experience: experience,

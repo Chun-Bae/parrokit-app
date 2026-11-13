@@ -85,8 +85,9 @@ LibrarySearchResults searchLibrary(
       .where((w) =>
           has(w.word) ||
           has(w.meaning) ||
-          has(w.example) ||
-          has(w.exampleTranslation))
+          // 예문은 여러 개일 수 있다(5차). 첫 예문만 보면 뒤 예문으로 못 찾는다.
+          w.examples
+              .any((e) => has(e.text) || has(e.translation)))
       .take(limit + 1)
       .toList();
 

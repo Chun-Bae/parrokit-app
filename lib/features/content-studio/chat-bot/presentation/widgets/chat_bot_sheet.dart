@@ -12,6 +12,7 @@ import 'script_recommendation_sheet.dart';
 import 'video_prompt_recommendation_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 Future<void> showChatBotSheet(
   BuildContext context, {
@@ -23,13 +24,8 @@ Future<void> showChatBotSheet(
   final mediaQuery = MediaQuery.of(context);
   final statusBarHeight = mediaQuery.padding.top;
 
-  await showModalBottomSheet(
+  await showAppSheet(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    showDragHandle: false,
     builder: (context) {
       return ChangeNotifierProvider.value(
         value: chatBotProvider,

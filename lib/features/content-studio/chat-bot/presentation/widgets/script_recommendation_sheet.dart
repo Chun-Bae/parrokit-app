@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 Future<void> showScriptRecommendationSheet(
   BuildContext context,
@@ -15,14 +16,8 @@ Future<void> showScriptRecommendationSheet(
 
   int selectedIndex = 0; // 기본으로 첫 번째 항목 선택
 
-  await showModalBottomSheet(
+  await showAppSheet(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: context.tokens.surfaceContainerHigh,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-    ),
     builder: (BuildContext sheetContext) {
       return StatefulBuilder(builder: (context, setState) {
         return SafeArea(

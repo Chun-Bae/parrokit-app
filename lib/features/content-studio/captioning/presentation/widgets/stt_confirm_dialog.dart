@@ -17,6 +17,7 @@ import '../providers/captioning_provider.dart';
 import 'stt_progress_card.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// STT 시작 전 안내 다이얼로그를 표시하고 진행 상황 위젯을 바텀시트 내에서 보여줍니다.
 Future<void> showSttConfirmDialog(
@@ -29,12 +30,8 @@ Future<void> showSttConfirmDialog(
   final bg = isDark ? context.tokens.surfaceContainer : context.tokens.surface;
   const visibleEngines = [AsrEngine.whisper];
 
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    showDragHandle: false,
     builder: (ctx) {
       AsrEngine selected =
           visibleEngines.contains(initial) ? initial : AsrEngine.whisper;

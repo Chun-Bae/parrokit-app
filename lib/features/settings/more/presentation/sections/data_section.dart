@@ -17,6 +17,7 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import '../widgets/backup_progress_dialog.dart';
 import '../widgets/nav_tile.dart';
 import 'remote_storage_section.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class DataSection extends StatefulWidget {
   const DataSection({super.key});
@@ -97,12 +98,8 @@ class _DataSectionState extends State<DataSection> {
   }
 
   void _openStorageSheet() {
-    showModalBottomSheet<void>(
+    showAppSheet<void>(
       context: context,
-      // 탭바 위로 띄운다. 안 그러면 시트 아래쪽이 떠 있는 탭바에 가려진다.
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (context) => DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.6,

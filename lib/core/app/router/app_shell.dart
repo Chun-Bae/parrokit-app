@@ -48,10 +48,7 @@ class AppShell extends StatelessWidget {
     final clipProvider = context.watch<ClipProvider>();
 
     // 네비바 숨김 조건
-    final hideNav = location.startsWith('/clips/') ||
-        location == AppRoutes.recentsPath ||
-        location == AppRoutes.contentStudioBridgePath ||
-        location.startsWith('${AppRoutes.contentStudioBridgePath}/');
+    final hideNav = appShellHidesNavBar(location);
     final isCollectionRoute = location.startsWith(AppRoutes.collectionPath);
     final showCollectionSelectionBar = isCollectionRoute &&
         clipProvider.isCollectionMenuOpen &&
@@ -221,3 +218,11 @@ class AppShell extends StatelessWidget {
     }
   }
 }
+
+/// 이 경로에서 아래 탭 바를 숨기는지. 바텀시트가 탭 바를 피해 뜨려면
+/// (app_bottom_sheet.dart) 탭 바가 있는지 알아야 해서 따로 뺐다.
+bool appShellHidesNavBar(String location) =>
+    location.startsWith('/clips/') ||
+    location == AppRoutes.recentsPath ||
+    location == AppRoutes.contentStudioBridgePath ||
+    location.startsWith('${AppRoutes.contentStudioBridgePath}/');

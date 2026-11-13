@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 Future<void> showVideoPromptRecommendationSheet(
   BuildContext context, {
@@ -14,14 +15,8 @@ Future<void> showVideoPromptRecommendationSheet(
   final isDark = theme.brightness == Brightness.dark;
   int selectedIndex = 0;
 
-  await showModalBottomSheet(
+  await showAppSheet(
     context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: context.tokens.surfaceContainerHigh,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-    ),
     builder: (BuildContext sheetContext) {
       return StatefulBuilder(
         builder: (context, setState) {

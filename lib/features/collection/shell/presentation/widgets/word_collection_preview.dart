@@ -13,6 +13,7 @@ import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// 보관함 > 단어 탭. 문장 탭과 같은 구조로 "내 단어"를 보여준다(5차 6번).
 ///
@@ -78,10 +79,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   }
 
   Future<void> addWord() async {
-    final result = await showModalBottomSheet<WordAddResult>(
+    final result = await showAppSheet<WordAddResult>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (_) => AddWordSheet(accountId: accountId, language: language),
     );
     if (!mounted || result == null) return;
@@ -89,18 +88,15 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   }
 
   Future<void> startReview(List<MyWord> due) async {
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (_) => WordReviewSheet(accountId: accountId, words: due),
     );
   }
 
   Future<void> openDetails(MyWord word) async {
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
       builder: (_) => _WordDetailSheet(
         word: word,
         review: reviews[word.id],
@@ -112,8 +108,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   Future<void> remove(MyWord word) async {
     await MyWordStore.remove(accountId, word.id);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
   }
 
   @override
@@ -128,7 +124,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
         if (mounted) reload();
       });
     }
-    final due = WordReviewStore.dueWords(languageWords, reviews, DateTime.now());
+    final due =
+        WordReviewStore.dueWords(languageWords, reviews, DateTime.now());
     final visible = visibleWords;
 
     return RefreshIndicator(
@@ -170,8 +167,7 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
           ),
           const SizedBox(height: 18),
           if (due.isNotEmpty) ...[
-            _ReviewSummary(
-                count: due.length, onStart: () => startReview(due)),
+            _ReviewSummary(count: due.length, onStart: () => startReview(due)),
             const SizedBox(height: 22),
           ],
           Row(children: [
@@ -255,7 +251,8 @@ class _ReviewSummary extends StatelessWidget {
         Icon(Icons.bolt_rounded, color: context.collectionTokens.creamInk),
         const SizedBox(width: 10),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('오늘 다시 볼 단어 $count개', style: context.texts.titleMedium),
             const SizedBox(height: 2),
             // 복습 창에는 말하기가 없다. 실제로 하는 일(뜻 떠올리고 알았는지 고르기)대로(5차).
@@ -309,20 +306,21 @@ class _WordTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
           child: Row(children: [
             Expanded(
-              child:
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(word.word,
-                    style: context.texts.titleMedium
-                        .copyWith(fontWeight: FontWeight.w800)),
-                if (word.meaning.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(word.meaning,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.texts.bodySmall
-                          .copyWith(color: colors.onSurfaceVariant)),
-                ],
-              ]),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(word.word,
+                        style: context.texts.titleMedium
+                            .copyWith(fontWeight: FontWeight.w800)),
+                    if (word.meaning.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(word.meaning,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.texts.bodySmall
+                              .copyWith(color: colors.onSurfaceVariant)),
+                    ],
+                  ]),
             ),
             // 복습 단계: 알아요를 누를 때마다 점이 하나씩 찬다.
             Semantics(
@@ -390,16 +388,15 @@ Future<void> showWordDetails(
   final reviews = await WordReviewStore.loadAll(accountId);
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.maybeOf(context);
-  await showModalBottomSheet<void>(
+  await showAppSheet<void>(
     context: context,
-    useRootNavigator: true,
     builder: (_) => _WordDetailSheet(
       word: word,
       review: reviews[word.id],
       onDelete: () async {
         await MyWordStore.remove(accountId, word.id);
-        messenger?.showSnackBar(
-            SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
+        messenger
+            ?.showSnackBar(SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
       },
     ),
   );
@@ -446,9 +443,11 @@ class _WordDetailSheet extends StatelessWidget {
             const SizedBox(height: 4),
             Text(word.meaning.isEmpty ? '뜻을 아직 적지 않았어요' : word.meaning,
                 style: context.texts.bodyLarge),
-            if (word.example.isNotEmpty) ...[
-              const SizedBox(height: 16),
+            // 예문은 여러 개일 수 있다(5차).
+            for (final (index, example) in word.examples.indexed) ...[
+              SizedBox(height: index == 0 ? 16 : 8),
               Container(
+                key: ValueKey('word-detail-example-$index'),
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -458,12 +457,12 @@ class _WordDetailSheet extends StatelessWidget {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(word.example,
+                      Text(example.text,
                           style: context.texts.bodyMedium
                               .copyWith(fontWeight: FontWeight.w700)),
-                      if (word.exampleTranslation.isNotEmpty) ...[
+                      if (example.translation.isNotEmpty) ...[
                         const SizedBox(height: 4),
-                        Text(word.exampleTranslation, style: muted),
+                        Text(example.translation, style: muted),
                       ],
                     ]),
               ),
@@ -528,7 +527,10 @@ class AddWordSheet extends StatefulWidget {
 class _AddWordSheetState extends State<AddWordSheet> {
   late final _word = TextEditingController(text: widget.initialWord);
   final _meaning = TextEditingController();
-  late final _example = TextEditingController(text: widget.example);
+  /// 예문 입력칸. 같은 단어를 여러 문장에서 만나므로 여러 개를 적을 수 있다(5차).
+  late final List<TextEditingController> _examples = [
+    TextEditingController(text: widget.example)
+  ];
   late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
   bool saving = false;
   bool filling = false;
@@ -551,8 +553,8 @@ class _AddWordSheetState extends State<AddWordSheet> {
         _meaning.text = meaning;
       }
     } on SentenceAssistQuotaExceeded {
-      messenger.showSnackBar(const SnackBar(
-          content: Text('오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.')));
+      messenger.showSnackBar(
+          const SnackBar(content: Text('오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.')));
     } on SentenceAssistUnavailable catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.reason)));
     } catch (_) {
@@ -573,8 +575,20 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void dispose() {
     _word.dispose();
     _meaning.dispose();
-    _example.dispose();
+    for (final c in _examples) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  void addExampleField() {
+    if (_examples.length >= examplesMaxCount) return;
+    setState(() => _examples.add(TextEditingController()));
+  }
+
+  void removeExampleField(int index) {
+    if (_examples.length <= 1) return;
+    setState(() => _examples.removeAt(index).dispose());
   }
 
   Future<void> save() async {
@@ -585,12 +599,19 @@ class _AddWordSheetState extends State<AddWordSheet> {
       language: widget.language,
       word: _word.text,
       meaning: _meaning.text,
-      example: _example.text,
-      exampleTranslation:
-          _example.text.trim() == widget.example.trim()
-              ? widget.exampleTranslation
-              : '',
-      sourceSentenceId: widget.sourceSentenceId,
+      examples: [
+        for (final c in _examples)
+          WordExample(
+            text: c.text,
+            // 미리 채워 준 문장은 그 문장의 뜻과 id를 그대로 붙인다.
+            translation: c.text.trim() == widget.example.trim()
+                ? widget.exampleTranslation
+                : '',
+            sourceSentenceId: c.text.trim() == widget.example.trim()
+                ? widget.sourceSentenceId
+                : '',
+          ),
+      ],
     );
     if (!mounted) return;
     Navigator.pop(context, result);
@@ -599,8 +620,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -636,8 +656,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                           padding: EdgeInsets.all(14),
                           child: SizedBox.square(
                               dimension: 18,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2)),
+                              child: CircularProgressIndicator(strokeWidth: 2)),
                         )
                       : IconButton(
                           key: const ValueKey('fill-word-meaning'),
@@ -649,22 +668,46 @@ class _AddWordSheetState extends State<AddWordSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              TextField(
-                key: const ValueKey('word-example'),
-                controller: _example,
-                maxLength: 300,
-                maxLines: 2,
-                minLines: 1,
-                decoration: const InputDecoration(
-                    labelText: '예문 (선택)', border: OutlineInputBorder()),
-              ),
+              for (final (index, controller) in _examples.indexed) ...[
+                if (index > 0) const SizedBox(height: 8),
+                TextField(
+                  key: ValueKey('word-example-$index'),
+                  controller: controller,
+                  maxLength: 300,
+                  maxLines: 2,
+                  minLines: 1,
+                  decoration: InputDecoration(
+                    labelText: _examples.length == 1
+                        ? '예문 (선택)'
+                        : '예문 ${index + 1}',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: _examples.length == 1
+                        ? null
+                        : IconButton(
+                            key: ValueKey('remove-word-example-$index'),
+                            tooltip: '이 예문 지우기',
+                            onPressed: () => removeExampleField(index),
+                            icon: const Icon(Icons.close_rounded, size: 20),
+                          ),
+                  ),
+                ),
+              ],
+              if (_examples.length < examplesMaxCount)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const ValueKey('add-word-example'),
+                    onPressed: addExampleField,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('예문 더 넣기'),
+                  ),
+                ),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   key: const ValueKey('save-word'),
-                  onPressed:
-                      _word.text.trim().isEmpty || saving ? null : save,
+                  onPressed: _word.text.trim().isEmpty || saving ? null : save,
                   style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(48)),
                   child: const Text('저장'),

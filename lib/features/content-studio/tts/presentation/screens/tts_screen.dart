@@ -31,6 +31,7 @@ import 'package:parrokit/features/content-studio/tts/presentation/widgets/tts_vo
 import 'package:parrokit/features/content-studio/tts/presentation/widgets/tts_gemini_voice_selection_sheet.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/widgets/tts_gemini_model_selection_sheet.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_gemini_models.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class TtsScreen extends StatelessWidget {
   const TtsScreen({super.key});
@@ -74,11 +75,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
   }
 
   void _showLanguageSelectionSheet(BuildContext context, TtsProvider provider) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => TtsLanguageSelectionSheet(provider: provider),
     );
   }
@@ -87,44 +85,32 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
     if (provider.availableVoices.isEmpty) {
       provider.fetchAvailableVoices();
     }
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => TtsVoiceSelectionSheet(provider: provider),
     );
   }
 
   void _showGeminiVoiceSelectionSheet(
       BuildContext context, TtsProvider provider) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => TtsGeminiVoiceSelectionSheet(provider: provider),
     );
   }
 
   void _showGeminiModelSelectionSheet(
       BuildContext context, TtsProvider provider) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => TtsGeminiModelSelectionSheet(provider: provider),
     );
   }
 
   void _showElevenLabsVoiceSelectionSheet(
       BuildContext context, TtsProvider provider) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) =>
           TtsElevenLabsVoiceSelectionSheet(provider: provider),
     );
@@ -275,11 +261,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                 )
                                 .name,
                             accentColor: context.tokens.secondary,
-                            onTap: () => showModalBottomSheet(
+                            onTap: () => showAppSheet(
                               context: context,
-                              useRootNavigator: true,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
                               builder: (context) =>
                                   TtsElevenLabsModelSelectionSheet(
                                       provider: provider),

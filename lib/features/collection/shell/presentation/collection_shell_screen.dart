@@ -24,6 +24,7 @@ import 'widgets/word_collection_preview.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -339,10 +340,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
     // 예전엔 입력칸만 있고 아무것도 찾지 않았다. 이제 내 문장·단어와 클립
     // 제목·자막에서 찾는다(5차).
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.fromLTRB(
           20,
@@ -402,10 +401,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   /// 영어로 넣는다(다른 언어는 단어 탭에서 언어를 고른 뒤 + 로 넣는다).
   Future<void> _addWord(BuildContext context) async {
     final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
-    final result = await showModalBottomSheet<WordAddResult>(
+    final result = await showAppSheet<WordAddResult>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
       builder: (_) => AddWordSheet(accountId: accountId, language: '영어'),
     );
     if (!context.mounted || result == null) return;
@@ -413,10 +410,8 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Future<void> _showAddSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),

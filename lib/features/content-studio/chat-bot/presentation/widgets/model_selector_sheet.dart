@@ -4,6 +4,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../chat_bot_provider.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 void showModelSelectorBottomSheet(
     BuildContext context, ChatBotProvider provider) {
@@ -11,11 +12,8 @@ void showModelSelectorBottomSheet(
   final isDark = theme.brightness == Brightness.dark;
   final bg = isDark ? context.tokens.surfaceContainer : context.tokens.surface;
 
-  showModalBottomSheet(
+  showAppSheet(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: Colors.transparent,
-    showDragHandle: false,
     builder: (context) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),

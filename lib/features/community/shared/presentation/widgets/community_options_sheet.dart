@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class CommunityOptionAction {
   const CommunityOptionAction({
@@ -22,13 +23,8 @@ Future<void> showCommunityOptionsSheet({
   required List<CommunityOptionAction> actions,
   String title = '옵션',
 }) async {
-  await showModalBottomSheet<void>(
+  await showAppSheet<void>(
     context: context,
-    useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
-    ),
     builder: (sheetContext) {
       return SafeArea(
         child: Padding(

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 Future<bool?> showContentStudioExitConfirmSheet(BuildContext context) {
-  return showModalBottomSheet<bool>(
+  return showAppSheet<bool>(
     context: context,
-    useRootNavigator: true,
-    showDragHandle: true,
     builder: (ctx) {
       final cs = Theme.of(ctx).colorScheme;
       return SafeArea(

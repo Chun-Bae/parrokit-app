@@ -17,6 +17,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// 편집 가능한 사용자 아바타.
 class EditableAvatar extends StatelessWidget {
@@ -46,10 +47,8 @@ class EditableAvatar extends StatelessWidget {
 
         final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
 
-        final choice = await showModalBottomSheet<int>(
+        final choice = await showAppSheet<int>(
           context: context,
-          useRootNavigator: true,
-          showDragHandle: true,
           builder: (context) => SafeArea(
             child: Wrap(
               children: [

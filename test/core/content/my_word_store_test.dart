@@ -96,6 +96,86 @@ void main() {
     });
   });
 
+  group('예문 여러 개', () {
+    test('예문을 여러 개 저장하고 순서대로 읽는다', () async {
+      await MyWordStore.add('guest',
+          language: '영어',
+          word: 'figure out',
+          examples: const [
+            WordExample(text: "I'll figure it out.", translation: '내가 알아낼게.'),
+            WordExample(text: 'Did you figure out the password?'),
+          ]);
+      final w = (await MyWordStore.load('guest')).single;
+      expect(w.examples.map((e) => e.text),
+          ["I'll figure it out.", 'Did you figure out the password?']);
+      expect(w.examples.first.translation, '내가 알아낼게.');
+      // 첫 예문은 예전 이름으로도 읽힌다.
+      expect(w.example, "I'll figure it out.");
+      expect(w.exampleTranslation, '내가 알아낼게.');
+    });
+
+    test('빈 예문은 버리고 다섯 개까지만 둔다', () {
+      final clipped = clipWordExamples([
+        const WordExample(text: ' '),
+        for (var i = 0; i < 7; i++) WordExample(text: '예문 $i'),
+      ]);
+      expect(clipped, hasLength(examplesMaxCount));
+      expect(clipped.first.text, '예문 0');
+    });
+
+    test('예전 형식(예문 하나)으로 저장된 단어도 읽는다', () {
+      final w = MyWord.fromJson({
+        'id': 'en:old',
+        'language': '영어',
+        'word': 'old',
+        'example': 'An old sentence.',
+        'exampleTranslation': '예전 문장.',
+        'sourceSentenceId': 's1',
+      })!;
+      expect(w.examples, hasLength(1));
+      expect(w.examples.single.text, 'An old sentence.');
+      expect(w.examples.single.translation, '예전 문장.');
+      expect(w.sourceSentenceId, 's1');
+    });
+
+    test('예문이 없으면 빈 목록이다', () {
+      final w = MyWord.fromJson(
+          {'id': 'en:x', 'language': '영어', 'word': 'x'})!;
+      expect(w.examples, isEmpty);
+      expect(w.example, '');
+    });
+
+    test('저장했다 읽어도 예문이 그대로다', () {
+      final w = MyWord(
+        id: 'en:keep',
+        language: '영어',
+        word: 'keep',
+        examples: const [
+          WordExample(text: 'Keep going.', translation: '계속 가.'),
+          WordExample(text: 'Keep it simple.'),
+        ],
+      );
+      final back = MyWord.fromJson(w.toJson())!;
+      expect(back.examples, w.examples);
+    });
+
+    test('서버에도 예문 목록과 첫 예문을 함께 올린다', () async {
+      final cloud = FakeWordCloud();
+      MyWordStore.cloud = cloud;
+      await MyWordStore.add('uid1',
+          language: '영어',
+          word: 'nuance',
+          examples: const [
+            WordExample(text: 'A subtle nuance.'),
+            WordExample(text: 'Nuance matters.'),
+          ]);
+      final stored = cloud.stored.single;
+      expect(stored.examples.map((e) => e.text),
+          ['A subtle nuance.', 'Nuance matters.']);
+      expect(stored.example, 'A subtle nuance.');
+    });
+  });
+
   group('서버 규칙 길이', () {
     test('긴 문장에서 저장해도 예문·번역을 규칙 길이 안으로 줄여 서버에 올린다',
         () async {

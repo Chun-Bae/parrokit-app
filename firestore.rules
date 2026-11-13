@@ -184,6 +184,11 @@ service cloud.firestore {
           && d.get('exampleTranslation', '') is string
           && d.get('exampleTranslation', '').size() <= 300
           && d.get('sourceSentenceId', '') is string
+          // 예문 여러 개(5차). 한 단어에 5개까지. 규칙은 목록 안을 하나씩
+          // 볼 수 없어 개수만 막고, 글자 수는 앱이 줄여서 올린다
+          // (my_word_store.dart의 clipWordExamples).
+          && d.get('examples', []) is list
+          && d.get('examples', []).size() <= 5
           && d.get('topic', '') is string && d.get('topic', '').size() <= 40;
       }
       allow read, delete: if request.auth != null

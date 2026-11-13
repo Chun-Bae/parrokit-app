@@ -4,6 +4,7 @@ import 'package:parrokit/core/content/learning_languages.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 class LearningLanguagePicker extends StatelessWidget {
   const LearningLanguagePicker({
@@ -18,11 +19,8 @@ class LearningLanguagePicker extends StatelessWidget {
   final bool compact;
 
   Future<void> openPicker(BuildContext context) async {
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showAppSheet<String>(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (context) => _LanguagePickerSheet(selected: value),
     );
     if (selected != null && selected != value) onChanged(selected);
