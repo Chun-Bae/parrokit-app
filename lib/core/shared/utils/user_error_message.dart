@@ -18,6 +18,9 @@ String userErrorMessage(Object error, {required String fallback}) {
       'network-request-failed' || 'unavailable' => _network,
       'too-many-requests' => '요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.',
       'requires-recent-login' => '보안을 위해 로그아웃 후 다시 로그인한 뒤 시도해 주세요.',
+      'user-disabled' => '이용이 정지된 계정이에요. 문의해 주세요.',
+      'account-exists-with-different-credential' =>
+        '이 이메일은 다른 방법으로 가입돼 있어요. 처음 가입한 방법으로 로그인해 주세요.',
       _ => fallback,
     };
   }

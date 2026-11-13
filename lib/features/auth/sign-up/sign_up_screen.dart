@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -104,7 +105,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         case 'too-many-requests':
           showToast('요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
         default:
-          showToast('오류가 발생했습니다: ${e.message}');
+          showToast(userErrorMessage(e,
+              fallback: '가입하지 못했어요. 잠시 후 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. 계정은 만들어졌는데 Firestore

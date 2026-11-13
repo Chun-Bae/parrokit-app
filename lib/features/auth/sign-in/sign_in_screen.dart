@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +55,8 @@ class _SignInScreenState extends State<SignInScreen> {
         case 'too-many-requests':
           showToast('요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
         default:
-          showToast('오류가 발생했습니다: ${e.message}');
+          showToast(userErrorMessage(e,
+              fallback: '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. Firestore 쓰기 실패나 타임아웃처럼
@@ -78,7 +80,8 @@ class _SignInScreenState extends State<SignInScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showToast('구글 로그인 오류: ${e.message}');
+      // Firebase 영어 원문을 그대로 보였다(5차). 코드에 맞는 안내로.
+      showToast(userErrorMessage(e, fallback: '구글 로그인 중 오류가 발생했습니다.'));
     } catch (e) {
       if (!mounted) return;
       showToast('구글 로그인 중 오류가 발생했습니다.');
@@ -95,7 +98,8 @@ class _SignInScreenState extends State<SignInScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showToast('카카오 로그인 오류: ${e.message}');
+      // Firebase 영어 원문을 그대로 보였다(5차). 코드에 맞는 안내로.
+      showToast(userErrorMessage(e, fallback: '카카오 로그인 중 오류가 발생했습니다.'));
     } catch (e) {
       if (!mounted) return;
       showToast('카카오 로그인 중 오류가 발생했습니다.');
@@ -115,7 +119,8 @@ class _SignInScreenState extends State<SignInScreen> {
       showToast(e.message);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showToast('네이버 로그인 오류: ${e.message}');
+      // Firebase 영어 원문을 그대로 보였다(5차). 코드에 맞는 안내로.
+      showToast(userErrorMessage(e, fallback: '네이버 로그인 중 오류가 발생했습니다.'));
     } catch (e) {
       if (!mounted) return;
       showToast('네이버 로그인 중 오류가 발생했습니다.');
@@ -132,7 +137,8 @@ class _SignInScreenState extends State<SignInScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showToast('애플 로그인 오류: ${e.message}');
+      // Firebase 영어 원문을 그대로 보였다(5차). 코드에 맞는 안내로.
+      showToast(userErrorMessage(e, fallback: '애플 로그인 중 오류가 발생했습니다.'));
     } catch (e) {
       if (!mounted) return;
       showToast('애플 로그인 중 오류가 발생했습니다.');

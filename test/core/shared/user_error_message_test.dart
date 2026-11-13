@@ -28,6 +28,12 @@ void main() {
   });
 
   test('Firebase 오류는 영어 문장 대신 코드에 맞는 안내를 한다', () {
+    expect(msg(FirebaseAuthException(code: 'user-disabled')), contains('정지된 계정'));
+    expect(
+        msg(FirebaseAuthException(
+            code: 'account-exists-with-different-credential',
+            message: 'An account already exists with the same email address')),
+        contains('처음 가입한 방법'));
     expect(
         msg(FirebaseAuthException(
             code: 'requires-recent-login',
