@@ -77,8 +77,10 @@ class _DataSectionState extends State<DataSection> {
             child: const Text('취소'),
           ),
           FilledButton(
+            key: const ValueKey('clear-cache-confirm'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
+            // 제목·완료 안내('정리했어요')와 같은 말로(5차). 예전 '삭제'.
+            child: const Text('정리'),
           ),
         ],
       ),

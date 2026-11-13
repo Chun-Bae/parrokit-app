@@ -100,7 +100,8 @@ class _StorageCacheManagementScreenState
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          '기기 보관분 삭제',
+          // 줄 버튼 '기기에서 지우기'와 같은 말로(5차). 예전 '기기 보관분 삭제'.
+          '기기에서 지울까요?',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -118,8 +119,9 @@ class _StorageCacheManagementScreenState
             child: const Text('취소'),
           ),
           FilledButton(
+            key: const ValueKey('clear-clip-cache-confirm'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
+            child: const Text('지우기'),
           ),
         ],
       ),
@@ -140,9 +142,9 @@ class _StorageCacheManagementScreenState
     if (success) {
       await _load(showSpinner: false);
       if (!mounted) return;
-      showToast('기기 보관분을 삭제했어요.');
+      showToast('기기에서 지웠어요.');
     } else {
-      showToast('삭제하지 못했어요.');
+      showToast('지우지 못했어요. 다시 시도해 주세요.');
     }
   }
 
