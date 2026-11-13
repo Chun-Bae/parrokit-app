@@ -65,12 +65,16 @@ SentenceAffinity affinityOf(SentenceActivity activity) {
   return SentenceAffinity._(index + 1, step.$2, points, step.$1, next);
 }
 
-/// "오늘", "어제", "N일 전" 형태로 날짜 차이를 표현한다.
+/// "오늘", "어제", "N일 전" 형태로 날짜 차이를 표현한다. 일주일이 넘으면 커뮤니티와
+/// 같이 '11월 7일'(올해가 아니면 연도까지)로 보인다(5차, 예전엔 '120일 전').
 String relativeDayLabel(DateTime now, DateTime then) {
   final days = DateTime(now.year, now.month, now.day)
       .difference(DateTime(then.year, then.month, then.day))
       .inDays;
   if (days <= 0) return '오늘';
   if (days == 1) return '어제';
-  return '$days일 전';
+  if (days < 7) return '$days일 전';
+  return then.year == now.year
+      ? '${then.month}월 ${then.day}일'
+      : '${then.year}년 ${then.month}월 ${then.day}일';
 }

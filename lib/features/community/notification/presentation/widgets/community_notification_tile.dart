@@ -152,7 +152,11 @@ class CommunityNotificationTile extends StatelessWidget {
     if (diff.inHours < 1) return '${diff.inMinutes}분 전';
     if (diff.inDays < 1) return '${diff.inHours}시간 전';
     if (diff.inDays < 7) return '${diff.inDays}일 전';
-    return '${createdAt.month}/${createdAt.day}';
+    // 글·댓글 시각과 같은 모양으로(5차, 예전 '11/7').
+    final now = DateTime.now();
+    return createdAt.year == now.year
+        ? '${createdAt.month}월 ${createdAt.day}일'
+        : '${createdAt.year}년 ${createdAt.month}월 ${createdAt.day}일';
   }
 }
 

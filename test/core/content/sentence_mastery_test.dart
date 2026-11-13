@@ -21,6 +21,9 @@ void main() {
     expect(relativeDayLabel(now, DateTime(2026, 10, 28, 23)), '오늘');
     expect(relativeDayLabel(now, DateTime(2026, 10, 27, 23)), '어제');
     expect(relativeDayLabel(now, DateTime(2026, 10, 25)), '3일 전');
+    // 일주일이 넘으면 날짜, 해가 다르면 연도까지.
+    expect(relativeDayLabel(now, DateTime(2026, 10, 1)), '10월 1일');
+    expect(relativeDayLabel(now, DateTime(2025, 12, 30)), '2025년 12월 30일');
   });
 
   test('친밀도는 청취 1점, 따라 말하기 2점으로 단계가 오른다', () {
