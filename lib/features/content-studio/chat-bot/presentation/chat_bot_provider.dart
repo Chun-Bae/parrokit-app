@@ -126,7 +126,13 @@ class ChatBotProvider extends ChangeNotifier {
     }
   }
 
+  /// 대화를 새로 시작할 때마다 1씩 늘린다. 답을 기다리는 사이 새로 시작하면
+  /// 예전 대화의 답이 새 대화에 끼어들고 모드·추천까지 바꿨다(5차).
+  int _conversation = 0;
+
   void resetChatbot() {
+    _conversation++;
+    _isTyping = false;
     _chatbotMode = 'general';
     _hasPendingRouting = false;
     _pendingScriptRecommendations = null;
@@ -148,6 +154,7 @@ class ChatBotProvider extends ChangeNotifier {
 
     // 현재까지의 대화 목록 복사 (새 사용자 메시지 추가 전)
     final history = List<AiChatMessage>.from(_messages);
+    final conversation = _conversation;
 
     // 사용자 메시지 추가
     _messages.insert(
@@ -161,6 +168,13 @@ class ChatBotProvider extends ChangeNotifier {
       // AI 응답 호출 (대화 히스토리, 모델 정보, 챗봇 모드 포함)
       final aiResponse = await _sendMessageUseCase.call(
           text, history, _selectedModel, _chatbotMode);
+      // 남은 횟수는 서버가 이미 셌으니 대화를 바꿨어도 반영한다.
+      _remainingChatsToday = aiResponse.remainingToday ?? _remainingChatsToday;
+      _dailyChatLimit = aiResponse.dailyLimit ?? _dailyChatLimit;
+      if (conversation != _conversation) {
+        notifyListeners();
+        return; // 그 사이 새 대화를 시작했다. 답은 버린다.
+      }
 
       // AI 응답의 actionType이 change_mode인 경우, 클라이언트의 챗봇 모드 전환 처리
       if (aiResponse.actionType == 'change_mode' &&
@@ -204,10 +218,9 @@ class ChatBotProvider extends ChangeNotifier {
 
       debugPrint(
           '[Chatbot][Provider] Send message success replyLength=${aiResponse.text.length} actionType=${aiResponse.actionType}');
-      _remainingChatsToday = aiResponse.remainingToday ?? _remainingChatsToday;
-      _dailyChatLimit = aiResponse.dailyLimit ?? _dailyChatLimit;
       _messages.insert(0, aiResponse.copyWith(chatbotMode: _chatbotMode));
     } catch (e) {
+      if (conversation != _conversation) return;
       AppLogger.e('[Chatbot][Provider] 메시지 전송 실패', error: e);
       final message = e is FirebaseFunctionsException &&
               e.message != null &&
@@ -223,8 +236,10 @@ class ChatBotProvider extends ChangeNotifier {
         ),
       );
     } finally {
-      _isTyping = false;
-      notifyListeners();
+      if (conversation == _conversation) {
+        _isTyping = false;
+        notifyListeners();
+      }
     }
   }
 
