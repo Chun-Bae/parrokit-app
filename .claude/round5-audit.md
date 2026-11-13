@@ -201,4 +201,5 @@
 - 지난 반복 테스트에 남은 analyze 안내 1건(불필요 import) 고침(dd9f3ce7). 그 커밋 때 analyze를 테스트 추가 전에만 돌렸다. 앞으로 커밋 직전에 한 번 더 돌린다
 - 시험 클립(로컬, 'Shorts test clip')의 자막을 'What does this word mean'으로 바꿔 확인에 썼다(시뮬레이터 DB 직접 수정, 이 클립만)
 - 테스트 3, 311 통과. 라이트·다크
+- 실수: c37788d9를 analyze 경고 1건이 있는 채로 커밋했다(`flutter analyze | tail -1 &&`는 tail의 종료 코드라 막지 못함). 바로 고침. 앞으로 커밋 전 검사는 `out=$(flutter analyze); grep -q 'No issues found' <<<"$out" &&`로 막는다
 - 다음: 클립 상세·구간 목록, 또는 환전·광고 보상 시트
