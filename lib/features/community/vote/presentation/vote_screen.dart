@@ -82,7 +82,7 @@ class _VoteScreenState extends State<VoteScreen> {
 
     if (posts.isEmpty) {
       final canLoadMore = provider.hasMorePosts && !provider.isLoading;
-      // 필터마다 비어 있는 이유가 다르다. 전에는 '완료'·'만료'에서도
+      // 필터마다 비어 있는 이유가 다르다. 전에는 '참여함'·'마감'(예전 '완료'·'만료')에서도
       // "진행 중인 투표가 없습니다"가 나왔다.
       final (emptyTitle, emptyDescription) = switch (widget.selectedFilter) {
         final f when f == CommunityFilters.vote[2] => (
@@ -542,19 +542,9 @@ class VoteCard extends StatelessWidget {
         item.voteOptions?.fold(0, (sum, opt) => sum! + opt.count) ?? 0;
 
     // 남은 시간 계산
-    String expiresInText = '';
-    if (item.voteEndTime != null) {
-      final diff = item.voteEndTime!.difference(DateTime.now());
-      if (diff.isNegative) {
-        expiresInText = '투표 종료';
-      } else if (diff.inDays > 0) {
-        expiresInText = '${diff.inDays}일 후 종료!';
-      } else if (diff.inHours > 0) {
-        expiresInText = '${diff.inHours}시간 ${diff.inMinutes % 60}분 후 종료!';
-      } else {
-        expiresInText = '${diff.inMinutes}분 후 종료!';
-      }
-    }
+    final expiresInText = item.voteEndTime == null
+        ? ''
+        : voteRemainingLabel(item.voteEndTime!, DateTime.now());
 
     return Container(
       decoration: BoxDecoration(
@@ -851,4 +841,20 @@ class VoteCard extends StatelessWidget {
       }),
     );
   }
+}
+
+/// 투표 카드 머리의 남은 시간. 필터 이름('마감')과 같은 말을 쓴다(5차). 예전엔
+/// 'N일 후 종료!'처럼 느낌표가 붙고, 1분 안 남으면 '0분 후 종료!'가 나왔다.
+String voteRemainingLabel(DateTime end, DateTime now) {
+  final diff = end.difference(now);
+  if (diff.isNegative) return '투표 마감';
+  if (diff.inDays > 0) return '${diff.inDays}일 뒤 마감';
+  if (diff.inHours > 0) {
+    final minutes = diff.inMinutes % 60;
+    return minutes == 0
+        ? '${diff.inHours}시간 뒤 마감'
+        : '${diff.inHours}시간 $minutes분 뒤 마감';
+  }
+  if (diff.inMinutes > 0) return '${diff.inMinutes}분 뒤 마감';
+  return '곧 마감';
 }
