@@ -96,6 +96,43 @@ void main() {
     });
   });
 
+  group('서버 규칙 길이', () {
+    test('긴 문장에서 저장해도 예문·번역을 규칙 길이 안으로 줄여 서버에 올린다',
+        () async {
+      final cloud = FakeWordCloud();
+      MyWordStore.cloud = cloud;
+      final longSentence = 'word ' * 100; // 500자
+      final longTranslation = '번역 ' * 200; // 600자
+      expect(
+        await MyWordStore.add('uid1',
+            language: '영어',
+            word: 'word',
+            meaning: '뜻' * 250,
+            example: longSentence,
+            exampleTranslation: longTranslation,
+            topic: '주제' * 30),
+        WordAddResult.added,
+      );
+      final w = cloud.stored.single;
+      expect(w.example.length, lessThanOrEqualTo(exampleMaxLength));
+      expect(w.exampleTranslation.length, lessThanOrEqualTo(exampleMaxLength));
+      expect(w.meaning.length, meaningMaxLength);
+      expect(w.topic.length, topicMaxLength);
+      expect(longSentence.trim().startsWith(w.example), isTrue);
+    });
+
+    test('짧은 값은 그대로 둔다', () {
+      expect(clipToLength('nuance', wordMaxLength), 'nuance');
+      expect(clipToLength('', exampleMaxLength), '');
+    });
+
+    test('두 칸짜리 글자(이모지)를 반으로 자르지 않는다', () {
+      final clipped = clipToLength('a😀😀', 4);
+      expect(clipped, 'a😀');
+      expect(clipped.length, 3);
+    });
+  });
+
   group('복습', () {
     final day0 = DateTime(2026, 11, 13, 9);
     MyWord w(String id) => MyWord(id: id, language: '영어', word: id);

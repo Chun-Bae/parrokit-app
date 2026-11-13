@@ -172,15 +172,20 @@ class MyWordStore {
     if (existing.any((w) => _normalize(w.word) == _normalize(trimmed))) {
       return WordAddResult.duplicate;
     }
+    // 서버 규칙(firestore.rules의 validWord) 길이 안으로 줄인다. 문장에서
+    // 저장하면 예문·번역에 긴 문장이 그대로 들어가 규칙에 걸렸고, 그 단어는
+    // 서버에 못 올라가 이 기기에만 남았다(5차). 입력칸 maxLength는 미리 채운
+    // 글을 줄이지 않는다.
     final entry = MyWord(
       id: idFor(language, trimmed),
       language: language,
-      word: trimmed,
-      meaning: meaning.trim(),
-      example: example.trim(),
-      exampleTranslation: exampleTranslation.trim(),
+      word: clipToLength(trimmed, wordMaxLength),
+      meaning: clipToLength(meaning.trim(), meaningMaxLength),
+      example: clipToLength(example.trim(), exampleMaxLength),
+      exampleTranslation:
+          clipToLength(exampleTranslation.trim(), exampleMaxLength),
       sourceSentenceId: sourceSentenceId,
-      topic: topic,
+      topic: clipToLength(topic, topicMaxLength),
       addedAt: now ?? DateTime.now(),
     );
     var result = WordAddResult.added;
@@ -212,4 +217,25 @@ class MyWordStore {
     }
     revision.value++;
   }
+}
+
+/// 단어 필드 길이 한도. firestore.rules의 validWord와 같아야 한다.
+const int wordMaxLength = 80;
+const int meaningMaxLength = 200;
+const int exampleMaxLength = 300;
+const int topicMaxLength = 40;
+
+/// [text]를 UTF-16 길이 [max] 안으로 자른다. 이모지 같은 두 칸짜리 글자를
+/// 반으로 자르지 않는다.
+String clipToLength(String text, int max) {
+  if (text.length <= max) return text;
+  final buffer = StringBuffer();
+  var length = 0;
+  for (final rune in text.runes) {
+    final size = rune > 0xFFFF ? 2 : 1;
+    if (length + size > max) break;
+    buffer.writeCharCode(rune);
+    length += size;
+  }
+  return buffer.toString();
 }
