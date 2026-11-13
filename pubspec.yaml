@@ -35,7 +35,6 @@ dependencies:
   cloud_firestore: ^6.1.0     # 클라우드 데이터베이스
   firebase_messaging: ^16.0.2 # 푸시 알림 수신
   firebase_crashlytics: ^5.0.5 # 크래시 자동 수집
-  device_info_plus: ^10.1.0   # 기기 식별자 (IDFV/Android ID)
 
   # -----------------------------------------------------------
   # Local Storage & Database
@@ -75,7 +74,6 @@ dependencies:
   flutter_inappwebview: ^6.1.5    # 인앱 브라우저
   webview_flutter: ^4.13.1       # 웹뷰 (약관/방침 문서 표시)
   web_socket_channel: ^3.0.1  # 웹소켓 통신 (필요 시)
-  flutter_email_sender: ^7.0.0 # 이메일 앱 호출
  
   # -----------------------------------------------------------
   # File Management
