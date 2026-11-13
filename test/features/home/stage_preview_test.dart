@@ -549,6 +549,8 @@ void main() {
     await tapTooltip(tester, '문장 목록');
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('phrase-list')), findsOneWidget);
+    // 문장 친밀도는 단계 이름과 함께(내 레벨과 헷갈리지 않게).
+    expect(find.textContaining('Lv.1 낯선'), findsWidgets);
     await tester.tap(find.text('How was your day?'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('phrase-list')), findsNothing);

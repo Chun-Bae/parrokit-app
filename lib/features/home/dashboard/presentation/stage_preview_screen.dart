@@ -666,11 +666,12 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                   itemCount: list.length,
                   itemBuilder: (context, i) {
                     final sentence = sentenceForPhrase(list[i]);
-                    final level = sentence == null
+                    // 문장 친밀도. 예전엔 'Lv.2'만 있어 바로 위 내 레벨(Lv.1)과
+                    // 헷갈렸다. 문장 탭과 같이 단계 이름을 붙인다(5차).
+                    final affinity = sentence == null
                         ? null
                         : affinityOf(activities[sentence.id] ??
-                                const SentenceActivity())
-                            .level;
+                            const SentenceActivity());
                     return ListTile(
                       selected: i == current,
                       leading: i == current
@@ -681,7 +682,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                           ? null
                           : Text(sentence.translation,
                               maxLines: 1, overflow: TextOverflow.ellipsis),
-                      trailing: level == null ? null : Text('Lv.$level'),
+                      trailing: affinity == null
+                          ? null
+                          : Text('Lv.${affinity.level} ${affinity.name}',
+                              style: context.texts.labelMedium),
                       onTap: () => Navigator.pop(context, i),
                     );
                   })),
