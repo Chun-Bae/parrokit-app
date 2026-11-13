@@ -1380,7 +1380,8 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
   Widget build(BuildContext context) {
     final palette = HomeTokens.of(context);
     return AlertDialog(
-      title: const Text('설정'),
+      // 버튼 툴팁·도움말의 '말하기 설정'과 같게(5차). 예전 '설정'.
+      title: const Text('말하기 설정'),
       content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1407,9 +1408,9 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
             SwitchListTile(
                 key: const ValueKey('count-listen-switch'),
                 contentPadding: EdgeInsets.zero,
-                title: const Text('들은 횟수 기록',
+                title: const Text('듣기 횟수 기록',
                     style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('끄면 앵무새 말을 끝까지 들어도 들은 횟수가 오르지 않아요.',
+                subtitle: Text('끄면 앵무새 말을 끝까지 들어도 듣기 횟수가 오르지 않아요.',
                     style: context.texts.bodySmall),
                 value: countListen,
                 onChanged: (value) => setState(() => countListen = value)),
@@ -1600,7 +1601,7 @@ class _HomeHelpDialog extends StatelessWidget {
           '문장 설정',
           '앵무새가 말할 문장을 고릅니다. 체크하면 바로 반영돼요.'
         ),
-        (Icons.settings_rounded, '말하기 설정', '말하기 간격과 들은 횟수 기록 여부를 정합니다.'),
+        (Icons.settings_rounded, '말하기 설정', '말하기 간격과 듣기 횟수 기록 여부를 정합니다.'),
       ]
     ),
     (

@@ -438,11 +438,14 @@ void main() {
     expect(log.single.score, isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
-  testWidgets('설정에서 들은 횟수 기록을 끄면 저장된다', (tester) async {
+  testWidgets('말하기 설정에서 듣기 횟수 기록을 끄면 저장된다', (tester) async {
     await openPreview(tester);
     await tester.pump();
     await tapTooltip(tester, '말하기 설정');
     await tester.pump();
+    // 창 제목이 버튼 이름과 같다(예전 '설정').
+    expect(find.descendant(of: find.byType(AlertDialog), matching: find.text('말하기 설정')),
+        findsOneWidget);
     final toggle = find.byKey(const ValueKey('count-listen-switch'));
     expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
     await tester.tap(toggle);
