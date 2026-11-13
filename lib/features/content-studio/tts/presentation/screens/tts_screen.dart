@@ -135,6 +135,12 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
     final theme = Theme.of(context);
     final mutedText = context.tokens.textSecondary;
     final provider = context.watch<TtsProvider>();
+    context.read<StudioHubProvider?>()?.setWorkCheck(
+        'tts',
+        () =>
+            mounted &&
+            (_textController.text.trim().isNotEmpty ||
+                provider.generatedFilePath != null));
 
     if (_textController.text != provider.text) {
       final newText = provider.text;

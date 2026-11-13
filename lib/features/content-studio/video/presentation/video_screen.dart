@@ -120,6 +120,13 @@ class _VideoScreenState extends State<VideoScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final mutedText = context.tokens.textSecondary;
     final provider = context.watch<VideoProvider>();
+    context.read<StudioHubProvider?>()?.setWorkCheck(
+        'video',
+        () =>
+            mounted &&
+            (_dialogueController.text.trim().isNotEmpty ||
+                _promptController.text.trim().isNotEmpty ||
+                provider.generatedFilePath != null));
 
     if (_dialogueController.text != provider.dialogue) {
       _dialogueController.value = _dialogueController.value.copyWith(

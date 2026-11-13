@@ -70,8 +70,12 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     );
   }
 
-  Future<void> _handleBack() async {
+  Future<void> _handleBack(StudioHubProvider hub) async {
     final router = GoRouter.of(context);
+    if (!hub.hasUnsavedWork) {
+      _leave(router);
+      return;
+    }
     final shouldExit = await showContentStudioExitConfirmSheet(context);
     if (shouldExit != true) return;
     _leave(router);
@@ -130,7 +134,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
             appBar: ContentStudioAppBar(
               title: appBarTitle,
               coins: userProvider.coins,
-              onBack: _handleBack,
+              onBack: () => _handleBack(hubProvider),
               backgroundColor: bg,
               onToggleExpand: () {
                 setState(() {
@@ -143,7 +147,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
               canPop: false,
               onPopInvokedWithResult: (didPop, result) {
                 if (didPop) return;
-                _handleBack();
+                _handleBack(hubProvider);
               },
               child: SafeArea(
                 top: false,

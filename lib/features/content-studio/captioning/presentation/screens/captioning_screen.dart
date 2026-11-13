@@ -80,6 +80,7 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
     final showAppBar = widget.showAppBar;
 
     final hubProvider = context.watch<StudioHubProvider?>();
+    hubProvider?.setWorkCheck('caption', () => mounted && !vm.isUntouchedNew);
 
     // 저장 후 닫기 - 한 번만 처리
     if (vm.shouldClose && !_hasHandledClose) {
