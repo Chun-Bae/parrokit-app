@@ -693,17 +693,20 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                         .copyWith(color: colors.onSurfaceVariant)),
                 const Spacer(),
                 // 전에는 "앵무새가 말할 문장 n개" 큰 배너가 따로 있었다.
-                Tooltip(
-                  message: '홈 앵무새가 순서대로 말해줘요',
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.record_voice_over_rounded,
-                        size: 16, color: colors.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text('앵무새 $routineCount',
-                        style: context.texts.labelMedium
-                            .copyWith(color: colors.onSurfaceVariant)),
-                  ]),
-                ),
+                // '앵무새 62'만 적으니 옆의 '내 문장 63'과 무슨 관계인지
+                // 알 수 없었다(5차). 몇 개 중 몇 개인지 함께 적는다.
+                if (mySentences.isNotEmpty)
+                  Tooltip(
+                    message: '홈 앵무새가 순서대로 말해줘요',
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.record_voice_over_rounded,
+                          size: 16, color: colors.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text('앵무새 $routineCount/${mySentences.length}',
+                          style: context.texts.labelMedium
+                              .copyWith(color: colors.onSurfaceVariant)),
+                    ]),
+                  ),
                 IconButton(
                     tooltip: '문장 추가',
                     onPressed: addMySentence,
@@ -1285,12 +1288,14 @@ class _ExploreStrip extends StatelessWidget {
         Row(children: [
           Text('둘러보기', style: context.texts.titleLarge),
           const Spacer(),
-          TextButton(
-            key: const ValueKey('open-explore'),
-            onPressed: onViewAll,
-            // 바로 위 카테고리 칩 '전체'와 같은 말이라 헷갈렸다. 홈과 같은 말로(5차).
-            child: const Text('전체 보기'),
-          ),
+          // 볼 문장이 없는데도 '전체 보기'가 있어서 누르면 빈 화면만 열렸다(5차).
+          if (loading || (!failed && sentences.isNotEmpty))
+            TextButton(
+              key: const ValueKey('open-explore'),
+              onPressed: onViewAll,
+              // 바로 위 카테고리 칩 '전체'와 같은 말이라 헷갈렸다. 홈과 같은 말로(5차).
+              child: const Text('전체 보기'),
+            ),
         ]),
         const SizedBox(height: 6),
         if (loading)
@@ -2324,14 +2329,17 @@ class _WordPickRow extends StatelessWidget {
   final DefaultConversationSentence sentence;
   final ValueChanged<String> onPick;
 
-  static final _edge = RegExp(r"^[^\p{L}\p{N}]+|[^\p{L}\p{N}'’]+$", unicode: true);
+  static final _edge =
+      RegExp(r"^[^\p{L}\p{N}]+|[^\p{L}\p{N}'’]+$", unicode: true);
 
   List<String> get tokens {
     final seen = <String>{};
     final out = <String>[];
     for (final raw in sentence.text.split(RegExp(r'\s+'))) {
       final token = raw.replaceAll(_edge, '');
-      if (token.isEmpty || token.length == sentence.text.trim().length) continue;
+      if (token.isEmpty || token.length == sentence.text.trim().length) {
+        continue;
+      }
       if (seen.add(token.toLowerCase())) out.add(token);
       if (out.length >= 12) break;
     }
