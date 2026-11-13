@@ -69,6 +69,8 @@ extension CommunityProviderUserAction on CommunityProvider {
 
   Future<void> toggleLike(String postId, String userId) async {
     if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+    // 로그인하지 않았으면 users//likes 같은 잘못된 경로가 된다. 아무것도 하지 않는다.
+    if (userId.isEmpty) return;
 
     _errorMessage = null;
     final originalState = _postLikedStates[postId] ?? _isCurrentPostLiked;
@@ -104,6 +106,8 @@ extension CommunityProviderUserAction on CommunityProvider {
 
   Future<void> toggleScrap(String postId, String userId) async {
     if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+    // 로그인하지 않았으면 users//likes 같은 잘못된 경로가 된다. 아무것도 하지 않는다.
+    if (userId.isEmpty) return;
 
     _errorMessage = null;
     final originalState = _postScrappedStates[postId] ?? _isCurrentPostScrapped;

@@ -503,9 +503,17 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     color: isLiked
                         ? context.tokens.primary
                         : context.tokens.textSecondary),
-                onPressed: () => context
-                    .read<CommunityProvider>()
-                    .toggleLike(question.id, currentUser?.id ?? ''),
+                // 로그아웃 상태면 빈 uid로 부르지 않고 안내한다(게시판과 같게).
+                // 예전에는 users//likes 경로가 되어 예외가 났다.
+                onPressed: () {
+                  if (currentUser == null) {
+                    showToast('로그인이 필요합니다.');
+                    return;
+                  }
+                  context
+                      .read<CommunityProvider>()
+                      .toggleLike(question.id, currentUser.id);
+                },
               ),
               IconButton(
                 icon: Icon(
@@ -516,9 +524,15 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     color: isBookmarked
                         ? context.tokens.primary
                         : context.tokens.textSecondary),
-                onPressed: () => context
-                    .read<CommunityProvider>()
-                    .toggleScrap(question.id, currentUser?.id ?? ''),
+                onPressed: () {
+                  if (currentUser == null) {
+                    showToast('로그인이 필요합니다.');
+                    return;
+                  }
+                  context
+                      .read<CommunityProvider>()
+                      .toggleScrap(question.id, currentUser.id);
+                },
               ),
             ],
           ),

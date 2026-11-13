@@ -45,4 +45,17 @@ void main() {
 
     expect(firestore.dump(), before);
   });
+
+  test('로그인하지 않은 공감·스크랩은 서버에 쓰지 않는다', () async {
+    final firestore = FakeFirebaseFirestore();
+    await firestore.collection('posts').doc('q1').set({'likeCount': 0});
+    final provider = CommunityProvider(
+      repository: CommunityRepository(firestore: firestore),
+      userService: FirebaseUserService(firestore: firestore),
+    );
+    final before = firestore.dump();
+    await provider.toggleLike('q1', '');
+    await provider.toggleScrap('q1', '');
+    expect(firestore.dump(), before);
+  });
 }
