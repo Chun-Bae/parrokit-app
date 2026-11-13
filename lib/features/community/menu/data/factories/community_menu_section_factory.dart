@@ -65,7 +65,9 @@ class CommunityMenuSectionFactory {
     return const [
       CommunityMenuEntry(title: '작성한 질문', iconKey: 'help', colorKey: 'question', boardType: 'question', activityType: 'written'),
       CommunityMenuEntry(title: '작성한 답변', iconKey: 'forum', colorKey: 'question', boardType: 'question', activityType: 'commented'),
-      CommunityMenuEntry(title: '답변에 달린 댓글', iconKey: 'chat', colorKey: 'question', boardType: 'question', activityType: 'commented_reply'),
+      // 내가 답변 아래에 단 답글이다. 예전 '답변에 달린 댓글'은 남이 내 답변에 단 댓글처럼
+      // 읽혔다(5차). 질문 상세의 '답글 쓰기'와 같은 말.
+      CommunityMenuEntry(title: '작성한 답글', iconKey: 'chat', colorKey: 'question', boardType: 'question', activityType: 'commented_reply'),
       CommunityMenuEntry(title: '공감한 질문', iconKey: 'thumb_up', colorKey: 'question', boardType: 'question', activityType: 'liked'),
       CommunityMenuEntry(title: '공감한 답변 및 댓글', iconKey: 'favorite', colorKey: 'question', boardType: 'question', activityType: 'liked_comment'),
       CommunityMenuEntry(title: '스크랩', iconKey: 'bookmark', colorKey: 'question', boardType: 'question', activityType: 'scraped'),
@@ -82,4 +84,20 @@ class CommunityMenuSectionFactory {
       CommunityMenuEntry(title: '스크랩', iconKey: 'bookmark', colorKey: 'vote', boardType: 'vote', activityType: 'scraped'),
     ];
   }
+}
+
+/// 내 활동 목록 화면 제목에 쓸 이름. 메뉴에서 누른 줄과 같은 이름을 돌려준다(5차).
+/// 예전엔 활동 화면이 따로 이름을 지어 '작성한 질문'을 누르면 '작성한 질문/답변',
+/// '작성한 답변'은 '작성한 댓글', 답글은 '활동'으로 나왔다. 메뉴에 없으면 null.
+String? communityActivityTitle(String boardType, String activityType) {
+  for (final section in const CommunityMenuSectionFactory().build()) {
+    for (final category in section.categories) {
+      for (final item in category.items) {
+        if (item.boardType == boardType && item.activityType == activityType) {
+          return item.title;
+        }
+      }
+    }
+  }
+  return null;
 }

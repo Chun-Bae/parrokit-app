@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/menu/data/factories/community_menu_section_factory.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -83,9 +84,10 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
     if (widget.boardType == 'vote' && widget.activityType == 'written') {
       activityName = '참여한 투표';
     }
-    if (widget.boardType == 'question' && widget.activityType == 'written') {
-      activityName = '작성한 질문/답변';
-    }
+    // 메뉴에서 누른 줄과 같은 이름을 쓴다(5차).
+    activityName =
+        communityActivityTitle(widget.boardType, widget.activityType) ??
+            activityName;
 
     return '$boardName - $activityName';
   }
@@ -97,11 +99,14 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
       case 'written_posted':
         typeLabel = '글';
         if (widget.boardType == 'vote') typeLabel = '투표';
-        if (widget.boardType == 'question') typeLabel = '질문/답변';
+        // 질문의 '작성한 질문'은 질문만 모은다(예전 '질문/답변').
+        if (widget.boardType == 'question') typeLabel = '질문';
         break;
       case 'commented':
+        typeLabel = widget.boardType == 'question' ? '답변' : '댓글';
+        break;
       case 'commented_reply':
-        typeLabel = '댓글';
+        typeLabel = '답글';
         break;
       case 'liked':
       case 'liked_comment':

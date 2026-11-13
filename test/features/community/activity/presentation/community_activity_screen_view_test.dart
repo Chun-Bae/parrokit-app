@@ -46,7 +46,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('질문 게시판 - 작성한 댓글'), findsOneWidget);
+      // 메뉴 이름과 같다(5차, 예전 '작성한 댓글').
+      expect(find.text('질문 게시판 - 작성한 답변'), findsOneWidget);
       expect(find.text('아직 활동 내역이 없습니다.'), findsOneWidget);
     });
   });
