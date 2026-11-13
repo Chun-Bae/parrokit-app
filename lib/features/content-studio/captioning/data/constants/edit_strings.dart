@@ -15,8 +15,9 @@ class EditStrings {
   EditStrings._();
 
   // 컬렉션 섹션
-  static const collectionLabel = '컬렉션 *';
-  static const collectionHint = '컬렉션 이름을 입력해주세요.';
+  // 보관함에서는 컬렉션을 '폴더'로 보여준다. 이름에 '/'를 넣으면 폴더 안의 폴더가 된다(5차).
+  static const collectionLabel = '폴더 *';
+  static const collectionHint = '예: 여행/일본 → 여행 폴더 안의 일본';
 
   // 클립 제목 섹션
   static const clipTitleLabel = '클립 제목 *';

@@ -5,6 +5,8 @@
 // 클립을 한 목록으로 보여주고, 위치와 태그는 필터 칩으로 거른다. 컬렉션은
 // "폴더"로 보여주고, 위치가 달라도 이름이 같으면 한 폴더로 합친다.
 //
+// 폴더 안에 폴더를 둘 수 있다. 이름에 '/'를 넣은 경로로 나타낸다(folder_tree.dart).
+//
 // 데이터는 바꾸지 않는다. 예전 화면은 그대로 있고, 더보기 > 앱 >
 // "새 클립 화면"을 끄면 돌아간다(AppConfig.newClipLibrary).
 
@@ -22,15 +24,8 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
+import 'folder_tree.dart';
 import 'widgets/clip_list_view.dart';
-
-/// 이름으로 합친 폴더. 위치마다 있던 컬렉션 id를 모두 들고 있다.
-class _Folder {
-  _Folder(this.name);
-  final String name;
-  final Set<int> collectionIds = {};
-  int count = 0;
-}
 
 class ClipLibraryHome extends StatefulWidget {
   const ClipLibraryHome({super.key});
@@ -49,7 +44,8 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   static const _all = '전체';
 
   List<ClipItem> _clips = [];
-  List<_Folder> _folders = [];
+  /// 맨 위 폴더들.
+  List<ClipFolder> _folders = [];
   bool _loading = true;
   bool _loadingNow = false;
   bool _reloadAgain = false;
@@ -57,7 +53,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   /// 위치 필터: '전체' 또는 storageMode. 태그 필터는 이름.
   String _location = _all;
   String? _tag;
-  _Folder? _openFolder;
+  ClipFolder? _openFolder;
 
   Timer? _debounce;
   ClipProvider? _clipProvider;
@@ -121,21 +117,17 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       final clips = [for (final list in clipLists) ...list]
         ..sort((a, b) => b.clip.id.compareTo(a.clip.id));
 
-      final byName = <String, _Folder>{};
-      final folderOfCollection = <int, _Folder>{};
-      for (final collection in collectionLists.expand((c) => c)) {
-        final name = collection.name.trim();
-        if (name.isEmpty) continue;
-        final folder = byName.putIfAbsent(name, () => _Folder(name));
-        folder.collectionIds.add(collection.id);
-        folderOfCollection[collection.id] = folder;
-      }
+      final counts = <int, int>{};
       for (final item in clips) {
         final id = item.clip.collectionId;
-        if (id != null) folderOfCollection[id]?.count++;
+        if (id != null) counts[id] = (counts[id] ?? 0) + 1;
       }
-      final folders = byName.values.where((f) => f.count > 0).toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+      final (folders, byPath) = buildFolderTree(
+        [
+          for (final c in collectionLists.expand((c) => c)) (c.id, c.name),
+        ],
+        counts,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -143,7 +135,16 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         _folders = folders;
         _loading = false;
         if (_openFolder != null) {
-          _openFolder = byName[_openFolder!.name];
+          // 클립을 옮기거나 지워 폴더가 사라졌으면 남아 있는 가장 가까운 위로 간다.
+          ClipFolder? next;
+          for (var path = _openFolder!.path;
+              path.isNotEmpty && next == null;
+              path = path.contains('/')
+                  ? path.substring(0, path.lastIndexOf('/'))
+                  : '') {
+            next = byPath[path];
+          }
+          _openFolder = next;
         }
         if (_location != _all && !modes.contains(_location)) _location = _all;
       });
@@ -184,6 +185,32 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}?clipId=$clipId',
       );
 
+  void _enterFolder(ClipFolder? folder) => setState(() {
+        _openFolder = folder;
+        _tag = null;
+      });
+
+  /// 클립 만들기 화면을 [path] 폴더로 열어 둔다. 폴더는 첫 클립을 저장할 때 생긴다
+  /// (빈 컬렉션은 앱이 정리하므로 빈 폴더를 따로 저장하지 않는다).
+  void _createClipIn(String path) => context.push(
+        '${AppRoutes.clipsPath}/${AppRoutes.clipsCreatePath}'
+        '?collectionName=${Uri.encodeComponent(path)}',
+      );
+
+  /// 지금 폴더 안(맨 위면 맨 위)에 새 폴더를 만든다.
+  Future<void> _newFolder() async {
+    final parent = _openFolder;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => _NewFolderDialog(parentName: parent?.name),
+    );
+    if (!mounted || name == null) return;
+    final path = parent == null ? name : '${parent.path}/$name';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("'$name' 폴더에 넣을 첫 클립을 만들어요. 저장하면 폴더가 생겨요.")));
+    _createClipIn(path);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -204,28 +231,19 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       ..sort();
 
     final slivers = <Widget>[
-      if (_openFolder != null)
-        SliverToBoxAdapter(child: _folderHeader(context, _openFolder!))
-      else ...[
+      if (_openFolder != null) ...[
+        SliverToBoxAdapter(child: _folderHeader(context, _openFolder!)),
+        ..._folderGrid(context, _openFolder!.children),
+        SliverToBoxAdapter(
+          child: _sectionTitle(context, '이 폴더의 클립',
+              trailing: '${_openFolder!.directCount}개'),
+        ),
+      ] else ...[
         if (recents.isNotEmpty) ...[
           SliverToBoxAdapter(child: _sectionTitle(context, '이어보기')),
           SliverToBoxAdapter(child: _recentRow(context, recents)),
         ],
-        if (_folders.isNotEmpty) ...[
-          SliverToBoxAdapter(child: _sectionTitle(context, '폴더')),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 2.6,
-              children: [
-                for (final folder in _folders) _folderTile(context, folder),
-              ],
-            ),
-          ),
-        ],
+        ..._folderGrid(context, _folders),
         SliverToBoxAdapter(
           child: _sectionTitle(context, '모든 클립', trailing: '${_clips.length}개'),
         ),
@@ -252,10 +270,11 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
     );
   }
 
-  Widget _sectionTitle(BuildContext context, String text, {String? trailing}) {
+  Widget _sectionTitle(BuildContext context, String text,
+      {String? trailing, Widget? action}) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+      padding: EdgeInsets.fromLTRB(20, action == null ? 18 : 8, 12, 10),
       child: Row(
         children: [
           Expanded(
@@ -264,13 +283,46 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                     color: cs.onSurface, fontWeight: FontWeight.w700)),
           ),
           if (trailing != null)
-            Text(trailing,
-                style: context.texts.labelMedium
-                    .copyWith(color: cs.onSurfaceVariant)),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(trailing,
+                  style: context.texts.labelMedium
+                      .copyWith(color: cs.onSurfaceVariant)),
+            ),
+          if (action != null) action,
         ],
       ),
     );
   }
+
+  /// '폴더' 제목 + 새 폴더 버튼 + 폴더 칸. 맨 위와 폴더 안에서 같이 쓴다.
+  List<Widget> _folderGrid(BuildContext context, List<ClipFolder> folders) => [
+        SliverToBoxAdapter(
+          child: _sectionTitle(
+            context,
+            '폴더',
+            action: TextButton.icon(
+              key: const ValueKey('new-clip-folder'),
+              onPressed: _newFolder,
+              icon: const Icon(Icons.create_new_folder_outlined, size: 18),
+              label: const Text('새 폴더'),
+            ),
+          ),
+        ),
+        if (folders.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverGrid.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 2.6,
+              children: [
+                for (final folder in folders) _folderTile(context, folder),
+              ],
+            ),
+          ),
+      ];
 
   Widget _recentRow(
     BuildContext context,
@@ -324,23 +376,24 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
     );
   }
 
-  Widget _folderTile(BuildContext context, _Folder folder) {
+  Widget _folderTile(BuildContext context, ClipFolder folder) {
     final cs = Theme.of(context).colorScheme;
     return Material(
       color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () => setState(() {
-          _openFolder = folder;
-          _tag = null;
-        }),
+        onTap: () => _enterFolder(folder),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
             children: [
-              Icon(Icons.folder_rounded,
-                  size: 22, color: context.tokens.primary),
+              Icon(
+                  folder.children.isEmpty
+                      ? Icons.folder_rounded
+                      : Icons.folder_copy_rounded,
+                  size: 22,
+                  color: context.tokens.primary),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -352,7 +405,10 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                         overflow: TextOverflow.ellipsis,
                         style: context.texts.labelLarge.copyWith(
                             color: cs.onSurface, fontWeight: FontWeight.w700)),
-                    Text('${folder.count}개',
+                    Text(
+                        folder.children.isEmpty
+                            ? '${folder.totalCount}개'
+                            : '${folder.totalCount}개 · 폴더 ${folder.children.length}',
                         style: context.texts.labelSmall
                             .copyWith(color: cs.onSurfaceVariant)),
                   ],
@@ -365,31 +421,80 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
     );
   }
 
-  Widget _folderHeader(BuildContext context, _Folder folder) {
+  Widget _folderHeader(BuildContext context, ClipFolder folder) {
     final cs = Theme.of(context).colorScheme;
+    final trail = folder.trail;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 20, 4),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            tooltip: '모든 클립으로',
-            onPressed: () => setState(() {
-              _openFolder = null;
-              _tag = null;
-            }),
-            icon: const Icon(Icons.arrow_back_rounded),
+          Row(
+            children: [
+              // 한 단계 위로. 맨 위 폴더면 모든 클립으로.
+              IconButton(
+                key: const ValueKey('folder-up'),
+                tooltip: folder.parent == null
+                    ? '모든 클립으로'
+                    : '${folder.parent!.name}(으)로',
+                onPressed: () => _enterFolder(folder.parent),
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+              Icon(Icons.folder_open_rounded,
+                  size: 22, color: context.tokens.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(folder.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        context.texts.titleLarge.copyWith(color: cs.onSurface)),
+              ),
+              IconButton(
+                key: const ValueKey('folder-add-clip'),
+                tooltip: '이 폴더에 클립 추가',
+                onPressed: () => _createClipIn(folder.path),
+                icon: const Icon(Icons.video_call_outlined),
+              ),
+            ],
           ),
-          Icon(Icons.folder_rounded, size: 22, color: context.tokens.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(folder.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.texts.titleLarge.copyWith(color: cs.onSurface)),
-          ),
-          Text('${folder.count}개',
-              style: context.texts.labelMedium
-                  .copyWith(color: cs.onSurfaceVariant)),
+          // 폴더 안의 폴더면 경로를 보여주고, 누르면 그 단계로 간다.
+          if (trail.length > 1)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(left: 12),
+              child: Row(children: [
+                InkWell(
+                  onTap: () => _enterFolder(null),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Text('클립',
+                        style: context.texts.labelMedium
+                            .copyWith(color: cs.onSurfaceVariant)),
+                  ),
+                ),
+                for (final step in trail) ...[
+                  Icon(Icons.chevron_right_rounded,
+                      size: 16, color: cs.onSurfaceVariant),
+                  InkWell(
+                    onTap: step == folder ? null : () => _enterFolder(step),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 4),
+                      child: Text(step.name,
+                          style: context.texts.labelMedium.copyWith(
+                              color: step == folder
+                                  ? cs.onSurface
+                                  : context.tokens.primary,
+                              fontWeight: step == folder
+                                  ? FontWeight.w700
+                                  : FontWeight.w500)),
+                    ),
+                  ),
+                ],
+              ]),
+            ),
         ],
       ),
     );
@@ -440,6 +545,69 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                 () => setState(() => _tag = _tag == tag ? null : tag)),
         ],
       ),
+    );
+  }
+}
+
+/// 새 폴더 이름 받기. '/'는 경로 구분이라 쓸 수 없다.
+class _NewFolderDialog extends StatefulWidget {
+  const _NewFolderDialog({this.parentName});
+
+  final String? parentName;
+
+  @override
+  State<_NewFolderDialog> createState() => _NewFolderDialogState();
+}
+
+class _NewFolderDialogState extends State<_NewFolderDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String? get _error {
+    final text = _controller.text;
+    if (text.contains('/')) return "'/'는 쓸 수 없어요";
+    return null;
+  }
+
+  bool get _valid => _controller.text.trim().isNotEmpty && _error == null;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.parentName == null
+          ? '새 폴더'
+          : "'${widget.parentName}' 안에 새 폴더"),
+      content: TextField(
+        key: const ValueKey('new-folder-name'),
+        controller: _controller,
+        autofocus: true,
+        maxLength: 40,
+        onChanged: (_) => setState(() {}),
+        onSubmitted: (_) {
+          if (_valid) Navigator.pop(context, _controller.text.trim());
+        },
+        decoration: InputDecoration(
+          labelText: '폴더 이름',
+          errorText: _error,
+          helperText: '첫 클립을 저장하면 폴더가 생겨요',
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소')),
+        FilledButton(
+          key: const ValueKey('confirm-new-folder'),
+          onPressed:
+              _valid ? () => Navigator.pop(context, _controller.text.trim()) : null,
+          child: const Text('만들기'),
+        ),
+      ],
     );
   }
 }
