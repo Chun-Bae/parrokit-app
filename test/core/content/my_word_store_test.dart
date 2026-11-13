@@ -110,7 +110,42 @@ void main() {
       expect(WordReviewStore.dueWords(words, reviews, day1), hasLength(1));
       await WordReviewStore.record('guest', 'a', known: true, now: day1);
       reviews = await WordReviewStore.loadAll('guest');
-      expect(reviews['a']!.dueAt, day1.add(const Duration(days: 3)));
+      // 3일 뒤 그날 0시(11/14 9시 → 11/17 0시).
+      expect(reviews['a']!.dueAt, DateTime(2026, 11, 17));
+    });
+
+    test('밤늦게 알아요를 눌러도 다음 날 아침이면 나온다', () async {
+      final late = DateTime(2026, 11, 13, 23, 30);
+      await WordReviewStore.record('guest', 'a', known: true, now: late);
+      final reviews = await WordReviewStore.loadAll('guest');
+      expect(
+          WordReviewStore.dueWords(
+              [w('a')], reviews, DateTime(2026, 11, 13, 23, 59)),
+          isEmpty);
+      expect(
+          WordReviewStore.dueWords(
+              [w('a')], reviews, DateTime(2026, 11, 14, 8)),
+          hasLength(1));
+    });
+
+    test('간격은 1·3·7·14·30일이고 그 뒤로는 30일씩', () async {
+      var at = DateTime(2026, 1, 1, 12);
+      final gaps = <int>[];
+      for (var i = 0; i < 7; i++) {
+        final r =
+            await WordReviewStore.record('guest', 'a', known: true, now: at);
+        gaps.add(
+            r.dueAt!.difference(DateTime(at.year, at.month, at.day)).inDays);
+        at = r.dueAt!.add(const Duration(hours: 9));
+      }
+      expect(gaps, [1, 3, 7, 14, 30, 30, 30]);
+    });
+
+    test('달·해가 바뀌어도 날짜로 센다', () {
+      expect(WordReviewStore.dueDayAfter(DateTime(2026, 12, 31, 22), 1),
+          DateTime(2027, 1, 1));
+      expect(WordReviewStore.dueDayAfter(DateTime(2026, 1, 31, 8), 30),
+          DateTime(2026, 3, 2));
     });
 
     test('다시를 누르면 처음 단계로 돌아가 오늘 다시 나온다', () async {
@@ -124,8 +159,8 @@ void main() {
     test('기한이 지난 단어가 새 단어보다 먼저 나온다', () async {
       await WordReviewStore.record('guest', 'old', known: false, now: day0);
       final reviews = await WordReviewStore.loadAll('guest');
-      final due = WordReviewStore.dueWords([w('new'), w('old')], reviews,
-          day0.add(const Duration(hours: 1)));
+      final due = WordReviewStore.dueWords(
+          [w('new'), w('old')], reviews, day0.add(const Duration(hours: 1)));
       expect(due.map((e) => e.id), ['old', 'new']);
     });
   });

@@ -76,6 +76,12 @@ class WordReviewStore {
     return due;
   }
 
+  /// [at]에서 [days]일 뒤 그날 0시(기기 시간). 예전엔 정확히 n일 뒤 같은
+  /// 시각이라, 밤 11시에 '알아요'를 누른 단어는 다음 날 밤 11시가 돼야 다시
+  /// 나왔다(5차). 단어 앱처럼 그날이 되면 아침부터 나온다.
+  static DateTime dueDayAfter(DateTime at, int days) =>
+      DateTime(at.year, at.month, at.day + days);
+
   /// 복습 결과를 남긴다. [known]이면 다음 간격 뒤로, 아니면 처음부터(오늘 다시).
   static Future<WordReview> record(
     String accountId,
@@ -89,8 +95,8 @@ class WordReviewStore {
     final next = known
         ? WordReview(
             step: current.step + 1,
-            dueAt: at.add(Duration(
-                days: intervals[current.step.clamp(0, intervals.length - 1)])),
+            dueAt: dueDayAfter(
+                at, intervals[current.step.clamp(0, intervals.length - 1)]),
             lastReviewedAt: at,
           )
         : WordReview(step: 0, dueAt: at, lastReviewedAt: at);
