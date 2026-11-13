@@ -33,9 +33,18 @@ mixin EditAutocompleteMixin on ChangeNotifier {
   /// 클립 생성/편집은 항상 로컬 클립을 다루므로 로컬 콜렉션 이름만 로드합니다.
   Future<void> loadCollectionNames() async {
     try {
-      final names = await collectionsDao
-          .fetchAllNames(ClipStorageConstants.storageModeLocal);
-      allCollectionNames = names;
+      // 보관함은 위치가 달라도 이름이 같으면 한 폴더로 보여준다. 폴더 고르기도
+      // 모든 위치의 폴더 이름을 보여준다. 고르면 로컬 컬렉션이 같은 이름으로
+      // 생겨 보관함에서 한 폴더로 합쳐진다.
+      final names = <String>{
+        for (final mode in const [
+          ClipStorageConstants.storageModeLocal,
+          ClipStorageConstants.storageModeServer,
+          ClipStorageConstants.storageModeGoogleDrive,
+        ])
+          ...await collectionsDao.fetchAllNames(mode),
+      };
+      allCollectionNames = names.toList()..sort();
       notifyListeners();
     } catch (e) {
       showToast('컬렉션 목록 로드 오류: $e');

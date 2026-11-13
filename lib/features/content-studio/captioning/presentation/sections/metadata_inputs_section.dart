@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/constants/edit_strings.dart';
 import '../providers/captioning_provider.dart';
+import 'package:parrokit/features/collection/library/presentation/folder_picker_sheet.dart';
+import 'package:parrokit/features/collection/library/presentation/folder_tree.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
@@ -18,65 +20,9 @@ class MetadataInputsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. 컬렉션 (자동완성)
-          Autocomplete<String>(
-            optionsBuilder: (textEditingValue) {
-              final query = textEditingValue.text.trim();
-              if (query.isEmpty) return vm.allCollectionNames;
-              return vm.allCollectionNames.where(
-                (name) => name.toLowerCase().contains(query.toLowerCase()),
-              );
-            },
-            onSelected: (selection) {
-              vm.collectionNameCtl.text = selection;
-            },
-            fieldViewBuilder:
-                (context, controller, focusNode, onFieldSubmitted) {
-              if (controller.text != vm.collectionNameCtl.text) {
-                controller.text = vm.collectionNameCtl.text;
-              }
-              controller.addListener(() {
-                vm.collectionNameCtl.text = controller.text;
-              });
-              return _LinearInputField(
-                label: EditStrings.collectionLabel,
-                hint: EditStrings.collectionHint,
-                controller: controller,
-                focusNode: focusNode,
-              );
-            },
-            optionsViewBuilder: (context, onSelected, options) {
-              return Align(
-                alignment: Alignment.topLeft,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxHeight: 280, minWidth: 240),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      shrinkWrap: true,
-                      itemCount: options.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, thickness: 0.5),
-                      itemBuilder: (context, index) {
-                        final option = options.elementAt(index);
-                        return InkWell(
-                          onTap: () => onSelected(option),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            child: Text(option),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          // 1. 폴더. 예전엔 이름을 직접 치는 칸이라 폴더 안의 폴더에 넣으려면
+          // '/'를 쳐야 했다. 이제 눌러서 트리에서 고르고, 새 폴더도 거기서 만든다.
+          _FolderField(vm: vm),
 
           Divider(height: 1, color: context.tokens.dividerSubtle),
 
@@ -144,7 +90,6 @@ class _LinearInputField extends StatefulWidget {
     required this.label,
     required this.hint,
     required this.controller,
-    this.focusNode,
     this.onSubmitted,
     this.trailing,
   });
@@ -152,7 +97,6 @@ class _LinearInputField extends StatefulWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
-  final FocusNode? focusNode;
   final ValueChanged<String>? onSubmitted;
   final Widget? trailing;
 
@@ -161,32 +105,18 @@ class _LinearInputField extends StatefulWidget {
 }
 
 class _LinearInputFieldState extends State<_LinearInputField> {
-  late FocusNode _focusNode;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = FocusNode();
     _focusNode.addListener(_onFocusChanged);
   }
 
   @override
-  void didUpdateWidget(covariant _LinearInputField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.focusNode != oldWidget.focusNode) {
-      _focusNode.removeListener(_onFocusChanged);
-      _focusNode = widget.focusNode ?? FocusNode();
-      _focusNode.addListener(_onFocusChanged);
-    }
-  }
-
-  @override
   void dispose() {
-    if (widget.focusNode == null) {
-      _focusNode.dispose();
-    } else {
-      _focusNode.removeListener(_onFocusChanged);
-    }
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -247,6 +177,63 @@ class _LinearInputFieldState extends State<_LinearInputField> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// 폴더 칸. 고른 경로를 "여행 › 일본"처럼 보여주고, 누르면 폴더 고르기를 연다.
+class _FolderField extends StatelessWidget {
+  const _FolderField({required this.vm});
+
+  final CaptioningProvider vm;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: vm.collectionNameCtl,
+      builder: (context, value, _) {
+        final path = normalizeFolderPath(value.text);
+        return InkWell(
+          key: const ValueKey('caption-folder-field'),
+          onTap: () async {
+            FocusScope.of(context).unfocus();
+            final picked = await showFolderPicker(
+              context,
+              existingNames: vm.allCollectionNames,
+              selected: path.isEmpty ? null : path,
+            );
+            if (picked != null) vm.collectionNameCtl.text = picked;
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(children: [
+              SizedBox(
+                width: 70,
+                child: Text(EditStrings.collectionLabel,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: cs.onSurfaceVariant)),
+              ),
+              Icon(Icons.folder_rounded,
+                  size: 18,
+                  color: path.isEmpty ? cs.outline : context.tokens.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  path.isEmpty ? EditStrings.collectionHint : path.split('/').join(' › '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: path.isEmpty ? cs.outline : cs.onSurface),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+            ]),
+          ),
+        );
+      },
     );
   }
 }

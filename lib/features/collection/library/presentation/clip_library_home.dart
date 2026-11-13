@@ -24,6 +24,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
+import 'folder_picker_sheet.dart';
 import 'folder_tree.dart';
 import 'widgets/clip_list_view.dart';
 
@@ -200,10 +201,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   /// 지금 폴더 안(맨 위면 맨 위)에 새 폴더를 만든다.
   Future<void> _newFolder() async {
     final parent = _openFolder;
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => _NewFolderDialog(parentName: parent?.name),
-    );
+    final name = await showNewFolderDialog(context, parentName: parent?.name);
     if (!mounted || name == null) return;
     final path = parent == null ? name : '${parent.path}/$name';
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -545,69 +543,6 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
                 () => setState(() => _tag = _tag == tag ? null : tag)),
         ],
       ),
-    );
-  }
-}
-
-/// 새 폴더 이름 받기. '/'는 경로 구분이라 쓸 수 없다.
-class _NewFolderDialog extends StatefulWidget {
-  const _NewFolderDialog({this.parentName});
-
-  final String? parentName;
-
-  @override
-  State<_NewFolderDialog> createState() => _NewFolderDialogState();
-}
-
-class _NewFolderDialogState extends State<_NewFolderDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  String? get _error {
-    final text = _controller.text;
-    if (text.contains('/')) return "'/'는 쓸 수 없어요";
-    return null;
-  }
-
-  bool get _valid => _controller.text.trim().isNotEmpty && _error == null;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.parentName == null
-          ? '새 폴더'
-          : "'${widget.parentName}' 안에 새 폴더"),
-      content: TextField(
-        key: const ValueKey('new-folder-name'),
-        controller: _controller,
-        autofocus: true,
-        maxLength: 40,
-        onChanged: (_) => setState(() {}),
-        onSubmitted: (_) {
-          if (_valid) Navigator.pop(context, _controller.text.trim());
-        },
-        decoration: InputDecoration(
-          labelText: '폴더 이름',
-          errorText: _error,
-          helperText: '첫 클립을 저장하면 폴더가 생겨요',
-        ),
-      ),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소')),
-        FilledButton(
-          key: const ValueKey('confirm-new-folder'),
-          onPressed:
-              _valid ? () => Navigator.pop(context, _controller.text.trim()) : null,
-          child: const Text('만들기'),
-        ),
-      ],
     );
   }
 }
