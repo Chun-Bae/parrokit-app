@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 10분마다 예약된 세션 루프(사실상 연속). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- ElevenLabs Turbo v2.5(지원 중단) → Flash v2.5, 서버가 예전 id도 바꿔 부름 (424c2bb8)
 - 영상 만들기 실패 안내를 예외 원문 대신 '쓴 패롯은 돌려드려요' 안내로 (d305d467)
 - **Gemini TTS**: 11월 17일 종료되는 2.5·3.1 프리뷰 TTS 모델 → gemini-3.8-flash-tts / flash-lite-tts. 서버가 예전 id를 대체 모델로 바꿔 부름 (c347a629)
 - 콘텐츠 제작 챗봇: Vertex에서 2026-10-20 종료된 gemini-2.5-flash → gemini-3.1-flash-lite(문장 도우미와 같은 모델) (dbc34531)
@@ -63,6 +64,9 @@
 - **함수 generateTts (Gemini TTS 모델 교체, c347a629) — 11월 17일 전에** 배포해야 한다. 그 뒤로는 예전 모델 호출이 실패한다. 챗봇 교체와 한 번에:
   ```
   npx -y firebase-tools@latest deploy --only functions:generateTts,functions:generateChatbotResponse --project parrokit-45126
+  ```
+  (ElevenLabs 교체 424c2bb8도 같은 generateTts에 들어간다)
+  ```
   ```
 - **함수 generateChatbotResponse (챗봇 모델 교체, dbc34531)** — 배포 전에는 종료된 모델을 불러 챗봇이 실패할 가능성이 높다(최근 호출 로그가 없어 실패를 직접 보지는 못함). build·lint 통과
   ```
@@ -367,3 +371,7 @@
 ## 반복 50 (18:48~)
 - 외부 모델 점검 이어서: Veo 3.1 프리뷰 셋이 10-22에 이미 종료(aistudio 지원 중단 표). whisper-1(2027-02-26), gpt-4o-mini(2027-01-14 추정), ElevenLabs는 당장 괜찮음
 - 영상 실패 안내만 고침(d305d467). 이전은 안건(결정 필요)
+
+## 반복 51 (18:58~)
+- 외부 모델 점검 마무리: ElevenLabs Turbo v2.5가 공식 문서 지원 중단 목록 → Flash v2.5로(424c2bb8). Multilingual v2 현역. 테스트 함수 4·앱 3, 통과
+- 결정 대기: 영상 만들기 이전(안건), 배포(규칙·함수)
