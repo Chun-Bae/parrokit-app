@@ -92,14 +92,15 @@ class _TipDialog extends StatelessWidget {
               color: cs.error,
               title: '로컬 클립은 백업해 두세요',
               body:
-                  "'로컬'에 둔 클립은 이 기기에만 있어서 앱을 지우거나 기기를 초기화하면 사라져요. 오래 둘 클립은 '저장 위치 바꾸기'로 서버나 Google Drive에 옮기거나, 더보기의 백업으로 내보내 두세요.",
+                  "'로컬'에 둔 클립은 이 기기에만 있어서 앱을 지우거나 기기를 초기화하면 사라져요. 오래 둘 클립은 보관함에서 클립을 왼쪽으로 밀어 '옮기기'로 서버나 Google Drive에 옮기거나, 더보기의 백업으로 내보내 두세요.",
             ),
             const SizedBox(height: AppSpacing.md),
 
             // 안내 항목 3
             _TipItem(
               icon: Icons.science_outlined,
-              color: cs.onPrimaryFixed,
+              // onPrimaryFixed는 다크에서도 짙은 남색이라 아이콘이 거의 안 보였다(5차).
+              color: cs.primary,
               title: '베타 테스트 중',
               body:
                   '현재 베타 테스트 기간으로, 결제 기능이 임시로 빠진 상태예요. 정식 출시 시 결제 기능이 추가될 예정이에요.',

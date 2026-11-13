@@ -18,5 +18,7 @@ void main() {
     expect(find.text('로컬 클립은 백업해 두세요'), findsOneWidget);
     expect(find.textContaining('이 기기에만 저장돼요'), findsNothing);
     expect(find.textContaining('Google Drive'), findsOneWidget);
+    // 실제 버튼 이름('옮기기')으로 방법을 알려 준다.
+    expect(find.textContaining("'옮기기'"), findsOneWidget);
   });
 }
