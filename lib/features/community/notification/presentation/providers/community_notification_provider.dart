@@ -109,17 +109,22 @@ class CommunityNotificationProvider extends ChangeNotifier {
 
     try {
       final notifications = await _fetchNotificationsUseCase.execute(userId);
+      // 기다리는 사이 계정이 바뀌었으면 이전 계정의 알림을 넣지 않는다.
+      if (_currentUserId != userId) return;
       _notifications = notifications;
       _errorMessage = null;
     } catch (e) {
+      if (_currentUserId != userId) return;
       _errorMessage = e.toString();
       AppLogger.e(
         '[CommunityNotification][Provider] refresh failed userId=$userId',
         error: e,
       );
     } finally {
-      _isLoading = false;
-      _notifyListenersSafe();
+      if (_currentUserId == userId) {
+        _isLoading = false;
+        _notifyListenersSafe();
+      }
     }
   }
 
@@ -197,6 +202,10 @@ class CommunityNotificationProvider extends ChangeNotifier {
     try {
       final initialNotifications =
           await _fetchNotificationsUseCase.execute(userId);
+      // 불러오는 사이 계정이 바뀌면(로그아웃 뒤 다른 계정 로그인) 예전엔
+      // 이전 계정의 알림을 새 계정 화면에 넣고, 이전 계정의 실시간 구독까지
+      // 붙여 둔 채 잃어버렸다(5차). 지금 계정의 요청이 아니면 버린다.
+      if (_currentUserId != userId) return;
       _notifications = initialNotifications;
 
       if (!_isActive) {
@@ -205,9 +214,10 @@ class CommunityNotificationProvider extends ChangeNotifier {
         return;
       }
 
+      _stopListening();
       _subscription = _watchNotificationsUseCase.execute(userId).listen(
         (items) {
-          if (!_isActive) return;
+          if (!_isActive || _currentUserId != userId) return;
           _notifications = items;
           _errorMessage = null;
           _isLoading = false;
@@ -224,14 +234,17 @@ class CommunityNotificationProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
+      if (_currentUserId != userId) return;
       _errorMessage = e.toString();
       AppLogger.e(
         '[CommunityNotification][Provider] init failed userId=$userId',
         error: e,
       );
     } finally {
-      _isLoading = false;
-      _notifyListenersSafe();
+      if (_currentUserId == userId) {
+        _isLoading = false;
+        _notifyListenersSafe();
+      }
     }
   }
 
