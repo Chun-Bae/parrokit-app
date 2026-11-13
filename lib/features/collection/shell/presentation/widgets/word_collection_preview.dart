@@ -404,6 +404,20 @@ Future<void> showWordDetails(
   );
 }
 
+/// 단어 상세의 다음 복습 안내. 기한은 그날 0시로 저장되므로(dueDayAfter) 달력
+/// 날짜로 센다(5차). 예전엔 지금 시각과의 차이(inDays)로 세어 밤 11시에 '내일 0시'
+/// 기한이 '오늘 복습할 단어'로, 이틀 뒤가 '1일 뒤'로 나왔다.
+@visibleForTesting
+String wordDueLabel(DateTime? due, DateTime now) {
+  if (due == null) return '아직 복습 전';
+  final days = DateTime(due.year, due.month, due.day)
+      .difference(DateTime(now.year, now.month, now.day))
+      .inDays;
+  if (days <= 0) return '오늘 복습할 단어';
+  if (days == 1) return '내일 복습';
+  return '$days일 뒤 복습';
+}
+
 class _WordDetailSheet extends StatelessWidget {
   const _WordDetailSheet({
     required this.word,
@@ -420,8 +434,6 @@ class _WordDetailSheet extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final muted =
         context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant);
-    final due = review?.dueAt;
-    final days = due?.difference(DateTime.now()).inDays;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -459,12 +471,7 @@ class _WordDetailSheet extends StatelessWidget {
             Text(
                 [
                   if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',
-                  if (days == null)
-                    '아직 복습 전'
-                  else if (days <= 0)
-                    '오늘 복습할 단어'
-                  else
-                    '$days일 뒤 복습',
+                  wordDueLabel(review?.dueAt, DateTime.now()),
                 ].join(' · '),
                 style: muted),
             const SizedBox(height: 16),

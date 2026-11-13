@@ -145,4 +145,14 @@ void main() {
     expect(find.text('내 뜻'), findsOneWidget);
     expect(find.textContaining('오늘 자동 채우기를 모두 썼어요'), findsOneWidget);
   });
+
+  test('다음 복습 안내는 달력 날짜로 센다', () {
+    final lateNight = DateTime(2026, 11, 14, 23);
+    expect(wordDueLabel(null, lateNight), '아직 복습 전');
+    expect(wordDueLabel(DateTime(2026, 11, 15), lateNight), '내일 복습');
+    expect(wordDueLabel(DateTime(2026, 11, 14), lateNight), '오늘 복습할 단어');
+    final morning = DateTime(2026, 11, 14, 10);
+    expect(wordDueLabel(DateTime(2026, 11, 16), morning), '2일 뒤 복습');
+    expect(wordDueLabel(DateTime(2026, 11, 10), morning), '오늘 복습할 단어');
+  });
 }
