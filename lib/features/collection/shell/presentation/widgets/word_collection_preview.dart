@@ -379,6 +379,31 @@ class _WordTile extends StatelessWidget {
   }
 }
 
+/// 단어 상세 창을 띄운다. 보관함 검색처럼 단어 탭 밖에서 열 때 쓴다(5차).
+/// 지우면 [MyWordStore.revision]이 올라가 단어 탭도 다시 읽는다.
+Future<void> showWordDetails(
+  BuildContext context, {
+  required MyWord word,
+  required String accountId,
+}) async {
+  final reviews = await WordReviewStore.loadAll(accountId);
+  if (!context.mounted) return;
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  await showModalBottomSheet<void>(
+    context: context,
+    useRootNavigator: true,
+    builder: (_) => _WordDetailSheet(
+      word: word,
+      review: reviews[word.id],
+      onDelete: () async {
+        await MyWordStore.remove(accountId, word.id);
+        messenger?.showSnackBar(
+            SnackBar(content: Text("'${word.word}'를 지웠어요.")));
+      },
+    ),
+  );
+}
+
 class _WordDetailSheet extends StatelessWidget {
   const _WordDetailSheet({
     required this.word,

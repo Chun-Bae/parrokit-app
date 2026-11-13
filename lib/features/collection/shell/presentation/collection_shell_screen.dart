@@ -18,9 +18,9 @@ import 'package:parrokit/features/collection/library/presentation/sections/libra
 import 'package:parrokit/features/collection/library/presentation/widgets/bookmark_tabs.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/storage_scope_tabs.dart';
 
+import 'library_search.dart';
 import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
-import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 
@@ -315,6 +315,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   Future<void> _showSearchSheet(BuildContext context) async {
+    final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+    // 예전엔 입력칸만 있고 아무것도 찾지 않았다. 이제 내 문장·단어와 클립
+    // 제목·자막에서 찾는다(5차).
     await showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
@@ -322,41 +325,33 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.fromLTRB(
           20,
-          14,
+          0,
           20,
           MediaQuery.viewInsetsOf(sheetContext).bottom + 24,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(sheetContext).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
+        child: SizedBox(
+          height: MediaQuery.sizeOf(sheetContext).height * 0.75,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 손잡이는 앱 테마(showDragHandle)가 그린다. 예전엔 직접 하나 더 그려 둘이었다.
+              Text(
+                '보관함 검색',
+                style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: LibrarySearchSheet(
+                  accountId: accountId,
+                  onOpenClip: (clipId) => context.push(
+                    '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}?clipId=$clipId',
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '보관함 검색',
-              style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
-            const SizedBox(height: 14),
-            const TextField(
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: '문장, 단어, 클립 검색',
-                prefixIcon: Icon(Icons.search_rounded),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
