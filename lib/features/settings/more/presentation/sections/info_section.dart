@@ -73,7 +73,8 @@ class _InfoSectionState extends State<InfoSection> {
             },
           ),
           NavTile(
-            icon: Icons.privacy_tip_outlined,
+            // 개인정보 처리방침과 같은 방패 아이콘이라 구분이 안 됐다(5차).
+            icon: Icons.description_outlined,
             title: '이용 약관',
             onTap: () {
               Navigator.of(context).push(
