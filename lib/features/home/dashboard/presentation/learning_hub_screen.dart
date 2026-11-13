@@ -3,9 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+
+/// 학습 방법을 플레이어 설정에 옮긴다(5차). 예전엔 카드를 골라도 버튼 글자만
+/// 바뀌고 같은 보관함으로 가서, 고른 방법이 아무 데도 쓰이지 않았다.
+/// 0 따라 말하기: 전체 재생 + 자막 한 줄마다 멈춤(따라 말할 틈).
+/// 1 반복 듣기: 구간 재생 + 구간 반복.
+/// 플레이어에서 바꾸면 그 값이 다시 기억된다.
+Future<void> applyStudyMode(int mode) async {
+  AppConfig.segmentLoop = mode == 0; // true면 전체 재생으로 연다
+  AppConfig.pauseEachLine = mode == 0;
+  AppConfig.repeatAll = mode == 1; // 구간 반복
+  await AppConfig.saveToPrefs();
+}
 
 class LearningHubScreen extends StatefulWidget {
   const LearningHubScreen({super.key});
@@ -139,7 +152,11 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
           // 섞여 있었다)은 지웠다. 할 일은 아래 버튼 문구가 말해준다.
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: () => context.push(AppRoutes.collectionPath),
+            key: const ValueKey('study-start'),
+            onPressed: () async {
+              await applyStudyMode(mode);
+              if (context.mounted) context.push(AppRoutes.collectionPath);
+            },
             style: FilledButton.styleFrom(
               backgroundColor: accent,
               foregroundColor: palette.onAccent,
@@ -151,6 +168,15 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             icon: const Icon(Icons.play_arrow_rounded),
             label: Text(mode == 0 ? '따라 말할 영상 고르기' : '반복해서 들을 영상 고르기',
                 style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            mode == 0
+                ? '영상을 고르면 자막 한 줄마다 멈춰 따라 말할 틈을 줘요.'
+                : '영상을 고르면 한 구간을 계속 반복해서 들려줘요.',
+            key: const ValueKey('study-mode-hint'),
+            textAlign: TextAlign.center,
+            style: context.texts.bodySmall.copyWith(color: muted),
           ),
           const SizedBox(height: 30),
           Text('공부할 영상 찾기',
