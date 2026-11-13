@@ -93,7 +93,9 @@ class BoardCommentInputBar extends StatelessWidget {
                               decoration: InputDecoration(
                                 hintText: '댓글을 입력해주세요.',
                                 fillColor: colorScheme.surfaceContainerHigh,
-                                hintStyle: context.texts.titleLarge.copyWith(
+                                // 안내 글자는 친 글자와 같은 크기로. 예전엔 titleLarge라
+                                // 친 글자보다 크고 굵었다(5차).
+                                hintStyle: context.texts.titleMedium.copyWith(
                                     color: colorScheme.onSurfaceVariant),
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,
@@ -104,14 +106,20 @@ class BoardCommentInputBar extends StatelessWidget {
                               textInputAction: TextInputAction.send,
                             ),
                           ),
-                          GestureDetector(
-                            onTap: canSubmit ? onSubmit : null,
-                            child: Icon(
-                              Icons.keyboard_return_rounded,
+                          // 예전엔 줄바꿈(↵) 아이콘에 이름이 없어 보내기 버튼으로
+                          // 읽히지 않았다(5차). 보내기 아이콘과 툴팁을 단다.
+                          IconButton(
+                            key: const ValueKey('comment-send'),
+                            tooltip: '댓글 보내기',
+                            onPressed: canSubmit ? onSubmit : null,
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              Icons.send_rounded,
                               color: canSubmit
                                   ? sendAccent
                                   : context.tokens.textTertiary,
-                              size: 30,
+                              size: 26,
                             ),
                           ),
                         ],
