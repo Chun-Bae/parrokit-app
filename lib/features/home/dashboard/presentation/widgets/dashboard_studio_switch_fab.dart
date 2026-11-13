@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -96,15 +97,16 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
                   unselectedText: unselectedText,
                   onTap: () => _handleTap(1),
                 ),
-                _StudioSwitchItem(
-                  // 옆 칸 '자막'처럼 한글로(5차). 예전 'Video'.
-                  title: '영상',
-                  icon: Icons.movie_creation_rounded,
-                  isSelected: widget.selectedIndex == 2,
-                  selectedText: selectedText,
-                  unselectedText: unselectedText,
-                  onTap: () => _handleTap(2),
-                ),
+                if (kVideoStudioEnabled)
+                  _StudioSwitchItem(
+                    // 옆 칸 '자막'처럼 한글로(5차). 예전 'Video'.
+                    title: '영상',
+                    icon: Icons.movie_creation_rounded,
+                    isSelected: widget.selectedIndex == 2,
+                    selectedText: selectedText,
+                    unselectedText: unselectedText,
+                    onTap: () => _handleTap(2),
+                  ),
               ],
             ),
           ],

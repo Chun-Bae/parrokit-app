@@ -34,7 +34,6 @@ Future<void> showSttConfirmDialog(
     useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.4),
     showDragHandle: false,
     builder: (ctx) {
       AsrEngine selected =

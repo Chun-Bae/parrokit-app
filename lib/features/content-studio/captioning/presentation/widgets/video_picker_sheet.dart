@@ -14,7 +14,6 @@ void showVideoPickerSheet({
     context: context,
     useRootNavigator: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.4),
     builder: (context) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),

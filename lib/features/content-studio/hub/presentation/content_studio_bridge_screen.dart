@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -89,15 +90,17 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                         borderColor: border,
                         onTap: () => openTab(1),
                       ),
-                      const SizedBox(height: 12),
-                      _BridgeFeatureRow(
-                        key: const ValueKey('studio-open-video'),
-                        icon: Icons.movie_creation_rounded,
-                        title: '영상',
-                        description: '대본으로 짧은 영상을 만들어요',
-                        borderColor: border,
-                        onTap: () => openTab(2),
-                      ),
+                      if (kVideoStudioEnabled) ...[
+                        const SizedBox(height: 12),
+                        _BridgeFeatureRow(
+                          key: const ValueKey('studio-open-video'),
+                          icon: Icons.movie_creation_rounded,
+                          title: '영상',
+                          description: '대본으로 짧은 영상을 만들어요',
+                          borderColor: border,
+                          onTap: () => openTab(2),
+                        ),
+                      ],
                       const SizedBox(height: 24),
                     ],
                   ),

@@ -1,5 +1,13 @@
 import 'package:parrokit/core/shared/utils/operator_access.dart';
 
+/// 영상 만들기를 앱에서 보여 줄지.
+///
+/// Veo 3.1 프리뷰(lite·fast·standard)가 Gemini API에서 2026-10-22에 종료돼
+/// 지금 누르면 실패한다(패롯은 서버가 돌려준다). 대체 모델은 API가 달라
+/// 서버 함수를 다시 써야 한다. 그때까지 입구를 숨긴다(사용자 결정, 11-14).
+/// 다시 켤 때는 이 값만 true로 바꾸면 된다.
+const bool kVideoStudioEnabled = false;
+
 /// 지원하는 Veo 해상도. 4K는 원가가 크게 뛰고 일부 모델은 지원도 안 해
 /// 채택하지 않는다.
 const String veo31Resolution720p = '720p';

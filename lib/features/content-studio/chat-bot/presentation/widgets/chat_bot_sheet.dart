@@ -29,7 +29,6 @@ Future<void> showChatBotSheet(
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
     showDragHandle: false,
     builder: (context) {
       return ChangeNotifierProvider.value(

@@ -7,6 +7,8 @@ import 'package:parrokit/features/content-studio/captioning/presentation/screens
 import 'package:parrokit/features/content-studio/tts/presentation/screens/tts_screen.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
 import 'package:parrokit/features/content-studio/tts/domain/repositories/tts_generation_repository.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:parrokit/features/content-studio/video/presentation/video_screen.dart';
 import 'package:parrokit/features/content-studio/video/presentation/video_provider.dart';
 import 'package:parrokit/features/content-studio/chat-bot/presentation/chat_bot_provider.dart';
@@ -33,6 +35,9 @@ class ContentStudioHubScreen extends StatefulWidget {
 
 class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   late final PageController _pageController;
+  /// 마지막 탭 번호. 영상 만들기를 숨기면 TTS(1)가 끝이다.
+  static int get _lastIndex => kVideoStudioEnabled ? 2 : 1;
+
   late int _selectedIndex;
   bool _isAppBarExpanded = false;
   bool _isChatBotVisible = true;
@@ -41,14 +46,14 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex.clamp(0, 2);
+    _selectedIndex = widget.initialIndex.clamp(0, _lastIndex);
     _pageController = PageController(initialPage: _selectedIndex);
   }
 
   @override
   void didUpdateWidget(covariant ContentStudioHubScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final nextIndex = widget.initialIndex.clamp(0, 2);
+    final nextIndex = widget.initialIndex.clamp(0, _lastIndex);
     if (nextIndex == _selectedIndex) return;
     _selectedIndex = nextIndex;
     _pageController.jumpToPage(nextIndex);
@@ -61,6 +66,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   }
 
   void _setPage(int index) {
+    index = index.clamp(0, _lastIndex);
     if (_selectedIndex == index) return;
     setState(() => _selectedIndex = index);
     _pageController.animateToPage(
@@ -102,6 +108,14 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
       1 => 'TTS 생성',
       _ => '영상 생성',
     };
+    // 영상 만들기를 숨기면 챗봇이 영상 탭을 열려고 해도 열 곳이 없다.
+    void openFromChatbot(int tabIndex) {
+      if (tabIndex == 2 && !kVideoStudioEnabled) {
+        showToast('영상 만들기는 지금 쉬고 있어요.');
+        return;
+      }
+      _setPage(tabIndex);
+    }
 
     return MultiProvider(
       providers: [
@@ -171,7 +185,8 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                           ),
                         ),
                         _StudioPageSlot(child: TtsScreen()),
-                        _StudioPageSlot(child: VideoScreen()),
+                        if (kVideoStudioEnabled)
+                          _StudioPageSlot(child: VideoScreen()),
                       ],
                     ),
                     Positioned(
@@ -252,7 +267,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                                               }
                                             }
                                           }
-                                          _setPage(tabIndex);
+                                          openFromChatbot(tabIndex);
                                         },
                                       ),
                                     ],

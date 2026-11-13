@@ -14,6 +14,10 @@ BottomSheetThemeData appBottomSheetTheme(ColorScheme cs,
     surfaceTintColor: Colors.transparent,
     modalBackgroundColor: cs.surface,
     modalElevation: 0,
+    // 바텀시트 뒤에 깔리던 어두운 막을 없앤다(5차, 사용자 의견). 막이 있으면
+    // 뒤 화면이 칙칙하게 비쳐서 가려진 건지 흐려진 건지 헷갈렸다. 투명해도
+    // 바깥을 누르면 그대로 닫힌다.
+    modalBarrierColor: Colors.transparent,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),

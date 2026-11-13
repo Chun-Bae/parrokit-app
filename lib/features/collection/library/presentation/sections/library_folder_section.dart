@@ -516,7 +516,6 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: cs.surface,
-      barrierColor: Colors.black.withValues(alpha: 0.42),
       shape: const RoundedRectangleBorder(
         borderRadius:
             BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
@@ -595,7 +594,6 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
           useRootNavigator: true,
           isScrollControlled: true,
           backgroundColor: cs.surface,
-          barrierColor: Colors.black.withValues(alpha: 0.42),
           shape: const RoundedRectangleBorder(
             borderRadius:
                 BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),

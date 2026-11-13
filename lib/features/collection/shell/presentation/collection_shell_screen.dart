@@ -23,6 +23,7 @@ import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -480,15 +481,16 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   context.push('${AppRoutes.contentStudioHubPath}?tab=1');
                 },
               ),
-              _AddMaterialTile(
-                icon: Icons.movie_creation_outlined,
-                title: '영상 만들기',
-                subtitle: '대본으로 짧은 영상을 만들어요',
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  context.push('${AppRoutes.contentStudioHubPath}?tab=2');
-                },
-              ),
+              if (kVideoStudioEnabled)
+                _AddMaterialTile(
+                  icon: Icons.movie_creation_outlined,
+                  title: '영상 만들기',
+                  subtitle: '대본으로 짧은 영상을 만들어요',
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.push('${AppRoutes.contentStudioHubPath}?tab=2');
+                  },
+                ),
             ],
           ),
         ),
