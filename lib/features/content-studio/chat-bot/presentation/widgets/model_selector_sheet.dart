@@ -47,9 +47,10 @@ void showModelSelectorBottomSheet(
             ),
             const SizedBox(height: 20),
 
-            // 모델 1: Gemini 2.5 Flash
+            // 모델 1: Flash-Lite. 서버는 이 모델만 쓴다(Gemini 2.5는 Vertex에서
+            // 2026-10 종료, 5차). 내부 값 'gemini-2.5-flash'는 선택 표시용으로만 남는다.
             ModelOptionCard(
-              title: 'Gemini 2.5 Flash',
+              title: 'Gemini 3.1 Flash-Lite',
               description: '빠르고 경량화된 모델로 간단한 아이디어 구상과 신속한 생성 요청에 이상적입니다.',
               speedText: '매우 빠름',
               costText: '가장 저렴함',
@@ -62,9 +63,9 @@ void showModelSelectorBottomSheet(
             ),
             const SizedBox(height: 12),
 
-            // 모델 2: Gemini 2.5 Pro (유료 플랜 전용, 현재는 잠금)
+            // 모델 2: Pro (유료 플랜 전용, 현재는 잠금)
             ModelOptionCard(
-              title: 'Gemini 2.5 Pro',
+              title: 'Gemini Pro',
               description:
                   '정교한 논리 추론과 긴 문맥 파악에 특화되어 복잡한 씬 연출 및 고품질 대사 다듬기에 적합합니다.',
               speedText: '보통',
@@ -73,7 +74,7 @@ void showModelSelectorBottomSheet(
               accentColor: context.tokens.secondary,
               locked: true,
               onTap: () {
-                showToast('Gemini 2.5 Pro는 유료 플랜 전용이에요. 출시 후 이용할 수 있어요.');
+                showToast('Gemini Pro는 유료 플랜 전용이에요. 출시 후 이용할 수 있어요.');
               },
             ),
             const SizedBox(height: 16),

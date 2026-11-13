@@ -777,8 +777,10 @@ export const chatbotFlow = ai.defineFlow(
     const recentHistory = (input.history || []).slice(-MAX_HISTORY);
 
     // Pro는 유료 플랜 전용으로 잠가둔 상태라, 결제 시스템이 붙기 전까지는
-    // 클라이언트가 어떤 모델을 요청하든 무조건 Flash만 사용한다.
-    const targetModel = "vertexai/gemini-2.5-flash";
+    // 클라이언트가 어떤 모델을 요청하든 무조건 한 모델만 사용한다.
+    // gemini-2.5-flash는 Vertex에서 2026-10-20에 종료됐다(5차). 문장 도우미
+    // (sentenceAssist.ts)가 이미 쓰고 있는 3.1 Flash-Lite로 맞춘다.
+    const targetModel = "vertexai/gemini-3.1-flash-lite";
     console.log(
       `[Chatbot][Flow] Mode parameter inputMode=${input.model} ` +
         `targetModel=${targetModel} chatbotMode=${input.chatbotMode}`
