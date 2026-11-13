@@ -9,6 +9,7 @@
 // Presentation Layer > Provider > Mixin
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -109,10 +110,12 @@ mixin EditFileMixin on ChangeNotifier {
     String effectivePath = path;
     try {
       effectivePath = await audioToVideo.ensureMp4(path);
-    } catch (e) {
+    } catch (e, st) {
       _isVideoLoading = false;
       notifyListeners();
-      showToast('오디오를 영상으로 변환 중 오류: $e');
+      AppLogger.e('오디오를 영상으로 변환 실패', error: e, stackTrace: st);
+      showToast(userErrorMessage(e,
+          fallback: '오디오 파일을 열지 못했어요. 다른 파일로 다시 시도해 주세요.'));
       return;
     }
 

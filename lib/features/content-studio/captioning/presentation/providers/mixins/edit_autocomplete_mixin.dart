@@ -10,6 +10,7 @@
 // Presentation Layer > Provider > Mixin
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -46,8 +47,10 @@ mixin EditAutocompleteMixin on ChangeNotifier {
       };
       allCollectionNames = names.toList()..sort();
       notifyListeners();
-    } catch (e) {
-      showToast('컬렉션 목록 로드 오류: $e');
+    } catch (e, st) {
+      // 폴더 목록은 고르기 창을 채울 뿐이라, 실패해도 새 폴더는 만들 수 있다.
+      AppLogger.e('폴더 목록 불러오기 실패', error: e, stackTrace: st);
+      showToast('폴더 목록을 불러오지 못했어요. 새 폴더는 만들 수 있어요.');
     }
   }
 }

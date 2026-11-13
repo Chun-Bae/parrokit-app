@@ -10,6 +10,8 @@
 // Presentation Layer - Provider
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -335,7 +337,16 @@ class CaptioningProvider extends ChangeNotifier
       return;
     }
 
-    final normalizedPath = await audioToVideo.ensureMp4(stagedPath);
+    // 변환이 실패하면 예전엔 예외가 그대로 밖으로 나갔다. 안내하고 멈춘다.
+    final String normalizedPath;
+    try {
+      normalizedPath = await audioToVideo.ensureMp4(stagedPath);
+    } catch (e, st) {
+      AppLogger.e('저장 전 영상 변환 실패', error: e, stackTrace: st);
+      showToast(userErrorMessage(e,
+          fallback: '영상을 준비하지 못했어요. 다른 파일로 다시 시도해 주세요.'));
+      return;
+    }
 
     // ClipFormData 생성
     final formData = _buildFormData(filePath: normalizedPath);
@@ -359,8 +370,10 @@ class CaptioningProvider extends ChangeNotifier
       _shouldClose = true;
       _closeResult = true;
       notifyListeners();
-    } catch (e) {
-      showToast('저장 실패: $e');
+    } catch (e, st) {
+      AppLogger.e('클립 저장 실패', error: e, stackTrace: st);
+      showToast(userErrorMessage(e,
+          fallback: '저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       _saveState = EditSaveState.error;
       notifyListeners();
     }
@@ -437,8 +450,9 @@ class CaptioningProvider extends ChangeNotifier
       if (form.filePath != null && form.filePath!.isNotEmpty) {
         await setExistingFile(form.filePath!);
       }
-    } catch (e) {
-      showToast('편집 데이터 로드 실패: $e');
+    } catch (e, st) {
+      AppLogger.e('편집할 클립 불러오기 실패', error: e, stackTrace: st);
+      showToast(userErrorMessage(e, fallback: '클립을 불러오지 못했어요.'));
     } finally {
       _isLoadingForEdit = false;
       notifyListeners();
