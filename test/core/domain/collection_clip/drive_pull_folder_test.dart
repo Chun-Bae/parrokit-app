@@ -216,4 +216,43 @@ void main() {
     await sync.pullCloudClips(account);
     expect(await clipCountByFolder(), {'미분류': 1});
   });
+
+  test('깊은 경로·특수문자·이모지·긴 이름이 그대로 돌아온다', () async {
+    final long = '아' * 200;
+    final names = [
+      '1/2/3/4/5/6',
+      '여행 & 맛집/일본(오사카)/#1 "best"',
+      '🇯🇵 일본어/아니메 🎬',
+      long,
+    ];
+    for (var i = 0; i < names.length; i++) {
+      drive.putClip('r$i', await metadataFor('r$i', names[i]));
+    }
+    await sync.pullCloudClips(account);
+    expect(await clipCountByFolder(), {for (final n in names) n: 1});
+  });
+
+  test('대소문자만 다른 폴더는 따로, 앞뒤 공백은 떼어 같은 폴더로', () async {
+    drive.putClip('a', await metadataFor('a', 'Travel'));
+    drive.putClip('b', await metadataFor('b', 'travel'));
+    final padded = await metadataFor('c', 'Travel')
+      ..['collectionName'] = '  Travel  ';
+    drive.putClip('c', padded);
+
+    await sync.pullCloudClips(account);
+    expect(await clipCountByFolder(), {'Travel': 2, 'travel': 1});
+  });
+
+  test('같은 이름의 로컬 폴더가 있어도 Drive 클립은 Drive 폴더로 들어간다', () async {
+    await target.collectionsDao.findOrCreate('여행/일본', 'local');
+    drive.putClip('r1', await metadataFor('r1', '여행/일본'));
+
+    await sync.pullCloudClips(account);
+    // clipCountByFolder가 클립의 폴더가 gdrive인지 확인한다.
+    expect(await clipCountByFolder(), {'여행/일본': 1});
+    final modes = (await target.select(target.collections).get())
+        .map((c) => (c.name, c.storageMode))
+        .toSet();
+    expect(modes, {('여행/일본', 'local'), ('여행/일본', 'gdrive')});
+  });
 }
