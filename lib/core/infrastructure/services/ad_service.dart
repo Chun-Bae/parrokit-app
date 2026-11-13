@@ -80,6 +80,11 @@ class AdService {
   /// 보상형 광고가 시청 가능한 상태인지 여부. 준비 중일 때 로딩 UI를 보여줄 때 구독한다.
   ValueListenable<bool> get isRewardedAdReadyListenable =>
       _rewarded.readyNotifier;
+
+  /// 보상형 광고를 불러오지 못했는지. 예전엔 실패해도 다시 부르지 않아 버튼이
+  /// '광고 준비 중'으로 계속 돌았다(5차). 실패하면 버튼이 '다시 불러오기'가 된다.
+  ValueListenable<bool> get isRewardedAdFailedListenable =>
+      _rewarded.failedNotifier;
 }
 
 /// 전면 광고 (Interstitial)
@@ -144,6 +149,9 @@ class _RewardedAdController {
   /// 광고 상태 감지용: 초기 진입시 UI 버튼을 비활성한다.
   final ValueNotifier<bool> readyNotifier = ValueNotifier(false);
 
+  /// 마지막 불러오기가 실패했는지(광고 단위 ID가 없을 때 포함).
+  final ValueNotifier<bool> failedNotifier = ValueNotifier(false);
+
   RewardedAd? __ad;
   RewardedAd? get _ad => __ad;
   set _ad(RewardedAd? value) {
@@ -161,8 +169,13 @@ class _RewardedAdController {
       );
 
   void load() {
-    if (_isLoading || _ad != null || _adUnitId.isEmpty) return;
+    if (_isLoading || _ad != null) return;
+    if (_adUnitId.isEmpty) {
+      failedNotifier.value = true;
+      return;
+    }
     _isLoading = true;
+    failedNotifier.value = false;
 
     RewardedAd.load(
       adUnitId: _adUnitId,
@@ -188,6 +201,7 @@ class _RewardedAdController {
         onAdFailedToLoad: (error) {
           _isLoading = false;
           _ad = null;
+          failedNotifier.value = true;
           AppLogger.e('[Ads][Rewarded] load failed', error: error);
         },
       ),

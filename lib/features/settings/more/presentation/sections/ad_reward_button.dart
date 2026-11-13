@@ -8,6 +8,28 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// 광고 버튼의 상태. 화면 글자와 누를 수 있는지는 [adRewardButtonLabel]이 정한다.
+enum AdRewardButtonState { cooldown, loading, failed, ready }
+
+AdRewardButtonState adRewardButtonState(
+    {required bool cooldown, required bool ready, required bool failed}) {
+  if (cooldown) return AdRewardButtonState.cooldown;
+  if (ready) return AdRewardButtonState.ready;
+  if (failed) return AdRewardButtonState.failed;
+  return AdRewardButtonState.loading;
+}
+
+/// 버튼 글자. 예전 '광고 보고 +3'은 무엇이 3개인지 몰라 '패롯'을 넣었다(5차).
+String adRewardButtonLabel(AdRewardButtonState state,
+    {required int coins, String cooldownText = ''}) {
+  return switch (state) {
+    AdRewardButtonState.cooldown => cooldownText,
+    AdRewardButtonState.loading => '광고 준비 중',
+    AdRewardButtonState.failed => '광고 다시 불러오기',
+    AdRewardButtonState.ready => '광고 보고 패롯 +$coins',
+  };
+}
+
 /// 광고 보고 패롯 받기 버튼. 지갑 카드 안에 들어간다.
 ///
 /// 광고 로드·시청·보상·쿨다운을 스스로 처리한다.
@@ -120,27 +142,43 @@ class _AdRewardButtonState extends State<AdRewardButton> {
   Widget build(BuildContext context) {
     final isCooldown = _remaining != null;
 
-    return ValueListenableBuilder<bool>(
-      valueListenable: AdService().isRewardedAdReadyListenable,
-      builder: (context, isAdReady, _) {
+    final ads = AdService();
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        ads.isRewardedAdReadyListenable,
+        ads.isRewardedAdFailedListenable,
+      ]),
+      builder: (context, _) {
+        final state = adRewardButtonState(
+          cooldown: isCooldown,
+          ready: ads.isRewardedAdReadyListenable.value,
+          failed: ads.isRewardedAdFailedListenable.value,
+        );
         return FilledButton.icon(
           style: widget.style,
-          onPressed: (isCooldown || !isAdReady) ? null : _onWatchAd,
-          icon: isCooldown
-              ? const Icon(Icons.timer_outlined, size: 18)
-              : !isAdReady
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.play_circle_outline_rounded, size: 18),
+          onPressed: switch (state) {
+            AdRewardButtonState.ready => _onWatchAd,
+            AdRewardButtonState.failed => ads.loadRewardedAd,
+            _ => null,
+          },
+          icon: switch (state) {
+            AdRewardButtonState.cooldown =>
+              const Icon(Icons.timer_outlined, size: 18),
+            AdRewardButtonState.loading => const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            AdRewardButtonState.failed =>
+              const Icon(Icons.refresh_rounded, size: 18),
+            AdRewardButtonState.ready =>
+              const Icon(Icons.play_circle_outline_rounded, size: 18),
+          },
           label: Text(
-            isCooldown
-                ? _formatRemaining(_remaining!)
-                : !isAdReady
-                    ? '광고 준비 중'
-                    : '광고 보고 +${AdService.rewardCoins}',
+            adRewardButtonLabel(state,
+                coins: AdService.rewardCoins,
+                cooldownText:
+                    isCooldown ? _formatRemaining(_remaining!) : ''),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
