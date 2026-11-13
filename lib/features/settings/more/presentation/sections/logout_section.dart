@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -61,8 +63,11 @@ class LogoutSection extends StatelessWidget {
         showToast('로그아웃되었습니다.');
         context.go('${AppRoutes.authPath}/${AppRoutes.signInPath}');
       }
-    } catch (e) {
-      if (context.mounted) showToast('로그아웃 중 오류가 발생했습니다: $e');
+    } catch (e, st) {
+      AppLogger.e('로그아웃 실패', error: e, stackTrace: st);
+      if (context.mounted) {
+        showToast(userErrorMessage(e, fallback: '로그아웃하지 못했어요. 다시 시도해 주세요.'));
+      }
     }
   }
 

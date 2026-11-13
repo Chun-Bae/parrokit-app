@@ -6,6 +6,8 @@
 // 더보기 맨 위 프로필 한 줄과 이메일 인증 안내.
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -31,9 +33,10 @@ class AccountSection extends StatelessWidget {
       final verified = await userProvider.isEmailVerified();
       if (!context.mounted) return;
       showToast(verified ? '이메일 인증이 완료되었습니다.' : '아직 이메일 인증이 완료되지 않았습니다.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.e('이메일 인증 상태 확인 실패', error: e, stackTrace: st);
       if (!context.mounted) return;
-      showToast('이메일 인증 상태 확인 중 오류가 발생했습니다: $e');
+      showToast(userErrorMessage(e, fallback: '인증 상태를 확인하지 못했어요. 다시 시도해 주세요.'));
     }
   }
 
@@ -43,9 +46,10 @@ class AccountSection extends StatelessWidget {
       await userProvider.sendEmailVerification();
       if (!context.mounted) return;
       showToast('인증 메일을 전송했습니다. 메일이 보이지 않는다면 스팸 메일함도 확인해 주세요.');
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.e('인증 메일 재전송 실패', error: e, stackTrace: st);
       if (!context.mounted) return;
-      showToast('인증 메일 재전송 중 오류가 발생했습니다: $e');
+      showToast(userErrorMessage(e, fallback: '인증 메일을 보내지 못했어요. 다시 시도해 주세요.'));
     }
   }
 

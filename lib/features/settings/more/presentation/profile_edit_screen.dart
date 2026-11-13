@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -174,9 +175,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       if (!mounted) return;
       showToast('프로필이 성공적으로 업데이트되었습니다.');
       context.pop();
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.e('프로필 업데이트 실패', error: e, stackTrace: st);
       if (!mounted) return;
-      showToast('프로필 업데이트 중 오류가 발생했습니다: $e');
+      showToast(userErrorMessage(e, fallback: '프로필을 저장하지 못했어요. 다시 시도해 주세요.'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

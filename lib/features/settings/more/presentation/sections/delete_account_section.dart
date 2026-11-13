@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -33,8 +35,11 @@ class DeleteAccountSection extends StatelessWidget {
     try {
       await context.read<UserProvider>().deleteAccount();
       if (context.mounted) showToast('탈퇴가 완료되었습니다.');
-    } catch (e) {
-      if (context.mounted) showToast('탈퇴 중 오류가 발생했습니다: $e');
+    } catch (e, st) {
+      AppLogger.e('탈퇴 실패', error: e, stackTrace: st);
+      if (context.mounted) {
+        showToast(userErrorMessage(e, fallback: '탈퇴하지 못했어요. 다시 시도해 주세요.'));
+      }
     }
   }
 

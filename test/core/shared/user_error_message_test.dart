@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
 
@@ -16,8 +18,7 @@ void main() {
 
   test('영어 원문·경로·클래스 이름은 보이지 않고 대신 말을 쓴다', () {
     expect(msg(Exception('Final copy failed')), fallback);
-    expect(msg(Exception('입력 mp3 파일이 존재하지 않습니다: /var/mobile/a.mp3')),
-        fallback);
+    expect(msg(Exception('입력 mp3 파일이 존재하지 않습니다: /var/mobile/a.mp3')), fallback);
     expect(msg(const FormatException('bad')), fallback);
     expect(msg('x' * 10), fallback);
   });
@@ -25,5 +26,22 @@ void main() {
   test('연결 문제는 연결을 확인하라고 한다', () {
     expect(msg(const SocketException('no route')), contains('인터넷 연결'));
     expect(msg(TimeoutException('t')), contains('인터넷 연결'));
+  });
+
+  test('Firebase 오류는 영어 문장 대신 코드에 맞는 안내를 한다', () {
+    expect(
+        msg(FirebaseAuthException(
+            code: 'requires-recent-login',
+            message: 'This operation is sensitive')),
+        contains('다시 로그인'));
+    expect(msg(FirebaseAuthException(code: 'too-many-requests')),
+        contains('잠시 뒤'));
+    expect(
+        msg(FirebaseException(plugin: 'auth', code: 'network-request-failed')),
+        contains('인터넷 연결'));
+    expect(
+        msg(FirebaseException(
+            plugin: 'cloud_firestore', code: 'internal', message: 'boom')),
+        fallback);
   });
 }
