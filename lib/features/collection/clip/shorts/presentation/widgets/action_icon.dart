@@ -43,40 +43,53 @@ class ActionIcon extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
-              shape: BoxShape.circle,
-              border: Border.all(color: scheme.outlineVariant),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Icon(
-                icon,
-                size: 26,
-                color: active ? scheme.primary : scheme.onSurface,
+    // 켜짐을 아이콘 색(주색/검정)으로만 보여서 '자동 넘김'이 켜졌는지 알기
+    // 어려웠다(5차). 켜지면 원을 주색으로 채우고, 꺼지면 영상 위 버튼처럼
+    // 어두운 반투명 원에 흰 아이콘을 둔다. 테마와 상관없이 영상 위라 같게 둔다.
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: active
+                    ? scheme.primary
+                    : Colors.black.withValues(alpha: 0.38),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: active
+                      ? scheme.primary
+                      : Colors.white.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Icon(
+                  icon,
+                  size: 26,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          // 쇼츠는 늘 영상 위라 테마 글자색(회색·주색)이 화면에 따라 묻혔다(5차).
-          // 영상 위 글자처럼 흰색에 그림자를 준다. 켜짐 여부는 아이콘 색으로 본다.
-          Text(
-            label,
-            style: textTheme.bodySmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              shadows: const [
-                Shadow(color: Colors.black87, blurRadius: 4),
-                Shadow(color: Colors.black54, blurRadius: 1),
-              ],
+            const SizedBox(height: 6),
+            // 쇼츠는 늘 영상 위라 테마 글자색(회색·주색)이 화면에 따라 묻혔다(5차).
+            // 영상 위 글자처럼 흰색에 그림자를 준다. 켜짐 여부는 원 색으로 본다.
+            Text(
+              label,
+              style: textTheme.bodySmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                shadows: const [
+                  Shadow(color: Colors.black87, blurRadius: 4),
+                  Shadow(color: Colors.black54, blurRadius: 1),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
