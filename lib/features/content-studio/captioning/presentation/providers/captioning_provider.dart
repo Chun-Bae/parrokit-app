@@ -83,7 +83,13 @@ class CaptioningProvider extends ChangeNotifier
 
   late final SaveClipUseCase _saveClip;
   late final LoadClipForEditUseCase _loadClipForEdit;
-  late final Map<AsrEngine, GenerateDraftUseCase> _generateDraftByEngine;
+  // 처음 쓸 때 만든다(자동 자막을 누를 때). 만들 때 Firebase 인스턴스를 잡아서,
+  // 화면을 여는 것만으로는 필요 없다.
+  late final Map<AsrEngine, GenerateDraftUseCase> _generateDraftByEngine = {
+    AsrEngine.whisper: GenerateDraftUseCase(
+      service: RemoteCaptionDraftService(engine: AsrEngine.whisper),
+    ),
+  };
   final ClipValidator _validator = ClipValidator();
 
   // ─────────────────────────────────────────────────────────────────
@@ -169,12 +175,6 @@ class CaptioningProvider extends ChangeNotifier
     _loadClipForEdit = LoadClipForEditUseCase(
       service: ClipLoadService(clipProvider: clipProvider),
     );
-
-    _generateDraftByEngine = {
-      AsrEngine.whisper: GenerateDraftUseCase(
-        service: RemoteCaptionDraftService(engine: AsrEngine.whisper),
-      ),
-    };
 
     // 세그먼트 폼 초기화
     initSegmentForms();
@@ -413,6 +413,9 @@ class CaptioningProvider extends ChangeNotifier
   Future<void> _loadForEdit(int clipId) async {
     try {
       final result = await _loadClipForEdit(clipId);
+      // 불러오는 사이 화면을 닫았으면 해제된 입력칸에 쓰지 않는다. 예전엔 그
+      // 오류로 닫은 뒤에 '클립을 불러오지 못했어요'가 떴다(5차).
+      if (_disposed) return;
 
       // 모드 설정
       _mode = result.mode;
@@ -451,6 +454,7 @@ class CaptioningProvider extends ChangeNotifier
         await setExistingFile(form.filePath!);
       }
     } catch (e, st) {
+      if (_disposed) return;
       AppLogger.e('편집할 클립 불러오기 실패', error: e, stackTrace: st);
       showToast(userErrorMessage(e, fallback: '클립을 불러오지 못했어요.'));
     } finally {
@@ -470,8 +474,19 @@ class CaptioningProvider extends ChangeNotifier
   // ─────────────────────────────────────────────────────────────────
   // Dispose
   // ─────────────────────────────────────────────────────────────────
+  /// 화면을 닫아 dispose된 뒤인지. 저장·불러오기가 끝나기 전에 닫으면 await 뒤
+  /// 알림이 해제된 notifier에 가서 디버그에서 오류가 났다.
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     titleCtl.dispose();
     collectionNameCtl.dispose();
     durationCtl.dispose();
