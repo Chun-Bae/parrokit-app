@@ -75,4 +75,13 @@ void main() {
     expect(mine.map((e) => e.text), ['Save me']);
     expect(find.byTooltip('내 문장에서 빼기'), findsOneWidget);
   });
+
+  testWidgets('머리의 전체 보기는 오른쪽 끝에 붙는다', (tester) async {
+    await tester.pumpWidget(app(language: '일본어'));
+    await tester.pumpAndSettle();
+    final screenRight = tester.getSize(find.byType(Scaffold)).width;
+    final buttonRight =
+        tester.getTopRight(find.widgetWithText(TextButton, '전체 보기')).dx;
+    expect(buttonRight, closeTo(screenRight, 1));
+  });
 }

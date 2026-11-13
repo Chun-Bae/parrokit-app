@@ -279,7 +279,9 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
               ),
             ),
             const SizedBox(width: 8),
-            Flexible(
+            // Flexible + Spacer는 남는 칸을 반씩 나눠 '전체 보기'가 오른쪽 끝에
+            // 붙지 않았다(위 '내 문장 기록'과 어긋남, 5차). 제목이 남는 칸을 다 쓴다.
+            Expanded(
               child: Text(
                 '공유 문장',
                 overflow: TextOverflow.ellipsis,
@@ -287,7 +289,6 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
                     .copyWith(color: ink, letterSpacing: -0.4),
               ),
             ),
-            const Spacer(),
             TextButton(
               onPressed: widget.onViewAll,
               // 바로 위 "내 문장 기록"의 '전체 보기'와 같은 말, 같은 색으로 맞춘다.
