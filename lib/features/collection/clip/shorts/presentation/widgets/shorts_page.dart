@@ -334,6 +334,9 @@ class _ShortsPageState extends State<ShortsPage>
 
     final currentSeg =
         c != null ? segmentForPosition(widget.segments, pos) : null;
+    // 아래 떠 있는 탭 바가 덮는 높이. 예전엔 탐색 줄을 bottom: 0에 두어 탭 바
+    // 뒤에 깔려 거의 안 보이고 잡을 수도 없었다(5차).
+    final navInset = MediaQuery.paddingOf(context).bottom;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -349,7 +352,7 @@ class _ShortsPageState extends State<ShortsPage>
             Positioned(
               left: 16,
               right: 16,
-              bottom: 90,
+              bottom: navInset + 56,
               child: IgnorePointer(
                 child: ShortsPageSubtitleSection(
                   segment: currentSeg,
@@ -384,7 +387,7 @@ class _ShortsPageState extends State<ShortsPage>
           Positioned(
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: navInset,
             child: ShortsPageControlSection(
               controller: c,
               durationMs: widget.durationMs,

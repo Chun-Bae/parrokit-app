@@ -29,8 +29,8 @@ class ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
+    // 영상 위에 그리므로 테마와 상관없이 흰색. 예전엔 onSecondary를 써서 다크
+    // 테마에서 지금 칸이 어둡게, 나머지가 밝게 보여 거꾸로 읽혔다(5차).
     return Row(
       children: List.generate(total, (i) {
         final active = i == index;
@@ -40,8 +40,8 @@ class ProgressBar extends StatelessWidget {
             margin: EdgeInsets.only(right: i == total - 1 ? 0 : AppSpacing.xs),
             decoration: BoxDecoration(
               color: active
-                  ? scheme.onSecondary
-                  : scheme.onSecondary.withValues(alpha: 0.3),
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(AppRadius.track),
             ),
           ),

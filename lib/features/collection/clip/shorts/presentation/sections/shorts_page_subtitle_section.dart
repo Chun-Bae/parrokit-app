@@ -73,11 +73,17 @@ class ShortsPageSubtitleSection extends StatelessWidget {
   // Styles
   // ─────────────────────────────────────────────────────────────────
 
+  // 밝은 영상 위에서도 읽히게 가까운 진한 그림자와 넓은 옅은 그림자를 겹친다.
+  // 예전 한 겹(black54, 3)으로는 흰 바탕 위 발음 줄이 거의 안 보였다(5차).
   static const _shadows = [
     Shadow(
-      blurRadius: 3,
-      color: Colors.black54,
+      blurRadius: 2,
+      color: Colors.black87,
       offset: Offset(0, 1),
+    ),
+    Shadow(
+      blurRadius: 10,
+      color: Colors.black54,
     ),
   ];
 
@@ -86,7 +92,8 @@ class ShortsPageSubtitleSection extends StatelessWidget {
       .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);
 
   static final _pronStyle = AppTextScale.bodyMedium
-      .copyWith(color: Colors.white70, height: 1.25, shadows: _shadows);
+      .copyWith(
+          color: const Color(0xE6FFFFFF), height: 1.25, shadows: _shadows);
 
   static final _transStyle = AppTextScale.bodyLarge
       .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);

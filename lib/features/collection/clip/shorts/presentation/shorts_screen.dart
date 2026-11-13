@@ -224,7 +224,8 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
               // Right action rail
               Positioned(
                 right: 12,
-                bottom: 110,
+                // 탐색 줄·자막과 같이 탭 바 위로 올린다.
+                bottom: MediaQuery.paddingOf(context).bottom + 120,
                 child: ActionRail(
                   autoNextEnabled: shorts.autoNext,
                   // Provider 상태
