@@ -33,6 +33,7 @@ List<Post> fakeCommunityPosts(String postType, {DateTime? now}) {
     required DateTime at,
     String questionStatus = 'waiting',
     int reward = 0,
+    DateTime? expireAt,
     List<VoteOption>? options,
     DateTime? voteEnd,
   }) =>
@@ -51,6 +52,7 @@ List<Post> fakeCommunityPosts(String postType, {DateTime? now}) {
         createdAt: at,
         questionStatus: questionStatus,
         rewardCrackers: reward,
+        expireAt: expireAt,
         voteOptions: options,
         voteEndTime: voteEnd,
       );
@@ -66,6 +68,7 @@ List<Post> fakeCommunityPosts(String postType, {DateTime? now}) {
             comments: 1,
             views: 14,
             reward: 30,
+            expireAt: base.add(const Duration(days: 2, hours: 3)),
             at: ago(2)),
         post('2',
             title: 'figure out 발음이 잘 안 돼요',

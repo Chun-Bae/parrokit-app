@@ -47,3 +47,15 @@ int _newestFirst(Post a, Post b) {
   if (bt == null) return -1;
   return bt.compareTo(at);
 }
+
+/// 답변을 기다리는 질문의 마감 안내. 질문 쓰기에서 고른 마감 기한(expireAt)을 어디에도
+/// 보여 주지 않았다(5차). 기한이 지나도 서버는 채택을 막지 않으므로 '마감'이 아니라
+/// '기한 지남'이라고만 말한다. 기한이 없으면 null.
+String? questionDeadlineLabel(DateTime? expireAt, DateTime now) {
+  if (expireAt == null) return null;
+  final left = expireAt.difference(now);
+  if (left.isNegative) return '기한 지남';
+  if (left.inDays >= 1) return '${left.inDays}일 남음';
+  if (left.inHours >= 1) return '${left.inHours}시간 남음';
+  return '곧 마감';
+}

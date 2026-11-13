@@ -1,5 +1,6 @@
 import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/question/presentation/question_filter.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
@@ -468,7 +469,13 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               ),
             ),
           Text(
-            '${formatCommunityTimeAgo(question.createdAt)} · 조회 ${question.viewCount}회',
+            [
+              formatCommunityTimeAgo(question.createdAt),
+              '조회 ${question.viewCount}회',
+              // 답을 기다리는 동안만 마감까지 남은 때를 붙인다(5차).
+              if (question.questionStatus == 'waiting')
+                questionDeadlineLabel(question.expireAt, DateTime.now()),
+            ].whereType<String>().join(' · '),
             style: context.texts.bodyMedium
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),

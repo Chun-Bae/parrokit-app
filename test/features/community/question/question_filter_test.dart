@@ -76,4 +76,17 @@ void main() {
     questionsForFilter(posts, '공감 순');
     expect(ids(posts), before);
   });
+
+  test('마감 안내는 남은 때를 말하고, 지나면 기한 지남', () {
+    final now = DateTime(2026, 11, 14, 12);
+    expect(questionDeadlineLabel(null, now), isNull);
+    expect(questionDeadlineLabel(now.add(const Duration(days: 2, hours: 3)), now),
+        '2일 남음');
+    expect(questionDeadlineLabel(now.add(const Duration(hours: 5)), now),
+        '5시간 남음');
+    expect(questionDeadlineLabel(now.add(const Duration(minutes: 20)), now),
+        '곧 마감');
+    expect(questionDeadlineLabel(now.subtract(const Duration(minutes: 1)), now),
+        '기한 지남');
+  });
 }
