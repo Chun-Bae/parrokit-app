@@ -342,30 +342,35 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     ],
                   ),
 
-                  // 3. 30일 쿨타임 안내 문구
+                  // 3. 30일 쿨타임 안내 문구. 예전엔 기다리는 중을 빨간 오류처럼
+                  // 한 줄로 보여 좁은 화면에서 넘칠 수 있었고, 바꿀 수 있을 때는
+                  // 30일 규칙을 알리지 않았다(5차).
                   const SizedBox(height: 8),
                   if (!_canChangeNickname)
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.error_outline_rounded,
-                            size: 16, color: cs.error),
+                        Icon(Icons.schedule_rounded,
+                            size: 16, color: cs.onSurfaceVariant),
                         const SizedBox(width: 4),
-                        Text(
-                          '닉네임은 30일에 한 번만 변경할 수 있습니다. (남은 기한: $_remainingDays일)',
-                          style:
-                              context.texts.bodySmall.copyWith(color: cs.error),
+                        Expanded(
+                          child: Text(
+                            nicknameCooldownNote(_remainingDays),
+                            style: context.texts.bodySmall
+                                .copyWith(color: cs.onSurfaceVariant),
+                          ),
                         ),
                       ],
                     )
                   else if (_lastChangedAt != null)
                     Text(
-                      '마지막 변경일: ${_lastChangedAt!.year}년 ${_lastChangedAt!.month}월 ${_lastChangedAt!.day}일',
+                      '마지막 변경일: ${_lastChangedAt!.year}년 ${_lastChangedAt!.month}월 ${_lastChangedAt!.day}일 · 바꾸면 30일 동안 다시 바꿀 수 없어요',
                       style: context.texts.bodySmall
                           .copyWith(color: cs.onSurface.withValues(alpha: 0.4)),
                     )
                   else
                     Text(
-                      '닉네임은 30일에 한 번만 변경 가능합니다.',
+                      '닉네임은 30일에 한 번 바꿀 수 있어요.',
                       style: context.texts.bodySmall
                           .copyWith(color: cs.onSurface.withValues(alpha: 0.4)),
                     ),
@@ -385,3 +390,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 }
+
+/// 닉네임을 아직 바꿀 수 없을 때 안내. [remainingDays]일 뒤에 바꿀 수 있다.
+@visibleForTesting
+String nicknameCooldownNote(int remainingDays) => remainingDays <= 1
+    ? '닉네임은 30일에 한 번 바꿀 수 있어요. 내일부터 바꿀 수 있어요.'
+    : '닉네임은 30일에 한 번 바꿀 수 있어요. $remainingDays일 뒤에 바꿀 수 있어요.';
