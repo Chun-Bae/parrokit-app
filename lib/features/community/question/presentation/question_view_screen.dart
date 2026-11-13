@@ -497,7 +497,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     FocusScope.of(context).requestFocus(_replyFocusNode),
               ),
               IconButton(
-                icon: Icon(isLiked ? Icons.bolt : Icons.bolt_outlined,
+                // 글 공감은 엄지(예전엔 번개였다). 게시판과 같게.
+                icon: Icon(isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
                     size: 22,
                     color: isLiked
                         ? context.tokens.primary
@@ -703,13 +704,14 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                         children: [
                           IconButton(
                               icon: Icon(
+                                  // 답변(댓글) 좋아요는 하트(투표 댓글과 같게).
                                   provider.likedCommentIds.contains(answer.id)
-                                      ? Icons.bolt
-                                      : Icons.bolt_outlined,
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
                                   size: 18,
                                   color: provider.likedCommentIds
                                           .contains(answer.id)
-                                      ? context.tokens.primary
+                                      ? context.tokens.danger
                                       : context.tokens.textSecondary),
                               onPressed: () {
                                 if (currentUser != null) {

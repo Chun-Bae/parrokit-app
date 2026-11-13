@@ -183,35 +183,6 @@ class _QuestionScreenState extends State<QuestionScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              // 크래커 보상 뱃지
-                              if (question.rewardCrackers > 0)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: context.tokens.primarySoft,
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.md),
-                                    border: Border.all(
-                                        color: context.tokens.primary
-                                            .withValues(alpha: 0.35)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text('🍪',
-                                          style: context.texts.labelSmall),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        '${question.rewardCrackers}',
-                                        style: context.texts.labelSmall
-                                            .copyWith(
-                                                color: context.tokens.primary),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                             ],
                           ),
                           Text(
@@ -283,7 +254,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   children: [
-                    Icon(Icons.favorite_border,
+                    // 글 공감은 엄지(커뮤니티 메뉴 규칙, 게시판과 같게).
+                    Icon(Icons.thumb_up_outlined,
                         size: 24, color: colorScheme.onSurface),
                     const SizedBox(width: 6),
                     Text(
@@ -299,6 +271,33 @@ class _QuestionScreenState extends State<QuestionScreen> {
                       style: context.texts.bodyMedium,
                     ),
                     const Spacer(),
+                    // 채택 보상은 답할 사람에게 가장 큰 이유다(design-research 5).
+                    // 예전엔 닉네임 옆 작은 칩이라 잘 안 보였다. 행동 줄 오른쪽에
+                    // "답하면 🍪 50"으로 크게 둔다. 채택이 끝났으면 흐리게.
+                    if (question.rewardCrackers > 0)
+                      Container(
+                        key: ValueKey('question-reward-${question.id}'),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          color: isResolved
+                              ? colorScheme.surfaceContainerHigh
+                              : context.tokens.primarySoft,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          isResolved
+                              ? '채택 🍪 ${question.rewardCrackers}'
+                              : '답하면 🍪 ${question.rewardCrackers}',
+                          style: context.texts.labelLarge.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: isResolved
+                                ? colorScheme.onSurfaceVariant
+                                : context.tokens.primary,
+                          ),
+                        ),
+                      ),
                     Icon(Icons.bookmark_border,
                         size: 24, color: colorScheme.onSurface),
                   ],

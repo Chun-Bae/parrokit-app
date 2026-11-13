@@ -692,10 +692,11 @@ class VoteCard extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: enablePostActions ? onTogglePostLike : null,
+                  // 글 공감은 엄지·파랑(게시판과 같게). 하트는 댓글 좋아요에 쓴다.
                   child: Icon(
-                    isPostLiked ? Icons.favorite : Icons.favorite_border,
-                    size: 24,
-                    color: isPostLiked ? context.tokens.danger : cs.onSurface,
+                    isPostLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                    size: 22,
+                    color: isPostLiked ? context.tokens.primary : cs.onSurface,
                   ),
                 ),
                 const SizedBox(width: 6),
