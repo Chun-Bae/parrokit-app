@@ -210,6 +210,23 @@ mixin EditSegmentMixin on ChangeNotifier {
     notifyListeners();
   }
 
+  /// [validateSegmentAt]이 시각을 고친 이유. 입력값([startMs], [endMs])과 앞뒤
+  /// 구간·영상 길이로 정한 범위([lowerBound]~[upperBound])로 판단한다.
+  @visibleForTesting
+  static String adjustReasonFor(
+      int startMs, int endMs, int lowerBound, int upperBound,
+      {required bool upperIsVideoEnd}) {
+    if (endMs <= startMs) return 'B는 A보다 뒤여야 해서 B를 A 바로 뒤로 옮겼어요.';
+    if (endMs > upperBound && upperIsVideoEnd) {
+      return '영상 길이에 맞춰 B를 옮겼어요.';
+    }
+    return '앞뒤 구간과 겹치지 않게 시각을 옮겼어요.';
+  }
+
+  String _adjustReason(int startMs, int endMs, int lowerBound, int upperBound) =>
+      adjustReasonFor(startMs, endMs, lowerBound, upperBound,
+          upperIsVideoEnd: upperBound == _maxDurationMs);
+
   /// 편집 중인 특정 세그먼트를 검증하고, 겹치면 자동 보정합니다.
   bool validateSegmentAt(int index) {
     if (index < 0 || index >= segmentForms.length) return true;
@@ -283,7 +300,9 @@ mixin EditSegmentMixin on ChangeNotifier {
     );
     _syncSnapshotAt(index);
     if (changed) {
-      showToast('겹침 방지를 위해 구간을 자동 조정했습니다.');
+      // 예전엔 이유와 상관없이 '겹침 방지' 문구였다. B가 A보다 앞이어서 고친
+      // 것인데도 겹쳤다고 해서 헷갈렸다(5차). 고친 이유를 그대로 말한다.
+      showToast(_adjustReason(startMs, endMs, lowerBound, upperBound));
     }
     notifyListeners();
     return true;

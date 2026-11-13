@@ -37,22 +37,19 @@ class _TimeTripletFieldState extends State<TimeTripletField> {
   @override
   void initState() {
     super.initState();
+    // 처음부터 자리를 채워 보인다. 예전엔 '0 : 0 . 50'처럼 보여 0.05초가
+    // 0.5초로 읽혔다(5차).
     final init = _fromMMSsMs(widget.target.text);
-    _mCtl = TextEditingController(text: init.m.toString());
-    _sCtl = TextEditingController(text: init.s.toString());
-    _msCtl = TextEditingController(text: init.ms.toString());
+    _mCtl = TextEditingController(text: _pad2(init.m));
+    _sCtl = TextEditingController(text: _pad2(init.s));
+    _msCtl = TextEditingController(text: _pad3(init.ms));
 
     _mFn = FocusNode()..addListener(_onFocusChange);
     _sFn = FocusNode()..addListener(_onFocusChange);
     _msFn = FocusNode()..addListener(_onFocusChange);
 
     // 외부에서 target이 바뀌면 내부 칸에 반영
-    _targetListener = () {
-      final p = _fromMMSsMs(widget.target.text);
-      _setIfDiff(_mCtl, p.m.toString());
-      _setIfDiff(_sCtl, p.s.toString());
-      _setIfDiff(_msCtl, p.ms.toString());
-    };
+    _targetListener = _syncFromTarget;
     widget.target.addListener(_targetListener);
 
     // ✅ 초기 동기화: target.text가 비어있거나 형식이 아니면 기본값으로 채움
@@ -88,14 +85,28 @@ class _TimeTripletFieldState extends State<TimeTripletField> {
     if (c.text != v) c.text = v;
   }
 
+  /// target 값을 칸에 옮긴다. 자리를 채워 보이되, 지금 치고 있는 칸은 건드리지
+  /// 않는다(치는 중에 '5'가 '05'로 바뀌면 커서가 튀고 다음 글자가 막힌다).
   void _syncFromTarget() {
     final p = _fromMMSsMs(widget.target.text);
-    _setIfDiff(_mCtl, p.m.toString());
-    _setIfDiff(_sCtl, p.s.toString());
-    _setIfDiff(_msCtl, p.ms.toString());
+    if (!_mFn.hasFocus) _setIfDiff(_mCtl, _pad2(p.m));
+    if (!_sFn.hasFocus) _setIfDiff(_sCtl, _pad2(p.s));
+    if (!_msFn.hasFocus) _setIfDiff(_msCtl, _pad3(p.ms));
   }
 
   void _onFocusChange() {
+    // 칸이 '00'·'000'으로 차 있어 끝에 숫자를 치면 글자 수 제한에 막혔다.
+    // 칸을 누르면 전체를 골라서 치는 숫자로 바로 바뀌게 한다(5차).
+    for (final (fn, ctl) in [(_mFn, _mCtl), (_sFn, _sCtl), (_msFn, _msCtl)]) {
+      if (fn.hasFocus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && fn.hasFocus) {
+            ctl.selection =
+                TextSelection(baseOffset: 0, extentOffset: ctl.text.length);
+          }
+        });
+      }
+    }
     // 포커스 빠질 때: 강제 동기화 + 보기용 패딩 반영
     if (!(_mFn.hasFocus || _sFn.hasFocus || _msFn.hasFocus)) {
       _syncToTarget();
