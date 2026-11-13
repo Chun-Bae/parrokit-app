@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import '../clip_time_format.dart';
 
 class SegmentList extends StatelessWidget {
   const SegmentList({
@@ -18,15 +19,6 @@ class SegmentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    String fmtMs(int ms) {
-      final d = Duration(milliseconds: ms);
-      final totalMs = d.inMilliseconds;
-      final mm = ((totalMs ~/ 1000) ~/ 60).toString().padLeft(2, '0');
-      final ss = ((totalMs ~/ 1000) % 60).toString().padLeft(2, '0');
-      final mmm = (totalMs % 1000).toString().padLeft(3, '0');
-      return '$mm:$ss.$mmm';
-    }
 
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -45,7 +37,7 @@ class SegmentList extends StatelessWidget {
                 : cs.surfaceContainerHighest.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          child: Text('#${i + 1}  ${fmtMs(seg.startMs)} ~ ${fmtMs(seg.endMs)}',
+          child: Text('#${i + 1}  ${segmentRangeLabel(seg.startMs, seg.endMs)}',
               style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: active
@@ -63,17 +55,26 @@ class SegmentList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 원문·발음·해석이 같은 크기라 어느 줄이 무엇인지 헷갈렸다(5차).
+                // 원문은 크게, 발음은 작고 흐리게, 해석은 보통 크기로. 빈 줄은 뺀다.
                 Text(seg.original,
-                    style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                    style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         )),
-                const SizedBox(height: 2),
-                Text(seg.pron,
-                    style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.7),
-                        )),
-                const SizedBox(height: 2),
-                Text(seg.trans, style: Theme.of(ctx).textTheme.bodyMedium),
+                if (seg.pron.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(seg.pron,
+                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          )),
+                ],
+                if (seg.trans.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(seg.trans,
+                      style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.85),
+                          )),
+                ],
               ],
             ),
           ),

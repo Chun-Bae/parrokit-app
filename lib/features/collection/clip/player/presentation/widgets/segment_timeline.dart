@@ -1,3 +1,4 @@
+import '../clip_time_format.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:video_player/video_player.dart';
@@ -126,11 +127,5 @@ class SegmentTimeline extends StatelessWidget {
     );
   }
 
-  String _fmt(Duration d) {
-    final totalMs = d.inMilliseconds;
-    final mm = ((totalMs ~/ 1000) ~/ 60).toString().padLeft(2, '0');
-    final ss = ((totalMs ~/ 1000) % 60).toString().padLeft(2, '0');
-    final mmm = (totalMs % 1000).toString().padLeft(3, '0');
-    return '$mm:$ss.$mmm';
-  }
+  String _fmt(Duration d) => clipClock(d.inMilliseconds);
 }
