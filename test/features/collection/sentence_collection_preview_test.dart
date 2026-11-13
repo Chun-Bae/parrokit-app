@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
+import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
@@ -241,6 +242,29 @@ void main() {
     expect(find.byKey(const ValueKey('save-shared-sentence')), findsNothing);
     final saved = await MySentenceStore.load('guest');
     expect(saved.any((s) => s.text == 'Could I get this to go?'), isTrue);
+  });
+
+  testWidgets('문장 상세에서 단어를 골라 저장하면 그 문장이 예문으로 붙는다', (tester) async {
+    MyWordStore.cloud = null;
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hello there!'));
+    await tester.pumpAndSettle();
+    final chip = find.byKey(const ValueKey('pick-word-Hello'));
+    await tester.ensureVisible(chip);
+    expect(find.byKey(const ValueKey('pick-word-there')), findsOneWidget);
+    await tester.tap(chip);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('word-example')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('save-word')));
+    await tester.pumpAndSettle();
+    final saved = (await MyWordStore.load('guest')).single;
+    expect(saved.word, 'Hello');
+    expect(saved.example, 'Hello there!');
+    expect(saved.sourceSentenceId, isNotEmpty);
+    expect(find.text('단어를 저장했어요.'), findsOneWidget);
   });
 
   testWidgets('내 문장 탭에서 기본 문장을 누르면 상세가 열린다', (tester) async {

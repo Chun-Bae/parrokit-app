@@ -23,6 +23,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/swipe_
 import '../sentence_explore_screen.dart';
 import 'sentence_import_method_dialog.dart';
 import 'sentence_import_sheet.dart';
+import 'word_collection_preview.dart' show AddWordSheet, showWordAddResult;
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -1786,6 +1787,26 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     }
   }
 
+  /// 이 문장의 단어를 내 단어로 저장한다. 문장이 예문으로 붙는다(5차 6번).
+  /// [word]가 비어 있으면 직접 입력.
+  Future<void> saveWord(String word) async {
+    final result = await showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (_) => AddWordSheet(
+        accountId: widget.accountId,
+        language: widget.sentence.language,
+        initialWord: word,
+        example: widget.sentence.text,
+        exampleTranslation: widget.sentence.translation,
+        sourceSentenceId: widget.sentence.id,
+      ),
+    );
+    if (!mounted || result == null) return;
+    showWordAddResult(context, result);
+  }
+
   Future<void> shareSentence() async {
     final renderBox = context.findRenderObject() as RenderBox?;
     await SharePlus.instance.share(
@@ -1910,6 +1931,11 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               ],
             ),
           ],
+          const SizedBox(height: 18),
+          _WordPickRow(
+            sentence: widget.sentence,
+            onPick: saveWord,
+          ),
           // 내 기록은 내 문장일 때만 보인다. 저장하지 않은 남의 문장에는 보이지 않는다.
           if (widget.saved) ...[
             const SizedBox(height: 22),
@@ -2363,6 +2389,65 @@ class _ScriptImportSheetState extends State<_ScriptImportSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 문장 상세의 "단어 저장" 줄. 문장을 띄어쓰기로 나눈 단어 칩을 누르면 그 단어로
+/// 단어 추가 시트를 연다(표현을 넓히려면 시트에서 고치면 된다). 띄어쓰기가 없는
+/// 언어(일본어·중국어)는 '직접 입력'만 쓴다.
+class _WordPickRow extends StatelessWidget {
+  const _WordPickRow({required this.sentence, required this.onPick});
+
+  final DefaultConversationSentence sentence;
+  final ValueChanged<String> onPick;
+
+  static final _edge = RegExp(r"^[^\p{L}\p{N}]+|[^\p{L}\p{N}'’]+$", unicode: true);
+
+  List<String> get tokens {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final raw in sentence.text.split(RegExp(r'\s+'))) {
+      final token = raw.replaceAll(_edge, '');
+      if (token.isEmpty || token.length == sentence.text.trim().length) continue;
+      if (seen.add(token.toLowerCase())) out.add(token);
+      if (out.length >= 12) break;
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      key: const ValueKey('word-pick-row'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('단어 저장',
+            style: context.texts.labelMedium
+                .copyWith(color: colors.onSurfaceVariant)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final token in tokens)
+              ActionChip(
+                key: ValueKey('pick-word-$token'),
+                label: Text(token),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => onPick(token),
+              ),
+            ActionChip(
+              key: const ValueKey('pick-word-custom'),
+              avatar: const Icon(Icons.add_rounded, size: 16),
+              label: const Text('직접 입력'),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => onPick(''),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
