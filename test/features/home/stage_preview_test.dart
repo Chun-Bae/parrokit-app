@@ -207,6 +207,25 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('문장 설정의 주황 점은 처음 한 번 열면 사라지고 다시 켜지지 않는다',
+      (tester) async {
+    Finder badge() => find.descendant(
+        of: find.byKey(const ValueKey('phrase-settings')),
+        matching: find.byKey(const ValueKey('menu-badge')));
+    await openPreview(tester);
+    await tester.pump(); // 저장값 읽기(loadXp)가 끝나길 기다린다.
+    await tester.pump();
+    expect(badge(), findsOneWidget);
+    await tapTooltip(tester, '문장 설정');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tapTooltip(tester, '닫기');
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(badge(), findsNothing);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('parrokit.home.phrase_settings_seen.v1'), isTrue);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('문장 설정 창의 +는 창을 닫고 문장 추가 화면을 연다', (tester) async {
     await openPreview(tester);
     await tapTooltip(tester, '문장 설정');

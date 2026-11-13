@@ -84,6 +84,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   bool completingResponse = false;
   bool soundOn = true;
 
+  /// '문장 설정' 버튼의 주황 점. 예전엔 늘 켜져 있어 아무 뜻이 없었다(5차).
+  /// 아직 한 번도 열지 않았을 때만 보여 새 기능이 있다고 알린다.
+  bool phraseSettingsSeen = true;
+  static const phraseSettingsSeenKey = 'parrokit.home.phrase_settings_seen.v1';
+
   /// 하단 "반복 듣기" 아이콘이 켜져 있을 때만 앵무새가 소리 내어 말한다.
   bool listenMode = false;
   final FlutterTts tts = FlutterTts();
@@ -172,6 +177,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
         gapSeconds = (prefs.getDouble(gapKey) ?? _defaultGapSeconds).clamp(
             _SpeakingSettingsDialog.minGap, _SpeakingSettingsDialog.maxGap);
         countListen = prefs.getBool(countListenKey) ?? true;
+        phraseSettingsSeen = prefs.getBool(phraseSettingsSeenKey) ?? false;
         xpReady = true;
       });
     } catch (_) {
@@ -790,6 +796,12 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   Future<void> showPhraseSettings() async {
+    if (!phraseSettingsSeen) {
+      setState(() => phraseSettingsSeen = true);
+      unawaited(SharedPreferences.getInstance()
+          .then((prefs) => prefs.setBool(phraseSettingsSeenKey, true))
+          .catchError((_) => false));
+    }
     final action = await showDialog<String>(
         context: context,
         builder: (context) => _PhraseSettingsDialog(
@@ -954,9 +966,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                       onTap: addPhrase),
                   const SizedBox(height: 7),
                   _GameMenuButton(
+                      key: const ValueKey('phrase-settings'),
                       label: '문장 설정',
                       icon: Icons.tune_rounded,
-                      badge: true,
+                      badge: !phraseSettingsSeen,
                       onTap: showPhraseSettings),
                   const SizedBox(height: 7),
                   _GameMenuButton(
@@ -1697,6 +1710,7 @@ class _GameMenuButton extends StatelessWidget {
                       color: selected ? Colors.white : palette.muted),
                   if (badge)
                     Positioned(
+                        key: const ValueKey('menu-badge'),
                         top: 5,
                         right: 5,
                         child: Container(
