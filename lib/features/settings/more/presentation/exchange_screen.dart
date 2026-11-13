@@ -10,6 +10,32 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+
+/// 패롯 1개 = 크래커 1,000개. 양쪽 환전 모두 같은 비율이다.
+const exchangeRate = 1000;
+
+/// 입력한 수량으로 환전할 수 없는 이유. 없으면 null.
+///
+/// 예전에는 보유량보다 많이 넣거나 크래커를 1,000 단위가 아니게 넣어도
+/// '환전하기'가 눌렸고, 누른 뒤에야 토스트로 알렸다(5차). 넣는 동안 보여준다.
+String? exchangeInputProblem({
+  required bool parrotsToCrackers,
+  required int amount,
+  required int balance,
+}) {
+  if (amount <= 0) return null;
+  final format = NumberFormat.decimalPattern('ko');
+  final name = parrotsToCrackers ? '패롯' : '크래커';
+  if (amount > balance) {
+    return '가진 $name보다 많아요 (보유 ${format.format(balance)})';
+  }
+  if (!parrotsToCrackers && amount % exchangeRate != 0) {
+    return '크래커는 ${format.format(exchangeRate)}개 단위로 바꿀 수 있어요';
+  }
+  return null;
+}
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -76,8 +102,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       _amountController.clear();
       showToast('환전이 완료되었습니다!');
       Navigator.pop(context);
-    } catch (e) {
-      showToast(e.toString().replaceAll('Exception: ', ''));
+    } catch (e, st) {
+      AppLogger.e('환전 실패', error: e, stackTrace: st);
+      showToast(userErrorMessage(e, fallback: '환전하지 못했어요. 다시 시도해 주세요.'));
     } finally {
       if (mounted) setState(() => _isExchanging = false);
     }
@@ -94,8 +121,14 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
     final int inputAmount = int.tryParse(_amountController.text) ?? 0;
     final int expectedAmount = _isParrotsToCrackers
-        ? inputAmount * 1000
-        : (inputAmount / 1000).floor();
+        ? inputAmount * exchangeRate
+        : (inputAmount / exchangeRate).floor();
+    final problem = exchangeInputProblem(
+      parrotsToCrackers: _isParrotsToCrackers,
+      amount: inputAmount,
+      balance: _isParrotsToCrackers ? user.parrots : user.crackers,
+    );
+    final canExchange = inputAmount > 0 && problem == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -144,7 +177,24 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   AppSegment(label: '크래커 → 패롯'),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 10),
+              // 비율을 숫자를 넣기 전에도 보여준다(예전엔 넣어야 받을 양이 보였다).
+              Row(
+                key: const ValueKey('exchange-rate'),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CurrencyIcon(Currency.parrot, size: 16),
+                  Text(' 1 = ',
+                      style: context.texts.labelLarge
+                          .copyWith(color: context.tokens.textSecondary)),
+                  const CurrencyIcon(Currency.cracker, size: 16),
+                  Text(
+                      ' ${NumberFormat.decimalPattern('ko').format(exchangeRate)}',
+                      style: context.texts.labelLarge
+                          .copyWith(color: context.tokens.textSecondary)),
+                ],
+              ),
+              const SizedBox(height: 24),
 
               // 입력 폼
               Text(
@@ -197,19 +247,34 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: context.tokens.info.withValues(alpha: 0.05),
+                    color: (problem == null
+                            ? context.tokens.info
+                            : theme.colorScheme.error)
+                        .withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline,
-                          size: 18, color: context.tokens.info),
+                      Icon(
+                          problem == null
+                              ? Icons.info_outline
+                              : Icons.error_outline_rounded,
+                          size: 18,
+                          color: problem == null
+                              ? context.tokens.info
+                              : theme.colorScheme.error),
                       const SizedBox(width: 8),
-                      Text(
-                        '받을 양: ${NumberFormat.decimalPattern('ko').format(expectedAmount)} ${_isParrotsToCrackers ? '크래커' : '패롯'}',
-                        style: TextStyle(
-                            color: context.tokens.info,
-                            fontWeight: FontWeight.w600),
+                      Expanded(
+                        child: Text(
+                          problem ??
+                              '받을 양: ${NumberFormat.decimalPattern('ko').format(expectedAmount)} ${_isParrotsToCrackers ? '크래커' : '패롯'}',
+                          key: const ValueKey('exchange-preview'),
+                          style: TextStyle(
+                              color: problem == null
+                                  ? context.tokens.info
+                                  : theme.colorScheme.error,
+                              fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ],
                   ),
@@ -219,8 +284,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
               // 환전 버튼
               ElevatedButton(
-                onPressed:
-                    _isExchanging || inputAmount <= 0 ? null : _onExchange,
+                onPressed: _isExchanging || !canExchange ? null : _onExchange,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -239,7 +303,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         '환전하기',
                         // 테마 글자색이 버튼의 흰 글자를 덮어 파란 바탕에 검은 글자가 됐다
                         style: context.texts.titleMedium.copyWith(
-                          color: inputAmount > 0
+                          color: canExchange
                               ? theme.colorScheme.onPrimary
                               : null,
                         ),
