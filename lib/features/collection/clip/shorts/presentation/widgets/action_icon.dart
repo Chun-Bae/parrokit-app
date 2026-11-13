@@ -63,11 +63,17 @@ class ActionIcon extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
+          // 쇼츠는 늘 영상 위라 테마 글자색(회색·주색)이 화면에 따라 묻혔다(5차).
+          // 영상 위 글자처럼 흰색에 그림자를 준다. 켜짐 여부는 아이콘 색으로 본다.
           Text(
             label,
             style: textTheme.bodySmall?.copyWith(
-              color: active ? scheme.primary : scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              shadows: const [
+                Shadow(color: Colors.black87, blurRadius: 4),
+                Shadow(color: Colors.black54, blurRadius: 1),
+              ],
             ),
           ),
         ],

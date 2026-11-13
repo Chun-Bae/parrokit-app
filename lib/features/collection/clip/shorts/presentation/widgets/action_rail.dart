@@ -41,13 +41,15 @@ class ActionRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 글자가 영어(Auto·CC·Player)라 다른 화면과 달랐다(5차). 한국어로 맞춘다.
+    // '연습'은 이 클립을 구간 반복·한 줄씩 멈춤이 있는 플레이어로 연다.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // ✅ AutoNext toggle
         ActionIcon(
           icon: Icons.playlist_play,
-          label: "Auto",
+          label: "자동 넘김",
           active: autoNextEnabled,
           onTap: () => onAutoNextChanged(!autoNextEnabled),
         ),
@@ -56,7 +58,7 @@ class ActionRail extends StatelessWidget {
         // ✅ Subtitle toggle
         ActionIcon(
           icon: showSubtitle ? Icons.closed_caption : Icons.closed_caption_off,
-          label: "CC",
+          label: "자막",
           active: showSubtitle,
           onTap: () => onSubtitleChanged(!showSubtitle),
         ),
@@ -65,7 +67,7 @@ class ActionRail extends StatelessWidget {
         // ✅ External player
         ActionIcon(
           icon: Icons.open_in_new,
-          label: "Player",
+          label: "연습",
           onTap: onOpenExternalPlayer,
         ),
       ],
