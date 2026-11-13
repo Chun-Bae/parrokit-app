@@ -5,6 +5,12 @@ extension CommunityProviderComment on CommunityProvider {
 
   // 특정 게시글의 댓글 목록 가져오기 (현재 로그인된 유저 ID도 받아와서 좋아요 상태 셋팅)
   Future<void> fetchComments(String postId, {String? currentUserId}) async {
+    // 글을 열었다가 바로 다른 글을 열면, 늦게 끝난 앞 글의 댓글이 지금 글
+    // 목록에 덧붙었다(같은 글을 두 번 부르면 댓글이 두 벌이 됐다)(5차).
+    // 마지막 요청만 목록을 채운다.
+    final request = ++_commentsRequest;
+    bool stale() => request != _commentsRequest;
+
     // 가짜 글(개발 빌드 전용)은 서버를 부르지 않고 가짜 댓글을 보여준다.
     if (isFakePost(postId)) {
       _currentPostComments
@@ -21,20 +27,25 @@ extension CommunityProviderComment on CommunityProvider {
 
     try {
       final comments = await _repository.getComments(postId);
+      if (stale()) return;
       _currentPostComments.addAll(comments);
 
       await _fetchMissingUsers(
         comments.map((c) => c.authorId).whereType<String>(),
       );
+      if (stale()) return;
 
       if (currentUserId != null) {
-        _likedCommentIds = await _repository.getLikedCommentIds(currentUserId);
+        final liked = await _repository.getLikedCommentIds(currentUserId);
+        if (stale()) return;
+        _likedCommentIds = liked;
       } else {
         _likedCommentIds.clear();
       }
 
       _notifyListenersSafe();
     } catch (e) {
+      if (stale()) return;
       _errorMessage = e.toString();
       _notifyListenersSafe();
     }

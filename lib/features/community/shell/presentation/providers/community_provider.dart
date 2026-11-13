@@ -155,6 +155,10 @@ class CommunityProvider with ChangeNotifier {
   /// 읽는 중에 기다리던 요청이 그 사이 더 새 요청이 왔는지 보는 데 쓴다.
   int _postTypeRequest = 0;
 
+  /// fetchComments를 부를 때마다 1씩 늘린다. 늦게 끝난 이전 요청이 지금 글의
+  /// 댓글 목록에 섞이지 않게 한다.
+  int _commentsRequest = 0;
+
   /// 이름에 Safe가 붙어 있지만 여기서는 아무것도 막지 않는다. 그냥
   /// notifyListeners()다. 커뮤니티 기능 전체에서 쉰 곳 넘게 부른다.
   ///
