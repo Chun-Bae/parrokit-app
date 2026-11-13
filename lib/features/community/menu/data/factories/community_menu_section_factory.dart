@@ -10,7 +10,8 @@ class CommunityMenuSectionFactory {
         title: '나의 활동',
         categories: [
           CommunityMenuCategoryEntry(
-            title: '일반 게시판',
+            // 탭 이름과 맞춘다(5차). 예전 이름은 '일반 게시판'.
+            title: '게시판',
             items: _boardItems(),
           ),
           CommunityMenuCategoryEntry(
@@ -29,7 +30,8 @@ class CommunityMenuSectionFactory {
           CommunityMenuCategoryEntry(
             title: null,
             items: const [
-              CommunityMenuEntry(title: '알림 설정', iconKey: 'notifications', colorKey: 'settings'),
+              // '알림 설정'은 갈 화면이 없어 눌러도 아무 일이 없었다(5차, 원칙 5).
+              // 알림 설정 화면을 만들면 routePath와 함께 다시 넣는다.
               CommunityMenuEntry(
                 title: '차단 사용자 관리',
                 iconKey: 'shield',

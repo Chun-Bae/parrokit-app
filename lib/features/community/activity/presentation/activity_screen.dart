@@ -43,7 +43,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
     String boardName = '';
     switch (widget.boardType) {
       case 'board':
-        boardName = '일반 게시판';
+        // 탭 이름이 '게시판'이라 '일반'을 뺐다(5차, 알림·내 활동 칩과 같게).
+        boardName = '게시판';
         break;
       case 'question':
         boardName = '질문 게시판';
