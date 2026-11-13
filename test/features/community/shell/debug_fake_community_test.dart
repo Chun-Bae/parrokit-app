@@ -36,7 +36,9 @@ void main() {
     await provider.incrementViewCount(id, userId: 'u1');
     await provider.toggleLike(id, 'u1');
     await provider.toggleScrap(id, 'u1');
-    expect(await provider.votePost(id, 0, 'u1'), isFalse);
+    // 투표는 앱 안에서만 반영해 결과 화면을 볼 수 있다(서버에는 쓰지 않는다).
+    expect(await provider.votePost(id, 0, 'u1'), isTrue);
+    expect(provider.myVotes[id], 0);
     expect(
         await provider.addComment(id, 'hi',
             authorId: 'u1', authorNickname: 'n'),

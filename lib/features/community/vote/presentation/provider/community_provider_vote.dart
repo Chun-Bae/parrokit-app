@@ -38,7 +38,9 @@ extension CommunityProviderVote on CommunityProvider {
 
   // 투표하기 (낙관적 UI 업데이트 포함)
   Future<bool> votePost(String postId, int optionIndex, String userId) async {
-    if (isFakePost(postId)) return false; // 가짜 글은 서버에 쓰지 않는다
+    // 가짜 글(개발 빌드 전용)은 서버에 쓰지 않고 앱 안에서만 반영해 결과 화면을
+    // 볼 수 있게 한다. 예전엔 바로 끝나서 투표해도 아무 변화가 없었다.
+    final fake = isFakePost(postId);
 
     _isLoading = true;
     _errorMessage = null;
@@ -47,7 +49,7 @@ extension CommunityProviderVote on CommunityProvider {
     _notifyListenersSafe();
 
     try {
-      await votePostUseCase.execute(postId, userId, optionIndex);
+      if (!fake) await votePostUseCase.execute(postId, userId, optionIndex);
 
       final postIndex = _posts.indexWhere((p) => p.id == postId);
       if (postIndex != -1) {

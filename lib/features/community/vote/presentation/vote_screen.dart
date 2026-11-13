@@ -812,7 +812,9 @@ class VoteCard extends StatelessWidget {
                 child: Container(
                   height: 26,
                   decoration: BoxDecoration(
-                    color: context.tokens.surfaceContainerHigh,
+                    // 다크에서는 카드와 같은 색이라 빈 칸(트랙)이 안 보였다(5차).
+                    // 글자색을 옅게 깔아 두 테마 모두 막대 길이를 가늠하게 한다.
+                    color: cs.onSurface.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   clipBehavior: Clip.hardEdge,
