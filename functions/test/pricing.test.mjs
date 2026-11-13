@@ -1,7 +1,7 @@
 // Gemini TTS 모델 교체와 가격(5차). firebase-admin 없이 돈다.
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {resolveGeminiTtsModel, ttsCost} from "../lib/pricing.js";
+import {resolveElevenLabsModel, resolveGeminiTtsModel, ttsCost} from "../lib/pricing.js";
 
 test("종료된 예전 TTS 모델 id는 대체 모델로 바꾼다", () => {
   assert.equal(resolveGeminiTtsModel("gemini-2.5-flash-preview-tts"), "gemini-3.8-flash-lite-tts");
@@ -22,4 +22,13 @@ test("가격은 실제로 부르는 모델 값으로 매긴다", () => {
   assert.equal(ttsCost({text, provider: "gemini", modelId: "gemini-3.8-flash-tts"}), 2);
   // 예전 2.5 Flash는 Lite로 바뀌어 예전과 같은 값(120자당 1)
   assert.equal(ttsCost({text, provider: "gemini", modelId: "gemini-2.5-flash-preview-tts"}), 1);
+});
+
+test("ElevenLabs turbo v2.5는 flash v2.5로 바꿔 부르고 같은 값으로 받는다", () => {
+  assert.equal(resolveElevenLabsModel("eleven_turbo_v2_5"), "eleven_flash_v2_5");
+  assert.equal(resolveElevenLabsModel("eleven_multilingual_v2"), "eleven_multilingual_v2");
+  assert.equal(resolveElevenLabsModel(undefined), "eleven_multilingual_v2");
+  const text = "a".repeat(40);
+  assert.equal(ttsCost({text, provider: "elevenlabs", modelId: "eleven_turbo_v2_5"}), 1);
+  assert.equal(ttsCost({text, provider: "elevenlabs", modelId: "eleven_flash_v2_5"}), 1);
 });

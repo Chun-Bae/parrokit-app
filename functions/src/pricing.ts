@@ -11,11 +11,30 @@
 
 const GOOGLE_TTS_CHARS_PER_PARROT = 100;
 
+// eleven_turbo_v2_5는 ElevenLabs에서 지원 중단(대체 eleven_flash_v2_5)이라
+// 바꿨다(5차). 예전 앱이 보내는 turbo는 flash로 부른다.
 const ELEVENLABS_CHARS_PER_PARROT: Record<string, number> = {
   "eleven_multilingual_v2": 20,
-  "eleven_turbo_v2_5": 40,
+  "eleven_flash_v2_5": 40,
 };
 const ELEVENLABS_DEFAULT_MODEL = "eleven_multilingual_v2";
+const ELEVENLABS_LEGACY: Record<string, string> = {
+  "eleven_turbo_v2_5": "eleven_flash_v2_5",
+};
+
+/**
+ * 실제로 부를 ElevenLabs 모델. 아는 모델이면 그대로, 지원 중단된 예전 id면
+ * 대체 모델, 모르는 값이면 기본 모델. 가격도 이 결과로 매긴다.
+ * @param {unknown} modelId 앱이 보낸 모델 id
+ * @return {string} 부를 모델 id
+ */
+export function resolveElevenLabsModel(modelId: unknown): string {
+  if (typeof modelId !== "string" || modelId.length === 0) {
+    return ELEVENLABS_DEFAULT_MODEL;
+  }
+  if (modelId in ELEVENLABS_CHARS_PER_PARROT) return modelId;
+  return ELEVENLABS_LEGACY[modelId] ?? ELEVENLABS_DEFAULT_MODEL;
+}
 
 // Gemini API의 예전 TTS 모델 셋(2.5 Flash·2.5 Pro·3.1 Flash 프리뷰)은
 // 2026-11-17에 종료된다(ai.google.dev 지원 중단 표). 대체 모델 둘만 쓴다(5차).
@@ -72,7 +91,7 @@ export function ttsCost(input: {
   case "elevenlabs":
     rate = charsPerParrot(
       ELEVENLABS_CHARS_PER_PARROT,
-      modelId || ELEVENLABS_DEFAULT_MODEL
+      resolveElevenLabsModel(modelId)
     );
     break;
   case "gemini":

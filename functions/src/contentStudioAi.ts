@@ -1,6 +1,11 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {applyLedger, requestIdOf} from "./wallet";
-import {resolveGeminiTtsModel, ttsCost, videoCost} from "./pricing";
+import {
+  resolveElevenLabsModel,
+  resolveGeminiTtsModel,
+  ttsCost,
+  videoCost,
+} from "./pricing";
 import {ENFORCE_APP_CHECK, appCheckOptions} from "./appCheck";
 import {defineSecret} from "firebase-functions/params";
 import * as admin from "firebase-admin";
@@ -850,7 +855,8 @@ export const generateTtsFlow = ai.defineFlow(
         });
 
         const targetVoice = input.voiceId || "21m00Tcm4TlvDq8ikWAM";
-        const targetModel = input.modelId || "eleven_multilingual_v2";
+        // turbo v2.5는 지원 중단이라 flash로 바꿔 부른다(5차).
+        const targetModel = resolveElevenLabsModel(input.modelId);
 
         const audioStream = await client.textToSpeech.convert(targetVoice, {
           text: input.text,

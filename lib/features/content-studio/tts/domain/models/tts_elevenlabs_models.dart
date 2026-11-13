@@ -216,10 +216,12 @@ const List<TtsElevenLabsModel> elevenLabsModels = [
     description: '가장 자연스럽고 감정 표현이 풍부한 고품질 모델. 생성 속도는 느린 편',
     charsPerParrot: 20,
   ),
+  // Turbo v2.5는 ElevenLabs에서 지원 중단(대체: Flash v2.5)이라 바꿨다(5차).
+  // 가격 단계는 그대로다. 서버(pricing.ts)도 같은 값이다.
   TtsElevenLabsModel(
-    id: 'eleven_turbo_v2_5',
-    name: 'Turbo v2.5',
-    description: 'v2보다 품질은 약간 낮지만 3배 빠르고 비용도 절반. 실시간 대화에 적합',
+    id: 'eleven_flash_v2_5',
+    name: 'Flash v2.5',
+    description: 'v2보다 품질은 약간 낮지만 빠르고 비용도 절반. 짧은 문장에 알맞아요',
     charsPerParrot: 40,
   ),
 ];

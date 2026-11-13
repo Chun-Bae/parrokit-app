@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/features/content-studio/tts/domain/models/tts_elevenlabs_models.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_gemini_models.dart';
 
 void main() {
@@ -25,5 +26,14 @@ void main() {
     }
     expect(server,
         contains('const GEMINI_TTS_DEFAULT_MODEL = "$defaultGeminiTtsModelId";'));
+  });
+
+  test('ElevenLabs 목록에 지원 중단된 turbo가 없고 가격표가 서버와 같다', () {
+    final server = File('functions/src/pricing.ts').readAsStringSync();
+    expect(elevenLabsModels.map((m) => m.id), isNot(contains('eleven_turbo_v2_5')));
+    for (final model in elevenLabsModels) {
+      expect(server, contains('"${model.id}": ${model.charsPerParrot},'),
+          reason: model.id);
+    }
   });
 }
