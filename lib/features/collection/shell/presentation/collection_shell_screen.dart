@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/app/config/app_config.dart';
+import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -381,6 +382,20 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     }
   }
 
+  /// 단어 탭의 + 버튼과 같은 단어 추가 창을 연다. 언어는 위 문장 추가와 같이
+  /// 영어로 넣는다(다른 언어는 단어 탭에서 언어를 고른 뒤 + 로 넣는다).
+  Future<void> _addWord(BuildContext context) async {
+    final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+    final result = await showModalBottomSheet<WordAddResult>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      builder: (_) => AddWordSheet(accountId: accountId, language: '영어'),
+    );
+    if (!context.mounted || result == null) return;
+    showWordAddResult(context, result);
+  }
+
   Future<void> _showAddSheet(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -416,18 +431,24 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 icon: Icons.smart_display_rounded,
                 title: '클립 추가',
                 subtitle: '영상과 자막을 함께 보관해요',
+                // 예전엔 탭만 바꿔서 '추가'를 눌러도 아무것도 열리지 않았다(5차).
+                // 문장 추가처럼 바로 클립 만들기 화면을 연다.
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _tabController.animateTo(1);
+                  context.push(
+                      '${AppRoutes.clipsPath}/${AppRoutes.clipsCreatePath}');
                 },
               ),
               _AddMaterialTile(
                 icon: Icons.spellcheck_rounded,
                 title: '단어 추가',
                 subtitle: '문장 속 표현을 따로 표시해요',
+                // 클립과 같은 이유로 단어 추가 창을 바로 연다.
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _tabController.animateTo(2);
+                  _addWord(context);
                 },
               ),
               _AddMaterialTile(
