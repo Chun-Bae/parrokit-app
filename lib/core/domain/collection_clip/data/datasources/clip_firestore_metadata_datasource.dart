@@ -17,7 +17,11 @@ import 'package:parrokit/data/local/app_database.dart';
 class ClipFirestoreMetadataDatasource {
   final AppDatabase db;
 
-  ClipFirestoreMetadataDatasource(this.db);
+  /// 테스트에서 가짜 Firestore를 끼우려고 받는다. 안 주면 평소대로 instance.
+  final FirebaseFirestore? _firestore;
+
+  ClipFirestoreMetadataDatasource(this.db, {FirebaseFirestore? firestore})
+      : _firestore = firestore;
 
   /// `users/{uid}/namespaces/library/{kind}` 컬렉션 레퍼런스. 클립뿐 아니라
   /// groups/collections 등 라이브러리 하위 컬렉션 전반에서 재사용합니다.
@@ -25,7 +29,7 @@ class ClipFirestoreMetadataDatasource {
     String uid,
     String kind,
   ) {
-    return FirebaseFirestore.instance
+    return (_firestore ?? FirebaseFirestore.instance)
         .collection('users')
         .doc(uid)
         .collection('namespaces')
