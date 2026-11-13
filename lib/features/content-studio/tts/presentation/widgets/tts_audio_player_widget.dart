@@ -229,6 +229,7 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                                   onHorizontalDragEnd: (details) {
                                     if (_isDragging) {
                                       _player.seek(_dragPosition).then((_) {
+                                        if (!mounted) return;
                                         setState(() => _isDragging = false);
                                         if (_wasPlayingBeforeDrag) {
                                           _player.play();

@@ -65,6 +65,7 @@ class _AdRewardButtonState extends State<AdRewardButton> {
 
   Future<void> _initCooldown() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final lastMs = prefs.getInt(_prefKey);
     if (lastMs == null) return;
     final elapsed = DateTime.now().millisecondsSinceEpoch - lastMs;
