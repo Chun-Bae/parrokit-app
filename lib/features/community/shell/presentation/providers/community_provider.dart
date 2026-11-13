@@ -159,6 +159,10 @@ class CommunityProvider with ChangeNotifier {
   /// 댓글 목록에 섞이지 않게 한다.
   int _commentsRequest = 0;
 
+  /// loadUserActions를 부를 때마다 1씩 늘린다. 늦게 끝난 앞 글의 공감·스크랩
+  /// 여부가 지금 글 표시를 덮지 않게 한다.
+  int _userActionsRequest = 0;
+
   /// 이름에 Safe가 붙어 있지만 여기서는 아무것도 막지 않는다. 그냥
   /// notifyListeners()다. 커뮤니티 기능 전체에서 쉰 곳 넘게 부른다.
   ///

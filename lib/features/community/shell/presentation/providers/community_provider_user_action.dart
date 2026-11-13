@@ -29,20 +29,27 @@ extension CommunityProviderUserAction on CommunityProvider {
   }
 
   Future<void> loadUserActions(String postId, {String? userId}) async {
-    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
+    // 글을 열었다가 바로 다른 글을 열면 늦게 끝난 앞 글의 공감·스크랩 여부가
+    // 지금 글에 표시됐고, 그 상태로 공감을 누르면 반대로 보냈다(5차).
+    // 앞 글 값은 그 글 몫으로만 저장하고, 지금 글 표시는 마지막 요청만 바꾼다.
+    final request = ++_userActionsRequest;
 
     _isCurrentPostLiked = false;
     _isCurrentPostScrapped = false;
     _notifyListenersSafe();
 
+    if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
     if (userId == null) return;
 
     try {
       final actions = await loadUserActionsUseCase.execute(postId, userId);
-      _isCurrentPostLiked = actions['isLiked'] ?? false;
-      _isCurrentPostScrapped = actions['isScrapped'] ?? false;
-      _postLikedStates[postId] = _isCurrentPostLiked;
-      _postScrappedStates[postId] = _isCurrentPostScrapped;
+      final liked = actions['isLiked'] ?? false;
+      final scrapped = actions['isScrapped'] ?? false;
+      _postLikedStates[postId] = liked;
+      _postScrappedStates[postId] = scrapped;
+      if (request != _userActionsRequest) return;
+      _isCurrentPostLiked = liked;
+      _isCurrentPostScrapped = scrapped;
       _notifyListenersSafe();
     } catch (e) {
       // noop
