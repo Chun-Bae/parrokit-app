@@ -258,6 +258,24 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                             onChanged: (val) =>
                                 setState(() => _rewardCrackers = val.toInt()),
                           ),
+                          // 보상이 언제 빠지고 어디로 가는지, 지금 얼마 있는지 몰랐다(5차).
+                          // 모자라면 올리기 전에 미리 알린다(예전엔 누른 뒤 토스트).
+                          Builder(builder: (context) {
+                            final owned = context
+                                    .watch<UserProvider>()
+                                    .currentUser
+                                    ?.crackers ??
+                                0;
+                            final short = owned < _rewardCrackers;
+                            return Text(
+                              rewardNote(owned, _rewardCrackers),
+                              key: const ValueKey('reward-note'),
+                              style: context.texts.bodySmall.copyWith(
+                                  color: short
+                                      ? colorScheme.error
+                                      : colorScheme.onSurfaceVariant),
+                            );
+                          }),
                           Divider(height: 32, color: tokens.divider),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -316,3 +334,16 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     );
   }
 }
+
+/// 질문 보상 크래커 안내. 올리면 바로 빠지고 채택한 답변에 간다(functions/questions.ts).
+@visibleForTesting
+String rewardNote(int owned, int reward) {
+  final ownedText = _comma(owned);
+  if (owned < reward) {
+    return '보유 $ownedText · 크래커가 ${_comma(reward - owned)}개 모자라요.';
+  }
+  return '보유 $ownedText · 질문을 올리면 바로 빠지고, 채택한 답변에 그대로 가요.';
+}
+
+String _comma(int n) => n.toString().replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
