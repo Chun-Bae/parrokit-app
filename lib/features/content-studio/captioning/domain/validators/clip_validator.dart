@@ -32,18 +32,18 @@ class ClipValidator {
     }
 
     if (form.collectionName == null || form.collectionName!.trim().isEmpty) {
-      return const ValidationResult.invalid('컬렉션은 필수입니다.');
+      return const ValidationResult.invalid('폴더를 골라 주세요.');
     }
 
     if (form.clipTitle.trim().isEmpty) {
-      return const ValidationResult.invalid('클립 제목은 필수입니다.');
+      return const ValidationResult.invalid('클립 제목을 적어 주세요.');
     }
 
     if (form.durationMs == null || form.durationMs! <= 0) {
-      return const ValidationResult.invalid('영상 길이(duration)는 필수입니다.');
+      return const ValidationResult.invalid('영상 길이를 읽지 못했어요. 영상을 다시 골라 주세요.');
     }
     if (form.durationMs! > maxDurationMs) {
-      return const ValidationResult.invalid('영상 길이는 최대 5분까지만 허용됩니다.');
+      return const ValidationResult.invalid('5분 이하 영상만 넣을 수 있어요.');
     }
 
     final segmentResult = validateSegments(form.segments, form.durationMs!);
@@ -54,10 +54,12 @@ class ClipValidator {
     return const ValidationResult.valid();
   }
 
+  // 화면은 '구간', 'A·B', '원문·해석·발음'이라고 부르는데 오류 문구만 '세그먼트',
+  // '필드', '시작·종료'라서 무엇을 고칠지 알기 어려웠다(5차). 화면 말로 맞춘다.
   ValidationResult validateSegments(
       List<SegmentInput> segments, int durationMs) {
     if (segments.isEmpty) {
-      return const ValidationResult.invalid('세그먼트는 최소 1개 이상 필요합니다.');
+      return const ValidationResult.invalid('구간을 하나 이상 만들어 주세요.');
     }
 
     for (int i = 0; i < segments.length; i++) {
@@ -65,24 +67,24 @@ class ClipValidator {
       final idx = i + 1;
 
       if (!seg.isComplete) {
-        return ValidationResult.invalid('세그먼트 $idx: 모든 필드는 필수입니다.');
+        return ValidationResult.invalid('구간 $idx: 원문·해석·발음을 모두 적어 주세요.');
       }
 
       if (!timecodePattern.hasMatch(seg.start)) {
-        return ValidationResult.invalid('세그먼트 $idx: 시작 시각 형식 오류.');
+        return ValidationResult.invalid('구간 $idx: A 시각을 다시 확인해 주세요.');
       }
       if (!timecodePattern.hasMatch(seg.end)) {
-        return ValidationResult.invalid('세그먼트 $idx: 종료 시각 형식 오류.');
+        return ValidationResult.invalid('구간 $idx: B 시각을 다시 확인해 주세요.');
       }
 
       final startMs = _parseTimecode(seg.start);
       final endMs = _parseTimecode(seg.end);
 
       if (endMs <= startMs) {
-        return ValidationResult.invalid('세그먼트 $idx: 종료가 시작보다 커야 합니다.');
+        return ValidationResult.invalid('구간 $idx: B가 A보다 뒤여야 해요.');
       }
       if (startMs < 0 || endMs > durationMs) {
-        return ValidationResult.invalid('세그먼트 $idx: 구간이 영상 길이를 벗어납니다.');
+        return ValidationResult.invalid('구간 $idx: 영상 길이를 넘어요.');
       }
     }
 
@@ -94,7 +96,7 @@ class ClipValidator {
       final prevEnd = _parseTimecode(sorted[i - 1].end);
       final currStart = _parseTimecode(sorted[i].start);
       if (currStart < prevEnd) {
-        return ValidationResult.invalid('세그먼트 $i와 ${i + 1}이 겹칩니다.');
+        return ValidationResult.invalid('겹치는 구간이 있어요: $i번, ${i + 1}번');
       }
     }
 

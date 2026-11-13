@@ -65,7 +65,7 @@ mixin EditSegmentMixin on ChangeNotifier {
   /// (최소 1개는 유지해야 합니다)
   void removeSegment(int index) {
     if (segmentForms.length <= 1) {
-      showToast('세그먼트는 최소 1개 이상 필요합니다.');
+      showToast('구간은 하나 이상 있어야 해요.');
       return;
     }
     final f = segmentForms.removeAt(index);
