@@ -360,7 +360,10 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               textAlignVertical: TextAlignVertical.top,
                               decoration: InputDecoration(
                                 hintText:
-                                    '쉐도잉에 도움 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.\n#자막 #쉐도잉 #발음 #미드추천',
+                                    // 본문 '#자막 #쉐도잉…' 예시는 뺐다(5차). 본문의 #은
+                                    // 태그로 읽지 않아서, 쓰면 태그가 붙는 줄 알았다.
+                                    // 태그 예시는 아래 태그 칸으로 옮겼다.
+                                    '쉐도잉에 도움이 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.',
                                 hintStyle: context.texts.titleMedium.copyWith(
                                     height: 1.6, color: tokens.textDisabled),
                                 border: InputBorder.none,
@@ -478,7 +481,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                       controller: _tagController,
                       focusNode: _tagFocusNode,
                       decoration: InputDecoration(
-                        hintText: '태그를 입력하고 엔터를 누르세요',
+                        hintText: '예: 쉐도잉, 미드추천 (엔터로 추가)',
                         hintStyle: context.texts.bodyLarge
                             .copyWith(color: tokens.textDisabled),
                         border: InputBorder.none,
