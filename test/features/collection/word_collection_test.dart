@@ -94,6 +94,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('start-word-review')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('review-word')), findsOneWidget);
+    // 뜻을 보기 전에는 다시/알아요를 고를 수 없다.
+    expect(find.byKey(const ValueKey('review-known')), findsNothing);
+    expect(find.byKey(const ValueKey('review-again')), findsNothing);
     await tester.tap(find.byKey(const ValueKey('reveal-word')));
     await tester.pump();
     expect(find.text('미묘한'), findsWidgets);

@@ -762,6 +762,8 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                                 ? '뜻을 아직 적지 않았어요'
                                 : widget.words[index].meaning,
                             textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: context.texts.bodyLarge),
                         if (widget.words[index].example.isNotEmpty) ...[
                           const SizedBox(height: 8),
@@ -774,35 +776,47 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                         ],
                       ])
                     : Center(
-                        child: TextButton(
-                          key: const ValueKey('reveal-word'),
-                          onPressed: () => setState(() => revealed = true),
-                          child: const Text('뜻 보기'),
-                        ),
+                        child: Text('뜻을 떠올려 보세요',
+                            style: context.texts.bodyMedium
+                                .copyWith(color: colors.onSurfaceVariant)),
                       ),
               ),
               const SizedBox(height: 16),
-              Row(children: [
-                Expanded(
-                  child: OutlinedButton(
-                    key: const ValueKey('review-again'),
-                    onPressed: () => answer(false),
-                    style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48)),
-                    child: const Text('다시'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    key: const ValueKey('review-known'),
-                    onPressed: () => answer(true),
+              // 뜻을 본 뒤에만 '다시/알아요'를 고른다(5차). 예전엔 처음부터 두 버튼이
+              // 있어 뜻을 안 보고도, 또는 잘못 연달아 눌러 기록이 남았다.
+              if (!revealed)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonal(
+                    key: const ValueKey('reveal-word'),
+                    onPressed: () => setState(() => revealed = true),
                     style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(48)),
-                    child: const Text('알아요'),
+                    child: const Text('뜻 보기'),
                   ),
-                ),
-              ]),
+                )
+              else
+                Row(children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      key: const ValueKey('review-again'),
+                      onPressed: () => answer(false),
+                      style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48)),
+                      child: const Text('다시'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      key: const ValueKey('review-known'),
+                      onPressed: () => answer(true),
+                      style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48)),
+                      child: const Text('알아요'),
+                    ),
+                  ),
+                ]),
             ],
           ],
         ),
