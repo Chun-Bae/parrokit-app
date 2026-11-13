@@ -8,8 +8,10 @@
 
 import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import {appCheckOptions} from "./appCheck";
 import {ledgerExists, readWallet, writeWallet} from "./wallet";
+import {questionNeedsRefund} from "./questionExpiry";
 
 const MIN_REWARD = 100;
 const MAX_REWARD = 5000;
@@ -256,3 +258,72 @@ export const acceptAnswer = onCall(appCheckOptions, async (request) => {
   });
   return {ok: true};
 });
+
+/**
+ * 마감이 지난 질문의 크래커를 질문한 사람에게 돌려준다.
+ *
+ * 전에는 질문을 'expired'로 바꾸는 곳이 어디에도 없어서, 마감이 지나도
+ * 질문은 '답변 대기'로 남고 걸어 둔 크래커는 아무에게도 가지 않았다
+ * (사용자 결정 2026-11-14). 한 번 돌려준 질문은 ledger 키로 막는다.
+ *
+ * 투표 마감 알림과 같은 방식으로, 색인 없이 질문 글을 읽어 메모리에서 고른다.
+ */
+export const onExpiredQuestionRefund = onSchedule(
+  "every 30 minutes",
+  async () => {
+    const now = new Date();
+    const db = admin.firestore();
+    const snapshot = await db
+      .collection("posts")
+      .where("postType", "==", "question")
+      .get();
+    const due = snapshot.docs.filter((doc) =>
+      questionNeedsRefund(doc.data() as Record<string, unknown>, now)
+    );
+    console.log(
+      `[Question][ExpireRefund] candidates=${snapshot.size} due=${due.length}`
+    );
+
+    for (const doc of due) {
+      const postId = doc.id;
+      try {
+        await db.runTransaction(async (tx) => {
+          const postRef = db.collection("posts").doc(postId);
+          const fresh = await tx.get(postRef);
+          const post = fresh.data();
+          // 읽는 사이 채택됐을 수 있다. 다시 본다.
+          if (!post || !questionNeedsRefund(post, now)) return;
+          const authorId = typeof post.authorId === "string" ?
+            post.authorId :
+            "";
+          const reward = Math.trunc(post.rewardCrackers as number);
+          const wallet = authorId ? await readWallet(tx, authorId) : null;
+          const key = `question_expired_${postId}`;
+          const alreadyPaid = wallet ?
+            await ledgerExists(tx, wallet, key) :
+            true;
+
+          tx.update(postRef, {
+            questionStatus: "expired",
+            updatedAt: now.toISOString(),
+          });
+          // 글쓴이 문서가 없으면(탈퇴 등) 상태만 바꾸고 넘어간다.
+          if (wallet && wallet.exists && !alreadyPaid) {
+            writeWallet(tx, wallet, {crackers: reward}, {
+              key,
+              reason: "question_expired",
+              meta: {postId},
+            });
+          }
+        });
+        console.log(`[Question][ExpireRefund] done postId=${postId}`);
+      } catch (error) {
+        // 한 건이 실패해도 나머지는 계속 처리한다. 다음 차례에 다시 본다.
+        console.error(
+          `[Question][ExpireRefund] failed postId=${postId}`,
+          error
+        );
+      }
+    }
+  }
+);
