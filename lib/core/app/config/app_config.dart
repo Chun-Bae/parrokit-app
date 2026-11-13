@@ -9,6 +9,7 @@ class AppConfig {
   static bool repeatAll = false; // 반복 재생(전체)
   static bool showSubtitles = true; // 자막 표시(플레이어)
   static double defaultPlaybackRate = 1.0; // 기본 재생 속도
+  static bool pauseEachLine = false; // 전체 재생에서 자막 한 줄마다 멈춤
 
   /// 쇼츠
   static bool autoNext = true; // 자동 넘기기
@@ -41,6 +42,7 @@ class AppConfig {
     repeatAll = p.getBool('repeatAll') ?? false;
     showSubtitles = p.getBool('showSubtitles') ?? true;
     defaultPlaybackRate = p.getDouble('defaultPlaybackRate') ?? 1.0;
+    pauseEachLine = p.getBool('pauseEachLine') ?? false;
 
     autoNext = p.getBool('autoNext') ?? true;
     shortsShowSubtitles = p.getBool('shortsShowSubtitles') ?? true;
@@ -59,6 +61,7 @@ class AppConfig {
     await p.setBool('repeatAll', repeatAll);
     await p.setBool('showSubtitles', showSubtitles);
     await p.setDouble('defaultPlaybackRate', defaultPlaybackRate);
+    await p.setBool('pauseEachLine', pauseEachLine);
 
     await p.setBool('autoNext', autoNext);
     await p.setBool('shortsShowSubtitles', shortsShowSubtitles);

@@ -28,6 +28,7 @@ import 'package:parrokit/core/shared/utils/audio_bg.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
 
+import 'line_pause_gate.dart';
 import 'view_model/playback_control_mixin.dart';
 import 'view_model/audio_mode_mixin.dart';
 import 'view_model/ui_control_mixin.dart';
@@ -108,6 +109,19 @@ class ClipPlayerViewModel extends ChangeNotifier
   @override
   double get playbackRate => _playbackRate;
 
+  /// 전체 재생에서 자막 한 줄이 끝날 때마다 멈출지. 기기에 기억한다.
+  bool _pauseEachLine = false;
+  bool get pauseEachLine => _pauseEachLine;
+  final LinePauseGate _lineGate = LinePauseGate();
+
+  void togglePauseEachLine() {
+    _pauseEachLine = !_pauseEachLine;
+    AppConfig.pauseEachLine = _pauseEachLine;
+    AppConfig.saveToPrefs();
+    _lineGate.reset();
+    notifyListeners();
+  }
+
   bool get isPlaying =>
       _controller?.value.isInitialized == true &&
       _controller?.value.isPlaying == true;
@@ -175,6 +189,7 @@ class ClipPlayerViewModel extends ChangeNotifier
     _loopSegment = AppConfig.repeatAll;
     _showSubtitles = AppConfig.showSubtitles;
     _playbackRate = AppConfig.defaultPlaybackRate;
+    _pauseEachLine = AppConfig.pauseEachLine;
 
     loadClip();
   }
@@ -264,6 +279,12 @@ class ClipPlayerViewModel extends ChangeNotifier
         _controller!.seekTo(start);
       }
     } else {
+      // 한 줄씩 멈춤: 지금 줄이 끝나면 한 번 멈춘다. 다시 재생하면 이어서 간다.
+      if (_pauseEachLine &&
+          _controller!.value.isPlaying &&
+          _lineGate.shouldPause(_segIndex, pos, end)) {
+        _controller!.pause();
+      }
       final idx = indexForPosition(pos);
       if (idx != null && idx != _segIndex) {
         _segIndex = idx;

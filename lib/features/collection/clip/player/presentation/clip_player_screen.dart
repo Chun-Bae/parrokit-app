@@ -17,6 +17,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
@@ -562,16 +564,39 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 구간/전체 토글
+                // 구간/전체: 예전에는 알약 하나가 글자('구간'/'전체재생')와 켜짐
+                // 색(전체일 때만)을 따로 바꿔 지금 무엇인지 헷갈렸다. 두 칸으로
+                // 나눠 지금 고른 쪽만 칠한다.
                 IgnorePointer(
                   ignoring: vm.isBackground,
                   child: Opacity(
                     opacity: vm.isBackground ? 0.4 : 1.0,
+                    child: _ScopeSwitch(
+                      full: vm.scope == PlayScope.full,
+                      onChanged: (full) {
+                        if (full != (vm.scope == PlayScope.full)) {
+                          vm.toggleScope();
+                        }
+                      },
+                      isLight: isLight,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 한 줄씩 멈춤은 전체 재생에서만 뜻이 있다(구간 재생은 줄 끝에서
+                // 반복하거나 멈춘다). 구간일 때는 흐리게 두고 누를 수 없다.
+                IgnorePointer(
+                  ignoring: vm.isBackground || vm.scope != PlayScope.full,
+                  child: Opacity(
+                    opacity: vm.isBackground || vm.scope != PlayScope.full
+                        ? 0.4
+                        : 1.0,
                     child: TogglePill(
-                      icon: Icons.all_inclusive_rounded,
-                      label: vm.scope == PlayScope.segment ? '구간' : '전체재생',
-                      active: vm.scope == PlayScope.full,
-                      onTap: vm.toggleScope,
+                      key: const ValueKey('pause-each-line'),
+                      icon: Icons.pause_circle_outline_rounded,
+                      label: '한 줄씩 멈춤',
+                      active: vm.pauseEachLine,
+                      onTap: vm.togglePauseEachLine,
                       isLight: isLight,
                     ),
                   ),
@@ -629,6 +654,71 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 구간 | 전체 두 칸. 고른 쪽만 칠한다. 모양은 옆 알약 버튼(TogglePill)에 맞춘다.
+class _ScopeSwitch extends StatelessWidget {
+  const _ScopeSwitch({
+    required this.full,
+    required this.onChanged,
+    required this.isLight,
+  });
+
+  final bool full;
+  final ValueChanged<bool> onChanged;
+  final bool isLight;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final trackColor =
+        isLight ? cs.surface.withValues(alpha: 0.9) : Colors.white12;
+
+    Widget cell(String label, bool value) {
+      final selected = full == value;
+      final fg = selected
+          ? (isLight ? cs.primary : Colors.white)
+          : (isLight ? cs.onSurface : Colors.white70);
+      return Semantics(
+        button: true,
+        selected: selected,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          onTap: () => onChanged(value),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: selected
+                  ? (isLight ? cs.primary.withValues(alpha: 0.14) : Colors.white24)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+            ),
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: fg, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      key: const ValueKey('play-scope-switch'),
+      // 흰 바탕에서 고르지 않은 '구간' 칸이 떠 보이지 않게 옅은 테두리로 묶는다.
+      decoration: BoxDecoration(
+        color: trackColor,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(
+            color: isLight ? cs.outlineVariant : Colors.white24, width: 0.8),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        cell('구간', false),
+        cell('전체', true),
+      ]),
     );
   }
 }
