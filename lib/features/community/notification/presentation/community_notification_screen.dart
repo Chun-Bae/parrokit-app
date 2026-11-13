@@ -1,3 +1,5 @@
+import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -64,6 +66,15 @@ class _CommunityNotificationScreenState
                   .copyWith(color: context.tokens.textPrimary),
             ),
             actions: [
+              // 알림 설정으로 바로 간다(5차). 메뉴(≡)에도 같은 줄이 있다.
+              IconButton(
+                key: const ValueKey('open-notification-settings'),
+                tooltip: '알림 설정',
+                onPressed: () => context
+                    .push(AppRoutes.communityNotificationSettingsPath),
+                icon: Icon(Icons.settings_outlined,
+                    size: 24, color: context.tokens.textPrimary),
+              ),
               IconButton(
                 onPressed: provider.hasNotifications
                     ? () => _showNotificationActionsSheet(context, provider)

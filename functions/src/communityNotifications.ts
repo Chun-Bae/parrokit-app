@@ -3,6 +3,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions/v1";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {shouldSendPush} from "./notificationPrefs";
 
 const db = admin.firestore();
 
@@ -272,6 +273,14 @@ async function safeSendPushNotification(payload: NotificationPayload): Promise<v
     if (!userSnap.exists) return;
 
     const userData = userSnap.data() as Record<string, unknown>;
+    // 사용자가 이 종류의 푸시를 꺼 두었으면 보내지 않는다(알림 목록에는 이미
+    // 저장됐다). 앱의 커뮤니티 > 알림 설정에서 바꾼다.
+    if (!shouldSendPush(payload.notificationType, userData.notificationPrefs)) {
+      console.log(
+        `[CommunityNotification][FCM] skipped by prefs recipient=${payload.recipientUserId} type=${payload.notificationType}`
+      );
+      return;
+    }
     const tokens = (userData.fcmTokens as unknown[] | undefined)
       ?.map((value) => String(value))
       .filter((token) => token.length > 0) ?? [];

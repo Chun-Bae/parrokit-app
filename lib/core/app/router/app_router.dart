@@ -10,6 +10,7 @@
 // Core Layer > Router
 // ============================================================================
 
+import 'package:parrokit/features/community/notification/presentation/notification_settings_screen.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -135,6 +136,11 @@ GoRouter buildAppRouter({
         path: AppRoutes.communityBlockedUsersPath,
         name: AppRoutes.communityBlockedUsers,
         builder: (context, state) => const BlockedUsersScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.communityNotificationSettingsPath,
+        name: AppRoutes.communityNotificationSettings,
+        builder: (context, state) => const NotificationSettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.communityNotificationPath,

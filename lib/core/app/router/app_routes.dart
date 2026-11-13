@@ -54,6 +54,8 @@ abstract class AppRoutes {
   static const communityVoteView = 'community_vote_view';
   static const communityMenu = 'community_menu';
   static const communityNotification = 'community_notification';
+  static const communityNotificationSettings =
+      'community_notification_settings';
   static const communityActivity = 'community_activity';
   static const communityBlockedUsers = 'community_blocked_users';
 
@@ -74,6 +76,8 @@ abstract class AppRoutes {
   static const communityNotificationPath = '/community/notification';
   static const communityActivityPath = '/community/activity';
   static const communityBlockedUsersPath = '/community/blocked-users';
+  static const communityNotificationSettingsPath =
+      '/community/notification-settings';
   static const explorePath = '/explore';
   static const collectionPath = '/collection';
   static const collectionClipPath = 'clip';

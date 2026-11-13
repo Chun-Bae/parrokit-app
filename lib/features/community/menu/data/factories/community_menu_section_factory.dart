@@ -30,8 +30,14 @@ class CommunityMenuSectionFactory {
           CommunityMenuCategoryEntry(
             title: null,
             items: const [
-              // '알림 설정'은 갈 화면이 없어 눌러도 아무 일이 없었다(5차, 원칙 5).
-              // 알림 설정 화면을 만들면 routePath와 함께 다시 넣는다.
+              // 알림 설정 화면을 만들어 다시 넣었다(5차, 사용자 요청). 전에는
+              // 갈 화면이 없어 눌러도 아무 일이 없었다.
+              CommunityMenuEntry(
+                title: '알림 설정',
+                iconKey: 'notifications',
+                colorKey: 'settings',
+                routePath: AppRoutes.communityNotificationSettingsPath,
+              ),
               CommunityMenuEntry(
                 title: '차단 사용자 관리',
                 iconKey: 'shield',
