@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// 가져오기 시트에서 "완료"로 확정한 결과. 취소하거나 닫으면 시트는 null을 돌려준다.
 class SentenceImportResult {
@@ -25,26 +26,30 @@ Future<SentenceImportResult?> showSentenceImportSheet(
   required Future<String?> Function(ImportedSentence item) addOne,
   required Future<void> Function(String id) removeOne,
 }) =>
-    // 다른 시트와 달리 공통 showAppSheet를 쓰지 않는다. 이 시트는 가져오는
-    // 동안 루트에 진행 창을 띄웠다 닫는데, 공통 시트로 바꾸면 중첩 내비게이터
-    // 안에서 진행 창이 닫히지 않고 남았다(회귀 테스트가 멈춤). 원인을 찾기
-    // 전까지 예전 설정을 그대로 둔다. 화면은 거의 전체 높이라 탭 바와 겹치는
-    // 문제는 적다.
-    showModalBottomSheet<SentenceImportResult>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      enableDrag: false,
-      builder: (context) => SentenceImportSheet(
-        items: items,
-        defaultLanguage: defaultLanguage,
-        existingKeys: existingKeys,
-        addOne: addOne,
-        removeOne: removeOne,
-      ),
-    );
+    // 탭 바는 UiKitView로 띄운 네이티브 뷰라 프레임 밖 위쪽에 그림자를
+    // 드리우고, 그게 시트 위로 희미한 가로선으로 비친다(5차). 공통 시트와
+    // 같게 시트가 떠 있는 동안은 탭 바를 숨긴다.
+    withNavBarHiddenForSheet(() =>
+        // 다른 시트와 달리 공통 showAppSheet를 쓰지 않는다. 이 시트는 가져오는
+        // 동안 루트에 진행 창을 띄웠다 닫는데, 공통 시트로 바꾸면 중첩 내비게이터
+        // 안에서 진행 창이 닫히지 않고 남았다(회귀 테스트가 멈춤). 원인을 찾기
+        // 전까지 예전 설정을 그대로 둔다. 화면은 거의 전체 높이라 탭 바와 겹치는
+        // 문제는 적다.
+        showModalBottomSheet<SentenceImportResult>(
+          context: context,
+          useRootNavigator: true,
+          isScrollControlled: true,
+          useSafeArea: true,
+          showDragHandle: true,
+          enableDrag: false,
+          builder: (context) => SentenceImportSheet(
+            items: items,
+            defaultLanguage: defaultLanguage,
+            existingKeys: existingKeys,
+            addOne: addOne,
+            removeOne: removeOne,
+          ),
+        ));
 
 /// 언어와 문장으로 같은 문장인지 가리는 키.
 String sentenceImportKey(String language, String text) =>

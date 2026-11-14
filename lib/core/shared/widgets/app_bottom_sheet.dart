@@ -22,6 +22,13 @@ import 'package:parrokit/core/app/router/app_shell.dart';
 /// 어차피 탭 바가 가려지므로 숨겨 둔다.
 final ValueNotifier<int> openAppSheetCount = ValueNotifier<int>(0);
 
+/// 공통 시트를 쓰지 않고 showModalBottomSheet를 직접 부르는 곳에서도
+/// 탭 바 숨김만 같이 쓰려고 열어 둔다. [show]가 끝나면 다시 보인다.
+Future<T?> withNavBarHiddenForSheet<T>(Future<T?> Function() show) {
+  openAppSheetCount.value++;
+  return show().whenComplete(() => openAppSheetCount.value--);
+}
+
 /// 지금 화면에 아래 탭 바가 있는지. 라우터 밖(테스트 등)에서는 없다고 본다.
 bool _hasNavBar(BuildContext context) {
   try {
