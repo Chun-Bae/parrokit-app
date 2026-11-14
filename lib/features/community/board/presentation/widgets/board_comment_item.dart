@@ -178,29 +178,38 @@ class BoardCommentItem extends StatelessWidget {
                 if (!isDeleted && !isBlocked)
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: onLike,
-                        child: Row(
-                          children: [
-                            Icon(
-                                isLiked
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                size: 18,
-                                color: isLiked
-                                    ? context.tokens.danger
-                                    : context.tokens.textDisabled),
-                            const SizedBox(width: 4),
-                            Text(
-                              comment.likeCount > 0
-                                  ? '${comment.likeCount}'
-                                  : '좋아요',
-                              style: context.texts.labelMedium.copyWith(
-                                  color: isLiked
-                                      ? context.tokens.danger
-                                      : context.tokens.textDisabled),
+                      // 한 목록 안에서 어떤 댓글은 '4', 어떤 댓글은 '좋아요'로
+                      // 보여 같은 줄인데 다른 것처럼 읽혔다. 늘 수를 보이고,
+                      // 무엇을 누르는지는 이름으로 알린다(5차).
+                      Tooltip(
+                        message: '좋아요',
+                        child: Semantics(
+                          button: true,
+                          label: '좋아요 ${comment.likeCount}',
+                          excludeSemantics: true,
+                          child: GestureDetector(
+                            onTap: onLike,
+                            child: Row(
+                              children: [
+                                Icon(
+                                    isLiked
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    size: 18,
+                                    color: isLiked
+                                        ? context.tokens.danger
+                                        : context.tokens.textDisabled),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${comment.likeCount}',
+                                  style: context.texts.labelMedium.copyWith(
+                                      color: isLiked
+                                          ? context.tokens.danger
+                                          : context.tokens.textDisabled),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 20),

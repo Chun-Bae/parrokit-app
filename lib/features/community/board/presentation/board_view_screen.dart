@@ -19,6 +19,7 @@ import 'package:parrokit/features/community/board/presentation/handlers/board_op
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardViewScreen extends StatefulWidget {
   final String postId;
@@ -277,6 +278,14 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                     onPressed: () => Navigator.maybePop(context),
                     icon:
                         const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
+                  ),
+                  // 질문('질문')·투표('투표') 상세에는 제목이 있는데 여기만
+                  // 없었다. 스크롤을 내리면 어느 탭의 글을 보는 중인지 알 수
+                  // 없었다(5차).
+                  Text(
+                    '게시판',
+                    style: context.texts.titleMedium.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   const Spacer(),
                   // 글별 알림 끄기 버튼은 뺐다(5차). 기능이 없어 흐린 종 아이콘만
