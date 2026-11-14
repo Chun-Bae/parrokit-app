@@ -743,7 +743,9 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                         value: 'script',
                         child: ListTile(
                             leading: Icon(Icons.content_paste_rounded),
-                            title: Text('스크립트 붙여넣어 문장 만들기'))),
+                            // 창 제목과 같은 말로(5차). 예전 '스크립트
+                            // 붙여넣어 문장 만들기'.
+                            title: Text('스크립트로 문장 만들기'))),
                     PopupMenuItem(
                         value: 'import',
                         child: ListTile(
@@ -2234,7 +2236,20 @@ class _ScriptImportSheetState extends State<_ScriptImportSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('스크립트로 문장 만들기', style: context.texts.titleLarge),
+              Row(children: [
+                Expanded(
+                  child: Text('스크립트로 문장 만들기',
+                      style: context.texts.titleLarge),
+                ),
+                // 긴 글을 붙여 넣는 창인데 밀어 내리는 것 말고는 나갈 길이
+                // 없었다(5차).
+                IconButton(
+                  key: const ValueKey('close-script-sheet'),
+                  tooltip: '닫기',
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ]),
               const SizedBox(height: 8),
               Container(
                 key: const ValueKey('script-notice'),

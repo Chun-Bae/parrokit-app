@@ -361,10 +361,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('가져오기·내보내기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('스크립트 붙여넣어 문장 만들기'));
+    // 메뉴 줄과 창 제목이 같은 말이라 둘 다 잡힌다(5차).
+    await tester.tap(find.text('스크립트로 문장 만들기').first);
     await tester.pumpAndSettle();
     // 자동으로 가져오지 않는다는 고지가 보인다.
     expect(find.byKey(const ValueKey('script-notice')), findsOneWidget);
+    // 밀어 내리지 않고도 나갈 수 있다.
+    expect(find.byKey(const ValueKey('close-script-sheet')), findsOneWidget);
     expect(find.textContaining('자동으로 가져오지는 않아요'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('script-input')),
         '0:01\nNice to meet you!\n0:03\nWhere is the station?');
