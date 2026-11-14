@@ -27,7 +27,7 @@ class _FakeActivityRepository implements ActivityRepository {
 
 void main() {
   group('CommunityActivityScreen View', () {
-    testWidgets('질문 게시판 활동 화면이 빈 상태로 렌더링된다', (tester) async {
+    testWidgets('질문 활동 화면이 빈 상태로 렌더링된다', (tester) async {
       final userProvider = _MockUserProvider();
       when(userProvider.currentUser).thenReturn(null);
 
@@ -47,7 +47,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // 메뉴 이름과 같다(5차, 예전 '작성한 댓글').
-      expect(find.text('질문 게시판 - 작성한 답변'), findsOneWidget);
+      // 묶음 이름을 탭과 같게 바꿨다(5차): '질문 게시판' → '질문'.
+      expect(find.text('질문 - 작성한 답변'), findsOneWidget);
       // 빈 화면도 어느 줄로 들어왔는지 말한다(5차, 예전 '아직 활동 내역이
       // 없습니다.').
       expect(find.text('아직 작성한 답변이 없어요.'), findsOneWidget);

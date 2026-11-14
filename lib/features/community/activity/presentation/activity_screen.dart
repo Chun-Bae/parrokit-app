@@ -57,10 +57,11 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
         boardName = '게시판';
         break;
       case 'question':
-        boardName = '질문 게시판';
+        // 메뉴 묶음 이름·탭과 같게(5차).
+        boardName = '질문';
         break;
       case 'vote':
-        boardName = '투표 게시판';
+        boardName = '투표';
         break;
       default:
         boardName = '알 수 없음';

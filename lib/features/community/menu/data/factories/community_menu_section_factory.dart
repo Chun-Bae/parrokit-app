@@ -15,11 +15,13 @@ class CommunityMenuSectionFactory {
             items: _boardItems(),
           ),
           CommunityMenuCategoryEntry(
-            title: '질문 게시판',
+            // 탭 이름과 맞춘다(5차). '질문 게시판'은 위의 '게시판'과 겹쳐
+            // 읽혔다.
+            title: '질문',
             items: _questionItems(),
           ),
           CommunityMenuCategoryEntry(
-            title: '투표 게시판',
+            title: '투표',
             items: _voteItems(),
           ),
         ],
@@ -69,7 +71,7 @@ class CommunityMenuSectionFactory {
       // 읽혔다(5차). 질문 상세의 '답글 쓰기'와 같은 말.
       CommunityMenuEntry(title: '작성한 답글', iconKey: 'chat', colorKey: 'question', boardType: 'question', activityType: 'commented_reply'),
       CommunityMenuEntry(title: '공감한 질문', iconKey: 'thumb_up', colorKey: 'question', boardType: 'question', activityType: 'liked'),
-      CommunityMenuEntry(title: '좋아요한 답변 및 댓글', iconKey: 'favorite', colorKey: 'question', boardType: 'question', activityType: 'liked_comment'),
+      CommunityMenuEntry(title: '좋아요한 답변·답글', iconKey: 'favorite', colorKey: 'question', boardType: 'question', activityType: 'liked_comment'),
       CommunityMenuEntry(title: '스크랩', iconKey: 'bookmark', colorKey: 'question', boardType: 'question', activityType: 'scraped'),
     ];
   }
