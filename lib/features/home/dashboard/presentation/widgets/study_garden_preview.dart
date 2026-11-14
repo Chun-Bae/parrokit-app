@@ -112,8 +112,8 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               ),
             ],
           ),
-          // "연습한 문장이 많을수록 날짜가 진해져요" 부제는 아래 범례(적게~완료)와
-          // 같은 말이라 지웠다.
+          // "연습한 문장이 많을수록 날짜가 진해져요" 부제는 아래 범례
+          // (안 한 날~목표 완료)와 같은 말이라 지웠다.
           const SizedBox(height: 16),
           Row(
             children: [
@@ -235,7 +235,10 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('적게',
+                  // 첫 칸은 '연습 안 한 날' 색이고 마지막 칸은 그날 목표를
+                  // 다 채운 날이다. '적게~완료'로는 무엇의 눈금인지 알기
+                  // 어려웠다(5차).
+                  Text('안 한 날',
                       style: context.texts.labelSmall.copyWith(color: muted)),
                   const SizedBox(width: 5),
                   ...levels.map(
@@ -249,7 +252,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                       ),
                     ),
                   ),
-                  Text('완료',
+                  Text('목표 완료',
                       style: context.texts.labelSmall.copyWith(color: muted)),
                 ],
               ),
