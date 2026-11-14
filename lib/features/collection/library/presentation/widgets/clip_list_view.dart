@@ -16,6 +16,7 @@ import 'mini_chip.dart';
 import 'storage_transfer_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/clip_time_format.dart';
 
 class ClipListView extends StatelessWidget {
   const ClipListView({
@@ -38,13 +39,6 @@ class ClipListView extends StatelessWidget {
   final Set<int> selectedClipIds;
   final ValueChanged<ClipItem>? onToggleSelection;
   final ImageProvider<Object>? Function(ClipItem item)? resolveThumb;
-
-  String _fmtMs(int ms) {
-    final total = ms ~/ 1000;
-    final m = total ~/ 60;
-    final s = total % 60;
-    return '${m.toString().padLeft(2, '0')}분 ${s.toString().padLeft(2, '0')}초';
-  }
 
   String? _storageLabel(String storageMode) {
     if (storageMode == ClipStorageConstants.storageModeLocal) return '로컬';
@@ -317,7 +311,9 @@ class ClipListView extends StatelessWidget {
           itemBuilder: (ctx, i) {
             final item = items[i];
             final clip = item.clip;
-            final dur = _fmtMs(clip.durationMs);
+            // 플레이어·구간 목록과 같은 모양으로 보인다. 예전에는
+            // '00분 06초'라 6초짜리 클립에 '00분'이 붙었다(5차).
+            final dur = clipClock(clip.durationMs);
             final swipeKey = GlobalKey<SwipeActionTileState>();
 
             ImageProvider? thumbProvider;
