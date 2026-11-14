@@ -38,10 +38,10 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
       context.read<UserProvider>().currentUser?.id ?? 'guest';
 
   /// 알림에 띄울 문장 후보. 못 읽어도 알림은 기본 문구로 울린다.
-  Future<List<String>> _sentences() async {
+  Future<List<ReminderCandidate>> _candidates() async {
     try {
       final mine = await MySentenceStore.load(_accountId);
-      return [for (final s in mine) s.text];
+      return reminderCandidatesFor(_accountId, mine);
     } catch (_) {
       return const [];
     }
@@ -53,8 +53,9 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
       _busy = true;
     });
     await PracticeReminder.save(next);
-    final sentences = next.enabled ? await _sentences() : const <String>[];
-    await applyPracticeReminder(settings: next, sentences: sentences);
+    final candidates =
+        next.enabled ? await _candidates() : const <ReminderCandidate>[];
+    await applyPracticeReminder(settings: next, candidates: candidates);
     if (!mounted) return;
     setState(() => _busy = false);
   }
@@ -88,6 +89,12 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
         current.copyWith(hour: picked.hour, minute: picked.minute));
   }
 
+  Future<void> _pickMode(ReminderPick pick) async {
+    final current = _settings;
+    if (current == null || pick == current.pick) return;
+    await _apply(current.copyWith(pick: pick));
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = _settings;
@@ -111,7 +118,7 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
             settings == null
                 ? '불러오는 중…'
                 : settings.enabled
-                    ? '${settings.label}에 따라 말할 문장을 알려 줘요'
+                    ? '${settings.label}에 ${settings.pick.hint}'
                     : '정한 시각에 따라 말할 문장을 알려 줘요',
             style: context.texts.bodySmall
                 .copyWith(color: cs.onSurfaceVariant),
@@ -125,14 +132,48 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
         if (settings != null && settings.enabled)
           Padding(
             padding: const EdgeInsets.only(left: 56, right: 4, bottom: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: const ValueKey('practice-reminder-time'),
-                onPressed: _busy ? null : _pickTime,
-                icon: const Icon(Icons.schedule_rounded, size: 18),
-                label: Text('${settings.label}에 받기'),
-              ),
+            child: Wrap(
+              spacing: 4,
+              children: [
+                TextButton.icon(
+                  key: const ValueKey('practice-reminder-time'),
+                  onPressed: _busy ? null : _pickTime,
+                  icon: const Icon(Icons.schedule_rounded, size: 18),
+                  label: Text('${settings.label}에 받기'),
+                ),
+                PopupMenuButton<ReminderPick>(
+                  key: const ValueKey('practice-reminder-pick'),
+                  enabled: !_busy,
+                  initialValue: settings.pick,
+                  tooltip: '문장 고르는 방식',
+                  onSelected: _pickMode,
+                  itemBuilder: (context) => [
+                    for (final pick in ReminderPick.values)
+                      PopupMenuItem<ReminderPick>(
+                        value: pick,
+                        child: Text(pick.label),
+                      ),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.swap_vert_rounded,
+                            size: 18, color: cs.primary),
+                        const SizedBox(width: 6),
+                        Text(settings.pick.label,
+                            style: TextStyle(
+                                color: cs.primary,
+                                fontWeight: FontWeight.w600)),
+                        Icon(Icons.keyboard_arrow_down,
+                            size: 18, color: cs.primary),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
       ],

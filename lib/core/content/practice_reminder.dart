@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +16,7 @@ class PracticeReminder {
   static const hourKey = 'parrokit.practice_reminder.hour.v1';
   static const minuteKey = 'parrokit.practice_reminder.minute.v1';
   static const linesKey = 'parrokit.practice_reminder.lines.v1';
+  static const pickKey = 'parrokit.practice_reminder.pick.v1';
 
   /// 기본 시각(저녁 8시).
   static const defaultHour = 20;
@@ -30,6 +32,7 @@ class PracticeReminder {
       enabled: prefs.getBool(enabledKey) ?? false,
       hour: prefs.getInt(hourKey) ?? defaultHour,
       minute: prefs.getInt(minuteKey) ?? defaultMinute,
+      pick: reminderPickFromKey(prefs.getString(pickKey)),
     );
   }
 
@@ -38,6 +41,7 @@ class PracticeReminder {
     await prefs.setBool(enabledKey, settings.enabled);
     await prefs.setInt(hourKey, settings.hour);
     await prefs.setInt(minuteKey, settings.minute);
+    await prefs.setString(pickKey, settings.pick.key);
   }
 
   /// 알림에 띄우려고 적어 둔 문장.
@@ -63,22 +67,64 @@ class PracticeReminder {
   }
 }
 
+/// 어떤 문장을 어떤 차례로 알릴지.
+enum ReminderPick {
+  /// 저장한 차례대로 하나씩.
+  inOrder('in_order', '저장한 순서대로', '저장한 차례대로 하나씩 알려 줘요'),
+
+  /// 섞어서. 예약할 때 한 번 섞고 그 차례를 쓴다.
+  random('random', '랜덤', '문장을 섞어서 번갈아 알려 줘요'),
+
+  /// 따라 말한 횟수가 적은 문장부터.
+  leastPracticed('least_practiced', '덜 익숙한 순', '따라 말한 횟수가 적은 문장부터 알려 줘요');
+
+  const ReminderPick(this.key, this.label, this.hint);
+
+  final String key;
+  final String label;
+  final String hint;
+}
+
+ReminderPick reminderPickFromKey(String? key) {
+  for (final pick in ReminderPick.values) {
+    if (pick.key == key) return pick;
+  }
+  return ReminderPick.inOrder;
+}
+
+/// 알림에 띄울 문장 후보. 고르는 방식에 따라 연습 기록도 본다.
+class ReminderCandidate {
+  const ReminderCandidate({
+    required this.text,
+    this.practiceCount = 0,
+    this.lastPracticedAt,
+  });
+
+  final String text;
+  final int practiceCount;
+  final DateTime? lastPracticedAt;
+}
+
 class PracticeReminderSettings {
   const PracticeReminderSettings({
     required this.enabled,
     required this.hour,
     required this.minute,
+    this.pick = ReminderPick.inOrder,
   });
 
   final bool enabled;
   final int hour;
   final int minute;
+  final ReminderPick pick;
 
-  PracticeReminderSettings copyWith({bool? enabled, int? hour, int? minute}) =>
+  PracticeReminderSettings copyWith(
+          {bool? enabled, int? hour, int? minute, ReminderPick? pick}) =>
       PracticeReminderSettings(
         enabled: enabled ?? this.enabled,
         hour: hour ?? this.hour,
         minute: minute ?? this.minute,
+        pick: pick ?? this.pick,
       );
 
   /// '오후 8:00'처럼 보여 준다.
@@ -113,6 +159,50 @@ List<DateTime> reminderTimes(
     for (var i = 0; i < days; i++)
       DateTime(first.year, first.month, first.day + i, hour, minute),
   ];
+}
+
+/// 고르는 방식대로 후보의 차례를 정한다. 빈 문장은 뺀다.
+///
+/// 랜덤은 예약할 때 한 번만 섞는다. 알림 하나하나를 그때 뽑을 수 없기
+/// 때문이다(기기에 미리 예약해 둔다).
+List<String> orderReminderLines(
+  List<ReminderCandidate> candidates,
+  ReminderPick pick, {
+  Random? random,
+}) {
+  final usable = [
+    for (final c in candidates)
+      if (c.text.trim().isNotEmpty)
+        ReminderCandidate(
+          text: c.text.trim(),
+          practiceCount: c.practiceCount,
+          lastPracticedAt: c.lastPracticedAt,
+        ),
+  ];
+  if (usable.isEmpty) return const [];
+  switch (pick) {
+    case ReminderPick.inOrder:
+      break;
+    case ReminderPick.random:
+      usable.shuffle(random ?? Random());
+    case ReminderPick.leastPracticed:
+      // 횟수가 같으면 오래 안 한 문장부터. 한 번도 안 한 문장이 가장 앞.
+      final order = {for (var i = 0; i < usable.length; i++) usable[i]: i};
+      usable.sort((a, b) {
+        final byCount = a.practiceCount.compareTo(b.practiceCount);
+        if (byCount != 0) return byCount;
+        final at = a.lastPracticedAt;
+        final bt = b.lastPracticedAt;
+        if (at == null && bt != null) return -1;
+        if (at != null && bt == null) return 1;
+        if (at != null && bt != null) {
+          final byTime = at.compareTo(bt);
+          if (byTime != 0) return byTime;
+        }
+        return order[a]!.compareTo(order[b]!);
+      });
+  }
+  return [for (final c in usable) c.text];
 }
 
 /// 알림에 넣을 문장을 날짜 수만큼 고른다. 문장이 적으면 돌려 쓴다.

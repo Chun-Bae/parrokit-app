@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -118,6 +120,64 @@ void main() {
       expect(await PracticeReminder.loadLines(), isEmpty);
       await PracticeReminder.saveLines(['Hello', 'Bye']);
       expect(await PracticeReminder.loadLines(), ['Hello', 'Bye']);
+    });
+
+    test('문장 고르는 방식도 그대로 남는다', () async {
+      expect((await PracticeReminder.load()).pick, ReminderPick.inOrder);
+      await PracticeReminder.save(const PracticeReminderSettings(
+          enabled: true, hour: 7, minute: 5, pick: ReminderPick.random));
+      expect((await PracticeReminder.load()).pick, ReminderPick.random);
+    });
+
+    test('모르는 방식이 적혀 있으면 순서대로로 읽는다', () {
+      expect(reminderPickFromKey(null), ReminderPick.inOrder);
+      expect(reminderPickFromKey('없는값'), ReminderPick.inOrder);
+      expect(reminderPickFromKey('least_practiced'),
+          ReminderPick.leastPracticed);
+    });
+  });
+
+  group('문장 고르는 방식', () {
+    ReminderCandidate c(String text, {int count = 0, DateTime? at}) =>
+        ReminderCandidate(text: text, practiceCount: count, lastPracticedAt: at);
+
+    final day = DateTime(2026, 11, 1);
+    final candidates = [
+      c('much', count: 5, at: day),
+      c('never'),
+      c('once-old', count: 1, at: day),
+      c('once-new', count: 1, at: day.add(const Duration(days: 3))),
+    ];
+
+    test('순서대로는 저장한 차례 그대로', () {
+      expect(orderReminderLines(candidates, ReminderPick.inOrder),
+          ['much', 'never', 'once-old', 'once-new']);
+    });
+
+    test('덜 익숙한 순은 횟수 적은 순, 같으면 오래 안 한 순', () {
+      expect(orderReminderLines(candidates, ReminderPick.leastPracticed),
+          ['never', 'once-old', 'once-new', 'much']);
+    });
+
+    test('랜덤은 차례만 바꾸고 문장을 빠뜨리지 않는다', () {
+      final shuffled =
+          orderReminderLines(candidates, ReminderPick.random, random: Random(1));
+      expect(shuffled..sort(), ['much', 'never', 'once-new', 'once-old']);
+    });
+
+    test('어느 방식이든 빈 문장은 빼고 앞뒤 공백을 지운다', () {
+      for (final pick in ReminderPick.values) {
+        expect(orderReminderLines([c('  a  '), c('   ')], pick), ['a'],
+            reason: pick.key);
+        expect(orderReminderLines(const [], pick), isEmpty, reason: pick.key);
+      }
+    });
+
+    test('정한 차례대로 날짜 수만큼 돌려 쓴다', () {
+      final ordered =
+          orderReminderLines(candidates, ReminderPick.leastPracticed);
+      expect(pickReminderLines(ordered, 6),
+          ['never', 'once-old', 'once-new', 'much', 'never', 'once-old']);
     });
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -6,6 +8,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:parrokit/core/content/practice_reminder.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
+import 'package:parrokit/core/content/default_conversation_sentences.dart';
+import 'package:parrokit/core/content/sentence_activity_store.dart';
 
 /// 기기에서 예약하는 알림. 서버(FCM)를 거치지 않는다.
 ///
@@ -107,11 +111,13 @@ class LocalNotificationService {
 
 /// 설정대로 연습 알림을 다시 예약한다. 꺼져 있으면 모두 지운다.
 ///
-/// [sentences]는 알림에 띄울 후보. 예약하는 이 순간에 읽어 둔 내 문장이다.
+/// [candidates]는 알림에 띄울 후보. 예약하는 이 순간에 읽어 둔 내 문장이다.
+/// 차례는 설정의 고르는 방식(순서·랜덤·덜 익숙한 순)대로 정한다.
 Future<void> applyPracticeReminder({
   required PracticeReminderSettings settings,
-  required List<String> sentences,
+  required List<ReminderCandidate> candidates,
   DateTime? now,
+  Random? random,
 }) async {
   if (!settings.enabled) {
     await LocalNotificationService.cancelPracticeReminders();
@@ -119,7 +125,9 @@ Future<void> applyPracticeReminder({
     return;
   }
   final times = reminderTimes(now ?? DateTime.now(), settings.hour, settings.minute);
-  final lines = pickReminderLines(sentences, times.length);
+  final ordered =
+      orderReminderLines(candidates, settings.pick, random: random);
+  final lines = pickReminderLines(ordered, times.length);
   await PracticeReminder.saveLines(lines);
   await LocalNotificationService.schedulePracticeReminders(
       times: times, lines: lines);
@@ -133,15 +141,42 @@ Future<void> refreshPracticeReminder(String accountId) async {
   try {
     final settings = await PracticeReminder.load();
     if (!settings.enabled) return;
-    var sentences = await PracticeReminder.loadLines();
+    var candidates = [
+      for (final text in await PracticeReminder.loadLines())
+        ReminderCandidate(text: text),
+    ];
     try {
       final mine = await MySentenceStore.load(accountId);
-      if (mine.isNotEmpty) sentences = [for (final s in mine) s.text];
+      if (mine.isNotEmpty) {
+        candidates = await reminderCandidatesFor(accountId, mine);
+      }
     } catch (_) {
       // 못 읽으면 지난번에 적어 둔 문장을 그대로 쓴다.
     }
-    await applyPracticeReminder(settings: settings, sentences: sentences);
+    await applyPracticeReminder(settings: settings, candidates: candidates);
   } catch (e) {
     AppLogger.e('[Reminder] 앱 시작 때 다시 예약 실패', error: e);
   }
+}
+
+/// 내 문장에 이 기기의 연습 기록을 붙여 알림 후보로 만든다.
+/// 기록을 못 읽으면 횟수 0으로 둔다('덜 익숙한 순'은 저장한 차례가 된다).
+Future<List<ReminderCandidate>> reminderCandidatesFor(
+  String accountId,
+  List<DefaultConversationSentence> sentences,
+) async {
+  Map<String, SentenceActivity> activity = const {};
+  try {
+    activity = await SentenceActivityStore.loadAll(accountId);
+  } catch (e) {
+    AppLogger.e('[Reminder] 연습 기록 읽기 실패', error: e);
+  }
+  return [
+    for (final s in sentences)
+      ReminderCandidate(
+        text: s.text,
+        practiceCount: activity[s.id]?.practiceCount ?? 0,
+        lastPracticedAt: activity[s.id]?.lastPracticedAt,
+      ),
+  ];
 }
