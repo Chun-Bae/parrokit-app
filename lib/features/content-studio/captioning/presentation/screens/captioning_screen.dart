@@ -140,21 +140,51 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
                       16,
                       16 + MediaQuery.of(context).padding.bottom,
                     ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: (vm.isSaving || vm.isSttProcessing)
-                            ? null
-                            : vm.save,
-                        child: vm.isSaving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('저장'),
-                      ),
+                    // 제목·폴더 입력칸은 Provider를 깨우지 않으므로 버튼만
+                    // 따로 듣는다. 글자를 칠 때마다 화면 전체를 다시 그리지
+                    // 않는다.
+                    child: ListenableBuilder(
+                      listenable: Listenable.merge(
+                          [vm.titleCtl, vm.collectionNameCtl]),
+                      builder: (context, _) {
+                        final blocked = vm.saveBlockedReason;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ElevatedButton(
+                              onPressed: (vm.isSaving ||
+                                      vm.isSttProcessing ||
+                                      blocked != null)
+                                  ? null
+                                  : vm.save,
+                              child: vm.isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : const Text('저장'),
+                            ),
+                            if (blocked != null && !vm.isSaving) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                blocked,
+                                key: const ValueKey('save-blocked-reason'),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],

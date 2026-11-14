@@ -26,17 +26,36 @@ class ClipValidator {
   static const int maxDurationMs = 5 * 60 * 1000;
   static final RegExp timecodePattern = RegExp(r'^\d{2}:\d{2}\.\d{3}$');
 
+  /// 영상을 고르기 전에도 알 수 있는 것만 본다. 저장 버튼을 끌 때 쓴다.
+  ///
+  /// 막는 까닭은 [validateForm]이 쓰는 말과 똑같이 둔다. 버튼 아래 안내와
+  /// 눌렀을 때 토스트가 다른 말이면 더 헷갈린다(5차).
+  static String? blockedReason({
+    required String filePath,
+    required String folder,
+    required String title,
+  }) {
+    if (filePath.trim().isEmpty) return noFileMessage;
+    if (folder.trim().isEmpty) return noFolderMessage;
+    if (title.trim().isEmpty) return noTitleMessage;
+    return null;
+  }
+
+  static const noFileMessage = '영상 파일을 먼저 선택해 주세요.';
+  static const noFolderMessage = '폴더를 골라 주세요.';
+  static const noTitleMessage = '클립 제목을 적어 주세요.';
+
   ValidationResult validateForm(ClipFormData form) {
     if (form.filePath == null || form.filePath!.isEmpty) {
-      return const ValidationResult.invalid('영상 파일을 먼저 선택해 주세요.');
+      return const ValidationResult.invalid(noFileMessage);
     }
 
     if (form.collectionName == null || form.collectionName!.trim().isEmpty) {
-      return const ValidationResult.invalid('폴더를 골라 주세요.');
+      return const ValidationResult.invalid(noFolderMessage);
     }
 
     if (form.clipTitle.trim().isEmpty) {
-      return const ValidationResult.invalid('클립 제목을 적어 주세요.');
+      return const ValidationResult.invalid(noTitleMessage);
     }
 
     if (form.durationMs == null || form.durationMs! <= 0) {

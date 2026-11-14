@@ -330,6 +330,18 @@ class CaptioningProvider extends ChangeNotifier
   // ─────────────────────────────────────────────────────────────────
 
   /// 클립과 세그먼트 정보를 저장합니다.
+  /// 지금 저장할 수 없는 까닭. 저장할 수 있으면 null.
+  ///
+  /// 전에는 아무것도 안 고른 새 클립 화면에서도 '저장'이 파랗게 켜져 있었다.
+  /// 눌러야만 '영상 파일을 먼저 선택해 주세요' 토스트가 떴다(5차). 못 누르게
+  /// 하고 무엇이 빠졌는지 버튼 아래에 적는다. 영상 길이·구간처럼 영상을
+  /// 골라야 알 수 있는 것은 그대로 누를 때 알린다.
+  String? get saveBlockedReason => ClipValidator.blockedReason(
+        filePath: picked?.path ?? '',
+        folder: collectionNameCtl.text,
+        title: titleCtl.text,
+      );
+
   Future<void> save() async {
     final stagedPath = picked?.path;
     if (stagedPath == null || stagedPath.isEmpty) {

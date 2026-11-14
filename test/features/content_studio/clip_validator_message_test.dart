@@ -39,4 +39,39 @@ void main() {
       expect(m, isNot(contains('필드')));
     }
   });
+
+  group('저장 버튼을 끌 때 쓰는 까닭', () {
+    test('영상 → 폴더 → 제목 순으로 알린다', () {
+      expect(
+          ClipValidator.blockedReason(filePath: '', folder: '', title: ''),
+          ClipValidator.noFileMessage);
+      expect(
+          ClipValidator.blockedReason(
+              filePath: '/tmp/a.mp4', folder: '  ', title: ''),
+          ClipValidator.noFolderMessage);
+      expect(
+          ClipValidator.blockedReason(
+              filePath: '/tmp/a.mp4', folder: '여행', title: '   '),
+          ClipValidator.noTitleMessage);
+      expect(
+          ClipValidator.blockedReason(
+              filePath: '/tmp/a.mp4', folder: '여행', title: '오사카'),
+          isNull);
+    });
+
+    test('버튼 아래 안내와 눌렀을 때 문구가 같다', () {
+      final validator = ClipValidator();
+      String? formMessage(ClipFormData form) =>
+          validator.validateForm(form).errorMessage;
+
+      expect(
+          formMessage(const ClipFormData(
+              filePath: null,
+              collectionName: null,
+              clipTitle: '',
+              durationMs: null,
+              segments: [])),
+          ClipValidator.blockedReason(filePath: '', folder: '', title: ''));
+    });
+  });
 }
