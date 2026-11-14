@@ -64,7 +64,7 @@ class LocalNotificationService {
 
   static Future<void> cancelPracticeReminders() async {
     await init();
-    for (var i = 0; i < PracticeReminder.scheduleDays; i++) {
+    for (var i = 0; i < PracticeReminder.maxPending; i++) {
       try {
         await plugin.cancel(practiceIdBase + i);
       } catch (_) {/* 없는 알림을 지우는 것은 그냥 넘어간다 */}
@@ -124,9 +124,16 @@ Future<void> applyPracticeReminder({
     await PracticeReminder.saveLines(const []);
     return;
   }
-  final times = reminderTimes(now ?? DateTime.now(), settings.hour, settings.minute);
-  final ordered =
-      orderReminderLines(candidates, settings.pick, random: random);
+  final times = reminderTimes(
+    now ?? DateTime.now(),
+    settings.hour,
+    settings.minute,
+    intervalMinutes: settings.intervalMinutes,
+    endHour: settings.endHour,
+  );
+  final chosen =
+      chosenReminderCandidates(candidates, await PracticeReminder.loadChosen());
+  final ordered = orderReminderLines(chosen, settings.pick, random: random);
   final lines = pickReminderLines(ordered, times.length);
   await PracticeReminder.saveLines(lines);
   await LocalNotificationService.schedulePracticeReminders(
@@ -175,6 +182,7 @@ Future<List<ReminderCandidate>> reminderCandidatesFor(
     for (final s in sentences)
       ReminderCandidate(
         text: s.text,
+        id: s.id,
         practiceCount: activity[s.id]?.practiceCount ?? 0,
         lastPracticedAt: activity[s.id]?.lastPracticedAt,
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_reminder.dart';
 import 'package:parrokit/core/infrastructure/services/local_notification_service.dart';
@@ -8,6 +9,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/features/settings/more/presentation/widgets/reminder_sentence_picker.dart';
 
 /// 더보기 > 앱의 '연습 알림' 줄. 켜면 정한 시각에 기기가 알려 준다.
 /// 서버를 쓰지 않으므로 비용이 들지 않고 오프라인에서도 울린다.
@@ -20,6 +22,7 @@ class PracticeReminderTile extends StatefulWidget {
 
 class _PracticeReminderTileState extends State<PracticeReminderTile> {
   PracticeReminderSettings? _settings;
+  Set<String> _chosen = const {};
   bool _busy = false;
 
   @override
@@ -30,8 +33,12 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
 
   Future<void> _load() async {
     final loaded = await PracticeReminder.load();
+    final chosen = await PracticeReminder.loadChosen();
     if (!mounted) return;
-    setState(() => _settings = loaded);
+    setState(() {
+      _settings = loaded;
+      _chosen = chosen;
+    });
   }
 
   String get _accountId =>
@@ -89,6 +96,51 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
         current.copyWith(hour: picked.hour, minute: picked.minute));
   }
 
+  Future<void> _pickInterval(int minutes) async {
+    final current = _settings;
+    if (current == null || minutes == current.intervalMinutes) return;
+    await _apply(current.copyWith(intervalMinutes: minutes));
+  }
+
+  /// 간격으로 받을 때 그날 그만 받을 시각.
+  Future<void> _pickEndHour() async {
+    final current = _settings;
+    if (current == null) return;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: current.endHour, minute: 0),
+      helpText: '알림을 그만 받을 시각',
+    );
+    if (!mounted || picked == null) return;
+    await _apply(current.copyWith(endHour: picked.hour));
+  }
+
+  /// 알림에 쓸 문장 고르기.
+  Future<void> _pickSentences() async {
+    setState(() => _busy = true);
+    List<DefaultConversationSentence> sentences = const [];
+    try {
+      sentences = await MySentenceStore.load(_accountId);
+    } catch (_) {
+      // 못 읽으면 빈 목록으로 연다(창이 그 사정을 알린다).
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _busy = false);
+    final picked = await showReminderSentencePicker(
+      context: context,
+      sentences: sentences,
+      chosen: _chosen,
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _chosen = picked);
+    await PracticeReminder.saveChosen(picked);
+    final current = _settings;
+    // 고른 문장이 바로 반영되게 다시 예약한다.
+    if (current != null && current.enabled) await _apply(current);
+  }
+
   Future<void> _pickMode(ReminderPick pick) async {
     final current = _settings;
     if (current == null || pick == current.pick) return;
@@ -118,7 +170,7 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
             settings == null
                 ? '불러오는 중…'
                 : settings.enabled
-                    ? '${settings.label}에 ${settings.pick.hint}'
+                    ? '${settings.whenLabel} ${settings.pick.hint}'
                     : '정한 시각에 따라 말할 문장을 알려 줘요',
             style: context.texts.bodySmall
                 .copyWith(color: cs.onSurfaceVariant),
@@ -139,7 +191,55 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
                   key: const ValueKey('practice-reminder-time'),
                   onPressed: _busy ? null : _pickTime,
                   icon: const Icon(Icons.schedule_rounded, size: 18),
-                  label: Text('${settings.label}에 받기'),
+                  label: Text(settings.repeats
+                      ? '${settings.label}부터'
+                      : '${settings.label}에 받기'),
+                ),
+                if (settings.repeats)
+                  TextButton.icon(
+                    key: const ValueKey('practice-reminder-end'),
+                    onPressed: _busy ? null : _pickEndHour,
+                    icon: const Icon(Icons.bedtime_outlined, size: 18),
+                    label: Text('${reminderHourLabel(settings.endHour)}까지'),
+                  ),
+                PopupMenuButton<int>(
+                  key: const ValueKey('practice-reminder-interval'),
+                  enabled: !_busy,
+                  initialValue: settings.intervalMinutes,
+                  tooltip: '알림 간격',
+                  onSelected: _pickInterval,
+                  itemBuilder: (context) => [
+                    for (final minutes in reminderIntervalChoices)
+                      PopupMenuItem<int>(
+                        value: minutes,
+                        child: Text(reminderIntervalLabel(minutes)),
+                      ),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.repeat_rounded, size: 18, color: cs.primary),
+                        const SizedBox(width: 6),
+                        Text(reminderIntervalLabel(settings.intervalMinutes),
+                            style: TextStyle(
+                                color: cs.primary,
+                                fontWeight: FontWeight.w600)),
+                        Icon(Icons.keyboard_arrow_down,
+                            size: 18, color: cs.primary),
+                      ],
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('practice-reminder-sentences'),
+                  onPressed: _busy ? null : _pickSentences,
+                  icon: const Icon(Icons.format_quote_rounded, size: 18),
+                  label: Text(_chosen.isEmpty
+                      ? '문장 고르기'
+                      : '고른 문장 ${_chosen.length}개'),
                 ),
                 PopupMenuButton<ReminderPick>(
                   key: const ValueKey('practice-reminder-pick'),

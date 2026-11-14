@@ -17,10 +17,20 @@ class PracticeReminder {
   static const minuteKey = 'parrokit.practice_reminder.minute.v1';
   static const linesKey = 'parrokit.practice_reminder.lines.v1';
   static const pickKey = 'parrokit.practice_reminder.pick.v1';
+  static const intervalKey = 'parrokit.practice_reminder.interval.v1';
+  static const endHourKey = 'parrokit.practice_reminder.end_hour.v1';
+  static const chosenKey = 'parrokit.practice_reminder.chosen.v1';
 
-  /// 기본 시각(저녁 8시).
+  /// 기본 시각(저녁 8시). 간격으로 받을 때는 그날 첫 알림 시각이다.
   static const defaultHour = 20;
   static const defaultMinute = 0;
+
+  /// 간격으로 받을 때 그날 알림을 그만 받는 시각(기본 밤 10시).
+  static const defaultEndHour = 22;
+
+  /// 한 번에 예약해 둘 수 있는 알림 수. iOS가 64개까지만 들고 있어서
+  /// 조금 남겨 둔다(다른 알림이 끼어도 밀리지 않게).
+  static const maxPending = 60;
 
   /// 한 번에 예약해 두는 날수. iOS는 예약 알림을 64개까지만 들고 있어서
   /// 넉넉히 잡아도 이 아래면 된다. 앱을 열 때마다 다시 채운다.
@@ -33,6 +43,8 @@ class PracticeReminder {
       hour: prefs.getInt(hourKey) ?? defaultHour,
       minute: prefs.getInt(minuteKey) ?? defaultMinute,
       pick: reminderPickFromKey(prefs.getString(pickKey)),
+      intervalMinutes: prefs.getInt(intervalKey) ?? 0,
+      endHour: prefs.getInt(endHourKey) ?? defaultEndHour,
     );
   }
 
@@ -42,6 +54,8 @@ class PracticeReminder {
     await prefs.setInt(hourKey, settings.hour);
     await prefs.setInt(minuteKey, settings.minute);
     await prefs.setString(pickKey, settings.pick.key);
+    await prefs.setInt(intervalKey, settings.intervalMinutes);
+    await prefs.setInt(endHourKey, settings.endHour);
   }
 
   /// 알림에 띄우려고 적어 둔 문장.
@@ -64,6 +78,17 @@ class PracticeReminder {
   static Future<void> saveLines(List<String> lines) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(linesKey, jsonEncode(lines));
+  }
+
+  /// 알림에 쓸 문장으로 고른 것들의 id. 비어 있으면 내 문장 전부를 쓴다.
+  static Future<Set<String>> loadChosen() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {...?prefs.getStringList(chosenKey)};
+  }
+
+  static Future<void> saveChosen(Set<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(chosenKey, ids.toList());
   }
 }
 
@@ -96,13 +121,35 @@ ReminderPick reminderPickFromKey(String? key) {
 class ReminderCandidate {
   const ReminderCandidate({
     required this.text,
+    this.id = '',
     this.practiceCount = 0,
     this.lastPracticedAt,
   });
 
   final String text;
+
+  /// 내 문장 id. 고른 문장만 쓸 때 이 id로 가린다.
+  final String id;
   final int practiceCount;
   final DateTime? lastPracticedAt;
+}
+
+/// 고를 수 있는 간격(분). 0은 하루 한 번. 가장 짧은 간격은 1분이다
+/// (사용자와 정함). 짧게 잡으면 기기가 들고 있을 수 있는 수(maxPending)에서
+/// 끊기지만, 앱을 열 때마다 다시 채운다.
+const reminderIntervalChoices = <int>[0, 1, 5, 10, 30, 60, 120, 180, 360];
+
+String reminderIntervalLabel(int minutes) {
+  if (minutes <= 0) return '하루 한 번';
+  if (minutes < 60) return '$minutes분마다';
+  final hours = minutes ~/ 60;
+  final rest = minutes % 60;
+  return rest == 0 ? '$hours시간마다' : '$hours시간 $rest분마다';
+}
+
+String reminderHourLabel(int hour) {
+  final h12 = hour % 12 == 0 ? 12 : hour % 12;
+  return '${hour >= 12 ? '오후' : '오전'} $h12시';
 }
 
 class PracticeReminderSettings {
@@ -111,6 +158,8 @@ class PracticeReminderSettings {
     required this.hour,
     required this.minute,
     this.pick = ReminderPick.inOrder,
+    this.intervalMinutes = 0,
+    this.endHour = PracticeReminder.defaultEndHour,
   });
 
   final bool enabled;
@@ -118,14 +167,35 @@ class PracticeReminderSettings {
   final int minute;
   final ReminderPick pick;
 
-  PracticeReminderSettings copyWith(
-          {bool? enabled, int? hour, int? minute, ReminderPick? pick}) =>
+  /// 몇 분마다 받을지. 0이면 하루 한 번([hour]:[minute]에).
+  final int intervalMinutes;
+
+  /// 간격으로 받을 때 그날 알림을 그만 받는 시각.
+  final int endHour;
+
+  bool get repeats => intervalMinutes > 0;
+
+  PracticeReminderSettings copyWith({
+    bool? enabled,
+    int? hour,
+    int? minute,
+    ReminderPick? pick,
+    int? intervalMinutes,
+    int? endHour,
+  }) =>
       PracticeReminderSettings(
         enabled: enabled ?? this.enabled,
         hour: hour ?? this.hour,
         minute: minute ?? this.minute,
         pick: pick ?? this.pick,
+        intervalMinutes: intervalMinutes ?? this.intervalMinutes,
+        endHour: endHour ?? this.endHour,
       );
+
+  /// 언제 받는지 한 줄로. '오후 8:00에' 또는 '오전 9:00~오후 10시, 2시간마다'.
+  String get whenLabel => repeats
+      ? '$label~${reminderHourLabel(endHour)}, ${reminderIntervalLabel(intervalMinutes)}'
+      : '$label에';
 
   /// '오후 8:00'처럼 보여 준다.
   String get label {
@@ -142,23 +212,61 @@ class PracticeReminderSettings {
 /// 바로 울려 버린다(5차, 사용자와 정함).
 const reminderMinLead = Duration(seconds: 10);
 
-/// [now] 다음으로 오는 알림 시각들. 오늘 그 시각이 지났거나
-/// [minLead]보다 가까우면 내일부터.
+/// [now] 다음으로 오는 알림 시각들.
+///
+/// [intervalMinutes]가 0이면 하루 한 번 [hour]:[minute]에. 0보다 크면 그날
+/// [hour]:[minute]부터 [endHour]시까지 그 간격마다. 어느 쪽이든 지금보다
+/// [minLead]만큼은 뒤의 것만 담고, 기기가 들고 있을 수 있는 수([maxCount])에서
+/// 끊는다.
 List<DateTime> reminderTimes(
   DateTime now,
   int hour,
   int minute, {
   int days = PracticeReminder.scheduleDays,
   Duration minLead = reminderMinLead,
+  int intervalMinutes = 0,
+  int endHour = PracticeReminder.defaultEndHour,
+  int maxCount = PracticeReminder.maxPending,
 }) {
-  var first = DateTime(now.year, now.month, now.day, hour, minute);
-  if (first.difference(now) < minLead) {
-    first = first.add(const Duration(days: 1));
+  if (intervalMinutes <= 0) {
+    var first = DateTime(now.year, now.month, now.day, hour, minute);
+    if (first.difference(now) < minLead) {
+      first = first.add(const Duration(days: 1));
+    }
+    return [
+      for (var i = 0; i < days && i < maxCount; i++)
+        DateTime(first.year, first.month, first.day + i, hour, minute),
+    ];
   }
-  return [
-    for (var i = 0; i < days; i++)
-      DateTime(first.year, first.month, first.day + i, hour, minute),
+
+  final earliest = now.add(minLead);
+  final times = <DateTime>[];
+  for (var day = 0; day < days && times.length < maxCount; day++) {
+    final start = DateTime(now.year, now.month, now.day + day, hour, minute);
+    final end = DateTime(now.year, now.month, now.day + day, endHour, 0);
+    var at = start;
+    // 시작이 끝보다 늦으면(예: 밤 11시 시작, 밤 10시까지) 그날은 한 번만.
+    final last = end.isBefore(start) ? start : end;
+    while (!at.isAfter(last) && times.length < maxCount) {
+      if (!at.isBefore(earliest)) times.add(at);
+      at = at.add(Duration(minutes: intervalMinutes));
+    }
+  }
+  return times;
+}
+
+/// 고른 문장만 남긴다. 고른 것이 없으면(또는 고른 문장이 모두 지워졌으면)
+/// 전부 쓴다. 알림이 아예 안 오는 것보다 낫다.
+List<ReminderCandidate> chosenReminderCandidates(
+  List<ReminderCandidate> candidates,
+  Set<String> chosenIds,
+) {
+  if (chosenIds.isEmpty) return candidates;
+  final kept = [
+    for (final c in candidates)
+      if (chosenIds.contains(c.id)) c,
   ];
+  return kept.isEmpty ? candidates : kept;
 }
 
 /// 고르는 방식대로 후보의 차례를 정한다. 빈 문장은 뺀다.
@@ -175,6 +283,7 @@ List<String> orderReminderLines(
       if (c.text.trim().isNotEmpty)
         ReminderCandidate(
           text: c.text.trim(),
+          id: c.id,
           practiceCount: c.practiceCount,
           lastPracticedAt: c.lastPracticedAt,
         ),

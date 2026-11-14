@@ -137,6 +137,123 @@ void main() {
     });
   });
 
+  group('간격으로 받기', () {
+    test('간격을 주면 시작 시각부터 끝 시각까지 그 간격마다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
+          days: 1, intervalMinutes: 180, endHour: 18);
+      expect(times, [
+        DateTime(2026, 11, 14, 9),
+        DateTime(2026, 11, 14, 12),
+        DateTime(2026, 11, 14, 15),
+        DateTime(2026, 11, 14, 18),
+      ]);
+    });
+
+    test('끝 시각에 딱 떨어지지 않으면 넘기지 않는다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
+          days: 1, intervalMinutes: 300, endHour: 18);
+      expect(times, [DateTime(2026, 11, 14, 9), DateTime(2026, 11, 14, 14)]);
+    });
+
+    test('오늘 이미 지난 칸은 빼고 다음 칸부터', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 13, 30), 9, 0,
+          days: 2, intervalMinutes: 120, endHour: 17);
+      expect(times.first, DateTime(2026, 11, 14, 15));
+      expect(times[1], DateTime(2026, 11, 14, 17));
+      expect(times[2], DateTime(2026, 11, 15, 9));
+    });
+
+    test('너무 가까운 칸(10초 안쪽)도 건너뛴다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 14, 59, 55), 9, 0,
+          days: 1, intervalMinutes: 120, endHour: 17);
+      expect(times.first, DateTime(2026, 11, 14, 17));
+    });
+
+    test('기기가 들고 있을 수 있는 수에서 끊는다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 0), 9, 0,
+          days: 14, intervalMinutes: 30, endHour: 22, maxCount: 5);
+      expect(times.length, 5);
+      expect(times.last, DateTime(2026, 11, 14, 11));
+    });
+
+    test('시작이 끝보다 늦으면 그날은 한 번만', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 8), 23, 0,
+          days: 2, intervalMinutes: 60, endHour: 22);
+      expect(times, [DateTime(2026, 11, 14, 23), DateTime(2026, 11, 15, 23)]);
+    });
+
+    test('가장 짧은 간격은 1분이고 그대로 예약한다', () {
+      expect(reminderIntervalChoices.where((m) => m > 0).reduce(min), 1);
+      final times = reminderTimes(DateTime(2026, 11, 14, 8, 59), 9, 0,
+          days: 1, intervalMinutes: 1, endHour: 10, maxCount: 3);
+      expect(times, [
+        DateTime(2026, 11, 14, 9),
+        DateTime(2026, 11, 14, 9, 1),
+        DateTime(2026, 11, 14, 9, 2),
+      ]);
+    });
+
+    test('간격이 0이면 예전처럼 하루 한 번', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
+          days: 2, intervalMinutes: 0);
+      expect(times, [DateTime(2026, 11, 14, 9), DateTime(2026, 11, 15, 9)]);
+    });
+
+    test('간격과 끝 시각을 저장하고 다시 읽는다', () async {
+      expect((await PracticeReminder.load()).intervalMinutes, 0);
+      await PracticeReminder.save(const PracticeReminderSettings(
+          enabled: true,
+          hour: 9,
+          minute: 0,
+          intervalMinutes: 120,
+          endHour: 18));
+      final s = await PracticeReminder.load();
+      expect(s.intervalMinutes, 120);
+      expect(s.endHour, 18);
+      expect(s.repeats, isTrue);
+    });
+
+    test('언제 받는지 한 줄로 말한다', () {
+      const once =
+          PracticeReminderSettings(enabled: true, hour: 20, minute: 0);
+      expect(once.whenLabel, '오후 8:00에');
+      expect(
+          once
+              .copyWith(hour: 9, intervalMinutes: 120, endHour: 22)
+              .whenLabel,
+          '오전 9:00~오후 10시, 2시간마다');
+      expect(reminderIntervalLabel(0), '하루 한 번');
+      expect(reminderIntervalLabel(1), '1분마다');
+      expect(reminderIntervalLabel(30), '30분마다');
+      expect(reminderIntervalLabel(90), '1시간 30분마다');
+    });
+  });
+
+  group('알림에 쓸 문장 고르기', () {
+    ReminderCandidate c(String id) => ReminderCandidate(id: id, text: id);
+    final all = [c('a'), c('b'), c('c')];
+
+    test('고른 것이 없으면 전부 쓴다', () {
+      expect(chosenReminderCandidates(all, const {}), all);
+    });
+
+    test('고른 문장만 쓴다', () {
+      expect(
+          chosenReminderCandidates(all, {'a', 'c'}).map((e) => e.id).toList(),
+          ['a', 'c']);
+    });
+
+    test('고른 문장이 모두 사라졌으면 전부 쓴다(알림이 멈추지 않게)', () {
+      expect(chosenReminderCandidates(all, {'지워진-문장'}), all);
+    });
+
+    test('고른 문장 id를 저장하고 다시 읽는다', () async {
+      expect(await PracticeReminder.loadChosen(), isEmpty);
+      await PracticeReminder.saveChosen({'a', 'b'});
+      expect(await PracticeReminder.loadChosen(), {'a', 'b'});
+    });
+  });
+
   group('문장 고르는 방식', () {
     ReminderCandidate c(String text, {int count = 0, DateTime? at}) =>
         ReminderCandidate(text: text, practiceCount: count, lastPracticedAt: at);
