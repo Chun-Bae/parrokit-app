@@ -8,6 +8,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -105,7 +106,7 @@ class _TipDialog extends StatelessWidget {
               color: cs.primary,
               title: '베타 테스트 중',
               body:
-                  '현재 베타 테스트 기간으로, 결제 기능이 임시로 빠진 상태예요. 정식 출시 시 결제 기능이 추가될 예정이에요.',
+                  '지금은 베타 테스트 기간이라 결제 기능이 빠져 있어요. 정식으로 나오면 결제 기능이 생겨요.',
             ),
             const SizedBox(height: AppSpacing.xl),
 
@@ -161,9 +162,11 @@ class _TipItem extends StatelessWidget {
               Text(title,
                   style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
+              // 여러 줄을 이어 읽는 글이라 작고 굵은 bodySmall(12, w600)로는
+              // 읽기 힘들었다. 커뮤니티 글과 같은 읽기용 굵기로(5차).
               Text(body,
-                  style: tt.bodySmall
-                      ?.copyWith(color: cs.onSurfaceVariant, height: 1.5)),
+                  style: context.texts.bodyReading
+                      .copyWith(color: cs.onSurfaceVariant, height: 1.5)),
             ],
           ),
         ),
