@@ -14,6 +14,7 @@
 // - SegmentTimeline, SegmentList, CircleIconButton 등: UI 위젯
 // ============================================================================
 
+import 'package:parrokit/features/collection/clip/player/presentation/audio_only_label.dart';
 import 'dart:math' as math;
 
 import 'package:go_router/go_router.dart';
@@ -651,8 +652,11 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                 ),
               ),
               TogglePill(
+                key: const ValueKey('audio-only-toggle'),
                 icon: Icons.headphones_rounded,
-                label: '백그라운드',
+                // '백그라운드'는 하는 일을 말해 주지 않았다. 화면을 끄거나 앱을
+                // 내려도 소리가 이어진다는 뜻이다(5차).
+                label: audioOnlyLabel,
                 active: vm.isBackground,
                 onTap: vm.toggleAudioOnlyMode,
                 isLight: isLight,
@@ -670,6 +674,20 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
               ),
             ],
           ),
+          // 소리만 듣는 동안은 화면·자막·속도 조작이 모두 꺼진다. 왜 흐린지
+          // 알려 주지 않으면 고장처럼 보였다(5차).
+          if (vm.isBackground)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                audioOnlyNotice,
+                key: const ValueKey('audio-only-notice'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isLight
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Colors.white70),
+              ),
+            ),
         ],
       ),
     );
