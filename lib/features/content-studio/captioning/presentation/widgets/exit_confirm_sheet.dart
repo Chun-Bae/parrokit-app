@@ -33,14 +33,15 @@ Future<bool?> showExitConfirmSheet(BuildContext context) {
               ),
               const SizedBox(height: 16),
               Text(
-                '편집을 취소하시겠습니까?',
+                // 다른 나가기 확인(문장 추가·글쓰기)과 같은 말투로(5차).
+                '편집을 그만둘까요?',
                 style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                '지금 나가면 입력한 모든 내용이 삭제됩니다.',
+                '지금 나가면 적은 내용이 모두 사라져요.',
                 style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                       color: cs.onSurface.withValues(alpha: 0.7),
                     ),

@@ -713,7 +713,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
             children: [
               _TabButton(
                 icon: Icons.auto_awesome_rounded,
-                label: '자동자막',
+                // 가격표·안내와 같은 띄어쓰기로(5차).
+                label: '자동 자막',
                 isActive: false,
                 isGradient: true,
                 onTap: widget.onSttRequest ?? () {},
@@ -721,7 +722,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
               const SizedBox(width: 8),
               _TabButton(
                 icon: Icons.list_alt_rounded,
-                label: 'A-B 리스트',
+                // 'A-B 리스트'는 반은 영어, 반은 외래어였다(5차).
+                label: '구간 목록',
                 isActive: _isExpanded[1],
                 onTap: () => setState(() => _isExpanded[1] = !_isExpanded[1]),
               ),
@@ -737,7 +739,9 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
               const SizedBox(width: 8),
               _TabButton(
                 icon: Icons.info_outline_rounded,
-                label: '메타데이터',
+                // '메타데이터'는 개발 용어다. 이 칸은 제목·폴더 같은
+                // 클립 정보를 보여 준다(5차).
+                label: '클립 정보',
                 isActive: _isExpanded[0],
                 onTap: () => setState(() => _isExpanded[0] = !_isExpanded[0]),
               ),
