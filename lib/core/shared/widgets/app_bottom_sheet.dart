@@ -61,6 +61,10 @@ Future<T?> showAppSheet<T>({
     isScrollControlled: fullHeight,
     isDismissible: dismissible,
     enableDrag: dismissible,
+    // 화면을 거의 채우는 시트는 위가 상태 표시줄·노치에 가린다. 예전에는
+    // 시트마다 useSafeArea를 켰는데, 공통으로 모으며 빠뜨려 문장 상세 위쪽
+    // 칩과 아이콘이 시계에 가렸다(5차).
+    useSafeArea: true,
     // 떠 있는 카드 모양으로 그리려고 시트 자체는 투명하게 둔다.
     backgroundColor: Colors.transparent,
     elevation: 0,
