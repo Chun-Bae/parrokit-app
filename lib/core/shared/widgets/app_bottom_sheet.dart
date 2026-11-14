@@ -13,12 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_shell.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
-import 'package:parrokit/core/shared/theme/app_theme.dart';
-
-/// 탭 바가 차지하는 높이(안전 영역 제외). app_bottom_navbar.dart와 같아야 한다.
-const double _navBarSpace = AppTheme.bottomNavHeight +
-    6 * 2 + // bottomNavPadding
-    8; // bottomNavMargin bottom
 
 /// 지금 화면에 아래 탭 바가 있는지. 라우터 밖(테스트 등)에서는 없다고 본다.
 bool _hasNavBar(BuildContext context) {
@@ -29,11 +23,12 @@ bool _hasNavBar(BuildContext context) {
   }
 }
 
-/// 지금 화면에서 바텀시트가 띄워야 할 아래 여백.
-double appSheetBottomGap(BuildContext context) {
-  final inset = MediaQuery.paddingOf(context).bottom;
-  return _hasNavBar(context) ? _navBarSpace + inset : inset;
-}
+/// 시트 안쪽 아래 여백. 시트가 탭 바를 덮으므로 안전 영역만 띄운다.
+///
+/// 한때 탭 바 높이만큼 더 띄워 탭 바 위에 떠 있게 했는데, 아래가 비어 보여
+/// 되돌렸다(5차, 사용자 의견).
+double appSheetBottomGap(BuildContext context) =>
+    MediaQuery.paddingOf(context).bottom;
 
 /// 앱 공통 바텀시트. [builder]가 그린 내용만 넣으면 된다.
 ///
@@ -78,7 +73,11 @@ Future<T?> showAppSheet<T>({
   );
 }
 
-/// 바텀시트 안쪽 면. 모서리·테두리·그림자·아래 여백을 맡는다.
+/// 바텀시트 안쪽 면. 아래 여백과 손잡이만 맡는다.
+///
+/// 한때 양옆 여백·테두리·그림자를 준 '떠 있는 카드'로 그렸는데, 기본
+/// 바텀시트와 달라 어색했다(5차, 사용자 의견). 화면 아래에 붙고 위 모서리만
+/// 둥근 보통 모양으로 되돌렸다.
 class AppSheetSurface extends StatelessWidget {
   const AppSheetSurface({
     super.key,
@@ -89,7 +88,7 @@ class AppSheetSurface extends StatelessWidget {
 
   final Widget child;
 
-  /// 아래 탭 바와 안전 영역을 피할 여백.
+  /// 더 이상 쓰지 않는다. 안전 영역은 시트 안쪽 내용이 맡는다.
   final double gap;
   final bool showHandle;
 
@@ -97,27 +96,19 @@ class AppSheetSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      // 키보드가 올라오면 그만큼 위로 밀어 입력칸이 가리지 않게 한다.
-      padding: EdgeInsets.only(
-        left: 8,
-        right: 8,
-        bottom: keyboard > 0 ? keyboard + 8 : gap,
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          // 뒤에 막이 없어도 떠 있는 것으로 보이게 한다.
-          border: Border.all(color: colors.outlineVariant),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 24,
-              offset: const Offset(0, -4),
-            ),
-          ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
         ),
+      ),
+      child: Padding(
+        // 키보드가 올라오면 그만큼 위로 밀어 입력칸이 가리지 않게 한다.
+        // 키보드가 없을 때는 아무것도 더하지 않는다. 안전 영역은 시트 안쪽
+        // 내용이 저마다 SafeArea로 처리한다. 여기서 또 띄웠더니 마지막 줄
+        // 아래에 흰 칸이 하나 더 생겨 보였다(5차, 사용자 의견).
+        padding: EdgeInsets.only(bottom: keyboard),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -133,15 +124,7 @@ class AppSheetSurface extends StatelessWidget {
                   ),
                 ),
               ),
-            // 아래 여백은 이 위젯이 이미 뒀다. 시트 안에서 SafeArea를 또
-            // 쓰면 여백이 두 번 들어가 카드 아래가 비어 보였다.
-            Flexible(
-              child: MediaQuery.removePadding(
-                context: context,
-                removeBottom: true,
-                child: child,
-              ),
-            ),
+            Flexible(child: child),
           ],
         ),
       ),
