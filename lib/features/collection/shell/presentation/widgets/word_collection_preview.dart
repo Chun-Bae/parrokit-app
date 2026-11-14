@@ -906,6 +906,15 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                       : '${index + 1} / ${queue.length}',
                   style: context.texts.bodySmall
                       .copyWith(color: colors.onSurfaceVariant)),
+              // 중간에 그만둘 길이 시트를 밀어 내리는 것뿐이었다(5차).
+              // 다른 창처럼 닫기 버튼을 둔다. 고른 답은 그때그때 저장되니
+              // 닫아도 지금까지 한 복습은 남는다.
+              IconButton(
+                key: const ValueKey('close-word-review'),
+                tooltip: '닫기',
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.close_rounded),
+              ),
             ]),
             const SizedBox(height: 8),
             LinearProgressIndicator(

@@ -159,6 +159,28 @@ void main() {
     expect(reviews.values.single.step, 1);
   });
 
+  testWidgets('복습 중에 닫기로 그만둘 수 있고 고른 답은 남는다', (tester) async {
+    await MyWordStore.add('guest', language: '영어', word: 'subtle', meaning: '미묘한');
+    await MyWordStore.add('guest', language: '영어', word: 'vivid', meaning: '생생한');
+    await openWordTab(tester);
+    await tester.tap(find.byKey(const ValueKey('start-word-review')));
+    await tester.pumpAndSettle();
+
+    // 첫 단어만 '알아요'로 고르고 닫는다.
+    await tester.tap(find.byKey(const ValueKey('reveal-word')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-known')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('close-word-review')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('review-word')), findsNothing);
+    final reviews = await WordReviewStore.loadAll('guest');
+    expect(reviews.values.where((r) => r.step == 1).length, 1);
+    // 남은 한 개는 아직 오늘 복습에 있다.
+    expect(find.byKey(const ValueKey('start-word-review')), findsOneWidget);
+  });
+
   testWidgets("'다시' 고른 단어는 창을 닫지 않고 한 번 더 본다", (tester) async {
     await MyWordStore.add('guest',
         language: '영어', word: 'subtle', meaning: '미묘한');
