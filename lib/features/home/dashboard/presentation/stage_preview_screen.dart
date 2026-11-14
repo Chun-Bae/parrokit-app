@@ -1637,7 +1637,9 @@ class _HomeHelpDialog extends StatelessWidget {
         (Icons.headphones_rounded, '듣기', '켜면 앵무새가 문장을 소리 내어 읽어 줘요.'),
         (Icons.skip_next_rounded, '이전 · 다음', '앞뒤 문장으로 넘어가요.'),
         (Icons.pause_rounded, '멈춤 · 재생', '앵무새 말하기를 잠시 멈추거나 다시 시작해요.'),
-        (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 아무 순서로 바꿔요.'),
+        // 버튼에 적히는 말 그대로 적는다(5차). 190에서 '아무 순서'로 바꿨다가
+          // 화면 라벨('랜덤')과 어긋나 되돌렸다.
+          (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 랜덤으로 바꿔요.'),
         (Icons.queue_music_rounded, '목록', '문장 목록에서 바로 골라요.'),
       ]
     ),

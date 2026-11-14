@@ -550,7 +550,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('repeat-affinity')), findsOneWidget);
     expect(find.text('Lv.1 낯선'), findsOneWidget);
-    expect(find.text('3점 남음'), findsOneWidget);
+    expect(find.text('다음 단계까지 3점'), findsOneWidget);
     await tester.ensureVisible(find.byKey(complete));
     await tester.tap(find.byKey(complete));
     await tester.pump();
@@ -558,7 +558,7 @@ void main() {
     await tester.tap(find.byTooltip('이전 문장'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('1점 남음'), findsOneWidget);
+    expect(find.text('다음 단계까지 1점'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('말풍선을 누르면 문장 정보 시트가 열린다', (tester) async {

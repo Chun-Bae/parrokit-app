@@ -57,7 +57,9 @@ class SentenceAffinityBar extends StatelessWidget {
                       .copyWith(fontWeight: FontWeight.w800)),
           if (compact && !loading) ...[
             const Spacer(),
-            Text(affinity.isMax ? 'MAX' : '$remaining점 남음',
+            // 무엇이 몇 점 남았는지 말한다(5차). 예전 '3점 남음'·'MAX'로는
+            // 무슨 점수인지 알 수 없었다(아래 설명 줄은 compact에서 숨는다).
+            Text(affinity.isMax ? '최고 단계' : '다음 단계까지 $remaining점',
                 style: context.texts.labelSmall
                     .copyWith(color: colors.onSurfaceVariant)),
           ],
