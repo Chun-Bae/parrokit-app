@@ -25,6 +25,7 @@ import 'nest_preview.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/core/content/speaking_xp.dart';
 
 enum _SpeakingMode { automatic, repeat }
 
@@ -167,7 +168,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   String get gapKey => 'parrokit.speaking.gap_seconds.v1.${widget.accountId}';
   String get phrasesKey =>
       'parrokit.speaking.phrases.v1.${widget.accountId}.${widget.language}';
-  int get level => totalXp ~/ 10 + 1;
+  int get level => speakingLevel(totalXp);
 
   Future<void> loadXp() async {
     try {
@@ -204,24 +205,13 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     } catch (_) {/* 저장하지 못해도 이번 실행에서는 바뀐 설정을 쓴다. */}
   }
 
-  /// 점수(0~1)에 비례해 XP를 준다. 100점이면 1 XP. 점수 없이 직접 넘기면 최소값만 준다.
-  static const _minXpGain = 0.1;
-
-  /// XP를 소수 첫째 자리까지만 보여준다. (예: 3.5 → '3.5', 4.0 → '4')
-  String xpText(double value) {
-    final rounded = (value * 10).round() / 10;
-    return rounded == rounded.roundToDouble()
-        ? '${rounded.round()}'
-        : rounded.toStringAsFixed(1);
-  }
-
   Future<bool> awardXp(double? score) async {
     final key = xpKey;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final gain = math.max(_minXpGain, score ?? 0).clamp(0.0, 1.0);
-      final previous = math.max(0, (prefs.get(key) as num?)?.toDouble() ?? 0);
-      final next = ((previous + gain) * 100).round() / 100;
+      final gain = xpGain(score);
+      final previous = (prefs.get(key) as num?)?.toDouble() ?? 0;
+      final next = nextXp(previous, gain);
       if (!await prefs.setDouble(key, next)) {
         throw StateError('XP save failed');
       }
@@ -893,7 +883,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
             Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                    xpReady ? '${xpText(totalXp % 10)} / 10 XP' : 'XP 불러오는 중…',
+                    xpReady
+                        ? '${xpProgressText(totalXp)} / 10 XP'
+                        : 'XP 불러오는 중…',
                     style: context.texts.labelSmall.copyWith(color: muted))),
           ])),
       Container(
