@@ -80,7 +80,14 @@ class LocalNotificationService {
     await cancelPracticeReminders();
 
     const details = NotificationDetails(
-      iOS: DarwinNotificationDetails(),
+      // 앱을 보고 있는 동안에도 뜨게 한다(5차, 사용자 요청). iOS 쪽
+      // AppDelegate도 연습 알림은 배너로 띄우도록 함께 고쳤다.
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBanner: true,
+        presentList: true,
+        presentSound: true,
+      ),
       android: AndroidNotificationDetails(
         'practice_reminder',
         '연습 알림',
