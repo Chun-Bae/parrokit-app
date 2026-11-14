@@ -422,7 +422,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                 child: Text(
-                  '새 학습 재료',
+                  // '재료'는 앱의 다른 곳에서 쓰지 않는 말이었다(5차).
+                  // 아래 줄들이 모두 '…추가'이니 묻는 말로 둔다.
+                  '무엇을 추가할까요?',
                   style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),

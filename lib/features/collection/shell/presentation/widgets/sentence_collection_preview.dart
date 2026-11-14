@@ -1313,7 +1313,9 @@ class _ExploreStrip extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(children: [
-          Text('둘러보기', style: context.texts.titleLarge),
+          // 홈에서는 같은 것을 '공유 문장'이라 부른다. 홈의 '전체 보기'로
+          // 오면 제목이 달라 다른 곳처럼 보였다(5차).
+          Text('공유 문장 둘러보기', style: context.texts.titleLarge),
           const Spacer(),
           // 볼 문장이 없는데도 '전체 보기'가 있어서 누르면 빈 화면만 열렸다(5차).
           if (loading || (!failed && sentences.isNotEmpty))
