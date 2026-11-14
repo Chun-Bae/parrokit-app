@@ -36,6 +36,11 @@ abstract final class AppTextScale {
   static const labelLarge =
       TextStyle(fontSize: 14, fontWeight: FontWeight.w800);
   static const bodyLarge = TextStyle(fontSize: 15, fontWeight: FontWeight.w700);
+
+  /// 여러 줄을 이어 읽는 글(게시글 본문, 댓글)용. 다른 역할은 모두 굵어서
+  /// (w600~w900) 긴 글이 통째로 굵게 보이고 제목과 구분되지 않았다(5차).
+  static const bodyReading =
+      TextStyle(fontSize: 15, fontWeight: FontWeight.w400);
   static const titleMedium =
       TextStyle(fontSize: 16, fontWeight: FontWeight.w800);
   static const titleLarge =
@@ -66,6 +71,10 @@ class AppTexts {
   TextStyle get bodyMedium => _theme.bodyMedium ?? AppTextScale.bodyMedium;
   TextStyle get labelLarge => _theme.labelLarge ?? AppTextScale.labelLarge;
   TextStyle get bodyLarge => _theme.bodyLarge ?? AppTextScale.bodyLarge;
+
+  /// 긴 글용. 테마에는 슬롯이 없어 스케일에서 가져오고 색만 본문색을 따른다.
+  TextStyle get bodyReading =>
+      AppTextScale.bodyReading.copyWith(color: bodyLarge.color);
   TextStyle get titleMedium => _theme.titleMedium ?? AppTextScale.titleMedium;
   TextStyle get titleLarge => _theme.titleLarge ?? AppTextScale.titleLarge;
   TextStyle get headlineSmall =>

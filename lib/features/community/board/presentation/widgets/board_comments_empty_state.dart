@@ -16,7 +16,7 @@ class BoardCommentsEmptyState extends StatelessWidget {
         const SizedBox(height: 130),
         Center(
           child: Text(
-            '첫 댓글을 남겨보세요',
+            '첫 댓글을 남겨 보세요',
             style: context.texts.titleMedium
                 .copyWith(color: context.tokens.textTertiary),
           ),

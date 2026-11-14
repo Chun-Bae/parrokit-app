@@ -30,7 +30,8 @@ class BoardPostContentSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             post.content.replaceAll(RegExp(r'!\[.*?\]\(.*?\)'), '').trim(),
-            style: context.texts.titleMedium
+            // 본문이 제목과 같은 굵기(w800)라 글 전체가 제목처럼 보였다(5차).
+            style: context.texts.bodyReading
                 .copyWith(height: 1.6, color: context.tokens.textPrimary),
           ),
         ),

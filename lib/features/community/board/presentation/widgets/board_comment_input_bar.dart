@@ -91,7 +91,7 @@ class BoardCommentInputBar extends StatelessWidget {
                               style: context.texts.titleMedium
                                   .copyWith(color: colorScheme.onSurface),
                               decoration: InputDecoration(
-                                hintText: '댓글을 입력해주세요.',
+                                hintText: '댓글을 남겨 보세요',
                                 fillColor: colorScheme.surfaceContainerHigh,
                                 // 안내 글자는 친 글자와 같은 크기로. 예전엔 titleLarge라
                                 // 친 글자보다 크고 굵었다(5차).

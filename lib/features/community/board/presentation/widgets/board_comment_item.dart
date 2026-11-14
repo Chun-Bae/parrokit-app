@@ -168,11 +168,12 @@ class BoardCommentItem extends StatelessWidget {
                       : isBlocked
                           ? '차단된 사용자의 댓글입니다.'
                           : comment.content,
-                  style: context.texts.bodyLarge.copyWith(
+                  // 댓글도 이름·날짜와 같이 굵어서 위아래 구분이 없었다(5차).
+                  style: context.texts.bodyReading.copyWith(
                       color: isDeleted
                           ? context.tokens.textDisabled
                           : colorScheme.onSurface,
-                      height: 1.35),
+                      height: 1.45),
                 ),
                 const SizedBox(height: 10),
                 if (!isDeleted && !isBlocked)
