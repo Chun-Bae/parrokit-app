@@ -11,6 +11,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/content/sentence_mastery.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -364,7 +365,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     )
                   else if (_lastChangedAt != null)
                     Text(
-                      '마지막 변경일: ${_lastChangedAt!.year}년 ${_lastChangedAt!.month}월 ${_lastChangedAt!.day}일 · 바꾸면 30일 동안 다시 바꿀 수 없어요',
+                      nicknameReadyNote(DateTime.now(), _lastChangedAt!),
                       style: context.texts.bodySmall
                           .copyWith(color: cs.onSurface.withValues(alpha: 0.4)),
                     )
@@ -393,6 +394,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
 /// 닉네임을 아직 바꿀 수 없을 때 안내. [remainingDays]일 뒤에 바꿀 수 있다.
 @visibleForTesting
+/// 30일이 지나 지금 바꿀 수 있을 때의 안내.
+///
+/// 예전엔 '마지막 변경일: 2026년 5월 27일 · 바꾸면 30일 동안 다시 바꿀 수
+/// 없어요'만 적혀서, 지금 바꿀 수 있는지 알 수 없었다. 날짜도 앱의 다른
+/// 곳(문장 기록·알림)과 달리 늘 연도를 붙였다(5차).
+String nicknameReadyNote(DateTime now, DateTime lastChangedAt) =>
+    '지금 바꿀 수 있어요. 마지막으로 바꾼 날은 '
+    '${relativeDayLabel(now, lastChangedAt)}이고, '
+    '바꾸면 30일 동안 다시 바꿀 수 없어요.';
+
 String nicknameCooldownNote(int remainingDays) => remainingDays <= 1
     ? '닉네임은 30일에 한 번 바꿀 수 있어요. 내일부터 바꿀 수 있어요.'
     : '닉네임은 30일에 한 번 바꿀 수 있어요. $remainingDays일 뒤에 바꿀 수 있어요.';
