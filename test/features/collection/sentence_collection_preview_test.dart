@@ -194,6 +194,49 @@ void main() {
     expect((await SentenceActivityStore.load('guest', id)).liked, isTrue);
   });
 
+  testWidgets('좋아요한 문장은 목록에서도 표시가 보인다', (tester) async {
+    await MySentenceStore.add('guest',
+        language: '영어', text: 'Liked sentence', translation: '좋아요 문장');
+    await MySentenceStore.add('guest',
+        language: '영어', text: 'Plain sentence', translation: '그냥 문장');
+    await SentenceActivityStore.setLiked(
+        'guest', MySentenceStore.idFor('영어', 'Liked sentence'), true);
+
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+
+    // 전에는 상세에서 누른 하트가 저장만 되고 어디에도 안 보여서, 눌러도
+    // 달라지는 게 없는 단추였다.
+    expect(find.byKey(const ValueKey('sentence-liked-mark')), findsOneWidget);
+    expect(find.text('Liked sentence'), findsOneWidget);
+    expect(find.text('Plain sentence'), findsOneWidget);
+  });
+
+  testWidgets('상세에서 좋아요를 누르면 목록 표시가 바로 바뀐다', (tester) async {
+    await MySentenceStore.add('guest',
+        language: '영어', text: 'Liked sentence', translation: '좋아요 문장');
+
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sentence-liked-mark')), findsNothing);
+
+    await tester.tap(find.text('Liked sentence'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('like-sentence')));
+    await tester.pumpAndSettle();
+    Navigator.of(tester.element(find.byKey(const ValueKey('like-sentence'))))
+        .pop();
+    await tester.pumpAndSettle();
+
+    // 전에는 목록이 활동 기록 변화를 듣지 않아서, 앱을 다시 켤 때까지
+    // 하트가 안 보였다.
+    expect(find.byKey(const ValueKey('sentence-liked-mark')), findsOneWidget);
+  });
+
   testWidgets('둘러보기에는 공유된 문장만 작성자와 함께 나온다', (tester) async {
     await seedShared();
     await tester.pumpWidget(exploreApp());

@@ -91,7 +91,22 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   void initState() {
     super.initState();
     SentenceActivityStore.revision.addListener(reload);
+    // 좋아요·친밀도·메모처럼 목록 자체는 그대로인 변화. 전에는 듣지 않아서,
+    // 상세에서 하트를 눌러도 목록은 앱을 다시 켤 때까지 그대로였다(5차).
+    SentenceActivityStore.activityRevision.addListener(reloadActivities);
     SharedSentenceRepository.revision.addListener(reloadSharedQuietly);
+  }
+
+  /// 문장 목록은 그대로 두고 활동 기록만 다시 읽는다.
+  Future<void> reloadActivities() async {
+    final requested = accountId;
+    try {
+      final loaded = await SentenceActivityStore.loadAll(requested);
+      if (!mounted || requested != accountId) return;
+      setState(() => activities = loaded);
+    } catch (_) {
+      // 못 읽으면 지금 값을 그대로 둔다.
+    }
   }
 
   /// 공개·공개 취소·공개한 문장 삭제가 있으면 둘러보기 목록을 조용히 다시 읽는다.
@@ -102,6 +117,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   @override
   void dispose() {
     SentenceActivityStore.revision.removeListener(reload);
+    SentenceActivityStore.activityRevision.removeListener(reloadActivities);
     SharedSentenceRepository.revision.removeListener(reloadSharedQuietly);
     super.dispose();
   }
@@ -1210,6 +1226,19 @@ class _MySentenceTile extends StatelessWidget {
               ],
             ),
           ),
+          // 상세에서 누르는 하트가 저장만 되고 어디에도 안 보였다. 눌러도
+          // 달라지는 게 없어서 아무 일도 안 하는 단추처럼 보였다(5차).
+          if (activity.liked) ...[
+            Tooltip(
+              message: '좋아요한 문장',
+              child: Icon(Icons.favorite_rounded,
+                  key: const ValueKey('sentence-liked-mark'),
+                  size: 16,
+                  semanticLabel: '좋아요한 문장',
+                  color: context.collectionTokens.liked),
+            ),
+            const SizedBox(width: 6),
+          ],
           Icon(Icons.chevron_right_rounded,
               color: colors.onSurface.withValues(alpha: 0.35)),
         ]),
