@@ -641,7 +641,8 @@ class VoteCard extends StatelessWidget {
             // ── 설명 ──
             Text(
               item.content,
-              style: context.texts.bodyMedium
+              // 투표 설명도 다른 긴 글과 같은 굵기로(5차).
+              style: context.texts.bodyReading
                   .copyWith(color: cs.onSurface, height: 1.45),
             ),
             const SizedBox(height: 20),

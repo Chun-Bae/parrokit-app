@@ -411,7 +411,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                         : isBlocked
                             ? '차단된 사용자의 댓글입니다.'
                             : comment.content,
-                    style: context.texts.bodyMedium.copyWith(
+                    // 게시판 댓글과 같은 크기·굵기로(5차).
+                    style: context.texts.bodyReading.copyWith(
                         color: isDeleted
                             ? context.tokens.textDisabled
                             : colorScheme.onSurface,
@@ -643,7 +644,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       onChanged: (_) => setState(() {}),
                       onSubmitted: (_) => _submitComment(),
                       decoration: InputDecoration(
-                        hintText: '댓글 남기기',
+                        hintText: '댓글을 남겨 보세요',
                         fillColor: colorScheme.surfaceContainerHigh,
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,

@@ -88,14 +88,15 @@ class BoardCommentInputBar extends StatelessWidget {
                               focusNode: focusNode,
                               onChanged: onChanged,
                               onSubmitted: (_) => onSubmit(),
-                              style: context.texts.titleMedium
+                              // 치는 글도 읽는 글과 같은 굵기로(5차).
+                              style: context.texts.bodyReading
                                   .copyWith(color: colorScheme.onSurface),
                               decoration: InputDecoration(
                                 hintText: '댓글을 남겨 보세요',
                                 fillColor: colorScheme.surfaceContainerHigh,
                                 // 안내 글자는 친 글자와 같은 크기로. 예전엔 titleLarge라
                                 // 친 글자보다 크고 굵었다(5차).
-                                hintStyle: context.texts.titleMedium.copyWith(
+                                hintStyle: context.texts.bodyReading.copyWith(
                                     color: colorScheme.onSurfaceVariant),
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,

@@ -450,8 +450,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           const SizedBox(height: 12),
           Text(
             question.content,
-            style: context.texts.titleMedium
-                .copyWith(color: colorScheme.onSurface, height: 1.5),
+            // 본문이 제목과 같은 굵기라 글 전체가 제목처럼 보였다(5차).
+            style: context.texts.bodyReading
+                .copyWith(color: colorScheme.onSurface, height: 1.6),
           ),
           const SizedBox(height: 16),
           if (question.hasImage && question.imageUrls.isNotEmpty)
@@ -741,7 +742,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   ),
                 Text(
                   isBlocked ? '차단된 사용자의 답변입니다.' : answer.content,
-                  style: context.texts.bodyLarge
+                  style: context.texts.bodyReading
                       .copyWith(color: colorScheme.onSurface, height: 1.45),
                 ),
                 const SizedBox(height: 12),
@@ -880,7 +881,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       controller: _replyController,
                       focusNode: _replyFocusNode,
                       decoration: InputDecoration(
-                        hintText: '답글 남기기...',
+                        hintText: '답글을 남겨 보세요',
                         hintStyle: context.texts.bodyMedium
                             .copyWith(color: colorScheme.onSurfaceVariant),
                         border: InputBorder.none,
