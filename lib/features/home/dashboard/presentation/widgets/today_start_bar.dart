@@ -37,7 +37,10 @@ class TodayStartBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(done ? '오늘 목표 완료' : '오늘 목표',
+              // 무엇을 세는지 적는다. 이 수는 무대에서 앵무새를 따라 말한
+              // 문장만 센다. 옆의 '학습하기'(영상 학습)는 세지 않아서, 영상을
+              // 보고 와도 그대로라 헷갈렸다(5차).
+              Text(done ? '오늘 목표 완료' : '오늘 목표 · 따라 말하기',
                   style: context.texts.labelMedium
                       .copyWith(color: done ? palette.good : palette.muted)),
               const SizedBox(height: 2),
