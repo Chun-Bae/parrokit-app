@@ -148,7 +148,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                   onTap: () {
                     Navigator.pop(modalContext);
                     provider.updateChatbotMode('video');
-                    provider.sendMessage('비디오(영상) 생성을 진행하고 싶어');
+                    provider.sendMessage('영상 만들기를 하고 싶어');
                   },
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   child: Container(
@@ -202,7 +202,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '🎬 AI 비디오 생성 요청',
+                                '🎬 영상 만들기',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: context.tokens.textPrimary,
@@ -210,7 +210,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '텍스트 시나리오를 바탕으로 멋진 비디오 씬을 기획합니다.',
+                                '적어 둔 이야기로 영상 장면을 짜 줘요.',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: context.tokens.textSecondary,
                                   height: 1.3,

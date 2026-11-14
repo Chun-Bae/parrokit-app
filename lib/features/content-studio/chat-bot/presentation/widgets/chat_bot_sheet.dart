@@ -245,11 +245,14 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
+                          // 앱의 다른 곳은 한국어로 부른다(앵무새·목소리·클립).
+                          // '비디오'는 5차에 '영상'으로 맞췄는데 여기만 남아
+                          // 있었다.
                           provider.chatbotMode == 'tts'
-                              ? 'AI TTS 어시스턴트'
+                              ? 'TTS 음성 도우미'
                               : provider.chatbotMode == 'video'
-                                  ? 'AI 비디오 어시스턴트'
-                                  : 'AI 스튜디오 어시스턴트',
+                                  ? '영상 만들기 도우미'
+                                  : '만들기 도우미',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
@@ -271,10 +274,10 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                             Expanded(
                               child: Text(
                                 provider.chatbotMode == 'tts'
-                                    ? '음성 스튜디오 튜닝 중'
+                                    ? '음성 만들기를 도와줄게요'
                                     : provider.chatbotMode == 'video'
-                                        ? '비디오 씬 기획 중'
-                                        : '도움 준비 완료',
+                                        ? '영상 만들기를 도와줄게요'
+                                        : '무엇이든 물어보세요',
                                 style: context.texts.labelSmall.copyWith(
                                   color: isDark
                                       ? context.tokens.textTertiary
@@ -574,7 +577,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      '비디오 전문가 모드',
+                                      '영상 만들기 도우미',
                                       style:
                                           theme.textTheme.bodyMedium?.copyWith(
                                         color: context.tokens.textPrimary,
