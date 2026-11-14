@@ -149,5 +149,46 @@ void main() {
       expect(opened, [1]);
       expect(find.byType(LibrarySearchSheet), findsNothing);
     });
+
+    testWidgets('종류를 고르면 그 종류만 보여 준다', (tester) async {
+      await open(tester);
+      await tester.enterText(
+          find.byKey(const ValueKey('library-search-field')), 'e');
+      await tester.pump();
+      // 처음에는 전체라 문장과 클립이 함께 보인다.
+      expect(find.byKey(const ValueKey('library-search-kinds')), findsOneWidget);
+      expect(find.text('여행 영어'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('library-search-kind-words')));
+      await tester.pump();
+      expect(find.text('여행 영어'), findsNothing);
+    });
+  });
+
+  group('종류 고르기', () {
+    test('고른 종류만 남는다', () {
+      final all = searchLibrary('e', _data);
+      expect(filterByKind(all, LibrarySearchKind.all), same(all));
+
+      final onlyWords = filterByKind(all, LibrarySearchKind.words);
+      expect(onlyWords.words, all.words);
+      expect(onlyWords.sentences, isEmpty);
+      expect(onlyWords.clips, isEmpty);
+
+      final onlyClips = filterByKind(all, LibrarySearchKind.clips);
+      expect(onlyClips.clips, all.clips);
+      expect(onlyClips.sentences, isEmpty);
+    });
+
+    test('칩에 보이는 수는 종류별 결과 수이고 전체는 그 합이다', () {
+      final all = searchLibrary('e', _data);
+      expect(kindCount(all, LibrarySearchKind.sentences), all.sentences.length);
+      expect(kindCount(all, LibrarySearchKind.words), all.words.length);
+      expect(kindCount(all, LibrarySearchKind.clips), all.clips.length);
+      expect(
+          kindCount(all, LibrarySearchKind.all),
+          all.sentences.length + all.words.length + all.clips.length);
+    });
+
   });
 }

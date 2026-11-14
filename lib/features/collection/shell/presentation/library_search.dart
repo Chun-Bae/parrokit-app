@@ -122,6 +122,47 @@ LibrarySearchResults searchLibrary(
 }
 
 /// 보관함 머리의 검색 창. 예전에는 입력칸만 있고 아무것도 찾지 않았다(5차).
+/// 검색 결과에서 볼 종류(5차). 문장이 많으면 단어·클립이 한참 아래로
+/// 밀려서, 위에서 종류를 골라 그것만 볼 수 있게 한다.
+enum LibrarySearchKind {
+  all('전체'),
+  sentences('문장'),
+  words('단어'),
+  clips('클립');
+
+  const LibrarySearchKind(this.label);
+  final String label;
+}
+
+/// [kind]가 고른 종류만 남긴 결과. '전체'면 그대로.
+LibrarySearchResults filterByKind(
+    LibrarySearchResults results, LibrarySearchKind kind) {
+  switch (kind) {
+    case LibrarySearchKind.all:
+      return results;
+    case LibrarySearchKind.sentences:
+      return LibrarySearchResults(
+          sentences: results.sentences, moreSentences: results.moreSentences);
+    case LibrarySearchKind.words:
+      return LibrarySearchResults(
+          words: results.words, moreWords: results.moreWords);
+    case LibrarySearchKind.clips:
+      return LibrarySearchResults(
+          clips: results.clips, moreClips: results.moreClips);
+  }
+}
+
+/// 종류 칩에 보일 수. 전체는 모두 더한 값.
+int kindCount(LibrarySearchResults results, LibrarySearchKind kind) =>
+    switch (kind) {
+      LibrarySearchKind.all => results.sentences.length +
+          results.words.length +
+          results.clips.length,
+      LibrarySearchKind.sentences => results.sentences.length,
+      LibrarySearchKind.words => results.words.length,
+      LibrarySearchKind.clips => results.clips.length,
+    };
+
 class LibrarySearchSheet extends StatefulWidget {
   const LibrarySearchSheet({
     super.key,
@@ -146,6 +187,7 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
   final _controller = TextEditingController();
   LibrarySearchData? _data;
   bool _failed = false;
+  LibrarySearchKind _kind = LibrarySearchKind.all;
 
   @override
   void initState() {
@@ -219,9 +261,10 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
         context.texts.bodyMedium.copyWith(color: colors.onSurfaceVariant);
     final query = _controller.text;
     final data = _data;
-    final results = data == null
+    final all = data == null
         ? const LibrarySearchResults()
         : searchLibrary(query, data);
+    final results = filterByKind(all, _kind);
 
     Widget body;
     if (_failed) {
@@ -234,7 +277,10 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
     } else if (query.trim().isEmpty) {
       body = Text('내 문장·단어와 클립 제목·자막에서 찾아요.', style: muted);
     } else if (results.isEmpty) {
-      body = Text("'${query.trim()}' 검색 결과가 없어요.",
+      body = Text(
+          _kind == LibrarySearchKind.all
+              ? "'${query.trim()}' 검색 결과가 없어요."
+              : "'${query.trim()}'에 맞는 ${_kind.label}이(가) 없어요.",
           key: const ValueKey('library-search-empty'), style: muted);
     } else {
       body = ListView(
@@ -297,6 +343,29 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
             border: const OutlineInputBorder(),
           ),
         ),
+        if (query.trim().isNotEmpty && data != null && !_failed) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 36,
+            child: ListView(
+              key: const ValueKey('library-search-kinds'),
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final kind in LibrarySearchKind.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      key: ValueKey('library-search-kind-${kind.name}'),
+                      // 섹션 머리('문장 3')와 헷갈리지 않게 '개'를 붙인다.
+                      label: Text('${kind.label} ${kindCount(all, kind)}개'),
+                      selected: _kind == kind,
+                      onSelected: (_) => setState(() => _kind = kind),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         Expanded(child: body),
       ],
