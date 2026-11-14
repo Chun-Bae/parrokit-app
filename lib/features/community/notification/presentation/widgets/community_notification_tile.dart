@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/notification/domain/entities/community_notification_item.dart';
 import 'community_notification_chip.dart';
@@ -146,18 +147,13 @@ class CommunityNotificationTile extends StatelessWidget {
     }
   }
 
-  String _formatRelativeTime(DateTime createdAt) {
-    final diff = DateTime.now().difference(createdAt);
-    if (diff.inMinutes < 1) return '방금 전';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    if (diff.inDays < 7) return '${diff.inDays}일 전';
-    // 글·댓글 시각과 같은 모양으로(5차, 예전 '11/7').
-    final now = DateTime.now();
-    return createdAt.year == now.year
-        ? '${createdAt.month}월 ${createdAt.day}일'
-        : '${createdAt.year}년 ${createdAt.month}월 ${createdAt.day}일';
-  }
+  /// 글·댓글과 같은 함수로 시각을 적는다(5차).
+  ///
+  /// 전에는 여기서 따로 셈해서, 글 목록은 기기 시간대로 바꿔 적는데
+  /// (toLocal) 알림만 그대로 적었다. 시각이 UTC로 오면 날짜가 하루
+  /// 어긋날 수 있었다.
+  String _formatRelativeTime(DateTime createdAt) =>
+      formatCommunityTimeAgo(createdAt);
 }
 
 class _UnreadDot extends StatelessWidget {
