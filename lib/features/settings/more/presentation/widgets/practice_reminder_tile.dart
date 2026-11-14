@@ -8,12 +8,16 @@ import 'package:parrokit/core/infrastructure/services/local_notification_service
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/app_time_picker_sheet.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/reminder_sentence_picker.dart';
 
 /// 더보기 > 앱의 '연습 알림' 줄. 켜면 정한 시각에 기기가 알려 준다.
 /// 서버를 쓰지 않으므로 비용이 들지 않고 오프라인에서도 울린다.
+///
+/// 줄에는 지금 설정만 한 줄로 보여 주고, 누르면 설정 시트를 연다. 전에는
+/// 옵션 네 줄이 더보기 목록 안에 그대로 펼쳐져 있어 지저분했다(5차, 사용자 의견).
 class PracticeReminderTile extends StatefulWidget {
   const PracticeReminderTile({super.key});
 
@@ -22,6 +26,135 @@ class PracticeReminderTile extends StatefulWidget {
 }
 
 class _PracticeReminderTileState extends State<PracticeReminderTile> {
+  PracticeReminderSettings? _settings;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final loaded = await PracticeReminder.load();
+    if (!mounted) return;
+    setState(() => _settings = loaded);
+  }
+
+  Future<void> _openSettings() async {
+    final settings = _settings;
+    if (settings == null) return;
+    await showAppSheet<void>(
+      context: context,
+      fullHeight: false,
+      builder: (context) => const PracticeReminderSheet(),
+    );
+    if (!mounted) return;
+    await _load();
+  }
+
+  Future<void> _toggleFromTile(bool on) async {
+    final current = _settings;
+    if (current == null) return;
+    setState(() => _busy = true);
+    final next = await applyReminderToggle(
+      context: context,
+      current: current,
+      on: on,
+    );
+    if (!mounted) return;
+    setState(() {
+      _settings = next;
+      _busy = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = _settings;
+    final cs = Theme.of(context).colorScheme;
+    return ListTile(
+      key: const ValueKey('practice-reminder-tile'),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      onTap: settings == null || _busy ? null : _openSettings,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Icon(Icons.alarm_rounded, size: 20, color: cs.onSurface),
+      ),
+      title:
+          const Text('연습 알림', style: TextStyle(fontWeight: FontWeight.w700)),
+      subtitle: Text(
+        settings == null
+            ? '불러오는 중…'
+            : settings.enabled
+                ? '${settings.whenLabel} ${settings.pick.hint}'
+                : '정한 시각에 따라 말할 문장을 알려 줘요',
+        style: context.texts.bodySmall.copyWith(color: cs.onSurfaceVariant),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Switch(
+            key: const ValueKey('practice-reminder-switch'),
+            value: settings?.enabled ?? false,
+            onChanged: settings == null || _busy ? null : _toggleFromTile,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 알림을 켜고 끈다. 켤 때는 휴대폰 알림 권한을 묻고, 거절하면 켜지 않는다.
+/// 바뀐 설정을 돌려준다.
+Future<PracticeReminderSettings> applyReminderToggle({
+  required BuildContext context,
+  required PracticeReminderSettings current,
+  required bool on,
+}) async {
+  final accountId = context.read<UserProvider>().currentUser?.id ?? 'guest';
+  if (!on) {
+    final next = current.copyWith(enabled: false);
+    await PracticeReminder.save(next);
+    await applyPracticeReminder(settings: next, candidates: const []);
+    return next;
+  }
+  final allowed = await LocalNotificationService.requestPermission();
+  if (!allowed) {
+    showToast('휴대폰 설정에서 패로킷 알림을 켜야 받을 수 있어요.');
+    return current;
+  }
+  final next = current.copyWith(enabled: true);
+  await PracticeReminder.save(next);
+  await applyPracticeReminder(
+      settings: next, candidates: await reminderCandidates(accountId));
+  return next;
+}
+
+/// 알림에 띄울 문장 후보. 못 읽어도 알림은 기본 문구로 울린다.
+Future<List<ReminderCandidate>> reminderCandidates(String accountId) async {
+  try {
+    final mine = await MySentenceStore.load(accountId);
+    return reminderCandidatesFor(accountId, mine);
+  } catch (_) {
+    return const [];
+  }
+}
+
+/// 연습 알림 설정 시트. 더보기 줄을 누르면 열린다.
+class PracticeReminderSheet extends StatefulWidget {
+  const PracticeReminderSheet({super.key});
+
+  @override
+  State<PracticeReminderSheet> createState() => _PracticeReminderSheetState();
+}
+
+class _PracticeReminderSheetState extends State<PracticeReminderSheet> {
   PracticeReminderSettings? _settings;
   Set<String> _chosen = const {};
   bool _busy = false;
@@ -45,15 +178,7 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
   String get _accountId =>
       context.read<UserProvider>().currentUser?.id ?? 'guest';
 
-  /// 알림에 띄울 문장 후보. 못 읽어도 알림은 기본 문구로 울린다.
-  Future<List<ReminderCandidate>> _candidates() async {
-    try {
-      final mine = await MySentenceStore.load(_accountId);
-      return reminderCandidatesFor(_accountId, mine);
-    } catch (_) {
-      return const [];
-    }
-  }
+  Future<List<ReminderCandidate>> _candidates() => reminderCandidates(_accountId);
 
   Future<void> _apply(PracticeReminderSettings next) async {
     setState(() {
@@ -71,17 +196,14 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
   Future<void> _toggle(bool on) async {
     final current = _settings;
     if (current == null) return;
-    if (!on) {
-      await _apply(current.copyWith(enabled: false));
-      return;
-    }
-    final allowed = await LocalNotificationService.requestPermission();
+    setState(() => _busy = true);
+    final next =
+        await applyReminderToggle(context: context, current: current, on: on);
     if (!mounted) return;
-    if (!allowed) {
-      showToast('휴대폰 설정에서 패로킷 알림을 켜야 받을 수 있어요.');
-      return;
-    }
-    await _apply(current.copyWith(enabled: true));
+    setState(() {
+      _settings = next;
+      _busy = false;
+    });
   }
 
   Future<void> _pickTime() async {
@@ -149,136 +271,225 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
     await _apply(current.copyWith(pick: pick));
   }
 
+
   @override
   Widget build(BuildContext context) {
     final settings = _settings;
     final cs = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Icon(Icons.alarm_rounded, size: 20, color: cs.onSurface),
-          ),
-          title: const Text('연습 알림',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text(
-            settings == null
-                ? '불러오는 중…'
-                : settings.enabled
-                    ? '${settings.whenLabel} ${settings.pick.hint}'
-                    : '정한 시각에 따라 말할 문장을 알려 줘요',
-            style: context.texts.bodySmall
-                .copyWith(color: cs.onSurfaceVariant),
-          ),
-          trailing: Switch(
-            key: const ValueKey('practice-reminder-switch'),
-            value: settings?.enabled ?? false,
-            onChanged: settings == null || _busy ? null : _toggle,
-          ),
-        ),
-        if (settings != null && settings.enabled)
-          Padding(
-            padding: const EdgeInsets.only(left: 56, right: 4, bottom: 8),
-            child: Wrap(
-              spacing: 4,
+    if (settings == null) {
+      return const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()));
+    }
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                TextButton.icon(
-                  key: const ValueKey('practice-reminder-time'),
-                  onPressed: _busy ? null : _pickTime,
-                  icon: const Icon(Icons.schedule_rounded, size: 18),
-                  label: Text(settings.repeats
-                      ? '${settings.label}부터'
-                      : '${settings.label}에 받기'),
+                Expanded(
+                  child: Text('연습 알림',
+                      style: context.texts.titleLarge
+                          .copyWith(fontWeight: FontWeight.w800)),
                 ),
-                if (settings.repeats)
-                  TextButton.icon(
-                    key: const ValueKey('practice-reminder-end'),
-                    onPressed: _busy ? null : _pickEndHour,
-                    icon: const Icon(Icons.bedtime_outlined, size: 18),
-                    label: Text('${settings.endLabel}까지'),
-                  ),
-                PopupMenuButton<int>(
-                  key: const ValueKey('practice-reminder-interval'),
-                  enabled: !_busy,
-                  initialValue: settings.intervalMinutes,
-                  tooltip: '알림 간격',
-                  onSelected: _pickInterval,
-                  itemBuilder: (context) => [
-                    for (final minutes in reminderIntervalChoices)
-                      PopupMenuItem<int>(
-                        value: minutes,
-                        child: Text(reminderIntervalLabel(minutes)),
-                      ),
-                  ],
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.repeat_rounded, size: 18, color: cs.primary),
-                        const SizedBox(width: 6),
-                        Text(reminderIntervalLabel(settings.intervalMinutes),
-                            style: TextStyle(
-                                color: cs.primary,
-                                fontWeight: FontWeight.w600)),
-                        Icon(Icons.keyboard_arrow_down,
-                            size: 18, color: cs.primary),
-                      ],
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  key: const ValueKey('practice-reminder-sentences'),
-                  onPressed: _busy ? null : _pickSentences,
-                  icon: const Icon(Icons.format_quote_rounded, size: 18),
-                  label: Text(_chosen.isEmpty
-                      ? '문장 고르기'
-                      : '고른 문장 ${_chosen.length}개'),
-                ),
-                PopupMenuButton<ReminderPick>(
-                  key: const ValueKey('practice-reminder-pick'),
-                  enabled: !_busy,
-                  initialValue: settings.pick,
-                  tooltip: '문장 고르는 방식',
-                  onSelected: _pickMode,
-                  itemBuilder: (context) => [
-                    for (final pick in ReminderPick.values)
-                      PopupMenuItem<ReminderPick>(
-                        value: pick,
-                        child: Text(pick.label),
-                      ),
-                  ],
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.swap_vert_rounded,
-                            size: 18, color: cs.primary),
-                        const SizedBox(width: 6),
-                        Text(settings.pick.label,
-                            style: TextStyle(
-                                color: cs.primary,
-                                fontWeight: FontWeight.w600)),
-                        Icon(Icons.keyboard_arrow_down,
-                            size: 18, color: cs.primary),
-                      ],
-                    ),
-                  ),
+                Switch(
+                  key: const ValueKey('practice-reminder-sheet-switch'),
+                  value: settings.enabled,
+                  onChanged: _busy ? null : _toggle,
                 ),
               ],
             ),
+            Text(
+              settings.enabled
+                  ? '${settings.whenLabel} ${settings.pick.hint}'
+                  : '켜면 정한 때에 따라 말할 문장을 알려 줘요',
+              style:
+                  context.texts.bodySmall.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            Opacity(
+              opacity: settings.enabled ? 1 : 0.45,
+              child: IgnorePointer(
+                ignoring: !settings.enabled,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: Column(
+                    children: [
+                      _ReminderOptionRow(
+                        label: settings.repeats ? '받는 때' : '받는 시각',
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          _ReminderValue(
+                            valueKey: const ValueKey('practice-reminder-time'),
+                            text: settings.label,
+                            onTap: _busy ? null : _pickTime,
+                          ),
+                          if (settings.repeats) ...[
+                            Text(' ~ ',
+                                style: context.texts.bodyMedium
+                                    .copyWith(color: cs.onSurfaceVariant)),
+                            _ReminderValue(
+                              valueKey: const ValueKey('practice-reminder-end'),
+                              text: settings.endLabel,
+                              onTap: _busy ? null : _pickEndHour,
+                            ),
+                          ],
+                        ]),
+                      ),
+                      _ReminderOptionRow(
+                        label: '얼마나 자주',
+                        child: PopupMenuButton<int>(
+                          key: const ValueKey('practice-reminder-interval'),
+                          enabled: !_busy,
+                          initialValue: settings.intervalMinutes,
+                          tooltip: '알림 간격',
+                          onSelected: _pickInterval,
+                          itemBuilder: (context) => [
+                            for (final minutes in reminderIntervalChoices)
+                              PopupMenuItem<int>(
+                                value: minutes,
+                                child: Text(reminderIntervalLabel(minutes)),
+                              ),
+                          ],
+                          child: _ReminderValue(
+                            text:
+                                reminderIntervalLabel(settings.intervalMinutes),
+                            trailingArrow: true,
+                          ),
+                        ),
+                      ),
+                      _ReminderOptionRow(
+                        label: '어떤 문장',
+                        child: _ReminderValue(
+                          valueKey:
+                              const ValueKey('practice-reminder-sentences'),
+                          text: _chosen.isEmpty
+                              ? '내 문장 전부'
+                              : '고른 ${_chosen.length}개',
+                          onTap: _busy ? null : _pickSentences,
+                        ),
+                      ),
+                      _ReminderOptionRow(
+                        label: '어떤 차례로',
+                        last: true,
+                        child: PopupMenuButton<ReminderPick>(
+                          key: const ValueKey('practice-reminder-pick'),
+                          enabled: !_busy,
+                          initialValue: settings.pick,
+                          tooltip: '문장 고르는 방식',
+                          onSelected: _pickMode,
+                          itemBuilder: (context) => [
+                            for (final pick in ReminderPick.values)
+                              PopupMenuItem<ReminderPick>(
+                                value: pick,
+                                child: Text(pick.label),
+                              ),
+                          ],
+                          child: _ReminderValue(
+                            text: settings.pick.label,
+                            trailingArrow: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                key: const ValueKey('practice-reminder-done'),
+                onPressed: () => Navigator.of(context).pop(),
+                style:
+                    FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                child: const Text('닫기'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 연습 알림 설정 한 줄: 왼쪽에 이름, 오른쪽에 지금 값.
+class _ReminderOptionRow extends StatelessWidget {
+  const _ReminderOptionRow({
+    required this.label,
+    required this.child,
+    this.last = false,
+  });
+
+  final String label;
+  final Widget child;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      decoration: last
+          ? null
+          : BoxDecoration(
+              border: Border(
+                  bottom: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.4)))),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: context.texts.bodyMedium
+                    .copyWith(color: cs.onSurfaceVariant)),
           ),
-      ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// 오른쪽에 놓이는 값. 누를 수 있으면 알약으로 보인다.
+class _ReminderValue extends StatelessWidget {
+  const _ReminderValue({
+    required this.text,
+    this.onTap,
+    this.trailingArrow = false,
+    this.valueKey,
+  });
+
+  final String text;
+  final VoidCallback? onTap;
+  final bool trailingArrow;
+  final Key? valueKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(text,
+            style: context.texts.bodyMedium
+                .copyWith(color: cs.primary, fontWeight: FontWeight.w700)),
+        if (trailingArrow)
+          Icon(Icons.keyboard_arrow_down, size: 18, color: cs.primary),
+      ]),
+    );
+    if (onTap == null) return content;
+    return InkWell(
+      key: valueKey,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: content,
     );
   }
 }

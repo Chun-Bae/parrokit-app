@@ -8,7 +8,6 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
-import 'package:parrokit/core/content/learning_languages.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
@@ -238,11 +237,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     }
   }
 
-  /// 앵무새가 말할 수 있는 전체 문장: 기본 문장 + 내가 저장·추가한 문장.
-  List<DefaultConversationSentence> get allSentences => [
-        ...defaultSentencesFor(widget.language),
-        ...mySentences.where((s) => s.language == widget.language),
-      ];
+  /// 앵무새가 말할 수 있는 문장: 내가 저장·추가한 문장만(5차, 기본 문장 없앰).
+  List<DefaultConversationSentence> get allSentences =>
+      mySentences.where((s) => s.language == widget.language).toList();
 
   DefaultConversationSentence? sentenceForPhrase(String text) {
     for (final sentence in allSentences) {
@@ -273,7 +270,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     try {
       final activities = await SentenceActivityStore.loadAll(widget.accountId);
       final mine = await MySentenceStore.load(widget.accountId);
-      final enabled = [...defaultConversationSentences, ...mine]
+      final enabled = mine
           .where((sentence) => activities[sentence.id]?.routineEnabled ?? true)
           .map((sentence) => sentence.id)
           .toSet();
@@ -801,11 +798,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
         initialLanguage: widget.language,
         mySentences: mySentences,
         initialEnabled: {
-          for (final sentence in [
-            for (final language in availableLearningLanguages)
-              ...defaultSentencesFor(language.label),
-            ...mySentences,
-          ])
+          for (final sentence in mySentences)
             sentence.id: activities[sentence.id]?.routineEnabled ?? true,
         },
       ),
@@ -1452,10 +1445,8 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
     language = widget.initialLanguage;
   }
 
-  List<DefaultConversationSentence> get visibleSentences => [
-        ...defaultSentencesFor(language),
-        ...widget.mySentences.where((s) => s.language == language),
-      ];
+  List<DefaultConversationSentence> get visibleSentences =>
+      widget.mySentences.where((s) => s.language == language).toList();
 
   bool isOn(DefaultConversationSentence sentence) =>
       enabled[sentence.id] ?? true;

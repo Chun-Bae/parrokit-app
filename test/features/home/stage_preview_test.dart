@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/practice_log.dart';
@@ -49,6 +48,9 @@ Future<void> openPreview(
                 recognizer: recognizer ?? FakeRecognizer(),
                 onPracticeCompleted: onPracticeCompleted))),
   )));
+  // 기본 문장을 없앤 뒤로는 무대가 내 문장을 읽어 와야 글이 나온다(5차).
+  await tester.pump();
+  await tester.pump();
 }
 
 /// 말풍선 시간(3초)과 문장 사이 기본 간격(1.5초)이 지나 다음 문장으로 넘어가기까지 시간을 흘린다.
@@ -71,9 +73,24 @@ Finder currentPhrase(String phrase) => find.byWidgetPredicate((widget) =>
 const complete = ValueKey('complete-repeat');
 const microphone = ValueKey('preview-microphone');
 
+/// 기본으로 주던 예시 문장을 없앴으므로(5차), 무대 테스트는 내 문장을
+/// 몇 개 넣어 두고 시작한다. 순서는 저장한 차례 그대로다.
+const _testSentences = [
+  ('Hello there!', '안녕하세요!'),
+  ('How was your day?', '오늘 하루 어땠어요?'),
+  ('Can I get a coffee?', '커피 한 잔 주시겠어요?'),
+];
+
+String sentenceId(String text) => MySentenceStore.idFor('영어', text);
+
 void main() {
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    MySentenceStore.cloud = null;
+    for (final (text, translation) in _testSentences) {
+      await MySentenceStore.add('guest',
+          language: '영어', text: text, translation: translation);
+    }
   });
   testWidgets('자동 반복은 XP를 주거나 응답 UI를 띄우지 않는다', (tester) async {
     await openPreview(tester);
@@ -190,19 +207,21 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('기본 문장의 앵무새 말하기와 사용자 연습 횟수를 기록한다', (tester) async {
+  testWidgets('내 문장의 앵무새 말하기와 사용자 연습 횟수를 기록한다', (tester) async {
     await openPreview(tester);
     await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
 
-    var activity = await SentenceActivityStore.load('guest', 'basic-en-001');
+    var activity =
+        await SentenceActivityStore.load('guest', sentenceId('Hello there!'));
     expect(activity.parrotSpeakCount, 1);
     expect(activity.practiceCount, 0);
 
     await tester.tap(find.byKey(complete));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    activity = await SentenceActivityStore.load('guest', 'basic-en-001');
+    activity =
+        await SentenceActivityStore.load('guest', sentenceId('Hello there!'));
     expect(activity.practiceCount, 1);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -240,8 +259,7 @@ void main() {
   });
 
   testWidgets('문장 설정 창의 체크는 적용 없이 바로 저장되고 무대에 반영된다', (tester) async {
-    final target = defaultConversationSentences
-        .firstWhere((s) => s.text == 'How was your day?');
+    final targetId = sentenceId('How was your day?');
     await openPreview(tester);
     expect(currentPhrase('Hello there!'), findsOneWidget);
     await tapTooltip(tester, '문장 설정');
@@ -252,7 +270,7 @@ void main() {
     await tester.tap(tile);
     await tester.pump();
     // 창을 닫기 전에 이미 저장돼 있다(문장 탭 '앵무새 끄기'와 같은 값).
-    expect((await SentenceActivityStore.load('guest', target.id)).routineEnabled,
+    expect((await SentenceActivityStore.load('guest', targetId)).routineEnabled,
         isFalse);
     await tapTooltip(tester, '닫기');
     await tester.pump(const Duration(milliseconds: 400));
@@ -420,7 +438,7 @@ void main() {
     expect(log[0].durationMs, greaterThanOrEqualTo(0));
     expect(log[1].success, isTrue);
     expect(log[1].score, 1);
-    expect(log[1].sentenceId, 'basic-en-001');
+    expect(log[1].sentenceId, sentenceId('Hello there!'));
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('체크 버튼으로 직접 완료하면 직접 완료로 기록한다', (tester) async {

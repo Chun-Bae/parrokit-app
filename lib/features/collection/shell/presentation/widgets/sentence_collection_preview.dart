@@ -578,12 +578,10 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         loadShared();
       });
     }
-    final basicSentences = defaultSentencesFor(language);
-    // 최근에 추가한 문장이 맨 위에 오도록 뒤집고, 기본 문장은 그 아래에 둔다.
-    final mySentences = [
-      ...mine.where((item) => item.language == language).toList().reversed,
-      ...basicSentences,
-    ];
+    // 최근에 추가한 문장이 맨 위에 온다. 기본으로 주던 예시 문장은 없앴다(5차).
+    final mySentences =
+        mine.where((item) => item.language == language).toList().reversed
+            .toList();
     final visibleShared = (category == '전체'
         ? [...shared]
         : shared.where((item) => item.topic == category).toList());

@@ -61,11 +61,24 @@ Widget urlApp(String csv, {Future<Uint8List> Function(Uri)? fetcher}) =>
           fetcher ?? (uri) async => Uint8List.fromList(utf8.encode(csv)),
     )));
 
+/// 기본으로 주던 예시 문장을 없앴으므로(5차) 테스트가 내 문장을 넣어 둔다.
+const _seedTexts = ['Hello there!', 'How was your day?'];
+
+String seedId(String text) => MySentenceStore.idFor('영어', text);
+
+/// 예시 문장이 필요한 테스트만 내 문장으로 넣어 둔다.
+Future<void> seedSentences() async {
+  for (final text in _seedTexts) {
+    await MySentenceStore.add('guest', language: '영어', text: text);
+  }
+}
+
 void main() {
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
     firestore = FakeFirebaseFirestore();
     repo = FirestoreSharedSentenceRepository(firestore: firestore);
+    MySentenceStore.cloud = null;
   });
 
   testWidgets('추가한 문장이 내 문장 목록에 나타난다', (tester) async {
@@ -158,6 +171,7 @@ void main() {
   });
 
   testWidgets('문장 상세 시트의 마이크 버튼을 눌러도 안전하다', (tester) async {
+    await seedSentences();
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     await tester.tap(find.text('내 문장'));
@@ -238,6 +252,7 @@ void main() {
   });
 
   testWidgets('둘러보기에는 공유된 문장만 작성자와 함께 나온다', (tester) async {
+    await seedSentences();
     await seedShared();
     await tester.pumpWidget(exploreApp());
     await tester.pumpAndSettle();
@@ -288,6 +303,7 @@ void main() {
   });
 
   testWidgets('문장 상세에서 단어를 골라 저장하면 그 문장이 예문으로 붙는다', (tester) async {
+    await seedSentences();
     MyWordStore.cloud = null;
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
@@ -310,7 +326,8 @@ void main() {
     expect(find.text('단어를 저장했어요.'), findsOneWidget);
   });
 
-  testWidgets('내 문장 탭에서 기본 문장을 누르면 상세가 열린다', (tester) async {
+  testWidgets('내 문장을 누르면 상세가 열린다', (tester) async {
+    await seedSentences();
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     await tester.tap(find.text('내 문장'));
@@ -321,16 +338,13 @@ void main() {
     expect(find.text('홈 말하기 루틴'), findsOneWidget);
     expect(find.byKey(const ValueKey('private-section')), findsOneWidget);
     expect(find.text('듣기'), findsOneWidget);
-    // 기본 문장은 내가 등록한 문장이 아니라 공유할 수 없고, 이유를 알려준다.
-    expect(find.byKey(const ValueKey('publish-sentence')), findsNothing);
-    await tester
-        .ensureVisible(find.byKey(const ValueKey('publish-sentence-disabled')));
-    expect(find.textContaining('기본 문장은 공유할 수 없어요'), findsOneWidget);
   });
 
   testWidgets('친밀도 최고 단계 문장 카드만 금색 테두리가 된다', (tester) async {
+    await seedSentences();
     for (var i = 0; i < 25; i++) {
-      await SentenceActivityStore.incrementPractice('guest', 'basic-en-001');
+      await SentenceActivityStore.incrementPractice(
+          'guest', seedId('Hello there!'));
     }
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
@@ -517,6 +531,7 @@ void main() {
   });
 
   testWidgets('문장 상세에서 메모를 쓰면 저장되고 다시 열면 보인다', (tester) async {
+    await seedSentences();
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     await tester.tap(find.text('내 문장'));
@@ -527,18 +542,25 @@ void main() {
     await tester.ensureVisible(memo);
     await tester.enterText(memo, '  인사할 때 쓰기  ');
     await tester.pump(const Duration(seconds: 1));
-    final saved = await SentenceActivityStore.load('guest', 'basic-en-001');
+    final saved =
+        await SentenceActivityStore.load('guest', seedId('Hello there!'));
     expect(saved.memo, '인사할 때 쓰기');
     // 지우면 메모도 사라진다.
     await tester.enterText(memo, '');
     await tester.pump(const Duration(seconds: 1));
     expect(
-        (await SentenceActivityStore.load('guest', 'basic-en-001')).memo, '');
+        (await SentenceActivityStore.load('guest', seedId('Hello there!')))
+            .memo,
+        '');
   });
   testWidgets('메모는 다른 활동 기록을 지우지 않는다', (tester) async {
-    await SentenceActivityStore.incrementPractice('guest', 'basic-en-001');
-    await SentenceActivityStore.setMemo('guest', 'basic-en-001', '메모');
-    final activity = await SentenceActivityStore.load('guest', 'basic-en-001');
+    await seedSentences();
+    await SentenceActivityStore.incrementPractice(
+          'guest', seedId('Hello there!'));
+    await SentenceActivityStore.setMemo(
+        'guest', seedId('Hello there!'), '메모');
+    final activity =
+        await SentenceActivityStore.load('guest', seedId('Hello there!'));
     expect(activity.memo, '메모');
     expect(activity.practiceCount, 1);
   });
@@ -587,6 +609,7 @@ void main() {
   });
 
   testWidgets('문장 탭은 둘러보기 한 줄과 내 문장을 함께 보여준다', (tester) async {
+    await seedSentences();
     await seedShared();
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
@@ -633,14 +656,4 @@ void main() {
         isFalse);
   });
 
-  testWidgets('기본 문장은 밀어도 삭제가 없다', (tester) async {
-    await tester.pumpWidget(app());
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Hello there!'), 300,
-        scrollable: find.byType(Scrollable).first);
-    await tester.drag(find.text('Hello there!'), const Offset(-200, 0));
-    await tester.pumpAndSettle();
-    expect(rowAction('Hello there!', '앵무새 끄기'), findsOneWidget);
-    expect(rowAction('Hello there!', '삭제'), findsNothing);
-  });
 }

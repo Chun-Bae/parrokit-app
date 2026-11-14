@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
-import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
@@ -79,7 +78,7 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
           language != widget.language) {
         return;
       }
-      final sentences = [...defaultSentencesFor(language), ...mine];
+      final sentences = mine;
       setState(() {
         summary = SentenceHistorySummary.build(sentences, activities);
         practice = PracticeLogSummary.build(
