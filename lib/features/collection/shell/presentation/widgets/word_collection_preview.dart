@@ -837,16 +837,37 @@ class WordReviewSheet extends StatefulWidget {
 }
 
 class _WordReviewSheetState extends State<WordReviewSheet> {
+  /// 이번 바퀴에서 볼 단어. '다시'를 고른 단어만 모아 한 바퀴 더 돌 수 있다.
+  late List<MyWord> queue = widget.words;
   int index = 0;
   bool revealed = false;
   int knownCount = 0;
 
+  /// 이번 바퀴에서 '다시'를 고른 단어.
+  final List<MyWord> again = [];
+
   Future<void> answer(bool known) async {
-    final word = widget.words[index];
+    final word = queue[index];
     unawaited(WordReviewStore.record(widget.accountId, word.id, known: known));
     setState(() {
-      if (known) knownCount++;
+      if (known) {
+        knownCount++;
+      } else {
+        again.add(word);
+      }
       index++;
+      revealed = false;
+    });
+  }
+
+  /// '다시'로 고른 단어만 다시 돈다. '다시'는 기한을 오늘로 두므로(record)
+  /// 전에는 창을 닫고 '시작'을 다시 눌러야 그 단어를 또 볼 수 있었다(5차).
+  void reviewAgain() {
+    setState(() {
+      queue = List.of(again);
+      again.clear();
+      index = 0;
+      knownCount = 0;
       revealed = false;
     });
   }
@@ -854,7 +875,7 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final done = index >= widget.words.length;
+    final done = index >= queue.length;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -866,16 +887,16 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
               const Spacer(),
               Text(
                   done
-                      ? '${widget.words.length} / ${widget.words.length}'
-                      : '${index + 1} / ${widget.words.length}',
+                      ? '${queue.length} / ${queue.length}'
+                      : '${index + 1} / ${queue.length}',
                   style: context.texts.bodySmall
                       .copyWith(color: colors.onSurfaceVariant)),
             ]),
             const SizedBox(height: 8),
             LinearProgressIndicator(
-              value: widget.words.isEmpty
+              value: queue.isEmpty
                   ? 1
-                  : index.clamp(0, widget.words.length) / widget.words.length,
+                  : index.clamp(0, queue.length) / queue.length,
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             const SizedBox(height: 24),
@@ -884,22 +905,43 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
               const SizedBox(height: 12),
               Text('오늘 복습을 마쳤어요', style: context.texts.titleMedium),
               const SizedBox(height: 4),
-              Text('알아요 $knownCount개 · 다시 ${widget.words.length - knownCount}개',
+              Text('알아요 $knownCount개 · 다시 ${queue.length - knownCount}개',
                   style: context.texts.bodySmall
                       .copyWith(color: colors.onSurfaceVariant)),
               const SizedBox(height: 20),
+              if (again.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const ValueKey('review-again-round'),
+                    onPressed: reviewAgain,
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48)),
+                    child: Text("'다시' 고른 ${again.length}개 한 번 더"),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
-                  key: const ValueKey('finish-word-review'),
-                  onPressed: () => Navigator.pop(context),
-                  style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48)),
-                  child: const Text('닫기'),
-                ),
+                child: again.isEmpty
+                    ? FilledButton(
+                        key: const ValueKey('finish-word-review'),
+                        onPressed: () => Navigator.pop(context),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48)),
+                        child: const Text('닫기'),
+                      )
+                    : OutlinedButton(
+                        key: const ValueKey('finish-word-review'),
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48)),
+                        child: const Text('닫기'),
+                      ),
               ),
             ] else ...[
-              Text(widget.words[index].word,
+              Text(queue[index].word,
                   key: const ValueKey('review-word'),
                   textAlign: TextAlign.center,
                   style: context.texts.headlineMedium),
@@ -909,16 +951,16 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                 child: revealed
                     ? Column(children: [
                         Text(
-                            widget.words[index].meaning.isEmpty
+                            queue[index].meaning.isEmpty
                                 ? '뜻을 아직 적지 않았어요'
-                                : widget.words[index].meaning,
+                                : queue[index].meaning,
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: context.texts.bodyLarge),
-                        if (widget.words[index].example.isNotEmpty) ...[
+                        if (queue[index].example.isNotEmpty) ...[
                           const SizedBox(height: 8),
-                          Text(widget.words[index].example,
+                          Text(queue[index].example,
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,

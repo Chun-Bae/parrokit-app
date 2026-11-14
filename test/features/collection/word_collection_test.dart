@@ -155,6 +155,58 @@ void main() {
     expect(reviews.values.single.step, 1);
   });
 
+  testWidgets("'다시' 고른 단어는 창을 닫지 않고 한 번 더 본다", (tester) async {
+    await MyWordStore.add('guest',
+        language: '영어', word: 'subtle', meaning: '미묘한');
+    await MyWordStore.add('guest',
+        language: '영어', word: 'linger', meaning: '머무르다');
+    await openWordTab(tester);
+    await tester.tap(find.byKey(const ValueKey('start-word-review')));
+    await tester.pumpAndSettle();
+
+    // 하나는 '다시', 하나는 '알아요'.
+    await tester.tap(find.byKey(const ValueKey('reveal-word')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-again')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reveal-word')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-known')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('오늘 복습을 마쳤어요'), findsOneWidget);
+    expect(find.text('알아요 1개 · 다시 1개'), findsOneWidget);
+
+    // 전에는 '다시'를 골라도 창을 닫고 '시작'을 다시 눌러야 그 단어를
+    // 또 볼 수 있었다.
+    await tester.tap(find.byKey(const ValueKey('review-again-round')));
+    await tester.pumpAndSettle();
+    expect(find.text('1 / 1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('review-word')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('reveal-word')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-known')));
+    await tester.pumpAndSettle();
+    expect(find.text('알아요 1개 · 다시 0개'), findsOneWidget);
+    expect(find.byKey(const ValueKey('review-again-round')), findsNothing);
+  });
+
+  testWidgets('모두 알아요면 한 번 더 버튼이 없다', (tester) async {
+    await MyWordStore.add('guest',
+        language: '영어', word: 'subtle', meaning: '미묘한');
+    await openWordTab(tester);
+    await tester.tap(find.byKey(const ValueKey('start-word-review')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reveal-word')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-known')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('review-again-round')), findsNothing);
+    expect(find.byKey(const ValueKey('finish-word-review')), findsOneWidget);
+  });
+
   testWidgets('단어 상세에서 지우면 목록에서 사라진다', (tester) async {
     await MyWordStore.add('guest', language: '영어', word: 'figure out');
     await openWordTab(tester);
