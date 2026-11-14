@@ -130,6 +130,8 @@ void main() {
     expect(find.text('미묘한 차이'), findsOneWidget);
     expect(find.text('오늘 다시 볼 단어 1개'), findsOneWidget);
     expect(find.text('뜻을 떠올려 보고 알았는지 골라요'), findsOneWidget);
+    // 점만으로는 무엇을 세는지 알 수 없어 글자도 함께 보여 준다(5차).
+    expect(find.text('복습 전'), findsOneWidget);
     expect((await MyWordStore.load('guest')).single.word, 'nuance');
   });
 
@@ -151,6 +153,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('finish-word-review')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('start-word-review')), findsNothing);
+    // 한 단계 올라간 것이 목록에도 글자로 보인다.
+    expect(find.text('복습 1단계'), findsOneWidget);
     final reviews = await WordReviewStore.loadAll('guest');
     expect(reviews.values.single.step, 1);
   });

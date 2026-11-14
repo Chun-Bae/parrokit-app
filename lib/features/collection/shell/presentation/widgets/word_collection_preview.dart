@@ -324,7 +324,15 @@ class _WordTile extends StatelessWidget {
                     ],
                   ]),
             ),
-            // 복습 단계: 알아요를 누를 때마다 점이 하나씩 찬다.
+            // 복습 단계: 알아요를 누를 때마다 점이 하나씩 찬다. 점만 있으면
+            // 무엇을 세는지 알 수 없어 글자도 함께 보여 준다(5차). 문장 목록이
+            // 'Lv.1 낯선'을 적는 것과 같은 결이다.
+            Text(
+              step == 0 ? '복습 전' : '복습 $step단계',
+              style: context.texts.labelSmall
+                  .copyWith(color: colors.onSurfaceVariant),
+            ),
+            const SizedBox(width: 6),
             Semantics(
               label: '복습 $step단계',
               child: Row(children: [
