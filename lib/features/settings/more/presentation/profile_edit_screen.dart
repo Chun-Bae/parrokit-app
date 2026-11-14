@@ -216,7 +216,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('프로필 수정'),
+        // 더보기에서 누르는 줄 이름과 같게 둔다('프로필 편집', 5차).
+        title: const Text('프로필 편집'),
         centerTitle: true,
         backgroundColor: cs.surface,
         elevation: 0,
@@ -329,7 +330,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                       CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : Text(
-                                  isVerified ? '확인됨' : '중복확인',
+                                  // 온보딩·회원가입과 같은 띄어쓰기로(5차).
+                                  isVerified ? '확인됨' : '중복 확인',
                                   style: TextStyle(
                                     color: isVerified
                                         ? context.tokens.success
