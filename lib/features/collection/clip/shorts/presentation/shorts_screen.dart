@@ -59,6 +59,7 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
   int _currentIndex = 0; // 현재 보는 클립 인덱스
   bool _showSubtitle = true;
   bool _initialized = false;
+  int? _loggedClipId; // 최근 본 클립으로 이미 남긴 클립
 
   @override
   void initState() {
@@ -91,6 +92,17 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
       ad.recordAdShown();
       _pauseSignal.value = false;
     }
+  }
+
+  /// 지금 보고 있는 클립 하나만 '최근 본 클립'에 남긴다.
+  ///
+  /// 전에는 itemBuilder 안에서 기록해서, PageView가 미리 만들어 두는 양옆
+  /// 페이지와 다시 그릴 때마다 DB에 썼다. 그래서 보지도 않은 클립이 최근
+  /// 목록에 올라왔다(5차).
+  void _logCurrentClip(int clipId) {
+    if (_loggedClipId == clipId) return;
+    _loggedClipId = clipId;
+    context.read<ClipActivityProvider>().logRecent(clipId);
   }
 
   @override
@@ -130,6 +142,14 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
             ),
           );
         }
+
+        // removeItems로 목록이 줄어든 프레임에서 _currentIndex가 범위를
+        // 넘을 수 있다. 아래에서 그대로 쓰므로 먼저 맞춘다.
+        final current = _currentIndex.clamp(0, shorts.shorts.length - 1);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _logCurrentClip(shorts.shorts[current].clip.id);
+        });
 
         return Scaffold(
           backgroundColor: Colors.black,
@@ -173,13 +193,9 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                 },
                 itemBuilder: (context, index) {
                   final item = shorts.shorts[index];
-                  context
-                      .read<ClipActivityProvider>()
-                      .logRecent(item.clip.id); // 최근 본 클립 기록
-
                   return ShortsPage(
                     key: ValueKey(item.clip.id),
-                    isActive: index == _currentIndex,
+                    isActive: index == current,
                     clipId: item.clip.id,
                     filePath: item.clip.filePath,
                     durationMs: item.clip.durationMs,
@@ -214,7 +230,7 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                     child: ProgressBar(
                       // 항상 10개를 기준으로 보여줌 (20개가 있어도 UI는 10개 사이클)
-                      index: _currentIndex % ShortsProvider.pageSize,
+                      index: current % ShortsProvider.pageSize,
                       total: ShortsProvider.pageSize,
                     ),
                   ),
@@ -235,7 +251,7 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                     AppConfig.saveToPrefs();
                   },
                   onOpenExternalPlayer: () {
-                    final item = shorts.shorts[_currentIndex];
+                    final item = shorts.shorts[current];
                     final clipId = item.clip.id;
 
                     _pauseSignal.value = true; // 모두 멈춰/해제
@@ -244,6 +260,9 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                       AppRoutes.clipsPlay,
                       queryParameters: {'clipId': clipId.toString()},
                     ).then((_) {
+                      // 플레이어를 보는 사이 쇼츠 탭을 떠났으면 해제된
+                      // notifier에 쓰게 된다(5차, 같은 종류 여러 번 고침).
+                      if (!mounted) return;
                       _pauseSignal.value = false;
                     });
                   },
@@ -264,7 +283,7 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                 top: 12 + MediaQuery.of(context).padding.top,
                 child: Row(
                   children: [
-                    for (final tag in shorts.shorts[_currentIndex].tags)
+                    for (final tag in shorts.shorts[current].tags)
                       Padding(
                         padding: const EdgeInsets.only(right: AppSpacing.sm),
                         child: ShortsBadge(
