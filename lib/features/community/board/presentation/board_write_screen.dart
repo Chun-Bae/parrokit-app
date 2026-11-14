@@ -146,7 +146,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     final currentUser = userProvider.currentUser;
 
     if (currentUser == null) {
-      showToast('로그인이 필요합니다.');
+      showToast('로그인하고 다시 해 주세요.');
       return;
     }
 
@@ -288,7 +288,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                         Expanded(
                           child: Center(
                             child: Text(
-                              _isEditMode ? '게시글 수정' : '게시글 작성',
+                              // 들어온 버튼·시트와 같은 말로(5차). 예전 '게시글 작성'.
+                              _isEditMode ? '글 고치기' : '글쓰기',
                               style: context.texts.titleLarge
                                   .copyWith(color: colorScheme.onSurface),
                             ),
@@ -330,7 +331,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    _selectedBoardTopic ?? '주제를 선택해주세요.',
+                                    _selectedBoardTopic ?? '주제를 골라 주세요',
                                     style: context.texts.titleLarge
                                         .copyWith(color: colorScheme.onSurface),
                                   ),
@@ -352,7 +353,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               controller: _titleController,
                               onChanged: (_) => setState(() {}),
                               decoration: InputDecoration(
-                                hintText: '제목을 입력하세요.',
+                                hintText: '제목을 적어 주세요',
                                 hintStyle: context.texts.headlineSmall
                                     .copyWith(color: mutedText),
                                 border: InputBorder.none,
@@ -382,7 +383,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                       // 본문 '#자막 #쉐도잉…' 예시는 뺐다(5차). 본문의 #은
                                       // 태그로 읽지 않아서, 쓰면 태그가 붙는 줄 알았다.
                                       // 태그 예시는 아래 태그 칸으로 옮겼다.
-                                      '쉐도잉에 도움이 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠보세요.',
+                                      '쉐도잉에 도움이 된 표현, 자막 활용 팁, 학습 루틴을 자유롭게 나눠 보세요.',
                                   hintStyle: context.texts.titleMedium.copyWith(
                                       height: 1.6, color: tokens.textDisabled),
                                   border: InputBorder.none,
@@ -408,7 +409,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      '쉐도잉 학습과 영상 자막 활용 경험을 나눠보세요',
+                                      '쉐도잉 학습과 영상 자막 활용 경험을 나눠 보세요',
                                       style: context.texts.bodyMedium.copyWith(
                                           color:
                                               isDark ? Colors.white : tipBlue),
@@ -522,11 +523,11 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                           if (text.isNotEmpty && !_tags.contains(text)) {
                             if (text.length > PostValidator.maxTagLength) {
                               showToast(
-                                  '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.');
+                                  '태그는 ${PostValidator.maxTagLength}글자까지 쓸 수 있어요.');
                               return;
                             }
                             if (_tags.length >= PostValidator.maxTags) {
-                              showToast('태그는 최대 20개까지만 등록할 수 있습니다.');
+                              showToast('태그는 20개까지 붙일 수 있어요.');
                               return;
                             }
 
@@ -629,7 +630,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 _selectedImages.length;
                             final int remainingSlot = 5 - currentCount;
                             if (remainingSlot <= 0) {
-                              showToast('사진은 최대 5장까지만 첨부할 수 있습니다.');
+                              showToast('사진은 5장까지 넣을 수 있어요.');
                               return;
                             }
 
@@ -643,7 +644,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                             } catch (e) {
                               if (!context.mounted) return;
                               showToast(
-                                  '지원하지 않는 형식이거나 깨진 이미지입니다. 다른 사진을 골라주세요.');
+                                  '열 수 없는 사진이에요. 다른 사진을 골라 주세요.');
                               return;
                             }
                             if (images.isEmpty) return;

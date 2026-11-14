@@ -28,8 +28,9 @@ void showCommunityWriteBottomSheet(BuildContext context) {
                 icon: Icons.edit_rounded,
                 iconColor: AppColors.communityBoardAccent,
                 bgColor: AppColors.communityBoardAccentSoft,
-                title: '게시판 작성',
-                subtitle: '자유롭게 대화해보세요',
+                // 목록의 버튼·메뉴와 같은 말로(5차). 예전 '게시판 작성'.
+                title: '글쓰기',
+                subtitle: '자유롭게 이야기 나눠 보세요',
                 onTap: () {
                   Navigator.pop(context);
                   context.push(AppRoutes.communityBoardWritePath);
@@ -41,7 +42,7 @@ void showCommunityWriteBottomSheet(BuildContext context) {
                 iconColor: AppColors.communityQuestionAccent,
                 bgColor: AppColors.communityQuestionAccentSoft,
                 title: '질문하기',
-                subtitle: '모르는 지식을 습득해보세요',
+                subtitle: '궁금한 것을 물어보세요',
                 onTap: () {
                   Navigator.pop(context);
                   context.push(AppRoutes.communityQuestionWritePath);
@@ -53,7 +54,7 @@ void showCommunityWriteBottomSheet(BuildContext context) {
                 iconColor: AppColors.communityVoteAccent,
                 bgColor: AppColors.communityVoteAccentSoft,
                 title: '투표 만들기',
-                subtitle: '투표를 진행하여 다양한 의견을 받아보세요',
+                subtitle: '여러 사람 의견을 받아 보세요',
                 onTap: () {
                   Navigator.pop(context);
                   context.push(AppRoutes.communityVoteWritePath);

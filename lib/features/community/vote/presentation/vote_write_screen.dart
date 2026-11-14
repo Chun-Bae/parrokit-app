@@ -80,7 +80,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
 
   void _addOption() {
     if (_optionControllers.length >= 5) {
-      showToast('투표 항목은 최대 5개까지만 추가할 수 있습니다.');
+      showToast('항목은 5개까지 넣을 수 있어요.');
       return;
     }
 
@@ -178,7 +178,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final user = userProvider.currentUser;
 
     if (user == null) {
-      showToast('로그인이 필요합니다.');
+      showToast('로그인하고 다시 해 주세요.');
       return;
     }
 
@@ -215,7 +215,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     if (success && mounted) {
       Navigator.pop(context);
     } else if (mounted) {
-      showToast(communityProvider.errorMessage ?? '투표 업로드에 실패했습니다.');
+      showToast(communityProvider.errorMessage ?? '투표를 올리지 못했어요.');
     }
   }
 
@@ -264,7 +264,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          '투표 작성',
+          '투표 만들기',
           style:
               context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
@@ -320,7 +320,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                     TextField(
                       controller: _titleController,
                       decoration: InputDecoration(
-                        hintText: '투표 제목을 입력하세요.',
+                        hintText: '투표 제목을 적어 주세요',
                         hintStyle: context.texts.headlineSmall
                             .copyWith(color: colorScheme.onSurfaceVariant),
                         filled: true,
@@ -341,7 +341,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       maxLines: null,
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
-                        hintText: '투표에 대한 자세한 설명을 적어보세요.',
+                        hintText: '무엇을 묻는 투표인지 적어 주세요',
                         hintStyle: context.texts.titleMedium.copyWith(
                             color: colorScheme.onSurfaceVariant, height: 1.5),
                         filled: true,
@@ -442,7 +442,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                                 child: TextField(
                                   controller: _optionControllers[index],
                                   decoration: InputDecoration(
-                                    hintText: '항목 ${index + 1} 입력',
+                                    hintText: '항목 ${index + 1}',
                                     hintStyle: context.texts.bodyLarge.copyWith(
                                         color: colorScheme.onSurfaceVariant),
                                     filled: true,

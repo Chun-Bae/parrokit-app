@@ -64,12 +64,12 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.currentUser;
     if (user == null) {
-      showToast('로그인이 필요합니다.');
+      showToast('로그인하고 다시 해 주세요.');
       return;
     }
 
     if (user.crackers < _rewardCrackers) {
-      showToast('크래커가 부족합니다. (보유: ${user.crackers} 🍪)');
+      showToast('크래커가 모자라요. (가진 크래커 ${user.crackers}개)');
       return;
     }
 
@@ -95,7 +95,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
       userProvider.updateUser(user.addCrackers(-_rewardCrackers));
       Navigator.pop(context);
     } else {
-      showToast(commProvider.errorMessage ?? '질문 등록에 실패했습니다.');
+      showToast(commProvider.errorMessage ?? '질문을 올리지 못했어요.');
     }
   }
 
@@ -128,7 +128,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          '질문 작성',
+          '질문하기',
           style:
               context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
         ),
@@ -187,7 +187,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                     TextField(
                       controller: _titleController,
                       decoration: InputDecoration(
-                        hintText: '제목을 입력하세요.',
+                        hintText: '제목을 적어 주세요',
                         filled: true,
                         fillColor: Colors.transparent,
                         hintStyle: context.texts.headlineSmall
@@ -209,7 +209,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
                         hintText:
-                            '무엇이 궁금하신가요? 단어 번역, 문맥 상 의미, 억양 차이 등 자유롭게 질문해보세요.',
+                            '무엇이 궁금한가요? 단어 뜻, 문맥에 맞는 의미, 억양 차이처럼 무엇이든 물어보세요.',
                         filled: true,
                         fillColor: Colors.transparent,
                         hintStyle: context.texts.titleMedium
