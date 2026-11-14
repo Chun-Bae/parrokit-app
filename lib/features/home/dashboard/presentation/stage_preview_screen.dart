@@ -78,6 +78,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   ui.Image? nestSprite;
   _SpeakingMode mode = _SpeakingMode.automatic;
   bool paused = false;
+
+  /// 창(문장 목록·설정·추가)이 떠 있는 동안은 앵무새를 쉬게 한다. 전에는
+  /// 목록을 열어 둔 채 문장이 넘어가서, 목록의 '지금 문장' 표시가 실제와
+  /// 어긋나고 가린 화면 뒤에서 계속 소리가 났다(5차).
+  bool sheetOpen = false;
   bool foreground = true;
   bool visible = true;
   bool reduceMotion = false;
@@ -187,11 +192,12 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   Future<void> showSpeakingSettings() async {
-    final next = await showDialog<({double gap, bool countListen})>(
-      context: context,
-      builder: (context) => _SpeakingSettingsDialog(
-          initialGap: gapSeconds, initialCountListen: countListen),
-    );
+    final next = await whilePaused(
+        () => showDialog<({double gap, bool countListen})>(
+              context: context,
+              builder: (context) => _SpeakingSettingsDialog(
+                  initialGap: gapSeconds, initialCountListen: countListen),
+            ));
     if (!mounted || next == null) return;
     setState(() {
       gapSeconds = next.gap;
@@ -512,7 +518,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   void syncPlayback() {
-    if (!foreground || !visible || paused) {
+    if (!foreground || !visible || paused || sheetOpen) {
       animation.stop();
       birdAnimation.stop();
       // 멈춘 동안은 음성도 끊고, 재개하면 같은 문장을 처음부터 다시 말한다.
@@ -613,6 +619,20 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   /// 목록에서 고른 문장으로 바로 이동한다.
+  /// 창이 떠 있는 동안 앵무새를 멈췄다가, 닫히면 원래대로 돌린다.
+  Future<T?> whilePaused<T>(Future<T?> Function() open) async {
+    if (mounted) setState(() => sheetOpen = true);
+    syncPlayback();
+    try {
+      return await open();
+    } finally {
+      if (mounted) {
+        setState(() => sheetOpen = false);
+        syncPlayback();
+      }
+    }
+  }
+
   void jumpToPhrase(int index) {
     if (completingResponse || !mounted) return;
     stopTts();
@@ -633,7 +653,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     if (!hasSpeakablePhrase) return;
     final list = phrases;
     final current = phraseIndex % list.length;
-    final picked = await showAppSheet<int>(
+    final picked = await whilePaused(() => showAppSheet<int>(
       context: context,
       builder: (context) => DraggableScrollableSheet(
         expand: false,
@@ -678,7 +698,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                   })),
         ]),
       ),
-    );
+    ));
     if (picked != null) jumpToPhrase(picked);
   }
 
@@ -764,11 +784,11 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   Future<void> addPhrase() async {
     ({AddedSentence sentence, bool added})? result;
     try {
-      result = await addSentenceFlow(
-        context,
-        accountId: widget.accountId,
-        language: widget.language,
-      );
+      result = await whilePaused(() => addSentenceFlow(
+            context,
+            accountId: widget.accountId,
+            language: widget.language,
+          ));
       if (result != null) await loadRoutineSettings();
     } catch (_) {
       if (mounted) {
@@ -798,7 +818,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
           .then((prefs) => prefs.setBool(phraseSettingsSeenKey, true))
           .catchError((_) => false));
     }
-    final action = await showDialog<String>(
+    final action = await whilePaused(() => showDialog<String>(
       context: context,
       builder: (context) => _PhraseSettingsDialog(
         accountId: widget.accountId,
@@ -809,7 +829,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
             sentence.id: activities[sentence.id]?.routineEnabled ?? true,
         },
       ),
-    );
+    ));
     // 창의 + 버튼은 창을 닫고 왼쪽 '문장 추가'와 같은 흐름을 연다.
     if (action == _PhraseSettingsDialog.addAction && mounted) {
       await addPhrase();
