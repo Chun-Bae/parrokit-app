@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -96,6 +97,18 @@ class _NotificationSettingsScreenState
     }
   }
 
+  /// 휴대폰의 이 앱 설정 화면을 연다. 열지 못하면 어디로 가야 하는지 알린다.
+  Future<void> _openSystemSettings() async {
+    try {
+      final opened = await launchUrl(Uri.parse('app-settings:'));
+      if (opened) return;
+    } catch (e) {
+      AppLogger.e('[Notification] 휴대폰 설정 열기 실패', error: e);
+    }
+    if (!mounted) return;
+    showToast('휴대폰 설정 > 패로킷 > 알림에서 켜 주세요.');
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -121,19 +134,36 @@ class _NotificationSettingsScreenState
                 color: cs.errorContainer.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
-              child:
-                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Icon(Icons.notifications_off_rounded, color: cs.error),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    '휴대폰 설정에서 패로킷 알림이 꺼져 있어요. 아래를 켜도 '
-                    '휴대폰 설정 > 패로킷 > 알림을 켜야 받을 수 있어요.',
-                    style: context.texts.bodyMedium
-                        .copyWith(color: cs.onErrorContainer),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.notifications_off_rounded, color: cs.error),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '휴대폰 설정에서 패로킷 알림이 꺼져 있어요. 아래를 켜도 '
+                            '휴대폰 설정 > 패로킷 > 알림을 켜야 받을 수 있어요.',
+                            style: context.texts.bodyMedium
+                                .copyWith(color: cs.onErrorContainer),
+                          ),
+                        ),
+                      ]),
+                  const SizedBox(height: 10),
+                  // 어디로 가야 하는지 적어만 두고 찾아가게 두면 멀다.
+                  // 바로 그 화면을 연다(5차).
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      key: const ValueKey('open-os-settings'),
+                      onPressed: _openSystemSettings,
+                      child: const Text('휴대폰 설정 열기'),
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
           ],

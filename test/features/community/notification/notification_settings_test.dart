@@ -95,9 +95,17 @@ void main() {
       expect(switchValue(tester, 'pref-comment-reply'), isTrue);
     });
 
-    testWidgets('휴대폰 설정에서 알림이 꺼져 있으면 알려준다', (tester) async {
+    testWidgets('휴대폰 설정에서 알림이 꺼져 있으면 알려주고 바로 갈 길을 준다',
+        (tester) async {
       await open(tester, osAllowed: false);
       expect(find.byKey(const ValueKey('os-push-off')), findsOneWidget);
+      // 어디로 가야 하는지 적어만 두면 찾아가기 멀다(5차).
+      expect(find.byKey(const ValueKey('open-os-settings')), findsOneWidget);
+    });
+
+    testWidgets('알림이 켜져 있으면 설정 열기 버튼도 없다', (tester) async {
+      await open(tester, osAllowed: true);
+      expect(find.byKey(const ValueKey('open-os-settings')), findsNothing);
     });
 
     testWidgets('휴대폰 허용 여부를 모르면 안내하지 않는다', (tester) async {
