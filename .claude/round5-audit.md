@@ -131,14 +131,11 @@
 - 홈 무대 조작 줄을 길게 누르면 "이전 문장", "재생 순서: 순서대로"처럼 뜻을 끝까지 보여준다 (7ec6db96)
 
 ## 배포 필요 (사용자가 직접)
-- **함수 onExpiredQuestionRefund (질문 마감 환불, c8ed0e7b)** — 새 예약 함수. 배포 전에는 마감이 지나도 크래커가 돌아오지 않는다(지금과 같음). 배포하면 30분마다 돌며 지난 질문도 함께 처리한다
-  ```
-  npx -y firebase-tools@latest deploy --only functions:onExpiredQuestionRefund --project parrokit-45126
-  ```
-- **Firestore 규칙 (단어 예문 여러 개, 29404fb3)** — 아직 배포 안 됨. 배포 전에는 예문을 여러 개 넣은 단어가 서버에 저장되지 않고 이 기기에만 남는다(잃지는 않음)
-  ```
-  npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126
-  ```
+- 지금은 없음.
+
+### 2026-11-14 10:00 배포 완료 (사용자가 직접 실행, Deploy complete 확인)
+- firestore:rules — 단어 예문 여러 개(examples 개수 제한)
+- functions:onExpiredQuestionRefund — 새로 만들어짐(create). 30분마다 돌며 마감 지난 질문의 크래커를 돌려준다
 
 ### 2026-11-14 07:00 배포 완료 (내가 돌림, Deploy complete 확인)
 - functions: generateTts, generateChatbotResponse, onCommunityCommentCreated, onVoteEndNotification
@@ -839,3 +836,10 @@
 - 7번: 문장 상세를 보다가 어제 내가 만든 회귀를 찾음. 바텀시트를 하나로 모을 때(29404fb3) useSafeArea를 빠뜨려 시트 위가 상태 표시줄·노치에 가렸다 → 고침(75bf58ad)
 - 공유 창이 떠서 아무것도 보내지 않고 닫음
 - 라이트·다크 확인, 테마 라이트로 되돌림. analyze 깨끗, 전체 496개 통과
+
+## 반복 127 (09:47~)
+- 사용자가 규칙과 질문 마감 환불 함수를 직접 배포함(둘 다 Deploy complete). **배포 대기 없음**
+- 바텀시트 되돌리기(9cd2ef39): 떠 있는 카드가 어색하고, 탭 바 위로 띄우느라 시트 아래에 탭 바의 흰 카드와 그림자가 드러나 '다른 흰색 면'으로 보였다 → 화면 아래에 붙는 기본 모양으로. 어두운 막도 다시 켬
+- 원인은 화면 캡처를 20배 대비로 올려 확인(직전 빌드엔 가로선과 두 번째 흰 면, 지금은 한 가지 흰색)
+- 위 안전 영역(useSafeArea)은 그대로 둔다(반복 126에서 고친 것)
+- analyze 깨끗, 전체 496개 통과. 다크 확인은 사용자가 화면을 쓰는 중이라 못 함
