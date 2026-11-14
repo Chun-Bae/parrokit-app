@@ -56,7 +56,7 @@ class CommunityMenuSectionFactory {
       CommunityMenuEntry(title: '작성한 글', iconKey: 'article', colorKey: 'board', boardType: 'board', activityType: 'written'),
       CommunityMenuEntry(title: '작성한 댓글', iconKey: 'chat_bubble', colorKey: 'board', boardType: 'board', activityType: 'commented'),
       CommunityMenuEntry(title: '공감한 글', iconKey: 'thumb_up', colorKey: 'board', boardType: 'board', activityType: 'liked'),
-      CommunityMenuEntry(title: '공감한 댓글', iconKey: 'favorite', colorKey: 'board', boardType: 'board', activityType: 'liked_comment'),
+      CommunityMenuEntry(title: '좋아요한 댓글', iconKey: 'favorite', colorKey: 'board', boardType: 'board', activityType: 'liked_comment'),
       CommunityMenuEntry(title: '스크랩', iconKey: 'bookmark', colorKey: 'board', boardType: 'board', activityType: 'scraped'),
     ];
   }
@@ -69,7 +69,7 @@ class CommunityMenuSectionFactory {
       // 읽혔다(5차). 질문 상세의 '답글 쓰기'와 같은 말.
       CommunityMenuEntry(title: '작성한 답글', iconKey: 'chat', colorKey: 'question', boardType: 'question', activityType: 'commented_reply'),
       CommunityMenuEntry(title: '공감한 질문', iconKey: 'thumb_up', colorKey: 'question', boardType: 'question', activityType: 'liked'),
-      CommunityMenuEntry(title: '공감한 답변 및 댓글', iconKey: 'favorite', colorKey: 'question', boardType: 'question', activityType: 'liked_comment'),
+      CommunityMenuEntry(title: '좋아요한 답변 및 댓글', iconKey: 'favorite', colorKey: 'question', boardType: 'question', activityType: 'liked_comment'),
       CommunityMenuEntry(title: '스크랩', iconKey: 'bookmark', colorKey: 'question', boardType: 'question', activityType: 'scraped'),
     ];
   }
@@ -80,7 +80,7 @@ class CommunityMenuSectionFactory {
       CommunityMenuEntry(title: '게시한 투표', iconKey: 'campaign', colorKey: 'vote', boardType: 'vote', activityType: 'written_posted'),
       CommunityMenuEntry(title: '작성한 댓글', iconKey: 'chat', colorKey: 'vote', boardType: 'vote', activityType: 'commented'),
       CommunityMenuEntry(title: '공감한 투표', iconKey: 'thumb_up', colorKey: 'vote', boardType: 'vote', activityType: 'liked'),
-      CommunityMenuEntry(title: '공감한 댓글', iconKey: 'favorite', colorKey: 'vote', boardType: 'vote', activityType: 'liked_comment'),
+      CommunityMenuEntry(title: '좋아요한 댓글', iconKey: 'favorite', colorKey: 'vote', boardType: 'vote', activityType: 'liked_comment'),
       CommunityMenuEntry(title: '스크랩', iconKey: 'bookmark', colorKey: 'vote', boardType: 'vote', activityType: 'scraped'),
     ];
   }

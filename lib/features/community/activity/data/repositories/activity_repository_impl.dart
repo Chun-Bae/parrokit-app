@@ -343,7 +343,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
     return ActivityModel(
       id: comment.id,
       sourcePostId: comment.postId,
-      title: activityType == 'liked_comment' ? '공감한 댓글' : '댓글 작성',
+      title: activityType == 'liked_comment' ? '좋아요한 댓글' : '댓글 작성',
       content: comment.content,
       createdAt: createdAtOverride ?? comment.createdAt ?? DateTime.now(),
       boardType: comment.postType,

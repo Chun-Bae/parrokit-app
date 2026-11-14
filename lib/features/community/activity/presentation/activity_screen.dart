@@ -72,7 +72,9 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
         activityName = '공감한 글';
         break;
       case 'liked_comment':
-        activityName = '공감한 댓글';
+        // 글·질문은 엄지 '공감', 댓글·답변은 하트 '좋아요'다(89d57b67).
+        // 메뉴와 화면이 '공감한 댓글'이라고 불러 버튼 이름과 어긋났다(5차).
+        activityName = '좋아요한 댓글';
         break;
       case 'scraped':
         activityName = '스크랩';
