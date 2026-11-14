@@ -43,3 +43,23 @@
 - lib/core/infrastructure/services/firebase/sync_status.dart
 
 지우면 쓰지 않게 되는 패키지(flutter_email_sender 등)도 pubspec에서 뺄 수 있는지 함께 본다.
+
+## 쓰이는 파일 안에 섞여 있는 안 쓰는 위젯 (5차 반복 169)
+
+파일 단위로는 안 보인다. `python3 tool/find_unused_widgets.py`가 찾는다.
+선언 파일 밖에서 아무도 만들지 않는 위젯만 적는다(grep으로 한 번 더 확인함).
+
+- `AutoNextButton` — lib/features/collection/clip/shorts/presentation/widgets/action_icon.dart
+  쇼츠 자동 넘김은 지금 같은 파일의 `ActionIcon`으로 그린다. 이 위젯은 아무도 안 만든다
+- `HeaderSection` — lib/features/home/dashboard/presentation/sections/header_section.dart
+  새 홈의 머리(이름·레벨·XP)가 대신한다
+- `QuickActionButton` — lib/features/home/dashboard/presentation/widgets/quick_action_button.dart
+  예전 홈의 빠른 동작 줄과 함께 떨어져 나갔다(quick_actions_section.dart도 위 목록에 있다)
+- `TodayPracticeSummary` — lib/features/home/dashboard/presentation/widgets/today_practice_summary.dart
+  **같은 파일의 `DailyGoalDialog`는 지금도 쓴다.** 목표를 바꾸는 길이 이 위젯뿐이어서
+  한동안 목표가 5에 묶여 있었다(반복 168에서 '오늘' 줄에 다시 이었다). 지울 때 창은 남겨야 한다
+
+오탐(같은 파일 안에서 쓴다): `SentenceImportSheet`, `WordReviewSheet`, `ModelOptionCard`,
+`FeatureChip`, `PracticeReminderSheet`.
+의도한 보관(결제를 붙이면 쓴다): `CoinStoreSection`, `PaymentSection`.
+
