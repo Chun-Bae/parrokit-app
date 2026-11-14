@@ -208,10 +208,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
               // 입력 폼
               Text(
+                // 화면 제목('환전소')·버튼('환전하기')과 같은 말을 쓴다.
+                // 여기만 '교환할'이었다(5차).
                 _isParrotsToCrackers
-                    ? '교환할 패롯 수량'
+                    ? '환전할 패롯 수량'
                     // 아래 안내와 같은 말로('1,000개 단위').
-                    : '교환할 크래커 수량 '
+                    : '환전할 크래커 수량 '
                         '(${NumberFormat.decimalPattern('ko').format(exchangeRate)}개 단위)',
                 style: context.texts.bodyMedium,
               ),
@@ -255,8 +257,16 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 예상 결과
-              if (inputAmount > 0)
+              // 예상 결과. 아직 아무것도 안 넣었으면 왜 버튼이 꺼져 있는지
+              // 알 수 있게 한 줄 띄운다(5차, 새 클립 화면과 같게).
+              if (inputAmount <= 0)
+                Text(
+                  '바꿀 수량을 적어 주세요.',
+                  key: const ValueKey('exchange-hint'),
+                  style: context.texts.bodySmall
+                      .copyWith(color: theme.colorScheme.onSurfaceVariant),
+                )
+              else
                 Container(
                   padding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
