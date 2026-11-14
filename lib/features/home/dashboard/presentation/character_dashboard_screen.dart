@@ -246,6 +246,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     completed: practiceCounts[dateKey(DateTime.now())] ?? 0,
                     goal: dailyGoal,
                     onStart: () => context.push(AppRoutes.learningHubPath),
+                    onEditGoal: editDailyGoal,
                   ),
                   const SizedBox(height: 20),
                   Row(children: [

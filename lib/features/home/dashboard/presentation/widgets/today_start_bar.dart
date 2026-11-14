@@ -13,11 +13,16 @@ class TodayStartBar extends StatelessWidget {
     required this.completed,
     required this.goal,
     required this.onStart,
+    this.onEditGoal,
   });
 
   final int completed;
   final int goal;
   final VoidCallback onStart;
+
+  /// 목표 수를 바꾸는 창을 연다. 새 홈으로 옮기면서 이 길이 끊겨 목표가
+  /// 5에 묶여 있었다(5차).
+  final VoidCallback? onEditGoal;
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +45,31 @@ class TodayStartBar extends StatelessWidget {
               // 무엇을 세는지 적는다. 이 수는 무대에서 앵무새를 따라 말한
               // 문장만 센다. 옆의 '학습하기'(영상 학습)는 세지 않아서, 영상을
               // 보고 와도 그대로라 헷갈렸다(5차).
-              Text(done ? '오늘 목표 완료' : '오늘 목표 · 따라 말하기',
-                  style: context.texts.labelMedium
-                      .copyWith(color: done ? palette.good : palette.muted)),
+              Row(children: [
+                Flexible(
+                  child: Text(done ? '오늘 목표 완료' : '오늘 목표 · 따라 말하기',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.texts.labelMedium.copyWith(
+                          color: done ? palette.good : palette.muted)),
+                ),
+                if (onEditGoal != null)
+                  GestureDetector(
+                    key: const ValueKey('edit-daily-goal'),
+                    onTap: onEditGoal,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 6, top: 2, bottom: 2),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.tune_rounded, size: 15, color: palette.primary),
+                        const SizedBox(width: 2),
+                        Text('목표 바꾸기',
+                            style: context.texts.labelSmall
+                                .copyWith(color: palette.primary)),
+                      ]),
+                    ),
+                  ),
+              ]),
               const SizedBox(height: 2),
               Text.rich(
                 TextSpan(children: [
