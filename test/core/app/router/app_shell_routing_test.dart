@@ -75,4 +75,51 @@ void main() {
       expect(topPaths, contains(AppRoutes.communityVoteWritePath));
     });
   });
+
+  group('탭을 눌렀을 때', () {
+    test('이미 그 탭 첫 화면이면 다시 그리지 않고 맨 위로만 올린다', () {
+      expect(
+          tabTapAction(
+              index: 1, currentIndex: 1, currentPath: AppRoutes.communityPath),
+          TabTapAction.reselect);
+    });
+
+    test('같은 탭이라도 하위 화면이면 첫 화면으로 간다', () {
+      expect(
+          tabTapAction(
+              index: 1,
+              currentIndex: 1,
+              currentPath: '/community/notification'),
+          TabTapAction.goToRoot);
+      expect(
+          tabTapAction(
+              index: 2,
+              currentIndex: 2,
+              currentPath: AppRoutes.learningHubPath),
+          TabTapAction.goToRoot);
+    });
+
+    test('다른 탭이면 그 탭 첫 화면으로 간다', () {
+      expect(
+          tabTapAction(
+              index: 3, currentIndex: 2, currentPath: AppRoutes.dashboardPath),
+          TabTapAction.goToRoot);
+    });
+
+    test('탭 번호마다 첫 화면이 정해져 있고 모르는 번호는 홈이다', () {
+      expect(tabRootPath(0), AppRoutes.explorePath);
+      expect(tabRootPath(1), AppRoutes.communityPath);
+      expect(tabRootPath(2), AppRoutes.dashboardPath);
+      expect(tabRootPath(3), AppRoutes.collectionPath);
+      expect(tabRootPath(4), AppRoutes.morePath);
+      expect(tabRootPath(9), AppRoutes.dashboardPath);
+      expect(tabRootPath(-1), AppRoutes.dashboardPath);
+    });
+
+    test('탭 첫 화면과 탭 칸 고르기가 서로 맞는다', () {
+      for (var i = 0; i < tabRootPaths.length; i++) {
+        expect(appShellTabIndex(tabRootPaths[i]), i, reason: tabRootPaths[i]);
+      }
+    });
+  });
 }

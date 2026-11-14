@@ -187,46 +187,59 @@ class AppShell extends StatelessWidget {
     );
   }
 
-  static const _tabRootPaths = [
-    AppRoutes.explorePath,
-    AppRoutes.communityPath,
-    AppRoutes.dashboardPath,
-    AppRoutes.collectionPath,
-    AppRoutes.morePath,
-  ];
-
   /// 탭 선택 시 네비게이션.
   ///
   /// 이미 그 탭의 첫 화면에 있으면 화면을 다시 만들지 않고 [TabReselect]로
-  /// 알려 맨 위로 스크롤하게 한다. 하위 화면이면 아래 go로 첫 화면에 간다.
+  /// 알려 맨 위로 스크롤하게 한다. 하위 화면이면 그 탭의 첫 화면으로 간다.
   void _onTabTap(BuildContext context, int index,
       {required int currentIndex, required String currentPath}) {
-    if (index == currentIndex && currentPath == _tabRootPaths[index]) {
-      TabReselect.instance.fire(index);
-      return;
-    }
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.explorePath);
-        break;
-      case 1:
-        context.go(AppRoutes.communityPath);
-        break;
-      case 2:
-        context.go(AppRoutes.dashboardPath);
-        break;
-      case 3:
-        context.go(AppRoutes.collectionPath);
-        break;
-      case 4:
-        context.go(AppRoutes.morePath);
-        break;
+    final action = tabTapAction(
+      index: index,
+      currentIndex: currentIndex,
+      currentPath: currentPath,
+    );
+    switch (action) {
+      case TabTapAction.reselect:
+        TabReselect.instance.fire(index);
+      case TabTapAction.goToRoot:
+        context.go(tabRootPath(index));
     }
   }
 }
 
-/// 이 경로에서 아래 탭 바를 숨기는지. 바텀시트가 탭 바를 피해 뜨려면
-/// (app_bottom_sheet.dart) 탭 바가 있는지 알아야 해서 따로 뺐다.
+/// 탭의 첫 화면 경로. 번호는 AppShell·AppBottomNavBar와 같다
+/// (0 쇼츠, 1 커뮤니티, 2 홈, 3 보관함, 4 더보기).
+const tabRootPaths = [
+  AppRoutes.explorePath,
+  AppRoutes.communityPath,
+  AppRoutes.dashboardPath,
+  AppRoutes.collectionPath,
+  AppRoutes.morePath,
+];
+
+/// 모르는 번호는 홈으로 둔다.
+String tabRootPath(int index) => index >= 0 && index < tabRootPaths.length
+    ? tabRootPaths[index]
+    : AppRoutes.dashboardPath;
+
+/// 탭을 눌렀을 때 할 일.
+enum TabTapAction {
+  /// 이미 그 탭의 첫 화면이다. 맨 위로 스크롤만 한다.
+  reselect,
+
+  /// 그 탭의 첫 화면으로 간다.
+  goToRoot,
+}
+
+TabTapAction tabTapAction({
+  required int index,
+  required int currentIndex,
+  required String currentPath,
+}) =>
+    index == currentIndex && currentPath == tabRootPath(index)
+        ? TabTapAction.reselect
+        : TabTapAction.goToRoot;
+
 /// 지금 경로에서 아래 탭 바의 몇 번째 칸이 켜져 보일지.
 int appShellTabIndex(String location) {
   if (location.startsWith(AppRoutes.communityPath)) return 1;
@@ -236,6 +249,8 @@ int appShellTabIndex(String location) {
   return 2; // 홈
 }
 
+/// 이 경로에서 아래 탭 바를 숨기는지. 바텀시트가 탭 바를 피해 뜨려면
+/// (app_bottom_sheet.dart) 탭 바가 있는지 알아야 해서 따로 뺐다.
 bool appShellHidesNavBar(String location) =>
     location.startsWith('/clips/') ||
     location == AppRoutes.recentsPath ||
