@@ -74,13 +74,15 @@ class _TipDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            // 안내 항목 1
+            // 안내 항목 1. 예전 문구는 '노래 번역 품질'이었는데 앱에 노래·가사
+            // 기능이 없다. 실제로 있는 것은 영상 자동 자막이고, 자막 화면의
+            // 안내(edit_strings.segmentsNotice)와 같은 말로 맞춘다(5차).
             _TipItem(
-              icon: Icons.music_note_rounded,
+              icon: Icons.closed_caption_outlined,
               color: cs.tertiary,
-              title: '노래 번역 품질',
+              title: '자동 자막 정확도',
               body:
-                  '배경음이 강한 노래는 자막 생성이 잘 안될 수 있어요. 보컬이 명확한 곡일수록 더 좋은 결과를 얻을 수 있어요.',
+                  '소음이나 음악이 많은 영상에선 자동 자막 정확도가 낮을 수 있어요. 말소리가 또렷한 영상일수록 더 좋은 결과를 얻을 수 있어요.',
             ),
             const SizedBox(height: AppSpacing.md),
 

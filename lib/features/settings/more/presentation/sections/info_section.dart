@@ -54,7 +54,9 @@ class _InfoSectionState extends State<InfoSection> {
           ),
           NavTile(
             icon: Icons.help_outline,
-            title: '도움말',
+            // '도움말'이라는 이름에 견주면 내용이 안내 세 가지뿐이라, 사용법
+            // 도움말을 기대하고 누르면 어긋났다. 창 제목과 같은 말로 둔다(5차).
+            title: '이용 안내',
             onTap: () => showTipDialog(context, force: true),
           ),
           NavTile(
