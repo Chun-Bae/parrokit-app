@@ -1934,7 +1934,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
             _HistoryLine(
               icon: Icons.history_rounded,
               text: activity.lastPracticedAt == null
-                  ? '아직 따라 말해보지 않았어요'
+                  ? '아직 따라 말해 보지 않았어요'
                   : '마지막 연습 ${relativeDayLabel(DateTime.now(), activity.lastPracticedAt!)}',
             ),
             if (widget.sentence.addedAt != null)
@@ -2398,7 +2398,8 @@ class _WordPickRow extends StatelessWidget {
             ActionChip(
               key: const ValueKey('pick-word-custom'),
               avatar: const Icon(Icons.add_rounded, size: 16),
-              label: const Text('직접 입력'),
+              // 단어 탭 칩과 같은 말로(5차). 예전 '직접 입력'.
+              label: const Text('직접 추가'),
               visualDensity: VisualDensity.compact,
               onPressed: () => onPick(''),
             ),

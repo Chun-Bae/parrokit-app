@@ -256,9 +256,9 @@ class _HangulTransliterateRow extends StatelessWidget {
             child: Text(
                 switch (status) {
                   AssistStatus.unavailable =>
-                    '지금은 한글 변환을 쓸 수 없어요. 원문을 직접 입력해주세요.',
+                    '지금은 한글 변환을 쓸 수 없어요. 원문을 직접 적어 주세요.',
                   AssistStatus.quotaExceeded => '오늘 횟수를 모두 썼어요. 내일 다시 쓸 수 있어요.',
-                  _ => '변환하지 못했어요. 다시 시도하거나 원문을 직접 입력해주세요.',
+                  _ => '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
                 },
                 key: const ValueKey('transliterate-message'),
                 style: context.texts.bodySmall
@@ -274,7 +274,7 @@ class _AutoFillCard extends StatelessWidget {
 
   String? get message => switch (controller.fillStatus) {
         AssistStatus.unavailable =>
-          '지금은 자동 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 입력해주세요.',
+          '지금은 자동 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 적어 주세요.',
         AssistStatus.quotaExceeded => '오늘 횟수를 모두 썼어요. 내일 다시 쓸 수 있어요.',
         AssistStatus.failed => '자동으로 채우지 못했어요. 횟수는 줄지 않았어요.',
         AssistStatus.loading => '채우는 중이에요…',
