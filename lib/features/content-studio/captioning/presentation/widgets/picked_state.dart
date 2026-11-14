@@ -561,7 +561,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
             children: [
               const SizedBox(height: 24),
               Text(
-                '스킵 간격 (초)',
+                '몇 초씩 건너뛸까요?',
                 style: context.texts.titleMedium.copyWith(color: cs.onSurface),
               ),
               const SizedBox(height: 16),
@@ -861,7 +861,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             Expanded(
                               child: _OptionCard(
                                 icon: Icons.speed_rounded,
-                                title: '배속',
+                                // 플레이어·TTS와 같은 말로(5차). 예전 '배속'.
+                                title: '속도',
                                 value: '${currentSpeed.toStringAsFixed(2)}x',
                                 onTap: () =>
                                     _showSpeedPickerBottomSheet(context),
@@ -871,7 +872,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             Expanded(
                               child: _OptionCard(
                                 icon: Icons.skip_next_rounded,
-                                title: '스킵 간격',
+                                // 위 조작 줄이 '3초 전/후'라 부른다(5차).
+                                title: '건너뛰기',
                                 value:
                                     '${widget.skipSeconds.toStringAsFixed(widget.skipSeconds == widget.skipSeconds.truncateToDouble() ? 0 : 1)}초',
                                 onTap: () =>
@@ -886,7 +888,8 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             Expanded(
                               child: _OptionCard(
                                 icon: Icons.swap_horiz_rounded,
-                                title: '다시 선택',
+                                // 눌러서 열리는 창 제목과 같은 말로(5차).
+                                title: '영상 다시 고르기',
                                 onTap: () {
                                   widget.controller?.pause();
                                   showVideoPickerSheet(
@@ -902,7 +905,9 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                             Expanded(
                               child: _OptionCard(
                                 icon: Icons.delete_outline_rounded,
-                                title: '지우기',
+                                // 무엇을 지우는지 밝힌다. 확인 창도 '영상
+                                // 지우기'다(5차).
+                                title: '영상 지우기',
                                 accentColor: cs.error,
                                 onTap: () => _showDeleteConfirmDialog(context),
                               ),

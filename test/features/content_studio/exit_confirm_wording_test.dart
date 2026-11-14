@@ -30,6 +30,20 @@ void main() {
     expect(screen, contains("Text('영상 형식'"));
   });
 
+  test('영상 설정 버튼이 누르면 열리는 창과 같은 말을 쓴다', () {
+    final screen = _code(
+      'lib/features/content-studio/captioning/presentation/widgets/picked_state.dart',
+    );
+    // 버튼 '다시 선택' → 창 '영상 다시 고르기'로 달랐다(5차).
+    expect(screen.contains("title: '다시 선택'"), isFalse);
+    expect(screen, contains("title: '영상 다시 고르기'"));
+    // 지우는 버튼은 무엇을 지우는지 밝힌다(확인 창도 '영상 지우기').
+    expect(screen, contains("title: '영상 지우기'"));
+    // '배속'·'스킵'은 플레이어·조작 줄이 쓰지 않는 말이다.
+    expect(screen.contains("title: '배속'"), isFalse);
+    expect(screen.contains('스킵'), isFalse);
+  });
+
   test('나가기 확인 세 곳이 같은 말투를 쓴다', () {
     final sheets = [
       'lib/features/content-studio/captioning/presentation/widgets/exit_confirm_sheet.dart',
