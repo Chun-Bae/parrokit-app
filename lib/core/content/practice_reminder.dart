@@ -90,15 +90,23 @@ class PracticeReminderSettings {
   }
 }
 
-/// [now] 다음으로 오는 알림 시각들. 오늘 그 시각이 이미 지났으면 내일부터.
+/// 지금과 첫 알림 사이에 적어도 이만큼은 둔다.
+///
+/// 몇 초 뒤로 잡으면 예약이 끝나기도 전에 그 시각이 지나 알림이 그냥 사라지거나
+/// 바로 울려 버린다(5차, 사용자와 정함).
+const reminderMinLead = Duration(seconds: 10);
+
+/// [now] 다음으로 오는 알림 시각들. 오늘 그 시각이 지났거나
+/// [minLead]보다 가까우면 내일부터.
 List<DateTime> reminderTimes(
   DateTime now,
   int hour,
   int minute, {
   int days = PracticeReminder.scheduleDays,
+  Duration minLead = reminderMinLead,
 }) {
   var first = DateTime(now.year, now.month, now.day, hour, minute);
-  if (!first.isAfter(now)) {
+  if (first.difference(now) < minLead) {
     first = first.add(const Duration(days: 1));
   }
   return [

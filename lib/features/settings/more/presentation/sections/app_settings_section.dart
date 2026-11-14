@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/state/provider/theme_provider.dart';
+import '../widgets/practice_reminder_tile.dart';
 import '../widgets/switch_tile.dart';
 import '../widgets/theme_tile.dart';
 
@@ -31,6 +32,7 @@ class AppSettingsSection extends StatelessWidget {
               context.read<ThemeProvider>().setTheme(mode);
             },
           ),
+          const PracticeReminderTile(),
           ValueListenableBuilder<bool>(
             valueListenable: AppConfig.newClipLibraryListenable,
             builder: (context, value, _) => SwitchTile(

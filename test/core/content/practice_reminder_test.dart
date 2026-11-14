@@ -26,6 +26,27 @@ void main() {
       expect(times.single, DateTime(2026, 11, 15, 20));
     });
 
+    test('너무 가까우면(10초 안쪽) 내일로 미룬다', () {
+      // 9초 뒤: 예약이 끝나기도 전에 지나갈 수 있다.
+      expect(
+          reminderTimes(DateTime(2026, 11, 14, 19, 59, 51), 20, 0, days: 1)
+              .single,
+          DateTime(2026, 11, 15, 20));
+      // 11초 뒤: 오늘 울린다.
+      expect(
+          reminderTimes(DateTime(2026, 11, 14, 19, 59, 49), 20, 0, days: 1)
+              .single,
+          DateTime(2026, 11, 14, 20));
+    });
+
+    test('간격은 바꿔 줄 수 있다', () {
+      expect(
+          reminderTimes(DateTime(2026, 11, 14, 19, 59, 51), 20, 0,
+                  days: 1, minLead: Duration.zero)
+              .single,
+          DateTime(2026, 11, 14, 20));
+    });
+
     test('달을 넘어가도 날짜가 이어진다', () {
       // 11월 30일 9시에는 그날 8시 30분이 지났으므로 12월 1일부터.
       final times = reminderTimes(DateTime(2026, 11, 30, 9), 8, 30, days: 3);
