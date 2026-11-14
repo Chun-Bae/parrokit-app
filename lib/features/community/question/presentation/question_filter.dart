@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/shell/domain/community_deadline.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 
@@ -63,9 +64,6 @@ int _newestFirst(Post a, Post b) {
 /// '기한 지남'이라고만 말한다. 기한이 없으면 null.
 String? questionDeadlineLabel(DateTime? expireAt, DateTime now) {
   if (expireAt == null) return null;
-  final left = expireAt.difference(now);
-  if (left.isNegative) return '기한 지남';
-  if (left.inDays >= 1) return '${left.inDays}일 남음';
-  if (left.inHours >= 1) return '${left.inHours}시간 남음';
-  return '곧 마감';
+  // 투표 카드와 같은 말을 쓴다(5차). 전에는 'N일 남음'·'기한 지남'이었다.
+  return communityDeadlineLabel(expireAt, now);
 }

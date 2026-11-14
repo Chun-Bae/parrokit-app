@@ -18,7 +18,7 @@ void main() {
     expect(at(const Duration(hours: 2)), '2시간 뒤 마감');
     expect(at(const Duration(minutes: 7)), '7분 뒤 마감');
     expect(at(const Duration(seconds: 30)), '곧 마감');
-    expect(at(const Duration(minutes: -1)), '투표 마감');
+    expect(at(const Duration(minutes: -1)), '마감 지남');
   });
 
   test('탭을 열면 걸러진 목록이 아니라 전체를 보여준다', () {

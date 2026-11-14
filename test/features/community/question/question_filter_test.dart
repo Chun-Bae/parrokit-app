@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/question/presentation/question_filter.dart';
+import 'package:parrokit/features/community/shell/domain/community_deadline.dart';
 
 Post q(String id,
         {int likes = 0,
@@ -91,16 +92,26 @@ void main() {
     expect(ids(posts), before);
   });
 
-  test('마감 안내는 남은 때를 말하고, 지나면 기한 지남', () {
+  test('마감 안내는 투표 카드와 같은 말을 쓴다', () {
+    // 전에는 질문만 'N일 남음'·'기한 지남'이고 투표는 'N일 뒤 마감'이었다(5차).
     final now = DateTime(2026, 11, 14, 12);
     expect(questionDeadlineLabel(null, now), isNull);
     expect(questionDeadlineLabel(now.add(const Duration(days: 2, hours: 3)), now),
-        '2일 남음');
+        '2일 뒤 마감');
     expect(questionDeadlineLabel(now.add(const Duration(hours: 5)), now),
-        '5시간 남음');
+        '5시간 뒤 마감');
     expect(questionDeadlineLabel(now.add(const Duration(minutes: 20)), now),
+        '20분 뒤 마감');
+    expect(questionDeadlineLabel(now.add(const Duration(seconds: 30)), now),
         '곧 마감');
     expect(questionDeadlineLabel(now.subtract(const Duration(minutes: 1)), now),
-        '기한 지남');
+        '마감 지남');
+  });
+
+  test('질문과 투표가 같은 함수로 같은 말을 낸다', () {
+    final now = DateTime(2026, 11, 14, 12);
+    final end = now.add(const Duration(hours: 2, minutes: 5));
+    expect(questionDeadlineLabel(end, now), communityDeadlineLabel(end, now));
+    expect(communityDeadlineLabel(end, now), '2시간 5분 뒤 마감');
   });
 }

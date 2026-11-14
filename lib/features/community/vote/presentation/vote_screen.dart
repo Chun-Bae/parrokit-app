@@ -3,6 +3,7 @@ import 'package:parrokit/features/community/shell/presentation/utils/community_p
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/community/shell/domain/community_deadline.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 
 import 'package:provider/provider.dart';
@@ -846,18 +847,6 @@ class VoteCard extends StatelessWidget {
   }
 }
 
-/// 투표 카드 머리의 남은 시간. 필터 이름('마감')과 같은 말을 쓴다(5차). 예전엔
-/// 'N일 후 종료!'처럼 느낌표가 붙고, 1분 안 남으면 '0분 후 종료!'가 나왔다.
-String voteRemainingLabel(DateTime end, DateTime now) {
-  final diff = end.difference(now);
-  if (diff.isNegative) return '투표 마감';
-  if (diff.inDays > 0) return '${diff.inDays}일 뒤 마감';
-  if (diff.inHours > 0) {
-    final minutes = diff.inMinutes % 60;
-    return minutes == 0
-        ? '${diff.inHours}시간 뒤 마감'
-        : '${diff.inHours}시간 $minutes분 뒤 마감';
-  }
-  if (diff.inMinutes > 0) return '${diff.inMinutes}분 뒤 마감';
-  return '곧 마감';
-}
+/// 투표 카드 머리의 남은 시간. 질문 상세와 같은 말을 쓴다(5차).
+String voteRemainingLabel(DateTime end, DateTime now) =>
+    communityDeadlineLabel(end, now);
