@@ -260,6 +260,7 @@
 - Google Drive 클립 편집 실패(4차 발견, 사용자가 "나중에"로 정함)
 
 ## 안건 (사용자가 정할 것)
+- **안 쓰는 위젯 넷을 지울지**(반복 169): `AutoNextButton`, `HeaderSection`, `QuickActionButton`, `TodayPracticeSummary`. 목록과 까닭은 .claude/dead-code-candidates.md 맨 아래. `TodayPracticeSummary`를 지울 때 같은 파일의 `DailyGoalDialog`(오늘 목표 창)는 남겨야 한다
 - **진짜 '이어보기'를 만들지**: 지금은 최근 본 클립 목록뿐이고 누르면 처음부터 튼다(47a95cd8에서 이름을 사실에 맞춤). 만들려면 플레이어가 마지막 재생 위치를 클립별로 저장하고 열 때 그 위치로 가야 한다(표 하나 추가 또는 clips에 칸 추가)
 - ~~맥 디스크~~ **정해짐(11-14): DerivedData 지움(12GB 확보)**. 원래 안건:: 빌드가 '공간 없음'으로 실패했다. Xcode DerivedData(~/Library/Developer/Xcode/DerivedData, 14GB, 다시 만들어지는 캐시)를 지워도 될지. 지우면 다른 Xcode 프로젝트는 다음 빌드가 느려질 뿐이다
 - **안 쓰는 파일 — 정해짐(11-14): 결제 3개만 남기고 25개 삭제**: 목록과 묶음은 .claude/dead-code-candidates.md. 예전 화면·위젯 10, 결제 3(나중에 쓸 수 있음), 커뮤니티 7, 앱에서 OpenAI 직접 부르던 자막 코드 5, 그 밖 3. 승인하면 지우고 analyze·test·빌드로 확인
@@ -1255,3 +1256,10 @@
 - 찾은 것(9ead97f3): **오늘 목표가 5에 묶여 있었다.** `DailyGoalDialog`와 `editDailyGoal()`은 그대로 있는데, 그 창을 열던 `TodayPracticeSummary`가 새 홈('오늘' 한 줄)으로 바뀌며 화면에서 빠져 호출하는 곳이 없어졌다 → '오늘 목표 · 따라 말하기' 옆에 '목표 바꾸기'를 두고 이었다
 - 쓰이지 않게 된 `TodayPracticeSummary` 위젯은 남겼다(안건의 '안 쓰는 파일' 정리 때 함께 볼 것)
 - analyze 깨끗, 전체 631개 통과. 라이트·다크에서 창이 열리는 것 확인, 테마 라이트로 되돌림
+
+## 반복 169 (20:05~)
+- 반복 168에서 찾은 '끊긴 길'이 어떤 도구로도 안 잡혔다는 점을 따라감. `unreachable_from_main`은 아무것도 내지 않고(State의 public 메서드는 안 잡힌다), 파일 단위 목록(.claude/dead-code-candidates.md)은 쓰이는 파일 안에 섞인 위젯을 못 본다
+- 만든 것(d3034aa5): `tool/find_unused_widgets.py` — 선언 파일 밖에서 아무도 만들지 않는 위젯을 찾는다. 196개 중 10개가 나왔고, grep으로 걸러 진짜 안 쓰는 넷(AutoNextButton, HeaderSection, QuickActionButton, TodayPracticeSummary), 오탐 다섯(같은 파일 안에서 씀), 의도한 보관 둘(결제)로 나눠 적었다
+- 넷 중 기능이 끊겨 있던 것은 TodayPracticeSummary뿐이고 반복 168에서 이미 이었다. 나머지 셋은 새 디자인으로 바뀌며 대체된 UI 조각이라 기능 손실은 없다
+- 지우지 않았다(삭제는 승인 필요). 안건에 올림
+- analyze 깨끗. 코드 동작 변경이 없어 기기 확인은 하지 않았다
