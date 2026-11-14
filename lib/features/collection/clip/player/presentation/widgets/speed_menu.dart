@@ -34,6 +34,12 @@ class SpeedMenu extends StatelessWidget {
         decoration: BoxDecoration(
           color: isLight ? cs.surface.withValues(alpha: 0.9) : Colors.white12,
           borderRadius: BorderRadius.circular(AppRadius.full),
+          // 옆 알약(TogglePill)의 꺼진 모습과 같은 테두리. 없으면 흰 화면에서
+          // 버튼으로 보이지 않았다(5차).
+          border: Border.all(
+            color: isLight ? cs.outlineVariant : Colors.white24,
+            width: 0.8,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

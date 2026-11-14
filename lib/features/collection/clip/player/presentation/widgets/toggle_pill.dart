@@ -28,9 +28,12 @@ class TogglePill extends StatelessWidget {
     final Color fg = active
         ? (isLight ? cs.primary : Colors.white)
         : (isLight ? cs.onSurface : Colors.white70);
-    final Color? border = active
+    // 꺼진 알약은 바탕이 화면색이고 테두리도 없어서, 흰 화면에서는 그냥
+    // 글자처럼 보였다. '소리만 듣기'와 속도가 버튼인 줄 모른다(5차).
+    // 꺼져 있어도 옅은 테두리를 둬서 누를 수 있는 것임을 알린다.
+    final Color border = active
         ? (isLight ? cs.primary.withValues(alpha: 0.6) : Colors.white30)
-        : null; // 비활성일 때는 테두리 없음
+        : (isLight ? cs.outlineVariant : Colors.white24);
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.full),
@@ -41,7 +44,7 @@ class TogglePill extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.full),
-          border: border != null ? Border.all(color: border, width: 0.8) : null,
+          border: Border.all(color: border, width: 0.8),
         ),
         // 내용만큼만 차지한다. 줄바꿈되는 줄(Wrap)에 들어가도 가로로 늘지 않게.
         child: Row(
