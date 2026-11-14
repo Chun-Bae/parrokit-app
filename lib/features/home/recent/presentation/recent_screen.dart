@@ -15,6 +15,7 @@
 // - EmptyRecentView: 빈 상태 표시
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
@@ -108,11 +109,14 @@ class _RecentScreenState extends State<RecentScreen> {
 
             // 에러
             if (snap.hasError) {
+              AppLogger.e('[Recent] 최근 본 클립 읽기 실패', error: snap.error);
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sectionGap),
+                  // 내부 오류 글(snap.error)을 그대로 보여 주지 않는다(5차).
+                  // 무엇을 하면 되는지만 적고, 자세한 것은 로그로 남긴다.
                   child: Text(
-                    '최근 목록을 불러오는 중 오류가 발생했어요.\n${snap.error}',
+                    '최근 본 클립을 불러오지 못했어요.\n아래로 당겨 다시 시도해 주세요.',
                     textAlign: TextAlign.center,
                   ),
                 ),

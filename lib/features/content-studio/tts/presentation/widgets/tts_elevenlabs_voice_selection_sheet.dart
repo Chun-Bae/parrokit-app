@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -88,9 +89,12 @@ class _TtsElevenLabsVoiceSelectionSheetState
                 }
 
                 if (snapshot.hasError) {
+                  // 내부 오류 글을 그대로 보여 주지 않는다(5차).
+                  AppLogger.e('[TTS] 보이스 목록 읽기 실패',
+                      error: snapshot.error);
                   return Center(
                     child: Text(
-                      '보이스 목록을 불러오지 못했습니다.\n${snapshot.error}',
+                      '목소리 목록을 불러오지 못했어요.\n창을 닫고 다시 열어 주세요.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: theme.colorScheme.error),
                     ),
