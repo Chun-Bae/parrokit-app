@@ -71,5 +71,9 @@ class FirestoreWordCloud implements WordCloud {
   }
 
   @override
+  Future<void> setMeaning(String id, String meaning) =>
+      _words.doc(id).update({'meaning': meaning});
+
+  @override
   Future<void> remove(String id) => _words.doc(id).delete();
 }

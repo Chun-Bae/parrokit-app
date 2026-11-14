@@ -171,6 +171,9 @@ abstract class WordCloud {
 
   /// 같은 언어에 같은 단어가 이미 있으면 false.
   Future<bool> add(String ownerId, MyWord word);
+
+  /// 뜻만 고친다. 규칙(firestore.rules의 words)에서 update를 허용한다.
+  Future<void> setMeaning(String id, String meaning);
   Future<void> remove(String id);
 }
 
@@ -307,6 +310,44 @@ class MyWordStore {
     await _saveDevice(accountId, [...device, entry]);
     revision.value++;
     return result;
+  }
+
+  /// 저장해 둔 단어의 뜻을 고친다. 고쳤으면 true.
+  ///
+  /// 전에는 뜻을 비워 둔 채 저장하면(문장에서 단어만 고르면 자주 그랬다)
+  /// 나중에 적을 길이 없었다. 지우고 다시 넣는 수밖에 없었다(5차).
+  static Future<bool> setMeaning(
+    String accountId,
+    String id,
+    String meaning,
+  ) async {
+    final clipped = clipToLength(meaning.trim(), meaningMaxLength);
+    final device = await _loadDevice(accountId);
+    final index = device.indexWhere((w) => w.id == id);
+    if (index >= 0) {
+      device[index] = MyWord(
+        id: device[index].id,
+        language: device[index].language,
+        word: device[index].word,
+        meaning: clipped,
+        examples: device[index].examples,
+        topic: device[index].topic,
+        addedAt: device[index].addedAt,
+      );
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setMeaning(id, clipped);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
   }
 
   /// 단어만 지운다. 예문으로 붙은 원래 문장은 건드리지 않는다.

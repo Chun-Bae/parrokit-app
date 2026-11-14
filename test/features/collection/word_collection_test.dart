@@ -60,6 +60,50 @@ void main() {
     MyWordStore.cloud = null;
   });
 
+  testWidgets('뜻이 비어 있는 단어도 상세에서 뜻을 적을 수 있다', (tester) async {
+    await MyWordStore.add('guest',
+        language: '영어',
+        word: 'slowly',
+        example: 'Could you speak more slowly?');
+    await openWordTab(tester);
+
+    await tester.tap(find.text('slowly'));
+    await tester.pumpAndSettle();
+    expect(find.text('뜻을 아직 적지 않았어요'), findsOneWidget);
+
+    // 전에는 '단어 지우기'뿐이라, 뜻을 안 적고 저장하면 지우고 다시 넣는
+    // 수밖에 없었다.
+    await tester.tap(find.byKey(const ValueKey('edit-word-meaning')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('word-meaning-input')), '천천히');
+    await tester.tap(find.byKey(const ValueKey('word-meaning-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('천천히'), findsWidgets);
+    expect(find.text('뜻을 아직 적지 않았어요'), findsNothing);
+    expect((await MyWordStore.load('guest')).single.meaning, '천천히');
+  });
+
+  testWidgets('뜻이 있으면 고치기로 바꾼다', (tester) async {
+    await MyWordStore.add('guest',
+        language: '영어', word: 'nuance', meaning: '미묘한 차이');
+    await openWordTab(tester);
+
+    await tester.tap(find.text('nuance'));
+    await tester.pumpAndSettle();
+    expect(find.text('뜻 고치기'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('edit-word-meaning')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('word-meaning-input')), '뉘앙스');
+    await tester.tap(find.byKey(const ValueKey('word-meaning-save')));
+    await tester.pumpAndSettle();
+
+    expect((await MyWordStore.load('guest')).single.meaning, '뉘앙스');
+  });
+
   testWidgets('단어가 없으면 빈 화면과 단어 추가를 보여주고 예시 데이터는 없다', (tester) async {
     await openWordTab(tester);
     expect(find.text('아직 모은 단어가 없어요'), findsOneWidget);

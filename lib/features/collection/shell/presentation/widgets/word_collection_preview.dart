@@ -100,6 +100,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
       builder: (_) => _WordDetailSheet(
         word: word,
         review: reviews[word.id],
+        accountId: accountId,
+        messenger: ScaffoldMessenger.maybeOf(context),
         onDelete: () => remove(word),
       ),
     );
@@ -393,6 +395,8 @@ Future<void> showWordDetails(
     builder: (_) => _WordDetailSheet(
       word: word,
       review: reviews[word.id],
+      accountId: accountId,
+      messenger: messenger,
       onDelete: () async {
         await MyWordStore.remove(accountId, word.id);
         messenger
@@ -416,19 +420,98 @@ String wordDueLabel(DateTime? due, DateTime now) {
   return '$days일 뒤 복습';
 }
 
-class _WordDetailSheet extends StatelessWidget {
+/// 뜻을 적는 작은 창. 입력칸 컨트롤러를 이 창이 가지고 있다가 닫힐 때
+/// 버린다. 부르는 쪽에서 showDialog가 끝나자마자 버렸더니, 닫히는 동안
+/// 그려지는 중에 "used after being disposed"가 났다(5차).
+class _MeaningDialog extends StatefulWidget {
+  const _MeaningDialog({required this.word, required this.meaning});
+
+  final String word;
+  final String meaning;
+
+  @override
+  State<_MeaningDialog> createState() => _MeaningDialogState();
+}
+
+class _MeaningDialogState extends State<_MeaningDialog> {
+  late final _controller = TextEditingController(text: widget.meaning);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text(widget.meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
+        content: TextField(
+          key: const ValueKey('word-meaning-input'),
+          controller: _controller,
+          autofocus: true,
+          maxLength: meaningMaxLength,
+          decoration: InputDecoration(hintText: widget.word),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            key: const ValueKey('word-meaning-save'),
+            onPressed: () => Navigator.pop(context, _controller.text),
+            child: const Text('저장'),
+          ),
+        ],
+      );
+}
+
+class _WordDetailSheet extends StatefulWidget {
   const _WordDetailSheet({
     required this.word,
     required this.review,
+    required this.accountId,
+    required this.messenger,
     required this.onDelete,
   });
 
   final MyWord word;
   final WordReview? review;
+  final String accountId;
+  final ScaffoldMessengerState? messenger;
   final VoidCallback onDelete;
 
   @override
+  State<_WordDetailSheet> createState() => _WordDetailSheetState();
+}
+
+class _WordDetailSheetState extends State<_WordDetailSheet> {
+  late String meaning = widget.word.meaning;
+
+  /// 뜻을 적거나 고친다. 전에는 뜻이 비어 있으면 지우고 다시 넣는 수밖에
+  /// 없었다(문장에서 단어만 고르면 뜻이 비어 있다, 5차).
+  Future<void> _editMeaning() async {
+    final next = await showDialog<String>(
+      context: context,
+      builder: (_) => _MeaningDialog(word: widget.word.word, meaning: meaning),
+    );
+    if (!mounted || next == null) return;
+
+    final saved = await MyWordStore.setMeaning(
+        widget.accountId, widget.word.id, next);
+    if (!mounted) return;
+    if (!saved) {
+      widget.messenger?.showSnackBar(
+          const SnackBar(content: Text('뜻을 저장하지 못했어요. 다시 시도해주세요.')));
+      return;
+    }
+    setState(() => meaning = next.trim());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final word = widget.word;
+    final review = widget.review;
     final colors = Theme.of(context).colorScheme;
     final muted =
         context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant);
@@ -441,8 +524,25 @@ class _WordDetailSheet extends StatelessWidget {
           children: [
             Text(word.word, style: context.texts.headlineSmall),
             const SizedBox(height: 4),
-            Text(word.meaning.isEmpty ? '뜻을 아직 적지 않았어요' : word.meaning,
-                style: context.texts.bodyLarge),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                      meaning.isEmpty ? '뜻을 아직 적지 않았어요' : meaning,
+                      key: const ValueKey('word-detail-meaning'),
+                      style: context.texts.bodyLarge.copyWith(
+                          color: meaning.isEmpty
+                              ? colors.onSurfaceVariant
+                              : null)),
+                ),
+                TextButton(
+                  key: const ValueKey('edit-word-meaning'),
+                  onPressed: _editMeaning,
+                  child: Text(meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
+                ),
+              ],
+            ),
             // 예문은 여러 개일 수 있다(5차).
             for (final (index, example) in word.examples.indexed) ...[
               SizedBox(height: index == 0 ? 16 : 8),
@@ -481,7 +581,7 @@ class _WordDetailSheet extends StatelessWidget {
                 key: const ValueKey('delete-word'),
                 onPressed: () {
                   Navigator.pop(context);
-                  onDelete();
+                  widget.onDelete();
                 },
                 icon: const Icon(Icons.delete_outline_rounded),
                 label: const Text('단어 지우기'),

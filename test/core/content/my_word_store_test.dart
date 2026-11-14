@@ -28,6 +28,23 @@ class FakeWordCloud implements WordCloud {
   }
 
   @override
+  Future<void> setMeaning(String id, String meaning) async {
+    if (fail) throw Exception('permission-denied');
+    final index = stored.indexWhere((w) => w.id == id);
+    if (index < 0) throw Exception('not-found');
+    final before = stored[index];
+    stored[index] = MyWord(
+      id: before.id,
+      language: before.language,
+      word: before.word,
+      meaning: meaning,
+      examples: before.examples,
+      topic: before.topic,
+      addedAt: before.addedAt,
+    );
+  }
+
+  @override
   Future<void> remove(String id) async => stored.removeWhere((w) => w.id == id);
 }
 
@@ -35,6 +52,48 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     MyWordStore.cloud = null;
+  });
+
+  group('뜻 나중에 적기', () {
+    test('기기에 있는 단어의 뜻을 고친다', () async {
+      await MyWordStore.add('guest', language: '영어', word: 'slowly');
+      final id = MyWordStore.idFor('영어', 'slowly');
+      expect((await MyWordStore.load('guest')).single.meaning, '');
+
+      expect(await MyWordStore.setMeaning('guest', id, ' 천천히 '), isTrue);
+      expect((await MyWordStore.load('guest')).single.meaning, '천천히');
+    });
+
+    test('뜻을 고쳐도 예문과 추가한 날은 그대로 둔다', () async {
+      await MyWordStore.add('guest',
+          language: '영어',
+          word: 'slowly',
+          example: 'Could you speak more slowly?',
+          exampleTranslation: '조금 더 천천히 말씀해 주실 수 있나요?');
+      final id = MyWordStore.idFor('영어', 'slowly');
+      final before = (await MyWordStore.load('guest')).single;
+
+      await MyWordStore.setMeaning('guest', id, '천천히');
+      final after = (await MyWordStore.load('guest')).single;
+      expect(after.meaning, '천천히');
+      expect(after.examples.single.text, before.examples.single.text);
+      expect(after.examples.single.translation,
+          before.examples.single.translation);
+      expect(after.addedAt, before.addedAt);
+    });
+
+    test('규칙 길이를 넘는 뜻은 줄여서 저장한다', () async {
+      await MyWordStore.add('guest', language: '영어', word: 'slowly');
+      final id = MyWordStore.idFor('영어', 'slowly');
+
+      await MyWordStore.setMeaning('guest', id, '가' * (meaningMaxLength + 50));
+      expect((await MyWordStore.load('guest')).single.meaning.length,
+          meaningMaxLength);
+    });
+
+    test('없는 단어면 고치지 않고 false', () async {
+      expect(await MyWordStore.setMeaning('guest', 'no-such-id', '뜻'), isFalse);
+    });
   });
 
   group('게스트(기기 저장)', () {
