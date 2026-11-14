@@ -4,20 +4,18 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions/v1";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {shouldSendPush} from "./notificationPrefs";
+import {
+  buildCommentTitle,
+  buildReplyTitle,
+  buildCommentBody,
+  buildReplyBody,
+} from "./communityNotificationText";
 
 const db = admin.firestore();
 
 // 투표 종료 알림을 한 번에 몇 명씩 보낼지. 한 명마다 트랜잭션 하나와
 // 조회 하나, 발송 하나가 들어간다.
 const FANOUT_CHUNK_SIZE = 50;
-
-const boardTypeLabelMap: Record<string, string> = {
-  // 앱의 커뮤니티 탭 이름과 맞춘다. 전에는 "일반"이라 알림이 "일반에 새
-  // 댓글이 달렸어요"가 됐는데 게시판에는 그런 카테고리가 없다.
-  board: "게시판",
-  question: "질문",
-  vote: "투표",
-};
 
 type NotificationPayload = {
   recipientUserId: string;
@@ -49,6 +47,7 @@ export const onCommunityCommentCreated = functions
     const postData = postSnap.data() as Record<string, unknown>;
     const boardType = asString(postData.postType) || "board";
     const postAuthorId = asString(postData.authorId);
+    const postTitle = asString(postData.title) ?? undefined;
     const actorDisplayName = asString(commentData.authorNickname);
     const parentId = asString(commentData.parentId);
 
@@ -67,8 +66,8 @@ export const onCommunityCommentCreated = functions
           actorId: authorId,
           actorDisplayName: actorDisplayName ?? undefined,
           routePath: buildRoutePath(boardType, postId),
-          title: buildCommentTitle(boardType),
-          body: buildCommentBody(boardType, actorDisplayName ?? undefined),
+          title: buildCommentTitle(boardType, actorDisplayName ?? undefined),
+          body: buildCommentBody(boardType, postTitle),
         })
       );
     }
@@ -84,7 +83,6 @@ export const onCommunityCommentCreated = functions
       if (parentSnap.exists) {
         const parentData = parentSnap.data() as Record<string, unknown>;
         const parentAuthorId = asString(parentData.authorId);
-        const parentAuthorNickname = asString(parentData.authorNickname);
 
         if (parentAuthorId && parentAuthorId !== authorId) {
           recipientMap.set(
@@ -99,12 +97,8 @@ export const onCommunityCommentCreated = functions
               actorId: authorId,
               actorDisplayName: actorDisplayName ?? undefined,
               routePath: buildRoutePath(boardType, postId),
-              title: buildReplyTitle(boardType),
-              body: buildReplyBody(
-                boardType,
-                actorDisplayName ?? undefined,
-                parentAuthorNickname ?? undefined,
-              ),
+              title: buildReplyTitle(boardType, actorDisplayName ?? undefined),
+              body: buildReplyBody(boardType, postTitle),
             })
           );
         }
@@ -384,30 +378,6 @@ function buildRoutePath(boardType: string, postId: string): string {
   }
 }
 
-function buildCommentTitle(boardType: string): string {
-  return `${boardTypeLabelMap[boardType] ?? "게시글"}에 새 댓글이 달렸어요.`;
-}
-
-function buildReplyTitle(boardType: string): string {
-  return `${boardTypeLabelMap[boardType] ?? "게시글"} 댓글에 답글이 달렸어요.`;
-}
-
-function buildCommentBody(boardType: string, actorDisplayName?: string): string {
-  const label = boardTypeLabelMap[boardType] ?? "게시글";
-  const actor = actorDisplayName && actorDisplayName.length > 0 ? actorDisplayName : "누군가";
-  return `${actor}님이 ${label}에 댓글을 남겼어요.`;
-}
-
-function buildReplyBody(
-  boardType: string,
-  actorDisplayName?: string,
-  parentDisplayName?: string,
-): string {
-  const label = boardTypeLabelMap[boardType] ?? "게시글";
-  const actor = actorDisplayName && actorDisplayName.length > 0 ? actorDisplayName : "누군가";
-  const parent = parentDisplayName && parentDisplayName.length > 0 ? parentDisplayName : "내 댓글";
-  return `${actor}님이 ${label}의 ${parent}에 답글을 남겼어요.`;
-}
 
 function asString(value: unknown): string | null {
   if (typeof value === "string" && value.length > 0) {
