@@ -139,7 +139,7 @@ class AppShell extends StatelessWidget {
                           },
                   ),
                   IconButton(
-                    tooltip: '삭제',
+                    tooltip: '지우기',
                     icon: const Icon(Icons.delete_rounded),
                     onPressed: selectedClipIds.isEmpty
                         ? null
@@ -148,10 +148,10 @@ class AppShell extends StatelessWidget {
                               context: context,
                               barrierDismissible: false,
                               builder: (dialogContext) => AlertDialog(
-                                title: const Text('선택한 클립을 삭제할까요?'),
+                                title: const Text('선택한 클립을 지울까요?'),
                                 content: Text(
-                                  '선택한 클립 ${selectedClipIds.length}개를 삭제합니다.\n\n'
-                                  '삭제한 클립은 다시 되돌릴 수 없습니다.',
+                                  '선택한 클립 ${selectedClipIds.length}개를 지워요.\n\n'
+                                  '지우면 되돌릴 수 없어요.',
                                 ),
                                 actions: [
                                   TextButton(
@@ -162,7 +162,7 @@ class AppShell extends StatelessWidget {
                                   FilledButton(
                                     onPressed: () =>
                                         Navigator.pop(dialogContext, true),
-                                    child: const Text('삭제'),
+                                    child: const Text('지우기'),
                                   ),
                                 ],
                               ),

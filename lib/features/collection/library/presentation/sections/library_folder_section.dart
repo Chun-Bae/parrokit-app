@@ -511,7 +511,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             Text(
               isAtGroupRoot
                   ? '그룹을 추가하거나 그룹 관리로 이동할 수 있어요.'
-                  : '폴더을 추가하거나 삭제 모드로 들어갈 수 있어요.',
+                  : '폴더를 추가하거나 지우기 모드로 들어갈 수 있어요.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),
@@ -524,7 +524,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             ListTile(
               leading: Icon(Icons.delete_outline_rounded, color: cs.error),
-              title: Text('삭제 모드', style: TextStyle(color: cs.error)),
+              title: Text('지우기 모드', style: TextStyle(color: cs.error)),
               onTap: () => Navigator.pop(context, 'delete'),
             ),
             ListTile(
@@ -572,7 +572,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('그룹 삭제'),
-        content: Text("'$name' 그룹을 삭제할까요?\n(그룹 내 컬렉션과 클립은 삭제되지 않습니다)"),
+        content: Text("'$name' 그룹을 지울까요?\n(그룹 안의 폴더와 클립은 지워지지 않아요)"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -582,7 +582,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             style: FilledButton.styleFrom(
                 backgroundColor: cs.error, foregroundColor: cs.onError),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('삭제'),
+            child: const Text('지우기'),
           ),
         ],
       ),
@@ -730,8 +730,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
 
     final cs = Theme.of(context).colorScheme;
     final content = clipCount > 0
-        ? "'$name' 컬렉션과 포함된 클립 $clipCount개를 모두 삭제할까요?\n\n이 작업은 되돌릴 수 없습니다."
-        : "'$name' 컬렉션을 삭제할까요?";
+        ? "'$name' 폴더와 그 안의 클립 $clipCount개를 모두 지울까요?\n\n지우면 되돌릴 수 없어요."
+        : "'$name' 폴더를 지울까요?";
 
     final ok = await showDialog<bool>(
       context: context,
@@ -747,7 +747,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             style: FilledButton.styleFrom(
                 backgroundColor: cs.error, foregroundColor: cs.onError),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('삭제'),
+            child: const Text('지우기'),
           ),
         ],
       ),
@@ -1036,7 +1036,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                               Icon(Icons.delete_outline_rounded,
                                   size: 16, color: cs.onErrorContainer),
                               const SizedBox(width: 8),
-                              Text('삭제 모드 — 폴더을 눌러 삭제',
+                              Text('지우기 모드 — 폴더를 눌러 지워요',
                                   style: context.texts.labelMedium
                                       .copyWith(color: cs.onErrorContainer)),
                               const Spacer(),

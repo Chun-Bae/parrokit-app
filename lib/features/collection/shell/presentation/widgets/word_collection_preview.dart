@@ -366,7 +366,7 @@ class _WordTile extends StatelessWidget {
                   Icon(Icons.delete_outline_rounded,
                       color: colors.onError, size: 20),
                   const SizedBox(height: 2),
-                  Text('삭제',
+                  Text('지우기',
                       style: context.texts.labelSmall
                           .copyWith(color: colors.onError)),
                 ],

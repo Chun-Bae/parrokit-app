@@ -403,18 +403,18 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   Future<bool> deleteClipById(int clipId) async {
     if (_isStorageTransferRunning) return false;
 
-    startStorageTransfer(0, '클립을 지우고 있어요', title: '삭제하는 중');
+    startStorageTransfer(0, '클립을 지우고 있어요', title: '지우는 중');
 
     try {
       final success = await super.deleteClipById(clipId);
       if (!success) {
         _isStorageTransferRunning = false;
         _storageTransferSucceeded = false;
-        _storageTransferError = '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.';
+        _storageTransferError = '지우지 못했어요. 잠시 후 다시 해 주세요.';
         notifyListeners();
         return false;
       }
-      endStorageTransfer(message: '삭제했어요');
+      endStorageTransfer(message: '지웠어요');
       return true;
     } catch (e, st) {
       AppLogger.e(
@@ -424,7 +424,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.';
+      _storageTransferError = '지우지 못했어요. 잠시 후 다시 해 주세요.';
       notifyListeners();
       return false;
     }
@@ -436,11 +436,11 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   Future<bool> deleteCollectionById(int collectionId) async {
     if (_isStorageTransferRunning) return false;
 
-    startStorageTransfer(0, '폴더을 지우고 있어요', title: '삭제하는 중');
+    startStorageTransfer(0, '폴더를 지우고 있어요', title: '지우는 중');
 
     try {
       final success = await super.deleteCollectionById(collectionId);
-      endStorageTransfer(message: '폴더을 지웠어요');
+      endStorageTransfer(message: '폴더를 지웠어요');
       return success;
     } catch (e, st) {
       AppLogger.e(
@@ -450,7 +450,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '폴더을 지우지 못했어요. 잠시 후 다시 시도해 주세요.';
+      _storageTransferError = '폴더를 지우지 못했어요. 잠시 후 다시 해 주세요.';
       notifyListeners();
       return false;
     }
@@ -463,7 +463,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     if (clipIds.isEmpty || _isStorageTransferRunning) return;
 
     final total = clipIds.length;
-    startStorageTransfer(total, '$total개 클립을 지우고 있어요', title: '삭제하는 중');
+    startStorageTransfer(total, '$total개 클립을 지우고 있어요', title: '지우는 중');
 
     try {
       var progress = 0;
@@ -875,7 +875,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   Future<void> deleteGroupById(int id) async {
     if (_isStorageTransferRunning) return;
 
-    startStorageTransfer(0, '그룹을 지우고 있어요', title: '삭제하는 중');
+    startStorageTransfer(0, '그룹을 지우고 있어요', title: '지우는 중');
 
     try {
       await _libraryEntitySyncCoordinator.deleteGroup(id);

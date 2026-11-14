@@ -47,7 +47,7 @@ Future<String?> showStorageTransferSheet(
               const SizedBox(height: 12),
               _StoragePickTile(
                 title: '기기',
-                subtitle: '이 기기 안에 남겨둡니다.',
+                subtitle: '이 기기 안에 남겨 둬요.',
                 icon: Icons.phone_android_rounded,
                 selected: selectedMode == ClipStorageConstants.storageModeLocal,
                 onTap: () => setSheetState(
@@ -55,7 +55,7 @@ Future<String?> showStorageTransferSheet(
               ),
               _StoragePickTile(
                 title: '서버',
-                subtitle: isServerLocked ? '유료 기능 준비 중이에요.' : '서버 저장으로 옮깁니다.',
+                subtitle: isServerLocked ? '유료 기능 준비 중이에요.' : '서버로 옮겨요.',
                 icon: Icons.cloud_queue_rounded,
                 selected:
                     selectedMode == ClipStorageConstants.storageModeServer,
@@ -68,7 +68,7 @@ Future<String?> showStorageTransferSheet(
               _StoragePickTile(
                 title: 'Google Drive',
                 subtitle:
-                    hasGoogleDriveLinked ? '내 Drive로 옮깁니다.' : '연동 후 사용할 수 있어요.',
+                    hasGoogleDriveLinked ? '내 Drive로 옮겨요.' : '연동하면 쓸 수 있어요.',
                 icon: Icons.cloud_upload_rounded,
                 selected:
                     selectedMode == ClipStorageConstants.storageModeGoogleDrive,

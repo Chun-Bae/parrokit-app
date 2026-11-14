@@ -218,7 +218,7 @@ class ClipListView extends StatelessWidget {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg)),
         title: Text(
-          '삭제할까요?',
+          '지울까요?',
           style: Theme.of(dialogContext)
               .textTheme
               .titleMedium
@@ -250,7 +250,7 @@ class ClipListView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
-            child: const Text('삭제'),
+            child: const Text('지우기'),
           ),
         ],
       ),
@@ -393,7 +393,7 @@ class ClipListView extends StatelessWidget {
                         _buildSwipeAction(
                           color: context.tokens.danger,
                           icon: Icons.delete_rounded,
-                          label: '삭제',
+                          label: '지우기',
                           onTap: () => _confirmDeleteClip(context, item),
                         ),
                       ],

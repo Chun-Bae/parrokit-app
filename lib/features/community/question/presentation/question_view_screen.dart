@@ -194,7 +194,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           ),
         if (isMyPost)
           CommunityOptionAction(
-            label: '삭제',
+            label: '지우기',
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
@@ -237,7 +237,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       actions: [
         if (isMyComment)
           CommunityOptionAction(
-            label: '삭제',
+            label: '지우기',
             icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {

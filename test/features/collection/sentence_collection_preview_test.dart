@@ -648,9 +648,9 @@ void main() {
     await tester.drag(find.text('Swipe me'), const Offset(-300, 0));
     await tester.pumpAndSettle();
     expect(rowAction('Swipe me', '앵무새 켜기'), findsOneWidget);
-    await tester.tap(rowAction('Swipe me', '삭제'));
+    await tester.tap(rowAction('Swipe me', '지우기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '삭제'));
+    await tester.tap(find.widgetWithText(FilledButton, '지우기'));
     await tester.pumpAndSettle();
     expect((await MySentenceStore.load('guest')).any((s) => s.id == id),
         isFalse);

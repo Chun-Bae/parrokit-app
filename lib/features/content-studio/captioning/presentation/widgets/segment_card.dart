@@ -120,7 +120,7 @@ class SegmentCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '삭제',
+                                '지우기',
                                 style: context.texts.labelSmall.copyWith(
                                     color: theme.colorScheme.onSurface
                                         .withValues(alpha: 0.5)),

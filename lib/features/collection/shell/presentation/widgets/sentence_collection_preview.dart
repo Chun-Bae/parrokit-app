@@ -1121,7 +1121,7 @@ class _MySentenceTile extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('내 문장에서 삭제할까요?'),
+        title: const Text('내 문장에서 지울까요?'),
         content: const Text('삭제하면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요. '
             '둘러보기에 공유 중이었다면 거기서도 사라져요.'),
         actions: [
@@ -1133,7 +1133,7 @@ class _MySentenceTile extends StatelessWidget {
                   backgroundColor: Theme.of(context).colorScheme.error,
                   foregroundColor: Theme.of(context).colorScheme.onError),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('삭제')),
+              child: const Text('지우기')),
         ],
       ),
     );
@@ -1276,7 +1276,7 @@ class _MySentenceTile extends StatelessWidget {
         _swipeAction(context,
             color: colors2.error,
             icon: Icons.delete_outline_rounded,
-            label: '삭제',
+            label: '지우기',
             onTap: () => _remove(context)),
     ];
     return SwipeActionTile(
@@ -1685,7 +1685,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       context: context,
       builder: (context) => AlertDialog(
         key: const ValueKey('delete-dialog'),
-        title: const Text('내 문장에서 삭제할까요?'),
+        title: const Text('내 문장에서 지울까요?'),
         content: Text(published == true
             ? '지금 둘러보기에 공유 중인 문장이에요. 삭제하면 둘러보기에서도 사라지고 '
                 '좋아요 수와 가져간 수도 함께 사라져요.\n이미 가져간 사람의 문장은 그대로 남아요.'
@@ -1696,7 +1696,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               child: const Text('취소')),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('삭제')),
+              child: const Text('지우기')),
         ],
       ),
     );
