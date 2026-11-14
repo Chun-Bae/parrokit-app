@@ -16,7 +16,11 @@ class CommunityFilters {
   static const List<String> vote = ['랜덤', '전체', '참여함', '마감'];
 
   static const String defaultBoard = '전체';
-  static const String defaultQuestion = '답변 대기';
+  // 질문 탭만 '답변 대기'로 열려서, 들어오자마자 채택이 끝난 질문이 빠진
+  // 목록을 봤다. 칩이 가운데에 있어 걸러진 줄도 모른다. 게시판과 같이
+  // '전체'로 연다(5차).
+  static const String defaultQuestion = '전체';
+  // 투표의 '랜덤'은 거르는 게 아니라 순서를 섞어 둘러보게 하는 것이라 둔다.
   static const String defaultVote = '랜덤';
 
   const CommunityFilters._();

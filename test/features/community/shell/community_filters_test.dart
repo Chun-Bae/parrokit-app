@@ -20,4 +20,19 @@ void main() {
     expect(at(const Duration(seconds: 30)), '곧 마감');
     expect(at(const Duration(minutes: -1)), '투표 마감');
   });
+
+  test('탭을 열면 걸러진 목록이 아니라 전체를 보여준다', () {
+    // 질문 탭만 '답변 대기'로 열려서, 들어오자마자 채택이 끝난 질문이 빠진
+    // 목록을 봤다. 칩이 가운데에 있어 걸러진 줄도 모른다(5차).
+    expect(CommunityFilters.defaultBoard, '전체');
+    expect(CommunityFilters.defaultQuestion, '전체');
+    expect(CommunityFilters.board, contains(CommunityFilters.defaultBoard));
+    expect(
+        CommunityFilters.question, contains(CommunityFilters.defaultQuestion));
+  });
+
+  test('질문 필터는 거르기 셋과 정렬 둘이다', () {
+    expect(CommunityFilters.question,
+        ['전체', '채택 완료', '답변 대기', '공감 순', '오래된 순']);
+  });
 }
