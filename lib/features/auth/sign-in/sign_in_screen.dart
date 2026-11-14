@@ -22,7 +22,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isAutoLogin = true;
 
   @override
   void dispose() {
@@ -55,8 +54,8 @@ class _SignInScreenState extends State<SignInScreen> {
         case 'too-many-requests':
           showToast('요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
         default:
-          showToast(userErrorMessage(e,
-              fallback: '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.'));
+          showToast(
+              userErrorMessage(e, fallback: '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. Firestore 쓰기 실패나 타임아웃처럼
@@ -178,31 +177,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     key: _formKey,
                     child: _buildFormFields(),
                   ),
-                  const SizedBox(height: 16),
-                  // 자동 로그인
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: _isAutoLogin,
-                          onChanged: (val) =>
-                              setState(() => _isAutoLogin = val ?? true),
-                          activeColor: context.tokens.primary,
-                          shape: const CircleBorder(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '자동 로그인',
-                        style: context.texts.bodyMedium
-                            .copyWith(color: context.tokens.primary),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                  ),
+                  // '자동 로그인' 체크 상자가 있었지만 값이 어디에도 쓰이지
+                  // 않았다. 꺼 두어도 로그인 상태는 그대로 남아서, 끄면 안
+                  // 남는 줄 알았던 사람에게는 거짓말이었다. 지금 로그인은
+                  // 늘 유지되므로 상자를 뺀다(5차).
                   const SizedBox(height: 32),
                   // 로그인 버튼
                   _buildSubmitButton(),
@@ -256,16 +234,16 @@ class _SignInScreenState extends State<SignInScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildSocialIcon('assets/icons/google_icon.png',
-                          onTap: _onGoogleSignIn),
+                          label: '구글로 로그인', onTap: _onGoogleSignIn),
                       const SizedBox(width: 32),
                       _buildSocialIcon('assets/icons/kakao_icon.png',
-                          onTap: _onKakaoSignIn),
+                          label: '카카오로 로그인', onTap: _onKakaoSignIn),
                       const SizedBox(width: 32),
                       _buildSocialIcon('assets/icons/naver_icon.png',
-                          onTap: _onNaverSignIn),
+                          label: '네이버로 로그인', onTap: _onNaverSignIn),
                       const SizedBox(width: 32),
                       _buildSocialIcon('assets/icons/apple_icon.png',
-                          onTap: _onAppleSignIn),
+                          label: '애플로 로그인', onTap: _onAppleSignIn),
                     ],
                   ),
                 ],
@@ -373,26 +351,36 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Widget _buildSocialIcon(String assetPath, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: _isLoading ? null : onTap,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+  /// 소셜 로그인 단추. 그림만 있어서 화면 읽기로는 무엇인지 알 수 없었고
+  /// 길게 눌러도 이름이 안 떴다(5차, 다른 아이콘 단추와 같게 맞춘다).
+  Widget _buildSocialIcon(String assetPath,
+      {required String label, VoidCallback? onTap}) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: label,
+        child: GestureDetector(
+          onTap: _isLoading ? null : onTap,
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: ClipOval(
-          child: Image.asset(
-            assetPath,
-            fit: BoxFit.cover,
+            child: ClipOval(
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
       ),
