@@ -28,6 +28,7 @@ import '../widgets/clip_list_view.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/collection/shared/drive_full_notice.dart';
 
 /// [역할]
 /// 라이브러리의 '폴더' 탭 UI 섹션.
@@ -442,6 +443,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                   ),
               ],
             ),
+            DriveFullNotice(hasQuota: hasQuota, remaining: remaining),
           ],
         ),
       ),
