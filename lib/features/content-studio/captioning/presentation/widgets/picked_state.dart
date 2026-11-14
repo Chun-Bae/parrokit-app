@@ -785,7 +785,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                           children: [
                             SizedBox(
                               width: 70,
-                              child: Text('파일이름',
+                              child: Text('파일 이름',
                                   style: context.texts.bodySmall
                                       .copyWith(color: cs.onSurfaceVariant)),
                             ),
@@ -822,7 +822,9 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                           children: [
                             SizedBox(
                               width: 70,
-                              child: Text('확장자',
+                              // '확장자'는 개발 용어다. 무엇으로 저장된
+                              // 영상인지 말한다(5차).
+                              child: Text('영상 형식',
                                   style: context.texts.bodySmall
                                       .copyWith(color: cs.onSurfaceVariant)),
                             ),

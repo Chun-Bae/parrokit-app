@@ -13,6 +13,23 @@ String _code(String path) => File(path)
     .join('\n');
 
 void main() {
+  test('클립 편집 글귀가 앱 말투를 쓴다', () {
+    // '입력해주세요.'·'삭제'가 섞여 있었다(5차).
+    final strings = _code(
+      'lib/features/content-studio/captioning/data/constants/edit_strings.dart',
+    );
+    expect(strings.contains('입력해주세요'), isFalse);
+    expect(strings.contains("'구간 삭제'"), isFalse);
+    expect(strings, contains('적어 주세요'));
+
+    final screen = _code(
+      'lib/features/content-studio/captioning/presentation/widgets/picked_state.dart',
+    );
+    // '확장자'는 개발 용어라 쓰지 않는다.
+    expect(screen.contains("Text('확장자'"), isFalse);
+    expect(screen, contains("Text('영상 형식'"));
+  });
+
   test('나가기 확인 세 곳이 같은 말투를 쓴다', () {
     final sheets = [
       'lib/features/content-studio/captioning/presentation/widgets/exit_confirm_sheet.dart',
