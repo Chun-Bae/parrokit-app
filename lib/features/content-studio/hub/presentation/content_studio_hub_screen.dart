@@ -106,7 +106,10 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? context.tokens.surface : theme.colorScheme.surface;
     final appBarTitle = switch (_selectedIndex) {
-      0 => '편집',
+      // 같은 화면을 /clips/create로 바로 열면 제목이 '새 클립'이다. 허브
+      // 탭으로 열었을 때만 '편집'이라 새로 만드는 화면인데 고치러 온 것처럼
+      // 보였다(5차). 두 길의 이름을 '새 클립'으로 맞춘다.
+      0 => '새 클립',
       // 들어온 입구와 같은 말로 둔다(보관함 + 의 'TTS 음성 만들기', 5차).
       1 => 'TTS 음성 만들기',
       _ => '영상 만들기',
