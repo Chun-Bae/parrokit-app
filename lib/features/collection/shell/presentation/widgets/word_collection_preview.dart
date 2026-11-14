@@ -579,8 +579,13 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
             Text(
                 [
                   if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',
+                  // 목록에는 단계가 보이는데 상세에는 없었다(5차). 목록과
+                  // 같은 말로 적는다. 한 번도 안 했으면 아래 기한 글이
+                  // '아직 복습 전'이라 겹치지 않게 뺀다.
+                  if ((review?.step ?? 0) > 0) '복습 ${review!.step}단계',
                   wordDueLabel(review?.dueAt, DateTime.now()),
                 ].join(' · '),
+                key: const ValueKey('word-detail-meta'),
                 style: muted),
             const SizedBox(height: 16),
             SizedBox(

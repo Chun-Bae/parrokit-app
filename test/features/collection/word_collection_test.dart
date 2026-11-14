@@ -159,6 +159,27 @@ void main() {
     expect(reviews.values.single.step, 1);
   });
 
+  testWidgets('단어 상세에도 복습 단계가 보인다', (tester) async {
+    await MyWordStore.add('guest', language: '영어', word: 'subtle', meaning: '미묘한');
+    await openWordTab(tester);
+    // 한 번 '알아요'로 골라 1단계로 올린다.
+    await tester.tap(find.byKey(const ValueKey('start-word-review')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reveal-word')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-known')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('finish-word-review')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('subtle'));
+    await tester.pumpAndSettle();
+    final meta = tester.widget<Text>(
+        find.byKey(const ValueKey('word-detail-meta')));
+    // 목록과 같은 말로 적는다.
+    expect(meta.data, contains('복습 1단계'));
+  });
+
   testWidgets('복습 중에 닫기로 그만둘 수 있고 고른 답은 남는다', (tester) async {
     await MyWordStore.add('guest', language: '영어', word: 'subtle', meaning: '미묘한');
     await MyWordStore.add('guest', language: '영어', word: 'vivid', meaning: '생생한');
