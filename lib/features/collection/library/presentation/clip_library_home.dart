@@ -10,6 +10,7 @@
 // 데이터는 바꾸지 않는다. 예전 화면은 그대로 있고, 더보기 > 앱 >
 // "새 클립 화면"을 끄면 돌아간다(AppConfig.newClipLibrary).
 
+import 'package:parrokit/core/content/recent_clips_label.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -357,7 +358,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         ),
       ] else ...[
         if (recents.isNotEmpty) ...[
-          SliverToBoxAdapter(child: _sectionTitle(context, '이어보기')),
+          SliverToBoxAdapter(child: _sectionTitle(context, recentClipsTitle)),
           SliverToBoxAdapter(child: _recentRow(context, recents)),
         ],
         ..._folderGrid(context, _folders),

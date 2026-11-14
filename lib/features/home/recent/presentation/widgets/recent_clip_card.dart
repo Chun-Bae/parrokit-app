@@ -10,6 +10,7 @@
 // Presentation Layer > Widgets
 // ============================================================================
 
+import 'package:parrokit/core/content/recent_clips_label.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
@@ -87,12 +88,12 @@ class RecentClipCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
 
-              // 이어보기 버튼
+              // 누르면 처음부터 다시 튼다(재생 위치를 기억하지 않는다).
               TextButton.icon(
                 onPressed: onTap,
                 icon: Icon(Icons.play_circle_fill, color: cs.primary),
                 label: Text(
-                  '이어보기',
+                  recentClipPlayLabel,
                   style: tt.labelSmall?.copyWith(
                     color: cs.primary,
                     fontWeight: FontWeight.w700,

@@ -11,6 +11,7 @@
 // DashboardScreen에서만 사용하는 화면 전용 섹션.
 // ============================================================================
 
+import 'package:parrokit/core/content/recent_clips_label.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -74,8 +75,8 @@ class ContinueWatchingSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           child: SectionHeader(
-            title: '이어보기',
-            subtitle: '최근에 보던 클립',
+            title: recentClipsTitle,
+            subtitle: recentClipsSubtitle,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
             trailing: TextButton(
