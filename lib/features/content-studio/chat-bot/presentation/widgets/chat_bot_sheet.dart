@@ -13,6 +13,7 @@ import 'video_prompt_recommendation_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 
 Future<void> showChatBotSheet(
   BuildContext context, {
@@ -546,45 +547,49 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                               ],
                             ),
                           ),
-                          PopupMenuItem<String>(
-                            value: 'mode_video',
-                            height: 38,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: Center(
-                                    child: Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: const BoxDecoration(
-                                        color: StudioColors.videoBlue, // 블루
-                                        shape: BoxShape.circle,
+                          // 영상 만들기를 숨긴 동안에는 이 모드도 숨긴다.
+                          // 골라도 영상 화면으로 갈 수 없다(5차).
+                          if (kVideoStudioEnabled)
+                            PopupMenuItem<String>(
+                              value: 'mode_video',
+                              height: 38,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: Center(
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: StudioColors.videoBlue, // 블루
+                                          shape: BoxShape.circle,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '비디오 전문가 모드',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: context.tokens.textPrimary,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '비디오 전문가 모드',
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        color: context.tokens.textPrimary,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                if (provider.chatbotMode == 'video')
-                                  const Icon(
-                                    Icons.check_rounded,
-                                    size: 16,
-                                    color: StudioColors.videoBlue,
-                                  ),
-                              ],
+                                  if (provider.chatbotMode == 'video')
+                                    const Icon(
+                                      Icons.check_rounded,
+                                      size: 16,
+                                      color: StudioColors.videoBlue,
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                       Expanded(
@@ -593,7 +598,9 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                           focusNode: _focusNode,
                           style: theme.textTheme.bodyMedium,
                           decoration: InputDecoration(
-                            hintText: 'TTS나 비디오 생성 요청을 입력하세요...',
+                            hintText: kVideoStudioEnabled
+                                ? 'TTS나 영상 만들기 요청을 입력하세요...'
+                                : 'TTS 음성으로 만들 내용을 적어 보세요...',
                             hintStyle: theme.textTheme.bodyMedium?.copyWith(
                               color: context.tokens.textTertiary,
                             ),

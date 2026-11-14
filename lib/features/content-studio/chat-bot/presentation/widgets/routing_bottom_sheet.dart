@@ -4,6 +4,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 
 void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
   final theme = Theme.of(context);
@@ -137,92 +138,96 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              // 영상 만들기를 숨긴 동안에는 이 입구도 숨긴다. 눌러도 영상
+              // 화면으로 못 가고 '지금 쉬고 있어요'만 떴다(5차).
+              if (kVideoStudioEnabled) ...[
+                const SizedBox(height: 12),
 
-              // Video Option Card
-              InkWell(
-                onTap: () {
-                  Navigator.pop(modalContext);
-                  provider.updateChatbotMode('video');
-                  provider.sendMessage('비디오(영상) 생성을 진행하고 싶어');
-                },
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                      color: isDark
-                          ? StudioColors.videoCyan.withValues(alpha: 0.4)
-                          : StudioColors.videoCyan.withValues(alpha: 0.2),
-                      width: 1.5,
+                // Video Option Card
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(modalContext);
+                    provider.updateChatbotMode('video');
+                    provider.sendMessage('비디오(영상) 생성을 진행하고 싶어');
+                  },
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: isDark
+                            ? StudioColors.videoCyan.withValues(alpha: 0.4)
+                            : StudioColors.videoCyan.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [
+                                StudioColors.videoBlue.withValues(alpha: 0.15),
+                                StudioColors.videoCyan.withValues(alpha: 0.15)
+                              ]
+                            : [
+                                StudioColors.videoBlue.withValues(alpha: 0.05),
+                                StudioColors.videoCyan.withValues(alpha: 0.05)
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                     ),
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [
-                              StudioColors.videoBlue.withValues(alpha: 0.15),
-                              StudioColors.videoCyan.withValues(alpha: 0.15)
-                            ]
-                          : [
-                              StudioColors.videoBlue.withValues(alpha: 0.05),
-                              StudioColors.videoCyan.withValues(alpha: 0.05)
-                            ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              StudioColors.videoBlue,
-                              StudioColors.videoCyan
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                StudioColors.videoBlue,
+                                StudioColors.videoCyan
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          child: const Icon(
+                            Icons.videocam_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.videocam_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '🎬 AI 비디오 생성 요청',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: context.tokens.textPrimary,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '🎬 AI 비디오 생성 요청',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: context.tokens.textPrimary,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '텍스트 시나리오를 바탕으로 멋진 비디오 씬을 기획합니다.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: context.tokens.textSecondary,
-                                height: 1.3,
+                              const SizedBox(height: 4),
+                              Text(
+                                '텍스트 시나리오를 바탕으로 멋진 비디오 씬을 기획합니다.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: context.tokens.textSecondary,
+                                  height: 1.3,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: context.tokens.textTertiary,
-                      ),
-                    ],
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: context.tokens.textTertiary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

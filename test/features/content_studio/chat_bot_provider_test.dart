@@ -9,6 +9,7 @@ import 'package:parrokit/features/content-studio/chat-bot/domain/entities/ai_cha
 import 'package:parrokit/features/content-studio/chat-bot/domain/repositories/ai_chat_repository.dart';
 import 'package:parrokit/features/content-studio/chat-bot/domain/usecases/send_chat_message_usecase.dart';
 import 'package:parrokit/features/content-studio/chat-bot/presentation/chat_bot_provider.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 
 class _Repo implements AiChatRepository {
   final pending = <Completer<AiChatMessage>>[];
@@ -86,5 +87,23 @@ void main() {
     expect(provider.isTyping, isFalse);
     expect(provider.messages.first.text, '새 답');
     expect(provider.messages.any((m) => m.text == '첫 답'), isFalse);
+  });
+
+  group('첫 인사', () {
+    test('영상 만들기를 숨긴 동안에는 영상을 돕는다고 하지 않는다', () {
+      final off = chatBotGreeting(videoEnabled: false);
+      expect(off.contains('영상'), isFalse);
+      expect(off.contains('TTS 음성 만들기'), isTrue);
+    });
+
+    test('영상 만들기를 켜면 영상도 함께 안내한다', () {
+      final on = chatBotGreeting(videoEnabled: true);
+      expect(on.contains('영상'), isTrue);
+    });
+
+    test('지금 설정(kVideoStudioEnabled)에 맞는 인사를 쓴다', () {
+      expect(chatBotGreeting(),
+          chatBotGreeting(videoEnabled: kVideoStudioEnabled));
+    });
   });
 }

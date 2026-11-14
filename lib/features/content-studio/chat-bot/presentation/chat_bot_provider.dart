@@ -5,13 +5,22 @@ import '../domain/usecases/send_chat_message_usecase.dart';
 import '../data/data_sources/ai_chat_remote_data_source.dart';
 import '../data/repositories/ai_chat_repository_impl.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
+
+/// 챗봇 첫 인사. 영상 만들기를 숨긴 동안에는 영상을 돕는다고 하지 않는다.
+/// 전에는 늘 '비디오 생성'을 돕는다고 했는데, 입구가 숨겨져 있어 눌러도
+/// '영상 만들기는 지금 쉬고 있어요'만 떴다(5차).
+@visibleForTesting
+String chatBotGreeting({bool videoEnabled = kVideoStudioEnabled}) => videoEnabled
+    ? '안녕하세요! TTS 음성과 영상 만들기를 도와드릴 챗봇입니다.\n어떤 영상이나 음성을 만들고 싶으신가요?'
+    : '안녕하세요! TTS 음성 만들기를 도와드릴 챗봇입니다.\n어떤 음성을 만들고 싶으신가요?';
 
 class ChatBotProvider extends ChangeNotifier {
   late final SendChatMessageUseCase _sendMessageUseCase;
 
   final List<AiChatMessage> _messages = [
-    const AiChatMessage(
-      text: '안녕하세요! TTS 생성 및 비디오 생성을 도와드릴 챗봇입니다.\n어떤 영상이나 음성을 만들고 싶으신가요?',
+    AiChatMessage(
+      text: chatBotGreeting(),
       isUser: false,
       chatbotMode: 'general',
     ),
@@ -140,8 +149,8 @@ class ChatBotProvider extends ChangeNotifier {
     _messages.clear();
     _messages.insert(
       0,
-      const AiChatMessage(
-        text: '안녕하세요! TTS 생성 및 비디오 생성을 도와드릴 챗봇입니다.\n어떤 영상이나 음성을 만들고 싶으신가요?',
+      AiChatMessage(
+        text: chatBotGreeting(),
         isUser: false,
         chatbotMode: 'general',
       ),

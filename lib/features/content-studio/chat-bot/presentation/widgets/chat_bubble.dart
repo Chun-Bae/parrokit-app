@@ -193,11 +193,11 @@ class ChatBubble extends StatelessWidget {
                               } else {
                                 showToast(
                                   message.actionType == 'video_trigger'
-                                      ? '비디오 생성 화면으로 이동합니다'
+                                      ? '영상 만들기 화면으로 이동합니다'
                                       : message.actionType ==
                                               'video_prompt_recommendation'
-                                          ? '비디오 프롬프트 추천을 적용합니다'
-                                          : 'TTS 생성 화면으로 이동합니다',
+                                          ? '영상 프롬프트 추천을 적용합니다'
+                                          : 'TTS 음성 만들기 화면으로 이동합니다',
                                 );
                               }
                             },
@@ -253,11 +253,11 @@ class ChatBubble extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Text(
                                     message.actionType == 'video_trigger'
-                                        ? '비디오 생성하기'
+                                        ? '영상 만들기'
                                         : message.actionType ==
                                                 'video_prompt_recommendation'
                                             ? '한 쌍 추가하기'
-                                            : 'TTS 생성하기',
+                                            : 'TTS 음성 만들기',
                                     style:
                                         theme.textTheme.labelMedium?.copyWith(
                                       color: Colors.white,

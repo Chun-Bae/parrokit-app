@@ -107,8 +107,9 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     final bg = isDark ? context.tokens.surface : theme.colorScheme.surface;
     final appBarTitle = switch (_selectedIndex) {
       0 => '편집',
-      1 => 'TTS 생성',
-      _ => '영상 생성',
+      // 들어온 입구와 같은 말로 둔다(보관함 + 의 'TTS 음성 만들기', 5차).
+      1 => 'TTS 음성 만들기',
+      _ => '영상 만들기',
     };
     // 영상 만들기를 숨기면 챗봇이 영상 탭을 열려고 해도 열 곳이 없다.
     void openFromChatbot(int tabIndex) {
