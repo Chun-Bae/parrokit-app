@@ -15,6 +15,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
 
 class QuestionViewScreen extends StatefulWidget {
   final String questionId;
@@ -312,7 +313,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     }
 
     if (question == null) {
-      return const Center(child: Text('질문을 찾을 수 없습니다.'));
+      // 전에는 글자 한 줄뿐이라 왜 못 보는지도, 어디로 가야 할지도
+      // 알 수 없었다(5차).
+      return const MissingPostView(boardType: 'question', appBarTitle: '질문');
     }
 
     final answers = provider.currentPostComments;

@@ -17,8 +17,7 @@ import 'package:parrokit/features/community/board/presentation/widgets/board_pos
 import 'package:parrokit/features/community/board/presentation/sections/board_comments_section.dart';
 import 'package:parrokit/features/community/board/presentation/handlers/board_options_handler.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
-import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
-import 'package:parrokit/features/community/board/presentation/missing_post_notice.dart';
+import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -251,30 +250,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     }
 
     if (post == null) {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: AppBar(
-          backgroundColor: backgroundColor,
-          leading: IconButton(
-            tooltip: '뒤로',
-            onPressed: () => Navigator.maybePop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
-          ),
-          title: Text(
-            '게시판',
-            style: context.texts.titleMedium
-                .copyWith(color: colorScheme.onSurface),
-          ),
-        ),
-        body: AppEmptyState(
-          key: const ValueKey('missing-post'),
-          icon: Icons.search_off_rounded,
-          title: missingPostTitle,
-          description: missingPostDescription,
-          actionLabel: missingPostBackLabel,
-          onAction: () => Navigator.maybePop(context),
-        ),
-      );
+      return const MissingPostView(boardType: 'board', appBarTitle: '게시판');
     }
 
     final currentUser = context.watch<UserProvider>().currentUser;

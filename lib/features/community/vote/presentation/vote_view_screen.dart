@@ -26,6 +26,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
 
 class VoteViewScreen extends StatefulWidget {
@@ -158,10 +159,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
     }
 
     if (voteItem == null) {
-      return Scaffold(
-        backgroundColor: colorScheme.surface,
-        body: Center(child: Text('투표를 찾을 수 없습니다.')),
-      );
+      // 전에는 글자 한 줄만 있고 위 바가 없어 뒤로 갈 길도 없었다(5차).
+      return const MissingPostView(boardType: 'vote', appBarTitle: '투표');
     }
 
     return Scaffold(
