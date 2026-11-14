@@ -232,8 +232,8 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           const SizedBox(height: 8),
           Text(
             hasQuota
-                ? 'Drive 전체 사용량 안에서 Parrokit가 차지하는 실제 크기를 따로 분리해 보여줍니다.'
-                : 'Drive 전체 사용량을 모두 가져오지 못해서 Parrokit 사용량 중심으로 보여줍니다.',
+                ? 'Drive 전체에서 Parrokit 폴더가 쓰는 만큼만 따로 보여 줘요.'
+                : 'Drive 전체 사용량을 다 못 가져와서 Parrokit 폴더 몫만 보여 줘요.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
