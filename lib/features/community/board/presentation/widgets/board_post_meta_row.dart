@@ -5,16 +5,9 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class BoardPostMetaRow extends StatelessWidget {
-  const BoardPostMetaRow({
-    super.key,
-    required this.post,
-    required this.likeMetaColor,
-    required this.likeIconColor,
-  });
+  const BoardPostMetaRow({super.key, required this.post});
 
   final Post post;
-  final Color likeMetaColor;
-  final Color likeIconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +44,9 @@ class BoardPostMetaRow extends StatelessWidget {
             style: context.texts.bodyLarge
                 .copyWith(color: context.tokens.textDisabled),
           ),
-          const SizedBox(width: 18),
-          Icon(Icons.thumb_up_outlined, color: likeIconColor, size: 24),
-          const SizedBox(width: 6),
-          Text(
-            '${post.likeCount}',
-            style: context.texts.bodyLarge.copyWith(color: likeMetaColor),
-          ),
+          // 공감 수는 아래 '공감' 버튼이 보여 준다. 여기에도 두면 같은 수가
+          // 멀리 떨어진 두 곳에 있어서, 버튼을 눌렀을 때 바뀌는 곳이 화면
+          // 밖일 수 있었다(5차).
         ],
       ),
     );

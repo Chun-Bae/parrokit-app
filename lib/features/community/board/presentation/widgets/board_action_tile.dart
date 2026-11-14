@@ -12,6 +12,7 @@ class BoardActionTile extends StatefulWidget {
     required this.selected,
     required this.accentColor,
     required this.onTap,
+    this.count,
   });
 
   final IconData icon;
@@ -19,6 +20,9 @@ class BoardActionTile extends StatefulWidget {
   final bool selected;
   final Color accentColor;
   final VoidCallback onTap;
+
+  /// 버튼 옆에 함께 보일 수(공감 수). null이면 글자만.
+  final int? count;
 
   @override
   State<BoardActionTile> createState() => _BoardActionTileState();
@@ -68,7 +72,11 @@ class _BoardActionTileState extends State<BoardActionTile> {
               Icon(widget.icon, size: 18, color: contentColor),
               const SizedBox(width: AppSpacing.sm - 2),
               Text(
-                widget.label,
+                // 수를 버튼에 함께 보인다. 전에는 화면 맨 위 줄에만 있어
+                // 눌러도 무엇이 바뀌는지 그 자리에서 보이지 않았다(5차).
+                widget.count == null
+                    ? widget.label
+                    : '${widget.label} ${widget.count}',
                 style: context.texts.bodyMedium.copyWith(
                   color: labelColor,
                   fontWeight: FontWeight.w700,

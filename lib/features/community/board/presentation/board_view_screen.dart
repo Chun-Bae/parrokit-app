@@ -231,9 +231,6 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     final liked = provider.isCurrentPostLiked;
     final scrapped = provider.isCurrentPostScrapped;
 
-    final likeMetaColor = liked ? likeAccent : context.tokens.textDisabled;
-    final likeIconColor = liked ? likeAccent : context.tokens.textDisabled;
-
     final post = provider.posts.firstWhere(
       (p) => p.id == widget.postId,
       orElse: () => Post(
@@ -307,11 +304,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 28),
-                    BoardPostMetaRow(
-                      post: post,
-                      likeMetaColor: likeMetaColor,
-                      likeIconColor: likeIconColor,
-                    ),
+                    BoardPostMetaRow(post: post),
                     const SizedBox(height: 26),
                     BoardPostAuthorRow(
                       post: post,
@@ -331,6 +324,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                           icon:
                               liked ? Icons.thumb_up : Icons.thumb_up_outlined,
                           label: '공감',
+                          count: post.likeCount,
                           selected: liked,
                           accentColor: likeAccent,
                           onTap: () {

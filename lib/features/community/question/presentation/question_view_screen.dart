@@ -481,21 +481,11 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           ),
           Divider(
               height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
+          // 공감 수는 아래 '공감' 버튼이 보여 준다. 전에는 이 줄에도 '2
+          // 유용해요'로 있어서 같은 수가 두 이름으로 두 번 나왔다(5차).
           Row(
             children: [
-              Text('${question.likeCount}',
-                  style: context.texts.bodyMedium
-                      .copyWith(color: colorScheme.onSurface)),
-              const SizedBox(width: 4),
-              Text('유용해요',
-                  style: context.texts.bodyMedium
-                      .copyWith(color: colorScheme.onSurface)),
-              const SizedBox(width: 16),
-              Text('${question.commentCount}',
-                  style: context.texts.bodyMedium
-                      .copyWith(color: colorScheme.onSurface)),
-              const SizedBox(width: 4),
-              Text('답글',
+              Text('답글 ${question.commentCount}',
                   style: context.texts.bodyMedium
                       .copyWith(color: colorScheme.onSurface)),
             ],
@@ -517,7 +507,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
               _QuestionAction(
                 // 글 공감은 엄지(예전엔 번개였다). 게시판과 같게.
                 icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                label: '유용해요',
+                // 메뉴·내 활동은 '공감한 질문'인데 버튼만 '유용해요'였다(5차).
+                label: '공감',
+                count: question.likeCount,
                 active: isLiked,
                 // 로그아웃 상태면 빈 uid로 부르지 않고 안내한다(게시판과 같게).
                 // 예전에는 users//likes 경로가 되어 예외가 났다.
@@ -920,12 +912,16 @@ class _QuestionAction extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onPressed,
+    this.count,
   });
 
   final IconData icon;
   final String label;
   final bool active;
   final VoidCallback onPressed;
+
+  /// 글자 옆에 함께 보일 수. null이면 글자만.
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
@@ -935,7 +931,7 @@ class _QuestionAction extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(foregroundColor: color),
       icon: Icon(icon, size: 20, color: color),
-      label: Text(label,
+      label: Text(count == null ? label : '$label $count',
           style: context.texts.labelLarge
               .copyWith(color: color, fontWeight: FontWeight.w600)),
     );

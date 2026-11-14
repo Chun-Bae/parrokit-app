@@ -691,7 +691,10 @@ class VoteCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text('${item.likeCount}', style: context.texts.bodyMedium),
+                // 게시판·질문 상세처럼 이름을 붙인다. 아이콘만 있으면 엄지가
+                // '공감'인지 '좋아요'인지 알기 어려웠다(5차).
+                Text('공감 ${item.likeCount}',
+                    style: context.texts.bodyMedium),
                 if (enablePostActions) ...[
                   const SizedBox(width: 16),
                   GestureDetector(
