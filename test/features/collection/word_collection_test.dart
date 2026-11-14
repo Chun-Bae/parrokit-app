@@ -183,12 +183,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1 / 1'), findsOneWidget);
     expect(find.byKey(const ValueKey('review-word')), findsOneWidget);
+    // 두 바퀴째인 것을 제목이 말해 준다. 전에는 '오늘 복습 1 / 1'이라
+    // 처음부터 다시 도는 것처럼 보였다(5차).
+    expect(find.text("'다시' 고른 단어"), findsOneWidget);
+    expect(find.text('오늘 복습'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('reveal-word')));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('review-known')));
     await tester.pumpAndSettle();
     expect(find.text('알아요 1개 · 다시 0개'), findsOneWidget);
+    expect(find.text('다시 본 단어까지 끝냈어요'), findsOneWidget);
     expect(find.byKey(const ValueKey('review-again-round')), findsNothing);
   });
 

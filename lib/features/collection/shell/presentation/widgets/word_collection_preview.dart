@@ -846,6 +846,10 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
   /// 이번 바퀴에서 '다시'를 고른 단어.
   final List<MyWord> again = [];
 
+  /// 몇 바퀴째인지(0이면 오늘 처음 도는 중). '다시' 고른 것만 다시 돌 때
+  /// 화면이 그대로여서 처음부터 다시 하는 것처럼 보였다(5차).
+  int round = 0;
+
   Future<void> answer(bool known) async {
     final word = queue[index];
     unawaited(WordReviewStore.record(widget.accountId, word.id, known: known));
@@ -869,6 +873,7 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
       index = 0;
       knownCount = 0;
       revealed = false;
+      round++;
     });
   }
 
@@ -883,7 +888,9 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(children: [
-              Text('오늘 복습', style: context.texts.titleLarge),
+              Text(round == 0 ? '오늘 복습' : "'다시' 고른 단어",
+                  key: const ValueKey('review-title'),
+                  style: context.texts.titleLarge),
               const Spacer(),
               Text(
                   done
@@ -903,7 +910,9 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
             if (done) ...[
               Icon(Icons.check_circle_rounded, size: 48, color: colors.primary),
               const SizedBox(height: 12),
-              Text('오늘 복습을 마쳤어요', style: context.texts.titleMedium),
+              Text(round == 0 ? '오늘 복습을 마쳤어요' : '다시 본 단어까지 끝냈어요',
+                  key: const ValueKey('review-done-title'),
+                  style: context.texts.titleMedium),
               const SizedBox(height: 4),
               Text('알아요 $knownCount개 · 다시 ${queue.length - knownCount}개',
                   style: context.texts.bodySmall
