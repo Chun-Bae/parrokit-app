@@ -12,7 +12,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_shell.dart';
-import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 지금 화면에 아래 탭 바가 있는지. 라우터 밖(테스트 등)에서는 없다고 본다.
 bool _hasNavBar(BuildContext context) {
@@ -22,13 +21,6 @@ bool _hasNavBar(BuildContext context) {
     return false;
   }
 }
-
-/// 시트 안쪽 아래 여백. 시트가 탭 바를 덮으므로 안전 영역만 띄운다.
-///
-/// 한때 탭 바 높이만큼 더 띄워 탭 바 위에 떠 있게 했는데, 아래가 비어 보여
-/// 되돌렸다(5차, 사용자 의견).
-double appSheetBottomGap(BuildContext context) =>
-    MediaQuery.paddingOf(context).bottom;
 
 /// 앱 공통 바텀시트. [builder]가 그린 내용만 넣으면 된다.
 ///
@@ -41,11 +33,9 @@ Future<T?> showAppSheet<T>({
   required WidgetBuilder builder,
   bool fullHeight = true,
   bool dismissible = true,
-  bool showHandle = true,
   bool? rootNavigator,
 }) {
   final hasNavBar = _hasNavBar(context);
-  final gap = appSheetBottomGap(context);
   return showModalBottomSheet<T>(
     context: context,
     // 탭 바는 셸의 Scaffold가 그리므로 그 위에 뜨려면 루트 내비게이터가 필요하다.
@@ -60,74 +50,10 @@ Future<T?> showAppSheet<T>({
     // 시트마다 useSafeArea를 켰는데, 공통으로 모으며 빠뜨려 문장 상세 위쪽
     // 칩과 아이콘이 시계에 가렸다(5차).
     useSafeArea: true,
-    // 떠 있는 카드 모양으로 그리려고 시트 자체는 투명하게 둔다.
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    showDragHandle: false,
-    constraints: const BoxConstraints(maxWidth: 600),
-    builder: (sheetContext) => AppSheetSurface(
-      gap: gap,
-      showHandle: showHandle,
-      child: builder(sheetContext),
-    ),
+    // 면·모서리·손잡이는 테마(app_bottom_sheet_theme.dart)가 그린다. 한때
+    // 여기서 한 겹을 더 그렸는데, 시트 안쪽이 이미 자기 흰 판과 손잡이를
+    // 그리는 곳이 있어 두 겹이 되면서 경계가 희미한 선으로 보였다
+    // (5차, 사용자 의견).
+    builder: builder,
   );
-}
-
-/// 바텀시트 안쪽 면. 아래 여백과 손잡이만 맡는다.
-///
-/// 한때 양옆 여백·테두리·그림자를 준 '떠 있는 카드'로 그렸는데, 기본
-/// 바텀시트와 달라 어색했다(5차, 사용자 의견). 화면 아래에 붙고 위 모서리만
-/// 둥근 보통 모양으로 되돌렸다.
-class AppSheetSurface extends StatelessWidget {
-  const AppSheetSurface({
-    super.key,
-    required this.child,
-    required this.gap,
-    this.showHandle = true,
-  });
-
-  final Widget child;
-
-  /// 더 이상 쓰지 않는다. 안전 영역은 시트 안쪽 내용이 맡는다.
-  final double gap;
-  final bool showHandle;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
-      ),
-      child: Padding(
-        // 키보드가 올라오면 그만큼 위로 밀어 입력칸이 가리지 않게 한다.
-        // 키보드가 없을 때는 아무것도 더하지 않는다. 안전 영역은 시트 안쪽
-        // 내용이 저마다 SafeArea로 처리한다. 여기서 또 띄웠더니 마지막 줄
-        // 아래에 흰 칸이 하나 더 생겨 보였다(5차, 사용자 의견).
-        padding: EdgeInsets.only(bottom: keyboard),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (showHandle)
-              Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 2),
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            Flexible(child: child),
-          ],
-        ),
-      ),
-    );
-  }
 }

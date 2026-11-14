@@ -42,12 +42,6 @@
 @import cloud_functions;
 #endif
 
-#if __has_include(<device_info_plus/FPPDeviceInfoPlusPlugin.h>)
-#import <device_info_plus/FPPDeviceInfoPlusPlugin.h>
-#else
-@import device_info_plus;
-#endif
-
 #if __has_include(<ffmpeg_kit_flutter_new/FFmpegKitFlutterPlugin.h>)
 #import <ffmpeg_kit_flutter_new/FFmpegKitFlutterPlugin.h>
 #else
@@ -94,12 +88,6 @@
 #import <firebase_storage/FLTFirebaseStoragePlugin.h>
 #else
 @import firebase_storage;
-#endif
-
-#if __has_include(<flutter_email_sender/FlutterEmailSenderPlugin.h>)
-#import <flutter_email_sender/FlutterEmailSenderPlugin.h>
-#else
-@import flutter_email_sender;
 #endif
 
 #if __has_include(<flutter_file_dialog/FlutterFileDialogPlugin.h>)
@@ -285,7 +273,6 @@
   [AudioWaveformsPlugin registerWithRegistrar:[registry registrarForPlugin:@"AudioWaveformsPlugin"]];
   [FLTFirebaseFirestorePlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseFirestorePlugin"]];
   [FirebaseFunctionsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FirebaseFunctionsPlugin"]];
-  [FPPDeviceInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPDeviceInfoPlusPlugin"]];
   [FFmpegKitFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"FFmpegKitFlutterPlugin"]];
   [FilePickerPlugin registerWithRegistrar:[registry registrarForPlugin:@"FilePickerPlugin"]];
   [FileSaverPlugin registerWithRegistrar:[registry registrarForPlugin:@"FileSaverPlugin"]];
@@ -294,7 +281,6 @@
   [FLTFirebaseCrashlyticsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseCrashlyticsPlugin"]];
   [FLTFirebaseMessagingPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseMessagingPlugin"]];
   [FLTFirebaseStoragePlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTFirebaseStoragePlugin"]];
-  [FlutterEmailSenderPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterEmailSenderPlugin"]];
   [FlutterFileDialogPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterFileDialogPlugin"]];
   [InAppWebViewFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"InAppWebViewFlutterPlugin"]];
   [FlutterNativeSplashPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterNativeSplashPlugin"]];
