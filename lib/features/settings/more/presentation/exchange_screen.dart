@@ -179,26 +179,40 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               ),
               const SizedBox(height: 10),
               // 비율을 숫자를 넣기 전에도 보여준다(예전엔 넣어야 받을 양이 보였다).
-              Row(
-                key: const ValueKey('exchange-rate'),
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CurrencyIcon(Currency.parrot, size: 16),
-                  Text(' 1 = ',
-                      style: context.texts.labelLarge
-                          .copyWith(color: context.tokens.textSecondary)),
-                  const CurrencyIcon(Currency.cracker, size: 16),
-                  Text(
-                      ' ${NumberFormat.decimalPattern('ko').format(exchangeRate)}',
-                      style: context.texts.labelLarge
-                          .copyWith(color: context.tokens.textSecondary)),
-                ],
-              ),
+              // 고른 방향대로 읽히게 좌우를 바꾼다. 예전엔 어느 쪽을 골라도
+              // '패롯 1 = 크래커 1,000'이라 거꾸로 읽혔다(5차).
+              Builder(builder: (context) {
+                final rateStyle = context.texts.labelLarge
+                    .copyWith(color: context.tokens.textSecondary);
+                final amount =
+                    NumberFormat.decimalPattern('ko').format(exchangeRate);
+                return Row(
+                  key: const ValueKey('exchange-rate'),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _isParrotsToCrackers
+                      ? [
+                          const CurrencyIcon(Currency.parrot, size: 16),
+                          Text(' 1 = ', style: rateStyle),
+                          const CurrencyIcon(Currency.cracker, size: 16),
+                          Text(' $amount', style: rateStyle),
+                        ]
+                      : [
+                          const CurrencyIcon(Currency.cracker, size: 16),
+                          Text(' $amount = ', style: rateStyle),
+                          const CurrencyIcon(Currency.parrot, size: 16),
+                          Text(' 1', style: rateStyle),
+                        ],
+                );
+              }),
               const SizedBox(height: 24),
 
               // 입력 폼
               Text(
-                _isParrotsToCrackers ? '교환할 패롯 수량' : '교환할 크래커 수량 (1000단위)',
+                _isParrotsToCrackers
+                    ? '교환할 패롯 수량'
+                    // 아래 안내와 같은 말로('1,000개 단위').
+                    : '교환할 크래커 수량 '
+                        '(${NumberFormat.decimalPattern('ko').format(exchangeRate)}개 단위)',
                 style: context.texts.bodyMedium,
               ),
               const SizedBox(height: 8),
