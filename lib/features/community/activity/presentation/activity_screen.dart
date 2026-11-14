@@ -4,7 +4,7 @@ import 'package:parrokit/features/community/menu/data/factories/community_menu_s
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
-import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'providers/activity_provider.dart';
 import 'widgets/activity_card.dart';
@@ -47,6 +47,65 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
         communityActivityTitle(widget.boardType, widget.activityType);
     if (title == null || title.isEmpty) return '아직 활동이 없어요.';
     return '아직 ${iGa(title)} 없어요.';
+  }
+
+  /// 왜 비었는지, 무엇을 하면 채워지는지 한 줄.
+  String _emptyDescription() {
+    switch (widget.activityType) {
+      case 'written':
+      case 'written_posted':
+        if (widget.boardType == 'vote') {
+          // 투표는 '쓰는' 것이 아니라 만들거나 참여하는 것이다(5차).
+          return widget.activityType == 'written'
+              ? '마음에 드는 투표에 참여해 보세요.'
+              : '첫 투표를 만들면 여기에 모여요.';
+        }
+        return widget.boardType == 'question'
+            ? '첫 질문을 올리면 여기에 모여요.'
+            : '첫 글을 남기면 여기에 모여요.';
+      case 'commented':
+      case 'commented_reply':
+        return '글에 남긴 말이 여기에 모여요.';
+      case 'liked':
+      case 'liked_comment':
+        return '공감하거나 좋아요한 글이 여기에 모여요.';
+      case 'scraped':
+        return '나중에 다시 볼 글을 스크랩해 두세요.';
+      default:
+        return '커뮤니티에서 한 일이 여기에 모여요.';
+    }
+  }
+
+  /// 쓰기 활동이면 글쓰기 화면 경로. 그 밖에는 null(버튼을 두지 않는다).
+  String? _writePath() {
+    if (widget.activityType != 'written' &&
+        widget.activityType != 'written_posted') {
+      return null;
+    }
+    switch (widget.boardType) {
+      case 'board':
+        return AppRoutes.communityBoardWritePath;
+      case 'question':
+        return AppRoutes.communityQuestionWritePath;
+      case 'vote':
+        // '참여한 투표'는 내가 쓴 투표가 아니라 참여한 것이라 버튼을 뺀다.
+        return widget.activityType == 'written_posted'
+            ? AppRoutes.communityVoteWritePath
+            : null;
+      default:
+        return null;
+    }
+  }
+
+  String _writeLabel() {
+    switch (widget.boardType) {
+      case 'question':
+        return '질문하기';
+      case 'vote':
+        return '투표 만들기';
+      default:
+        return '글쓰기';
+    }
   }
 
   String _getAppBarTitle() {
@@ -184,23 +243,17 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
             }
 
             if (provider.activities.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inbox_rounded,
-                        size: 64, color: context.tokens.textDisabled),
-                    const SizedBox(height: 16),
-                    Text(
-                      // 무엇이 없는지 말하고, 앱의 다른 빈 화면과 같은 말투로
-                      // 적는다(5차). 전에는 어느 줄로 들어와도 '아직 활동
-                      // 내역이 없습니다.'였다.
-                      _emptyText(),
-                      style: context.texts.titleMedium
-                          .copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
+              // 앱의 다른 빈 화면과 같은 모양으로(AppEmptyState). 무엇이
+              // 없는지 말하고, 쓰기 활동이면 바로 쓰러 갈 길을 둔다(5차).
+              // 전에는 글자 한 줄뿐이라 여기서 할 수 있는 일이 없었다.
+              final writePath = _writePath();
+              return AppEmptyState(
+                icon: Icons.inbox_rounded,
+                title: _emptyText(),
+                description: _emptyDescription(),
+                actionLabel: writePath == null ? null : _writeLabel(),
+                onAction:
+                    writePath == null ? null : () => context.push(writePath),
               );
             }
 
