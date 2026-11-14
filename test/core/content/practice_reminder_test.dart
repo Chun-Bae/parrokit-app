@@ -193,6 +193,23 @@ void main() {
       ]);
     });
 
+    test('그만 받을 시각은 분까지 본다', () async {
+      final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
+          days: 1, intervalMinutes: 60, endHour: 11, endMinute: 30);
+      expect(times.last, DateTime(2026, 11, 14, 11));
+
+      await PracticeReminder.save(const PracticeReminderSettings(
+          enabled: true,
+          hour: 9,
+          minute: 0,
+          intervalMinutes: 60,
+          endHour: 21,
+          endMinute: 30));
+      final saved = await PracticeReminder.load();
+      expect(saved.endMinute, 30);
+      expect(saved.endLabel, '오후 9:30');
+    });
+
     test('간격이 0이면 예전처럼 하루 한 번', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
           days: 2, intervalMinutes: 0);
@@ -210,6 +227,7 @@ void main() {
       final s = await PracticeReminder.load();
       expect(s.intervalMinutes, 120);
       expect(s.endHour, 18);
+      expect(s.endMinute, 0);
       expect(s.repeats, isTrue);
     });
 
@@ -221,7 +239,9 @@ void main() {
           once
               .copyWith(hour: 9, intervalMinutes: 120, endHour: 22)
               .whenLabel,
-          '오전 9:00~오후 10시, 2시간마다');
+          '오전 9:00~오후 10:00, 2시간마다');
+      expect(reminderTimeLabel(22, 0), '오후 10:00');
+      expect(reminderTimeLabel(0, 5), '오전 12:05');
       expect(reminderIntervalLabel(0), '하루 한 번');
       expect(reminderIntervalLabel(1), '1분마다');
       expect(reminderIntervalLabel(30), '30분마다');

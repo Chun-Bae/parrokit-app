@@ -19,6 +19,7 @@ class PracticeReminder {
   static const pickKey = 'parrokit.practice_reminder.pick.v1';
   static const intervalKey = 'parrokit.practice_reminder.interval.v1';
   static const endHourKey = 'parrokit.practice_reminder.end_hour.v1';
+  static const endMinuteKey = 'parrokit.practice_reminder.end_minute.v1';
   static const chosenKey = 'parrokit.practice_reminder.chosen.v1';
 
   /// 기본 시각(저녁 8시). 간격으로 받을 때는 그날 첫 알림 시각이다.
@@ -45,6 +46,7 @@ class PracticeReminder {
       pick: reminderPickFromKey(prefs.getString(pickKey)),
       intervalMinutes: prefs.getInt(intervalKey) ?? 0,
       endHour: prefs.getInt(endHourKey) ?? defaultEndHour,
+      endMinute: prefs.getInt(endMinuteKey) ?? 0,
     );
   }
 
@@ -56,6 +58,7 @@ class PracticeReminder {
     await prefs.setString(pickKey, settings.pick.key);
     await prefs.setInt(intervalKey, settings.intervalMinutes);
     await prefs.setInt(endHourKey, settings.endHour);
+    await prefs.setInt(endMinuteKey, settings.endMinute);
   }
 
   /// 알림에 띄우려고 적어 둔 문장.
@@ -147,9 +150,11 @@ String reminderIntervalLabel(int minutes) {
   return rest == 0 ? '$hours시간마다' : '$hours시간 $rest분마다';
 }
 
-String reminderHourLabel(int hour) {
+/// '오후 10:00'처럼 보여 준다.
+String reminderTimeLabel(int hour, int minute) {
   final h12 = hour % 12 == 0 ? 12 : hour % 12;
-  return '${hour >= 12 ? '오후' : '오전'} $h12시';
+  final mm = minute.toString().padLeft(2, '0');
+  return '${hour >= 12 ? '오후' : '오전'} $h12:$mm';
 }
 
 class PracticeReminderSettings {
@@ -160,6 +165,7 @@ class PracticeReminderSettings {
     this.pick = ReminderPick.inOrder,
     this.intervalMinutes = 0,
     this.endHour = PracticeReminder.defaultEndHour,
+    this.endMinute = 0,
   });
 
   final bool enabled;
@@ -172,6 +178,7 @@ class PracticeReminderSettings {
 
   /// 간격으로 받을 때 그날 알림을 그만 받는 시각.
   final int endHour;
+  final int endMinute;
 
   bool get repeats => intervalMinutes > 0;
 
@@ -182,6 +189,7 @@ class PracticeReminderSettings {
     ReminderPick? pick,
     int? intervalMinutes,
     int? endHour,
+    int? endMinute,
   }) =>
       PracticeReminderSettings(
         enabled: enabled ?? this.enabled,
@@ -190,20 +198,19 @@ class PracticeReminderSettings {
         pick: pick ?? this.pick,
         intervalMinutes: intervalMinutes ?? this.intervalMinutes,
         endHour: endHour ?? this.endHour,
+        endMinute: endMinute ?? this.endMinute,
       );
 
-  /// 언제 받는지 한 줄로. '오후 8:00에' 또는 '오전 9:00~오후 10시, 2시간마다'.
+  /// 언제 받는지 한 줄로. '오후 8:00에' 또는 '오전 9:00~오후 10:00, 2시간마다'.
   String get whenLabel => repeats
-      ? '$label~${reminderHourLabel(endHour)}, ${reminderIntervalLabel(intervalMinutes)}'
+      ? '$label~$endLabel, ${reminderIntervalLabel(intervalMinutes)}'
       : '$label에';
 
   /// '오후 8:00'처럼 보여 준다.
-  String get label {
-    final isAfternoon = hour >= 12;
-    final h12 = hour % 12 == 0 ? 12 : hour % 12;
-    final mm = minute.toString().padLeft(2, '0');
-    return '${isAfternoon ? '오후' : '오전'} $h12:$mm';
-  }
+  String get label => reminderTimeLabel(hour, minute);
+
+  /// 그만 받을 시각.
+  String get endLabel => reminderTimeLabel(endHour, endMinute);
 }
 
 /// 지금과 첫 알림 사이에 적어도 이만큼은 둔다.
@@ -226,6 +233,7 @@ List<DateTime> reminderTimes(
   Duration minLead = reminderMinLead,
   int intervalMinutes = 0,
   int endHour = PracticeReminder.defaultEndHour,
+  int endMinute = 0,
   int maxCount = PracticeReminder.maxPending,
 }) {
   if (intervalMinutes <= 0) {
@@ -243,7 +251,8 @@ List<DateTime> reminderTimes(
   final times = <DateTime>[];
   for (var day = 0; day < days && times.length < maxCount; day++) {
     final start = DateTime(now.year, now.month, now.day + day, hour, minute);
-    final end = DateTime(now.year, now.month, now.day + day, endHour, 0);
+    final end =
+        DateTime(now.year, now.month, now.day + day, endHour, endMinute);
     var at = start;
     // 시작이 끝보다 늦으면(예: 밤 11시 시작, 밤 10시까지) 그날은 한 번만.
     final last = end.isBefore(start) ? start : end;

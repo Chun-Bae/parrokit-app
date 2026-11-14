@@ -8,6 +8,7 @@ import 'package:parrokit/core/infrastructure/services/local_notification_service
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/widgets/app_time_picker_sheet.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/reminder_sentence_picker.dart';
 
@@ -86,10 +87,10 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
   Future<void> _pickTime() async {
     final current = _settings;
     if (current == null) return;
-    final picked = await showTimePicker(
+    final picked = await showAppTimePickerSheet(
       context: context,
-      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
-      helpText: '알림 받을 시각',
+      initial: TimeOfDay(hour: current.hour, minute: current.minute),
+      title: current.repeats ? '알림을 받기 시작할 시각' : '알림 받을 시각',
     );
     if (!mounted || picked == null) return;
     await _apply(
@@ -106,13 +107,14 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
   Future<void> _pickEndHour() async {
     final current = _settings;
     if (current == null) return;
-    final picked = await showTimePicker(
+    final picked = await showAppTimePickerSheet(
       context: context,
-      initialTime: TimeOfDay(hour: current.endHour, minute: 0),
-      helpText: '알림을 그만 받을 시각',
+      initial: TimeOfDay(hour: current.endHour, minute: current.endMinute),
+      title: '알림을 그만 받을 시각',
     );
     if (!mounted || picked == null) return;
-    await _apply(current.copyWith(endHour: picked.hour));
+    await _apply(
+        current.copyWith(endHour: picked.hour, endMinute: picked.minute));
   }
 
   /// 알림에 쓸 문장 고르기.
@@ -200,7 +202,7 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
                     key: const ValueKey('practice-reminder-end'),
                     onPressed: _busy ? null : _pickEndHour,
                     icon: const Icon(Icons.bedtime_outlined, size: 18),
-                    label: Text('${reminderHourLabel(settings.endHour)}까지'),
+                    label: Text('${settings.endLabel}까지'),
                   ),
                 PopupMenuButton<int>(
                   key: const ValueKey('practice-reminder-interval'),

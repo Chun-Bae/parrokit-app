@@ -130,6 +130,7 @@ Future<void> applyPracticeReminder({
     settings.minute,
     intervalMinutes: settings.intervalMinutes,
     endHour: settings.endHour,
+    endMinute: settings.endMinute,
   );
   final chosen =
       chosenReminderCandidates(candidates, await PracticeReminder.loadChosen());
