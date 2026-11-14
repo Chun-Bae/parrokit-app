@@ -502,7 +502,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              isAtGroupRoot ? '그룹 메뉴' : '컬렉션 메뉴',
+              isAtGroupRoot ? '그룹 메뉴' : '폴더 메뉴',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -511,7 +511,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             Text(
               isAtGroupRoot
                   ? '그룹을 추가하거나 그룹 관리로 이동할 수 있어요.'
-                  : '컬렉션을 추가하거나 삭제 모드로 들어갈 수 있어요.',
+                  : '폴더을 추가하거나 삭제 모드로 들어갈 수 있어요.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),
@@ -519,7 +519,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             const SizedBox(height: 12),
             ListTile(
               leading: Icon(Icons.add_rounded, color: cs.primary),
-              title: Text(isAtGroupRoot ? '그룹 추가' : '컬렉션 추가'),
+              title: Text(isAtGroupRoot ? '그룹 추가' : '폴더 추가'),
               onTap: () => Navigator.pop(context, 'add'),
             ),
             ListTile(
@@ -529,7 +529,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             ListTile(
               leading: Icon(Icons.settings_suggest_rounded, color: cs.primary),
-              title: const Text('그룹/컬렉션 관리'),
+              title: const Text('그룹/폴더 관리'),
               onTap: () => Navigator.pop(context, 'manage'),
             ),
             const SizedBox(height: 8),
@@ -628,8 +628,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final clipProvider = context.read<ClipProvider>();
     await _showNameEntryDialog(
       context,
-      title: '컬렉션 이름 변경',
-      hint: '컬렉션 이름',
+      title: '폴더 이름 변경',
+      hint: '폴더 이름',
       submitLabel: '변경',
       initialText: currentName,
       onSubmit: (name) => clipProvider.renameCollection(collectionId, name),
@@ -670,7 +670,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
               final exists = await clipProvider.isNameExists(name);
               if (!ctx.mounted) return;
               if (exists) {
-                showToast('이미 같은 이름의 그룹이나 컬렉션이 존재합니다.');
+                showToast('이미 같은 이름의 그룹이나 폴더이 존재합니다.');
                 return;
               }
               setState(() => submitting = true);
@@ -736,7 +736,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('컬렉션 삭제'),
+        title: const Text('폴더 삭제'),
         content: Text(content),
         actions: [
           TextButton(
@@ -762,8 +762,8 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final clipProvider = context.read<ClipProvider>();
     await _showNameEntryDialog(
       context,
-      title: '컬렉션 추가',
-      hint: '컬렉션 이름',
+      title: '폴더 추가',
+      hint: '폴더 이름',
       submitLabel: '추가',
       onSubmit: (name) => clipProvider.createCollection(name),
     );
@@ -847,7 +847,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
 
     if (clipProvider.selectedGroupId != null) {
       if (clipProvider.selectedGroupId == -1) {
-        selectedGroupName = '모든 컬렉션';
+        selectedGroupName = '모든 폴더';
         crumbs.add(selectedGroupName);
       } else {
         final grp = clipProvider.groups.cast<dynamic>().firstWhere(
@@ -917,7 +917,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
               final List<Widget> contentSlivers;
               if (isAtGroupRoot) {
                 final gridItems = [
-                  '모든 컬렉션',
+                  '모든 폴더',
                   ...clipProvider.groups
                       .map((g) => (g as dynamic).name as String)
                 ];
@@ -958,7 +958,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                       .map((c) => (c as dynamic).name as String)
                 ];
                 contentSlivers = FolderGrid(
-                  sectionTitle: '컬렉션',
+                  sectionTitle: '폴더',
                   items: gridItems,
                   deleteMode: _deleteMode,
                   isGridView: _isGridView,
@@ -1036,7 +1036,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                               Icon(Icons.delete_outline_rounded,
                                   size: 16, color: cs.onErrorContainer),
                               const SizedBox(width: 8),
-                              Text('삭제 모드 — 컬렉션을 눌러 삭제',
+                              Text('삭제 모드 — 폴더을 눌러 삭제',
                                   style: context.texts.labelMedium
                                       .copyWith(color: cs.onErrorContainer)),
                               const Spacer(),
@@ -1077,7 +1077,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                       : Icons.more_horiz_rounded,
                   label: isAtClipList
                       ? '클립 메뉴'
-                      : (isAtGroupRoot ? '그룹 메뉴' : '컬렉션 메뉴'),
+                      : (isAtGroupRoot ? '그룹 메뉴' : '폴더 메뉴'),
                   onTap: isAtClipList
                       ? () => _showClipFabMenu(
                             fabCtx,

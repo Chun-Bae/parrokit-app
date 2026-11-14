@@ -112,7 +112,7 @@ class FolderGrid extends StatelessWidget {
       );
     }
 
-    final isSpecial = i == 0 && (sectionTitle == '그룹' || sectionTitle == '컬렉션');
+    final isSpecial = i == 0 && (sectionTitle == '그룹' || sectionTitle == '폴더');
     return FolderCard(
       name: items[i],
       onTap: () => onTap(i),

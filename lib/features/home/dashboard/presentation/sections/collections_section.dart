@@ -50,7 +50,7 @@ class CollectionsSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
           child: SectionHeader(
             title: '모음집',
-            subtitle: '컬렉션별 정리',
+            subtitle: '폴더별 정리',
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -59,7 +59,7 @@ class CollectionsSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: collections.isEmpty
               ? EmptyCard(
-                  noun: '컬렉션', subtle: subtle, textSecondary: textSecondary)
+                  noun: '폴더', subtle: subtle, textSecondary: textSecondary)
               : _buildGrid(context, cardBg, subtle, textPrimary, textSecondary),
         ),
       ],
