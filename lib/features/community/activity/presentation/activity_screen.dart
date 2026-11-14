@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/menu/data/factories/community_menu_section_factory.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +39,14 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// 빈 화면에 적을 말. 메뉴에서 누른 줄 이름을 그대로 쓴다.
+  String _emptyText() {
+    final title =
+        communityActivityTitle(widget.boardType, widget.activityType);
+    if (title == null || title.isEmpty) return '아직 활동이 없어요.';
+    return '아직 ${iGa(title)} 없어요.';
   }
 
   String _getAppBarTitle() {
@@ -165,9 +174,11 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
             }
 
             if (provider.error != null) {
+              // 내부 오류 글을 그대로 보여 주지 않는다(5차, 다른 화면과 같게).
               return Center(
-                child: Text('오류가 발생했습니다: ${provider.error}',
-                    style: TextStyle(color: colorScheme.error)),
+                child: Text('불러오지 못했어요. 잠시 뒤 다시 열어 주세요.',
+                    style: context.texts.bodyMedium
+                        .copyWith(color: colorScheme.error)),
               );
             }
 
@@ -180,7 +191,10 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                         size: 64, color: context.tokens.textDisabled),
                     const SizedBox(height: 16),
                     Text(
-                      '아직 활동 내역이 없습니다.',
+                      // 무엇이 없는지 말하고, 앱의 다른 빈 화면과 같은 말투로
+                      // 적는다(5차). 전에는 어느 줄로 들어와도 '아직 활동
+                      // 내역이 없습니다.'였다.
+                      _emptyText(),
                       style: context.texts.titleMedium
                           .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
