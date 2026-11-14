@@ -7,6 +7,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/utils/nickname_rule.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -20,6 +21,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   bool _isNicknameAvailable = false;
   bool _hasCheckedNickname = false;
+  bool _isCheckingNickname = false;
   String? _nicknameCheckMessage;
 
   @override
@@ -31,6 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool get _isLoading => context.watch<UserProvider>().isLoading;
 
   Future<void> _checkNickname() async {
+    if (_isCheckingNickname) return;
     final nickname = _nicknameController.text.trim();
     if (nickname.isEmpty) {
       setState(() {
@@ -40,6 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       });
       return;
     }
+    setState(() => _isCheckingNickname = true);
 
     // 프로필 수정 화면과 같은 모양으로 맞춘다. 전에는 try도 mounted 검사도
     // 없었다. 네트워크가 흔들리면 예외가 비동기로 사라져 아무 안내도 안 뜨고,
@@ -49,6 +53,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           await context.read<UserProvider>().isNicknameAvailable(nickname);
       if (!mounted) return;
       setState(() {
+        _isCheckingNickname = false;
         _isNicknameAvailable = isAvailable;
         _hasCheckedNickname = true;
         _nicknameCheckMessage =
@@ -58,6 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       AppLogger.e('[Auth] 닉네임 중복 확인 실패', error: e);
       if (!mounted) return;
       setState(() {
+        _isCheckingNickname = false;
         _isNicknameAvailable = false;
         _hasCheckedNickname = false;
         _nicknameCheckMessage = '닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.';
@@ -144,6 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _nicknameController,
+                          maxLength: nicknameMaxLength,
                           onChanged: (val) {
                             setState(() {
                               _hasCheckedNickname = false;
@@ -175,7 +182,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: ElevatedButton(
-                          onPressed: _nicknameController.text.trim().isEmpty
+                          onPressed: _isCheckingNickname ||
+                                  _nicknameController.text.trim().isEmpty
                               ? null
                               : _checkNickname,
                           style: ElevatedButton.styleFrom(
@@ -190,7 +198,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ],
                   ),
-                  if (_hasCheckedNickname && _nicknameCheckMessage != null)
+                  if (_nicknameCheckMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8, left: 4),
                       child: Align(

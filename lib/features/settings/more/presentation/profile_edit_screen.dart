@@ -12,6 +12,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
+import 'package:parrokit/core/shared/utils/nickname_rule.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -286,7 +287,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       Expanded(
                         child: TextField(
                           controller: _nicknameController,
-                          maxLength: 15,
+                          maxLength: nicknameMaxLength,
                           enabled: _canChangeNickname, // 쿨타임 시 비활성화
                           onChanged: (_) =>
                               setState(() {}), // 상태 반영 (확인 버튼 상태용)
