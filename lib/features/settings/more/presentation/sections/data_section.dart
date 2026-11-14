@@ -144,7 +144,9 @@ class _DataSectionState extends State<DataSection> {
               ),
               _GridAction(
                 icon: Icons.video_library_outlined,
-                label: '보관 영상',
+                // 화면 제목과 같은 말로 둔다(5차). '보관 영상'은 보관함
+                // 영상과 헷갈렸고, 여는 화면은 '기기 보관 관리'였다.
+                label: '받아 둔 영상',
                 caption: '$cachedCount개 · ${formatBytes(cachedBytes)}',
                 onTap: () =>
                     context.pushNamed(AppRoutes.storageCacheManagement),

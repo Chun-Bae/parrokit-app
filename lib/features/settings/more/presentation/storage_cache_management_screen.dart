@@ -165,7 +165,7 @@ class _StorageCacheManagementScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '원격 저장 클립의 기기 보관분',
+                  '기기에 받아 둔 파일',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -291,7 +291,8 @@ class _StorageCacheManagementScreenState
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('기기 보관 관리'),
+        // 들어온 줄('받아 둔 영상')과 같은 말(5차).
+        title: const Text('받아 둔 영상'),
       ),
       body: SafeArea(
         child: RefreshIndicator(
