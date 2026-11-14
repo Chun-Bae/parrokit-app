@@ -212,9 +212,14 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             title: '보이스',
                             value: provider.isLoadingVoices
                                 ? '목록 불러오는 중...'
-                                : (provider.voiceId.isEmpty
-                                    ? '선택 (기본값)'
-                                    : provider.voiceId),
+                                : provider.voicesFailed
+                                    // 실패해도 '선택 (기본값)'으로 보여
+                                    // 목록이 없는 것인지 못 가져온 것인지
+                                    // 알 수 없었다(5차).
+                                    ? '목록을 불러오지 못했어요'
+                                    : (provider.voiceId.isEmpty
+                                        ? '선택 (기본값)'
+                                        : provider.voiceId),
                             accentColor: theme.colorScheme.primary,
                             onTap: () =>
                                 _showVoiceSelectionSheet(context, provider),

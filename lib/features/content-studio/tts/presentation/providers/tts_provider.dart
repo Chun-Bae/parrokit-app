@@ -78,6 +78,16 @@ class TtsProvider extends ChangeNotifier {
   bool _isLoadingVoices = false;
   bool get isLoadingVoices => _isLoadingVoices;
 
+  /// 보이스 목록을 불러오지 못했는지. 전에는 실패해도 빈 목록이 돼
+  /// '선택 (기본값)'으로 보여, 목록이 원래 없는 것인지 못 가져온 것인지
+  /// 알 수 없었다. 네트워크가 느리면 '목록 불러오는 중...'에서 끝나지 않았다
+  /// (5차).
+  bool _voicesFailed = false;
+  bool get voicesFailed => _voicesFailed;
+
+  /// 이보다 오래 걸리면 못 가져온 것으로 본다.
+  static const voicesTimeout = Duration(seconds: 15);
+
   /// 현재 스크립트 기준 예상 소모 패롯.
   int get estimatedCost => _calculateCoinCost(_text.length);
 
@@ -163,10 +173,13 @@ class TtsProvider extends ChangeNotifier {
     final requestedLanguage = _language;
 
     _isLoadingVoices = true;
+    _voicesFailed = false;
     notifyListeners();
 
     try {
-      final voices = await _useCase.repository.listVoices(requestedLanguage);
+      final voices = await _useCase.repository
+          .listVoices(requestedLanguage)
+          .timeout(voicesTimeout);
 
       // 기다리는 동안 언어가 또 바뀌었으면 이 목록은 버린다. 언어 고르기
       // 시트는 updateLanguage 직후 이 함수를 await 없이 부르므로, 빠르게
@@ -188,6 +201,7 @@ class TtsProvider extends ChangeNotifier {
       AppLogger.e('[TTS][Provider] Failed to load voices', error: e);
       if (requestId != _voicesRequestId) return;
       _availableVoices = [];
+      _voicesFailed = true;
     } finally {
       if (requestId == _voicesRequestId) {
         _isLoadingVoices = false;

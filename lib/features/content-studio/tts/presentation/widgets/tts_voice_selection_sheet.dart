@@ -213,6 +213,27 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
           const SizedBox(height: AppSpacing.md),
           if (widget.provider.isLoadingVoices)
             const Expanded(child: Center(child: CircularProgressIndicator()))
+          else if (widget.provider.voicesFailed)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '보이스 목록을 불러오지 못했어요.',
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: mutedText),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton.tonal(
+                      key: const ValueKey('retry-voices'),
+                      onPressed: widget.provider.fetchAvailableVoices,
+                      child: const Text('다시 시도'),
+                    ),
+                  ],
+                ),
+              ),
+            )
           else if (tiers.isEmpty)
             Expanded(
               child: Center(
