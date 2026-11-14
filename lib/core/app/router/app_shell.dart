@@ -33,19 +33,10 @@ class AppShell extends StatelessWidget {
 
   final Widget child;
 
-  /// 현재 경로에서 탭 인덱스 계산
-  int _indexFromLocation(String location) {
-    if (location.startsWith(AppRoutes.communityPath)) return 1;
-    if (location.startsWith(AppRoutes.explorePath)) return 0;
-    if (location.startsWith(AppRoutes.collectionPath)) return 3;
-    if (location.startsWith(AppRoutes.morePath)) return 4;
-    return 2; // dashboard
-  }
-
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    final currentIndex = _indexFromLocation(location);
+    final currentIndex = appShellTabIndex(location);
     final clipProvider = context.watch<ClipProvider>();
 
     // 네비바 숨김 조건
@@ -236,6 +227,15 @@ class AppShell extends StatelessWidget {
 
 /// 이 경로에서 아래 탭 바를 숨기는지. 바텀시트가 탭 바를 피해 뜨려면
 /// (app_bottom_sheet.dart) 탭 바가 있는지 알아야 해서 따로 뺐다.
+/// 지금 경로에서 아래 탭 바의 몇 번째 칸이 켜져 보일지.
+int appShellTabIndex(String location) {
+  if (location.startsWith(AppRoutes.communityPath)) return 1;
+  if (location.startsWith(AppRoutes.explorePath)) return 0;
+  if (location.startsWith(AppRoutes.collectionPath)) return 3;
+  if (location.startsWith(AppRoutes.morePath)) return 4;
+  return 2; // 홈
+}
+
 bool appShellHidesNavBar(String location) =>
     location.startsWith('/clips/') ||
     location == AppRoutes.recentsPath ||
