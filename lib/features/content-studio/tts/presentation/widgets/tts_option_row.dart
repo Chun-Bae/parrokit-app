@@ -67,7 +67,7 @@ class TtsOptionRow extends StatelessWidget {
             if (onTap != null) ...[
               const SizedBox(width: AppSpacing.xs),
               const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
-            ] else if (title == '보이스') ...[
+            ] else if (title == '목소리') ...[
               const SizedBox(width: AppSpacing.xs),
               const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
             ],

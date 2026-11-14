@@ -205,7 +205,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              '보이스 선택',
+              '목소리 선택',
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
@@ -220,7 +220,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '보이스 목록을 불러오지 못했어요.',
+                      '목소리 목록을 불러오지 못했어요.',
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: mutedText),
                     ),
@@ -238,7 +238,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
             Expanded(
               child: Center(
                 child: Text(
-                  '선택할 수 있는 보이스가 없습니다.',
+                  '선택할 수 있는 목소리가 없습니다.',
                   style: theme.textTheme.bodyMedium?.copyWith(color: mutedText),
                 ),
               ),
@@ -295,13 +295,13 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            _SectionLabel(text: '보이스', mutedColor: mutedText),
+            _SectionLabel(text: '목소리', mutedColor: mutedText),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
               child: candidates.isEmpty
                   ? Center(
                       child: Text(
-                        '해당 조합의 보이스가 없습니다.',
+                        '해당 조합의 목소리가 없습니다.',
                         style: theme.textTheme.bodyMedium
                             ?.copyWith(color: mutedText),
                       ),
@@ -321,7 +321,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
 
                         return ListTile(
                           title: Text(
-                            '보이스 ${index + 1}',
+                            '목소리 ${index + 1}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: isSelected
                                   ? FontWeight.bold

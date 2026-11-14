@@ -67,7 +67,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              'ElevenLabs 보이스 선택',
+              'ElevenLabs 목소리 선택',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -105,7 +105,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                 if (voices.isEmpty) {
                   return const AppEmptyState(
                     icon: Icons.record_voice_over_outlined,
-                    title: '사용 가능한 보이스가 없습니다.',
+                    title: '사용 가능한 목소리가 없습니다.',
                     compact: true,
                   );
                 }
@@ -142,7 +142,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                       child: filteredVoices.isEmpty
                           ? Center(
                               child: Text(
-                                '해당 억양의 보이스가 없습니다.',
+                                '해당 억양의 목소리가 없습니다.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: context.tokens.textSecondary,
                                 ),
@@ -254,7 +254,7 @@ class _AccentNoticeBanner extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              '억양이 표시된 보이스는 다른 언어로 생성해도 그 억양이 남을 수 있어요. '
+              '억양이 표시된 목소리는 다른 언어로 생성해도 그 억양이 남을 수 있어요. '
               '다만 실제로는 큰 차이가 느껴지지 않는 경우도 많으니 참고만 해주세요. '
               '학습 언어의 정확한 발음이 중요하면 Gemini 사용을 권장해요.',
               style: theme.textTheme.labelSmall?.copyWith(

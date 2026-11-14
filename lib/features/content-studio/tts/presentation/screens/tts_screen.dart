@@ -178,7 +178,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             ),
             const SizedBox(height: AppSpacing.lg),
             TtsPanel(
-              title: '보이스 설정',
+              title: '목소리 설정',
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (Widget child, Animation<double> animation) {
@@ -209,7 +209,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.record_voice_over_rounded,
-                            title: '보이스',
+                            title: '목소리',
                             value: provider.isLoadingVoices
                                 ? '목록 불러오는 중...'
                                 : provider.voicesFailed
@@ -276,7 +276,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.record_voice_over_rounded,
-                            title: '보이스',
+                            title: '목소리',
                             value: provider.voiceId.isEmpty
                                 ? '선택 (기본값)'
                                 : (TtsVoiceCache()
@@ -368,7 +368,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           const SizedBox(height: AppSpacing.md),
                           TtsOptionRow(
                             icon: Icons.record_voice_over_rounded,
-                            title: '보이스 에이전트',
+                            title: '목소리 에이전트',
                             value: geminiVoices
                                 .firstWhere(
                                   (v) =>
