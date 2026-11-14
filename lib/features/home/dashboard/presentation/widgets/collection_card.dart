@@ -43,9 +43,9 @@ class CollectionCard extends StatelessWidget {
   });
 
   String? get _storageLabel => switch (storageMode) {
-        ClipStorageConstants.storageModeLocal => '로컬',
+        ClipStorageConstants.storageModeLocal => '기기',
         ClipStorageConstants.storageModeServer => '서버',
-        ClipStorageConstants.storageModeGoogleDrive => '클라우드',
+        ClipStorageConstants.storageModeGoogleDrive => 'Google Drive',
         _ => null,
       };
 

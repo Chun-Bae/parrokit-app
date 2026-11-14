@@ -633,9 +633,9 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   ) {
     final modes = _chipModes(provider);
     String label(String mode) => switch (mode) {
-          ClipStorageConstants.storageModeLocal => '로컬',
+          ClipStorageConstants.storageModeLocal => '기기',
           ClipStorageConstants.storageModeServer => '서버',
-          ClipStorageConstants.storageModeGoogleDrive => '클라우드',
+          ClipStorageConstants.storageModeGoogleDrive => 'Google Drive',
           _ => mode,
         };
     Widget chip(String text, bool selected, VoidCallback onTap) => Padding(

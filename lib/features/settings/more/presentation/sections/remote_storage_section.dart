@@ -304,7 +304,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
         _buildUsageCard(
           context,
           icon: Icons.phone_android_rounded,
-          title: '로컬',
+          title: '기기',
           subtitle: '이 기기에 있어 오프라인에서도 열 수 있는 파일',
           usageText: _formatBytes(localUsed),
           color: Theme.of(context).colorScheme.tertiary,

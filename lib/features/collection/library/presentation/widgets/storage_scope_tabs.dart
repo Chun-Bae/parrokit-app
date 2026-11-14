@@ -20,7 +20,7 @@ class StorageScopeTabs extends StatelessWidget {
     (
       mode: ClipStorageConstants.storageModeLocal,
       icon: Icons.phone_android_rounded,
-      label: '로컬',
+      label: '기기',
     ),
     (
       mode: ClipStorageConstants.storageModeServer,
@@ -30,7 +30,7 @@ class StorageScopeTabs extends StatelessWidget {
     (
       mode: ClipStorageConstants.storageModeGoogleDrive,
       icon: Icons.cloud_upload_rounded,
-      label: '클라우드',
+      label: 'Google Drive',
     ),
   ];
 

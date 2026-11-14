@@ -40,11 +40,13 @@ class ClipListView extends StatelessWidget {
   final ValueChanged<ClipItem>? onToggleSelection;
   final ImageProvider<Object>? Function(ClipItem item)? resolveThumb;
 
+  /// 저장 위치 이름. 옮기기 시트·저장 용량과 같은 말을 쓴다(5차).
+  /// 전에는 목록만 '로컬'·'클라우드 · Google Drive'라 불렀다.
   String? _storageLabel(String storageMode) {
-    if (storageMode == ClipStorageConstants.storageModeLocal) return '로컬';
+    if (storageMode == ClipStorageConstants.storageModeLocal) return '기기';
     if (storageMode == ClipStorageConstants.storageModeServer) return '서버';
     if (storageMode == ClipStorageConstants.storageModeGoogleDrive) {
-      return '클라우드 · Google Drive';
+      return 'Google Drive';
     }
 
     return null;

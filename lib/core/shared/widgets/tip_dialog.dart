@@ -92,9 +92,9 @@ class _TipDialog extends StatelessWidget {
             _TipItem(
               icon: Icons.save_alt_rounded,
               color: cs.error,
-              title: '로컬 클립은 백업해 두세요',
+              title: '기기에만 있는 클립은 백업해 두세요',
               body:
-                  "'로컬'에 둔 클립은 이 기기에만 있어서 앱을 지우거나 기기를 초기화하면 사라져요. 오래 둘 클립은 보관함에서 클립을 왼쪽으로 밀어 '옮기기'로 서버나 Google Drive에 옮기거나, 더보기의 백업으로 내보내 두세요.",
+                  "'기기'에 둔 클립은 이 기기에만 있어서 앱을 지우거나 기기를 초기화하면 사라져요. 오래 둘 클립은 보관함에서 클립을 왼쪽으로 밀어 '옮기기'로 서버나 Google Drive에 옮기거나, 더보기의 백업으로 내보내 두세요.",
             ),
             const SizedBox(height: AppSpacing.md),
 

@@ -46,7 +46,7 @@ Future<String?> showStorageTransferSheet(
               ),
               const SizedBox(height: 12),
               _StoragePickTile(
-                title: '로컬',
+                title: '기기',
                 subtitle: '이 기기 안에 남겨둡니다.',
                 icon: Icons.phone_android_rounded,
                 selected: selectedMode == ClipStorageConstants.storageModeLocal,
