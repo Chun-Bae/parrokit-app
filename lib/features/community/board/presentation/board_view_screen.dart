@@ -17,6 +17,8 @@ import 'package:parrokit/features/community/board/presentation/widgets/board_pos
 import 'package:parrokit/features/community/board/presentation/sections/board_comments_section.dart';
 import 'package:parrokit/features/community/board/presentation/handlers/board_options_handler.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
+import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
+import 'package:parrokit/features/community/board/presentation/missing_post_notice.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -99,7 +101,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       // 미리 비우는 건 반응이 빨라 보이려는 것이지, 실패했을 때 사용자가
       // 다시 타이핑해야 한다는 뜻은 아니다. 쓴 글을 돌려준다.
       _commentController.text = text;
-      showToast(provider.errorMessage ?? '댓글 등록에 실패했습니다.');
+      showToast(provider.errorMessage ?? '댓글을 올리지 못했어요.');
     }
   }
 
@@ -138,9 +140,10 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.lg)),
-            title: const Text('댓글 삭제',
+            title: const Text('댓글 지우기',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            content: const Text('정말로 이 댓글을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'),
+            // 보관함 지우기 확인과 같은 말로(5차).
+            content: const Text('이 댓글을 지울까요?\n지우면 되돌릴 수 없어요.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -149,7 +152,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text('삭제',
+                child: Text('지우기',
                     style: TextStyle(
                         color: context.tokens.danger,
                         fontWeight: FontWeight.bold)),
@@ -186,9 +189,9 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.lg)),
-            title: const Text('게시글 삭제',
+            title: const Text('글 지우기',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            content: const Text('정말로 이 게시글을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'),
+            content: const Text('이 글을 지울까요?\n지우면 되돌릴 수 없어요.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -197,7 +200,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text('삭제',
+                child: Text('지우기',
                     style: TextStyle(
                         color: context.tokens.danger,
                         fontWeight: FontWeight.bold)),
@@ -231,24 +234,11 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     final liked = provider.isCurrentPostLiked;
     final scrapped = provider.isCurrentPostScrapped;
 
-    final post = provider.posts.firstWhere(
-      (p) => p.id == widget.postId,
-      orElse: () => Post(
-        id: widget.postId,
-        postType: 'board',
-        category: '알 수 없음',
-        title: '게시글을 찾을 수 없습니다.',
-        content: '삭제되었거나 접근할 수 없는 게시글입니다.',
-        authorId: '',
-        authorNickname: '알 수 없음',
-        snippet: '',
-        createdAt: DateTime.now(),
-      ),
-    );
-
-    final currentUser = context.watch<UserProvider>().currentUser;
-    final isMe = currentUser != null && post.authorId == currentUser.id;
-    final cachedAuthor = provider.getCachedUser(post.authorId);
+    // 지워졌거나 못 여는 글은 가짜 글로 그리지 않는다(5차). 전에는 제목이
+    // 없는 글을 글처럼 보여 줘서 공감·스크랩·댓글칸이
+    // 그대로 살아 있었다.
+    final found = provider.posts.where((p) => p.id == widget.postId).toList();
+    final post = found.isEmpty ? null : found.first;
 
     final comments = provider.currentPostComments;
     if (_isFetchingDetails) {
@@ -259,6 +249,37 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
         ),
       );
     }
+
+    if (post == null) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: backgroundColor,
+          leading: IconButton(
+            tooltip: '뒤로',
+            onPressed: () => Navigator.maybePop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 24),
+          ),
+          title: Text(
+            '게시판',
+            style: context.texts.titleMedium
+                .copyWith(color: colorScheme.onSurface),
+          ),
+        ),
+        body: AppEmptyState(
+          key: const ValueKey('missing-post'),
+          icon: Icons.search_off_rounded,
+          title: missingPostTitle,
+          description: missingPostDescription,
+          actionLabel: missingPostBackLabel,
+          onAction: () => Navigator.maybePop(context),
+        ),
+      );
+    }
+
+    final currentUser = context.watch<UserProvider>().currentUser;
+    final isMe = currentUser != null && post.authorId == currentUser.id;
+    final cachedAuthor = provider.getCachedUser(post.authorId);
 
     return Scaffold(
       backgroundColor: backgroundColor,
