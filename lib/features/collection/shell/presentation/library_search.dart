@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/content/clip_sentence_match.dart';
@@ -280,7 +281,8 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
       body = Text(
           _kind == LibrarySearchKind.all
               ? "'${query.trim()}' 검색 결과가 없어요."
-              : "'${query.trim()}'에 맞는 ${_kind.label}이(가) 없어요.",
+              // '문장이(가)'처럼 두 가지를 함께 쓰지 않는다(5차).
+              : "'${query.trim()}'에 맞는 ${iGa(_kind.label)} 없어요.",
           key: const ValueKey('library-search-empty'), style: muted);
     } else {
       body = ListView(
@@ -343,7 +345,12 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
             border: const OutlineInputBorder(),
           ),
         ),
-        if (query.trim().isNotEmpty && data != null && !_failed) ...[
+        // 하나도 못 찾았으면 거르기 칩을 숨긴다. 전에는 '문장 0개 · 단어
+        // 0개 · 클립 0개'만 남아 고를 것이 없는 칩이 자리를 차지했다(5차).
+        if (query.trim().isNotEmpty &&
+            data != null &&
+            !_failed &&
+            kindCount(all, LibrarySearchKind.all) > 0) ...[
           const SizedBox(height: 10),
           SizedBox(
             height: 36,

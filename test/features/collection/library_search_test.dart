@@ -136,6 +136,26 @@ void main() {
           find.byKey(const ValueKey('library-search-field')), 'zzz');
       await tester.pump();
       expect(find.byKey(const ValueKey('library-search-empty')), findsOneWidget);
+      // 하나도 못 찾으면 고를 것이 없는 거르기 칩은 숨긴다(5차).
+      expect(find.byKey(const ValueKey('library-search-kinds')), findsNothing);
+    });
+
+    testWidgets('한 종류만 걸러 빈 결과일 때 조사를 맞춰 말한다', (tester) async {
+      await open(tester);
+      await tester.enterText(
+          find.byKey(const ValueKey('library-search-field')), 'e');
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('library-search-kind-clips')));
+      await tester.pump();
+      await tester.enterText(
+          find.byKey(const ValueKey('library-search-field')), '여행 영어');
+      await tester.pump();
+
+      final empty = find.byKey(const ValueKey('library-search-empty'));
+      if (empty.evaluate().isNotEmpty) {
+        // '클립이(가) 없어요'처럼 두 가지를 함께 쓰지 않는다.
+        expect(tester.widget<Text>(empty).data!.contains('('), isFalse);
+      }
     });
 
     testWidgets('클립을 누르면 검색 창을 닫고 그 클립을 연다', (tester) async {
