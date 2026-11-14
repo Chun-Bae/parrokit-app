@@ -22,6 +22,7 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/storage_transfer_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
 /// 앱 메인 쉘 위젯.
 ///
@@ -65,11 +66,25 @@ class AppShell extends StatelessWidget {
           ? null
           : showCollectionSelectionBar
               ? _buildCollectionSelectionBar(context)
-              : AppBottomNavBar(
-                  currentIndex: currentIndex,
-                  onTap: (i) => _onTabTap(context, i,
-                      currentIndex: currentIndex,
-                      currentPath: GoRouterState.of(context).uri.path),
+              // 시트가 떠 있는 동안에는 숨긴다. 네이티브 탭 바가 자기 프레임
+              // 위로 드리우는 그림자가 시트 위에 가로 띠로 비쳤다(5차).
+              // 자리는 그대로 두어(maintainSize) 본문이 움찔거리지 않는다.
+              : ValueListenableBuilder<int>(
+                  valueListenable: openAppSheetCount,
+                  builder: (context, sheets, child) => Visibility(
+                    visible: sheets == 0,
+                    maintainState: true,
+                    maintainAnimation: true,
+                    maintainSize: true,
+                    maintainInteractivity: false,
+                    child: child!,
+                  ),
+                  child: AppBottomNavBar(
+                    currentIndex: currentIndex,
+                    onTap: (i) => _onTabTap(context, i,
+                        currentIndex: currentIndex,
+                        currentPath: GoRouterState.of(context).uri.path),
+                  ),
                 ),
     );
   }

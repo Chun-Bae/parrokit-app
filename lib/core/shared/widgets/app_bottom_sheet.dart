@@ -13,6 +13,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_shell.dart';
 
+/// 지금 떠 있는 공통 바텀시트의 수. 0보다 크면 셸이 아래 탭 바를 숨긴다.
+///
+/// 아래 탭 바는 Flutter 위젯이 아니라 UiKitView로 띄운 iOS UITabBar다.
+/// 그 네이티브 뷰는 자기 프레임 바깥 위쪽으로 그림자를 드리우는데, 그 영역은
+/// Flutter가 시트를 올려 그리는 오버레이가 덮지 않아서 시트 위로 희미한
+/// 가로 띠로 비쳤다(5차, 사용자가 여러 번 지적). 시트가 떠 있는 동안에는
+/// 어차피 탭 바가 가려지므로 숨겨 둔다.
+final ValueNotifier<int> openAppSheetCount = ValueNotifier<int>(0);
+
 /// 지금 화면에 아래 탭 바가 있는지. 라우터 밖(테스트 등)에서는 없다고 본다.
 bool _hasNavBar(BuildContext context) {
   try {
@@ -36,6 +45,7 @@ Future<T?> showAppSheet<T>({
   bool? rootNavigator,
 }) {
   final hasNavBar = _hasNavBar(context);
+  openAppSheetCount.value++;
   return showModalBottomSheet<T>(
     context: context,
     // 탭 바는 셸의 Scaffold가 그리므로 그 위에 뜨려면 루트 내비게이터가 필요하다.
@@ -55,5 +65,5 @@ Future<T?> showAppSheet<T>({
     // 그리는 곳이 있어 두 겹이 되면서 경계가 희미한 선으로 보였다
     // (5차, 사용자 의견).
     builder: builder,
-  );
+  ).whenComplete(() => openAppSheetCount.value--);
 }
