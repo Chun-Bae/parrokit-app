@@ -23,16 +23,20 @@ void main() {
 
   test('탭을 열면 걸러진 목록이 아니라 전체를 보여준다', () {
     // 질문 탭만 '답변 대기'로 열려서, 들어오자마자 채택이 끝난 질문이 빠진
-    // 목록을 봤다. 칩이 가운데에 있어 걸러진 줄도 모른다(5차).
+    // 목록을 봤다(5차).
     expect(CommunityFilters.defaultBoard, '전체');
-    expect(CommunityFilters.defaultQuestion, '전체');
+    expect(CommunityFilters.defaultQuestionStatus, '전체');
     expect(CommunityFilters.board, contains(CommunityFilters.defaultBoard));
-    expect(
-        CommunityFilters.question, contains(CommunityFilters.defaultQuestion));
+    expect(CommunityFilters.questionStatus,
+        contains(CommunityFilters.defaultQuestionStatus));
   });
 
-  test('질문 필터는 거르기 셋과 정렬 둘이다', () {
-    expect(CommunityFilters.question,
-        ['전체', '채택 완료', '답변 대기', '공감 순', '오래된 순']);
+  test('질문은 거르기와 정렬을 따로 고른다', () {
+    // 전에는 다섯 칸 한 줄이라 '답변 대기'를 보면서 '공감 순'으로 볼 수
+    // 없었다(5차).
+    expect(CommunityFilters.questionStatus, ['전체', '답변 대기', '채택 완료']);
+    expect(CommunityFilters.questionSort, ['최신 순', '공감 순', '오래된 순']);
+    expect(CommunityFilters.defaultQuestionSort,
+        CommunityFilters.questionSort.first);
   });
 }

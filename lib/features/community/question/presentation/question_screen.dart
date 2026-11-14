@@ -15,9 +15,15 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 class QuestionScreen extends StatefulWidget {
-  final String selectedFilter;
+  /// 거르기(전체·답변 대기·채택 완료)와 정렬(최신·공감·오래된)을 따로 받는다.
+  final String selectedStatus;
+  final String selectedSort;
 
-  const QuestionScreen({super.key, required this.selectedFilter});
+  const QuestionScreen({
+    super.key,
+    required this.selectedStatus,
+    required this.selectedSort,
+  });
 
   @override
   State<QuestionScreen> createState() => _QuestionScreenState();
@@ -68,7 +74,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
 
     // 질문만 골라 필터에 맞게 거르고 정렬한다(question_filter.dart).
     final questionPosts =
-        questionsForFilter(provider.posts, widget.selectedFilter);
+        questionsFor(provider.posts,
+            status: widget.selectedStatus, sort: widget.selectedSort);
 
     if (questionPosts.isEmpty) {
       // "답변 대기"·"채택 완료"는 읽어 온 페이지에서 거른 것이라, 이 페이지에
@@ -76,7 +83,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
       final canLoadMore = provider.hasMorePosts && !provider.isLoading;
       return AppEmptyState(
         icon: Icons.live_help_outlined,
-        title: widget.selectedFilter == '전체'
+        title: widget.selectedStatus == '전체'
             ? '아직 질문이 없어요.'
             : '해당 조건의 질문이 없습니다.',
         description: '다른 조건을 골라 보거나 직접 질문해 보세요.',

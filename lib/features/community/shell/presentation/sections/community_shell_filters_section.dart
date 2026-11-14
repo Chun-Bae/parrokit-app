@@ -17,19 +17,23 @@ class CommunityShellFiltersSection extends StatelessWidget {
     super.key,
     required this.tabIndex,
     required this.selectedBoardFilter,
-    required this.selectedQuestionFilter,
+    required this.selectedQuestionStatus,
+    required this.selectedQuestionSort,
     required this.selectedVoteFilter,
     required this.onBoardFilterSelected,
-    required this.onQuestionFilterSelected,
+    required this.onQuestionStatusSelected,
+    required this.onQuestionSortSelected,
     required this.onVoteFilterSelected,
   });
 
   final int tabIndex;
   final String selectedBoardFilter;
-  final String selectedQuestionFilter;
+  final String selectedQuestionStatus;
+  final String selectedQuestionSort;
   final String selectedVoteFilter;
   final ValueChanged<String> onBoardFilterSelected;
-  final ValueChanged<String> onQuestionFilterSelected;
+  final ValueChanged<String> onQuestionStatusSelected;
+  final ValueChanged<String> onQuestionSortSelected;
   final ValueChanged<String> onVoteFilterSelected;
 
   @override
@@ -58,17 +62,31 @@ class CommunityShellFiltersSection extends StatelessWidget {
     }
 
     if (tabIndex == 1) {
+      // 거르기와 정렬을 한 줄에 같이 두되 따로 고른다. 전에는 다섯 칸을
+      // 한 세그먼트에 넣어 '답변 대기'를 보면서 '공감 순'으로 볼 수 없었다
+      // (5차).
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: AppSegmentedTabs(
-          selectedIndex: CommunityFilters.question
-              .indexOf(selectedQuestionFilter)
-              .clamp(0, CommunityFilters.question.length - 1),
-          onChanged: (index) =>
-              onQuestionFilterSelected(CommunityFilters.question[index]),
-          segments: [
-            for (final filter in CommunityFilters.question)
-              AppSegment(label: filter),
+        child: Row(
+          children: [
+            Expanded(
+              child: AppSegmentedTabs(
+                selectedIndex: CommunityFilters.questionStatus
+                    .indexOf(selectedQuestionStatus)
+                    .clamp(0, CommunityFilters.questionStatus.length - 1),
+                onChanged: (index) => onQuestionStatusSelected(
+                    CommunityFilters.questionStatus[index]),
+                segments: [
+                  for (final filter in CommunityFilters.questionStatus)
+                    AppSegment(label: filter),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            _QuestionSortButton(
+              selected: selectedQuestionSort,
+              onSelected: onQuestionSortSelected,
+            ),
           ],
         ),
       );
@@ -100,6 +118,47 @@ class CommunityShellFiltersSection extends StatelessWidget {
         2 => Icons.how_to_vote_rounded,
         _ => Icons.timer_off_rounded,
       };
+}
+
+/// 질문 정렬 고르기. 칸을 적게 쓰려고 세그먼트 대신 눌러서 고르는 메뉴로 둔다.
+class _QuestionSortButton extends StatelessWidget {
+  const _QuestionSortButton({required this.selected, required this.onSelected});
+
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return PopupMenuButton<String>(
+      key: const ValueKey('question-sort'),
+      tooltip: '정렬',
+      initialValue: selected,
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (final sort in CommunityFilters.questionSort)
+          PopupMenuItem<String>(value: sort, child: Text(sort)),
+      ],
+      child: Container(
+        height: _boardChipHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(selected,
+                style: context.texts.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(width: 2),
+            Icon(Icons.keyboard_arrow_down, size: 18, color: cs.onSurface),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _BoardChip extends StatelessWidget {

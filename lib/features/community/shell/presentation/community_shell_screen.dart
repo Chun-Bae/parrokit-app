@@ -29,7 +29,8 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
   final ScrollController _outerScrollController = ScrollController();
 
   String _selectedBoardFilter = CommunityFilters.defaultBoard;
-  String _selectedQuestionFilter = CommunityFilters.defaultQuestion;
+  String _selectedQuestionStatus = CommunityFilters.defaultQuestionStatus;
+  String _selectedQuestionSort = CommunityFilters.defaultQuestionSort;
   String _selectedVoteFilter = CommunityFilters.defaultVote;
 
   int _currentIndex = 0;
@@ -155,7 +156,10 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                 : const NeverScrollableScrollPhysics(),
             children: [
               BoardScreen(selectedFilter: _selectedBoardFilter),
-              QuestionScreen(selectedFilter: _selectedQuestionFilter),
+              QuestionScreen(
+                selectedStatus: _selectedQuestionStatus,
+                selectedSort: _selectedQuestionSort,
+              ),
               VoteScreen(
                 selectedFilter: _normalizedVoteFilter(_selectedVoteFilter),
                 swipeEnabled: !_headerVisible,
@@ -268,12 +272,15 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
         CommunityShellFiltersSection(
           tabIndex: _tabController.index,
           selectedBoardFilter: _selectedBoardFilter,
-          selectedQuestionFilter: _selectedQuestionFilter,
+          selectedQuestionStatus: _selectedQuestionStatus,
+          selectedQuestionSort: _selectedQuestionSort,
           selectedVoteFilter: _selectedVoteFilter,
           onBoardFilterSelected: (value) =>
               setState(() => _selectedBoardFilter = value),
-          onQuestionFilterSelected: (value) =>
-              setState(() => _selectedQuestionFilter = value),
+          onQuestionStatusSelected: (value) =>
+              setState(() => _selectedQuestionStatus = value),
+          onQuestionSortSelected: (value) =>
+              setState(() => _selectedQuestionSort = value),
           onVoteFilterSelected: (value) => setState(
               () => _selectedVoteFilter = _normalizedVoteFilter(value)),
         ),

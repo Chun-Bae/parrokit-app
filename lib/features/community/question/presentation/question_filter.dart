@@ -1,43 +1,53 @@
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 
-/// 질문 탭 필터(CommunityFilters.question)에 맞춰 질문을 거르고 정렬한다.
+/// 질문 탭의 거르기(status)와 정렬(sort)을 함께 적용한다.
 ///
-/// 서버 조회 순서(최신순)는 그대로 두고, 이미 불러온 질문 안에서만 다시
-/// 정렬한다. 서버 정렬에는 Firestore 인덱스 배포가 필요해서다(5차 결정).
-/// 예전에는 '화제의 질문'·'오래된 질문'(지금 '공감 순'·'오래된 순')이 아무것도
-/// 바꾸지 않아 '전체'와 같았다.
-List<Post> questionsForFilter(List<Post> posts, String filter) {
-  final questions = posts.where((p) => p.postType == 'question').toList();
-  // 이름이 아니라 CommunityFilters.question의 순서로 고른다(이름이 바뀌어도 그대로).
-  switch (CommunityFilters.question.indexOf(filter)) {
-    case 1: // 채택 완료
-      return questions.where((p) => p.questionStatus == 'resolved').toList();
-    case 2: // 답변 대기
-      return questions.where((p) => p.questionStatus == 'waiting').toList();
-    case 3: // 공감 순
-      // 공감 많은 순, 같으면 댓글 많은 순, 그다음 최신 순.
-      return questions
-        ..sort((a, b) {
-          final byLike = b.likeCount.compareTo(a.likeCount);
-          if (byLike != 0) return byLike;
-          final byComment = b.commentCount.compareTo(a.commentCount);
-          if (byComment != 0) return byComment;
-          return _newestFirst(a, b);
-        });
-    case 4: // 오래된 순
-      // 작성 시각이 없는 글은 맨 뒤로.
-      return questions
-        ..sort((a, b) {
-          final at = a.createdAt, bt = b.createdAt;
-          if (at == null && bt == null) return 0;
-          if (at == null) return 1;
-          if (bt == null) return -1;
-          return at.compareTo(bt);
-        });
-    default: // '전체'
-      return questions;
+/// 전에는 둘이 한 줄에 섞여 있어 하나만 고를 수 있었다. '답변 대기'를
+/// 보면서 '공감 순'으로 볼 수 없었다(5차).
+///
+/// 서버 조회 순서는 그대로 두고, 이미 불러온 질문 안에서만 다시 정렬한다.
+/// 서버 정렬에는 Firestore 인덱스 배포가 필요해서다(5차 결정).
+List<Post> questionsFor(
+  List<Post> posts, {
+  required String status,
+  required String sort,
+}) {
+  var questions = posts.where((p) => p.postType == 'question').toList();
+
+  // 이름이 아니라 목록의 순서로 고른다(이름이 바뀌어도 그대로).
+  switch (CommunityFilters.questionStatus.indexOf(status)) {
+    case 1: // 답변 대기
+      questions =
+          questions.where((p) => p.questionStatus == 'waiting').toList();
+    case 2: // 채택 완료
+      questions =
+          questions.where((p) => p.questionStatus == 'resolved').toList();
+    default: // 전체
+      break;
   }
+
+  switch (CommunityFilters.questionSort.indexOf(sort)) {
+    case 1: // 공감 순: 공감 많은 순, 같으면 댓글 많은 순, 그다음 최신 순
+      questions.sort((a, b) {
+        final byLike = b.likeCount.compareTo(a.likeCount);
+        if (byLike != 0) return byLike;
+        final byComment = b.commentCount.compareTo(a.commentCount);
+        if (byComment != 0) return byComment;
+        return _newestFirst(a, b);
+      });
+    case 2: // 오래된 순: 작성 시각이 없는 글은 맨 뒤로
+      questions.sort((a, b) {
+        final at = a.createdAt, bt = b.createdAt;
+        if (at == null && bt == null) return 0;
+        if (at == null) return 1;
+        if (bt == null) return -1;
+        return at.compareTo(bt);
+      });
+    default: // 최신 순
+      questions.sort(_newestFirst);
+  }
+  return questions;
 }
 
 int _newestFirst(Post a, Post b) {
