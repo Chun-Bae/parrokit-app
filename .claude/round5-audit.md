@@ -169,6 +169,12 @@
 ## 배포 필요 (사용자가 직접)
 - 지금은 없음.
 
+### 2026-11-14 15:24 테스트 배포 (사용자 요청, 내가 로컬에서 돌림)
+- **1.0.6 (110)을 Firebase App Distribution `testers` 그룹에 올렸다.** 5차 작업분이 처음으로 폰에 올라간다
+- GitHub Actions는 못 썼다: 계정이 결제 문제로 잠겨("account is locked due to a billing issue") 작업이 2초 만에 멈춘다. 결제를 풀면 워크플로는 그대로 쓸 수 있다
+- 로컬 절차(스킬 ios-distribute와 같은 순서): pubspec +110 → `flutter build ios --release --no-codesign --config-only` → xcodeproj로 Runner Release만 수동 서명(parrokit-adhoc) → archive → ad-hoc export → `firebase appdistribution:distribute`. **서명 설정은 빌드 뒤 `git checkout`으로 되돌렸다**(커밋하지 않음)
+- dev 브랜치도 이때 처음 푸시했다(bf37c6c3 → 6da05885, 375개 커밋)
+
 ### 2026-11-14 10:00 배포 완료 (사용자가 직접 실행, Deploy complete 확인)
 - firestore:rules — 단어 예문 여러 개(examples 개수 제한)
 - functions:onExpiredQuestionRefund — 새로 만들어짐(create). 30분마다 돌며 마감 지난 질문의 크래커를 돌려준다
