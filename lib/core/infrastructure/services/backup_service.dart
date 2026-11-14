@@ -206,7 +206,7 @@ class BackupService {
         await backupZip.delete();
       } catch (_) {}
     } else {
-      throw Exception('파일 저장이 취소되었거나 실패했습니다.');
+      throw Exception('파일을 저장하지 못했어요.');
     }
 
     return backupZip;
@@ -353,7 +353,7 @@ class BackupService {
       allowedExtensions: ['zip'],
     );
     if (res == null || res.files.isEmpty) {
-      throw Exception('파일 선택이 취소되었습니다.');
+      throw Exception('파일을 고르지 않았어요.');
     }
 
     final appDir = await _appDocDir();

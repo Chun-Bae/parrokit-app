@@ -16,7 +16,38 @@ final _offenderPatterns = <RegExp>[
   RegExp(r'\$\{error\.toString\(\)\}'),
 ];
 
+/// 화면이 직접 들고 있는 상태에 예외 글을 그대로 담는 꼴.
+/// `_error = e.toString();`처럼 쓰면 그 글이 그대로 화면에 뜬다. 백업 창과
+/// 기기 보관 화면이 이랬다(5차, 반복 179). Provider들도 같은 꼴이 많지만
+/// 화면에 쓰이는지 하나씩 봐야 해서 여기서는 화면·위젯 파일만 본다.
+final _assignmentPattern =
+    RegExp(r'_(error|errorMessage)\s*=\s*(e|ex|error|err)\.toString\(\)');
+
+bool _isScreenOrWidget(String path) {
+  if (!path.contains('/presentation/')) return false;
+  return !path.contains('/provider');
+}
+
 void main() {
+  test('화면 상태에 예외 글을 그대로 담지 않는다', () {
+    final files = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'))
+        .where((f) => _isScreenOrWidget(f.path));
+    final offenders = <String>[];
+    for (final file in files) {
+      final lines = file.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        if (_assignmentPattern.hasMatch(lines[i])) {
+          offenders.add('${file.path}:${i + 1}  ${lines[i].trim()}');
+        }
+      }
+    }
+    expect(offenders, isEmpty,
+        reason: '사람 말로 된 안내를 담고 예외는 AppLogger로 남기세요.');
+  });
+
   test('화면 글에 내부 오류 객체를 그대로 넣지 않는다', () {
     final files = Directory('lib')
         .listSync(recursive: true)

@@ -22,10 +22,36 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 enum BackupDialogType {
   backup,
   restore,
+}
+
+/// 실패했을 때 보여 줄 안내를 고른다(5차).
+///
+/// 전에는 `e.toString()`을 그대로 보여 줘서 사용자가 고칠 수 없는 내부 글이
+/// 화면에 떴다. 앱이 직접 던진 짧은 한국어 안내('파일 선택이 취소되었습니다.'
+/// 같은 것)는 도움이 되니 그대로 쓰고, 그 밖의 예외 글은 감추고 사람 말로
+/// 바꾼다. 자세한 내용은 AppLogger로 남긴다.
+String backupFailureMessage(Object error, {required BackupDialogType type}) {
+  final raw = error.toString().replaceFirst('Exception: ', '').trim();
+  if (_isUserFacingMessage(raw)) return raw;
+  return type == BackupDialogType.backup
+      ? '백업하지 못했어요. 저장 공간을 확인하고 다시 해 보세요.'
+      : '불러오지 못했어요. 백업 파일이 맞는지 확인하고 다시 해 보세요.';
+}
+
+bool _isUserFacingMessage(String message) {
+  if (message.isEmpty || message.length > 60) return false;
+  // 한글이 없으면 내부 예외 글이다.
+  if (!RegExp(r'[가-힣]').hasMatch(message)) return false;
+  // 경로·클래스 이름·null이 섞인 글은 사람 말이 아니다.
+  if (RegExp(r'''[/\\{}<>()\[\]'"]|Exception|Error|null''').hasMatch(message)) {
+    return false;
+  }
+  return true;
 }
 
 /// 백업/복원 진행 단계
@@ -114,25 +140,25 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
 
   String get _title {
     if (_step == 2) {
-      if (_isSuccess == true) return '완료';
-      return '실패';
+      if (_isSuccess == true) return '다 됐어요';
+      return '안 됐어요';
     }
-    return widget.type == BackupDialogType.backup ? '데이터 백업' : '데이터 복원';
+    // 더보기 카드의 칸 이름('백업' · '불러오기')과 같은 말로 둔다(5차).
+    return widget.type == BackupDialogType.backup ? '데이터 백업' : '데이터 불러오기';
   }
 
   String get _description {
     if (widget.type == BackupDialogType.backup) {
-      return '현재 앱의 모든 데이터(클립, 자막 등)를 하나의 파일로 백업합니다.\n\n백업 파일은 외부 경로에 저장되며, 나중에 "복원하기"를 통해 다시 불러올 수 있습니다.';
-    } else {
-      return '백업 파일(.zip)을 선택하여 데이터를 복원합니다.\n\n⚠️ 체크: 복원 시 현재 앱의 기존 데이터는 모두 삭제되고 백업 시점의 데이터로 덮어씌워집니다.\n\n🔄 알림: 복원이 완료되면 앱이 종료되거나 재시작됩니다. 종료된 경우 다시 실행해 주세요.';
+      return '지금 앱에 있는 것(클립, 자막 등)을 파일 하나로 묶어 둬요.\n\n묶은 파일은 앱 밖에 저장돼서, 나중에 \'불러오기\'로 다시 넣을 수 있어요.';
     }
+    return '백업해 둔 파일(.zip)을 골라 그때 상태로 되돌려요.\n\n지금 앱에 있는 것은 모두 지워지고 백업 때의 것으로 바뀌어요.\n\n다 되면 앱이 다시 시작돼요. 꺼지면 다시 열어 주세요.';
   }
 
   String get _startLabel =>
-      widget.type == BackupDialogType.backup ? '백업 시작' : '복원 시작';
+      widget.type == BackupDialogType.backup ? '백업 시작' : '불러오기 시작';
 
   String get _headerLabel =>
-      widget.type == BackupDialogType.backup ? '데이터 백업 중...' : '데이터 복원 중...';
+      widget.type == BackupDialogType.backup ? '백업하는 중' : '불러오는 중';
 
   // ─────────────────────────────────────────────────────────────────
   // Actions
@@ -162,18 +188,17 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
           _currentState = BackupProgressState.done;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.e(
+        widget.type == BackupDialogType.backup ? '백업 실패' : '불러오기 실패',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
-        // "Exception: " 접두사 제거
-        String errorMsg = e.toString();
-        if (errorMsg.startsWith('Exception: ')) {
-          errorMsg = errorMsg.substring('Exception: '.length);
-        }
-
         setState(() {
           _step = 2;
           _isSuccess = false;
-          _errorMessage = errorMsg;
+          _errorMessage = backupFailureMessage(e, type: widget.type);
           _currentState = BackupProgressState.done;
         });
       }
@@ -239,9 +264,9 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
 
     // 복원 단계 정의
     final restoreSteps = [
-      (BackupProgressState.analyzing, '파일 분석', Icons.manage_search_rounded),
-      (BackupProgressState.extracting, '압축 해제', Icons.unarchive_rounded),
-      (BackupProgressState.restoring, '데이터 복원', Icons.restore_page_rounded),
+      (BackupProgressState.analyzing, '파일 확인', Icons.manage_search_rounded),
+      (BackupProgressState.extracting, '압축 풀기', Icons.unarchive_rounded),
+      (BackupProgressState.restoring, '데이터 넣기', Icons.restore_page_rounded),
     ];
 
     final steps = isBackup ? backupSteps : restoreSteps;
@@ -354,9 +379,11 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
     final icon = isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
 
     final successMessage = widget.type == BackupDialogType.backup
-        ? '백업이 완료되었습니다.'
-        : '복원이 완료되었습니다.';
-    final failureMessage = '작업 중 오류가 발생했습니다.';
+        ? '백업했어요.'
+        : '다 불러왔어요.';
+    final failureMessage = widget.type == BackupDialogType.backup
+        ? '백업하지 못했어요.'
+        : '불러오지 못했어요.';
 
     return Center(
       child: Column(

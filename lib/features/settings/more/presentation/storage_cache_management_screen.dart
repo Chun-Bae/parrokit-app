@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
@@ -53,10 +54,13 @@ class _StorageCacheManagementScreenState
         _isRefreshing = false;
       });
       await provider.refreshStorageUsage();
-    } catch (e) {
+    } catch (e, stack) {
+      // 내부 오류 글을 그대로 보여 주지 않는다(5차). 사람 말로 안내하고
+      // 자세한 것은 로그로 남긴다.
+      AppLogger.e('기기 보관 목록 불러오기 실패', error: e, stackTrace: stack);
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = '목록을 불러오지 못했어요. 아래로 당겨 다시 해 보세요.';
         _isLoading = false;
         _isRefreshing = false;
       });
