@@ -151,7 +151,9 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             // 앱바 'TTS 생성'과 콘텐츠 제작 첫 화면이 같은 말을 해서 큰 소개
             // 상자(TtsStudioHero)는 없앴다(4차). 스크립트 입력부터 보인다.
             TtsPanel(
-              title: '스크립트',
+              // 앱의 다른 곳은 '글·문장'이라 부른다. '스크립트'는 여기만
+              // 쓰던 말이다(5차).
+              title: '읽을 글',
               trailing: Text(
                 '${provider.text.length} / 240',
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -237,7 +239,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
-                            label: '톤 (-20 ~ 20)',
+                            label: '목소리 높낮이',
                             valueText: provider.pitch > 0
                                 ? '+${provider.pitch.toStringAsFixed(1)}'
                                 : provider.pitch.toStringAsFixed(1),
@@ -392,7 +394,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             ),
             const SizedBox(height: AppSpacing.lg),
             TtsPanel(
-              title: '생성 미리보기',
+              title: '미리 듣기',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

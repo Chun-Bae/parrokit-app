@@ -373,8 +373,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                 else
                   Text(
                     widget.provider.isGenerating
-                        ? '잠시만 기다려주세요.'
-                        : '스크립트를 입력하면 결과를 확인합니다.',
+                        ? '잠시만 기다려 주세요.'
+                        : '읽을 글을 적으면 여기서 들어 볼 수 있어요.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: mutedText,
                     ),
