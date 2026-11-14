@@ -27,6 +27,25 @@ import 'package:restart_app/restart_app.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart'
     show BackupProgress, BackupProgressState;
 
+/// 압축 안의 이름을 풀어 둘 자리로 바꾼다. [root] 밖으로 나가면 null.
+///
+/// 백업 zip은 사용자가 고른 파일이라 내용이 어떻든 올 수 있다. 전에는 이름을
+/// 그대로 이어 붙여서, 이름이 '../'로 시작하면 앱 폴더 밖에 파일을 쓸 수
+/// 있었다(5차).
+String? safeExtractPath(String root, String entryName) {
+  final normalizedName = entryName.replaceAll('\\', '/').trim();
+  if (normalizedName.isEmpty) return null;
+  // 절대 경로(/etc/… 또는 C:\…)는 받지 않는다.
+  if (p.isAbsolute(normalizedName) || normalizedName.startsWith('/')) {
+    return null;
+  }
+  final rootPath = p.normalize(p.absolute(root));
+  final candidate = p.normalize(p.join(rootPath, normalizedName));
+  if (candidate == rootPath) return null;
+  if (!p.isWithin(rootPath, candidate)) return null;
+  return candidate;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Isolate 압축용 파라미터
 // ─────────────────────────────────────────────────────────────────────────────
@@ -376,9 +395,11 @@ class BackupService {
       for (final file in archive) {
         await Future.delayed(const Duration(milliseconds: 1)); // UI 양보
 
-        // 경로 구분자 정규화 (백슬래시 → 슬래시)
-        final normalizedName = file.name.replaceAll('\\', '/');
-        final outPath = p.join(tmpDir.path, normalizedName);
+        // 압축 안 이름이 묶음 밖을 가리키면(../) 풀지 않는다(5차).
+        final outPath = safeExtractPath(tmpDir.path, file.name);
+        if (outPath == null) {
+          throw StateError('백업 파일 안에 이상한 경로가 있어요: ${file.name}');
+        }
 
         if (file.isFile) {
           await File(outPath).parent.create(recursive: true);
