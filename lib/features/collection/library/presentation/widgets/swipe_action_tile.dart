@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// 밀어서 여는 동작 한 칸의 너비(5차).
+///
+/// 문장·단어 목록이 쓰던 값이다. 클립 목록만 300을 써서 세 칸을 열면 줄을
+/// 거의 다 덮었고, 그 안에 삭제가 있었다. 칸 수에 이 값을 곱해 쓴다.
+const double swipeActionSlotWidth = 84;
+
 class SwipeActionTile extends StatefulWidget {
   const SwipeActionTile({
     super.key,

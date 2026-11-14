@@ -350,7 +350,7 @@ class _WordTile extends StatelessWidget {
     );
     return SwipeActionTile(
       key: swipeKey,
-      actionWidth: 84,
+      actionWidth: swipeActionSlotWidth,
       actions: [
         Expanded(
           child: Material(

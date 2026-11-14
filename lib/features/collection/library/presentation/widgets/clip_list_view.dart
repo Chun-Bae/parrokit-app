@@ -342,7 +342,10 @@ class ClipListView extends StatelessWidget {
                     )
                   : SwipeActionTile(
                       key: swipeKey,
-                      actionWidth: 300,
+                      // 칸 수 × 공통 너비(문장·단어 목록과 같은 치수). 300이면
+                      // 줄을 거의 다 덮어 어떤 클립을 다루는지 안 보였고,
+                      // 그 안에 삭제가 있었다(5차).
+                      actionWidth: swipeActionSlotWidth * 3,
                       actions: [
                         _buildSwipeAction(
                           color: context.tokens.info,

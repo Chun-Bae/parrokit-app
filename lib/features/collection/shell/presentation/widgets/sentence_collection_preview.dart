@@ -1281,7 +1281,7 @@ class _MySentenceTile extends StatelessWidget {
     ];
     return SwipeActionTile(
       key: _swipeKey,
-      actionWidth: 84.0 * actions.length,
+      actionWidth: swipeActionSlotWidth * actions.length,
       actions: actions,
       child: body,
     );
