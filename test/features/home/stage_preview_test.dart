@@ -594,4 +594,22 @@ void main() {
     // 말하기 설정은 왼쪽 줄로 옮겼다.
     expect(find.byTooltip('말하기 설정'), findsOneWidget);
   });
+
+  testWidgets('문장이 하나도 없으면 안내를 보여 주고 눌러서 추가할 수 있다', (tester) async {
+    // 기본으로 주던 예시 문장을 없앴으므로(5차) 처음 켠 사람이 보는 화면이다.
+    SharedPreferences.setMockInitialValues({});
+    for (final sentence in await MySentenceStore.load('guest')) {
+      await MySentenceStore.remove('guest', sentence.id);
+    }
+    await openPreview(tester);
+    expect(currentPhrase('여기를 눌러 따라 말할 문장을 추가해 보세요.'), findsOneWidget);
+
+    final bubble = tester.getRect(find.byKey(const ValueKey('phrase-bubble')));
+    await tester.tapAt(Offset(bubble.center.dx, bubble.top + 40));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    // 문장 정보 시트가 아니라 문장 추가 화면이 열린다.
+    expect(find.byKey(const ValueKey('sentence-language')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

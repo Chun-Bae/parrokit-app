@@ -261,8 +261,10 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   List<String> get phrases => [
         ...routineDefaults.map((sentence) => sentence.text),
         ...customPhrases,
+        // 기본으로 주던 예시 문장을 없앤 뒤로는(5차) 처음 켠 사람이 바로 이
+        // 상태를 본다. 무엇을 해야 하는지와 누르면 된다는 것을 함께 말한다.
         if (routineDefaults.isEmpty && customPhrases.isEmpty)
-          '루틴에 문장을 추가해 주세요.',
+          '여기를 눌러 따라 말할 문장을 추가해 보세요.',
       ];
   String get phrase => phrases[phraseIndex % phrases.length];
 
@@ -744,7 +746,12 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   }
 
   /// 말풍선을 누르면 보관함과 같은 문장 정보 시트를 연다.
+  /// 말할 문장이 없으면 안내를 누른 것이므로 문장 추가로 간다(5차).
   Future<void> openPhraseDetails() async {
+    if (!hasSpeakablePhrase) {
+      await addPhrase();
+      return;
+    }
     final sentence = sentenceForPhrase(phrase);
     if (sentence == null) return;
     await showSentenceDetails(
