@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
+import 'package:parrokit/core/shared/theme/app_theme.dart';
 import 'package:parrokit/features/home/dashboard/presentation/learning_hub_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,5 +39,22 @@ void main() {
     // 같은 탭을 다시 요청해도 다시 알린다(그 사이 사용자가 탭을 바꿨을 수 있다).
     CollectionShellScreen.openTab(1);
     expect(heard.where((t) => t == 1), hasLength(2));
+  });
+
+  testWidgets('영상 찾기 줄은 앱이 쓰는 말(클립)로 부른다', (tester) async {
+    tester.view.physicalSize = const Size(440, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: const LearningHubScreen(),
+    ));
+    await tester.pump();
+
+    // '동영상'은 앱 다른 곳에서 안 쓰는 말이고, '영상과 학습 클립'은 같은
+    // 것을 두 이름으로 부른 것이었다(5차).
+    expect(find.textContaining('동영상'), findsNothing);
+    expect(find.text('클립으로 보기'), findsOneWidget);
+    expect(find.text('쇼츠로 발견하기'), findsOneWidget);
   });
 }

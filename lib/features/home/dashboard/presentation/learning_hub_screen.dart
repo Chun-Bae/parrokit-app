@@ -192,8 +192,10 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
           const SizedBox(height: 14),
           destination(Icons.swipe_up_rounded, '쇼츠로 발견하기',
               '짧은 영상을 넘기며 마음에 드는 표현 찾기', AppRoutes.explorePath),
-          destination(Icons.video_library_outlined, '동영상별로 보기',
-              '보관함에서 영상과 학습 클립 찾아보기', AppRoutes.collectionPath),
+          // '동영상'은 앱 다른 곳에서 쓰지 않는 말이고, '영상과 학습 클립'은
+          // 같은 것을 두 이름으로 부른 것이었다(5차).
+          destination(Icons.video_library_outlined, '클립으로 보기',
+              '보관함에 모아 둔 클립에서 고르기', AppRoutes.collectionPath),
           // 눌러도 아무 일 없던 '함께 나눈 영상 보기(준비 중)' 줄은 지웠다(4차).
         ],
       ),

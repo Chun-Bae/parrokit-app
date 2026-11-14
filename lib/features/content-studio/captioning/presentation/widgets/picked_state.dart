@@ -662,9 +662,9 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
       builder: (context) {
         final cs = Theme.of(context).colorScheme;
         return AlertDialog(
-          title: const Text('동영상 지우기',
+          title: const Text('영상 지우기',
               style: TextStyle(fontWeight: FontWeight.w700)),
-          content: const Text('현재 선택된 동영상을 정말 지우시겠습니까?'),
+          content: const Text('지금 고른 영상을 지울까요?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -744,7 +744,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
               const SizedBox(width: 8),
               _TabButton(
                 icon: Icons.settings_rounded,
-                label: '동영상 설정',
+                label: '영상 설정',
                 isActive: _isExpanded[2],
                 onTap: () => setState(() => _isExpanded[2] = !_isExpanded[2]),
               ),
@@ -801,7 +801,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                           children: [
                             SizedBox(
                               width: 70,
-                              child: Text('동영상 길이',
+                              child: Text('영상 길이',
                                   style: context.texts.bodySmall
                                       .copyWith(color: cs.onSurfaceVariant)),
                             ),
@@ -843,7 +843,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                   ),
                 ],
                 if (_isExpanded[2]) ...[
-                  // 3. 동영상 설정
+                  // 3. 영상 설정
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -885,7 +885,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                                   widget.controller?.pause();
                                   showVideoPickerSheet(
                                     context: context,
-                                    title: '동영상 다시 선택',
+                                    title: '영상 다시 고르기',
                                     onPickFile: widget.onReplace,
                                     onPickPhotos: widget.onPickFromPhotos,
                                   );

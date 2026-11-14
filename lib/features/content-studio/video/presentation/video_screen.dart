@@ -957,7 +957,7 @@ class _VideoWarningBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '동영상 생성 전 확인',
+                  '영상 만들기 전 확인',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
@@ -976,7 +976,7 @@ class _VideoWarningBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '의도와 다르게 생성된 동영상에 대한 책임은 사용자에게 있습니다.',
+                  '의도와 다르게 만들어진 영상에 대한 책임은 사용자에게 있습니다.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: context.tokens.textSecondary,
                     fontWeight: FontWeight.w600,
