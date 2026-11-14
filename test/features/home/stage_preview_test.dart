@@ -92,6 +92,15 @@ void main() {
           language: '영어', text: text, translation: translation);
     }
   });
+  testWidgets('왼쪽 버튼에도 이름이 보인다', (tester) async {
+    // 아래 조작 줄은 글자가 있는데 왼쪽 버튼만 아이콘뿐이라, 눌러 보기 전에는
+    // 무엇인지 알 수 없었다(5차).
+    await openPreview(tester);
+    for (final name in ['소리', '문장 추가', '문장 설정', '말하기 설정']) {
+      expect(find.text(name), findsWidgets, reason: name);
+    }
+  });
+
   testWidgets('자동 반복은 XP를 주거나 응답 UI를 띄우지 않는다', (tester) async {
     await openPreview(tester);
     expect(currentPhrase('Hello there!'), findsOneWidget);
@@ -285,7 +294,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('add-phrase')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('문장 추가'), findsOneWidget);
+    // 왼쪽 버튼에도 '문장 추가' 글자가 생겨(5차) 화면에 둘이 보인다.
+    // 창이 열렸는지는 아래 칸들로 확인한다.
+    expect(find.text('문장 추가'), findsWidgets);
     expect(find.byKey(const ValueKey('sentence-language')), findsOneWidget);
     expect(find.text('발음 (선택)'), findsOneWidget);
     // 뜻이 없으면 저장할 수 없다.

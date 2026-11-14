@@ -942,31 +942,35 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                             })))),
             Positioned(
                 left: 8,
-                top: 30,
+                top: 16,
                 child: Column(children: [
                   _GameMenuButton(
                       label: soundOn ? '소리 끄기' : '소리 켜기',
+                      shortLabel: '소리',
                       icon: soundOn
                           ? Icons.volume_up_rounded
                           : Icons.volume_off_rounded,
                       selected: soundOn,
                       onTap: () => setSound(!soundOn)),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   _GameMenuButton(
                       key: const ValueKey('add-phrase'),
                       label: '문장 추가',
+                      shortLabel: '문장 추가',
                       icon: Icons.add_comment_rounded,
                       onTap: addPhrase),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   _GameMenuButton(
                       key: const ValueKey('phrase-settings'),
                       label: '문장 설정',
+                      shortLabel: '문장 설정',
                       icon: Icons.tune_rounded,
                       badge: !phraseSettingsSeen,
                       onTap: showPhraseSettings),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   _GameMenuButton(
                       label: '말하기 설정',
+                      shortLabel: '말하기 설정',
                       icon: Icons.settings_rounded,
                       onTap: showSpeakingSettings),
                 ])),
@@ -1595,11 +1599,11 @@ class _HomeHelpDialog extends StatelessWidget {
         (
           Icons.volume_up_rounded,
           '소리',
-          '앵무새 목소리를 켜고 끕니다. 듣기와 함께 켜져 있어야 문장을 읽어줘요.'
+          '앵무새 목소리를 켜고 꺼요. 듣기와 함께 켜져 있어야 문장을 읽어 줘요.'
         ),
-        (Icons.add_comment_rounded, '문장 추가', '내가 연습할 문장을 직접 추가합니다.'),
-        (Icons.tune_rounded, '문장 설정', '앵무새가 말할 문장을 고릅니다. 체크하면 바로 반영돼요.'),
-        (Icons.settings_rounded, '말하기 설정', '말하기 간격과 듣기 횟수 기록 여부를 정합니다.'),
+        (Icons.add_comment_rounded, '문장 추가', '내가 연습할 문장을 직접 넣어요.'),
+        (Icons.tune_rounded, '문장 설정', '앵무새가 말할 문장을 골라요. 체크하면 바로 반영돼요.'),
+        (Icons.settings_rounded, '말하기 설정', '말하기 간격과 듣기 횟수를 기록할지 정해요.'),
       ]
     ),
     (
@@ -1608,13 +1612,13 @@ class _HomeHelpDialog extends StatelessWidget {
         (
           Icons.record_voice_over_rounded,
           '따라 말하기',
-          '앵무새가 말한 문장을 마이크로 따라 말하고 점수를 받습니다.'
+          '앵무새가 말한 문장을 마이크로 따라 말하고 점수를 받아요.'
         ),
-        (Icons.headphones_rounded, '듣기', '켜면 앵무새가 문장을 소리 내어 읽어줍니다.'),
-        (Icons.skip_next_rounded, '이전 · 다음', '앞뒤 문장으로 넘어갑니다.'),
-        (Icons.pause_rounded, '멈춤 · 재생', '앵무새 말하기를 잠시 멈추거나 다시 시작합니다.'),
-        (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 랜덤 순서로 바꿉니다.'),
-        (Icons.queue_music_rounded, '목록', '문장 목록에서 바로 고릅니다.'),
+        (Icons.headphones_rounded, '듣기', '켜면 앵무새가 문장을 소리 내어 읽어 줘요.'),
+        (Icons.skip_next_rounded, '이전 · 다음', '앞뒤 문장으로 넘어가요.'),
+        (Icons.pause_rounded, '멈춤 · 재생', '앵무새 말하기를 잠시 멈추거나 다시 시작해요.'),
+        (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 아무 순서로 바꿔요.'),
+        (Icons.queue_music_rounded, '목록', '문장 목록에서 바로 골라요.'),
       ]
     ),
   ];
@@ -1671,20 +1675,50 @@ class _GameMenuButton extends StatelessWidget {
   const _GameMenuButton(
       {super.key,
       required this.label,
+      this.shortLabel,
       required this.icon,
       this.selected = false,
       this.badge = false,
       required this.onTap});
   final String label;
+
+  /// 아이콘 아래에 적을 짧은 이름. 아래 조작 줄처럼 글자를 함께 보여 준다(5차).
+  /// 전에는 아이콘만 있어서 눌러 보기 전에는 무엇인지 알 수 없었다.
+  final String? shortLabel;
   final IconData icon;
   final bool selected;
   final bool badge;
-  // 아래 아이콘 줄(40pt)이 사라져 크기는 44pt 하나만 남았다.
-  static const double dimension = 44;
+  // 아래 아이콘 줄(40pt)이 사라져 크기는 44pt 하나만 남았다. 이름을 아래
+  // 붙이면서 네 칸이 조작 줄에 가려, 40pt로 줄였다(5차).
+  static const double dimension = 40;
   final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     final palette = HomeTokens.of(context);
+    final button = _buildButton(context, palette);
+    final name = shortLabel;
+    if (name == null) return button;
+    return SizedBox(
+      width: 62,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        button,
+        const SizedBox(height: 2),
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: context.texts.labelSmall.copyWith(
+            fontSize: 10,
+            color: selected ? palette.primary : palette.muted,
+            height: 1.1,
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildButton(BuildContext context, HomeTokens palette) {
     return SizedBox.square(
       dimension: dimension,
       child: Semantics(
