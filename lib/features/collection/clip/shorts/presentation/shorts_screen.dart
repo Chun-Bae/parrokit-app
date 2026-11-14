@@ -34,6 +34,7 @@ import 'widgets/progress_bar.dart';
 import 'widgets/action_rail.dart';
 import 'widgets/shorts_badge.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
+import 'package:parrokit/features/collection/clip/shorts/presentation/shorts_progress.dart';
 
 /// [역할]
 /// 쇼츠(Shorts) 기능을 제공하는 메인 화면.
@@ -228,11 +229,16 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                   bottom: false,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    child: ProgressBar(
-                      // 항상 10개를 기준으로 보여줌 (20개가 있어도 UI는 10개 사이클)
-                      index: current % ShortsProvider.pageSize,
-                      total: ShortsProvider.pageSize,
-                    ),
+                    child: Builder(builder: (_) {
+                      // 클립이 묶음(10개)보다 적으면 그만큼만 그린다. 전에는
+                      // 늘 10칸이라 두 개뿐이어도 여덟 개가 남은 듯 보였다(5차).
+                      final bar = shortsProgress(
+                        currentIndex: current,
+                        clipCount: shorts.shorts.length,
+                        pageSize: ShortsProvider.pageSize,
+                      );
+                      return ProgressBar(index: bar.index, total: bar.total);
+                    }),
                   ),
                 ),
               ),
