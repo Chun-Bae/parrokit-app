@@ -29,6 +29,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/features/collection/shared/drive_full_notice.dart';
+import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
 
 /// [역할]
 /// 라이브러리의 '폴더' 탭 UI 섹션.
@@ -305,26 +306,26 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final otherUsed = math.max(used - parrokitUsed, 0);
     final remaining = hasQuota ? math.max(quota - used, 0) : 0;
     final segments = hasQuota
-        ? <_StorageSegment>[
-            _StorageSegment(
+        ? <StorageSegment>[
+            StorageSegment(
               value: otherUsed,
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
             ),
-            _StorageSegment(
+            StorageSegment(
               value: parrokitUsed,
               color: Theme.of(context).colorScheme.primary,
             ),
-            _StorageSegment(
+            StorageSegment(
               value: remaining,
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
           ]
-        : <_StorageSegment>[
-            _StorageSegment(
+        : <StorageSegment>[
+            StorageSegment(
               value: otherUsed,
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
             ),
-            _StorageSegment(
+            StorageSegment(
               value: parrokitUsed,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -410,7 +411,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
               ],
             ),
             const SizedBox(height: 10),
-            _buildSegmentedBar(context, segments: segments),
+            StorageSegmentBar(segments: segments),
             const SizedBox(height: 8),
             Text(
               hasQuota
@@ -445,40 +446,6 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             DriveFullNotice(hasQuota: hasQuota, remaining: remaining),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSegmentedBar(
-    BuildContext context, {
-    required List<_StorageSegment> segments,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    final visibleSegments =
-        segments.where((segment) => segment.value > 0).toList();
-    final effectiveSegments = visibleSegments.isEmpty
-        ? [
-            _StorageSegment(
-              value: 1,
-              color: cs.surfaceContainerHigh,
-            ),
-          ]
-        : visibleSegments;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      child: SizedBox(
-        height: 10,
-        child: Row(
-          children: effectiveSegments
-              .map(
-                (segment) => Expanded(
-                  flex: math.max(segment.value, 1),
-                  child: Container(color: segment.color),
-                ),
-              )
-              .toList(),
         ),
       ),
     );
@@ -1133,12 +1100,4 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
   }
 }
 
-class _StorageSegment {
-  const _StorageSegment({
-    required this.value,
-    required this.color,
-  });
 
-  final int value;
-  final Color color;
-}

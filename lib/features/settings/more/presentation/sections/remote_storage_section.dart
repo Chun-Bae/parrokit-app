@@ -15,6 +15,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/drive_full_notice.dart';
+import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
 
 /// 로컬·서버·Google Drive 저장 용량과 Drive 연동 버튼. 더보기 데이터 카드의
 /// "저장 용량 · Google Drive" 줄을 누르면 시트로 열린다.
@@ -107,40 +108,6 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     );
   }
 
-  Widget _buildSegmentedBar(
-    BuildContext context, {
-    required List<_StorageSegment> segments,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    final visibleSegments =
-        segments.where((segment) => segment.value > 0).toList();
-    final effectiveSegments = visibleSegments.isEmpty
-        ? [
-            _StorageSegment(
-              value: 1,
-              color: cs.surfaceContainerHigh,
-            ),
-          ]
-        : visibleSegments;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      child: SizedBox(
-        height: 10,
-        child: Row(
-          children: effectiveSegments
-              .map(
-                (segment) => Expanded(
-                  flex: math.max(segment.value, 1),
-                  child: Container(color: segment.color),
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDriveUsageCard(BuildContext context) {
     final clipProvider = context.watch<ClipProvider>();
     final driveUsed = clipProvider.googleDriveUsedBytes;
@@ -153,26 +120,26 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     final remaining = hasQuota ? math.max(cloudQuota - driveUsed, 0) : 0;
 
     final segments = hasQuota
-        ? <_StorageSegment>[
-            _StorageSegment(
+        ? <StorageSegment>[
+            StorageSegment(
               value: otherUsed,
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
             ),
-            _StorageSegment(
+            StorageSegment(
               value: parrokitUsed,
               color: Theme.of(context).colorScheme.primary,
             ),
-            _StorageSegment(
+            StorageSegment(
               value: remaining,
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
           ]
-        : <_StorageSegment>[
-            _StorageSegment(
+        : <StorageSegment>[
+            StorageSegment(
               value: otherUsed,
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
             ),
-            _StorageSegment(
+            StorageSegment(
               value: parrokitUsed,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -261,7 +228,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
             ],
           ),
           const SizedBox(height: 10),
-          _buildSegmentedBar(context, segments: segments),
+          StorageSegmentBar(segments: segments),
           const SizedBox(height: 8),
           Text(
             hasQuota
@@ -362,12 +329,4 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
   }
 }
 
-class _StorageSegment {
-  const _StorageSegment({
-    required this.value,
-    required this.color,
-  });
 
-  final int value;
-  final Color color;
-}
