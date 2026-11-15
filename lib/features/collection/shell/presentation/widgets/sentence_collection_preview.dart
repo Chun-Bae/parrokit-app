@@ -19,6 +19,7 @@ import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/content/speaking_xp.dart';
+import 'package:parrokit/core/content/practice_calendar.dart';
 import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/speech/presentation/speech_practice_view.dart';
 import 'package:parrokit/core/speech/phrase_recognizer.dart';
@@ -1629,6 +1630,9 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       score: score,
     );
     final total = await addSpeakingXp(widget.accountId, score);
+    // 홈 '학습 캘린더'에도 쌓는다. 전에는 홈 무대에서 한 것만 쌓여,
+    // 바로 위 '내 문장 기록'과 어긋나 보였다(5차).
+    await PracticeCalendar.recordOne(widget.accountId);
     if (!mounted) return;
     final scoreText = score == null ? '' : '${(score * 100).round()}점 · ';
     messenger.showSnackBar(SnackBar(

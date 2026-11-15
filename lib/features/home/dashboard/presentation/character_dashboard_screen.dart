@@ -10,6 +10,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parrokit/core/content/practice_calendar.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
@@ -136,30 +137,17 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
 
   Future<void> recordCompletedSentence() async {
     final accountId = loadedAccountId ?? 'guest';
-    final key = dateKey(DateTime.now());
-    final nextHistory = Map<String, int>.from(practiceCounts);
-    final nextGoals = Map<String, int>.from(practiceGoals);
-    nextHistory[key] = (nextHistory[key] ?? 0) + 1;
-    nextGoals.putIfAbsent(key, () => dailyGoal);
-    final nextTotal = totalPracticed + 1;
-
+    // 적는 곳은 공용이다. 보관함 문장 창에서 따라 말해도 같은 자리에
+    // 쌓인다(5차).
+    final data = await PracticeCalendar.recordOne(accountId);
+    if (!mounted) return;
     setState(() {
-      practiceCounts = nextHistory;
-      practiceGoals = nextGoals;
-      totalPracticed = nextTotal;
+      practiceCounts = data.counts;
+      practiceGoals = data.goals;
+      totalPracticed = data.total;
     });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await Future.wait([
-        prefs.setString(historyKey(accountId), jsonEncode(nextHistory)),
-        prefs.setString(goalsKey(accountId), jsonEncode(nextGoals)),
-        prefs.setInt(totalKey(accountId), nextTotal),
-      ]);
-    } catch (_) {
-      // 현재 실행 중 기록은 유지하고 다음 성공 때 다시 저장을 시도한다.
-    }
   }
+
 
   Future<void> editDailyGoal() async {
     final next = await showDialog<int>(
