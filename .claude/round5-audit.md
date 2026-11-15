@@ -325,10 +325,21 @@
   npx -y firebase-tools@latest deploy --only functions:checkStorageQuota,functions:onUserFileUploaded,functions:onUserFileDeleted --project parrokit-45126
   ```
 
+- **함수 onVoteEndNotification (투표 알림 글귀, 308bd0c0)** — 배포 전에는 '투표가 종료되었어요.' 그대로다(동작은 멀쩡).
+  ```
+  npx -y firebase-tools@latest deploy --only functions:onVoteEndNotification --project parrokit-45126
+  ```
+
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
   ```
+
+### 2026-11-16 01:50 테스트 배포 (사용자 요청 "올려줘", 내가 로컬에서 돌림)
+- **1.0.6 (114)를 App Distribution `testers`에 올렸다.** `uploaded new release`로 새 항목
+- 담긴 것: 자막 내보내기 한글 깨짐 고침, 앱을 내리면 알아서 소리가 이어짐('소리만 듣기' 버튼 없앰), 화면의 TTS를 '음성 만들기'로, 문장 설정 숫자 설명
+- 콘솔: https://console.firebase.google.com/project/parrokit-45126/appdistribution/app/ios:com.bull.parrokit/releases/47p45vjbcaa8g
+- 기기에서 볼 것: 자막 한글이 제대로 구워지는지, 앱을 내렸을 때 소리가 이어지는지
 
 ### 2026-11-15 23:05 테스트 배포 (사용자 요청, 내가 로컬에서 돌림)
 - **1.0.6 (113)을 App Distribution `testers`에 올렸다.** `uploaded new release`로 새 항목
@@ -2201,4 +2212,10 @@
 - 고친 것(이번 커밋): **문장 설정 창의 '50 / 50'**이 무엇의 수인지 없었다 → 전부면 '50개 모두 켜짐', 일부면 '켠 문장 3 / 5'. 홈의 '앵무새 62/63'과 같은 결
 - 알아낸 것: 홈 왼쪽 세로 버튼(소리·문장 추가·문장 설정·말하기 설정)은 **길게 누르면 안 열린다. 짧은 탭이어야 한다.** 네이티브 탭 바와 반대다
 - analyze 깨끗, 889개 통과. 라이트·다크 확인, 테마 라이트로 되돌림
+
+## 반복 254 (2026-11-16 01:40~)
+- 아카이브가 도는 동안 `lib/`를 건드리면 빌드에 섞이므로 서버 쪽 안건을 처리했다
+- **투표 알림도 앱과 같이 '마감'이라 부른다**(308bd0c0). 앱은 거르개 '마감'·카드 'N일 뒤 마감'인데 알림만 '투표가 종료되었어요.'였다. 본문도 어느 투표인지 따옴표로 묶고 30자까지만(댓글 알림과 같은 규칙). 글귀를 communityNotificationText로 옮겼다. 테스트 8개(+2)
+- **1.0.6 (114) 테스트 배포**(위 기록). 서명 설정은 되돌렸다
+- 배포 필요: `functions:onVoteEndNotification`
 
