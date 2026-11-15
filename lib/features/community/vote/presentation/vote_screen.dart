@@ -12,6 +12,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/vote/presentation/vote_confirm_text.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/post_list_paging.dart';
 
@@ -737,9 +738,10 @@ class VoteCard extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: Text('투표 확인', style: context.texts.titleLarge),
-                  content: Text(
-                      '\'${options[i].text}\' 항목에 투표하시겠습니까?\n한 번 투표하면 수정할 수 없습니다.'),
+                  // 다른 확인 창처럼 제목은 하는 일, 본문은 앱 말투로(5차).
+                  // 예전: '투표 확인' / '…투표하시겠습니까? 수정할 수 없습니다.'
+                  title: Text(voteConfirmTitle, style: context.texts.titleLarge),
+                  content: Text(voteConfirmMessage(options[i].text)),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg)),
                   actions: [
