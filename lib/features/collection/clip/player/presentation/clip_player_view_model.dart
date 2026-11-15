@@ -330,15 +330,33 @@ class ClipPlayerViewModel extends ChangeNotifier
   // ─────────────────────────────────────────────────────────────────
 
   /// 앱 생명주기 변화 처리.
+  /// 앱을 내렸을 때 보던 영상이 틀어져 있었는지. 돌아오면 그대로 이어 준다.
+  bool _wasPlayingBeforeBackground = false;
+
+  /// 앱을 내리면 소리를 이어서 틀고, 돌아오면 영상으로 되돌린다(5차, 사용자 요청).
+  ///
+  /// 전에는 '소리만 듣기' 버튼을 눌러 둔 사람만 소리가 이어졌다. 누르지 않았으면
+  /// 앱을 내리는 순간 멈췄다. 유튜브처럼 알아서 이어지게 한다.
   Future<void> handleAppLifecycleChange(AppLifecycleState state) async {
     if (!_isInitialized || _clip == null || _segments.isEmpty) return;
-    if (_isBackground) return;
 
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      if (_controller?.value.isInitialized == true &&
-          _controller!.value.isPlaying) {
-        await _controller!.pause();
+    if (state == AppLifecycleState.paused) {
+      if (_isBackground) return;
+      final playing = _controller?.value.isInitialized == true &&
+          _controller!.value.isPlaying;
+      _wasPlayingBeforeBackground = playing;
+      if (!playing) return;
+      // 영상은 멈추고 소리만 이어 간다. enterAudioOnlyMode가 지금 위치부터 튼다.
+      await enterAudioOnlyMode(autoPlay: true);
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      if (!_isBackground || !_wasPlayingBeforeBackground) return;
+      _wasPlayingBeforeBackground = false;
+      await exitAudioOnlyMode();
+      if (_controller?.value.isInitialized == true) {
+        await _controller!.play();
       }
     }
   }

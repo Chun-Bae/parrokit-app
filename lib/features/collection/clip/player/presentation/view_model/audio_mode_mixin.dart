@@ -51,7 +51,10 @@ mixin AudioModeMixin on ChangeNotifier {
   }
 
   /// 오디오 전용 모드 진입.
-  Future<void> enterAudioOnlyMode() async {
+  ///
+  /// [autoPlay]면 바로 이어서 튼다. 앱을 내렸을 때 끊기지 않게 하려는 것이라
+  /// 사용자가 다시 재생을 누를 일이 없어야 한다(5차, 사용자 요청).
+  Future<void> enterAudioOnlyMode({bool autoPlay = false}) async {
     if (isBackground ||
         controller?.value.isInitialized != true ||
         clip == null) {
@@ -89,7 +92,12 @@ mixin AudioModeMixin on ChangeNotifier {
         artUri: artUri,
       );
       await h.seek(pos);
-      await h.pause();
+      if (autoPlay) {
+        await h.play();
+        mutableBgPlaying = true;
+      } else {
+        await h.pause();
+      }
 
       notifyListeners();
     } catch (_) {
