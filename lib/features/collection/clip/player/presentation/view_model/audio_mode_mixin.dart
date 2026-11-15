@@ -12,6 +12,7 @@ import 'package:video_player/video_player.dart';
 import 'package:parrokit/core/shared/utils/audio_bg.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
+import 'package:parrokit/features/collection/clip/player/domain/resume_target.dart';
 
 /// 오디오 전용 모드 믹스인.
 ///
@@ -127,14 +128,13 @@ mixin AudioModeMixin on ChangeNotifier {
       mutableBgPlaying = false;
 
       if (controller?.value.isInitialized == true) {
-        var target = bgPos;
-        if (scope == PlayScope.segment) {
-          final st = Duration(milliseconds: currentSegment.startMs);
-          final en = Duration(milliseconds: currentSegment.endMs);
-          if (target < st || target >= en) {
-            target = st;
-          }
-        }
+        final target = resumeTargetAfterBackground(
+          position: bgPos,
+          segmentScope: scope == PlayScope.segment,
+          segmentStart: Duration(milliseconds: currentSegment.startMs),
+          segmentEnd: Duration(milliseconds: currentSegment.endMs),
+          duration: controller!.value.duration,
+        );
         await controller!.seekTo(target);
         await controller!.setPlaybackSpeed(playbackRate);
       }
