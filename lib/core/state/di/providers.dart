@@ -17,6 +17,7 @@ import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/state/provider/theme_provider.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/providers/ad_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
@@ -104,12 +105,22 @@ List<SingleChildWidget> buildProviders({
         return provider;
       },
     ),
-    // 구독 단계는 서버가 정한다. 로그인한 사람이 바뀌면 그 문서를 지켜본다.
-    ChangeNotifierProxyProvider<UserProvider, SubscriptionProvider>(
-      create: (_) => SubscriptionProvider(),
-      update: (_, userProvider, subscriptionProvider) {
+    // 구독 단계는 서버가 정한다. 로그인한 사람이 바뀌면 그 문서를 지켜보고,
+    // 서버가 아직 안 적었으면 RevenueCat이 들고 있는 entitlement를 쓴다.
+    // 광고를 보여 줄지도 여기서 한 번에 정한다(구독자이거나 광고 제거를 산 사람).
+    ChangeNotifierProxyProvider2<UserProvider, IapProvider,
+        SubscriptionProvider>(
+      create: (_) {
+        final provider = SubscriptionProvider();
+        provider.addListener(
+            () => syncAdsPremium(adProvider, iapProvider, provider));
+        return provider;
+      },
+      update: (_, userProvider, iap, subscriptionProvider) {
         final provider = subscriptionProvider ?? SubscriptionProvider();
         provider.syncUser(userProvider.currentUser?.id);
+        provider.applyEntitlements(iap.activeEntitlements);
+        syncAdsPremium(adProvider, iap, provider);
         return provider;
       },
     ),
@@ -154,4 +165,11 @@ CommunityNotificationProvider _createCommunityNotificationProvider() {
       firebaseUserService: FirebaseUserService(),
     ),
   );
+}
+
+/// 광고를 끌지 정한다. 구독 중이거나 예전에 광고 제거를 산 사람은 안 본다.
+void syncAdsPremium(
+    AdProvider adProvider, IapProvider iapProvider, SubscriptionProvider sub) {
+  adProvider.premium =
+      !showsAds(tier: sub.tier, adsRemoved: iapProvider.isPremium);
 }

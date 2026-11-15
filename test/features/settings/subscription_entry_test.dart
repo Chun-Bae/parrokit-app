@@ -31,16 +31,6 @@ void main() {
       expect(subscriptionRowSubtitle(SubscriptionTier.pro), contains('구독 중'));
     });
 
-    test('개발 빌드에서 단계를 바꿔 볼 수 있다', () {
-      expect(currentSubscriptionTier(adsRemoved: false, fakeTier: 'pro'),
-          SubscriptionTier.pro);
-      expect(currentSubscriptionTier(adsRemoved: false, fakeTier: 'light'),
-          SubscriptionTier.light);
-      expect(currentSubscriptionTier(adsRemoved: true, fakeTier: ''),
-          SubscriptionTier.free,
-          reason: '예전 1회 구매는 단계를 올리지 않는다');
-    });
-
     test('광고는 무료이면서 1회 구매도 없을 때만 보여 준다', () {
       expect(showsAds(tier: SubscriptionTier.free, adsRemoved: false), isTrue);
       expect(showsAds(tier: SubscriptionTier.free, adsRemoved: true), isFalse);

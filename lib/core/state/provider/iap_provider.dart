@@ -24,6 +24,10 @@ class IapProvider extends ChangeNotifier {
   bool loading = true;
   bool available = true;
 
+  /// 지금 켜져 있는 entitlement 이름들. 구독 단계를 서버가 아직 안 적었을 때
+  /// 이 값으로 단계를 본다(5차).
+  Set<String> activeEntitlements = const {};
+
   Future<void> init() async {
     loading = true;
     notifyListeners();
@@ -42,9 +46,14 @@ class IapProvider extends ChangeNotifier {
   }
 
   void _applyCustomerInfo(CustomerInfo info) {
-    final active = info.entitlements.active.containsKey(entitlementId);
-    if (isPremium == active) return;
+    final entitlements = info.entitlements.active.keys.toSet();
+    final active = entitlements.contains(entitlementId);
+    final sameEntitlements =
+        entitlements.length == activeEntitlements.length &&
+            entitlements.containsAll(activeEntitlements);
+    if (isPremium == active && sameEntitlements) return;
     isPremium = active;
+    activeEntitlements = entitlements;
     AppLogger.i('[IAP] isPremium updated: $isPremium');
     notifyListeners();
   }

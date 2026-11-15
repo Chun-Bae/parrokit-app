@@ -55,13 +55,3 @@ AdProvider createAdProvider({required IapProvider iapProvider}) {
     initialPremium: iapProvider.isPremium,
   );
 }
-
-// IAP premium 변경을 광고 provider에 동기화한다.
-void bindPremiumSync({
-  required IapProvider iapProvider,
-  required AdProvider adProvider,
-}) {
-  iapProvider.addListener(() {
-    adProvider.premium = iapProvider.isPremium;
-  });
-}

@@ -52,7 +52,6 @@ Future<void> bootstrap() async {
 
   final iapProvider = await createIapProvider();
   final adProvider = createAdProvider(iapProvider: iapProvider);
-  bindPremiumSync(iapProvider: iapProvider, adProvider: adProvider);
 
   runApp(
     MultiProvider(
