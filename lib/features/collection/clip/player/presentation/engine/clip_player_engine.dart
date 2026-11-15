@@ -31,8 +31,11 @@ abstract class ClipPlayerEngine implements Listenable {
   /// 영상 크기. 모르면 Size.zero.
   Size get size;
 
+  /// 지금 열어 둔 클립의 이름. 잠금화면·'듣는 중' 줄에 쓴다.
+  String get title;
+
   /// 파일을 읽는다. 끝나면 [isReady]가 참이 된다.
-  Future<void> open(String absolutePath, {double speed = 1.0});
+  Future<void> open(String absolutePath, {double speed = 1.0, String title = ''});
 
   Future<void> play();
 
@@ -84,7 +87,13 @@ class VideoPlayerEngine extends ChangeNotifier implements ClipPlayerEngine {
   Size get size => _controller?.value.size ?? Size.zero;
 
   @override
-  Future<void> open(String absolutePath, {double speed = 1.0}) async {
+  String get title => _title;
+  String _title = '';
+
+  @override
+  Future<void> open(String absolutePath,
+      {double speed = 1.0, String title = ''}) async {
+    _title = title;
     await close();
     final controller = VideoPlayerController.file(File(absolutePath));
     _controller = controller;

@@ -26,7 +26,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/player/native_player.dart';
-import 'package:parrokit/features/collection/clip/player/presentation/engine/native_clip_player_engine.dart';
+import 'package:parrokit/core/state/provider/clip_playback_holder.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
@@ -57,6 +57,13 @@ class ClipPlayerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useNative = AppConfig.nativePlayer && nativePlayerSupported;
+    final borrowed = useNative
+        ? context.read<ClipPlaybackHolder>().engineFor(
+              clipId: clipId,
+              title: '',
+            )
+        : null;
     return ChangeNotifierProvider(
       create: (ctx) => ClipPlayerViewModel(
         clipId: clipId,
@@ -64,10 +71,10 @@ class ClipPlayerScreen extends StatelessWidget {
         // 나가면 소리를 여기로 넘기고, 다시 들어오면 돌려받는다(5차).
         background: ctx.read<BackgroundPlaybackProvider>(),
         initialIndex: initialIndex,
-        // 새 플레이어를 켰으면 그것으로 돈다(5차 4단계, 더보기 > 개발).
-        engine: AppConfig.nativePlayer && nativePlayerSupported
-            ? NativeClipPlayerEngine()
-            : null,
+        // 새 플레이어를 켰으면 앱이 들고 있는 그것으로 돈다. 화면을 나가도
+        // 계속 돌고, 다시 들어오면 그 자리에서 이어 본다(5차 4단계).
+        engine: borrowed?.engine,
+        engineAlreadyLoaded: borrowed?.loaded ?? false,
       ),
       child: _ClipPlayerView(clipId: clipId),
     );

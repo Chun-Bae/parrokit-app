@@ -47,9 +47,15 @@ class NativeClipPlayerEngine extends ChangeNotifier
       : Size.zero;
 
   @override
-  Future<void> open(String absolutePath, {double speed = 1.0}) async {
+  String get title => _title;
+  String _title = '';
+
+  @override
+  Future<void> open(String absolutePath,
+      {double speed = 1.0, String title = ''}) async {
+    _title = title;
     await _player.create();
-    await _player.load(absolutePath, speed: speed);
+    await _player.load(absolutePath, speed: speed, title: title);
   }
 
   @override

@@ -16,6 +16,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/collection/clip/player/presentation/widgets/listening_bar.dart';
 import 'package:parrokit/core/state/provider/background_playback_provider.dart';
+import 'package:parrokit/core/state/provider/clip_playback_holder.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/clip_backup_action.dart';
@@ -45,6 +46,9 @@ class AppShell extends StatelessWidget {
 
     // 네비바 숨김 조건
     final hideNav = appShellHidesNavBar(location);
+    // 플레이어 화면에서는 '듣는 중' 줄을 띄우지 않는다. 새 플레이어는 화면을
+    // 나가도 살아 있어서, 돌아왔을 때 줄이 겹쳐 보였다(5차 4단계).
+    final onPlayer = location.contains(AppRoutes.clipsPlayPath);
     final isCollectionRoute = location.startsWith(AppRoutes.collectionPath);
     final showCollectionSelectionBar = isCollectionRoute &&
         clipProvider.isCollectionMenuOpen &&
@@ -58,7 +62,7 @@ class AppShell extends StatelessWidget {
       body: child,
       // 모달 시트는 useRootNavigator로 띄워서 이 네비바 위를 덮는다.
       bottomNavigationBar: hideNav
-          ? _listeningBar(context)
+          ? _listeningBar(context, onPlayer: onPlayer)
           : showCollectionSelectionBar
               ? _buildCollectionSelectionBar(context)
               // 시트가 떠 있는 동안에는 숨긴다. 네이티브 탭 바가 자기 프레임
@@ -66,7 +70,7 @@ class AppShell extends StatelessWidget {
               // 자리는 그대로 두어(maintainSize) 본문이 움찔거리지 않는다.
               : Column(mainAxisSize: MainAxisSize.min, children: [
                   // 플레이어를 나와도 듣고 있으면 무엇이 울리는지 알린다(5차).
-                  _listeningBar(context),
+                  _listeningBar(context, onPlayer: onPlayer),
                   ValueListenableBuilder<int>(
                     valueListenable: openAppSheetCount,
                     builder: (context, sheets, child) => Visibility(
@@ -89,10 +93,42 @@ class AppShell extends StatelessWidget {
   }
 
   /// 듣는 중이면 줄을 그리고, 아니면 자리를 차지하지 않는다.
-  Widget _listeningBar(BuildContext context) {
+  Widget _listeningBar(BuildContext context, {bool onPlayer = false}) {
+    // 새 플레이어로 듣는 중이면 그쪽을 보여 준다. 플레이어가 하나뿐이라
+    // 넘기지 않고 그대로 돌고 있다(5차 4단계).
+    final held = context.watch<ClipPlaybackHolder>();
+    if (held.isActive && !onPlayer) {
+      return _bar(
+        context,
+        playback: BackgroundPlayback(
+          clipId: held.clipId!,
+          title: held.title.isEmpty ? '클립' : held.title,
+          playing: held.isPlaying,
+        ),
+        onTogglePlay: () => held.isPlaying ? held.pause() : held.resume(),
+        onClose: held.stop,
+      );
+    }
+
     final playback = context.watch<BackgroundPlaybackProvider>();
     final current = playback.current;
     if (current == null) return const SizedBox.shrink();
+    return _bar(
+      context,
+      playback: current,
+      onTogglePlay: () =>
+          current.playing ? playback.pause() : playback.resume(),
+      onClose: playback.stop,
+    );
+  }
+
+  Widget _bar(
+    BuildContext context, {
+    required BackgroundPlayback playback,
+    required VoidCallback onTogglePlay,
+    required VoidCallback onClose,
+  }) {
+    final current = playback;
     return SafeArea(
       top: false,
       bottom: false,
@@ -101,9 +137,8 @@ class AppShell extends StatelessWidget {
         onOpen: () => context.push(
             '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}'
             '?clipId=${current.clipId}'),
-        onTogglePlay: () =>
-            current.playing ? playback.pause() : playback.resume(),
-        onClose: playback.stop,
+        onTogglePlay: onTogglePlay,
+        onClose: onClose,
       ),
     );
   }

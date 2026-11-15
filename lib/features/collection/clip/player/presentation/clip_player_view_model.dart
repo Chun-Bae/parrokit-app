@@ -48,13 +48,22 @@ class ClipPlayerViewModel extends ChangeNotifier
     this.background,
     this.initialIndex = 0,
     ClipPlayerEngine? engine,
-  }) : engine = engine ?? VideoPlayerEngine() {
+    this.engineAlreadyLoaded = false,
+  })  : engine = engine ?? VideoPlayerEngine(),
+        _ownsEngine = engine == null {
     _init();
   }
 
   /// 영상을 다루는 창구. 지금은 video_player, 나중에 네이티브 플레이어(5차).
   @override
   final ClipPlayerEngine engine;
+
+  /// 창구를 우리가 만들었는지. 밖에서 받은 것이면 닫지 않는다 — 화면을
+  /// 나가도 계속 돌아야 하기 때문이다(5차 4단계).
+  final bool _ownsEngine;
+
+  /// 받은 창구가 이미 이 클립을 읽어 둔 상태인지. 그러면 다시 읽지 않는다.
+  final bool engineAlreadyLoaded;
 
   // ─────────────────────────────────────────────────────────────────
   // Dependencies
@@ -283,7 +292,8 @@ class ClipPlayerViewModel extends ChangeNotifier
     if (!engine.isReady) return;
     _isInitialized = false;
     engine.removeListener(_onTick);
-    unawaited(engine.close());
+    // 남의 창구는 닫지 않는다. 화면을 나가도 계속 돌아야 한다(5차 4단계).
+    if (_ownsEngine) unawaited(engine.close());
   }
 
   Future<void> _initVideo() async {
@@ -298,13 +308,19 @@ class ClipPlayerViewModel extends ChangeNotifier
       return null;
     });
 
-    await engine.open(resolvedPath, speed: _playbackRate);
-    // 기다리는 사이 화면을 닫았으면 그만둔다.
-    if (_disposed) return;
-    await engine.setLooping(false);
-    if (_disposed) return;
+    // 밖에서 받은 창구가 이미 이 클립을 들고 있으면 다시 읽지 않는다.
+    // 다시 읽으면 듣던 자리가 끊긴다(5차 4단계).
+    final keepPlaying = engineAlreadyLoaded && engine.isReady;
+    if (!keepPlaying) {
+      await engine.open(resolvedPath,
+          speed: _playbackRate, title: _clip?.title ?? '');
+      // 기다리는 사이 화면을 닫았으면 그만둔다.
+      if (_disposed) return;
+      await engine.setLooping(false);
+      if (_disposed) return;
+    }
 
-    if (_segments.isNotEmpty) {
+    if (!keepPlaying && _segments.isNotEmpty) {
       _segIndex = _segIndex.clamp(0, _segments.length - 1);
       // 이어 듣다 들어왔으면 그 자리부터, 아니면 구간 처음부터.
       final resume = _resumeFrom;
@@ -396,6 +412,8 @@ class ClipPlayerViewModel extends ChangeNotifier
   /// dispose는 기다릴 수 없으므로 필요한 값(경로·위치·속도)을 먼저 읽어
   /// 넘기고, 실제 재생은 provider가 이어서 한다(5차, 사용자 요청).
   bool _handOffToBackground() {
+    // 스스로 이어 가는 플레이어면 넘길 것이 없다. 그대로 두면 계속 돈다.
+    if (engine.keepsPlayingInBackground && !_ownsEngine) return true;
     final handOff = background;
     final clip = _clip;
     if (handOff == null || clip == null || _resolvedPath.isEmpty) return false;
