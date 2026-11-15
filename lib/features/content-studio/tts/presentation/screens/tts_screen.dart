@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/speed_label.dart';
 import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
@@ -228,9 +229,10 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TtsSliderPreview(
-                            label: '속도 (0.25배 ~ 4.0배)',
-                            valueText:
-                                '${provider.speakingRate.toStringAsFixed(2)}x',
+                            // 범위는 슬라이더가 보여 준다. 제목은 다른
+                            // 화면과 같은 '속도'(5차).
+                            label: '속도',
+                            valueText: speedLabel(provider.speakingRate),
                             value: provider.speakingRate,
                             min: 0.25,
                             max: 4.0,

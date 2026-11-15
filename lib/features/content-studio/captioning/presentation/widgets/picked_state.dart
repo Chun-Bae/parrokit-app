@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/utils/speed_label.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
@@ -639,7 +640,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                   children: speeds.map((speed) {
                     return Center(
                       child: Text(
-                        '${speed.toStringAsFixed(2)}x',
+                        speedLabel(speed),
                         style: context.texts.titleLarge
                             .copyWith(color: cs.onSurface),
                       ),
@@ -864,7 +865,7 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                                 icon: Icons.speed_rounded,
                                 // 플레이어·TTS와 같은 말로(5차). 예전 '배속'.
                                 title: '속도',
-                                value: '${currentSpeed.toStringAsFixed(2)}x',
+                                value: speedLabel(currentSpeed),
                                 onTap: () =>
                                     _showSpeedPickerBottomSheet(context),
                               ),

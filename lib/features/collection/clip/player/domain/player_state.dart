@@ -9,6 +9,8 @@
 // Domain Layer
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/speed_label.dart';
+
 /// 재생 범위 (세그먼트/전체)
 enum PlayScope { segment, full }
 
@@ -25,6 +27,6 @@ class PlaybackRates {
   static const double minRate = 0.5;
   static const double maxRate = 2.0;
 
-  /// 속도 표시 문자열 (예: "1.0x")
-  static String label(double rate) => '${rate}x';
+  /// 속도 표시 문자열 (예: "1배"). 화면마다 다르게 적지 않도록 공용 함수를 쓴다.
+  static String label(double rate) => speedLabel(rate);
 }

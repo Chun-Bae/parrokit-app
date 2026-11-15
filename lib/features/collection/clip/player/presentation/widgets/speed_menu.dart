@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/speed_label.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
@@ -25,7 +26,7 @@ class SpeedMenu extends StatelessWidget {
         for (final s in speeds)
           PopupMenuItem<double>(
             value: s,
-            child: Text('${s.toStringAsFixed(2)}x'),
+            child: Text(speedLabel(s)),
           ),
       ],
       child: Container(
@@ -46,7 +47,7 @@ class SpeedMenu extends StatelessWidget {
           children: [
             const Icon(Icons.speed_rounded, size: 18),
             const SizedBox(width: 6),
-            Text('${value.toStringAsFixed(2)}x',
+            Text(speedLabel(value),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: isLight ? cs.onSurface : Colors.white)),
