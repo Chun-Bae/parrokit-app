@@ -22,6 +22,7 @@ import 'sections/delete_account_section.dart';
 import 'sections/info_section.dart';
 import 'sections/logout_section.dart';
 import 'sections/wallet_section.dart';
+import 'sections/subscription_section.dart';
 
 /// 설정/더보기 화면.
 class MoreScreen extends StatefulWidget {
@@ -77,6 +78,8 @@ class _MoreScreenState extends State<MoreScreen> {
             const AccountSection(),
             const SizedBox(height: AppSpacing.md),
             const WalletSection(),
+            const _GroupLabel('구독'),
+            const SubscriptionSection(),
             const _GroupLabel('데이터'),
             const DataSection(),
             const _GroupLabel('앱'),
