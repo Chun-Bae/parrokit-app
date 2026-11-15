@@ -15,6 +15,11 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/infrastructure/services/backup_service.dart';
+import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
+import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
+import 'package:parrokit/features/collection/library/presentation/widgets/local_only_notice.dart';
 import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -111,6 +116,17 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
 
   /// Drive에 남은 클립을 모두 기기로 가져온다. 가져오면 Drive 파일은
   /// 지워지므로 먼저 묻는다.
+  /// 더보기의 '백업'과 같은 창을 띄운다. 보관함에서 바로 만들 수 있게(5차).
+  Future<void> _runBackup(BuildContext context) => showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => BackupProgressDialog(
+          type: BackupDialogType.backup,
+          onStart: (onProgress) =>
+              BackupService.instance.createBackup(onProgress: onProgress),
+        ),
+      );
+
   Future<void> _importDriveClips(BuildContext context) async {
     final targets = _clips
         .where((c) =>
@@ -420,6 +436,15 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
           child: _sectionTitle(context, '모든 클립', trailing: '${_clips.length}개'),
         ),
       ],
+      // 무료면 클립이 이 기기에만 있다. 폰을 바꾸면 사라진다는 것을 알린다(5차).
+      SliverToBoxAdapter(
+        child: LocalOnlyNotice(
+          tier: context.watch<SubscriptionProvider>().tier,
+          clipCount: _clips.length,
+          onBackup: () => _runBackup(context),
+          onSubscribe: () => resolvePaywallPresenter().show(context),
+        ),
+      ),
       SliverToBoxAdapter(
         child: DriveMigrationNotice(
           clipCount: _driveClipCount,
