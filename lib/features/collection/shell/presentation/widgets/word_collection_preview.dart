@@ -923,9 +923,7 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
             ]),
             const SizedBox(height: 8),
             LinearProgressIndicator(
-              value: queue.isEmpty
-                  ? 1
-                  : index.clamp(0, queue.length) / queue.length,
+              value: wordReviewProgress(index: index, total: queue.length),
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             const SizedBox(height: 24),
@@ -1047,4 +1045,15 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
       ),
     );
   }
+}
+
+/// 복습 시트 진행 막대가 채울 몫.
+///
+/// 머리말이 '1 / 3'이라고 적는 것과 같은 몫을 채운다. 전에는 끝낸 개수
+/// (index)를 썼다. 그래서 첫 단어에서 머리말은 '1 / 3'인데 막대는 하나도
+/// 차지 않았고, 마지막 단어에서도 2/3만 찼다(5차).
+double wordReviewProgress({required int index, required int total}) {
+  if (total <= 0) return 1;
+  final shown = (index + 1).clamp(1, total);
+  return shown / total;
 }

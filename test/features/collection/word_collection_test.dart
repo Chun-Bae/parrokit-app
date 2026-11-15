@@ -55,6 +55,8 @@ Future<void> openWordTab(WidgetTester tester) async {
 }
 
 void main() {
+  _reviewProgressTests();
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     MyWordStore.cloud = null;
@@ -303,5 +305,25 @@ void main() {
     final morning = DateTime(2026, 11, 14, 10);
     expect(wordDueLabel(DateTime(2026, 11, 16), morning), '2일 뒤 복습');
     expect(wordDueLabel(DateTime(2026, 11, 10), morning), '오늘 복습할 단어');
+  });
+}
+
+void _reviewProgressTests() {
+  group('복습 진행 막대', () {
+    test('머리말 숫자와 같은 몫을 채운다', () {
+      // '1 / 3'이면 1/3만큼. 전에는 끝낸 개수를 써서 첫 단어에서 0이었다.
+      expect(wordReviewProgress(index: 0, total: 3), closeTo(1 / 3, 1e-9));
+      expect(wordReviewProgress(index: 1, total: 3), closeTo(2 / 3, 1e-9));
+      expect(wordReviewProgress(index: 2, total: 3), 1);
+    });
+
+    test('다 끝내도 넘치지 않는다', () {
+      expect(wordReviewProgress(index: 3, total: 3), 1);
+      expect(wordReviewProgress(index: 99, total: 3), 1);
+    });
+
+    test('볼 단어가 없으면 가득 찬 것으로 둔다', () {
+      expect(wordReviewProgress(index: 0, total: 0), 1);
+    });
   });
 }
