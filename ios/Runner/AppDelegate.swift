@@ -15,10 +15,8 @@ import UserNotifications
     GeneratedPluginRegistrant.register(with: self)
 
     // 영상과 소리를 한 플레이어로 다루는 네이티브 플레이어(5차).
-    if let controller = window?.rootViewController as? FlutterViewController {
-      registrar(forPlugin: "NativePlayer")?.register(
-        NativePlayerFactory(messenger: controller.binaryMessenger),
-        withId: NativePlayerFactory.viewType)
+    if let registrar = registrar(forPlugin: "NativePlayer") {
+      NativePlayerPlugin.register(with: registrar)
     }
 
     // 앱을 보고 있는 동안에도 연습 알림이 배너로 뜨게 한다.

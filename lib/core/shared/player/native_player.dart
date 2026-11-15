@@ -4,6 +4,9 @@
 // 내릴 때마다 파일을 다시 읽고 자리를 맞춰 트느라 0.3초쯤 끊겼다. 하나의
 // 플레이어가 계속 돌면 넘기는 과정 자체가 없어진다.
 //
+// 그림은 Flutter 텍스처로 받는다. AVPlayerLayer를 플랫폼 뷰에 얹는 쪽은
+// 시뮬레이터에서 까맣게 나왔다(반복 262).
+//
 // 1단계(뼈대): 로컬 파일 읽기, 영상 보이기, play/pause/seek/속도.
 // 백그라운드 유지와 잠금화면 조작은 2단계에서 붙인다. 지금은 iOS만 있다.
 
@@ -14,7 +17,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-const String nativePlayerViewType = 'parrokit/native_player';
+const String nativePlayerChannelName = 'parrokit/native_player';
 
 /// 네이티브 플레이어가 지금 이 기기에서 쓸 수 있는지.
 bool get nativePlayerSupported => !kIsWeb && Platform.isIOS;
@@ -28,6 +31,10 @@ class NativePlayerState {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.speed = 1.0,
+    this.width = 0,
+    this.height = 0,
+    this.frames = 0,
+    this.pulls = 0,
     this.errorMessage,
   });
 
@@ -36,6 +43,18 @@ class NativePlayerState {
   final Duration position;
   final Duration duration;
   final double speed;
+
+  /// 영상 크기. 아직 모르면 0.
+  final int width;
+  final int height;
+
+  /// 진단용: 네이티브가 받은 프레임 수와 Flutter가 가져간 횟수.
+  final int frames;
+  final int pulls;
+
+  /// 가로세로 비. 모르면 16:9로 본다.
+  double get aspectRatio =>
+      (width > 0 && height > 0) ? width / height : 16 / 9;
 
   /// 영상을 열지 못했을 때만 값이 있다.
   final String? errorMessage;
@@ -46,6 +65,10 @@ class NativePlayerState {
     Duration? position,
     Duration? duration,
     double? speed,
+    int? width,
+    int? height,
+    int? frames,
+    int? pulls,
     String? errorMessage,
     bool clearError = false,
   }) =>
@@ -55,46 +78,61 @@ class NativePlayerState {
         position: position ?? this.position,
         duration: duration ?? this.duration,
         speed: speed ?? this.speed,
+        width: width ?? this.width,
+        height: height ?? this.height,
+        frames: frames ?? this.frames,
+        pulls: pulls ?? this.pulls,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       );
 }
 
-/// 네이티브 플레이어 하나를 다룬다. 화면([NativePlayerSurface])이 만들어지면
-/// [attach]가 불려 채널이 이어진다.
+/// 네이티브 플레이어 하나를 다룬다. [create]로 텍스처를 하나 받아 쓴다.
 class NativePlayerController extends ChangeNotifier {
   NativePlayerController({
-    @visibleForTesting MethodChannel Function(int id)? channelOf,
-    @visibleForTesting Stream<dynamic> Function(int id)? eventsOf,
-  })  : _channelOf = channelOf ?? _defaultChannel,
+    @visibleForTesting MethodChannel? channel,
+    @visibleForTesting Stream<dynamic> Function(int textureId)? eventsOf,
+  })  : _channel = channel ?? const MethodChannel(nativePlayerChannelName),
         _eventsOf = eventsOf ?? _defaultEvents;
 
-  final MethodChannel Function(int id) _channelOf;
-  final Stream<dynamic> Function(int id) _eventsOf;
+  final MethodChannel _channel;
+  final Stream<dynamic> Function(int textureId) _eventsOf;
 
-  static MethodChannel _defaultChannel(int id) =>
-      MethodChannel('$nativePlayerViewType/$id');
+  static Stream<dynamic> _defaultEvents(int textureId) =>
+      EventChannel('$nativePlayerChannelName/$textureId/events')
+          .receiveBroadcastStream();
 
-  static Stream<dynamic> _defaultEvents(int id) =>
-      EventChannel('$nativePlayerViewType/$id/events').receiveBroadcastStream();
-
-  MethodChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   bool _disposed = false;
+
+  int? _textureId;
+
+  /// 그림을 받을 텍스처. 아직 안 만들었으면 null.
+  int? get textureId => _textureId;
 
   NativePlayerState _state = const NativePlayerState();
   NativePlayerState get state => _state;
 
-  /// 화면이 아직 안 만들어졌으면 false. 이때 부른 명령은 그냥 넘어간다.
-  bool get isAttached => _channel != null;
+  /// 아직 플레이어를 안 만들었으면 false. 이때 부른 명령은 그냥 넘어간다.
+  bool get isReady => _textureId != null;
 
-  /// 플랫폼 뷰가 만들어졌을 때 불린다.
-  void attach(int viewId) {
-    if (_disposed) return;
-    _channel = _channelOf(viewId);
-    _sub?.cancel();
-    _sub = _eventsOf(viewId).listen(_onEvent, onError: (Object error) {
-      _set(_state.copyWith(errorMessage: '$error'));
-    });
+  /// 네이티브에 플레이어를 하나 만든다. 화면을 열 때 한 번 부른다.
+  Future<void> create() async {
+    if (_disposed || _textureId != null) return;
+    try {
+      final made = await _channel
+          .invokeMapMethod<String, dynamic>('create');
+      final id = (made?['textureId'] as num?)?.toInt();
+      if (id == null || _disposed) return;
+      _textureId = id;
+      _sub = _eventsOf(id).listen(_onEvent, onError: (Object error) {
+        _set(_state.copyWith(errorMessage: '$error'));
+      });
+      _set(_state);
+    } on PlatformException catch (error) {
+      _set(_state.copyWith(errorMessage: error.message ?? '플레이어 오류'));
+    } on MissingPluginException {
+      // 이 기기에는 네이티브 플레이어가 없다. 조용히 넘어간다.
+    }
   }
 
   void _onEvent(dynamic raw) {
@@ -108,6 +146,10 @@ class NativePlayerController extends ChangeNotifier {
           position: _ms(map['positionMs']),
           duration: _ms(map['durationMs']),
           speed: (map['speed'] as num?)?.toDouble() ?? _state.speed,
+          width: (map['width'] as num?)?.toInt() ?? _state.width,
+          height: (map['height'] as num?)?.toInt() ?? _state.height,
+          frames: (map['frames'] as num?)?.toInt() ?? _state.frames,
+          pulls: (map['pulls'] as num?)?.toInt() ?? _state.pulls,
         ));
       case 'error':
         _set(_state.copyWith(
@@ -138,10 +180,10 @@ class NativePlayerController extends ChangeNotifier {
   }
 
   Future<void> _invoke(String method, [Map<String, Object?>? args]) async {
-    final channel = _channel;
-    if (channel == null) return;
+    final id = _textureId;
+    if (id == null) return;
     try {
-      await channel.invokeMethod<void>(method, args);
+      await _channel.invokeMethod<void>(method, {'textureId': id, ...?args});
     } on PlatformException catch (error) {
       _set(_state.copyWith(errorMessage: error.message ?? '플레이어 오류'));
     } on MissingPluginException {
@@ -156,10 +198,16 @@ class NativePlayerController extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return; // 두 번 닫아도 탈 나지 않게
+    final id = _textureId;
     _disposed = true;
     _sub?.cancel();
-    unawaited(_invoke('dispose'));
-    _channel = null;
+    if (id != null) {
+      unawaited(_channel
+          .invokeMethod<void>('dispose', {'textureId': id})
+          .catchError((_) {}));
+    }
+    _textureId = null;
     super.dispose();
   }
 }
@@ -172,13 +220,18 @@ class NativePlayerSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!nativePlayerSupported) {
+    final id = controller.textureId;
+    if (!nativePlayerSupported || id == null) {
       return const ColoredBox(color: Color(0xFF000000));
     }
-    return UiKitView(
-      viewType: nativePlayerViewType,
-      onPlatformViewCreated: controller.attach,
-      creationParamsCodec: const StandardMessageCodec(),
+    return ColoredBox(
+      color: const Color(0xFF000000),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: controller.state.aspectRatio,
+          child: Texture(textureId: id),
+        ),
+      ),
     );
   }
 }

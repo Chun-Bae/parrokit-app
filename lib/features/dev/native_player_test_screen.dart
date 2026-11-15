@@ -48,6 +48,8 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
   Future<void> _loadOnce() async {
     if (_loaded) return;
     _loaded = true;
+    await _player.create();
+    if (!mounted) return;
     final db = context.read<AppDatabase>();
     final clips = await db.select(db.clips).get();
     if (!mounted) return;
@@ -84,8 +86,7 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
   @override
   Widget build(BuildContext context) {
     final state = _player.state;
-    // 플랫폼 뷰가 만들어진 뒤에야 명령이 닿는다.
-    if (_player.isAttached) unawaitedLoad();
+    unawaitedLoad();
 
     return Scaffold(
       appBar: AppBar(title: const Text('네이티브 플레이어 시험')),
@@ -116,7 +117,9 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
           Text(
             '${state.ready ? "준비됨" : "읽는 중"} · '
             '${_clock(state.position)} / ${_clock(state.duration)} · '
-            '${state.speed}배',
+            '${state.speed}배 · ${state.width}x${state.height} · '
+            '텍스처 ${_player.textureId ?? "없음"} · '
+            '프레임 ${state.frames}/${state.pulls}',
             style: context.texts.bodyMedium,
           ),
         const SizedBox(height: 12),
