@@ -25,6 +25,9 @@ import 'package:parrokit/features/collection/clip/export/presentation/subtitle_e
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/player/native_player.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/engine/native_clip_player_engine.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -61,6 +64,10 @@ class ClipPlayerScreen extends StatelessWidget {
         // 나가면 소리를 여기로 넘기고, 다시 들어오면 돌려받는다(5차).
         background: ctx.read<BackgroundPlaybackProvider>(),
         initialIndex: initialIndex,
+        // 새 플레이어를 켰으면 그것으로 돈다(5차 4단계, 더보기 > 개발).
+        engine: AppConfig.nativePlayer && nativePlayerSupported
+            ? NativeClipPlayerEngine()
+            : null,
       ),
       child: _ClipPlayerView(clipId: clipId),
     );

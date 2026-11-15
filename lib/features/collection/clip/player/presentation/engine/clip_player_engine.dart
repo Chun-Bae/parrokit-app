@@ -10,6 +10,12 @@ import 'package:flutter/widgets.dart';
 import 'package:video_player/video_player.dart';
 
 abstract class ClipPlayerEngine implements Listenable {
+  /// 앱을 내려도 이 플레이어가 알아서 소리를 잇는지.
+  ///
+  /// 참이면 화면 쪽에서 소리 전용 플레이어로 넘기지 않는다. 넘기면 같은
+  /// 소리가 둘이 나거나 한 템포 끊긴다(5차 4단계).
+  bool get keepsPlayingInBackground;
+
   /// 영상을 읽어 틀 준비가 됐는지.
   bool get isReady;
 
@@ -54,6 +60,10 @@ class VideoPlayerEngine extends ChangeNotifier implements ClipPlayerEngine {
 
   /// 테스트와 화면에서 쓸 수 있게 열어 둔다. 새 플레이어로 다 옮기면 없앤다.
   VideoPlayerController? get controller => _controller;
+
+  /// video_player는 앱을 내리면 멈춘다. 그래서 넘겨야 한다.
+  @override
+  bool get keepsPlayingInBackground => false;
 
   @override
   bool get isReady => _controller?.value.isInitialized == true;

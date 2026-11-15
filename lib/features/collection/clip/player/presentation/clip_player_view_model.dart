@@ -367,6 +367,8 @@ class ClipPlayerViewModel extends ChangeNotifier
   /// 앱을 내리는 순간 멈췄다. 유튜브처럼 알아서 이어지게 한다.
   Future<void> handleAppLifecycleChange(AppLifecycleState state) async {
     if (!_isInitialized || _clip == null || _segments.isEmpty) return;
+    // 새 플레이어는 앱을 내려도 알아서 이어 간다. 넘기면 되레 끊긴다(5차).
+    if (engine.keepsPlayingInBackground) return;
 
     if (state == AppLifecycleState.paused) {
       if (_isBackground) return;
