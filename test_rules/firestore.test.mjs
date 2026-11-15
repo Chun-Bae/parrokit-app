@@ -475,6 +475,27 @@ test("구독 단계는 앱이 쓸 수 없다", async () => {
   );
 });
 
+test("구독으로 받은 패롯(subParrots)도 앱이 못 바꾼다", async () => {
+  await seed(testEnv, (db) =>
+    setDoc(doc(db, "users/bob"), {
+      nickname: "밥",
+      parrots: 1,
+      subParrots: 0,
+    })
+  );
+
+  // 쓸 때 먼저 깎이는 잔액이라, 앱이 올릴 수 있으면 그대로 돈이 된다.
+  await assertFails(
+    updateDoc(doc(bob(), "users/bob"), { subParrots: 9999 })
+  );
+  await assertFails(
+    updateDoc(doc(bob(), "users/bob"), { nickname: "밥2", subParrots: 10 })
+  );
+  await assertFails(
+    updateDoc(doc(alice(), "users/bob"), { subParrots: 9999 })
+  );
+});
+
 test("구독 칸을 건드리지 않는 수정은 그대로 된다", async () => {
   await seed(testEnv, (db) =>
     setDoc(doc(db, "users/bob"), {

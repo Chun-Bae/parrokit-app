@@ -21,10 +21,43 @@ export interface Balance {
   crackers: number;
 }
 
-export interface Wallet extends Balance {
+/**
+ * 구독으로 매달 받는 패롯. 보통 패롯과 따로 센다.
+ *
+ * - 쓸 때는 이쪽부터 깎는다(그달 안에 써야 하므로).
+ * - 기간이 끝나면 남은 것은 0으로 지운다.
+ * - 환전하지 않는다(환전은 보통 패롯만).
+ */
+export interface FullBalance extends Balance {
+  subParrots: number;
+}
+
+/**
+ * 패롯을 쓸 때 구독 패롯과 보통 패롯에서 각각 얼마를 깎을지 나눈다.
+ * 넣는 경우(양수)는 보통 패롯으로 간다.
+ *
+ * @param {number} subParrots 지금 구독 패롯
+ * @param {number} parrotsDelta 바꿀 양(음수면 쓰는 것)
+ * @return {{sub: number, normal: number}} 각각 바꿀 양
+ */
+export function splitParrotSpend(
+  subParrots: number,
+  parrotsDelta: number
+): {sub: number; normal: number} {
+  if (parrotsDelta >= 0) return {sub: 0, normal: parrotsDelta};
+  const want = -parrotsDelta;
+  const fromSub = Math.min(subParrots, want);
+  // `|| 0`은 -0이 나오지 않게 한다(장부에 -0을 남기지 않는다).
+  return {sub: -fromSub || 0, normal: -(want - fromSub) || 0};
+}
+
+export interface Wallet extends FullBalance {
   ref: DocumentReference;
   exists: boolean;
 }
+
+/** 잔액을 바꿀 양. subFirst를 false로 두면 구독 패롯을 건드리지 않는다. */
+export type WalletDelta = Partial<FullBalance> & {subFirst?: boolean};
 
 export interface LedgerEntry {
   /** 장부 문서 id. 같은 키는 한 번만 반영된다. */
@@ -63,6 +96,7 @@ export async function readWallet(
     exists: snapshot.exists,
     parrots: toInt(data.parrots ?? data.coins),
     crackers: toInt(data.crackers),
+    subParrots: toInt(data.subParrots),
   };
 }
 
@@ -93,16 +127,23 @@ export async function ledgerExists(
 export function writeWallet(
   tx: Transaction,
   wallet: Wallet,
-  delta: Partial<Balance>,
+  delta: WalletDelta,
   entry: LedgerEntry
-): Balance {
+): FullBalance {
   const parrotsDelta = delta.parrots ?? 0;
   const crackersDelta = delta.crackers ?? 0;
-  const after = {
-    parrots: wallet.parrots + parrotsDelta,
+  // 구독 패롯(subParrots)은 따로 넣고(지급), 쓸 때는 이쪽부터 깎는다.
+  // 환전처럼 구독 패롯을 쓰면 안 되는 자리는 subFirst를 꺼서 부른다.
+  const subDelta = delta.subParrots ?? 0;
+  const spend = delta.subFirst === false ?
+    {sub: 0, normal: parrotsDelta} :
+    splitParrotSpend(wallet.subParrots + subDelta, parrotsDelta);
+  const after: FullBalance = {
+    parrots: wallet.parrots + spend.normal,
     crackers: wallet.crackers + crackersDelta,
+    subParrots: wallet.subParrots + subDelta + spend.sub,
   };
-  if (after.parrots < 0) {
+  if (after.parrots < 0 || after.subParrots < 0) {
     throw new HttpsError("failed-precondition", "보유하신 패롯이 부족합니다.");
   }
   if (after.crackers < 0) {
@@ -114,14 +155,16 @@ export function writeWallet(
     {
       parrots: after.parrots,
       crackers: after.crackers,
+      subParrots: after.subParrots,
       coins: admin.firestore.FieldValue.delete(),
       updatedAt: now,
     },
     {merge: true}
   );
   tx.set(wallet.ref.collection(LEDGER).doc(entry.key), {
-    parrots: parrotsDelta,
+    parrots: spend.normal,
     crackers: crackersDelta,
+    subParrots: subDelta + spend.sub,
     balanceAfter: after,
     reason: entry.reason,
     meta: entry.meta ?? {},
@@ -140,15 +183,16 @@ export function writeWallet(
  */
 export async function applyLedger(
   uid: string,
-  delta: Partial<Balance>,
+  delta: WalletDelta,
   entry: LedgerEntry
-): Promise<Balance & {applied: boolean}> {
+): Promise<FullBalance & {applied: boolean}> {
   return admin.firestore().runTransaction(async (tx) => {
     const wallet = await readWallet(tx, uid);
     if (await ledgerExists(tx, wallet, entry.key)) {
       return {
         parrots: wallet.parrots,
         crackers: wallet.crackers,
+        subParrots: wallet.subParrots,
         applied: false,
       };
     }
@@ -187,9 +231,22 @@ export const exchangeCurrency = onCall(appCheckOptions, async (request) => {
   ) {
     throw new HttpsError("invalid-argument", "환전할 수량을 확인해주세요.");
   }
-  let delta: Balance;
+  let delta: WalletDelta;
   if (direction === "parrotsToCrackers") {
-    delta = {parrots: -amount, crackers: amount * CRACKERS_PER_PARROT};
+    // 구독으로 받은 패롯은 환전하지 않는다. 보통 패롯이 모자라면 막는다.
+    const wallet = await admin.firestore().collection("users").doc(uid).get();
+    const own = toInt(wallet.data()?.parrots ?? wallet.data()?.coins);
+    if (own < amount) {
+      throw new HttpsError(
+        "failed-precondition",
+        "구독으로 받은 패롯은 환전할 수 없어요. 가진 패롯만큼만 환전해 주세요."
+      );
+    }
+    delta = {
+      parrots: -amount,
+      crackers: amount * CRACKERS_PER_PARROT,
+      subFirst: false,
+    };
   } else if (direction === "crackersToParrots") {
     if (amount % CRACKERS_PER_PARROT !== 0) {
       throw new HttpsError(

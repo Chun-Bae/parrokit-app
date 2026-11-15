@@ -193,8 +193,12 @@ test("가격은 앱의 표와 같다", () => {
     ttsCost({text: "a".repeat(40), provider: "elevenlabs", modelId: "eleven_turbo_v2_5"}),
     1
   );
-  // tts_gemini_models.dart
-  assert.equal(ttsCost({text: "a".repeat(120), provider: "gemini"}), 1);
+  // tts_gemini_models.dart (기본 모델이 3.8 Flash TTS로 바뀌어 60자에 1패롯)
+  assert.equal(ttsCost({text: "a".repeat(120), provider: "gemini"}), 2);
+  assert.equal(
+    ttsCost({text: "a".repeat(120), provider: "gemini", modelId: "gemini-3.8-flash-lite-tts"}),
+    1
+  );
   assert.equal(
     ttsCost({text: "a".repeat(120), provider: "gemini", modelId: "gemini-2.5-pro-preview-tts"}),
     2

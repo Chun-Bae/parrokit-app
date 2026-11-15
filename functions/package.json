@@ -16,7 +16,9 @@
     "test:community": "npm run build && node --test test/communityNotificationText.test.mjs",
     "test:adreward": "npm run build && node --test test/adReward.test.mjs",
     "test:subscription": "npm run build && node --test test/subscriptionEvent.test.mjs",
-    "test:tier": "npm run build && node --test test/subscriptionTier.test.mjs"
+    "test:tier": "npm run build && node --test test/subscriptionTier.test.mjs",
+    "test:subgrant": "npm run build && node --test test/subscriptionGrant.test.mjs",
+    "test:subwallet": "npm run build && npx -y firebase-tools@latest --project=demo-parrokit emulators:exec --only firestore \"node --test test/subscriptionWallet.test.mjs\""
   },
   "engines": {
     "node": "22"

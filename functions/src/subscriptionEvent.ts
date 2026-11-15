@@ -9,6 +9,10 @@
 // 새 상태를 덮지 않게 이벤트 시각을 함께 본다.
 
 import * as admin from "firebase-admin";
+import {
+  expireSubscriptionParrots,
+  grantSubscriptionParrots,
+} from "./subscriptionGrant";
 import {onRequest} from "firebase-functions/v2/https";
 
 /** 구독 단계. 앱의 SubscriptionTier와 같은 말이다. */
@@ -130,12 +134,16 @@ export const onSubscriptionEvent = onRequest(async (req, res) => {
   }
 
   const ref = admin.firestore().collection("users").doc(next.uid);
+  let saveApplied = true;
   await admin.firestore().runTransaction(async (tx) => {
     const snapshot = await tx.get(ref);
     const saved = snapshot.data()?.subscription as
       | FirebaseFirestore.DocumentData
       | undefined;
-    if (shouldSkipEvent(saved, next)) return;
+    if (shouldSkipEvent(saved, next)) {
+      saveApplied = false;
+      return;
+    }
     tx.set(
       ref,
       {
@@ -152,6 +160,17 @@ export const onSubscriptionEvent = onRequest(async (req, res) => {
       {merge: true}
     );
   });
+
+  if (saveApplied) {
+    // 이번 기간 몫을 넣고(같은 기간이면 한 번만), 끝났으면 남은 것을 지운다.
+    try {
+      await grantSubscriptionParrots(next);
+      await expireSubscriptionParrots(next);
+    } catch (error) {
+      // 지급이 실패해도 상태는 저장됐다. 다음 이벤트에서 같은 키로 다시 시도된다.
+      console.error("[Subscription] grant failed", error);
+    }
+  }
 
   res.status(200).send("ok");
 });
