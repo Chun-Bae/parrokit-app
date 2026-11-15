@@ -94,6 +94,14 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   private var events: FlutterEventChannel?
   private var sink: FlutterEventSink?
 
+  /// 보이지 않는 AVPlayerLayer(크기 0). 눈에는 안 보인다.
+  ///
+  /// video_player도 같은 것을 둔다. 보호된 영상에서 그림이 빈 화면으로
+  /// 나오는 것과, 어떤 영상의 가로세로가 뒤바뀌는 것을 막으려는 것이다
+  /// ("An invisible AVPlayerLayer is used to overwrite the protection of
+  /// pixel buffers"). 우리 시험 영상에서는 이게 없어도 그려졌지만, 겪지
+  /// 못한 영상을 위해 같이 둔다.
+  private let playerLayer: AVPlayerLayer
   private var displayLink: CADisplayLink?
   /// 진단용: 받은 프레임 수와 Flutter가 가져간 횟수.
   private var frames = 0
@@ -116,7 +124,11 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
       // 프레임이 와도 화면은 까맣다(video_player도 같은 설정을 쓴다).
       kCVPixelBufferIOSurfacePropertiesKey as String: [String: Any](),
     ])
+    playerLayer = AVPlayerLayer()
     super.init()
+
+    playerLayer.player = player
+    NativePlayer.hostLayer()?.addSublayer(playerLayer)
 
     textureId = registry.register(self)
     events = FlutterEventChannel(
@@ -126,6 +138,15 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
 
     observePlayer()
     startDisplayLink()
+  }
+
+  /// Flutter 화면의 레이어. 여기에 몰래 붙인다.
+  private static func hostLayer() -> CALayer? {
+    let windows = UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+    let window = windows.first { $0.isKeyWindow } ?? windows.first
+    return window?.rootViewController?.view.layer
   }
 
   // MARK: - 명령
@@ -276,6 +297,8 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
     rateObservation?.invalidate()
     rateObservation = nil
     player.pause()
+    playerLayer.player = nil
+    playerLayer.removeFromSuperlayer()
     player.currentItem?.remove(output)
     player.replaceCurrentItem(with: nil)
     events?.setStreamHandler(nil)
