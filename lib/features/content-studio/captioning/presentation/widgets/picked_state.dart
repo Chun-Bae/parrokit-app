@@ -739,9 +739,10 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
               const SizedBox(width: 8),
               _TabButton(
                 icon: Icons.info_outline_rounded,
-                // '메타데이터'는 개발 용어다. 이 칸은 제목·폴더 같은
-                // 클립 정보를 보여 준다(5차).
-                label: '클립 정보',
+                // '메타데이터'는 개발 용어다. 이 칸이 여는 것은 고른 영상
+                // 파일의 이름·길이·형식이다. 폴더·제목·태그는 접어도 늘
+                // 보이므로 '클립 정보'보다 '파일 정보'가 맞다(5차).
+                label: '파일 정보',
                 isActive: _isExpanded[0],
                 onTap: () => setState(() => _isExpanded[0] = !_isExpanded[0]),
               ),
@@ -768,13 +769,13 @@ class _VideoSettingsBarState extends State<_VideoSettingsBar> {
                       height: 1, color: cs.onSurface.withValues(alpha: 0.1)),
                 ],
                 if (_isExpanded[1]) ...[
-                  // 1. A-B 리스트
+                  // 1. 구간 목록
                   if (widget.segmentsWidget != null) ...[
                     widget.segmentsWidget!,
                   ],
                 ],
                 if (_isExpanded[0]) ...[
-                  // 2. 메타 데이터
+                  // 2. 파일 정보
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),

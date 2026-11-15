@@ -42,6 +42,9 @@ void main() {
     // '배속'·'스킵'은 플레이어·조작 줄이 쓰지 않는 말이다.
     expect(screen.contains("title: '배속'"), isFalse);
     expect(screen.contains('스킵'), isFalse);
+    // 접었다 펴는 칸은 파일 이름·길이·형식만 보여 준다. 폴더·제목·태그는
+    // 접어도 늘 보이므로 '클립 정보'가 아니라 '파일 정보'다(5차).
+    expect(screen, contains("label: '파일 정보'"));
   });
 
   test('나가기 확인 세 곳이 같은 말투를 쓴다', () {

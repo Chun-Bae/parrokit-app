@@ -38,7 +38,7 @@ void main() {
 
   test("클립 편집 화면이 '메타데이터' 같은 개발 용어를 쓰지 않는다", () {
     // 버튼 이름이 '메타데이터'·'A-B 리스트'였다. 하나는 개발 용어이고
-    // 하나는 반은 영어였다(5차). '클립 정보'·'구간 목록'으로 부른다.
+    // 하나는 반은 영어였다(5차). '파일 정보'·'구간 목록'으로 부른다.
     final offenders = _uiStrings('lib/features/content-studio/captioning')
         .where((s) => s.contains('메타데이터') || s.contains('A-B 리스트'))
         .toList();
