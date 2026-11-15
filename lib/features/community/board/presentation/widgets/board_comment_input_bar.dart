@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
 class BoardCommentInputBar extends StatelessWidget {
@@ -52,7 +53,7 @@ class BoardCommentInputBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${replyingTo!.authorNickname}님에게 답글 남기는 중',
+                      replyingToLabel(replyingTo!.authorNickname),
                       style: context.texts.labelMedium
                           .copyWith(color: context.tokens.textSecondary),
                     ),
@@ -92,7 +93,8 @@ class BoardCommentInputBar extends StatelessWidget {
                               style: context.texts.bodyReading
                                   .copyWith(color: colorScheme.onSurface),
                               decoration: InputDecoration(
-                                hintText: '댓글을 남겨 보세요',
+                                hintText: commentInputHint(
+                                    replying: replyingTo != null),
                                 fillColor: colorScheme.surfaceContainerHigh,
                                 // 안내 글자는 친 글자와 같은 크기로. 예전엔 titleLarge라
                                 // 친 글자보다 크고 굵었다(5차).
@@ -111,7 +113,8 @@ class BoardCommentInputBar extends StatelessWidget {
                           // 읽히지 않았다(5차). 보내기 아이콘과 툴팁을 단다.
                           IconButton(
                             key: const ValueKey('comment-send'),
-                            tooltip: '댓글 보내기',
+                            tooltip: commentSendTooltip(
+                                replying: replyingTo != null),
                             onPressed: canSubmit ? onSubmit : null,
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,

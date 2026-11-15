@@ -22,6 +22,7 @@ import 'package:parrokit/data/models/comment.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'vote_screen.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -583,7 +584,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    '${provider.replyingTo?.authorNickname} 님에게 답글 남기는 중',
+                    replyingToLabel(
+                        provider.replyingTo?.authorNickname ?? ''),
                     style: context.texts.labelMedium
                         .copyWith(color: context.tokens.textSecondary),
                   ),
@@ -643,7 +645,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       onChanged: (_) => setState(() {}),
                       onSubmitted: (_) => _submitComment(),
                       decoration: InputDecoration(
-                        hintText: '댓글을 남겨 보세요',
+                        hintText: commentInputHint(
+                            replying: provider.replyingTo != null),
                         fillColor: colorScheme.surfaceContainerHigh,
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -658,7 +661,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  tooltip: '보내기',
+                  tooltip: commentSendTooltip(
+                      replying: provider.replyingTo != null),
                   icon: Icon(
                     Icons.send_rounded,
                     color: _canSubmitComment
