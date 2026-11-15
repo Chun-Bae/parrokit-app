@@ -67,7 +67,7 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
       _path = path;
     });
     if (path.isEmpty || !File(path).existsSync()) return;
-    await _player.load(path);
+    await _player.load(path, title: clip.title);
   }
 
   @override

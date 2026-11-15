@@ -9,11 +9,12 @@
 // 텍스처로 주면 video_player와 같은 길이라 시뮬레이터에서도 그려지고, AVPlayer는
 // 그대로 우리 것이라 2단계(백그라운드에서 비디오 트랙만 끄기)도 그대로 된다.
 //
-// 이 파일은 1단계(뼈대)다. 로컬 파일을 읽어 영상을 보이고 play/pause/seek/
-// 속도까지만 한다. 백그라운드 유지와 잠금화면 조작은 2단계에서 붙인다.
+// 2단계까지: 앱을 내리면 비디오 트랙만 끄고 같은 플레이어가 소리를 잇는다.
+// 잠금화면·제어센터에서도 멈추고 이어 들을 수 있다.
 
 import AVFoundation
 import Flutter
+import MediaPlayer
 import UIKit
 
 final class NativePlayerPlugin: NSObject, FlutterPlugin {
@@ -61,7 +62,10 @@ final class NativePlayerPlugin: NSObject, FlutterPlugin {
           code: "bad-path", message: "영상 파일 경로가 필요하다", details: nil))
         return
       }
-      player.load(path: path, speed: (args["speed"] as? NSNumber)?.floatValue ?? 1.0)
+      player.load(
+        path: path,
+        speed: (args["speed"] as? NSNumber)?.floatValue ?? 1.0,
+        title: args["title"] as? String ?? "")
       result(nil)
     case "play":
       player.play()
@@ -113,6 +117,13 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   /// 사용자가 고른 속도. 멈췄다 다시 틀어도 그대로 쓴다.
   private var speed: Float = 1.0
 
+  /// 잠금화면에 보일 이름.
+  private var title: String = ""
+
+  /// 앱을 내릴 때 틀고 있었는지.
+  private var wasPlayingOnBackground = false
+  private var appObservers: [NSObjectProtocol] = []
+
   private(set) var textureId: Int64 = 0
 
   init(registry: FlutterTextureRegistry, messenger: FlutterBinaryMessenger) {
@@ -136,7 +147,10 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
       binaryMessenger: messenger)
     events?.setStreamHandler(self)
 
+    configureAudioSession()
     observePlayer()
+    observeAppState()
+    observeRemoteCommands()
     startDisplayLink()
   }
 
@@ -151,8 +165,9 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
 
   // MARK: - 명령
 
-  func load(path: String, speed: Float) {
+  func load(path: String, speed: Float, title: String) {
     self.speed = speed
+    self.title = title
     let item = AVPlayerItem(url: URL(fileURLWithPath: path))
     item.add(output)
 
@@ -194,6 +209,122 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
     if player.rate != 0 { player.rate = value }
     sendState()
   }
+
+  // MARK: - 백그라운드에서도 소리 잇기
+
+  /// 앱을 내려도 소리가 나려면 오디오 세션이 playback이어야 한다.
+  private func configureAudioSession() {
+    let session = AVAudioSession.sharedInstance()
+    try? session.setCategory(.playback, mode: .moviePlayback)
+    try? session.setActive(true)
+
+    // iOS 17부터는 이것까지 켜야 앱을 내렸을 때 영상 플레이어가 안 멈춘다.
+    // 기본값(.automatic)은 '영상이니까 멈춘다'이다.
+    if #available(iOS 17.0, *) {
+      player.audiovisualBackgroundPlaybackPolicy = .continuesIfPossible
+    }
+  }
+
+  private func observeAppState() {
+    let center = NotificationCenter.default
+    appObservers.append(center.addObserver(
+      forName: UIApplication.didEnterBackgroundNotification,
+      object: nil, queue: .main
+    ) { [weak self] _ in self?.enterBackground() })
+    appObservers.append(center.addObserver(
+      forName: UIApplication.willEnterForegroundNotification,
+      object: nil, queue: .main
+    ) { [weak self] _ in self?.enterForeground() })
+  }
+
+  /// 앱을 내릴 때. 그림만 끄고 소리는 그대로 둔다.
+  ///
+  /// iOS는 화면에 붙은 영상이 있으면 앱을 내릴 때 플레이어를 멈춘다. 비디오
+  /// 트랙을 꺼 두면 소리만 계속 난다. 넘기는 과정이 없으니 끊기지 않는다.
+  private func enterBackground() {
+    wasPlayingOnBackground = player.rate != 0
+    playerLayer.player = nil
+    let videoTracks = setVideoTracks(enabled: false)
+    displayLink?.isPaused = true
+    NSLog("[NativePlayer] 내림: 틀고 있었나=%@ 비디오 트랙=%d",
+          wasPlayingOnBackground ? "예" : "아니오", videoTracks)
+    if wasPlayingOnBackground {
+      player.playImmediately(atRate: speed)
+      // iOS가 내리는 순간 한 번 더 멈추는 일이 있어, 조금 뒤에 다시 본다.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        guard let self, self.wasPlayingOnBackground, self.player.rate == 0 else {
+          return
+        }
+        NSLog("[NativePlayer] 내린 뒤 멈춰 있어 다시 튼다")
+        self.player.playImmediately(atRate: self.speed)
+      }
+    }
+  }
+
+  /// 돌아올 때. 그림을 다시 켠다.
+  private func enterForeground() {
+    setVideoTracks(enabled: true)
+    playerLayer.player = player
+    displayLink?.isPaused = false
+    if wasPlayingOnBackground, player.rate == 0 {
+      player.playImmediately(atRate: speed)
+    }
+    sendState()
+  }
+
+  /// 끈(또는 켠) 비디오 트랙 수를 돌려준다.
+  @discardableResult
+  private func setVideoTracks(enabled: Bool) -> Int {
+    guard let item = player.currentItem else { return 0 }
+    var count = 0
+    for track in item.tracks where track.assetTrack?.mediaType == .video {
+      track.isEnabled = enabled
+      count += 1
+    }
+    return count
+  }
+
+  // MARK: - 잠금화면·제어센터
+
+  private func observeRemoteCommands() {
+    let center = MPRemoteCommandCenter.shared()
+    center.playCommand.addTarget { [weak self] _ in
+      self?.play()
+      return .success
+    }
+    center.pauseCommand.addTarget { [weak self] _ in
+      self?.pause()
+      return .success
+    }
+    center.togglePlayPauseCommand.addTarget { [weak self] _ in
+      guard let self else { return .commandFailed }
+      if self.player.rate == 0 { self.play() } else { self.pause() }
+      return .success
+    }
+    center.changePlaybackPositionCommand.addTarget { [weak self] event in
+      guard let self,
+            let event = event as? MPChangePlaybackPositionCommandEvent else {
+        return .commandFailed
+      }
+      self.seek(toMs: Int64(event.positionTime * 1000)) {}
+      return .success
+    }
+  }
+
+  private func updateNowPlaying() {
+    var info: [String: Any] = [:]
+    info[MPMediaItemPropertyTitle] = title.isEmpty ? "클립" : title
+    if let seconds = player.currentItem?.duration.seconds,
+       seconds.isFinite, seconds > 0 {
+      info[MPMediaItemPropertyPlaybackDuration] = seconds
+    }
+    let position = player.currentTime().seconds
+    info[MPNowPlayingInfoPropertyElapsedPlaybackTime] =
+      position.isFinite ? position : 0
+    info[MPNowPlayingInfoPropertyPlaybackRate] = player.rate
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+  }
+
 
   // MARK: - 그림
 
@@ -264,6 +395,7 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
       "frames": frames,
       "pulls": pulls,
     ])
+    updateNowPlaying()
   }
 
   private func send(_ payload: [String: Any]) {
@@ -286,6 +418,16 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   // MARK: - 정리
 
   func tearDown() {
+    for observer in appObservers {
+      NotificationCenter.default.removeObserver(observer)
+    }
+    appObservers = []
+    let commands = MPRemoteCommandCenter.shared()
+    commands.playCommand.removeTarget(self)
+    commands.pauseCommand.removeTarget(self)
+    commands.togglePlayPauseCommand.removeTarget(self)
+    commands.changePlaybackPositionCommand.removeTarget(self)
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     displayLink?.invalidate()
     displayLink = nil
     if let timeObserver {

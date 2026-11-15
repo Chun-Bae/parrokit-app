@@ -65,7 +65,7 @@ void main() {
     await player.create();
     calls.clear();
 
-    await player.load('/tmp/a.mp4', speed: 1.5);
+    await player.load('/tmp/a.mp4', speed: 1.5, title: '카페에서');
     await player.play();
     await player.seek(const Duration(seconds: 3));
     await player.setSpeed(2.0);
@@ -73,8 +73,12 @@ void main() {
 
     expect(calls.map((c) => c.method).toList(),
         ['load', 'play', 'seek', 'setSpeed', 'pause']);
-    expect(calls.first.arguments,
-        {'textureId': 7, 'path': '/tmp/a.mp4', 'speed': 1.5});
+    expect(calls.first.arguments, {
+      'textureId': 7,
+      'path': '/tmp/a.mp4',
+      'speed': 1.5,
+      'title': '카페에서',
+    }, reason: '잠금화면에 보일 이름도 함께 보낸다');
     expect(calls[2].arguments, {'textureId': 7, 'positionMs': 3000});
     expect(calls[3].arguments, {'textureId': 7, 'speed': 2.0});
   });

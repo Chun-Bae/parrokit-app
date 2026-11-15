@@ -162,9 +162,15 @@ class NativePlayerController extends ChangeNotifier {
   static Duration _ms(Object? value) =>
       Duration(milliseconds: (value as num?)?.toInt() ?? 0);
 
-  Future<void> load(String absolutePath, {double speed = 1.0}) async {
+  /// [title]은 잠금화면·제어센터에 보일 이름이다.
+  Future<void> load(
+    String absolutePath, {
+    double speed = 1.0,
+    String title = '',
+  }) async {
     _set(_state.copyWith(clearError: true, ready: false));
-    await _invoke('load', {'path': absolutePath, 'speed': speed});
+    await _invoke(
+        'load', {'path': absolutePath, 'speed': speed, 'title': title});
   }
 
   Future<void> play() => _invoke('play');
