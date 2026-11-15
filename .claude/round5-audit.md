@@ -320,6 +320,12 @@
   3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
   4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
+- **새 함수 onUserFileUploaded·onUserFileDeleted + 규칙 (저장 용량, 2f82e96c)** — 배포 전에는 서버가 용량을 세지 않아 앱이 0 B로 보여 주고, `storage` 칸을 앱이 바꿀 수 있는 상태가 이어진다.
+  ```
+  npx -y firebase-tools@latest deploy --only functions:onUserFileUploaded,functions:onUserFileDeleted,firestore:rules --project parrokit-45126
+  ```
+  이미 올라가 있는 파일은 트리거가 못 본다. 처음 한 번은 콘솔에서 `users/{uid}.storage.usedBytes`를 손으로 맞추거나, 다음 업로드·삭제부터 맞아 간다.
+
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
@@ -2041,4 +2047,15 @@
   - 테스트 6개(합계·환전용 값·JSON 왕복·예전 문서·환전소 안내 보임/안 보임)
 - analyze 깨끗, 819개 통과. 지갑 줄과 환전소를 라이트·다크 확인(구독 패롯이 있는 상태를 임시로 만들어 봤고 임시 수정은 되돌림), 테마 라이트로 되돌림
 - 3단계에서 남은 것: 서버 저장 용량(용량 집계와 올리기 전 승인). 광고·매달 패롯·문장 도우미 한도는 끝났다
+
+## 반복 241 (2026-11-15 19:50~)
+- 구독 3단계 마지막 조각: **서버가 저장 용량을 센다**(2f82e96c)
+  - `functions/src/storageUsage.ts` — Storage 트리거(`onObjectFinalized`/`onObjectDeleted`)가 `users/{uid}/` 아래 파일을 보고 `users/{uid}.storage = {usedBytes, objectCount, updatedAt}`에 적는다. 파일마다 크기를 `storage_objects/{키}`에 적어 두고 **차이만** 더해서, 같은 이벤트가 두 번 와도 숫자가 안 틀어진다
+  - 단계별 한도: 무료 0, 라이트 5GB, 프로 30GB(`config/subscription.storage`로 조정)
+  - `firestore.rules`: `storage` 칸과 `storage_objects`는 앱이 못 건드린다(usedBytes를 0으로 만들 수 있으면 한도가 뜻이 없다)
+  - 앱: 서버가 센 값이 있으면 그것을 쓰고, 한도는 단계에서 가져온다. 무료 줄은 '구독하면 영상이 서버에 백업돼요'
+  - 테스트: functions 9개(경로·한도 4, 에뮬레이터 5), 규칙 43개(+1), 앱 4개
+- 아직 안 한 것: **올리기 전에 막기**(남은 용량 승인). 지금은 세기만 한다 → 다음 조각
+- 배포하면 이미 올라가 있는 파일은 트리거가 못 본다. 처음 값은 손으로 맞추거나 다음 업로드부터 맞아 간다(배포 필요에 적음)
+- analyze 깨끗, 823개 통과. 저장 용량 시트 라이트·다크 확인, 테마 라이트로 되돌림
 
