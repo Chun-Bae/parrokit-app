@@ -86,8 +86,8 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
     setState(() {
       score = 0;
       message = null;
+      heard = '';
     });
-    heard = '';
     var started = false;
     try {
       started = await widget.recognizer.start(
@@ -124,9 +124,12 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
 
   void handleResult(String text) {
     if (!mounted || !listening) return;
-    heard = text;
     final next = speechMatchScore(widget.phrase, text);
-    setState(() => score = math.max(score, next));
+    setState(() {
+      // 내가 말한 것이 그대로 보여야 어디가 틀렸는지 안다(5차, 사용자 요청).
+      heard = text;
+      score = math.max(score, next);
+    });
     if (score >= speechPassScore) {
       // 통과선을 넘어도 끝까지 말할 수 있게 계속 듣는다. 다 맞췄거나 잠깐 말이 없으면 끝낸다.
       passTimer?.cancel();
@@ -275,6 +278,20 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
                 : null,
             icon: Icon(Icons.check_circle_rounded, color: active, size: 30)),
       ]),
+      if (heard.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Column(children: [
+            Text('내가 말한 것',
+                style: context.texts.labelSmall.copyWith(color: idle)),
+            const SizedBox(height: 2),
+            Text(heard,
+                key: const ValueKey('speech-heard'),
+                textAlign: TextAlign.center,
+                style:
+                    context.texts.bodyReading.copyWith(color: palette.ink)),
+          ]),
+        ),
       if (message != null)
         Padding(
             padding: const EdgeInsets.only(top: 8),

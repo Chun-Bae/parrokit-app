@@ -366,6 +366,10 @@ void main() {
     await tester.pump();
     expect(find.text('다시 한번 말해볼까요?'), findsOneWidget);
     expect(currentPhrase('Hello there!'), findsOneWidget);
+    // 어디가 틀렸는지 보이게 내가 말한 것을 그대로 적는다(5차).
+    expect(find.text('내가 말한 것'), findsOneWidget);
+    expect(find.byKey(const ValueKey('speech-heard')), findsOneWidget);
+    expect(find.text('good morning'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('음성 인식을 쓸 수 없으면 안내하고 체크로 넘어갈 수 있다', (tester) async {
