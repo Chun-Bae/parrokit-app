@@ -290,6 +290,23 @@ void main() {
       expect(reviews['a']!.dueAt, DateTime(2026, 11, 17));
     });
 
+    test('밀린 것끼리는 오래 밀린 단어가 먼저 나온다', () async {
+      // '기한 지난 것 vs 새 단어'는 아래에서 지키는데, 밀린 것끼리의 차례는
+      // 주석으로만 적혀 있었다(5차 점검).
+      await WordReviewStore.record('guest', 'old',
+          rating: ReviewRating.known,
+          now: day0.subtract(const Duration(days: 10)));
+      await WordReviewStore.record('guest', 'recent',
+          rating: ReviewRating.known,
+          now: day0.subtract(const Duration(days: 2)));
+      final reviews = await WordReviewStore.loadAll('guest');
+
+      final order =
+          WordReviewStore.dueWords([w('recent'), w('old')], reviews, day0);
+
+      expect(order.map((e) => e.id).toList(), ['old', 'recent']);
+    });
+
     test('밤늦게 알아요를 눌러도 다음 날 아침이면 나온다', () async {
       final late = DateTime(2026, 11, 13, 23, 30);
       await WordReviewStore.record('guest', 'a', rating: ReviewRating.known, now: late);
