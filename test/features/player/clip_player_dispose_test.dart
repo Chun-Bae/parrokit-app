@@ -55,12 +55,12 @@ void main() {
     // 화면을 닫는다.
     vm.dispose();
 
-    // 그 뒤에 클립 읽기가 끝난다. 예전엔 여기서 파일 경로를 풀고 컨트롤러를
+    // 그 뒤에 클립 읽기가 끝난다. 예전엔 여기서 파일 경로를 풀고 플레이어를
     // 만들다 넘어진 뒤, dispose된 notifier를 알리다 오류가 났다.
     provider.gate.complete();
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    expect(vm.controller, isNull);
+    expect(vm.engine.isReady, isFalse, reason: '영상을 새로 열지 않는다');
     expect(notified, 0);
   });
 }

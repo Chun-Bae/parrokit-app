@@ -7,9 +7,8 @@
 // ============================================================================
 
 import 'package:flutter/foundation.dart';
-import 'package:video_player/video_player.dart';
-
 import 'package:parrokit/core/shared/utils/audio_bg.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/engine/clip_player_engine.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
 import 'package:parrokit/features/collection/clip/player/domain/resume_target.dart';
@@ -22,7 +21,7 @@ mixin AudioModeMixin on ChangeNotifier {
   // Abstract getters (메인 클래스에서 구현)
   // ─────────────────────────────────────────────────────────────────
 
-  VideoPlayerController? get controller;
+  ClipPlayerEngine get engine;
   Clip? get clip;
   Segment get currentSegment;
   bool get isBackground;
@@ -57,7 +56,7 @@ mixin AudioModeMixin on ChangeNotifier {
   /// 사용자가 다시 재생을 누를 일이 없어야 한다(5차, 사용자 요청).
   Future<void> enterAudioOnlyMode({bool autoPlay = false}) async {
     if (isBackground ||
-        controller?.value.isInitialized != true ||
+        !engine.isReady ||
         clip == null) {
       return;
     }
@@ -67,8 +66,8 @@ mixin AudioModeMixin on ChangeNotifier {
     notifyListeners();
 
     try {
-      await controller!.pause();
-      final pos = controller!.value.position;
+      await engine.pause();
+      final pos = engine.position;
 
       final src = await resolvedSourcePath();
       if (src.isEmpty) return;
@@ -127,16 +126,16 @@ mixin AudioModeMixin on ChangeNotifier {
       await h.stop();
       mutableBgPlaying = false;
 
-      if (controller?.value.isInitialized == true) {
+      if (engine.isReady) {
         final target = resumeTargetAfterBackground(
           position: bgPos,
           segmentScope: scope == PlayScope.segment,
           segmentStart: Duration(milliseconds: currentSegment.startMs),
           segmentEnd: Duration(milliseconds: currentSegment.endMs),
-          duration: controller!.value.duration,
+          duration: engine.duration,
         );
-        await controller!.seekTo(target);
-        await controller!.setPlaybackSpeed(playbackRate);
+        await engine.seekTo(target);
+        await engine.setSpeed(playbackRate);
       }
     } catch (_) {
       mutableIsBackground = true;

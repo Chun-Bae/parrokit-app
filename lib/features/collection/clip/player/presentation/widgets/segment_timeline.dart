@@ -1,27 +1,27 @@
 import '../clip_time_format.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
-import 'package:video_player/video_player.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/engine/clip_player_engine.dart';
 import 'seek_gesture_layer.dart';
 
 class SegmentTimeline extends StatelessWidget {
   const SegmentTimeline({
     super.key,
-    required this.controller,
+    required this.engine,
     required this.start, // ⬅️ 호출부 호환용 (미사용)
     required this.end, // ⬅️ 호출부 호환용 (미사용)
     required this.onSeek,
   });
 
-  final VideoPlayerController controller;
+  final ClipPlayerEngine engine;
   final Duration start; // 미사용
   final Duration end; // 미사용
   final ValueChanged<Duration> onSeek;
 
   @override
   Widget build(BuildContext context) {
-    final pos = controller.value.position;
-    final total = controller.value.duration;
+    final pos = engine.position;
+    final total = engine.duration;
 
     double frac(double v, double max) =>
         (max <= 0 ? 0.0 : (v / max).clamp(0.0, 1.0));
@@ -107,8 +107,8 @@ class SegmentTimeline extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _timeLabel(controller.value.position, isLight),
-              _timeLabel(controller.value.duration, isLight),
+              _timeLabel(engine.position, isLight),
+              _timeLabel(engine.duration, isLight),
             ],
           ),
         ],

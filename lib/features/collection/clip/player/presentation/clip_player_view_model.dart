@@ -23,7 +23,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:video_player/video_player.dart';
 
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -32,6 +31,7 @@ import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
 
+import 'engine/clip_player_engine.dart';
 import 'line_pause_gate.dart';
 import 'view_model/playback_control_mixin.dart';
 import 'view_model/audio_mode_mixin.dart';
@@ -47,9 +47,14 @@ class ClipPlayerViewModel extends ChangeNotifier
     required this.clipProvider,
     this.background,
     this.initialIndex = 0,
-  }) {
+    ClipPlayerEngine? engine,
+  }) : engine = engine ?? VideoPlayerEngine() {
     _init();
   }
+
+  /// 영상을 다루는 창구. 지금은 video_player, 나중에 네이티브 플레이어(5차).
+  @override
+  final ClipPlayerEngine engine;
 
   // ─────────────────────────────────────────────────────────────────
   // Dependencies
@@ -100,10 +105,6 @@ class ClipPlayerViewModel extends ChangeNotifier
   // State - Playback
   // ─────────────────────────────────────────────────────────────────
 
-  VideoPlayerController? _controller;
-  @override
-  VideoPlayerController? get controller => _controller;
-
   PlayScope _scope = PlayScope.segment;
   @override
   PlayScope get scope => _scope;
@@ -140,9 +141,7 @@ class ClipPlayerViewModel extends ChangeNotifier
     notifyListeners();
   }
 
-  bool get isPlaying =>
-      _controller?.value.isInitialized == true &&
-      _controller?.value.isPlaying == true;
+  bool get isPlaying => engine.isReady && engine.isPlaying;
 
   // ─────────────────────────────────────────────────────────────────
   // State - Audio Only Mode
@@ -279,14 +278,12 @@ class ClipPlayerViewModel extends ChangeNotifier
     await loadClip();
   }
 
-  /// 컨트롤러를 놓는다. 초기화에 성공했는지와 무관하게 부를 수 있다.
+  /// 지금 영상을 놓는다. 읽기에 성공했는지와 무관하게 부를 수 있다.
   void _disposeController() {
-    final controller = _controller;
-    if (controller == null) return;
-    _controller = null;
+    if (!engine.isReady) return;
     _isInitialized = false;
-    controller.removeListener(_onTick);
-    controller.dispose();
+    engine.removeListener(_onTick);
+    unawaited(engine.close());
   }
 
   Future<void> _initVideo() async {
@@ -300,56 +297,29 @@ class ClipPlayerViewModel extends ChangeNotifier
       _resolvedArtUri = null;
       return null;
     });
-    final controller = VideoPlayerController.file(File(resolvedPath));
-    _controller = controller;
 
-    // 기다리는 사이 dispose나 다시 읽기가 이 컨트롤러를 놓았으면 그만둔다.
-    bool released() => _disposed || !identical(_controller, controller);
-
-    await controller.initialize();
-    if (released()) return;
-    await controller.setLooping(false);
-    if (released()) return;
-    await controller.setPlaybackSpeed(_playbackRate);
-    if (released()) return;
+    await engine.open(resolvedPath, speed: _playbackRate);
+    // 기다리는 사이 화면을 닫았으면 그만둔다.
+    if (_disposed) return;
+    await engine.setLooping(false);
+    if (_disposed) return;
 
     if (_segments.isNotEmpty) {
       _segIndex = _segIndex.clamp(0, _segments.length - 1);
       // 이어 듣다 들어왔으면 그 자리부터, 아니면 구간 처음부터.
       final resume = _resumeFrom;
       _resumeFrom = null;
-      await controller.seekTo(
-          resume ?? Duration(milliseconds: currentSegment.startMs));
-      if (released()) return;
+      await engine
+          .seekTo(resume ?? Duration(milliseconds: currentSegment.startMs));
+      if (_disposed) return;
     }
 
-    controller.addListener(_onTick);
-
-    // 나갈 때가 되어서야 소리를 읽으면 한 템포 쉰다. 보고 있는 동안 미리
-    // 읽어 둔다(5차, 사용자 신고).
-    unawaited(_prepareBackground());
-  }
-
-  /// 나가면 틀 소리를 미리 읽어 둔다. 지금 보고 있는 구간·속도 그대로.
-  Future<void> _prepareBackground() async {
-    final bg = background;
-    if (bg == null || _clip == null || _resolvedPath.isEmpty) return;
-    if (_isBackground) return; // 이미 소리로 듣는 중이면 건드리지 않는다
-    final segmentScope = _scope == PlayScope.segment && _segments.isNotEmpty;
-    await bg.prepare(
-      absolutePath: _resolvedPath,
-      speed: _playbackRate,
-      clipBegin:
-          segmentScope ? Duration(milliseconds: currentSegment.startMs) : null,
-      clipEnd:
-          segmentScope ? Duration(milliseconds: currentSegment.endMs) : null,
-      loop: _loopSegment,
-    );
+    engine.addListener(_onTick);
   }
 
   void _onTick() {
-    if (_controller?.value.isInitialized != true || _segments.isEmpty) return;
-    final pos = _controller!.value.position;
+    if (!engine.isReady || _segments.isEmpty) return;
+    final pos = engine.position;
 
     final start = Duration(milliseconds: currentSegment.startMs);
     final end = Duration(milliseconds: currentSegment.endMs);
@@ -357,22 +327,22 @@ class ClipPlayerViewModel extends ChangeNotifier
     if (_scope == PlayScope.segment) {
       if (pos >= end) {
         if (_loopSegment) {
-          _controller!.seekTo(start);
-          _controller!.play();
+          engine.seekTo(start);
+          engine.play();
         } else {
-          _controller!.pause();
-          _controller!.seekTo(end);
+          engine.pause();
+          engine.seekTo(end);
         }
       }
-      if (pos < start && _controller!.value.isPlaying) {
-        _controller!.seekTo(start);
+      if (pos < start && engine.isPlaying) {
+        engine.seekTo(start);
       }
     } else {
       // 한 줄씩 멈춤: 지금 줄이 끝나면 한 번 멈춘다. 다시 재생하면 이어서 간다.
       if (_pauseEachLine &&
-          _controller!.value.isPlaying &&
+          engine.isPlaying &&
           _lineGate.shouldPause(_segIndex, pos, end)) {
-        _controller!.pause();
+        engine.pause();
       }
       final idx = indexForPosition(pos);
       if (idx != null && idx != _segIndex) {
@@ -400,8 +370,8 @@ class ClipPlayerViewModel extends ChangeNotifier
 
     if (state == AppLifecycleState.paused) {
       if (_isBackground) return;
-      final playing = _controller?.value.isInitialized == true &&
-          _controller!.value.isPlaying;
+      final playing = engine.isReady &&
+          engine.isPlaying;
       _wasPlayingBeforeBackground = playing;
       if (!playing) return;
       // 영상은 멈추고 소리만 이어 간다. enterAudioOnlyMode가 지금 위치부터 튼다.
@@ -413,8 +383,8 @@ class ClipPlayerViewModel extends ChangeNotifier
       if (!_isBackground || !_wasPlayingBeforeBackground) return;
       _wasPlayingBeforeBackground = false;
       await exitAudioOnlyMode();
-      if (_controller?.value.isInitialized == true) {
-        await _controller!.play();
+      if (engine.isReady) {
+        await engine.play();
       }
     }
   }
@@ -428,13 +398,13 @@ class ClipPlayerViewModel extends ChangeNotifier
     final clip = _clip;
     if (handOff == null || clip == null || _resolvedPath.isEmpty) return false;
 
-    final playingVideo = _controller?.value.isInitialized == true &&
-        _controller!.value.isPlaying;
+    final playingVideo = engine.isReady &&
+        engine.isPlaying;
     // 앱을 내렸다가 바로 화면을 닫은 경우에도 소리는 이어 간다.
     if (!playingVideo && !_isBackground) return false;
 
-    final position = _controller?.value.isInitialized == true
-        ? _controller!.value.position
+    final position = engine.isReady
+        ? engine.position
         : Duration(milliseconds: currentSegment.startMs);
 
     unawaited(handOff.takeOver(
@@ -467,7 +437,7 @@ class ClipPlayerViewModel extends ChangeNotifier
       });
     }
 
-    // 전에는 `_isInitialized && _controller != null`일 때만 놓았다. 파일이
+    // 전에는 `_isInitialized && controller != null`일 때만 놓았다. 파일이
     // 깨졌거나 없어서 initialize()가 던지면, 또는 초기화가 끝나기 전에
     // 사용자가 뒤로 가면 _isInitialized가 false라 컨트롤러를 영영 안 놓았다.
     // 네이티브 플레이어가 그대로 남는다.

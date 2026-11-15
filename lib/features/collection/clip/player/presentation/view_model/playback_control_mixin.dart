@@ -7,9 +7,8 @@
 // ============================================================================
 
 import 'package:flutter/foundation.dart';
-import 'package:video_player/video_player.dart';
-
 import 'package:parrokit/core/shared/utils/audio_bg.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/engine/clip_player_engine.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
 
@@ -21,7 +20,7 @@ mixin PlaybackControlMixin on ChangeNotifier {
   // Abstract getters (메인 클래스에서 구현)
   // ─────────────────────────────────────────────────────────────────
 
-  VideoPlayerController? get controller;
+  ClipPlayerEngine get engine;
   List<Segment> get segments;
   Segment get currentSegment;
   bool get isInitialized;
@@ -55,21 +54,21 @@ mixin PlaybackControlMixin on ChangeNotifier {
   }
 
   Future<void> _playPauseVideo() async {
-    if (!isInitialized || segments.isEmpty || controller == null) return;
+    if (!isInitialized || segments.isEmpty || !engine.isReady) return;
     if (isBackground) return;
 
-    if (controller!.value.isPlaying) {
-      await controller!.pause();
+    if (engine.isPlaying) {
+      await engine.pause();
     } else {
       if (scope == PlayScope.segment) {
-        final pos = controller!.value.position;
+        final pos = engine.position;
         final st = Duration(milliseconds: currentSegment.startMs);
         final en = Duration(milliseconds: currentSegment.endMs);
         if (pos < st || pos >= en) {
-          await controller!.seekTo(st);
+          await engine.seekTo(st);
         }
       }
-      await controller!.play();
+      await engine.play();
     }
     notifyListeners();
   }
@@ -109,28 +108,28 @@ mixin PlaybackControlMixin on ChangeNotifier {
 
   /// 특정 세그먼트로 이동.
   Future<void> jumpToSegment(int index, {bool autoplay = false}) async {
-    if (isBackground || segments.isEmpty || controller == null) return;
+    if (isBackground || segments.isEmpty || !engine.isReady) return;
 
     if (index == segIndex) {
-      await controller!.seekTo(Duration(milliseconds: currentSegment.startMs));
+      await engine.seekTo(Duration(milliseconds: currentSegment.startMs));
     } else {
       mutableSegIndex = index;
-      await controller!.seekTo(Duration(milliseconds: segments[index].startMs));
+      await engine.seekTo(Duration(milliseconds: segments[index].startMs));
     }
 
-    if (autoplay || controller!.value.isPlaying) {
-      await controller!.play();
+    if (autoplay || engine.isPlaying) {
+      await engine.play();
     } else {
-      await controller!.pause();
+      await engine.pause();
     }
     notifyListeners();
   }
 
   /// 사용자 시크.
   Future<void> seekTo(Duration target) async {
-    if (!isInitialized || segments.isEmpty || controller == null) return;
+    if (!isInitialized || segments.isEmpty || !engine.isReady) return;
 
-    final total = controller!.value.duration;
+    final total = engine.duration;
     Duration clamp(Duration x, Duration lo, Duration hi) =>
         x < lo ? lo : (x > hi ? hi : x);
 
@@ -147,7 +146,7 @@ mixin PlaybackControlMixin on ChangeNotifier {
       finalTarget = clamp(target, Duration.zero, total);
     }
 
-    await controller!.seekTo(finalTarget);
+    await engine.seekTo(finalTarget);
     notifyListeners();
 
     final h = await BgAudio.instance.ensureAudioHandler();
@@ -171,19 +170,19 @@ mixin PlaybackControlMixin on ChangeNotifier {
 
   /// 구간/전체 재생 모드 토글.
   Future<void> toggleScope() async {
-    if (isBackground || controller == null) return;
+    if (isBackground || !engine.isReady) return;
 
     if (scope == PlayScope.full) {
-      final pos = controller!.value.position;
+      final pos = engine.position;
       final st = Duration(milliseconds: currentSegment.startMs);
       final en = Duration(milliseconds: currentSegment.endMs);
       if (!(pos >= st && pos < en)) {
-        await controller!.seekTo(st);
+        await engine.seekTo(st);
       }
-      await controller!.setLooping(false);
+      await engine.setLooping(false);
       mutableScope = PlayScope.segment;
     } else {
-      await controller!.setLooping(loopSegment);
+      await engine.setLooping(loopSegment);
       mutableScope = PlayScope.full;
     }
     notifyListeners();
@@ -191,9 +190,9 @@ mixin PlaybackControlMixin on ChangeNotifier {
 
   /// 루프 토글.
   Future<void> toggleLoop() async {
-    if (isBackground || controller == null) return;
+    if (isBackground || !engine.isReady) return;
     mutableLoopSegment = !loopSegment;
-    await controller!.setLooping(scope == PlayScope.full && loopSegment);
+    await engine.setLooping(scope == PlayScope.full && loopSegment);
     notifyListeners();
   }
 
@@ -206,9 +205,9 @@ mixin PlaybackControlMixin on ChangeNotifier {
 
   /// 재생 속도 설정.
   Future<void> setPlaybackRate(double rate) async {
-    if (isBackground || controller == null) return;
+    if (isBackground || !engine.isReady) return;
     mutablePlaybackRate = rate;
-    await controller!.setPlaybackSpeed(rate);
+    await engine.setSpeed(rate);
     notifyListeners();
   }
 }

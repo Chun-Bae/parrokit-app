@@ -25,7 +25,6 @@ import 'package:parrokit/features/collection/clip/export/presentation/subtitle_e
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
-import 'package:video_player/video_player.dart';
 
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -193,7 +192,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                     tooltip: subtitleExportTitle,
                     icon: const Icon(Icons.movie_filter_outlined),
                     onPressed: () async {
-                      vm.controller?.pause();
+                      vm.engine.pause();
                       final path = await vm.resolvedSourcePath();
                       if (!context.mounted) return;
                       if (!await videoExists(path)) {
@@ -218,7 +217,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                     tooltip: '편집',
                     icon: const Icon(Icons.edit_outlined),
                     onPressed: () async {
-                      vm.controller?.pause();
+                      vm.engine.pause();
                       final changed = await context.push<bool>(
                           '${AppRoutes.clipsPath}/${AppRoutes.clipsEditPath}'
                           '?clipId=${widget.clipId}');
@@ -265,16 +264,16 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                 child: vm.isBackground
                     ? Container(color: Colors.black)
                     : Builder(builder: (context) {
-                        final controller = vm.controller;
-                        if (controller == null) {
+                        final engine = vm.engine;
+                        if (!engine.isReady) {
                           return Container(color: Colors.black);
                         }
                         return FittedBox(
                           fit: BoxFit.cover,
                           child: SizedBox(
-                            width: controller.value.size.width,
-                            height: controller.value.size.height,
-                            child: VideoPlayer(controller),
+                            width: engine.size.width,
+                            height: engine.size.height,
+                            child: engine.surface(),
                           ),
                         );
                       }),
@@ -351,7 +350,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
     bool isLight,
   ) {
     final cs = Theme.of(context).colorScheme;
-    final controller = vm.controller;
+    final engine = vm.engine;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -365,9 +364,9 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                 flex: 3,
                 child: Center(
                   child: AspectRatio(
-                    aspectRatio: controller?.value.aspectRatio == 0
+                    aspectRatio: engine.aspectRatio == 0
                         ? 16 / 9
-                        : controller?.value.aspectRatio ?? 16 / 9,
+                        : engine.aspectRatio,
                     child: _buildVideoStack(context, vm, isLight),
                   ),
                 ),
@@ -375,11 +374,11 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
               const SizedBox(height: 8),
 
               // Timeline
-              if (controller != null)
+              if (engine.isReady)
                 IgnorePointer(
                   ignoring: vm.isBackground,
                   child: SegmentTimeline(
-                    controller: controller,
+                    engine: engine,
                     start: Duration(milliseconds: vm.currentSegment.startMs),
                     end: Duration(milliseconds: vm.currentSegment.endMs),
                     onSeek: vm.seekTo,
@@ -431,8 +430,8 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
     Color fg,
     bool isLight,
   ) {
-    final controller = vm.controller;
-    final ar = controller?.value.aspectRatio ?? 0;
+    final engine = vm.engine;
+    final ar = engine.aspectRatio;
     final displayAr = ar == 0 ? 16.0 / 9.0 : ar;
     final isPortraitVideo = displayAr < 1.0;
 
@@ -461,11 +460,11 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
           ),
 
         // Timeline
-        if (controller != null)
+        if (engine.isReady)
           IgnorePointer(
             ignoring: vm.isBackground,
             child: SegmentTimeline(
-              controller: controller,
+              engine: engine,
               start: Duration(milliseconds: vm.currentSegment.startMs),
               end: Duration(milliseconds: vm.currentSegment.endMs),
               onSeek: vm.seekTo,
@@ -504,7 +503,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
     ClipPlayerViewModel vm,
     bool isLight,
   ) {
-    final controller = vm.controller;
+    final engine = vm.engine;
 
     return Stack(
       alignment: Alignment.center,
@@ -518,8 +517,8 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
             },
             child: vm.isBackground
                 ? Container(color: Colors.black)
-                : controller != null
-                    ? VideoPlayer(controller)
+                : engine.isReady
+                    ? engine.surface()
                     : Container(color: Colors.black),
           ),
         ),
