@@ -11,6 +11,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/community/question/presentation/question_words.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/comment_reply_button.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
@@ -131,9 +132,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('답변 채택'),
-        content: Text(
-            '이 답변을 채택하시겠습니까?\n채택 시 ${question.rewardCrackers} 크래커가 송금됩니다.'),
+        title: const Text(questionAcceptTitle),
+        content: Text(questionAcceptMessage(question.rewardCrackers)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -490,25 +490,35 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           // 유용해요'로 있어서 같은 수가 두 이름으로 두 번 나왔다(5차).
           Row(
             children: [
-              // 서버에 적힌 수(commentCount)가 아니라 지금 불러온 답글 수를
-              // 센다. 게시판·투표 상세도 그렇게 한다. 서버 카운터는 답글을
+              // 서버에 적힌 수(commentCount)가 아니라 지금 불러온 목록을
+              // 센다. 게시판·투표 상세도 그렇게 한다. 서버 카운터는 글을
               // 지우거나 올리다 실패하면 실제와 어긋날 수 있는데, 화면에는
               // 바로 아래 목록이 함께 보이므로 어긋나면 바로 티가 난다(5차).
-              Text('답글 ${provider.currentPostComments.length}',
+              //
+              // 세는 것은 질문에 바로 달린 답변뿐이다. 답글은 각 답변 아래에
+              // 붙어 있고 커뮤니티 메뉴도 '작성한 답변'과 '작성한 답글'을
+              // 따로 센다.
+              Text(
+                  questionAnswerCountLabel(provider.currentPostComments
+                      .where((c) => c.parentId == null)
+                      .length),
                   style: context.texts.bodyMedium
                       .copyWith(color: colorScheme.onSurface)),
             ],
           ),
           Divider(
               height: 24, color: colorScheme.onSurface.withValues(alpha: 0.08)),
-          // 아이콘만 있던 세 버튼에 글자를 붙였다(5차). 말풍선이 '답글 쓰기'인지
+          // 아이콘만 있던 세 버튼에 글자를 붙였다(5차). 말풍선이 무엇인지
           // 알기 어려웠고, 게시판 상세는 '공감'·'스크랩'처럼 글자가 있다.
+          //
+          // 여기서 쓰는 글은 질문에 바로 달리는 것이므로 '답변 쓰기'다.
+          // 각 답변 아래의 버튼이 '답글 쓰기'(220).
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _QuestionAction(
                 icon: Icons.mode_comment_outlined,
-                label: '답글 쓰기',
+                label: questionWriteAnswerLabel,
                 active: false,
                 onPressed: () =>
                     FocusScope.of(context).requestFocus(_replyFocusNode),
@@ -567,7 +577,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
         child: Center(
-          child: Text('아직 답변이 없습니다.\n첫 번째 답변을 남겨보세요!',
+          child: Text(questionNoAnswersMessage,
               textAlign: TextAlign.center,
               style: context.texts.bodyMedium
                   .copyWith(color: context.tokens.textDisabled)),
@@ -749,7 +759,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     ),
                   ),
                 Text(
-                  isBlocked ? '차단된 사용자의 답변입니다.' : answer.content,
+                  isBlocked ? questionBlockedAnswerMessage : answer.content,
                   style: context.texts.bodyReading
                       .copyWith(color: colorScheme.onSurface, height: 1.45),
                 ),
@@ -885,7 +895,8 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       controller: _replyController,
                       focusNode: _replyFocusNode,
                       decoration: InputDecoration(
-                        hintText: '답글을 남겨 보세요',
+                        hintText: questionInputHint(
+                            replying: provider.replyingTo != null),
                         hintStyle: context.texts.bodyMedium
                             .copyWith(color: colorScheme.onSurfaceVariant),
                         border: InputBorder.none,

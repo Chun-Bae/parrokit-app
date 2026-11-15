@@ -24,9 +24,11 @@ void main() {
       _read('lib/features/community/vote/presentation/vote_view_screen.dart'),
       contains('hintText: commentInputHint('),
     );
+    // 질문 화면은 220에서 '답변'과 '답글'을 나눴다. 질문에 바로 다는 것은
+    // 답변, 답변에 다는 것은 답글이다.
     expect(
       _read('lib/features/community/question/presentation/question_view_screen.dart'),
-      contains("hintText: '답글을 남겨 보세요'"),
+      contains('hintText: questionInputHint('),
     );
   });
 }
