@@ -320,21 +320,19 @@
   3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
   4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
-- **함수 onSubscriptionEvent + 규칙 (매달 패롯, 190d87b9)** — 배포 전에는 구독해도 패롯이 들어오지 않고, 앱이 `subParrots`를 바꿀 수 있는 상태가 이어진다.
-  ```
-  npx -y firebase-tools@latest deploy --only functions:onSubscriptionEvent,firestore:rules --project parrokit-45126
-  ```
-
-- **함수 suggestSentenceInfo (단계별 한도, 6c9c377b)** — 배포 전에는 모두 하루 3번 그대로다(동작은 멀쩡).
-  ```
-  npx -y firebase-tools@latest deploy --only functions:suggestSentenceInfo --project parrokit-45126
-  ```
-  한도를 바꾸려면 배포 없이 Firestore `config/sentenceAssist`에 `tierLimits: {light: 15, pro: 60}`를 둔다.
-
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
   ```
+
+### 2026-11-15 19:05 배포 완료 (사용자 요청 "로컬빌드로 배포", "규칙도 배포", 내가 돌림, Deploy complete 확인)
+- functions:onSubscriptionEvent — 매달 패롯 지급·만료가 들어갔다. 메모리 512MiB로 올림(292b3b47)
+- functions:suggestSentenceInfo — 문장 도우미 하루 한도를 구독 단계가 정한다(무료 3·라이트 15·프로 60)
+- firestore:rules — `subscription`과 `subParrots`는 앱이 못 바꾼다
+- 확인: GET 405, 우리 계정이 아닌 이벤트는 200 `ignored`. 주소는 둘 다 산다
+  (`https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`,
+  `https://onsubscriptionevent-my7jjzrohq-uc.a.run.app`)
+- 남은 설정: RevenueCat 대시보드(상품·entitlement·offering·Webhook 주소). 그전에는 이벤트가 오지 않는다
 
 ### 2026-11-15 16:3x 배포 완료 (사용자 요청 "함수배포 부탁해", 내가 돌림, Deploy complete 확인)
 - functions:onSubscriptionEvent — 새로 만들어짐(create). 주소 `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`
