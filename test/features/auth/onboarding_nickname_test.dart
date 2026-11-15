@@ -54,17 +54,17 @@ void main() {
     await tester.tap(find.text('중복 확인'));
     await tester.pump();
     await tester.pump();
-    expect(find.text('사용 가능한 닉네임입니다.'), findsOneWidget);
+    expect(find.text('쓸 수 있는 이름이에요.'), findsOneWidget);
 
     user.available = false;
     await tester.enterText(find.byType(TextFormField), '다른이름');
     await tester.pump();
     // 글자를 바꾸면 앞 결과는 지워진다
-    expect(find.text('사용 가능한 닉네임입니다.'), findsNothing);
+    expect(find.text('쓸 수 있는 이름이에요.'), findsNothing);
     await tester.tap(find.text('중복 확인'));
     await tester.pump();
     await tester.pump();
-    expect(find.text('이미 사용 중인 닉네임입니다.'), findsOneWidget);
+    expect(find.text('이미 누가 쓰고 있어요.'), findsOneWidget);
   });
 
   testWidgets('온보딩 닉네임도 프로필 수정과 같은 길이까지만 쳐진다', (tester) async {

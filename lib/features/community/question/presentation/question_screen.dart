@@ -83,10 +83,14 @@ class _QuestionScreenState extends State<QuestionScreen> {
       final canLoadMore = provider.hasMorePosts && !provider.isLoading;
       return AppEmptyState(
         icon: Icons.live_help_outlined,
+        // 거르개가 '전체'인데 "다른 조건을 골라 보라"고 하면 할 수 있는 일이
+        // 아니다. 조건을 골라 둔 사람에게만 그 말을 한다(5차).
         title: widget.selectedStatus == '전체'
             ? '아직 질문이 없어요.'
-            : '해당 조건의 질문이 없습니다.',
-        description: '다른 조건을 골라 보거나 직접 질문해 보세요.',
+            : '고른 조건에 맞는 질문이 없어요.',
+        description: widget.selectedStatus == '전체'
+            ? '첫 질문을 올려 보세요.'
+            : '다른 조건을 골라 보거나 직접 질문해 보세요.',
         actionLabel: canLoadMore ? '이전 글 더 보기' : null,
         onAction: canLoadMore ? () => loadMorePostsFrom(context) : null,
       );

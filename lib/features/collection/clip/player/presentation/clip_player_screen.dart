@@ -168,7 +168,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
           foregroundColor: fg,
           title: const Text('재생'),
         ),
-        body: const Center(child: Text('클립을 찾을 수 없습니다.')),
+        body: const Center(child: Text('클립을 찾을 수 없어요.')),
       );
     }
 

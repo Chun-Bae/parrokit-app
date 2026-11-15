@@ -57,7 +57,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _isNicknameAvailable = isAvailable;
         _hasCheckedNickname = true;
         _nicknameCheckMessage =
-            isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
+            isAvailable ? '쓸 수 있는 이름이에요.' : '이미 누가 쓰고 있어요.';
       });
     } catch (e) {
       AppLogger.e('[Auth] 닉네임 중복 확인 실패', error: e);
@@ -87,12 +87,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       await context.read<UserProvider>().updateDisplayName(nickname);
       if (!mounted) return;
-      showToast('닉네임 설정이 완료되었습니다!');
+      showToast('이름을 정했어요!');
       // 명시적으로 메인(대시보드)으로 이동
       context.go('/');
     } catch (e) {
       if (!mounted) return;
-      showToast('오류가 발생했습니다. 다시 시도해 주세요.');
+      showToast('잘 되지 않았어요. 다시 시도해 주세요.');
     }
   }
 

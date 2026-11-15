@@ -208,7 +208,7 @@ class ClipPlayerViewModel extends ChangeNotifier
       if (_disposed) return;
 
       if (payload == null) {
-        _errorMessage = '클립을 찾을 수 없습니다.';
+        _errorMessage = '클립을 찾을 수 없어요.';
         _isLoading = false;
         _clip = null;
         _segments = const [];

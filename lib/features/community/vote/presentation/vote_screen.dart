@@ -88,14 +88,14 @@ class _VoteScreenState extends State<VoteScreen> {
       // "진행 중인 투표가 없습니다"가 나왔다.
       final (emptyTitle, emptyDescription) = switch (widget.selectedFilter) {
         final f when f == CommunityFilters.vote[2] => (
-            '참여한 투표가 없습니다.',
+            '참여한 투표가 없어요.',
             '투표에 참여하면 여기에서 다시 볼 수 있어요.',
           ),
         final f when f == CommunityFilters.vote[3] => (
-            '마감된 투표가 없습니다.',
+            '마감된 투표가 없어요.',
             '기간이 끝난 투표가 여기에 모여요.',
           ),
-        _ => ('진행 중인 투표가 없습니다.', '새 투표를 만들면 여기에 올라와요.'),
+        _ => ('진행 중인 투표가 없어요.', '새 투표를 만들면 여기에 올라와요.'),
       };
       return AppEmptyState(
         icon: Icons.how_to_vote_outlined,

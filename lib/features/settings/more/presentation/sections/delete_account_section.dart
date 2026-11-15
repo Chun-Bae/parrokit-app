@@ -15,7 +15,7 @@ class DeleteAccountSection extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('회원탈퇴'),
-        content: const Text('탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.\n정말 탈퇴하시겠습니까?'),
+        content: const Text('탈퇴하면 모든 데이터가 지워지고 되돌릴 수 없어요.\n정말 탈퇴할까요?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -34,7 +34,7 @@ class DeleteAccountSection extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await context.read<UserProvider>().deleteAccount();
-      if (context.mounted) showToast('탈퇴가 완료되었습니다.');
+      if (context.mounted) showToast('탈퇴했어요.');
     } catch (e, st) {
       AppLogger.e('탈퇴 실패', error: e, stackTrace: st);
       if (context.mounted) {

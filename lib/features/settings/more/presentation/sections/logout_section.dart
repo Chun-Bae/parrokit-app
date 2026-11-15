@@ -19,7 +19,7 @@ class LogoutSection extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('로그아웃'),
-        content: const Text('로그아웃 하시겠습니까?'),
+        content: const Text('로그아웃할까요?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -60,7 +60,7 @@ class LogoutSection extends StatelessWidget {
       clipProvider.resetTransientUiState();
 
       if (context.mounted) {
-        showToast('로그아웃되었습니다.');
+        showToast('로그아웃했어요.');
         context.go('${AppRoutes.authPath}/${AppRoutes.signInPath}');
       }
     } catch (e, st) {

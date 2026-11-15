@@ -66,7 +66,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _isNicknameAvailable = isAvailable;
         _hasCheckedNickname = true;
         _nicknameCheckMessage =
-            isAvailable ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.';
+            isAvailable ? '쓸 수 있는 이름이에요.' : '이미 누가 쓰고 있어요.';
       });
     } catch (e) {
       AppLogger.e('[Auth] 닉네임 중복 확인 실패', error: e);
@@ -97,7 +97,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await userProvider.signUpWithEmail(
           email: email, password: password, nickname: nickname);
       if (!mounted) return;
-      showToast('회원가입이 완료되었습니다. 이메일로 전송된 인증 메일을 확인해 주세요.');
+      showToast('가입했어요. 보낸 인증 메일을 확인해 주세요.');
       context.pop(); // Go back to sign in
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -120,7 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // 뜬다. 사용자 눈에는 가입 버튼이 먹통인 것으로 보인다.
       AppLogger.e('[Auth] 이메일 회원가입 실패', error: e);
       if (!mounted) return;
-      showToast('회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      showToast('가입하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
     }
   }
 
@@ -344,7 +344,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           validator: (value) {
             if (value == null || value.isEmpty) return '비밀번호를 다시 입력해주세요.';
-            if (value != _passwordController.text) return '비밀번호가 일치하지 않습니다.';
+            if (value != _passwordController.text) return '비밀번호가 서로 달라요.';
             return null;
           },
         ),

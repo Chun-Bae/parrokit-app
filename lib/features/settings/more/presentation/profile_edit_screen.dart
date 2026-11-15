@@ -83,7 +83,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         _isNicknameAvailable = true;
         _checkedNickname = nickname;
       });
-      showToast('현재 사용 중인 닉네임입니다.');
+      showToast('지금 쓰고 있는 이름이에요.');
       return;
     }
 
@@ -97,13 +97,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         _checkedNickname = nickname;
       });
       if (isAvailable) {
-        showToast('사용 가능한 닉네임입니다.');
+        showToast('쓸 수 있는 이름이에요.');
       } else {
-        showToast('이미 누군가 사용 중인 닉네임입니다.');
+        showToast('이미 누가 쓰고 있어요.');
       }
     } catch (e) {
       if (!mounted) return;
-      showToast('중복 확인 중 오류가 발생했습니다.');
+      showToast('확인하지 못했어요. 다시 시도해 주세요.');
     } finally {
       if (mounted) setState(() => _isCheckingDuplicate = false);
     }
@@ -175,7 +175,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       }
 
       if (!mounted) return;
-      showToast('프로필이 성공적으로 업데이트되었습니다.');
+      showToast('프로필을 바꿨어요.');
       context.pop();
     } catch (e, st) {
       AppLogger.e('프로필 업데이트 실패', error: e, stackTrace: st);

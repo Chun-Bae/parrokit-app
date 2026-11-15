@@ -288,7 +288,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
         icon: Icons.phone_android_rounded,
         title: '로컬 저장 용량',
         usageText: _formatBytes(clipProvider.localStorageUsedBytes),
-        description: '인터넷이 없어도 바로 열 수 있도록 이 기기에 남아 있는 파일입니다.',
+        description: '인터넷이 없어도 바로 열 수 있게 이 기기에 남아 있는 파일이에요.',
         color: Theme.of(context).colorScheme.tertiary,
       ),
     );
