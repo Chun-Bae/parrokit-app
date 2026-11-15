@@ -26,19 +26,27 @@ class ClipValidator {
   static const int maxDurationMs = 5 * 60 * 1000;
   static final RegExp timecodePattern = RegExp(r'^\d{2}:\d{2}\.\d{3}$');
 
-  /// 영상을 고르기 전에도 알 수 있는 것만 본다. 저장 버튼을 끌 때 쓴다.
+  /// 지금 저장할 수 없는 까닭. 저장 버튼을 끄고 버튼 아래에 적을 때 쓴다.
   ///
   /// 막는 까닭은 [validateForm]이 쓰는 말과 똑같이 둔다. 버튼 아래 안내와
   /// 눌렀을 때 토스트가 다른 말이면 더 헷갈린다(5차).
+  ///
+  /// [segments]와 [durationMs]를 주면 구간까지 본다. 전에는 영상·폴더·제목만
+  /// 봐서, 구간이 비어 있어도 버튼이 파랗게 켜져 있었다. 눌러도 화면은
+  /// 그대로고 잠깐 뜨는 토스트만 알려 줬다(5차).
   static String? blockedReason({
     required String filePath,
     required String folder,
     required String title,
+    List<SegmentInput>? segments,
+    int? durationMs,
   }) {
     if (filePath.trim().isEmpty) return noFileMessage;
     if (folder.trim().isEmpty) return noFolderMessage;
     if (title.trim().isEmpty) return noTitleMessage;
-    return null;
+    if (segments == null || durationMs == null || durationMs <= 0) return null;
+    final result = ClipValidator().validateSegments(segments, durationMs);
+    return result.isValid ? null : result.errorMessage;
   }
 
   static const noFileMessage = '영상 파일을 먼저 선택해 주세요.';

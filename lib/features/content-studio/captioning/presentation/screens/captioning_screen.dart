@@ -140,12 +140,11 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
                       16,
                       16 + MediaQuery.of(context).padding.bottom,
                     ),
-                    // 제목·폴더 입력칸은 Provider를 깨우지 않으므로 버튼만
-                    // 따로 듣는다. 글자를 칠 때마다 화면 전체를 다시 그리지
-                    // 않는다.
+                    // 제목·폴더·구간 입력칸은 Provider를 깨우지 않으므로
+                    // 버튼만 따로 듣는다. 글자를 칠 때마다 화면 전체를 다시
+                    // 그리지 않는다.
                     child: ListenableBuilder(
-                      listenable: Listenable.merge(
-                          [vm.titleCtl, vm.collectionNameCtl]),
+                      listenable: vm.saveWatchables,
                       builder: (context, _) {
                         final blocked = vm.saveBlockedReason;
                         return Column(

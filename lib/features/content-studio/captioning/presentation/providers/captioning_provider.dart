@@ -334,13 +334,42 @@ class CaptioningProvider extends ChangeNotifier
   ///
   /// 전에는 아무것도 안 고른 새 클립 화면에서도 '저장'이 파랗게 켜져 있었다.
   /// 눌러야만 '영상 파일을 먼저 선택해 주세요' 토스트가 떴다(5차). 못 누르게
-  /// 하고 무엇이 빠졌는지 버튼 아래에 적는다. 영상 길이·구간처럼 영상을
-  /// 골라야 알 수 있는 것은 그대로 누를 때 알린다.
+  /// 하고 무엇이 빠졌는지 버튼 아래에 적는다.
+  ///
+  /// 구간도 같이 본다. 영상을 고르고 제목까지 적으면 버튼이 켜지는데, 구간이
+  /// 비어 있으면 눌러도 화면이 그대로여서 고장난 것처럼 보였다(5차).
   String? get saveBlockedReason => ClipValidator.blockedReason(
         filePath: picked?.path ?? '',
         folder: collectionNameCtl.text,
         title: titleCtl.text,
+        segments: _segmentInputs(),
+        durationMs: int.tryParse(durationCtl.text.trim()),
       );
+
+  /// 저장 버튼이 다시 판단해야 하는 입력칸들. 구간 칸은 Provider를 깨우지
+  /// 않으므로 버튼 쪽에서 직접 듣는다.
+  Listenable get saveWatchables => Listenable.merge([
+        titleCtl,
+        collectionNameCtl,
+        durationCtl,
+        for (final f in segmentForms) ...[
+          f.startCtl,
+          f.endCtl,
+          f.originalCtl,
+          f.pronCtl,
+          f.koCtl,
+        ],
+      ]);
+
+  List<SegmentInput> _segmentInputs() => segmentForms
+      .map((f) => SegmentInput(
+            start: f.startCtl.text.trim(),
+            end: f.endCtl.text.trim(),
+            original: f.originalCtl.text.trim(),
+            pron: f.pronCtl.text.trim(),
+            ko: f.koCtl.text.trim(),
+          ))
+      .toList();
 
   Future<void> save() async {
     final stagedPath = picked?.path;
@@ -397,15 +426,7 @@ class CaptioningProvider extends ChangeNotifier
 
   /// 현재 UI 상태에서 ClipFormData를 빌드합니다.
   ClipFormData _buildFormData({String? filePath}) {
-    final segments = segmentForms
-        .map((f) => SegmentInput(
-              start: f.startCtl.text.trim(),
-              end: f.endCtl.text.trim(),
-              original: f.originalCtl.text.trim(),
-              pron: f.pronCtl.text.trim(),
-              ko: f.koCtl.text.trim(),
-            ))
-        .toList();
+    final segments = _segmentInputs();
 
     final colName = collectionNameCtl.text.trim();
 
