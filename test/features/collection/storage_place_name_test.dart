@@ -31,15 +31,17 @@ void main() {
     }
   });
 
-  test('세 저장 위치 이름을 같은 말로 쓴다', () {
-    final list = _code(_files[0]);
-    expect(list, contains("return '기기'"));
-    expect(list, contains("return '서버'"));
-    expect(list, contains("return 'Google Drive'"));
-
-    final tabs = _code(_files[1]);
-    expect(tabs, contains("label: '기기'"));
-    expect(tabs, contains("label: '서버'"));
-    expect(tabs, contains("label: 'Google Drive'"));
+  test('클립 칩·거르개·폴더 카드가 같은 상태 말을 쓴다', () {
+    // 228부터 위치 이름이 아니라 상태로 적는다. 말이 한 곳(storageStateLabel)에
+    // 모여 있어야 화면마다 어긋나지 않는다.
+    for (final path in [
+      'lib/features/collection/library/presentation/widgets/clip_list_view.dart',
+      'lib/features/collection/library/presentation/clip_library_home.dart',
+      'lib/features/home/dashboard/presentation/widgets/collection_card.dart',
+    ]) {
+      final code = _code(path);
+      expect(code, contains('storageStateLabel('), reason: path);
+      expect(code.contains("'Google Drive'"), isFalse, reason: path);
+    }
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'storage_state_label.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/data/models/clip_item.dart';
@@ -40,17 +41,8 @@ class ClipListView extends StatelessWidget {
   final ValueChanged<ClipItem>? onToggleSelection;
   final ImageProvider<Object>? Function(ClipItem item)? resolveThumb;
 
-  /// 저장 위치 이름. 옮기기 시트·저장 용량과 같은 말을 쓴다(5차).
-  /// 전에는 목록만 '로컬'·'클라우드 · Google Drive'라 불렀다.
-  String? _storageLabel(String storageMode) {
-    if (storageMode == ClipStorageConstants.storageModeLocal) return '기기';
-    if (storageMode == ClipStorageConstants.storageModeServer) return '서버';
-    if (storageMode == ClipStorageConstants.storageModeGoogleDrive) {
-      return 'Google Drive';
-    }
-
-    return null;
-  }
+  /// 저장 상태. 위치 이름 대신 '이 기기에만 / 백업됨'으로 적는다(5차).
+  String? _storageLabel(String storageMode) => storageStateLabel(storageMode);
 
   Widget? _buildStorageChip(BuildContext context, String storageMode) {
     final theme = Theme.of(context);

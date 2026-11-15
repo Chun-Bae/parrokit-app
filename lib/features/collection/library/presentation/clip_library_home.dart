@@ -20,6 +20,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'widgets/storage_state_label.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -632,12 +633,8 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
     List<String> tags,
   ) {
     final modes = _chipModes(provider);
-    String label(String mode) => switch (mode) {
-          ClipStorageConstants.storageModeLocal => '기기',
-          ClipStorageConstants.storageModeServer => '서버',
-          ClipStorageConstants.storageModeGoogleDrive => 'Google Drive',
-          _ => mode,
-        };
+    // 거르개도 목록 칩과 같은 말을 쓴다(5차).
+    String label(String mode) => storageStateLabel(mode) ?? mode;
     Widget chip(String text, bool selected, VoidCallback onTap) => Padding(
           padding: const EdgeInsets.only(right: 6),
           child: ChoiceChip(

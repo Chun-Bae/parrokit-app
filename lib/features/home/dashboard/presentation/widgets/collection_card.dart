@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'package:parrokit/features/collection/library/presentation/widgets/storage_state_label.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
@@ -42,12 +43,9 @@ class CollectionCard extends StatelessWidget {
     required this.onTap,
   });
 
-  String? get _storageLabel => switch (storageMode) {
-        ClipStorageConstants.storageModeLocal => '기기',
-        ClipStorageConstants.storageModeServer => '서버',
-        ClipStorageConstants.storageModeGoogleDrive => 'Google Drive',
-        _ => null,
-      };
+  // 목록 칩·거르개와 같은 말(5차). 위치가 아니라 상태로 적는다.
+  String? get _storageLabel =>
+      storageMode == null ? null : storageStateLabel(storageMode!);
 
   // 대시보드 테마의 ColorScheme.secondary/tertiary는 은은한 톤으로 맞춰져
   // 있어(예: secondary = primarySoft) 배지 색으로 쓰면 거의 안 보인다.
