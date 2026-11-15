@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 
 /// 실제 소리를 내지 않고 부른 것만 적어 두는 가짜 핸들러.
@@ -12,7 +13,20 @@ class _FakeHandler extends BaseAudioHandler {
   Duration position = const Duration(seconds: 7);
   bool loadFails = false;
 
-  // ignore: non_constant_identifier_names
+  /// 읽기를 일부러 늦추고 싶을 때.
+  Completer<void>? loadGate;
+
+  Future<void> prepareSourceLocal({
+    required String absolutePath,
+    double speed = 1.0,
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) async {
+    if (loadFails) throw StateError('못 읽음');
+    calls.add('prepare:$absolutePath speed=$speed loop=$loop');
+  }
+
   Future<void> loadSourceLocal({
     required String absolutePath,
     double speed = 1.0,
@@ -22,9 +36,12 @@ class _FakeHandler extends BaseAudioHandler {
     String? title,
     String? subtitle,
     Uri? artUri,
+    bool sourceReady = false,
   }) async {
     if (loadFails) throw StateError('못 읽음');
-    calls.add('load:$absolutePath speed=$speed loop=$loop title=$title');
+    if (loadGate != null) await loadGate!.future;
+    calls.add('load:$absolutePath speed=$speed loop=$loop title=$title '
+        'ready=$sourceReady');
   }
 
   /// just_audio처럼 '재생이 끝날 때'까지 안 끝나는 Future를 주는 흉내.
@@ -172,13 +189,74 @@ void main() {
     expect(provider.isActive, isTrue, reason: '첫 진입에서 바로 줄이 떠야 한다');
   });
 
-  test('플레이어가 열릴 때 소리 쪽을 미리 깨운다', () async {
-    // 첫 진입에서 나가는 순간에야 띄우면 늦어서, 두 번째 진입부터만
-    // 줄이 떴다(5차, 사용자 신고).
-    await provider.warmUp();
+  test('플레이어가 열릴 때 소리를 미리 읽어 둔다', () async {
+    await provider.prepare(
+        absolutePath: '/tmp/a.mp4', speed: 1.5, loop: true);
 
     expect(handlerCalls, 1);
-    expect(provider.isActive, isFalse, reason: '깨우기만 하고 틀지는 않는다');
+    expect(handler.calls, ['prepare:/tmp/a.mp4 speed=1.5 loop=true']);
+    expect(provider.isActive, isFalse, reason: '읽어만 두고 틀지는 않는다');
+  });
+
+  test('미리 읽어 둔 그대로 나가면 다시 읽지 않는다', () async {
+    await provider.prepare(
+        absolutePath: '/tmp/a.mp4', speed: 1.5, loop: true);
+    await takeOver();
+
+    expect(handler.calls.last, isNot(contains('load')));
+    expect(
+        handler.calls.firstWhere((c) => c.startsWith('load:')), contains('ready=true'));
+  });
+
+  test('보던 것과 다르면 나갈 때 읽는다', () async {
+    await provider.prepare(
+        absolutePath: '/tmp/a.mp4', speed: 1.0, loop: false);
+    await takeOver(); // speed=1.5, loop=true
+
+    expect(handler.calls.firstWhere((c) => c.startsWith('load:')),
+        contains('ready=false'));
+  });
+
+  test('이어 듣는 중에는 미리 읽기가 소리를 건드리지 않는다', () async {
+    await takeOver();
+    handler.calls.clear();
+
+    await provider.prepare(
+        absolutePath: '/tmp/b.mp4', speed: 1.0, loop: false);
+
+    expect(handler.calls, isEmpty);
+    expect(provider.current!.title, '카페에서');
+  });
+
+  test('소리를 읽는 동안에도 줄은 이미 떠 있다', () async {
+    // 다 읽은 뒤에 띄웠더니 한 템포 늦게 생겼다(5차, 사용자 신고).
+    handler.loadGate = Completer<void>();
+    final pending = takeOver();
+
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(provider.isActive, isTrue, reason: '기다리는 동안에도 줄은 떠 있다');
+    expect(provider.current!.playing, isTrue);
+
+    handler.loadGate!.complete();
+    await pending;
+    expect(provider.isActive, isTrue);
+  });
+
+  test('다른 소리가 나면 듣던 것이 멈춘다', () async {
+    // 이어 듣는 동안 쇼츠나 문장 소리가 겹쳐 울렸다(5차, 사용자 요청).
+    await takeOver();
+
+    await AudioFocus.instance.claim();
+
+    expect(provider.isActive, isFalse);
+    expect(handler.calls, contains('stop'));
+  });
+
+  test('듣는 중이 아니면 소리 쪽을 괜히 깨우지 않는다', () async {
+    await AudioFocus.instance.claim();
+
+    expect(handlerCalls, 0);
+    expect(handler.calls, isEmpty);
   });
 
   test('소리 쪽이 늦게 올라와도 한 번 더 해 본다', () async {

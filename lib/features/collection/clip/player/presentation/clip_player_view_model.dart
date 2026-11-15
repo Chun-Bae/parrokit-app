@@ -247,9 +247,6 @@ class ClipPlayerViewModel extends ChangeNotifier
       _clip = payload.clip;
       _segments = payload.segments;
 
-      // 나갈 때가 되어서야 소리 쪽을 띄우면 늦는다. 미리 깨워 둔다(5차).
-      unawaited(background?.warmUp() ?? Future<void>.value());
-
       await _initVideo();
       if (_disposed) return;
 
@@ -327,6 +324,27 @@ class ClipPlayerViewModel extends ChangeNotifier
     }
 
     controller.addListener(_onTick);
+
+    // 나갈 때가 되어서야 소리를 읽으면 한 템포 쉰다. 보고 있는 동안 미리
+    // 읽어 둔다(5차, 사용자 신고).
+    unawaited(_prepareBackground());
+  }
+
+  /// 나가면 틀 소리를 미리 읽어 둔다. 지금 보고 있는 구간·속도 그대로.
+  Future<void> _prepareBackground() async {
+    final bg = background;
+    if (bg == null || _clip == null || _resolvedPath.isEmpty) return;
+    if (_isBackground) return; // 이미 소리로 듣는 중이면 건드리지 않는다
+    final segmentScope = _scope == PlayScope.segment && _segments.isNotEmpty;
+    await bg.prepare(
+      absolutePath: _resolvedPath,
+      speed: _playbackRate,
+      clipBegin:
+          segmentScope ? Duration(milliseconds: currentSegment.startMs) : null,
+      clipEnd:
+          segmentScope ? Duration(milliseconds: currentSegment.endMs) : null,
+      loop: _loopSegment,
+    );
   }
 
   void _onTick() {

@@ -96,6 +96,45 @@ class _BgAudioHandler extends BaseAudioHandler with SeekHandler {
     return base;
   }
 
+  /// 소리를 실제로 읽어 올리는 곳. 읽는 데 시간이 걸린다.
+  Future<void> _applySource({
+    required String absolutePath,
+    required double speed,
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) async {
+    _currentPath = absolutePath;
+    _clipStart = clipBegin;
+    _clipEnd = clipEnd;
+    await _player.setAudioSource(_buildSource(), preload: true);
+    await _player.setSpeed(speed);
+    await _player.setLoopMode(loop ? LoopMode.one : LoopMode.off);
+  }
+
+  /// 소리 없이 미리 읽어만 둔다(5차, 사용자 신고).
+  ///
+  /// 플레이어를 나가는 순간에야 읽기 시작하면 소리가 이어지기까지 한 템포
+  /// 쉰다. 화면을 보고 있는 동안 미리 읽어 두면 나갈 때는 틀기만 하면 된다.
+  /// 알림(지금 듣는 것)은 아직 띄우지 않는다. 틀지도 않았는데 잠금 화면에
+  /// 뜨면 안 된다.
+  Future<void> prepareSourceLocal({
+    required String absolutePath,
+    double speed = 1.0,
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) async {
+    assert(absolutePath.startsWith('/'), 'absolute path required');
+    await _applySource(
+      absolutePath: absolutePath,
+      speed: speed,
+      clipBegin: clipBegin,
+      clipEnd: clipEnd,
+      loop: loop,
+    );
+  }
+
   // 로컬 전용 로더
   Future<void> loadSourceLocal({
     required String absolutePath,
@@ -106,12 +145,10 @@ class _BgAudioHandler extends BaseAudioHandler with SeekHandler {
     String? title,
     String? subtitle,
     Uri? artUri,
+    bool sourceReady = false,
   }) async {
     // 안전장치: 반드시 절대경로
     assert(absolutePath.startsWith('/'), 'absolute path required');
-    _currentPath = absolutePath;
-    _clipStart = clipBegin;
-    _clipEnd = clipEnd;
 
     final item = MediaItem(
       id: absolutePath,
@@ -123,10 +160,15 @@ class _BgAudioHandler extends BaseAudioHandler with SeekHandler {
     );
     mediaItem.add(item);
 
-    final src = _buildSource();
-    await _player.setAudioSource(src, preload: true);
-    await _player.setSpeed(speed);
-    await _player.setLoopMode(loop ? LoopMode.one : LoopMode.off);
+    // 미리 읽어 둔 그대로면 다시 읽지 않는다.
+    if (sourceReady) return;
+    await _applySource(
+      absolutePath: absolutePath,
+      speed: speed,
+      clipBegin: clipBegin,
+      clipEnd: clipEnd,
+      loop: loop,
+    );
   }
 
   // 클립 변경 시 소스 재구성(재생상태/포지션 유지)
