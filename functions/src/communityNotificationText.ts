@@ -50,3 +50,13 @@ export function buildReplyBody(boardType: string, postTitle?: string): string {
   if (title.length === 0) return `${boardTypeLabelMap[boardType] ?? "게시글"}에 달렸어요.`;
   return `'${title}'에 달렸어요.`;
 }
+
+// 투표가 끝났을 때. 앱은 같은 것을 '마감'이라 부른다(거르개 '마감',
+// 카드의 'N일 뒤 마감'). 알림만 '종료'라 다른 일처럼 보였다(5차).
+export const voteEndTitle = "투표가 마감됐어요.";
+
+export function buildVoteEndBody(postTitle?: string): string {
+  const title = shortPostTitle(postTitle);
+  if (title.length === 0) return "결과를 확인해 보세요.";
+  return `'${title}' 결과를 확인해 보세요.`;
+}

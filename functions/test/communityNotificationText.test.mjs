@@ -10,6 +10,8 @@ import {
   buildReplyTitle,
   buildCommentBody,
   shortPostTitle,
+  voteEndTitle,
+  buildVoteEndBody,
 } from "../lib/communityNotificationText.js";
 
 test("제목은 누가 무엇을 했는지만 말한다", () => {
@@ -38,4 +40,16 @@ test("긴 제목은 30자까지만 쓴다", () => {
   const long = "가".repeat(40);
   assert.equal(shortPostTitle(long), `${"가".repeat(30)}…`);
   assert.equal(shortPostTitle("  짧은 제목  "), "짧은 제목");
+});
+
+test("투표 알림은 앱과 같이 '마감'이라 부른다", () => {
+  // 앱의 거르개는 '마감', 카드는 'N일 뒤 마감'인데 알림만 '종료'였다(5차).
+  assert.equal(voteEndTitle, "투표가 마감됐어요.");
+  assert.ok(!voteEndTitle.includes("종료"));
+});
+
+test("투표 알림 본문은 어느 투표인지 적는다", () => {
+  assert.equal(buildVoteEndBody("점심 뭐 먹지"), "'점심 뭐 먹지' 결과를 확인해 보세요.");
+  assert.equal(buildVoteEndBody(""), "결과를 확인해 보세요.");
+  assert.equal(buildVoteEndBody(undefined), "결과를 확인해 보세요.");
 });

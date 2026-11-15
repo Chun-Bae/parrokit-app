@@ -9,6 +9,8 @@ import {
   buildReplyTitle,
   buildCommentBody,
   buildReplyBody,
+  voteEndTitle,
+  buildVoteEndBody,
 } from "./communityNotificationText";
 
 const db = admin.firestore();
@@ -178,8 +180,8 @@ export const onVoteEndNotification = onSchedule(
               boardType: "vote",
               postId,
               actorId: "system",
-              title: "투표가 종료되었어요.",
-              body: `${postTitle} 결과를 확인해 보세요.`,
+              title: voteEndTitle,
+              body: buildVoteEndBody(postTitle),
               routePath,
             });
 
