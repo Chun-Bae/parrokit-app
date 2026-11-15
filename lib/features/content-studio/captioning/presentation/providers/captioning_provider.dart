@@ -1,3 +1,4 @@
+import 'dart:async';
 // ============================================================================
 // lib/features/content-studio/captioning/presentation/providers/captioning_provider.dart
 // ============================================================================
@@ -18,6 +19,7 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/local/dao/collections_dao.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart' as utils;
+import 'package:parrokit/features/settings/subscription/presentation/not_enough_parrots_sheet.dart';
 
 import '../../data/adapters/asr_engine.dart';
 import '../../data/adapters/openai_api_exception.dart';
@@ -226,7 +228,9 @@ class CaptioningProvider extends ChangeNotifier
     // 거절한다. 전에는 가진 만큼만 깎고 만들어 줘서 0패롯이면 공짜였다.
     final cost = captionParrotCost(durationMs);
     if (userProvider.coins < cost) {
-      showToast('패롯이 부족합니다. (필요 $cost / 보유 ${userProvider.coins})');
+      // 할 수 있는 일(광고 보기·구독)을 시트로 알린다(5차 4단계).
+      unawaited(showNotEnoughParrots(
+          needed: cost, have: userProvider.coins));
       _setSttState(SttProcessState.idle);
       return;
     }

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/settings/subscription/presentation/not_enough_parrots_sheet.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 
 import '../../data/data_sources/tts_remote_data_source.dart';
@@ -215,7 +217,9 @@ class TtsProvider extends ChangeNotifier {
 
     final cost = _calculateCoinCost(_text.length);
     if (userProvider.coins < cost) {
-      showToast('패롯이 부족합니다. (필요 $cost / 보유 ${userProvider.coins})');
+      // 할 수 있는 일(광고 보기·구독)을 시트로 알린다(5차 4단계).
+      unawaited(showNotEnoughParrots(
+          needed: cost, have: userProvider.coins));
       return;
     }
 
