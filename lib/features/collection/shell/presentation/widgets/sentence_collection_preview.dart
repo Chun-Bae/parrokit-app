@@ -17,6 +17,10 @@ import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
+import 'package:parrokit/core/content/speaking_xp.dart';
+import 'package:parrokit/core/content/practice_log.dart';
+import 'package:parrokit/core/speech/presentation/speech_practice_view.dart';
+import 'package:parrokit/core/speech/phrase_recognizer.dart';
 import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'clip_sentence_matches_section.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
@@ -1456,6 +1460,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   late final int sharedImports = widget.shared?.importCount ?? 0;
 
   static const _ttsLocales = {'영어': 'en-US', '일본어': 'ja-JP', '중국어': 'zh-CN'};
+
+  /// 따라 말하기. 홈 무대와 같은 위젯·기록·XP를 쓴다(5차).
+  final PhraseRecognizer recognizer = SpeechToTextRecognizer();
+
+  /// 마지막 연습 점수(100점 만점). 아직 안 했으면 null.
+  int? lastPracticeScore;
   final FlutterTts tts = FlutterTts();
   bool ttsReady = false;
   bool speaking = false;
@@ -1589,6 +1599,45 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   }
 
   /// 마이크 버튼: 이 문장을 TTS로 읽어준다. 읽는 중에 다시 누르면 멈춘다.
+  /// 따라 말하기 시도 하나를 기록에 남긴다(홈 무대와 같은 저장소).
+  void recordPracticeAttempt(PracticeAttemptResult result) {
+    setState(() {
+      lastPracticeScore =
+          result.score == null ? null : (result.score! * 100).round();
+    });
+    unawaited(PracticeLogStore.add(
+      widget.accountId,
+      PracticeAttempt(
+        at: DateTime.now(),
+        sentenceId: widget.sentence.id,
+        score: result.score,
+        heard: result.heard,
+        success: result.success,
+        manual: result.manual,
+        durationMs: result.duration.inMilliseconds,
+      ),
+    ).catchError((Object _) {/* 기록 실패가 연습을 막지는 않는다. */}));
+  }
+
+  /// 한 번 따라 말하기를 마쳤다. 연습 수를 올리고 XP를 더한다.
+  Future<void> completePractice(double? score) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await SentenceActivityStore.incrementPractice(
+      widget.accountId,
+      widget.sentence.id,
+    );
+    final total = await addSpeakingXp(widget.accountId, score);
+    if (!mounted) return;
+    final scoreText = score == null ? '' : '${(score * 100).round()}점 · ';
+    messenger.showSnackBar(SnackBar(
+      content: Text(total == null
+          ? '따라 말하기 완료 · $scoreText기록했어요'
+          : '따라 말하기 완료 · $scoreText+${xpText(xpGain(score))} XP'),
+      duration: const Duration(seconds: 2),
+    ));
+    await loadActivity();
+  }
+
   Future<void> speakSentence() async {
     if (!ttsReady) return;
     try {
@@ -1901,6 +1950,30 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
           ),
           // 내 기록은 내 문장일 때만 보인다. 저장하지 않은 남의 문장에는 보이지 않는다.
           if (widget.saved) ...[
+            const SizedBox(height: 18),
+            // 위에도 문장이 있어서, 아래 줄이 '연습하는 자리'라는 것을
+            // 이름으로 알린다(5차).
+            Row(
+              children: [
+                Icon(Icons.mic_rounded, size: 16, color: colors.primary),
+                const SizedBox(width: 6),
+                Text('따라 말하기',
+                    style: context.texts.labelLarge
+                        .copyWith(color: colors.onSurface)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SpeechPracticeView(
+              key: const ValueKey('sentence-speech-practice'),
+              phrase: widget.sentence.text,
+              localeId: _ttsLocales[widget.sentence.language] ?? 'en-US',
+              recognizer: recognizer,
+              enabled: true,
+              reduceMotion: MediaQuery.disableAnimationsOf(context),
+              onBeforeStart: () => unawaited(tts.stop()),
+              onAttempt: recordPracticeAttempt,
+              onComplete: (score) => unawaited(completePractice(score)),
+            ),
             const SizedBox(height: 22),
             const _PrivateSectionLabel(),
             const SizedBox(height: 12),

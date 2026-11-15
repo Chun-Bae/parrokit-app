@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 /// 따라 말하기 XP 계산. 화면(stage_preview_screen)이 들고 있던 식을 꺼내
 /// 따로 둔다. 홈에 그대로 보이는 숫자인데 테스트가 없었다(5차).
 
@@ -36,3 +38,20 @@ String xpText(double value) {
 /// 올랐는데 '10 / 10 XP'로 보였다. 내림해서 한 단계를 다 채워야 10이 된다.
 String xpProgressText(double totalXp) =>
     xpText((xpInLevel(totalXp) * 10).floor() / 10);
+
+/// XP를 저장하는 자리. 홈 무대와 문장 상세가 같은 값을 쌓는다.
+String speakingXpKey(String accountId) => 'parrokit.speaking.xp.v1.$accountId';
+
+/// 따라 말하기 한 번의 XP를 더하고 쌓인 값을 돌려준다. 저장에 실패하면 null.
+Future<double?> addSpeakingXp(String accountId, double? score) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final key = speakingXpKey(accountId);
+    final previous = (prefs.get(key) as num?)?.toDouble() ?? 0;
+    final next = nextXp(previous, xpGain(score));
+    if (!await prefs.setDouble(key, next)) return null;
+    return next;
+  } catch (_) {
+    return null;
+  }
+}
