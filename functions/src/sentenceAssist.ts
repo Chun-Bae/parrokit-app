@@ -2,6 +2,13 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ENFORCE_APP_CHECK} from "./appCheck";
 import * as admin from "firebase-admin";
 import {genkit, z} from "genkit";
+import {SubscriptionTier} from "./subscriptionEvent";
+import {
+  limitForTier,
+  loadTier,
+  sanitizeLimits,
+  TierLimits,
+} from "./subscriptionTier";
 import {vertexAI} from "@genkit-ai/google-genai";
 
 // 문장 추가 화면의 "뜻·발음 채우기"와 "한글로 원문 만들기"를 맡는다.
@@ -12,7 +19,11 @@ const MODEL = "vertexai/gemini-3.1-flash-lite";
 const DEFAULT_DAILY_LIMIT = 3;
 const USAGE_COLLECTION = "sentence-assist-usage";
 // 한도와 예외 대상은 코드가 아니라 이 문서에서 읽는다. 콘솔에서 고치면 배포 없이 바로 적용된다.
-//   config/sentenceAssist = {dailyLimit: 3, unlimitedUids: ["uid1", ...]}
+//   config/sentenceAssist = {
+//     dailyLimit: 3,                        // 무료 한도(예전 이름, 그대로 둔다)
+//     tierLimits: {light: 15, pro: 60},     // 구독 단계별 한도
+//     unlimitedUids: ["uid1", ...],
+//   }
 const CONFIG_DOC = "config/sentenceAssist";
 const CONFIG_CACHE_MS = 30 * 1000;
 const MAX_TEXT_LENGTH = 80;
@@ -33,6 +44,7 @@ const TransliterateOutput = z.object({
 
 interface AssistConfig {
   dailyLimit: number;
+  tierLimits: Partial<TierLimits>;
   unlimitedUids: Set<string>;
 }
 
@@ -50,6 +62,7 @@ async function loadConfig(): Promise<AssistConfig> {
     return cachedConfig.value;
   }
   let dailyLimit = DEFAULT_DAILY_LIMIT;
+  let tierLimits: Partial<TierLimits> = {};
   let unlimitedUids = new Set<string>();
   try {
     const snapshot = await admin.firestore().doc(CONFIG_DOC).get();
@@ -59,6 +72,7 @@ async function loadConfig(): Promise<AssistConfig> {
       if (Number.isInteger(limit) && limit >= 0 && limit <= 10000) {
         dailyLimit = limit;
       }
+      tierLimits = sanitizeLimits(data.tierLimits);
       if (Array.isArray(data.unlimitedUids)) {
         unlimitedUids = new Set(
           data.unlimitedUids.filter((v: unknown) => typeof v === "string")
@@ -68,9 +82,23 @@ async function loadConfig(): Promise<AssistConfig> {
   } catch (error) {
     console.error("[SentenceAssist] config read failed", error);
   }
-  const value = {dailyLimit, unlimitedUids};
+  const value = {dailyLimit, tierLimits, unlimitedUids};
   cachedConfig = {value, at: now};
   return value;
+}
+
+/**
+ * 이 사람의 단계에 맞는 하루 한도. 무료는 예전 설정값(dailyLimit)을 그대로 쓴다.
+ *
+ * @param {SubscriptionTier} tier 단계
+ * @param {AssistConfig} config 설정
+ * @return {number} 하루 한도
+ */
+function limitFor(tier: SubscriptionTier, config: AssistConfig): number {
+  if (tier === "free") {
+    return config.tierLimits.free ?? config.dailyLimit;
+  }
+  return limitForTier(tier, config.tierLimits);
 }
 
 /**
@@ -218,11 +246,14 @@ export const suggestSentenceInfo = onCall(
 
     // 모델을 부르지 않고 오늘 쓴 횟수만 알려 준다. 횟수를 쓰지 않는다.
     if (data.mode === "status") {
-      const {dailyLimit, unlimitedUids} = await loadConfig();
-      const used = unlimitedUids.has(uid) ? 0 : await usedToday(uid);
+      const config = await loadConfig();
+      const tier = await loadTier(uid);
+      const limit = limitFor(tier, config);
+      const used = config.unlimitedUids.has(uid) ? 0 : await usedToday(uid);
       return {
-        dailyLimit,
-        remainingToday: Math.max(dailyLimit - used, 0),
+        dailyLimit: limit,
+        remainingToday: Math.max(limit - used, 0),
+        tier,
       };
     }
 
@@ -232,11 +263,13 @@ export const suggestSentenceInfo = onCall(
     }
     const mode = data.mode === "transliterate" ? "transliterate" : "suggest";
 
-    const {dailyLimit, unlimitedUids} = await loadConfig();
-    const unlimited = unlimitedUids.has(uid);
+    const config = await loadConfig();
+    const tier = await loadTier(uid);
+    const dailyLimit = limitFor(tier, config);
+    const unlimited = config.unlimitedUids.has(uid);
     // 어떤 uid가 어떤 한도로 판단됐는지 남겨 둔다. 예외 대상을 정할 때 이 uid를 쓴다.
     console.log(
-      `[SentenceAssist] uid=${uid} mode=${mode} ` +
+      `[SentenceAssist] uid=${uid} mode=${mode} tier=${tier} ` +
         `limit=${dailyLimit} unlimited=${unlimited}`
     );
 

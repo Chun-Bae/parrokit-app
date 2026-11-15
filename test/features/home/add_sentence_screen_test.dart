@@ -1,10 +1,19 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
 
 Future<void> open(WidgetTester tester, String language) =>
-    tester.pumpWidget(MaterialApp(home: AddSentenceScreen(language: language)));
+    tester.pumpWidget(withSubscription(AddSentenceScreen(language: language)));
+
+/// 한도를 다 쓴 화면이 구독 단계를 읽으므로 테스트에도 Provider를 둔다.
+Widget withSubscription(Widget child, {SubscriptionProvider? provider}) =>
+    ChangeNotifierProvider<SubscriptionProvider>.value(
+        value: provider ?? SubscriptionProvider(firestore: FakeFirebaseFirestore()),
+        child: MaterialApp(home: child));
 
 /// 서버가 알려 준 하루 한도와 남은 횟수를 흉내 낸다.
 class _UsageAssist implements SentenceAssist {
@@ -94,10 +103,9 @@ void main() {
   });
 
   testWidgets('서버가 알려 준 횟수를 버튼 옆에 "쓴 횟수 / 한도"로 보여준다', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-        home: AddSentenceScreen(
-            language: '영어',
-            assist: _UsageAssist(dailyLimit: 3, remainingToday: 2))));
+    await tester.pumpWidget(withSubscription(AddSentenceScreen(
+        language: '영어',
+        assist: _UsageAssist(dailyLimit: 3, remainingToday: 2))));
     await tester.pump();
     expect(find.byKey(const ValueKey('usage-count')), findsOneWidget);
     expect(find.text('오늘 1/3회 사용'), findsOneWidget);
@@ -105,10 +113,9 @@ void main() {
   });
 
   testWidgets('횟수를 모두 쓰면 3 / 3이 되고 채우기 버튼이 꺼진다', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-        home: AddSentenceScreen(
-            language: '영어',
-            assist: _UsageAssist(dailyLimit: 3, remainingToday: 0))));
+    await tester.pumpWidget(withSubscription(AddSentenceScreen(
+        language: '영어',
+        assist: _UsageAssist(dailyLimit: 3, remainingToday: 0))));
     await tester.pump();
     await tester.enterText(
         find.byKey(const ValueKey('sentence-text')), 'Hello');
@@ -152,5 +159,47 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('draft-discard')));
     await tester.pumpAndSettle();
     expect(find.text('열기'), findsOneWidget);
+  });
+
+  testWidgets('무료 사용자가 횟수를 다 쓰면 구독 길을 한 줄로 알린다', (tester) async {
+    await tester.pumpWidget(withSubscription(AddSentenceScreen(
+        language: '영어',
+        assist: _UsageAssist(dailyLimit: 3, remainingToday: 0))));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('assist-quota-upsell')), findsOneWidget);
+    expect(find.text('구독하면 하루에 더 많이 채울 수 있어요.'), findsOneWidget);
+    expect(find.text('구독 보기'), findsOneWidget);
+  });
+
+  testWidgets('아직 남아 있으면 구독 안내를 보여 주지 않는다', (tester) async {
+    await tester.pumpWidget(withSubscription(AddSentenceScreen(
+        language: '영어',
+        assist: _UsageAssist(dailyLimit: 3, remainingToday: 1))));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('assist-quota-upsell')), findsNothing);
+  });
+
+  testWidgets('구독 중인 사람에게는 다 썼어도 구독 안내를 보여 주지 않는다', (tester) async {
+    final db = FakeFirebaseFirestore();
+    await db.collection('users').doc('uid-1').set({
+      'subscription': {'tier': 'pro', 'status': 'active'},
+    });
+    final provider = SubscriptionProvider(firestore: db);
+    addTearDown(provider.dispose);
+    provider.syncUser('uid-1');
+    // 테스트 시계는 멈춰 있어서, 서버 문서가 도착하게 실제 시간을 잠깐 흘린다.
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)));
+
+    await tester.pumpWidget(withSubscription(
+        AddSentenceScreen(
+            language: '영어',
+            assist: _UsageAssist(dailyLimit: 60, remainingToday: 0)),
+        provider: provider));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('assist-quota-upsell')), findsNothing);
   });
 }

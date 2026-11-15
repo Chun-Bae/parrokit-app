@@ -22,6 +22,13 @@ String subscriptionRowSubtitle(SubscriptionTier tier) =>
 
 const String subscriptionScreenTitle = '구독';
 
+/// 하루 한도를 다 썼을 때 무료 사용자에게 보여 주는 한 줄.
+/// 숫자는 서버 설정에서 바뀔 수 있어서 적지 않는다.
+const String assistQuotaUpsellText = '구독하면 하루에 더 많이 채울 수 있어요.';
+
+/// 구독 화면으로 가는 버튼 이름. 여러 화면에서 같은 말을 쓴다.
+const String subscriptionOpenButtonLabel = '구독 보기';
+
 /// 구독하지 않은 사람에게 보여 주는 머리말.
 const String subscriptionFreeHeadline = '지금 무료예요';
 const String subscriptionFreeBody = '광고를 보고 패롯 3개를 받고 있어요.';

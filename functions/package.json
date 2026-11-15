@@ -15,7 +15,8 @@
     "test:questions": "npm run build && node --test test/questionExpiry.test.mjs",
     "test:community": "npm run build && node --test test/communityNotificationText.test.mjs",
     "test:adreward": "npm run build && node --test test/adReward.test.mjs",
-    "test:subscription": "npm run build && node --test test/subscriptionEvent.test.mjs"
+    "test:subscription": "npm run build && node --test test/subscriptionEvent.test.mjs",
+    "test:tier": "npm run build && node --test test/subscriptionTier.test.mjs"
   },
   "engines": {
     "node": "22"

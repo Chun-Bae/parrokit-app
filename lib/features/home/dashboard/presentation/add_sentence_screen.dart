@@ -6,6 +6,10 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
+import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
@@ -341,6 +345,23 @@ class _AutoFillCard extends StatelessWidget {
               key: const ValueKey('auto-fill-message'),
               style: context.texts.bodySmall.copyWith(
                   color: exhausted ? colors.error : colors.onSurfaceVariant)),
+        ),
+      // 다 쓴 무료 사용자에게만, 더 쓸 수 있는 길을 한 줄로 알린다(5차 구독 3단계).
+      if (exhausted &&
+          context.watch<SubscriptionProvider>().tier == SubscriptionTier.free)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(children: [
+            Expanded(
+                child: Text(assistQuotaUpsellText,
+                    key: const ValueKey('assist-quota-upsell'),
+                    style: context.texts.bodySmall
+                        .copyWith(color: colors.onSurfaceVariant))),
+            TextButton(
+                key: const ValueKey('assist-quota-subscribe'),
+                onPressed: () => resolvePaywallPresenter().show(context),
+                child: const Text(subscriptionOpenButtonLabel)),
+          ]),
         ),
     ]);
   }
