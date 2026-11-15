@@ -419,5 +419,18 @@ void main() {
           reason: '기한이 지난 단어는 오늘 볼 단어다');
       expect(WordReviewStore.dueLabel(null, now), '오늘', reason: '새 단어');
     });
+
+    test('목록은 언제 다시 보는지 적는다', () {
+      // 전에는 '오늘'만 적혀 무엇의 오늘인지 몰랐다(5차).
+      final now = DateTime(2026, 11, 15, 23);
+      expect(WordReviewStore.nextSeenLabel(DateTime(2026, 11, 15), now),
+          '오늘 다시');
+      expect(WordReviewStore.nextSeenLabel(DateTime(2026, 11, 16), now),
+          '내일 다시');
+      expect(WordReviewStore.nextSeenLabel(DateTime(2026, 11, 23), now),
+          '8일 뒤 다시');
+      expect(WordReviewStore.nextSeenLabel(null, now), '오늘 다시',
+          reason: '새 단어');
+    });
   });
 }

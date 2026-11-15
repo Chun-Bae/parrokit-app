@@ -190,6 +190,13 @@ class WordReviewStore {
         _ => '$days일 뒤',
       };
 
+  /// 목록에서 "언제 다시 보는지" 적는 말.
+  ///
+  /// 전에는 '오늘'만 적혀 있어 무엇의 오늘인지 알 수 없었다(추가한 날? 복습일?).
+  /// 위의 배너('오늘 다시 볼 단어 N개')와 같은 결로 적는다(5차).
+  static String nextSeenLabel(DateTime? dueAt, DateTime now) =>
+      '${dueLabel(dueAt, now)} 다시';
+
   /// 기한까지 며칠 남았는지 적는 말. 지났거나 오늘이면 '오늘'.
   static String dueLabel(DateTime? dueAt, DateTime now) {
     if (dueAt == null) return '오늘';

@@ -341,7 +341,8 @@ class _WordTile extends StatelessWidget {
                       .copyWith(color: colors.onSurfaceVariant),
                 ),
                 Text(
-                  WordReviewStore.dueLabel(review?.dueAt, DateTime.now()),
+                  WordReviewStore.nextSeenLabel(
+                      review?.dueAt, DateTime.now()),
                   key: ValueKey('word-due-${word.id}'),
                   style: context.texts.labelSmall.copyWith(
                       color: colors.onSurfaceVariant.withValues(alpha: 0.8)),
