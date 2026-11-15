@@ -68,6 +68,13 @@ String escapeForFilter(String path) => path
     .replaceAll('[', r'\[')
     .replaceAll(']', r'\]');
 
+/// 자막에 쓸 글꼴 이름. **파일 안에 적힌 이름과 한 글자도 달라서는 안 된다.**
+///
+/// 'IBM Plex Sans KR'로 넘겼더니 libass가 못 찾아 다른 글꼴로 떨어졌고,
+/// 그 글꼴에 한글이 없는 기기에서는 자막이 깨져 나왔다(5차, 사용자 신고).
+/// 시뮬레이터에는 한글 글꼴이 있어 멀쩡해 보여서 늦게 드러났다.
+const String burnFontFamily = 'IBM Plex Sans KR SemiBold';
+
 /// 자막을 구울 ffmpeg 인자.
 ///
 /// - 글꼴은 앱이 들고 있는 것을 쓴다. 기기 글꼴을 찾게 두면 한글이 깨진다
@@ -78,7 +85,7 @@ List<String> burnArguments({
   required String subtitlePath,
   required String fontsDir,
   required String outputPath,
-  String fontName = 'IBM Plex Sans KR',
+  String fontName = burnFontFamily,
   int fontSize = 18,
 }) {
   final style = 'FontName=$fontName,FontSize=$fontSize,'

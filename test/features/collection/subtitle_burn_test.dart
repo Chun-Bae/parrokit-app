@@ -1,5 +1,7 @@
 // 자막을 구워 내보낼 때 쓰는 계산들(5차, 사용자 요청).
 
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/export/domain/subtitle_burn.dart';
@@ -119,5 +121,38 @@ Second
     expect(burnTimeHint(const Duration(seconds: 8)), '10초쯤 걸려요.');
     expect(burnTimeHint(const Duration(seconds: 60)), '30초쯤 걸려요.');
     expect(burnTimeHint(const Duration(minutes: 3)), '2분쯤 걸려요.');
+  });
+
+  test('글꼴 이름이 실제 글꼴 파일에 적힌 이름과 같다', () {
+    // 이름이 한 글자라도 다르면 libass가 못 찾고 다른 글꼴로 떨어진다.
+    // 그 글꼴에 한글이 없으면 자막이 깨져 나온다(5차, 사용자 신고).
+    final bytes = File(
+            'assets/fonts/IBMPlexSansKR/IBMPlexSansKR-SemiBold.ttf')
+        .readAsBytesSync();
+    // 글꼴 이름표는 UTF-16(BE)로 들어 있다.
+    final wanted = <int>[];
+    for (final unit in burnFontFamily.codeUnits) {
+      wanted.addAll([unit >> 8, unit & 0xFF]);
+    }
+    var found = false;
+    for (var i = 0; i + wanted.length <= bytes.length && !found; i++) {
+      var same = true;
+      for (var j = 0; j < wanted.length && same; j++) {
+        if (bytes[i + j] != wanted[j]) same = false;
+      }
+      found = same;
+    }
+    expect(found, isTrue, reason: "글꼴 파일에 '$burnFontFamily'가 없다");
+  });
+
+  test('명령에 그 이름이 그대로 들어간다', () {
+    final args = burnArguments(
+      inputPath: '/tmp/in.mp4',
+      subtitlePath: '/tmp/sub.srt',
+      fontsDir: '/tmp/fonts',
+      outputPath: '/tmp/out.mp4',
+    );
+    final filter = args[args.indexOf('-vf') + 1];
+    expect(filter, contains('FontName=$burnFontFamily'));
   });
 }
