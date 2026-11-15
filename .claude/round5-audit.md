@@ -320,6 +320,12 @@
   3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
   4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
+- **함수 suggestSentenceInfo (단계별 한도, 6c9c377b)** — 배포 전에는 모두 하루 3번 그대로다(동작은 멀쩡).
+  ```
+  npx -y firebase-tools@latest deploy --only functions:suggestSentenceInfo --project parrokit-45126
+  ```
+  한도를 바꾸려면 배포 없이 Firestore `config/sentenceAssist`에 `tierLimits: {light: 15, pro: 60}`를 둔다.
+
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
@@ -2000,4 +2006,14 @@
 - 테스트 8개(자동 시작, 자동 넘김, 자동 재시도, 재시도 한도, 버튼 바뀜, 다시 하기, 기다리는 중 다시 하기, 설정 끄기)
 - 미확인: 실제 음성 인식은 시뮬레이터가 못 한다. 기기에서 한 번 해 봐야 한다
 - analyze 깨끗, 810개 통과. 라이트·다크 확인, 테마 라이트로 되돌림
+
+## 반복 238 (2026-11-15 18:00~)
+- 구독 **3단계: 문장 도우미 한도를 단계가 정한다**(6c9c377b)
+  - `functions/src/subscriptionTier.ts` — 서버가 `users/{uid}.subscription`을 읽어 지금 단계를 정한다. 해지 예약(canceled)·결제 밀림(grace)은 기간 안이라 혜택을 그대로 준다. 못 읽으면 무료
+  - `suggestSentenceInfo`가 그 단계로 한도를 고른다. 기본 무료 3, 라이트 15, 프로 60. `config/sentenceAssist.tierLimits`로 배포 없이 바꿀 수 있고, 무료는 예전 `dailyLimit` 값을 그대로 쓴다. status 응답에 `tier`도 담는다
+  - 앱: 한도를 다 쓴 **무료 사용자에게만** '구독하면 하루에 더 많이 채울 수 있어요' + '구독 보기'. 숫자는 서버에서 바뀔 수 있어 적지 않는다
+  - 테스트: functions 7개(단계 읽기·한도 고르기·이상한 값 버리기), 앱 3개(다 썼을 때 보임, 남았으면 안 보임, 구독자에게 안 보임)
+- 배운 것: `testWidgets` 안에서 맨 `Future.delayed`는 테스트 시계가 멈춰 있어 끝나지 않는다(10분 뒤 실패). `tester.runAsync`로 감싼다
+- **배포 필요**에 `functions:suggestSentenceInfo` 추가. 배포 전에는 모두 하루 3번 그대로
+- analyze 깨끗, 813개 통과. functions build·lint 통과. 라이트·다크 확인(한도를 다 쓴 상태를 임시로 만들어 봤고 임시 수정은 되돌림), 테마 라이트로 되돌림
 
