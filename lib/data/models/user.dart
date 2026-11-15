@@ -17,11 +17,20 @@ class AppUser {
   final String? photoUrl;
   final int parrots;
   final int crackers;
+
+  /// 구독으로 매달 받는 패롯. 보통 패롯과 따로 센다(5차).
+  ///
+  /// 쓸 때는 서버가 이쪽부터 깎고, 기간이 끝나면 사라진다. 환전은 안 된다.
+  final int subParrots;
   final int unreadNotificationCount;
   final List<String> blockedUserIds;
 
-  /// 하위 호환성 (기존 코인 시스템과 패롯을 동일 취급)
-  int get coins => parrots;
+  /// 지금 쓸 수 있는 패롯. 구독으로 받은 것까지 더한 값이다.
+  int get spendableParrots => parrots + subParrots;
+
+  /// 하위 호환성 (기존 코인 시스템과 패롯을 동일 취급).
+  /// 쓸 수 있는지 보는 자리에서 쓰므로 구독 패롯까지 센다.
+  int get coins => spendableParrots;
 
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -34,6 +43,7 @@ class AppUser {
     this.photoUrl,
     this.parrots = 20,
     this.crackers = 1000,
+    this.subParrots = 0,
     this.unreadNotificationCount = 0,
     this.blockedUserIds = const [],
     this.createdAt,
@@ -63,6 +73,7 @@ class AppUser {
     bool clearPhotoUrl = false,
     int? parrots,
     int? crackers,
+    int? subParrots,
     int? unreadNotificationCount,
     List<String>? blockedUserIds,
     DateTime? createdAt,
@@ -76,6 +87,7 @@ class AppUser {
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
       parrots: parrots ?? this.parrots,
       crackers: crackers ?? this.crackers,
+      subParrots: subParrots ?? this.subParrots,
       unreadNotificationCount:
           unreadNotificationCount ?? this.unreadNotificationCount,
       blockedUserIds: blockedUserIds ?? this.blockedUserIds,
@@ -98,6 +110,7 @@ class AppUser {
           (json['coins'] as num?)?.toInt() ??
           0,
       crackers: (json['crackers'] as num?)?.toInt() ?? 0,
+      subParrots: (json['subParrots'] as num?)?.toInt() ?? 0,
       unreadNotificationCount:
           (json['unreadNotificationCount'] as num?)?.toInt() ?? 0,
       blockedUserIds: (json['blockedUserIds'] as List<dynamic>?)
@@ -120,6 +133,7 @@ class AppUser {
       'photoUrl': photoUrl,
       'parrots': parrots,
       'crackers': crackers,
+      'subParrots': subParrots,
       'unreadNotificationCount': unreadNotificationCount,
       'blockedUserIds': blockedUserIds,
       'createdAt': createdAt?.toIso8601String(),

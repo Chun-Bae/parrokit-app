@@ -161,6 +161,18 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   ],
                 ),
               ),
+              // 더보기 지갑 줄은 구독 패롯까지 합쳐 보여 주는데 여기 값은 더
+              // 작다. 왜 다른지 한 줄로 알린다(5차).
+              if (user.subParrots > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '구독으로 받은 패롯 ${user.subParrots}개는 환전할 수 없어요.',
+                    key: const ValueKey('exchange-sub-parrots-note'),
+                    style: context.texts.bodySmall
+                        .copyWith(color: context.tokens.textTertiary),
+                  ),
+                ),
               const SizedBox(height: 32),
 
               // 환전 방향 고르기

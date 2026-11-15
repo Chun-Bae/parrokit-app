@@ -40,6 +40,8 @@ class CoinsToParrotsMigration {
       photoUrl: data['photoUrl'],
       parrots: readParrots(data),
       crackers: (data['crackers'] as num?)?.toInt() ?? 0,
+      // 구독으로 받은 패롯. 서버만 쓰고 앱은 읽기만 한다(5차).
+      subParrots: (data['subParrots'] as num?)?.toInt() ?? 0,
       unreadNotificationCount:
           (data['unreadNotificationCount'] as num?)?.toInt() ?? 0,
       blockedUserIds: (data['blockedUserIds'] as List<dynamic>?)

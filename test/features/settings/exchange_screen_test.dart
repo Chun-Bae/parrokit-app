@@ -8,20 +8,24 @@ import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/features/settings/more/presentation/exchange_screen.dart';
 
 class _FakeUserProvider extends ChangeNotifier implements UserProvider {
+  _FakeUserProvider({this.subParrots = 0});
+
+  final int subParrots;
+
   @override
-  AppUser? get currentUser =>
-      const AppUser(id: 'u1', parrots: 4, crackers: 44900);
+  AppUser? get currentUser => AppUser(
+      id: 'u1', parrots: 4, crackers: 44900, subParrots: subParrots);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Future<void> _open(WidgetTester tester) async {
+Future<void> _open(WidgetTester tester, {int subParrots = 0}) async {
   tester.view.physicalSize = const Size(440, 1100);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ChangeNotifierProvider<UserProvider>.value(
-    value: _FakeUserProvider(),
+    value: _FakeUserProvider(subParrots: subParrots),
     child: MaterialApp(theme: AppTheme.light, home: const ExchangeScreen()),
   ));
   await tester.pump();
@@ -56,5 +60,21 @@ void main() {
     await tester.pump();
 
     expect(find.text('가진 패롯보다 많아요 (보유 4)'), findsOneWidget);
+  });
+
+  testWidgets('구독 패롯이 있으면 환전할 수 없다는 것을 알린다', (tester) async {
+    await _open(tester, subParrots: 100);
+
+    expect(find.byKey(const ValueKey('exchange-sub-parrots-note')),
+        findsOneWidget);
+    expect(find.text('구독으로 받은 패롯 100개는 환전할 수 없어요.'), findsOneWidget);
+    // 환전에 쓸 수 있는 값은 보통 패롯 그대로다.
+    expect(find.text('4'), findsWidgets);
+  });
+
+  testWidgets('구독 패롯이 없으면 그 안내는 없다', (tester) async {
+    await _open(tester);
+
+    expect(find.byKey(const ValueKey('exchange-sub-parrots-note')), findsNothing);
   });
 }

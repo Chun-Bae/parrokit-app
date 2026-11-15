@@ -74,7 +74,12 @@ class WalletSection extends StatelessWidget {
                 child: _Balance(
                   currency: Currency.parrot,
                   label: '패롯',
-                  value: _count.format(user?.parrots ?? 0),
+                  // 구독으로 받은 패롯까지 합쳐서 보여 준다. 쓸 때 서버가
+                  // 그쪽부터 깎으므로, 지금 쓸 수 있는 양이 이 값이다(5차).
+                  value: _count.format(user?.spendableParrots ?? 0),
+                  caption: (user?.subParrots ?? 0) > 0
+                      ? '구독 패롯 ${_count.format(user!.subParrots)}개 포함'
+                      : null,
                 ),
               ),
               Expanded(
@@ -125,11 +130,15 @@ class _Balance extends StatelessWidget {
     required this.currency,
     required this.label,
     required this.value,
+    this.caption,
   });
 
   final Currency currency;
   final String label;
   final String value;
+
+  /// 숫자 아래 작은 글씨. 지금은 구독 패롯이 얼마나 섞여 있는지 알린다.
+  final String? caption;
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +165,11 @@ class _Balance extends StatelessWidget {
                 .copyWith(fontWeight: FontWeight.w800, color: cs.onSurface),
           ),
         ),
+        if (caption case final text?)
+          Text(text,
+              key: const ValueKey('wallet-sub-parrots'),
+              style: context.texts.labelSmall
+                  .copyWith(color: cs.onSurfaceVariant)),
       ],
     );
   }
