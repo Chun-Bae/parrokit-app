@@ -293,7 +293,9 @@ class _WordTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final step = (review?.step ?? 0).clamp(0, WordReviewStore.intervals.length);
+    // 단계는 SM-2에서 계속 오를 수 있어 글자는 그대로 적고, 점만 다섯 칸까지 찬다(5차).
+    final step = review?.step ?? 0;
+    final dots = step.clamp(0, WordReviewStore.intervals.length);
     final body = Material(
       color: colors.surface,
       child: InkWell(
@@ -343,7 +345,7 @@ class _WordTile extends StatelessWidget {
                     margin: const EdgeInsets.only(left: 3),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: i < step
+                      color: i < dots
                           ? colors.primary
                           : colors.outlineVariant.withValues(alpha: 0.6),
                     ),
@@ -899,9 +901,11 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
   /// 화면이 그대로여서 처음부터 다시 하는 것처럼 보였다(5차).
   int round = 0;
 
-  Future<void> answer(bool known) async {
+  Future<void> answer(ReviewRating rating) async {
     final word = queue[index];
-    unawaited(WordReviewStore.record(widget.accountId, word.id, known: known));
+    final known = rating != ReviewRating.again;
+    unawaited(
+        WordReviewStore.record(widget.accountId, word.id, rating: rating));
     setState(() {
       if (known) {
         knownCount++;
@@ -1054,24 +1058,36 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                   ),
                 )
               else
+                // 얼마나 쉬웠는지에 따라 다음에 나오는 날이 달라진다(5차, SM-2).
+                // '쉬워요'는 바로 떠오른 단어라 더 멀리 민다.
                 Row(children: [
                   Expanded(
                     child: OutlinedButton(
                       key: const ValueKey('review-again'),
-                      onPressed: () => answer(false),
+                      onPressed: () => answer(ReviewRating.again),
                       style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(48)),
                       child: const Text('다시'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton(
                       key: const ValueKey('review-known'),
-                      onPressed: () => answer(true),
+                      onPressed: () => answer(ReviewRating.known),
                       style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(48)),
                       child: const Text('알아요'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.tonal(
+                      key: const ValueKey('review-easy'),
+                      onPressed: () => answer(ReviewRating.easy),
+                      style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48)),
+                      child: const Text('쉬워요'),
                     ),
                   ),
                 ]),

@@ -279,12 +279,12 @@ void main() {
     test('새 단어는 바로, 알아요를 누르면 1·3·7일 뒤에 다시 나온다', () async {
       final words = [w('a')];
       expect(WordReviewStore.dueWords(words, {}, day0), hasLength(1));
-      await WordReviewStore.record('guest', 'a', known: true, now: day0);
+      await WordReviewStore.record('guest', 'a', rating: ReviewRating.known, now: day0);
       var reviews = await WordReviewStore.loadAll('guest');
       expect(WordReviewStore.dueWords(words, reviews, day0), isEmpty);
       final day1 = day0.add(const Duration(days: 1));
       expect(WordReviewStore.dueWords(words, reviews, day1), hasLength(1));
-      await WordReviewStore.record('guest', 'a', known: true, now: day1);
+      await WordReviewStore.record('guest', 'a', rating: ReviewRating.known, now: day1);
       reviews = await WordReviewStore.loadAll('guest');
       // 3일 뒤 그날 0시(11/14 9시 → 11/17 0시).
       expect(reviews['a']!.dueAt, DateTime(2026, 11, 17));
@@ -292,7 +292,7 @@ void main() {
 
     test('밤늦게 알아요를 눌러도 다음 날 아침이면 나온다', () async {
       final late = DateTime(2026, 11, 13, 23, 30);
-      await WordReviewStore.record('guest', 'a', known: true, now: late);
+      await WordReviewStore.record('guest', 'a', rating: ReviewRating.known, now: late);
       final reviews = await WordReviewStore.loadAll('guest');
       expect(
           WordReviewStore.dueWords(
@@ -304,17 +304,68 @@ void main() {
           hasLength(1));
     });
 
-    test('간격은 1·3·7·14·30일이고 그 뒤로는 30일씩', () async {
+    test('알아요만 누르면 간격이 1·3일로 시작해 2.5배씩 벌어진다', () async {
       var at = DateTime(2026, 1, 1, 12);
       final gaps = <int>[];
-      for (var i = 0; i < 7; i++) {
-        final r =
-            await WordReviewStore.record('guest', 'a', known: true, now: at);
+      for (var i = 0; i < 6; i++) {
+        final r = await WordReviewStore.record('guest', 'a',
+            rating: ReviewRating.known, now: at);
         gaps.add(
             r.dueAt!.difference(DateTime(at.year, at.month, at.day)).inDays);
         at = r.dueAt!.add(const Duration(hours: 9));
       }
-      expect(gaps, [1, 3, 7, 14, 30, 30, 30]);
+      // 1, 3, 3×2.5=8, 8×2.5=20, 50, 125. 예전 고정 표(최대 30일)보다 멀리 간다.
+      expect(gaps, [1, 3, 8, 20, 50, 125]);
+    });
+
+    test('쉬워요는 더 멀리, 다시는 쉬움 계수를 깎는다', () async {
+      var at = DateTime(2026, 1, 1, 12);
+      for (var i = 0; i < 2; i++) {
+        final r = await WordReviewStore.record('guest', 'a',
+            rating: ReviewRating.known, now: at);
+        at = r.dueAt!.add(const Duration(hours: 9));
+      }
+      final easy = await WordReviewStore.record('guest', 'a',
+          rating: ReviewRating.easy, now: at);
+      // 3일 × (2.5+0.15) × 1.3 = 10일. 알아요였다면 8일이다.
+      expect(easy.dueAt!.difference(DateTime(at.year, at.month, at.day)).inDays,
+          10);
+      expect(easy.ease, closeTo(2.65, 0.001));
+
+      final again = await WordReviewStore.record('guest', 'a',
+          rating: ReviewRating.again, now: at);
+      expect(again.ease, closeTo(2.45, 0.001), reason: '틀리면 계수가 깎인다');
+      expect(again.step, 0);
+    });
+
+    test('쉬움 계수는 1.3 아래로 내려가지 않는다', () {
+      var ease = 2.5;
+      for (var i = 0; i < 20; i++) {
+        ease = WordReviewStore.nextEase(ease, ReviewRating.again);
+      }
+      expect(ease, WordReviewStore.minEase);
+    });
+
+    test('간격은 1년에서 멈춘다', () {
+      expect(
+          WordReviewStore.nextInterval(
+              interval: 300, step: 9, ease: 2.5, rating: ReviewRating.known),
+          WordReviewStore.maxInterval);
+    });
+
+    test('예전 기록(단계만 있는 것)은 쓰던 간격을 그대로 이어받는다', () async {
+      // step 3까지 간 예전 사용자: 그때 간격은 7일이었다.
+      const old = WordReview(step: 3);
+      expect(old.intervalOrFromStep, 7);
+      expect(old.easeOrDefault, WordReviewStore.defaultEase);
+      expect(
+          WordReviewStore.nextInterval(
+              interval: old.intervalOrFromStep,
+              step: old.step,
+              ease: old.easeOrDefault,
+              rating: ReviewRating.known),
+          18,
+          reason: '7 × 2.5 = 17.5 → 18일');
     });
 
     test('달·해가 바뀌어도 날짜로 센다', () {
@@ -325,15 +376,15 @@ void main() {
     });
 
     test('다시를 누르면 처음 단계로 돌아가 오늘 다시 나온다', () async {
-      await WordReviewStore.record('guest', 'a', known: true, now: day0);
-      await WordReviewStore.record('guest', 'a', known: false, now: day0);
+      await WordReviewStore.record('guest', 'a', rating: ReviewRating.known, now: day0);
+      await WordReviewStore.record('guest', 'a', rating: ReviewRating.again, now: day0);
       final reviews = await WordReviewStore.loadAll('guest');
       expect(reviews['a']!.step, 0);
       expect(WordReviewStore.dueWords([w('a')], reviews, day0), hasLength(1));
     });
 
     test('기한이 지난 단어가 새 단어보다 먼저 나온다', () async {
-      await WordReviewStore.record('guest', 'old', known: false, now: day0);
+      await WordReviewStore.record('guest', 'old', rating: ReviewRating.again, now: day0);
       final reviews = await WordReviewStore.loadAll('guest');
       final due = WordReviewStore.dueWords(
           [w('new'), w('old')], reviews, day0.add(const Duration(hours: 1)));
