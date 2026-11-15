@@ -489,7 +489,11 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
           // 유용해요'로 있어서 같은 수가 두 이름으로 두 번 나왔다(5차).
           Row(
             children: [
-              Text('답글 ${question.commentCount}',
+              // 서버에 적힌 수(commentCount)가 아니라 지금 불러온 답글 수를
+              // 센다. 게시판·투표 상세도 그렇게 한다. 서버 카운터는 답글을
+              // 지우거나 올리다 실패하면 실제와 어긋날 수 있는데, 화면에는
+              // 바로 아래 목록이 함께 보이므로 어긋나면 바로 티가 난다(5차).
+              Text('답글 ${provider.currentPostComments.length}',
                   style: context.texts.bodyMedium
                       .copyWith(color: colorScheme.onSurface)),
             ],
