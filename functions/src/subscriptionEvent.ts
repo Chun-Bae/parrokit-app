@@ -114,63 +114,67 @@ export function shouldSkipEvent(
   return savedAt !== null && savedAt > next.eventAtMs;
 }
 
-export const onSubscriptionEvent = onRequest(async (req, res) => {
-  if (req.method !== "POST") {
-    res.status(405).send("method not allowed");
-    return;
-  }
-  // RevenueCat 대시보드에 적은 값과 같아야 받는다. 설정 전에는 막지 않는다.
-  const expected = process.env.REVENUECAT_WEBHOOK_SECRET;
-  if (expected && req.get("authorization") !== expected) {
-    res.status(401).send("unauthorized");
-    return;
-  }
-
-  const next = subscriptionFromEvent(req.body);
-  if (!next) {
-    // 우리 계정 이벤트가 아니면 조용히 받아들인다. 다시 보내지 않게 200.
-    res.status(200).send("ignored");
-    return;
-  }
-
-  const ref = admin.firestore().collection("users").doc(next.uid);
-  let saveApplied = true;
-  await admin.firestore().runTransaction(async (tx) => {
-    const snapshot = await tx.get(ref);
-    const saved = snapshot.data()?.subscription as
-      | FirebaseFirestore.DocumentData
-      | undefined;
-    if (shouldSkipEvent(saved, next)) {
-      saveApplied = false;
+// index.ts가 코드 전체(genkit, TTS 등)를 함께 불러와서 기본 256MiB로는 모자란다.
+export const onSubscriptionEvent = onRequest(
+  {memory: "512MiB"},
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).send("method not allowed");
       return;
     }
-    tx.set(
-      ref,
-      {
-        subscription: {
-          tier: next.tier,
-          status: next.status,
-          periodEnd: next.periodEnd,
-          store: next.store,
-          lastEventId: next.eventId,
-          lastEventAtMs: next.eventAtMs,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-      },
-      {merge: true}
-    );
-  });
-
-  if (saveApplied) {
-    // 이번 기간 몫을 넣고(같은 기간이면 한 번만), 끝났으면 남은 것을 지운다.
-    try {
-      await grantSubscriptionParrots(next);
-      await expireSubscriptionParrots(next);
-    } catch (error) {
-      // 지급이 실패해도 상태는 저장됐다. 다음 이벤트에서 같은 키로 다시 시도된다.
-      console.error("[Subscription] grant failed", error);
+    // RevenueCat 대시보드에 적은 값과 같아야 받는다. 설정 전에는 막지 않는다.
+    const expected = process.env.REVENUECAT_WEBHOOK_SECRET;
+    if (expected && req.get("authorization") !== expected) {
+      res.status(401).send("unauthorized");
+      return;
     }
-  }
 
-  res.status(200).send("ok");
-});
+    const next = subscriptionFromEvent(req.body);
+    if (!next) {
+      // 우리 계정 이벤트가 아니면 조용히 받아들인다. 다시 보내지 않게 200.
+      res.status(200).send("ignored");
+      return;
+    }
+
+    const ref = admin.firestore().collection("users").doc(next.uid);
+    let saveApplied = true;
+    await admin.firestore().runTransaction(async (tx) => {
+      const snapshot = await tx.get(ref);
+      const saved = snapshot.data()?.subscription as
+        | FirebaseFirestore.DocumentData
+        | undefined;
+      if (shouldSkipEvent(saved, next)) {
+        saveApplied = false;
+        return;
+      }
+      tx.set(
+        ref,
+        {
+          subscription: {
+            tier: next.tier,
+            status: next.status,
+            periodEnd: next.periodEnd,
+            store: next.store,
+            lastEventId: next.eventId,
+            lastEventAtMs: next.eventAtMs,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+        },
+        {merge: true}
+      );
+    });
+
+    if (saveApplied) {
+      // 이번 기간 몫을 넣고(같은 기간이면 한 번만), 끝났으면 남은 것을 지운다.
+      try {
+        await grantSubscriptionParrots(next);
+        await expireSubscriptionParrots(next);
+      } catch (error) {
+        // 지급이 실패해도 상태는 저장됐다. 다음 이벤트에서 같은 키로 다시 시도된다.
+        console.error("[Subscription] grant failed", error);
+      }
+    }
+
+    res.status(200).send("ok");
+  }
+);
