@@ -496,6 +496,23 @@ test("구독으로 받은 패롯(subParrots)도 앱이 못 바꾼다", async () 
   );
 });
 
+test("서버가 센 저장 용량(storage)도 앱이 못 바꾼다", async () => {
+  await seed(testEnv, (db) =>
+    setDoc(doc(db, "users/bob"), {
+      nickname: "밥",
+      storage: { usedBytes: 1000, objectCount: 2 },
+    })
+  );
+
+  // 여기를 0으로 만들 수 있으면 용량 한도가 뜻이 없어진다.
+  await assertFails(
+    updateDoc(doc(bob(), "users/bob"), { storage: { usedBytes: 0 } })
+  );
+  await assertFails(
+    updateDoc(doc(bob(), "users/bob"), { "storage.usedBytes": 0 })
+  );
+});
+
 test("구독 칸을 건드리지 않는 수정은 그대로 된다", async () => {
   await seed(testEnv, (db) =>
     setDoc(doc(db, "users/bob"), {

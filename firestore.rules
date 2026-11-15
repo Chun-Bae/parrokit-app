@@ -46,14 +46,14 @@ service cloud.firestore {
       // 패롯을 임의로 올리는 것은 이 규칙으로 막지 못한다. 그건 지급을
       // 서버로 옮겨야 하는 문제다.
       //
-      // subscription(구독 단계)과 subParrots(구독으로 매달 받는 패롯)는 서버만
-      // 쓴다. 앱이 자기 문서를 통째로 쓸 수 있으므로, 그 칸들만 따로 막는다.
+      // subscription(구독 단계), subParrots(구독으로 매달 받는 패롯),
+      // storage(서버에 올린 양)는 서버만 쓴다. 앱이 자기 문서를 통째로 쓸 수 있으므로, 그 칸들만 따로 막는다.
       // subParrots는 쓸 때 먼저 깎이는 잔액이라 앱이 올릴 수 있으면 그대로
       // 돈이 된다. 값은 Admin SDK를 쓰는 함수들이 정한다(이 규칙을 거치지 않는다).
       allow update: if request.auth != null && (
         (request.auth.uid == userId
           && !request.resource.data.diff(resource.data).affectedKeys()
-                .hasAny(['subscription', 'subParrots'].toSet())) ||
+                .hasAny(['subscription', 'subParrots', 'storage'].toSet())) ||
         (changesOnly(['crackers'])
           && request.resource.data.crackers > resource.data.crackers)
       );
@@ -62,6 +62,11 @@ service cloud.firestore {
       // 전에는 네 컬렉션 모두 read, write가 if true였다. 로그인하지 않아도
       // 남의 기록을 읽고 지울 수 있었다. 앱은 언제나 자기 uid 아래만
       // 읽고 쓴다(toggleLike, toggleScrap, toggleCommentLike, votePost).
+      // 서버가 파일 크기를 적어 두는 곳. 앱은 읽지도 쓰지도 않는다.
+      match /storage_objects/{objectId} {
+        allow read, write: if false;
+      }
+
       match /likes/{postId} {
         allow read, write: if isOwner(userId);
       }

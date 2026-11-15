@@ -15,6 +15,8 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 
 /// 로컬·서버·Google Drive 저장 용량과 Drive 연동 버튼. 더보기 데이터 카드의
 /// "저장 용량 · Google Drive" 줄을 누르면 시트로 열린다.
@@ -286,9 +288,13 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
   @override
   Widget build(BuildContext context) {
     final clipProvider = context.watch<ClipProvider>();
+    final subscription = context.watch<SubscriptionProvider>();
     final localUsed = clipProvider.localStorageUsedBytes;
-    final serverUsed = clipProvider.serverStorageUsedBytes;
-    final serverTotal = ClipProvider.serverStorageQuotaBytes;
+    // 서버가 센 값이 있으면 그것을 쓴다. 앱이 기기 목록을 더한 값은
+    // 기기마다 달라서 한도를 말할 근거가 못 된다(5차).
+    final serverUsed =
+        subscription.storageUsedBytes ?? clipProvider.serverStorageUsedBytes;
+    final serverTotal = serverStorageQuotaBytes(subscription.tier);
     final serverProgress =
         serverTotal == 0 ? 0.0 : (serverUsed / serverTotal).clamp(0.0, 1.0);
     return Column(
@@ -306,9 +312,10 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           context,
           icon: Icons.cloud_queue_rounded,
           title: '서버',
-          subtitle: '앱 서버에 저장된 파일과 정보',
-          usageText:
-              '${_formatBytes(serverUsed)} / ${_formatBytes(serverTotal)}',
+          subtitle: serverStorageSubtitle(subscription.tier),
+          usageText: serverTotal == 0
+              ? _formatBytes(serverUsed)
+              : '${_formatBytes(serverUsed)} / ${_formatBytes(serverTotal)}',
           // secondary(primarySoft)는 라이트의 흰 카드 위에서 아이콘이 거의
           // 안 보였다. 막대와 아이콘 모두 브랜드 파랑으로 맞춘다.
           color: Theme.of(context).colorScheme.primary,

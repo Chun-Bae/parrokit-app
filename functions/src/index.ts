@@ -21,3 +21,4 @@ export * from "./wallet";
 export * from "./questions";
 export * from "./adReward";
 export * from "./subscriptionEvent";
+export * from "./storageUsage";
