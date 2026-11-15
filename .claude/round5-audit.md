@@ -304,7 +304,17 @@
 - **Drive 걷어내기 마무리**: 저장 위치 탭에서 Drive 제거, 남은 Drive 클립에는 보관함 안내와 '기기로 가져오기'(134c93f3)
 - **문장 상세에서도 따라 말하기**(사용자 요청). 홈 무대 위젯을 공용으로 빼고 연습 수·기록·XP를 같은 곳에 남긴다 (c58db05a)
 
+- **구독 단계를 서버가 정하는 길**: RevenueCat Webhook 함수 `onSubscriptionEvent`와 `users/{uid}.subscription`, 앱이 그 칸을 못 쓰게 하는 규칙. 테스트 12개 + 규칙 2개 (a76dd90c)
+
 ## 배포 필요 (사용자가 직접)
+
+- **구독 함수와 규칙 (a76dd90c)** — 배포 전에는 구독 상태가 서버에 쌓이지 않는다. 앱은 무료로 본다.
+  ```
+  npx -y firebase-tools@latest deploy --only functions:onSubscriptionEvent,firestore:rules --project parrokit-45126
+  ```
+  배포한 뒤 RevenueCat 대시보드 > Integrations > Webhooks에 그 함수 주소를 넣는다.
+  비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다.
+
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
@@ -1924,3 +1934,16 @@
   - 테스트 7개(XP 누적·계정 분리, 화면이 같은 위젯·저장소를 쓰는지)
 - 미확인: 시뮬레이터는 음성 인식을 못 해서 실제 점수·기록은 못 봤다. 기기에서 한 번 해 봐야 한다
 - analyze 깨끗, 전체 781개 통과. 라이트·다크 확인, 테마 라이트로 되돌림
+
+## 반복 233 (2026-11-15 17:45~)
+- 구독 **2단계 시작: 단계를 서버가 정하게**(a76dd90c)
+- 만든 것
+  - `functions/src/subscriptionEvent.ts` — RevenueCat Webhook을 받아 `users/{uid}.subscription`에 {tier, status, periodEnd, store, lastEventId, lastEventAtMs, updatedAt} 저장
+  - 단계: `parrokit_sub_pro` > `parrokit_sub_light` > 없으면 free
+  - 상태: 구매·갱신 active, 결제 밀림 grace, 해지 예약 canceled, 만료·환불·일시중지 expired(단계는 free)
+  - 멱등: 같은 이벤트 id면 건너뛰고, 늦게 온 옛 이벤트가 새 상태를 덮지 않게 이벤트 시각도 본다
+  - 우리 계정이 아닌 이벤트(`$RCAnonymousID:`)는 200으로 조용히 받는다. 비밀값(`REVENUECAT_WEBHOOK_SECRET`)이 있으면 Authorization 확인
+  - `firestore.rules`: 본인도 `subscription` 칸은 못 바꾼다(서버 전용)
+- 테스트: functions 12개, 규칙 에뮬레이터 41개(+2) 모두 통과. build·lint 통과
+- 앱은 아직 이 값을 읽지 않는다(다음 조각: SubscriptionProvider)
+- **배포 필요**에 명령과 대시보드 설정을 적어 뒀다
