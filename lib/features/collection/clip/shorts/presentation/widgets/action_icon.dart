@@ -30,12 +30,17 @@ class ActionIcon extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.active = false,
+    this.toggle = false,
     super.key,
   });
 
   final IconData icon;
   final String label;
   final bool active;
+
+  /// 켜고 끄는 버튼인지. 켜짐을 원 색으로만 보여서, 화면 읽기로는 '자막'이
+  /// 지금 켜져 있는지 알 수 없었다(5차).
+  final bool toggle;
   final VoidCallback onTap;
 
   @override
@@ -49,6 +54,7 @@ class ActionIcon extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      toggled: toggle ? active : null,
       child: GestureDetector(
         onTap: onTap,
         child: Column(

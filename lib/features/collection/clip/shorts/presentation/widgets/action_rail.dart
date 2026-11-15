@@ -51,6 +51,7 @@ class ActionRail extends StatelessWidget {
           icon: Icons.playlist_play,
           label: "자동 넘김",
           active: autoNextEnabled,
+          toggle: true,
           onTap: () => onAutoNextChanged(!autoNextEnabled),
         ),
 
@@ -60,6 +61,7 @@ class ActionRail extends StatelessWidget {
           icon: showSubtitle ? Icons.closed_caption : Icons.closed_caption_off,
           label: "자막",
           active: showSubtitle,
+          toggle: true,
           onTap: () => onSubtitleChanged(!showSubtitle),
         ),
         const SizedBox(height: 16),

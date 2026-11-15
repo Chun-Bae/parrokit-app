@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/clip_time_format.dart';
 import 'package:video_player/video_player.dart';
 
 /// [역할]
@@ -60,6 +61,11 @@ class _ShortsPageControlSectionState extends State<ShortsPageControlSection> {
         ? _dragProgress!.clamp(0.0, 1.0)
         : liveProgress;
 
+    final totalMs =
+        dur.inMilliseconds > 0 ? dur.inMilliseconds : widget.durationMs;
+    final shownMs = (uiProgress.isNaN ? 0.0 : uiProgress) * totalMs;
+    final clockLabel = '${clipClock(shownMs.round())} / ${clipClock(totalMs)}';
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 터치 영역 확보
       onTap: () {}, // 부모 탭(재생/일시정지) 방지
@@ -67,35 +73,66 @@ class _ShortsPageControlSectionState extends State<ShortsPageControlSection> {
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: SizedBox(
           height: 48,
-          child: Center(
-            child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 3,
-                activeTrackColor: Colors.white,
-                inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
-                thumbShape: SliderComponentShape.noThumb,
-                overlayShape: SliderComponentShape.noOverlay,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // 끌고 있는 동안에만 지금 시각을 보여 준다. 줄만 있을 때는
+              // 어디로 가는지 알 수 없었다(5차). 줄 자리는 그대로 둬야
+              // 손가락 밑에서 줄이 움직이지 않는다.
+              Positioned(
+                top: 0,
+                child: AnimatedOpacity(
+                  opacity: _isDragging ? 1 : 0,
+                  duration: const Duration(milliseconds: 120),
+                  child: Text(
+                    clockLabel,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          shadows: const [
+                            Shadow(color: Colors.black87, blurRadius: 4),
+                          ],
+                        ),
+                  ),
+                ),
               ),
-              child: Slider(
-                value: uiProgress.isNaN ? 0.0 : uiProgress,
-                onChangeStart: (_) {
-                  setState(() => _isDragging = true);
-                  widget.onDragStart();
-                },
-                onChanged: (v) {
-                  setState(() => _dragProgress = v);
-                },
-                onChangeEnd: (v) async {
-                  await widget.onSeek(v);
-                  if (!mounted) return;
-                  setState(() {
-                    _isDragging = false;
-                    _dragProgress = null;
-                  });
-                  widget.onDragEnd();
-                },
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  // 끌고 있는 동안에는 줄을 굵게 하고 손잡이를 띄운다.
+                  // 평소에는 영상을 가리지 않게 가는 줄만 둔다.
+                  trackHeight: _isDragging ? 5 : 3,
+                  activeTrackColor: Colors.white,
+                  inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
+                  thumbColor: Colors.white,
+                  thumbShape: _isDragging
+                      ? const RoundSliderThumbShape(enabledThumbRadius: 7)
+                      : SliderComponentShape.noThumb,
+                  overlayShape: SliderComponentShape.noOverlay,
+                ),
+                child: Slider(
+                  value: uiProgress.isNaN ? 0.0 : uiProgress,
+                  // 화면 읽기가 '34%'라고만 읽던 것을 시각으로 읽어 준다.
+                  semanticFormatterCallback: (value) =>
+                      '${clipClock((value * totalMs).round())} / ${clipClock(totalMs)}',
+                  onChangeStart: (_) {
+                    setState(() => _isDragging = true);
+                    widget.onDragStart();
+                  },
+                  onChanged: (v) {
+                    setState(() => _dragProgress = v);
+                  },
+                  onChangeEnd: (v) async {
+                    await widget.onSeek(v);
+                    if (!mounted) return;
+                    setState(() {
+                      _isDragging = false;
+                      _dragProgress = null;
+                    });
+                    widget.onDragEnd();
+                  },
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
