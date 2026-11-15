@@ -678,10 +678,29 @@ class _AddWordSheetState extends State<AddWordSheet> {
     }
   }
 
+  /// 서버에서 횟수를 받아왔는지. 못 받아오면 안내를 지운다.
+  bool _usageChecked = false;
+  bool _usageFailed = false;
+
+  /// 오늘 쓴 횟수. 서버에서 못 받아오면 null.
+  int? get _assistUsed {
+    final remaining = _assist.remainingToday;
+    final limit = _assist.dailyLimit;
+    if (remaining == null || limit == null) return null;
+    return limit - remaining;
+  }
+
   @override
   void initState() {
     super.initState();
     _word.addListener(() => setState(() {}));
+    // 횟수만 가져온다(모델을 부르지 않으므로 한 번도 쓰지 않는다).
+    // 못 가져오면 '확인 중'에 갇히지 않게 안내를 지운다.
+    _assist.refreshUsage().then((_) {
+      if (mounted) setState(() => _usageChecked = true);
+    }).catchError((_) {
+      if (mounted) setState(() => _usageFailed = true);
+    });
   }
 
   @override
@@ -760,25 +779,42 @@ class _AddWordSheetState extends State<AddWordSheet> {
                 key: const ValueKey('word-meaning'),
                 controller: _meaning,
                 maxLength: 200,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: '뜻 (선택)',
-                  border: const OutlineInputBorder(),
-                  // 단어를 적으면 뜻을 자동으로 채울 수 있다.
-                  suffixIcon: filling
-                      ? const Padding(
-                          padding: EdgeInsets.all(14),
-                          child: SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2)),
-                        )
-                      : IconButton(
-                          key: const ValueKey('fill-word-meaning'),
-                          tooltip: '뜻 채우기',
-                          onPressed:
-                              _word.text.trim().isEmpty ? null : fillMeaning,
-                          icon: const Icon(Icons.auto_awesome_rounded),
-                        ),
+                  border: OutlineInputBorder(),
                 ),
+              ),
+              // 뜻 채우기는 하루 몇 번만 쓸 수 있다. 전에는 입력칸 안에
+              // 반짝이 아이콘만 있어서 무엇을 하는 단추인지, 몇 번 남았는지
+              // 알 수 없었다. 문장 추가 화면처럼 이름과 남은 횟수를 적는다(5차).
+              Row(
+                children: [
+                  FilledButton.tonalIcon(
+                    key: const ValueKey('fill-word-meaning'),
+                    onPressed: _word.text.trim().isEmpty || filling
+                        ? null
+                        : fillMeaning,
+                    icon: filling
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: const Text('뜻 채우기'),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      wordAssistUsageLabel(
+                        used: _assistUsed,
+                        limit: _assist.dailyLimit,
+                        failed: _usageFailed || (_usageChecked && _assistUsed == null),
+                      ),
+                      key: const ValueKey('word-assist-usage'),
+                      style: context.texts.bodySmall.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               for (final (index, controller) in _examples.indexed) ...[
@@ -1056,4 +1092,17 @@ double wordReviewProgress({required int index, required int total}) {
   if (total <= 0) return 1;
   final shown = (index + 1).clamp(1, total);
   return shown / total;
+}
+
+/// 단어 뜻 채우기의 남은 횟수 안내. 숫자만 있으면 쓴 횟수인지 남은
+/// 횟수인지 알 수 없어서 문장 추가 화면과 같은 말로 적는다(5차).
+String wordAssistUsageLabel({
+  required int? used,
+  required int? limit,
+  bool failed = false,
+}) {
+  if (used != null && limit != null) return '오늘 $used/$limit회 사용';
+  // 서버가 횟수를 알려 주지 않으면 아무 말도 하지 않는다. 전에는 '확인
+  // 중…'이 그대로 남아 고장난 것처럼 보였다.
+  return failed ? '' : '횟수 확인 중…';
 }

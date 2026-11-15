@@ -276,13 +276,28 @@ void main() {
     final assist = FakeAssist();
     await openAddSheet(tester, assist);
     final fill = find.byKey(const ValueKey('fill-word-meaning'));
-    expect(tester.widget<IconButton>(fill).onPressed, isNull);
+    // 222에서 입력칸 안의 아이콘을 이름 있는 버튼으로 바꿨다.
+    expect(find.text('뜻 채우기'), findsOneWidget);
+    expect(tester.widget<ButtonStyleButton>(fill).onPressed, isNull);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
     await tester.pump();
     await tester.tap(fill);
     await tester.pumpAndSettle();
     expect(assist.calls, ['영어:nuance']);
     expect(find.text('미묘한 차이'), findsOneWidget);
+  });
+
+  testWidgets('남은 횟수를 버튼 옆에 적는다', (tester) async {
+    await openAddSheet(tester, FakeAssist());
+    await tester.pumpAndSettle();
+    // FakeAssist는 하루 3회 중 2회가 남았다고 말한다.
+    expect(find.text('오늘 1/3회 사용'), findsOneWidget);
+  });
+
+  test('횟수를 모르면 확인 중, 못 받아오면 아무 말도 안 한다', () {
+    expect(wordAssistUsageLabel(used: null, limit: 3), '횟수 확인 중…');
+    expect(wordAssistUsageLabel(used: 2, limit: 3), '오늘 2/3회 사용');
+    expect(wordAssistUsageLabel(used: null, limit: null, failed: true), '');
   });
 
   testWidgets('이미 적은 뜻은 덮지 않고, 횟수를 다 쓰면 안내한다', (tester) async {
