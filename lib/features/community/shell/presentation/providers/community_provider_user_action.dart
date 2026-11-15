@@ -106,7 +106,8 @@ extension CommunityProviderUserAction on CommunityProvider {
         _posts[rollbackIndex] =
             p.copyWith(likeCount: p.likeCount + (originalState ? 1 : -1));
       }
-      _errorMessage = '추천 처리에 실패했습니다.';
+      // 앱은 이 동작을 '공감'이라 부른다. '추천'은 쓰지 않는 말이다(5차).
+      _errorMessage = '공감하지 못했어요. 잠시 후 다시 해 주세요.';
       _notifyListenersSafe();
     }
   }
@@ -146,7 +147,7 @@ extension CommunityProviderUserAction on CommunityProvider {
           scrapCount: p.scrapCount + (originalState ? 1 : -1),
         );
       }
-      _errorMessage = '스크랩 처리에 실패했습니다.';
+      _errorMessage = '스크랩하지 못했어요. 잠시 후 다시 해 주세요.';
       _notifyListenersSafe();
     }
   }
