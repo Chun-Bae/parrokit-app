@@ -20,6 +20,8 @@ import 'dart:math' as math;
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/collection/clip/export/presentation/subtitle_export_sheet.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
@@ -183,6 +185,31 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
               // 플레이어에서 바로 고친다(5차). 예전엔 목록에서 밀어야만 '편집'이
               // 보여서, 보다가 고칠 데를 찾으면 나갔다가 다시 찾아야 했다.
               actions: [
+                if (vm.clip != null && vm.segments.isNotEmpty)
+                  IconButton(
+                    key: const ValueKey('player-export-subtitles'),
+                    tooltip: subtitleExportTitle,
+                    icon: const Icon(Icons.movie_filter_outlined),
+                    onPressed: () async {
+                      vm.controller?.pause();
+                      final path = await vm.resolvedSourcePath();
+                      if (!context.mounted) return;
+                      if (!await videoExists(path)) {
+                        if (!context.mounted) return;
+                        showToast('영상 파일을 찾을 수 없어요.');
+                        return;
+                      }
+                      if (!context.mounted) return;
+                      await showSubtitleExportSheet(
+                        context,
+                        videoPath: path,
+                        segments: vm.segments,
+                        clipTitle: vm.clip!.title,
+                        videoLength: Duration(
+                            milliseconds: vm.clip!.durationMs),
+                      );
+                    },
+                  ),
                 if (vm.clip != null)
                   IconButton(
                     key: const ValueKey('player-edit'),
