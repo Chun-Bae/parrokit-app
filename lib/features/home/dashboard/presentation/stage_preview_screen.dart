@@ -1297,8 +1297,13 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
               Expanded(
                   child: Text('앵무새가 말할 문장',
                       style: context.texts.bodyLarge.copyWith(color: ink))),
+              // 숫자만 '50 / 50'이라 무엇을 세는지 알 수 없었다(5차).
+              // 홈의 '앵무새 62/63'과 같이 무엇의 수인지 적는다.
               Text(
-                  '${visibleSentences.where(isOn).length} / ${visibleSentences.length}',
+                  routineCountLabel(
+                      on: visibleSentences.where(isOn).length,
+                      total: visibleSentences.length),
+                  key: const ValueKey('routine-count'),
                   style: context.texts.bodySmall.copyWith(color: muted)),
             ]),
             const SizedBox(height: 8),
@@ -1727,3 +1732,7 @@ class _LabeledControl extends StatelessWidget {
     );
   }
 }
+
+/// 문장 설정 창의 '켠 문장 N / 전체'. 숫자만 두면 무엇의 수인지 알 수 없다(5차).
+String routineCountLabel({required int on, required int total}) =>
+    on == total && total > 0 ? '$total개 모두 켜짐' : '켠 문장 $on / $total';

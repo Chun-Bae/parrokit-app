@@ -785,4 +785,11 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
   });
+
+  test('문장 설정 창은 무엇의 수인지 적는다', () {
+    // 숫자만 '50 / 50'이라 무엇을 세는지 알 수 없었다(5차 UX 점검).
+    expect(routineCountLabel(on: 3, total: 5), '켠 문장 3 / 5');
+    expect(routineCountLabel(on: 5, total: 5), '5개 모두 켜짐');
+    expect(routineCountLabel(on: 0, total: 0), '켠 문장 0 / 0');
+  });
 }
