@@ -32,12 +32,14 @@ test("설정값이 기본값을 이기고 이상한 값은 버린다", () => {
   assert.deepEqual(sanitizeStorage({free: 0}), {free: 0});
 });
 
-test("users/{uid}/ 아래 파일만 센다", () => {
-  assert.equal(uidFromObjectName("users/uid-1/clips/a.mp4"), "uid-1");
-  assert.equal(uidFromObjectName("users/uid-1/profile.png"), "uid-1");
+test("클립만 센다. 프로필·글 사진은 한도와 상관없다", () => {
+  assert.equal(uidFromObjectName("users/uid-1/clips/doc1/video.mp4"), "uid-1");
+  assert.equal(uidFromObjectName("users/uid-1/clips/doc1/thumbnail.jpg"), "uid-1");
+  // 무료 한도가 0이라, 프로필 사진까지 셌다면 사진을 바꾸는 것만으로 한도를 넘는다.
+  assert.equal(uidFromObjectName("users/uid-1/profile.png"), null);
+  assert.equal(uidFromObjectName("users/uid-1/posts/p1/a.png"), null);
   assert.equal(uidFromObjectName("caption-inputs/uid-1/a.mp4"), null);
-  assert.equal(uidFromObjectName("users/uid-1"), null, "파일이 아니라 폴더");
-  assert.equal(uidFromObjectName("posts/a.png"), null);
+  assert.equal(uidFromObjectName("users/uid-1"), null);
   assert.equal(uidFromObjectName(undefined), null);
 });
 

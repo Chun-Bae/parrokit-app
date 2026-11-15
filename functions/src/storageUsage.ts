@@ -13,8 +13,10 @@ import {
   onObjectFinalized,
 } from "firebase-functions/v2/storage";
 import * as admin from "firebase-admin";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {ENFORCE_APP_CHECK} from "./appCheck";
 import {SubscriptionTier} from "./subscriptionEvent";
-import {TierLimits} from "./subscriptionTier";
+import {tierFromUserDoc, TierLimits} from "./subscriptionTier";
 
 /** 단계별 서버 저장 한도(바이트). config/subscription.storage로 바꿀 수 있다. */
 export const DEFAULT_STORAGE_QUOTAS: TierLimits = {
@@ -64,7 +66,11 @@ export function sanitizeStorage(value: unknown): Partial<TierLimits> {
 }
 
 /**
- * 파일 경로에서 주인을 읽는다. users/{uid}/... 밖은 세지 않는다.
+ * 파일 경로에서 주인을 읽는다.
+ *
+ * 세는 것은 클립뿐이다(users/{uid}/clips/...). 프로필 사진이나 글 사진은
+ * 용량 한도와 상관없어야 해서 빼 둔다 — 무료 한도가 0이라, 함께 셌다면
+ * 프로필 사진을 바꾼 것만으로 한도를 넘게 된다.
  *
  * @param {string | undefined} name Storage 객체 이름
  * @return {string | null} uid
@@ -72,7 +78,9 @@ export function sanitizeStorage(value: unknown): Partial<TierLimits> {
 export function uidFromObjectName(name: string | undefined): string | null {
   if (!name) return null;
   const parts = name.split("/");
-  if (parts.length < 3 || parts[0] !== "users") return null;
+  if (parts.length < 4 || parts[0] !== "users" || parts[2] !== "clips") {
+    return null;
+  }
   return parts[1] || null;
 }
 
@@ -159,5 +167,70 @@ export const onUserFileDeleted = onObjectDeleted(
     const uid = uidFromObjectName(event.data.name);
     if (!uid) return;
     await recordObjectSize(uid, event.data.name as string, 0);
+  }
+);
+
+
+/**
+ * 지금 남은 용량. 서버가 센 값과 서버가 정한 단계로만 따진다.
+ *
+ * @param {string} uid 사용자
+ * @return {Promise<Object>} 쓴 양, 한도, 남은 양, 단계
+ */
+export async function storageStatus(uid: string): Promise<{
+  usedBytes: number;
+  quotaBytes: number;
+  remainingBytes: number;
+  tier: SubscriptionTier;
+}> {
+  const snapshot = await admin.firestore().doc(`users/${uid}`).get();
+  const data = snapshot.data();
+  const tier = tierFromUserDoc(data);
+  const storage = data?.storage as {usedBytes?: number} | undefined;
+  const usedBytes = Math.max(0, Math.trunc(storage?.usedBytes ?? 0));
+  const quotaBytes = quotaForTier(tier, await loadStorageQuotas());
+  return {
+    usedBytes,
+    quotaBytes,
+    remainingBytes: Math.max(0, quotaBytes - usedBytes),
+    tier,
+  };
+}
+
+/**
+ * 설정에서 단계별 한도를 읽는다. 없으면 기본값.
+ *
+ * @return {Promise<Partial<TierLimits>>} 설정값
+ */
+async function loadStorageQuotas(): Promise<Partial<TierLimits>> {
+  try {
+    const snapshot = await admin.firestore().doc("config/subscription").get();
+    return sanitizeStorage(snapshot.data()?.storage);
+  } catch (error) {
+    console.error("[Storage] quota config read failed", error);
+    return {};
+  }
+}
+
+/**
+ * 올리기 전에 앱이 묻는다. 들어갈 자리가 없으면 까닭을 알려 준다.
+ *
+ * 앱이 보낸 숫자는 "올리려는 파일 크기"로만 쓴다. 지금 쓴 양과 한도는
+ * 서버 값만 본다.
+ */
+export const checkStorageQuota = onCall(
+  {memory: "256MiB", enforceAppCheck: ENFORCE_APP_CHECK},
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError("unauthenticated", "로그인이 필요해요.");
+    }
+    const raw = request.data?.bytes;
+    const bytes = typeof raw === "number" && Number.isFinite(raw) ?
+      Math.max(0, Math.trunc(raw)) :
+      0;
+    const status = await storageStatus(uid);
+    const allowed = bytes <= status.remainingBytes;
+    return {...status, bytes, allowed};
   }
 );

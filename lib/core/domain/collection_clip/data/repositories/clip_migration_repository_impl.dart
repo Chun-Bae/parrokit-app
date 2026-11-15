@@ -24,6 +24,7 @@ import 'package:drift/drift.dart';
 
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/domain/collection_clip/data/services/storage_quota_service.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/domain/collection_clip/data/utils/clip_path_utils.dart';
@@ -53,6 +54,9 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
   final GoogleDriveStorageService googleDriveStorageService;
   final LibraryEntitySyncCoordinator libraryEntitySyncCoordinator;
 
+  /// 서버에 올리기 전에 자리를 묻는 곳. 테스트에서 바꿔 끼운다.
+  final StorageQuotaService storageQuotaService;
+
   ClipMigrationRepositoryImpl({
     required this.db,
     required this.sourceRefDatasource,
@@ -66,7 +70,8 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
     required this.remoteDocIdResolver,
     required this.googleDriveStorageService,
     required this.libraryEntitySyncCoordinator,
-  });
+    StorageQuotaService? storageQuotaService,
+  }) : storageQuotaService = storageQuotaService ?? StorageQuotaService();
 
   @override
   Future<void> moveClipToServer(
@@ -113,6 +118,17 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
     final contentType = lookupMimeType(absPath) ?? 'application/octet-stream';
     final fileSize = await file.length();
     onProgress?.call(0, fileSize, '영상 파일을 확인하고 있어요');
+
+    // 올리기 전에 서버에 자리를 묻는다. 쓴 양과 한도는 서버 값만 본다(5차).
+    // 서버가 답하지 않으면 막지 않는다. 올라가면 서버가 센다.
+    final quota = await storageQuotaService.check(bytes: fileSize);
+    if (!quota.allowed) {
+      AppLogger.i(
+        '[Clip][Storage] server-upload blocked clipId=$clipId '
+        'tier=${quota.tier} need=$fileSize left=${quota.remainingBytes}',
+      );
+      throw StateError(storageQuotaMessage(quota));
+    }
     final storagePath =
         'users/${user.uid}/clips/$remoteDocId/video$normalizedExtension';
     final thumbnailPath = await thumbnailDatasource.ensureThumbnailFile(
