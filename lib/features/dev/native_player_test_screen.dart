@@ -119,7 +119,9 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
             '${_clock(state.position)} / ${_clock(state.duration)} · '
             '${state.speed}배 · ${state.width}x${state.height} · '
             '텍스처 ${_player.textureId ?? "없음"} · '
-            '프레임 ${state.frames}/${state.pulls}',
+            '프레임 ${state.frames}/${state.pulls}\n'
+            '구간 ${state.hasClipRange ? "${_clock(state.clipBegin)}~${_clock(state.clipEnd)}" : "전체"}'
+            ' · 반복 ${state.loop ? "켬" : "끔"}',
             style: context.texts.bodyMedium,
           ),
         const SizedBox(height: 12),
@@ -142,6 +144,15 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
             onPressed: () =>
                 _player.setSpeed(state.speed == 1.0 ? 1.5 : 1.0),
             child: Text(state.speed == 1.0 ? '1.5배' : '1배'),
+          ),
+          OutlinedButton(
+            key: const ValueKey('native-player-range'),
+            onPressed: () => _player.setRange(
+              clipBegin: state.hasClipRange ? null : const Duration(seconds: 1),
+              clipEnd: state.hasClipRange ? null : const Duration(seconds: 3),
+              loop: !state.hasClipRange,
+            ),
+            child: Text(state.hasClipRange ? '구간 끄기' : '1~3초 반복'),
           ),
           OutlinedButton(
             key: const ValueKey('native-player-next-clip'),

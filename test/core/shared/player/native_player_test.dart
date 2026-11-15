@@ -78,9 +78,63 @@ void main() {
       'path': '/tmp/a.mp4',
       'speed': 1.5,
       'title': '카페에서',
-    }, reason: '잠금화면에 보일 이름도 함께 보낸다');
+      'clipBeginMs': null,
+      'clipEndMs': null,
+      'loop': false,
+    }, reason: '잠금화면에 보일 이름과 구간도 함께 보낸다');
     expect(calls[2].arguments, {'textureId': 7, 'positionMs': 3000});
     expect(calls[3].arguments, {'textureId': 7, 'speed': 2.0});
+  });
+
+  test('구간과 반복을 함께 보낸다', () async {
+    await player.create();
+    calls.clear();
+
+    await player.load(
+      '/tmp/a.mp4',
+      clipBegin: const Duration(seconds: 1),
+      clipEnd: const Duration(seconds: 3),
+      loop: true,
+    );
+    await player.setRange();
+
+    expect(calls.first.arguments, {
+      'textureId': 7,
+      'path': '/tmp/a.mp4',
+      'speed': 1.0,
+      'title': '',
+      'clipBeginMs': 1000,
+      'clipEndMs': 3000,
+      'loop': true,
+    });
+    expect(calls[1].method, 'setRange');
+    expect(calls[1].arguments, {
+      'textureId': 7,
+      'clipBeginMs': null,
+      'clipEndMs': null,
+      'loop': false,
+    }, reason: '비우면 영상 전체');
+  });
+
+  test('네이티브가 알려 준 구간도 담는다', () async {
+    await player.create();
+
+    events.add({
+      'event': 'state',
+      'clipBeginMs': 1000,
+      'clipEndMs': 3000,
+      'loop': true,
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    expect(player.state.clipBegin, const Duration(seconds: 1));
+    expect(player.state.clipEnd, const Duration(seconds: 3));
+    expect(player.state.loop, isTrue);
+    expect(player.state.hasClipRange, isTrue);
+  });
+
+  test('구간이 없으면 전체로 본다', () {
+    expect(const NativePlayerState().hasClipRange, isFalse);
   });
 
   test('네이티브가 알려 준 상태를 그대로 담는다', () async {

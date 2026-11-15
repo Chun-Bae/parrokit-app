@@ -11,6 +11,7 @@
 //
 // 2단계까지: 앱을 내리면 비디오 트랙만 끄고 같은 플레이어가 소리를 잇는다.
 // 잠금화면·제어센터에서도 멈추고 이어 들을 수 있다.
+// 3단계: 구간(clipBegin~clipEnd)만 틀고, 끝에 닿으면 반복하거나 멈춘다.
 
 import AVFoundation
 import Flutter
@@ -66,6 +67,10 @@ final class NativePlayerPlugin: NSObject, FlutterPlugin {
         path: path,
         speed: (args["speed"] as? NSNumber)?.floatValue ?? 1.0,
         title: args["title"] as? String ?? "")
+      player.setRange(
+        beginMs: (args["clipBeginMs"] as? NSNumber)?.int64Value,
+        endMs: (args["clipEndMs"] as? NSNumber)?.int64Value,
+        loop: args["loop"] as? Bool ?? false)
       result(nil)
     case "play":
       player.play()
@@ -79,6 +84,12 @@ final class NativePlayerPlugin: NSObject, FlutterPlugin {
       }
     case "setSpeed":
       player.setSpeed((args["speed"] as? NSNumber)?.floatValue ?? 1.0)
+      result(nil)
+    case "setRange":
+      player.setRange(
+        beginMs: (args["clipBeginMs"] as? NSNumber)?.int64Value,
+        endMs: (args["clipEndMs"] as? NSNumber)?.int64Value,
+        loop: args["loop"] as? Bool ?? false)
       result(nil)
     case "dispose":
       player.tearDown()
@@ -119,6 +130,14 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
 
   /// 잠금화면에 보일 이름.
   private var title: String = ""
+
+  /// 틀 구간. 없으면 영상 전체.
+  private var clipBegin: CMTime?
+  private var clipEnd: CMTime?
+  /// 끝에 닿으면 처음으로 돌아가 다시 틀지.
+  private var loop = false
+  private var boundaryObserver: Any?
+  private var endObserver: NSObjectProtocol?
 
   /// 앱을 내릴 때 틀고 있었는지.
   private var wasPlayingOnBackground = false
@@ -186,6 +205,13 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   }
 
   func play() {
+    // 구간 밖에서 누르면 구간 처음부터. 끝에 붙어 있을 때 눌러도 돈다.
+    if let begin = clipBegin, let end = clipEnd {
+      let now = player.currentTime()
+      if now < begin || now >= end {
+        player.seek(to: begin, toleranceBefore: .zero, toleranceAfter: .zero)
+      }
+    }
     player.playImmediately(atRate: speed)
   }
 
@@ -207,6 +233,52 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   func setSpeed(_ value: Float) {
     speed = value
     if player.rate != 0 { player.rate = value }
+    sendState()
+  }
+
+  /// 틀 구간과 반복 여부를 정한다. [beginMs]·[endMs]가 없으면 영상 전체.
+  func setRange(beginMs: Int64?, endMs: Int64?, loop: Bool) {
+    self.loop = loop
+    if let beginMs, let endMs, endMs > beginMs {
+      clipBegin = CMTime(value: beginMs, timescale: 1000)
+      clipEnd = CMTime(value: endMs, timescale: 1000)
+    } else {
+      clipBegin = nil
+      clipEnd = nil
+    }
+    installBoundaryObserver()
+    sendState()
+  }
+
+  /// 구간 끝에 닿는 순간을 정확히 잡는다. 0.2초마다 보는 것으로는 늦다.
+  private func installBoundaryObserver() {
+    if let boundaryObserver {
+      player.removeTimeObserver(boundaryObserver)
+      self.boundaryObserver = nil
+    }
+    guard let end = clipEnd else { return }
+    boundaryObserver = player.addBoundaryTimeObserver(
+      forTimes: [NSValue(time: end)], queue: .main
+    ) { [weak self] in
+      self?.reachedEnd()
+    }
+  }
+
+  /// 구간(또는 영상)의 끝에 닿았을 때.
+  private func reachedEnd() {
+    if loop {
+      player.seek(
+        to: clipBegin ?? .zero, toleranceBefore: .zero, toleranceAfter: .zero
+      ) { [weak self] _ in
+        guard let self else { return }
+        self.player.playImmediately(atRate: self.speed)
+      }
+      return
+    }
+    player.pause()
+    if let end = clipEnd {
+      player.seek(to: end, toleranceBefore: .zero, toleranceAfter: .zero)
+    }
     sendState()
   }
 
@@ -368,6 +440,16 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
     rateObservation = player.observe(\.rate, options: [.new]) { [weak self] _, _ in
       self?.sendState()
     }
+    // 구간이 없을 때(영상 전체)의 끝. 반복이면 처음으로 돌아간다.
+    endObserver = NotificationCenter.default.addObserver(
+      forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main
+    ) { [weak self] note in
+      guard let self,
+            (note.object as? AVPlayerItem) === self.player.currentItem else {
+        return
+      }
+      if self.clipEnd == nil { self.reachedEnd() }
+    }
   }
 
   private func sendState() {
@@ -394,6 +476,9 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
       "height": height,
       "frames": frames,
       "pulls": pulls,
+      "clipBeginMs": clipBegin.map { Int64($0.seconds * 1000) } ?? 0,
+      "clipEndMs": clipEnd.map { Int64($0.seconds * 1000) } ?? 0,
+      "loop": loop,
     ])
     updateNowPlaying()
   }
@@ -418,6 +503,14 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   // MARK: - 정리
 
   func tearDown() {
+    if let boundaryObserver {
+      player.removeTimeObserver(boundaryObserver)
+      self.boundaryObserver = nil
+    }
+    if let endObserver {
+      NotificationCenter.default.removeObserver(endObserver)
+      self.endObserver = nil
+    }
     for observer in appObservers {
       NotificationCenter.default.removeObserver(observer)
     }

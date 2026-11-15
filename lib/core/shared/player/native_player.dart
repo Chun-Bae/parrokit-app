@@ -35,6 +35,9 @@ class NativePlayerState {
     this.height = 0,
     this.frames = 0,
     this.pulls = 0,
+    this.clipBegin = Duration.zero,
+    this.clipEnd = Duration.zero,
+    this.loop = false,
     this.errorMessage,
   });
 
@@ -51,6 +54,13 @@ class NativePlayerState {
   /// 진단용: 네이티브가 받은 프레임 수와 Flutter가 가져간 횟수.
   final int frames;
   final int pulls;
+
+  /// 틀고 있는 구간. 둘 다 0이면 영상 전체.
+  final Duration clipBegin;
+  final Duration clipEnd;
+  final bool loop;
+
+  bool get hasClipRange => clipEnd > clipBegin;
 
   /// 가로세로 비. 모르면 16:9로 본다.
   double get aspectRatio =>
@@ -69,6 +79,9 @@ class NativePlayerState {
     int? height,
     int? frames,
     int? pulls,
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool? loop,
     String? errorMessage,
     bool clearError = false,
   }) =>
@@ -82,6 +95,9 @@ class NativePlayerState {
         height: height ?? this.height,
         frames: frames ?? this.frames,
         pulls: pulls ?? this.pulls,
+        clipBegin: clipBegin ?? this.clipBegin,
+        clipEnd: clipEnd ?? this.clipEnd,
+        loop: loop ?? this.loop,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       );
 }
@@ -150,6 +166,9 @@ class NativePlayerController extends ChangeNotifier {
           height: (map['height'] as num?)?.toInt() ?? _state.height,
           frames: (map['frames'] as num?)?.toInt() ?? _state.frames,
           pulls: (map['pulls'] as num?)?.toInt() ?? _state.pulls,
+          clipBegin: _ms(map['clipBeginMs']),
+          clipEnd: _ms(map['clipEndMs']),
+          loop: map['loop'] == true,
         ));
       case 'error':
         _set(_state.copyWith(
@@ -163,15 +182,39 @@ class NativePlayerController extends ChangeNotifier {
       Duration(milliseconds: (value as num?)?.toInt() ?? 0);
 
   /// [title]은 잠금화면·제어센터에 보일 이름이다.
+  /// [clipBegin]~[clipEnd]를 주면 그 구간만 튼다. [loop]면 끝에서 되돌아간다.
   Future<void> load(
     String absolutePath, {
     double speed = 1.0,
     String title = '',
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
   }) async {
     _set(_state.copyWith(clearError: true, ready: false));
-    await _invoke(
-        'load', {'path': absolutePath, 'speed': speed, 'title': title});
+    await _invoke('load', {
+      'path': absolutePath,
+      'speed': speed,
+      'title': title,
+      ..._rangeArgs(clipBegin, clipEnd, loop),
+    });
   }
+
+  /// 틀 구간과 반복을 바꾼다. 구간을 비우면 영상 전체.
+  Future<void> setRange({
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) =>
+      _invoke('setRange', _rangeArgs(clipBegin, clipEnd, loop));
+
+  static Map<String, Object?> _rangeArgs(
+          Duration? begin, Duration? end, bool loop) =>
+      {
+        'clipBeginMs': begin?.inMilliseconds,
+        'clipEndMs': end?.inMilliseconds,
+        'loop': loop,
+      };
 
   Future<void> play() => _invoke('play');
 
