@@ -5,8 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/state/provider/iap_provider.dart';
-import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 import '../widgets/nav_tile.dart';
@@ -19,8 +18,9 @@ class SubscriptionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final adsRemoved = context.watch<IapProvider>().isPremium;
-    final tier = currentSubscriptionTier(adsRemoved: adsRemoved);
+    // 단계는 서버가 정한다. 예전 1회 구매(광고 제거)는 단계를 올리지 않고
+    // 광고만 없앤다.
+    final tier = context.watch<SubscriptionProvider>().tier;
     final paywall = presenter ?? resolvePaywallPresenter();
 
     return Padding(

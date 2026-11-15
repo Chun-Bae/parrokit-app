@@ -16,6 +16,7 @@ import 'package:provider/single_child_widget.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/state/provider/theme_provider.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/providers/ad_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
@@ -100,6 +101,15 @@ List<SingleChildWidget> buildProviders({
       update: (_, blockProvider, communityProvider) {
         final provider = communityProvider ?? CommunityProvider();
         provider.setBlockedUserIds(blockProvider.blockedUserIds);
+        return provider;
+      },
+    ),
+    // 구독 단계는 서버가 정한다. 로그인한 사람이 바뀌면 그 문서를 지켜본다.
+    ChangeNotifierProxyProvider<UserProvider, SubscriptionProvider>(
+      create: (_) => SubscriptionProvider(),
+      update: (_, userProvider, subscriptionProvider) {
+        final provider = subscriptionProvider ?? SubscriptionProvider();
+        provider.syncUser(userProvider.currentUser?.id);
         return provider;
       },
     ),
