@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 10분마다 예약된 세션 루프(사실상 연속). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- 질문 글 입력 검사(보상 크래커·마감일·글 id·사진 주소·태그·서버가 정하는 값)를 `functions/src/questionInput.ts`로 떼어 내 테스트 10개로 지킴. 동작 변화 없음 (547cfac6)
 - 커뮤니티 옵션 시트가 받기만 하고 안 그리던 `icon` 매개변수와 넘기던 인자 열 개를 지움(사용자 결정). 화면은 그대로 (0d7d4087)
 - **예전 알림이 지금 앱 말과 달랐던 것**: 알림은 만들어질 때 글귀를 문서에 적어 둬서 서버를 고쳐도 쌓인 알림은 옛말 그대로다 → 보여줄 때만 바꾼다. '투표가 종료되었어요.' → '투표가 마감됐어요.', 투표 본문의 글 제목을 따옴표로 묶음('ㅇㅁㄴ 결과를…' → "'ㅇㅁㄴ' 결과를…"). 알림 메뉴의 '모두 읽음'이 다 읽은 뒤에도 멀쩡해 보이면서 눌러도 조용히 닫히기만 하던 것 → 흐리게, 안 눌림. 테스트 14개 (8a820ddf)
 - **다른 소리가 나면 이어 듣기가 멈춘다(사용자 요청)**: 이어 듣는 중에 쇼츠를 보거나 문장을 들으면 둘이 겹쳐 울리던 것 → 소리 내기 직전에 `AudioFocus.claim()`. 쇼츠 진입, 보관함 문장 창의 '문장 듣기', 대시보드 문장 읽어 주기 (22f6603d)
@@ -339,6 +340,13 @@
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
   ```
+
+### 2026-11-16 01:00 테스트 배포 (사용자 요청 "로컬 빌드 올려줘", 내가 로컬에서 돌림)
+- **1.0.6 (115)를 App Distribution `testers`에 올렸다.** `uploaded new release`로 새 항목
+- 담긴 것: 플레이어를 나가도 소리가 이어짐('듣는 중' 줄, 나가자마자 뜸), 다른 소리(쇼츠·문장 듣기)가 나면 이어 듣기 자동 멈춤, 예전 알림 글귀를 지금 말로 보여 줌('투표가 마감됐어요.', 제목 따옴표)
+- 콘솔: https://console.firebase.google.com/project/parrokit-45126/appdistribution/app/ios:com.bull.parrokit/releases/410n5p9k5sei0
+- 기기에서 볼 것: 플레이어를 나갔을 때 소리가 이어지는지, 쇼츠·문장 듣기를 하면 멈추는지
+- 절차: pubspec +115(0faa02f6) → `flutter build ios --release --no-codesign --config-only` → xcodeproj로 Runner Release만 수동 서명(parrokit-adhoc) → archive → ad-hoc export(release-testing) → `appdistribution:distribute`. **서명 설정은 `git checkout`으로 되돌렸다**
 
 ### 2026-11-16 01:50 테스트 배포 (사용자 요청 "올려줘", 내가 로컬에서 돌림)
 - **1.0.6 (114)를 App Distribution `testers`에 올렸다.** `uploaded new release`로 새 항목
@@ -2300,3 +2308,16 @@
   그리는 코드가 없었으므로 화면은 그대로다
 - analyze 깨끗, 917개 통과(수 변화 없음). 시뮬레이터에서 알림 메뉴와 게시판 글 메뉴를
   라이트·다크 모두 열어 전과 같은 것을 확인, 테마 라이트로 되돌림
+
+## 반복 260 (2026-11-16 04:25~, 사용자 요청 "로컬 빌드 올려줘")
+- **1.0.6 (115) 테스트 배포**(위 기록). 아카이브 성공, export 성공, `uploaded new release`로 새 항목.
+  서명 설정은 되돌렸다
+- 아카이브가 도는 동안 `lib/`를 건드리면 빌드에 섞이므로 서버 쪽 일을 했다(254와 같은 이유)
+- **질문 글 입력 검사를 떼어 냈다**(547cfac6). `createQuestion` 콜 안에 있던 검사를
+  `questionInput.ts`의 순수 함수로. 검사 차례·오류 문구·문서 필드가 전과 같다(동작 변화 없음)
+  - 테스트 10개: 보상 크래커 100개 단위 100~5000, 마감일(지금보다 뒤·15일 안·딱 15일은 통과),
+    글 id 영숫자 10~40자(`../other/path0` 거절), 사진 https 10장(http·`javascript:` 거절),
+    태그 10자 20개, 꼭 필요한 글자 빈 값 거절, **앱이 authorId·likeCount·status를 보내도 서버 값이 이김**,
+    50자 미리보기 자르기
+  - build·lint 통과(오류 0). 에뮬레이터 없이 도는 함수 테스트 9벌 모두 통과
+- 배포는 급하지 않다: 동작이 같아서 지금 떠 있는 `createQuestion`과 차이가 없다
