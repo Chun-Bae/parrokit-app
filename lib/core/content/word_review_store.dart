@@ -70,6 +70,10 @@ class WordReviewStore {
   static const int firstInterval = 1;
   static const int secondInterval = 3;
 
+  /// 처음 보는 단어에 '쉬워요'를 고르면 바로 이만큼 뛴다. 1일에 1.3을 곱하면
+  /// 반올림해서 또 1일이라, '알아요'와 다른 점이 없었다(Anki도 이 칸을 따로 둔다).
+  static const int easyFirstInterval = 4;
+
   /// 간격이 아무리 벌어져도 이 날을 넘지 않는다. 1년쯤에서 멈춘다.
   static const int maxInterval = 365;
 
@@ -95,6 +99,7 @@ class WordReviewStore {
     required ReviewRating rating,
   }) {
     if (rating == ReviewRating.again) return 0;
+    if (rating == ReviewRating.easy && step == 0) return easyFirstInterval;
     final base = switch (step) {
       0 => firstInterval,
       1 => secondInterval,
@@ -166,6 +171,33 @@ class WordReviewStore {
   /// 나왔다(5차). 단어 앱처럼 그날이 되면 아침부터 나온다.
   static DateTime dueDayAfter(DateTime at, int days) =>
       DateTime(at.year, at.month, at.day + days);
+
+  /// 지금 이 답을 고르면 며칠 뒤에 다시 나오는지. 화면이 버튼에 적는다(5차).
+  static int previewInterval(WordReview? review, ReviewRating rating) {
+    final current = review ?? const WordReview();
+    return nextInterval(
+      interval: current.intervalOrFromStep,
+      step: current.step,
+      ease: nextEase(current.easeOrDefault, rating),
+      rating: rating,
+    );
+  }
+
+  /// 며칠 뒤인지 적는 말. 0이면 오늘, 1이면 내일.
+  static String intervalLabel(int days) => switch (days) {
+        <= 0 => '오늘',
+        1 => '내일',
+        _ => '$days일 뒤',
+      };
+
+  /// 기한까지 며칠 남았는지 적는 말. 지났거나 오늘이면 '오늘'.
+  static String dueLabel(DateTime? dueAt, DateTime now) {
+    if (dueAt == null) return '오늘';
+    final days = DateTime(dueAt.year, dueAt.month, dueAt.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+    return intervalLabel(days);
+  }
 
   /// 복습 결과를 남긴다. 간격과 쉬움 계수를 함께 갱신한다.
   static Future<WordReview> record(

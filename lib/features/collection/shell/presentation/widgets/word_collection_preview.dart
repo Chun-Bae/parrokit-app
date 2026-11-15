@@ -90,7 +90,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   Future<void> startReview(List<MyWord> due) async {
     await showAppSheet<void>(
       context: context,
-      builder: (_) => WordReviewSheet(accountId: accountId, words: due),
+      builder: (_) => WordReviewSheet(
+          accountId: accountId, words: due, reviews: reviews),
     );
   }
 
@@ -329,10 +330,23 @@ class _WordTile extends StatelessWidget {
             // 복습 단계: 알아요를 누를 때마다 점이 하나씩 찬다. 점만 있으면
             // 무엇을 세는지 알 수 없어 글자도 함께 보여 준다(5차). 문장 목록이
             // 'Lv.1 낯선'을 적는 것과 같은 결이다.
-            Text(
-              step == 0 ? '복습 전' : '복습 $step단계',
-              style: context.texts.labelSmall
-                  .copyWith(color: colors.onSurfaceVariant),
+            // 언제 다시 나오는지 함께 적는다(5차, 사용자 요청). 전에는 단계만
+            // 보여서 이 단어를 언제 또 보는지 알 수 없었다.
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  step == 0 ? '복습 전' : '복습 $step단계',
+                  style: context.texts.labelSmall
+                      .copyWith(color: colors.onSurfaceVariant),
+                ),
+                Text(
+                  WordReviewStore.dueLabel(review?.dueAt, DateTime.now()),
+                  key: ValueKey('word-due-${word.id}'),
+                  style: context.texts.labelSmall.copyWith(
+                      color: colors.onSurfaceVariant.withValues(alpha: 0.8)),
+                ),
+              ],
             ),
             const SizedBox(width: 6),
             Semantics(
@@ -878,10 +892,14 @@ class WordReviewSheet extends StatefulWidget {
     super.key,
     required this.accountId,
     required this.words,
+    this.reviews = const {},
   });
 
   final String accountId;
   final List<MyWord> words;
+
+  /// 지금까지의 복습 상태. 버튼에 '며칠 뒤에 다시 나오는지'를 적는 데 쓴다(5차).
+  final Map<String, WordReview> reviews;
 
   @override
   State<WordReviewSheet> createState() => _WordReviewSheetState();
@@ -890,6 +908,9 @@ class WordReviewSheet extends StatefulWidget {
 class _WordReviewSheetState extends State<WordReviewSheet> {
   /// 이번 바퀴에서 볼 단어. '다시'를 고른 단어만 모아 한 바퀴 더 돌 수 있다.
   late List<MyWord> queue = widget.words;
+
+  /// 이번 창에서 쌓인 복습 상태. 답할 때마다 갱신해 버튼의 날짜가 맞게 한다.
+  late final Map<String, WordReview> reviews = {...widget.reviews};
   int index = 0;
   bool revealed = false;
   int knownCount = 0;
@@ -904,8 +925,10 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
   Future<void> answer(ReviewRating rating) async {
     final word = queue[index];
     final known = rating != ReviewRating.again;
-    unawaited(
-        WordReviewStore.record(widget.accountId, word.id, rating: rating));
+    unawaited(WordReviewStore.record(widget.accountId, word.id, rating: rating)
+        .then((next) {
+      if (mounted) setState(() => reviews[word.id] = next);
+    }));
     setState(() {
       if (known) {
         knownCount++;
@@ -915,6 +938,14 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
       index++;
       revealed = false;
     });
+  }
+
+  /// 이 답을 고르면 며칠 뒤에 다시 나오는지.
+  String nextLabelFor(ReviewRating rating) {
+    if (index >= queue.length) return '';
+    final review = reviews[queue[index].id];
+    return WordReviewStore.intervalLabel(
+        WordReviewStore.previewInterval(review, rating));
   }
 
   /// '다시'로 고른 단어만 다시 돈다. '다시'는 기한을 오늘로 두므로(record)
@@ -1060,34 +1091,50 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
               else
                 // 얼마나 쉬웠는지에 따라 다음에 나오는 날이 달라진다(5차, SM-2).
                 // '쉬워요'는 바로 떠오른 단어라 더 멀리 민다.
+                // 고르기 전에 며칠 뒤에 다시 나오는지 적어 둔다(5차, 사용자 요청).
                 Row(children: [
                   Expanded(
-                    child: OutlinedButton(
-                      key: const ValueKey('review-again'),
+                    child: _RatingChoice(
+                      label: '다시',
+                      nextLabel: nextLabelFor(ReviewRating.again),
                       onPressed: () => answer(ReviewRating.again),
-                      style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48)),
-                      child: const Text('다시'),
+                      child: OutlinedButton(
+                        key: const ValueKey('review-again'),
+                        onPressed: () => answer(ReviewRating.again),
+                        style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48)),
+                        child: const Text('다시'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: FilledButton(
-                      key: const ValueKey('review-known'),
+                    child: _RatingChoice(
+                      label: '알아요',
+                      nextLabel: nextLabelFor(ReviewRating.known),
                       onPressed: () => answer(ReviewRating.known),
-                      style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48)),
-                      child: const Text('알아요'),
+                      child: FilledButton(
+                        key: const ValueKey('review-known'),
+                        onPressed: () => answer(ReviewRating.known),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48)),
+                        child: const Text('알아요'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: FilledButton.tonal(
-                      key: const ValueKey('review-easy'),
+                    child: _RatingChoice(
+                      label: '쉬워요',
+                      nextLabel: nextLabelFor(ReviewRating.easy),
                       onPressed: () => answer(ReviewRating.easy),
-                      style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48)),
-                      child: const Text('쉬워요'),
+                      child: FilledButton.tonal(
+                        key: const ValueKey('review-easy'),
+                        onPressed: () => answer(ReviewRating.easy),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48)),
+                        child: const Text('쉬워요'),
+                      ),
                     ),
                   ),
                 ]),
@@ -1121,4 +1168,34 @@ String wordAssistUsageLabel({
   // 서버가 횟수를 알려 주지 않으면 아무 말도 하지 않는다. 전에는 '확인
   // 중…'이 그대로 남아 고장난 것처럼 보였다.
   return failed ? '' : '횟수 확인 중…';
+}
+
+/// 복습 답 버튼 하나와 그 아래 '며칠 뒤에 다시 나오는지'.
+class _RatingChoice extends StatelessWidget {
+  const _RatingChoice({
+    required this.label,
+    required this.nextLabel,
+    required this.onPressed,
+    required this.child,
+  });
+
+  final String label;
+  final String nextLabel;
+  final VoidCallback onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      child,
+      const SizedBox(height: 4),
+      Text(
+        nextLabel,
+        key: ValueKey('review-next-$label'),
+        style:
+            context.texts.labelSmall.copyWith(color: colors.onSurfaceVariant),
+      ),
+    ]);
+  }
 }

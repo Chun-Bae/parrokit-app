@@ -390,5 +390,34 @@ void main() {
           [w('new'), w('old')], reviews, day0.add(const Duration(hours: 1)));
       expect(due.map((e) => e.id), ['old', 'new']);
     });
+
+    test('이 답을 고르면 며칠 뒤에 나오는지 미리 알려 준다', () {
+      const fresh = WordReview();
+      expect(WordReviewStore.previewInterval(fresh, ReviewRating.known), 1);
+      expect(WordReviewStore.previewInterval(fresh, ReviewRating.again), 0);
+      // 처음부터 쉬운 단어는 바로 4일 뒤로 민다(1일 × 1.3은 또 1일이라 뜻이 없다).
+      expect(WordReviewStore.previewInterval(fresh, ReviewRating.easy), 4);
+
+      // 3일 간격까지 온 단어: 알아요 8일, 쉬워요 10일.
+      const third = WordReview(step: 2, intervalDays: 3, ease: 2.5);
+      expect(WordReviewStore.previewInterval(third, ReviewRating.known), 8);
+      expect(WordReviewStore.previewInterval(third, ReviewRating.easy), 10);
+    });
+
+    test('며칠 뒤인지 적는 말', () {
+      expect(WordReviewStore.intervalLabel(0), '오늘');
+      expect(WordReviewStore.intervalLabel(1), '내일');
+      expect(WordReviewStore.intervalLabel(8), '8일 뒤');
+    });
+
+    test('기한까지 남은 날도 같은 말로 적고, 지난 것은 오늘로 본다', () {
+      final now = DateTime(2026, 11, 15, 9);
+      expect(WordReviewStore.dueLabel(DateTime(2026, 11, 15), now), '오늘');
+      expect(WordReviewStore.dueLabel(DateTime(2026, 11, 16), now), '내일');
+      expect(WordReviewStore.dueLabel(DateTime(2026, 11, 23), now), '8일 뒤');
+      expect(WordReviewStore.dueLabel(DateTime(2026, 11, 1), now), '오늘',
+          reason: '기한이 지난 단어는 오늘 볼 단어다');
+      expect(WordReviewStore.dueLabel(null, now), '오늘', reason: '새 단어');
+    });
   });
 }
