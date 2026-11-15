@@ -10,11 +10,17 @@ class CommunityOptionAction {
     required this.onTap,
     this.icon,
     this.isDestructive = false,
+    this.enabled = true,
   });
 
   final String label;
   final IconData? icon;
   final bool isDestructive;
+
+  /// 지금 할 수 없는 일이면 false. 흐리게 보이고 눌러도 아무 일이 없다.
+  /// 전에는 할 수 없을 때도 멀쩡해 보여, 눌러도 조용히 닫히기만 했다(5차).
+  final bool enabled;
+
   final Future<void> Function() onTap;
 }
 
@@ -74,11 +80,13 @@ class _CommunityOptionActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final foregroundColor =
+    final baseColor =
         action.isDestructive ? context.tokens.danger : colorScheme.onSurface;
+    final foregroundColor =
+        action.enabled ? baseColor : baseColor.withValues(alpha: 0.38);
 
     return InkWell(
-      onTap: onTap,
+      onTap: action.enabled ? onTap : null,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: double.infinity,
