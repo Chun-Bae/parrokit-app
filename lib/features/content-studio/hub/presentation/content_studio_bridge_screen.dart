@@ -85,7 +85,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-tts'),
                         icon: Icons.graphic_eq_rounded,
-                        title: 'TTS',
+                        title: '음성 만들기',
                         description: '문장을 읽어 주는 음성을 만들어요',
                         borderColor: border,
                         onTap: () => openTab(1),

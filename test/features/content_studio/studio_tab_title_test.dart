@@ -27,7 +27,30 @@ void main() {
     final entry = File(
             'lib/features/collection/shell/presentation/collection_shell_screen.dart')
         .readAsStringSync();
-    expect(hub, contains("1 => 'TTS 음성 만들기'"));
-    expect(entry, contains("title: 'TTS 음성 만들기'"));
+    // 'TTS'는 영어 약어라 다른 줄('문장 추가·클립 추가')과 결이 달랐다(5차).
+    expect(hub, contains("1 => '음성 만들기'"));
+    expect(entry, contains("title: '음성 만들기'"));
+  });
+
+  test("화면에 보이는 글에 'TTS' 약어를 쓰지 않는다", () {
+    // 모델 이름(Gemini 3.8 Flash TTS)과 로그 태그는 그대로 둔다.
+    final offenders = <String>[];
+    for (final entity
+        in Directory('lib/features/content-studio').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      for (final line in entity.readAsLinesSync()) {
+        final trimmed = line.trimLeft();
+        if (trimmed.startsWith('//')) continue;
+        if (line.contains('AppLogger') ||
+            line.contains('[TTS]') ||
+            line.contains('Gemini 3.8') ||
+            line.contains('Parrokit_TTS')) {
+          continue;
+        }
+        final match = RegExp(r"'[^']*TTS[^']*'").firstMatch(line)?.group(0);
+        if (match != null) offenders.add('${entity.path}: $match');
+      }
+    }
+    expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 }

@@ -249,7 +249,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                           // '비디오'는 5차에 '영상'으로 맞췄는데 여기만 남아
                           // 있었다.
                           provider.chatbotMode == 'tts'
-                              ? 'TTS 음성 도우미'
+                              ? '음성 도우미'
                               : provider.chatbotMode == 'video'
                                   ? '영상 만들기 도우미'
                                   : '만들기 도우미',
@@ -535,7 +535,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'TTS 전문가 모드',
+                                    '음성 전문가 모드',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: context.tokens.textPrimary,
                                     ),
@@ -602,8 +602,8 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                           style: theme.textTheme.bodyMedium,
                           decoration: InputDecoration(
                             hintText: kVideoStudioEnabled
-                                ? 'TTS나 영상 만들기 요청을 입력하세요...'
-                                : 'TTS 음성으로 만들 내용을 적어 보세요...',
+                                ? '음성이나 영상 만들기 요청을 적어 보세요...'
+                                : '음성으로 만들 내용을 적어 보세요...',
                             hintStyle: theme.textTheme.bodyMedium?.copyWith(
                               color: context.tokens.textTertiary,
                             ),

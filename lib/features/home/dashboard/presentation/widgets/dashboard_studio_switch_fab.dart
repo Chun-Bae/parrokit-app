@@ -99,7 +99,7 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
                   onTap: () => _handleTap(0),
                 ),
                 _StudioSwitchItem(
-                  title: 'TTS',
+                  title: '음성 만들기',
                   icon: Icons.graphic_eq_rounded,
                   isSelected: widget.selectedIndex == 1,
                   selectedText: selectedText,

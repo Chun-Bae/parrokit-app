@@ -42,7 +42,7 @@ Future<void> showScriptRecommendationSheet(
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '선택한 스크립트를 TTS 입력창으로 복사합니다.',
+                  '고른 스크립트를 음성 만들기 입력칸으로 옮겨요.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: context.tokens.textSecondary,
                   ),

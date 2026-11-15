@@ -59,7 +59,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                 onTap: () {
                   Navigator.pop(modalContext);
                   provider.updateChatbotMode('tts');
-                  provider.sendMessage('음성(TTS) 생성을 진행하고 싶어');
+                  provider.sendMessage('음성 만들기를 하고 싶어');
                 },
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Container(
@@ -113,7 +113,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '🎙️ AI 음성(TTS) 생성 요청',
+                              '🎙️ 음성 만들기 요청',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: context.tokens.textPrimary,

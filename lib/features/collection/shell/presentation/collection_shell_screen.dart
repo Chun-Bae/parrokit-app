@@ -471,7 +471,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               // push로 열어 나가면 보관함으로 돌아온다.
               _AddMaterialTile(
                 icon: Icons.graphic_eq_rounded,
-                title: 'TTS 음성 만들기',
+                title: '음성 만들기',
                 subtitle: '문장을 읽어 주는 음성을 만들어요',
                 onTap: () {
                   Navigator.pop(sheetContext);

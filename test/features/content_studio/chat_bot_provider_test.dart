@@ -93,7 +93,7 @@ void main() {
     test('영상 만들기를 숨긴 동안에는 영상을 돕는다고 하지 않는다', () {
       final off = chatBotGreeting(videoEnabled: false);
       expect(off.contains('영상'), isFalse);
-      expect(off.contains('TTS 음성 만들기'), isTrue);
+      expect(off.contains('음성 만들기'), isTrue);
     });
 
     test('영상 만들기를 켜면 영상도 함께 안내한다', () {

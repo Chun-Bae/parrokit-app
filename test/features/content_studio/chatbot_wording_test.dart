@@ -37,7 +37,7 @@ void main() {
 
     final sheet = File('$_chatbotDir/presentation/widgets/chat_bot_sheet.dart')
         .readAsStringSync();
-    expect(sheet, contains('TTS 음성 도우미'));
+    expect(sheet, contains('음성 도우미'));
     expect(sheet, contains('만들기 도우미'));
   });
 }

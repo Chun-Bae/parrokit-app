@@ -12,8 +12,8 @@ import 'package:parrokit/features/content-studio/video/domain/models/video_gener
 /// '영상 만들기는 지금 쉬고 있어요'만 떴다(5차).
 @visibleForTesting
 String chatBotGreeting({bool videoEnabled = kVideoStudioEnabled}) => videoEnabled
-    ? '안녕하세요! TTS 음성과 영상 만들기를 도와드릴 챗봇입니다.\n어떤 영상이나 음성을 만들고 싶으신가요?'
-    : '안녕하세요! TTS 음성 만들기를 도와드릴 챗봇입니다.\n어떤 음성을 만들고 싶으신가요?';
+    ? '안녕하세요! 음성과 영상 만들기를 도와줄 챗봇이에요.\n어떤 영상이나 음성을 만들고 싶으신가요?'
+    : '안녕하세요! 음성 만들기를 도와줄 챗봇이에요.\n어떤 음성을 만들고 싶으신가요?';
 
 class ChatBotProvider extends ChangeNotifier {
   late final SendChatMessageUseCase _sendMessageUseCase;

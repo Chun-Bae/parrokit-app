@@ -197,7 +197,7 @@ class ChatBubble extends StatelessWidget {
                                       : message.actionType ==
                                               'video_prompt_recommendation'
                                           ? '영상 프롬프트 추천을 적용합니다'
-                                          : 'TTS 음성 만들기 화면으로 이동합니다',
+                                          : '음성 만들기 화면으로 가요',
                                 );
                               }
                             },
@@ -257,7 +257,7 @@ class ChatBubble extends StatelessWidget {
                                         : message.actionType ==
                                                 'video_prompt_recommendation'
                                             ? '한 쌍 추가하기'
-                                            : 'TTS 음성 만들기',
+                                            : '음성 만들기',
                                     style:
                                         theme.textTheme.labelMedium?.copyWith(
                                       color: Colors.white,
