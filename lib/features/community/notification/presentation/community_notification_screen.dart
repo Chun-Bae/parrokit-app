@@ -2,6 +2,7 @@ import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/notification/presentation/providers/community_notification_provider.dart';
@@ -118,6 +119,48 @@ class _CommunityNotificationScreenState
     );
   }
 
+  /// 알림을 모두 지우기 전에 한 번 묻는다.
+  ///
+  /// 전에는 메뉴에서 '모두 지우기'를 누르는 순간 전부 사라졌다. 되돌릴 수
+  /// 없는데 확인이 없었다. 글·댓글 지우기와 같은 말과 모양으로 묻는다(5차).
+  Future<void> _confirmDeleteAll(
+    BuildContext context,
+    CommunityNotificationProvider provider,
+  ) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        title: const Text('알림 모두 지우기',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('알림을 모두 지울까요?\n지우면 되돌릴 수 없어요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('취소',
+                style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          ),
+          TextButton(
+            key: const ValueKey('confirm-delete-all-notifications'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('모두 지우기',
+                style: TextStyle(
+                    color: context.tokens.danger,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await provider.deleteAllNotifications();
+    if (!context.mounted) return;
+    if (provider.errorMessage == null) {
+      showToast('알림을 모두 지웠어요.');
+    }
+  }
+
   Future<void> _showNotificationActionsSheet(
     BuildContext context,
     CommunityNotificationProvider provider,
@@ -137,13 +180,7 @@ class _CommunityNotificationScreenState
           icon: Icons.delete_sweep_outlined,
           isDestructive: true,
           onTap: provider.hasNotifications
-              ? () async {
-                  await provider.deleteAllNotifications();
-                  if (!context.mounted) return;
-                  if (provider.errorMessage == null) {
-                    showToast('알림을 모두 삭제했습니다.');
-                  }
-                }
+              ? () => _confirmDeleteAll(context, provider)
               : () async {},
         ),
         CommunityOptionAction(

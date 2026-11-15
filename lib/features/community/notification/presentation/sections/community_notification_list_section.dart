@@ -52,7 +52,7 @@ class CommunityNotificationListSection extends StatelessWidget {
               await provider.deleteNotification(item.id);
               if (!context.mounted) return;
               if (provider.errorMessage == null) {
-                showToast('알림을 삭제했습니다.');
+                showToast('알림을 지웠어요.');
               }
             },
             child: CommunityNotificationTile(
