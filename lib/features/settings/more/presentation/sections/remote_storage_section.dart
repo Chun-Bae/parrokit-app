@@ -188,7 +188,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                             builder: (dialogContext) => AlertDialog(
                               title: const Text('Google Drive 연동 해제'),
                               content: const Text(
-                                '연동을 해제하면 Google Drive에 있던 파일들을 모두 기기로 옮긴 뒤, 계정을 분리합니다.',
+                                '연동을 해제하면 Google Drive에 있던 파일을 모두 이 기기로 옮긴 뒤 계정을 떼어 내요.',
                               ),
                               actions: [
                                 TextButton(

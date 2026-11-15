@@ -587,7 +587,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
 
     final user = fb.FirebaseAuth.instance.currentUser;
     if (user == null) {
-      throw StateError('로컬 전환을 위해 로그인 정보가 필요합니다.');
+      throw StateError('이 기기로 옮기려면 로그인 정보가 필요해요.');
     }
 
     final sourceRef = await sourceRefDatasource.getCurrentClipSourceRef(target);
@@ -767,7 +767,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         .visibleClipsByStorageMode(ClipStorageConstants.storageModeGoogleDrive);
 
     if (clips.isEmpty) {
-      onProgress?.call(0, 0, '이동할 Google Drive 파일이 없습니다.');
+      onProgress?.call(0, 0, '옮길 Google Drive 파일이 없어요.');
       return 0;
     }
 
@@ -776,14 +776,14 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       onProgress?.call(
         current,
         clips.length,
-        'Google Drive 파일을 로컬로 옮기는 중',
+        'Google Drive 파일을 이 기기로 옮기는 중',
       );
       await moveClipToLocal(clip.id);
       current++;
       onProgress?.call(
         current,
         clips.length,
-        'Google Drive 파일을 로컬로 옮기는 중',
+        'Google Drive 파일을 이 기기로 옮기는 중',
       );
     }
 

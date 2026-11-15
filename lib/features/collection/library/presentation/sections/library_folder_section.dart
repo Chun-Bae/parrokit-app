@@ -286,7 +286,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
       child: _buildUsageCard(
         context,
         icon: Icons.phone_android_rounded,
-        title: '로컬 저장 용량',
+        title: '이 기기 저장 용량',
         usageText: _formatBytes(clipProvider.localStorageUsedBytes),
         description: '인터넷이 없어도 바로 열 수 있게 이 기기에 남아 있는 파일이에요.',
         color: Theme.of(context).colorScheme.tertiary,
@@ -358,18 +358,20 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                         ),
                   ),
                 ),
-                TextButton(
-                  onPressed: isBusy
-                      ? null
-                      : () async {
-                          final provider = context.read<ClipProvider>();
-                          if (provider.hasGoogleDriveLinked) {
+                // Drive 저장은 더 쓰지 않는다(5차). 새로 연동하는 길은 뺐고,
+                // 이미 연동한 사람에게 해제만 남긴다.
+                if (isLinked)
+                  TextButton(
+                    onPressed: isBusy
+                        ? null
+                        : () async {
+                            final provider = context.read<ClipProvider>();
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (dialogContext) => AlertDialog(
                                 title: const Text('Google Drive 연동 해제'),
                                 content: const Text(
-                                  '연동을 해제하면 Google Drive에 있던 파일들을 모두 기기로 옮긴 뒤, 계정을 분리합니다.',
+                                  '연동을 해제하면 Google Drive에 있던 파일을 모두 이 기기로 옮긴 뒤 계정을 떼어 내요.',
                                 ),
                                 actions: [
                                   TextButton(
@@ -395,18 +397,9 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                                   ? 'Google Drive 연동을 해제했어요.'
                                   : 'Google Drive 연동 해제에 실패했어요.',
                             );
-                          } else {
-                            final success = await provider.connectGoogleDrive();
-                            if (!context.mounted) return;
-                            showToast(
-                              success
-                                  ? 'Google Drive 연동을 완료했어요.'
-                                  : 'Google Drive 연동에 실패했어요.',
-                            );
-                          }
-                        },
-                  child: Text(isLinked ? '연동 해제' : '구글 드라이브 연동하기'),
-                ),
+                          },
+                    child: const Text('연동 해제'),
+                  ),
               ],
             ),
             const SizedBox(height: 10),

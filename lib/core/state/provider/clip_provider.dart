@@ -533,7 +533,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
 
     _setGoogleDriveLinkState(
       isRunning: true,
-      message: 'Google Drive 파일을 로컬로 옮기는 중',
+      message: 'Google Drive 파일을 이 기기로 옮기는 중',
       error: null,
     );
 
