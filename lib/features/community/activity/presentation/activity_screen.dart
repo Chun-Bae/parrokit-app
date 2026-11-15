@@ -4,6 +4,7 @@ import 'package:parrokit/features/community/menu/data/factories/community_menu_s
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:parrokit/features/community/activity/presentation/activity_empty_text.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'providers/activity_provider.dart';
@@ -50,31 +51,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
   }
 
   /// 왜 비었는지, 무엇을 하면 채워지는지 한 줄.
-  String _emptyDescription() {
-    switch (widget.activityType) {
-      case 'written':
-      case 'written_posted':
-        if (widget.boardType == 'vote') {
-          // 투표는 '쓰는' 것이 아니라 만들거나 참여하는 것이다(5차).
-          return widget.activityType == 'written'
-              ? '마음에 드는 투표에 참여해 보세요.'
-              : '첫 투표를 만들면 여기에 모여요.';
-        }
-        return widget.boardType == 'question'
-            ? '첫 질문을 올리면 여기에 모여요.'
-            : '첫 글을 남기면 여기에 모여요.';
-      case 'commented':
-      case 'commented_reply':
-        return '글에 남긴 말이 여기에 모여요.';
-      case 'liked':
-      case 'liked_comment':
-        return '공감하거나 좋아요한 글이 여기에 모여요.';
-      case 'scraped':
-        return '나중에 다시 볼 글을 스크랩해 두세요.';
-      default:
-        return '커뮤니티에서 한 일이 여기에 모여요.';
-    }
-  }
+  String _emptyDescription() =>
+      activityEmptyDescription(widget.boardType, widget.activityType);
 
   /// 쓰기 활동이면 글쓰기 화면 경로. 그 밖에는 null(버튼을 두지 않는다).
   String? _writePath() {

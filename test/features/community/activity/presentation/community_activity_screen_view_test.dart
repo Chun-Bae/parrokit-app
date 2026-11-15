@@ -52,8 +52,9 @@ void main() {
       // 빈 화면도 어느 줄로 들어왔는지 말한다(5차, 예전 '아직 활동 내역이
       // 없습니다.').
       expect(find.text('아직 작성한 답변이 없어요.'), findsOneWidget);
-      // 무엇을 하면 채워지는지도 알린다(5차).
-      expect(find.text('글에 남긴 말이 여기에 모여요.'), findsOneWidget);
+      // 무엇을 하면 채워지는지도 알린다(5차). 221에서 게시판·질문·투표가
+      // 각자의 말을 쓰게 했다('글에 남긴 말' → '질문에 남긴 답변').
+      expect(find.text('질문에 남긴 답변이 여기에 모여요.'), findsOneWidget);
       // 답변은 질문 글에 다는 것이라 여기서 쓰러 가는 버튼은 두지 않는다.
       expect(find.text('질문하기'), findsNothing);
     });
