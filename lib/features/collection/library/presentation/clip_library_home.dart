@@ -20,7 +20,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'widgets/storage_state_label.dart';
+import 'widgets/drive_migration_notice.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -99,12 +101,63 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       ];
 
   /// 칩으로 보여줄 위치. 클립이 있거나 Drive가 연동된 위치만.
+  bool _importingDrive = false;
+
+  /// 아직 Drive에 남아 있는 클립 수.
+  int get _driveClipCount => _clips
+      .where((c) =>
+          c.clip.storageMode == ClipStorageConstants.storageModeGoogleDrive)
+      .length;
+
+  /// Drive에 남은 클립을 모두 기기로 가져온다. 가져오면 Drive 파일은
+  /// 지워지므로 먼저 묻는다.
+  Future<void> _importDriveClips(BuildContext context) async {
+    final targets = _clips
+        .where((c) =>
+            c.clip.storageMode == ClipStorageConstants.storageModeGoogleDrive)
+        .map((c) => c.clip.id)
+        .toList();
+    if (targets.isEmpty) return;
+
+    // 묻기 전에 Provider를 잡아 둔다. 창을 기다린 뒤 context를 다시 쓰면
+    // 그 사이 화면이 사라졌을 수 있다.
+    final provider = _clipProvider ?? context.read<ClipProvider>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(driveNoticeConfirmTitle),
+        content: Text(driveNoticeConfirmBody(targets.length)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소')),
+          FilledButton(
+            key: const ValueKey('confirm-drive-import'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(driveNoticeActionLabel),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _importingDrive = true);
+    var failed = 0;
+    for (final id in targets) {
+      final ok = await provider.moveClipToLocal(id);
+      if (!ok) failed++;
+    }
+    if (!mounted) return;
+    setState(() => _importingDrive = false);
+    showToast(failed == 0 ? driveNoticeDoneToast : driveNoticeFailToast);
+    await _load();
+  }
+
   List<String> _chipModes(ClipProvider provider) => [
+        // Drive는 연동 여부가 아니라 '남은 클립이 있는지'로만 보여 준다(5차).
         for (final mode in _fetchModes)
           if (mode == ClipStorageConstants.storageModeLocal ||
-              _clips.any((c) => c.clip.storageMode == mode) ||
-              (mode == ClipStorageConstants.storageModeGoogleDrive &&
-                  provider.hasGoogleDriveLinked))
+              _clips.any((c) => c.clip.storageMode == mode))
             mode,
       ];
 
@@ -367,6 +420,13 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
           child: _sectionTitle(context, '모든 클립', trailing: '${_clips.length}개'),
         ),
       ],
+      SliverToBoxAdapter(
+        child: DriveMigrationNotice(
+          clipCount: _driveClipCount,
+          busy: _importingDrive,
+          onImport: () => _importDriveClips(context),
+        ),
+      ),
       SliverToBoxAdapter(
         child: _filterChips(context, provider, tags),
       ),

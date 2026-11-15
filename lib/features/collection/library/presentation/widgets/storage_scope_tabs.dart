@@ -5,7 +5,10 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 
 /// [역할]
-/// 라이브러리 상단의 저장위치 탭 전환 위젯 (로컬 / 서버 / 클라우드).
+/// 라이브러리 상단의 저장 위치 탭(기기 / 서버).
+///
+/// Google Drive 칸은 뺐다(5차). Drive 저장은 더 쓰지 않는다. 예전에 Drive에
+/// 올린 클립은 '모든 클립' 목록과 보관함 안내에서 볼 수 있다.
 ///
 /// 그룹→콜렉션→클립 트리를 저장위치별로 완전히 독립적으로 보여주기 위한 탭이다.
 /// 생김새는 앱 전역 세그먼트 컨트롤([AppSegmentedTabs])을 그대로 쓴다.
@@ -26,11 +29,6 @@ class StorageScopeTabs extends StatelessWidget {
       mode: ClipStorageConstants.storageModeServer,
       icon: Icons.cloud_queue_rounded,
       label: '서버',
-    ),
-    (
-      mode: ClipStorageConstants.storageModeGoogleDrive,
-      icon: Icons.cloud_upload_rounded,
-      label: 'Google Drive',
     ),
   ];
 
