@@ -17,7 +17,6 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -30,9 +29,8 @@ import 'package:parrokit/features/collection/clip/shorts/presentation/providers/
 import 'package:parrokit/core/infrastructure/services/ad_service.dart';
 
 import 'widgets/shorts_page.dart';
-import 'widgets/progress_bar.dart';
 import 'widgets/action_rail.dart';
-import 'widgets/shorts_badge.dart';
+import 'widgets/shorts_top_overlay.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/shorts_progress.dart';
 
@@ -220,29 +218,31 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                   );
                 },
               ),
-              // Top progress (story-like)
+              // 위쪽 겹침 줄: 진행 띠 → 클립 이름 → 태그.
               Positioned(
                 top: 60,
                 left: 0,
                 right: 0,
                 child: SafeArea(
                   bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    child: Builder(builder: (_) {
-                      // 클립이 묶음(10개)보다 적으면 그만큼만 그린다. 전에는
-                      // 늘 10칸이라 두 개뿐이어도 여덟 개가 남은 듯 보였다(5차).
-                      final bar = shortsProgress(
-                        currentIndex: current,
-                        clipCount: shorts.shorts.length,
-                        pageSize: ShortsProvider.pageSize,
-                      );
-                      return ProgressBar(index: bar.index, total: bar.total);
-                    }),
-                  ),
+                  child: Builder(builder: (_) {
+                    // 클립이 묶음(10개)보다 적으면 그만큼만 그린다. 전에는
+                    // 늘 10칸이라 두 개뿐이어도 여덟 개가 남은 듯 보였다(5차).
+                    final bar = shortsProgress(
+                      currentIndex: current,
+                      clipCount: shorts.shorts.length,
+                      pageSize: ShortsProvider.pageSize,
+                    );
+                    final item = shorts.shorts[current];
+                    return ShortsTopOverlay(
+                      index: bar.index,
+                      total: bar.total,
+                      title: item.clip.title,
+                      tagNames: [for (final tag in item.tags) tag.name],
+                    );
+                  }),
                 ),
               ),
-
               // Right action rail
               Positioned(
                 right: 12,
@@ -280,24 +280,6 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                     AppConfig.shortsShowSubtitles = enabled;
                     AppConfig.saveToPrefs();
                   },
-                ),
-              ),
-
-              // Branding badges
-              Positioned(
-                left: 12,
-                top: 12 + MediaQuery.of(context).padding.top,
-                child: Row(
-                  children: [
-                    for (final tag in shorts.shorts[current].tags)
-                      Padding(
-                        padding: const EdgeInsets.only(right: AppSpacing.sm),
-                        child: ShortsBadge(
-                          label: tag.name,
-                          icon: Icons.star_border_rounded,
-                        ),
-                      ),
-                  ],
                 ),
               ),
             ],
