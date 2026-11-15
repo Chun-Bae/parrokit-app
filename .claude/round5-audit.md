@@ -320,6 +320,11 @@
   3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
   4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
+- **함수 onSubscriptionEvent + 규칙 (매달 패롯, 190d87b9)** — 배포 전에는 구독해도 패롯이 들어오지 않고, 앱이 `subParrots`를 바꿀 수 있는 상태가 이어진다.
+  ```
+  npx -y firebase-tools@latest deploy --only functions:onSubscriptionEvent,firestore:rules --project parrokit-45126
+  ```
+
 - **함수 suggestSentenceInfo (단계별 한도, 6c9c377b)** — 배포 전에는 모두 하루 3번 그대로다(동작은 멀쩡).
   ```
   npx -y firebase-tools@latest deploy --only functions:suggestSentenceInfo --project parrokit-45126
@@ -2016,4 +2021,16 @@
 - 배운 것: `testWidgets` 안에서 맨 `Future.delayed`는 테스트 시계가 멈춰 있어 끝나지 않는다(10분 뒤 실패). `tester.runAsync`로 감싼다
 - **배포 필요**에 `functions:suggestSentenceInfo` 추가. 배포 전에는 모두 하루 3번 그대로
 - analyze 깨끗, 813개 통과. functions build·lint 통과. 라이트·다크 확인(한도를 다 쓴 상태를 임시로 만들어 봤고 임시 수정은 되돌림), 테마 라이트로 되돌림
+
+## 반복 239 (2026-11-15 18:40~)
+- 구독 3단계: **매달 주는 패롯**(190d87b9). 서버만 바뀌었다
+  - 지갑에 **구독 패롯(subParrots)**을 따로 둔다. 쓸 때 이쪽부터 깎이고 보통 패롯은 남는다. 둘을 합쳐도 모자라면 아무것도 깎지 않는다
+  - 환전은 보통 패롯만. 구독 패롯으로 환전하려 하면 까닭을 알려 준다("그달 안에 써요"와 맞춘다)
+  - `onSubscriptionEvent`가 기간마다 한 번 넣는다(라이트 100, 프로 400, `config/subscription.grants`로 바꿀 수 있다). 장부 키 `sub_grant_{tier}_{periodEnd}`라 같은 기간 이벤트가 여러 번 와도 한 번만
+  - 기간이 끝나면 남은 구독 패롯을 지운다(`sub_expire_{periodEnd}`). 보통 패롯은 그대로
+  - `firestore.rules`: `subParrots`도 앱이 못 바꾼다. **먼저 깎이는 잔액이라 앱이 올릴 수 있으면 그대로 돈이 된다**
+  - 테스트: 계산 6개, 에뮬레이터 7개(지급·중복 방지·다음 기간·소진 순서·부족·만료·환전 막기), 규칙 42개(+1)
+- 지나가다 고친 것: 지갑 테스트의 낡은 Gemini TTS 값(기본 모델이 3.8 Flash TTS로 바뀌어 120자가 2패롯인데 1로 적혀 있었다)
+- 다음 조각: **앱이 구독 패롯을 보여 주기**(지금은 `parrots`만 본다. 합계와 '구독 패롯 n개 포함'을 더보기 지갑 줄에)
+- analyze 깨끗(Dart 변경 없음), functions build·lint 통과
 
