@@ -3,6 +3,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/player/native_player.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:parrokit/core/state/provider/clip_playback_holder.dart';
 import 'package:parrokit/features/collection/clip/player/presentation/engine/native_clip_player_engine.dart';
 
@@ -75,5 +76,20 @@ void main() {
     holder.engineFor(clipId: 7, title: '카페에서');
 
     expect(notified, greaterThan(0));
+  });
+
+  test('다른 소리가 나면 들고 있던 것을 놓는다', () async {
+    // 쇼츠나 문장 소리와 겹쳐 울리면 안 된다(5차).
+    holder.engineFor(clipId: 7, title: '카페에서');
+
+    await AudioFocus.instance.claim();
+
+    expect(holder.isActive, isFalse);
+  });
+
+  test('들고 있는 것이 없으면 아무 일도 없다', () async {
+    await AudioFocus.instance.claim();
+
+    expect(holder.isActive, isFalse);
   });
 }

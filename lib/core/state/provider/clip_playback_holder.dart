@@ -7,11 +7,21 @@
 
 import 'package:flutter/foundation.dart';
 
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:parrokit/features/collection/clip/player/presentation/engine/native_clip_player_engine.dart';
 
 class ClipPlaybackHolder extends ChangeNotifier {
   ClipPlaybackHolder({NativeClipPlayerEngine Function()? engineOf})
-      : _engineOf = engineOf ?? NativeClipPlayerEngine.new;
+      : _engineOf = engineOf ?? NativeClipPlayerEngine.new {
+    // 쇼츠나 문장 소리가 날 때 듣던 것을 멈춘다(5차).
+    AudioFocus.instance.registerBackground(_stopForOtherSound);
+  }
+
+  /// 다른 소리가 날 때 불린다. 듣는 중이 아니면 아무것도 하지 않는다.
+  Future<void> _stopForOtherSound() async {
+    if (_engine == null) return;
+    await stop();
+  }
 
   final NativeClipPlayerEngine Function() _engineOf;
 
@@ -85,6 +95,7 @@ class ClipPlaybackHolder extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    AudioFocus.instance.unregisterBackground(_stopForOtherSound);
     _engine?.removeListener(_onEngineChanged);
     _engine?.dispose();
     _engine = null;

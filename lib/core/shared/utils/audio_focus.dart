@@ -15,23 +15,25 @@ class AudioFocus {
   AudioFocus._();
   static final AudioFocus instance = AudioFocus._();
 
-  StopSound? _stopBackground;
+  /// 지금 소리를 내고 있을 수 있는 곳들. 둘 이상일 수 있다
+  /// (소리 전용 플레이어, 새 네이티브 플레이어).
+  final List<StopSound> _stoppers = [];
 
-  /// 이어 듣기 쪽이 '내가 소리를 들고 있다'고 알려 둔다.
-  void registerBackground(StopSound stop) => _stopBackground = stop;
-
-  void unregisterBackground(StopSound stop) {
-    if (identical(_stopBackground, stop)) _stopBackground = null;
+  /// 소리를 들고 있는 쪽이 '나도 있다'고 알려 둔다.
+  void registerBackground(StopSound stop) {
+    if (!_stoppers.contains(stop)) _stoppers.add(stop);
   }
 
-  /// 다른 소리를 내기 직전에 부른다. 듣던 것이 있으면 멈춘다.
+  void unregisterBackground(StopSound stop) => _stoppers.remove(stop);
+
+  /// 다른 소리를 내기 직전에 부른다. 듣던 것이 있으면 모두 멈춘다.
   Future<void> claim() async {
-    final stop = _stopBackground;
-    if (stop == null) return;
-    try {
-      await stop();
-    } catch (error) {
-      AppLogger.w('[AudioFocus] 듣던 소리를 멈추지 못했어요: $error');
+    for (final stop in List<StopSound>.of(_stoppers)) {
+      try {
+        await stop();
+      } catch (error) {
+        AppLogger.w('[AudioFocus] 듣던 소리를 멈추지 못했어요: $error');
+      }
     }
   }
 }
