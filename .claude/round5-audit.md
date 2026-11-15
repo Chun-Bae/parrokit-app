@@ -334,26 +334,17 @@
 
 ## 배포 필요 (사용자가 직접)
 
-- **구독 규칙 (a76dd90c)** — 함수는 2026-11-15에 배포했고(아래), 규칙은 아직이다.
-  배포 전에는 본인이 자기 `users/{uid}.subscription` 칸을 바꿀 수 있다(서버 전용이어야 한다).
-  ```
-  npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126
-  ```
-
 - **RevenueCat 대시보드 설정 (사용자만 할 수 있음)** — 함수는 떠 있지만 아직 아무 이벤트도 오지 않는다.
   1. 상품(월 구독 2개)과 entitlement `parrokit_sub_light` / `parrokit_sub_pro`, offering을 만든다
   2. Integrations > Webhooks에 주소를 넣는다: `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`
   3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
   4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
-- **함수 checkStorageQuota + 저장 트리거 고침 (93f105d1)** — 배포 전에는 올리기 전에 묻지 못하고(앱은 그냥 올린다), 프로필 사진까지 용량으로 센다.
+- **함수 checkStorageQuota (93f105d1)** — 저장 트리거 둘(onUserFileUploaded·onUserFileDeleted)은
+  2026-11-15 19:30에 배포했다. 올리기 전에 자리를 묻는 이 함수만 남았다. 배포 전에는 앱이
+  묻지 않고 그냥 올린다.
   ```
-  npx -y firebase-tools@latest deploy --only functions:checkStorageQuota,functions:onUserFileUploaded,functions:onUserFileDeleted --project parrokit-45126
-  ```
-
-- **함수 onVoteEndNotification (투표 알림 글귀, 308bd0c0)** — 배포 전에는 '투표가 종료되었어요.' 그대로다(동작은 멀쩡).
-  ```
-  npx -y firebase-tools@latest deploy --only functions:onVoteEndNotification --project parrokit-45126
+  npx -y firebase-tools@latest deploy --only functions:checkStorageQuota --project parrokit-45126
   ```
 
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
