@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_tab_names.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -109,10 +110,10 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
       // 같은 화면을 /clips/create로 바로 열면 제목이 '새 클립'이다. 허브
       // 탭으로 열었을 때만 '편집'이라 새로 만드는 화면인데 고치러 온 것처럼
       // 보였다(5차). 두 길의 이름을 '새 클립'으로 맞춘다.
-      0 => '새 클립',
-      // 들어온 입구와 같은 말로 둔다(보관함 + 의 'TTS 음성 만들기', 5차).
-      1 => '음성 만들기',
-      _ => '영상 만들기',
+      0 => studioClipTabName,
+      // 들어온 입구와 같은 말로 둔다(보관함 +, 스튜디오 아래 칸. 5차).
+      1 => studioVoiceTabName,
+      _ => studioVideoTabName,
     };
     // 영상 만들기를 숨기면 챗봇이 영상 탭을 열려고 해도 열 곳이 없다.
     void openFromChatbot(int tabIndex) {

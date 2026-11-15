@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_tab_names.dart';
 
 void main() {
   test('클립 만들기 화면은 어느 길로 열어도 제목이 같다', () {
@@ -10,7 +11,9 @@ void main() {
     final hub = File(
             'lib/features/content-studio/hub/presentation/content_studio_hub_screen.dart')
         .readAsStringSync();
-    expect(hub, contains("0 => '새 클립'"));
+    // 이름은 studio_tab_names.dart 한 곳에서 가져다 쓴다(5차).
+    expect(hub, contains('0 => studioClipTabName'));
+    expect(studioClipTabName, '새 클립');
     expect(hub.contains("0 => '편집'"), isFalse);
 
     final create = File(
@@ -28,7 +31,8 @@ void main() {
             'lib/features/collection/shell/presentation/collection_shell_screen.dart')
         .readAsStringSync();
     // 'TTS'는 영어 약어라 다른 줄('문장 추가·클립 추가')과 결이 달랐다(5차).
-    expect(hub, contains("1 => '음성 만들기'"));
+    expect(hub, contains('1 => studioVoiceTabName'));
+    expect(studioVoiceTabName, '음성 만들기');
     expect(entry, contains("title: '음성 만들기'"));
   });
 

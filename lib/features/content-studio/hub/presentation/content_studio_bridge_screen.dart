@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_tab_names.dart';
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:go_router/go_router.dart';
 
@@ -76,7 +77,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-captioning'),
                         icon: Icons.subtitles_rounded,
-                        title: '자막',
+                        title: studioClipTabName,
                         description: '영상에 자막을 달아 클립으로 저장해요',
                         borderColor: border,
                         onTap: () => openTab(0),
@@ -85,7 +86,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                       _BridgeFeatureRow(
                         key: const ValueKey('studio-open-tts'),
                         icon: Icons.graphic_eq_rounded,
-                        title: '음성 만들기',
+                        title: studioVoiceTabName,
                         description: '문장을 읽어 주는 음성을 만들어요',
                         borderColor: border,
                         onTap: () => openTab(1),
@@ -95,7 +96,7 @@ class ContentStudioBridgeScreen extends StatelessWidget {
                         _BridgeFeatureRow(
                           key: const ValueKey('studio-open-video'),
                           icon: Icons.movie_creation_rounded,
-                          title: '영상',
+                          title: studioVideoTabName,
                           description: '대본으로 짧은 영상을 만들어요',
                           borderColor: border,
                           onTap: () => openTab(2),

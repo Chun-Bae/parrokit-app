@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/content-studio/hub/presentation/studio_tab_names.dart';
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -91,7 +92,8 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
             Row(
               children: [
                 _StudioSwitchItem(
-                  title: '자막',
+                  // 열리는 화면 제목과 같은 말로(5차).
+                  title: studioClipTabName,
                   icon: Icons.subtitles_rounded,
                   isSelected: widget.selectedIndex == 0,
                   selectedText: selectedText,
@@ -99,7 +101,7 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
                   onTap: () => _handleTap(0),
                 ),
                 _StudioSwitchItem(
-                  title: '음성 만들기',
+                  title: studioVoiceTabName,
                   icon: Icons.graphic_eq_rounded,
                   isSelected: widget.selectedIndex == 1,
                   selectedText: selectedText,
@@ -108,8 +110,8 @@ class _DashboardStudioSwitchFabState extends State<DashboardStudioSwitchFab> {
                 ),
                 if (kVideoStudioEnabled)
                   _StudioSwitchItem(
-                    // 옆 칸 '자막'처럼 한글로(5차). 예전 'Video'.
-                    title: '영상',
+                    // 옆 칸처럼 한글로(5차). 예전 'Video'.
+                    title: studioVideoTabName,
                     icon: Icons.movie_creation_rounded,
                     isSelected: widget.selectedIndex == 2,
                     selectedText: selectedText,
