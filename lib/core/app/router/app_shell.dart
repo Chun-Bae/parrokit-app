@@ -124,8 +124,6 @@ class AppShell extends StatelessWidget {
                               title: '선택한 ${selectedClipIds.length}개 클립 전환',
                               subtitle:
                                   '선택한 클립 ${selectedClipIds.length}개를 한 번에 옮길 위치를 고르세요.',
-                              hasGoogleDriveLinked:
-                                  clipProvider.hasGoogleDriveLinked,
                             );
 
                             if (!context.mounted || target == null) return;

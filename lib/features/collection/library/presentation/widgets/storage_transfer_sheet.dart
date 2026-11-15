@@ -8,17 +8,19 @@ Future<String?> showStorageTransferSheet(
   BuildContext context, {
   required String title,
   required String subtitle,
-  required bool hasGoogleDriveLinked,
   String initialMode = ClipStorageConstants.storageModeLocal,
+  // 서버 저장 잠금은 로그인 정보를 읽는다. 테스트에서는 값을 넘긴다.
+  bool? serverLocked,
 }) {
   final cs = Theme.of(context).colorScheme;
   var selectedMode = initialMode;
-  if (!hasGoogleDriveLinked &&
-      selectedMode == ClipStorageConstants.storageModeGoogleDrive) {
-    selectedMode = ClipStorageConstants.storageModeServer;
+  // Google Drive 저장은 더 쓰지 않는다(5차). 예전에 Drive에 올린 클립을
+  // 열면 기기가 고른 것으로 시작한다.
+  if (selectedMode == ClipStorageConstants.storageModeGoogleDrive) {
+    selectedMode = ClipStorageConstants.storageModeLocal;
   }
   final isServerLocked =
-      ClipStorageConstants.isServerStorageLockedForCurrentUser();
+      serverLocked ?? ClipStorageConstants.isServerStorageLockedForCurrentUser();
 
   return showAppSheet<String>(
     context: context,
@@ -65,19 +67,6 @@ Future<String?> showStorageTransferSheet(
                     : () => setSheetState(() =>
                         selectedMode = ClipStorageConstants.storageModeServer),
               ),
-              _StoragePickTile(
-                title: 'Google Drive',
-                subtitle:
-                    hasGoogleDriveLinked ? '내 Drive로 옮겨요.' : '연동하면 쓸 수 있어요.',
-                icon: Icons.cloud_upload_rounded,
-                selected:
-                    selectedMode == ClipStorageConstants.storageModeGoogleDrive,
-                enabled: hasGoogleDriveLinked,
-                onTap: hasGoogleDriveLinked
-                    ? () => setSheetState(() => selectedMode =
-                        ClipStorageConstants.storageModeGoogleDrive)
-                    : null,
-              ),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => Navigator.pop(sheetContext, selectedMode),
@@ -98,7 +87,6 @@ class _StoragePickTile extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
-    this.enabled = true,
     this.locked = false,
   });
 
@@ -106,7 +94,6 @@ class _StoragePickTile extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final bool selected;
-  final bool enabled;
   final VoidCallback? onTap;
 
   /// 유료화 준비 등으로 아직 고를 수 없는 항목인지 여부. 탭은 여전히
@@ -118,7 +105,7 @@ class _StoragePickTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final activeColor = cs.primaryContainer.withValues(alpha: 0.55);
-    final isDimmed = !enabled || locked;
+    final isDimmed = locked;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -126,7 +113,7 @@ class _StoragePickTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: enabled ? onTap : null,
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(

@@ -124,17 +124,6 @@ class ClipListView extends StatelessWidget {
     return true;
   }
 
-  Future<bool> _moveToGoogleDrive(
-    ClipProvider provider,
-    ClipItem item,
-  ) async {
-    final success = await provider.moveClipToGoogleDrive(item.clip.id);
-    if (!success) return false;
-
-    await _refreshClipListAfterStorageChange(provider);
-    return true;
-  }
-
   void _showStorageModeSheet(
     BuildContext context,
     ClipItem item, {
@@ -145,7 +134,6 @@ class ClipListView extends StatelessWidget {
       context,
       title: '저장 위치 바꾸기',
       subtitle: '원하는 위치를 고르면, 기기 안에 남겨둘지도 함께 정할 수 있어요.',
-      hasGoogleDriveLinked: provider.hasGoogleDriveLinked,
       initialMode: item.clip.storageMode,
     ).then((target) async {
       if (!context.mounted || target == null) return;
@@ -154,8 +142,6 @@ class ClipListView extends StatelessWidget {
           await _moveToLocal(provider, item),
         ClipStorageConstants.storageModeServer =>
           await _moveToServer(provider, item),
-        ClipStorageConstants.storageModeGoogleDrive =>
-          await _moveToGoogleDrive(provider, item),
         _ => false,
       };
 
@@ -165,15 +151,11 @@ class ClipListView extends StatelessWidget {
           showToast('서버에 저장했어요.');
         } else if (target == ClipStorageConstants.storageModeLocal) {
           showToast('로컬로 옮겼어요.');
-        } else if (target == ClipStorageConstants.storageModeGoogleDrive) {
-          showToast('Google Drive에 저장했어요.');
         }
       } else if (target == ClipStorageConstants.storageModeServer) {
         showToast('서버 저장에 실패했어요.');
       } else if (target == ClipStorageConstants.storageModeLocal) {
         showToast('로컬 전환에 실패했어요.');
-      } else if (target == ClipStorageConstants.storageModeGoogleDrive) {
-        showToast('Google Drive 저장에 실패했어요.');
       }
     });
   }
