@@ -24,6 +24,21 @@ class _FakeEngine extends ChangeNotifier implements ClipPlayerEngine {
   bool get keepsPlayingInBackground => true;
 
   @override
+  bool get handlesClipRange => true;
+
+  final ranges = <String>[];
+
+  @override
+  Future<void> setRange({
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) async {
+    ranges.add('${clipBegin?.inMilliseconds}~${clipEnd?.inMilliseconds} '
+        'loop=$loop');
+  }
+
+  @override
   bool get isReady => ready;
 
   @override
@@ -155,5 +170,19 @@ void main() {
 
     expect(engine.opens, [videoPath],
         reason: '영상이나 구간이 바뀌었을 수 있다');
+  });
+
+  test('구간을 다루는 플레이어에는 지금 구간을 알려 준다', () async {
+    final (_, provider, clipId) = await seed();
+    final engine = _FakeEngine()..ready = false;
+    final vm = ClipPlayerViewModel(
+      clipId: clipId,
+      clipProvider: provider,
+      engine: engine,
+    );
+    addTearDown(vm.dispose);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    expect(engine.ranges, isNotEmpty, reason: '끝을 플레이어가 잡아야 한다');
   });
 }

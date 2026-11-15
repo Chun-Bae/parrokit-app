@@ -16,6 +16,12 @@ abstract class ClipPlayerEngine implements Listenable {
   /// 소리가 둘이 나거나 한 템포 끊긴다(5차 4단계).
   bool get keepsPlayingInBackground;
 
+  /// 구간(그리고 그 반복)을 플레이어가 직접 다루는지.
+  ///
+  /// 참이면 화면 쪽에서 자리를 보며 되돌리지 않는다. 0.2초마다 보는 것으로는
+  /// 구간 끝을 최대 0.2초까지 지나친다(5차 4단계).
+  bool get handlesClipRange;
+
   /// 영상을 읽어 틀 준비가 됐는지.
   bool get isReady;
 
@@ -48,6 +54,14 @@ abstract class ClipPlayerEngine implements Listenable {
   /// 영상 전체를 끝에서 처음으로 되돌릴지.
   Future<void> setLooping(bool value);
 
+  /// 틀 구간과 반복. 비우면 영상 전체. [handlesClipRange]가 거짓이면 아무
+  /// 일도 하지 않는다.
+  Future<void> setRange({
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  });
+
   /// 지금 영상을 놓는다. 창구는 그대로라 다시 [open]할 수 있다.
   Future<void> close();
 
@@ -67,6 +81,10 @@ class VideoPlayerEngine extends ChangeNotifier implements ClipPlayerEngine {
   /// video_player는 앱을 내리면 멈춘다. 그래서 넘겨야 한다.
   @override
   bool get keepsPlayingInBackground => false;
+
+  /// 구간은 화면 쪽이 자리를 보며 되돌린다.
+  @override
+  bool get handlesClipRange => false;
 
   @override
   bool get isReady => _controller?.value.isInitialized == true;
@@ -125,6 +143,15 @@ class VideoPlayerEngine extends ChangeNotifier implements ClipPlayerEngine {
 
   @override
   Future<void> setLooping(bool value) async => _controller?.setLooping(value);
+
+  @override
+  Future<void> setRange({
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) async {
+    // video_player는 구간을 모른다. 화면 쪽이 한다.
+  }
 
   @override
   Future<void> close() async {

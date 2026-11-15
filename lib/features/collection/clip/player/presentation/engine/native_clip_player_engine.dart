@@ -24,6 +24,10 @@ class NativeClipPlayerEngine extends ChangeNotifier
   @override
   bool get keepsPlayingInBackground => true;
 
+  /// 구간 끝을 플레이어가 정확히 잡는다(5차 3단계).
+  @override
+  bool get handlesClipRange => true;
+
   @override
   bool get isReady => _state.ready;
 
@@ -70,12 +74,18 @@ class NativeClipPlayerEngine extends ChangeNotifier
   @override
   Future<void> setSpeed(double speed) => _player.setSpeed(speed);
 
-  /// 영상 전체를 끝에서 처음으로 되돌릴지.
-  ///
-  /// 구간 반복은 지금도 ViewModel이 자리로 보고 처리한다. 두 곳에서 같이
-  /// 하면 어긋나므로, 여기서는 전체 반복만 네이티브에 맡긴다.
+  /// 영상 전체를 끝에서 처음으로 되돌릴지. 구간은 [setRange]가 따로 정한다.
   @override
   Future<void> setLooping(bool value) => _player.setRange(loop: value);
+
+  @override
+  Future<void> setRange({
+    Duration? clipBegin,
+    Duration? clipEnd,
+    bool loop = false,
+  }) =>
+      _player.setRange(
+          clipBegin: clipBegin, clipEnd: clipEnd, loop: loop);
 
   @override
   Future<void> close() async {

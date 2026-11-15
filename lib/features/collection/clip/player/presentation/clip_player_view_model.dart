@@ -340,6 +340,24 @@ class ClipPlayerViewModel extends ChangeNotifier
     }
 
     engine.addListener(_onTick);
+    await syncPlaybackRange();
+  }
+
+  /// 지금 보고 있는 구간과 반복을 플레이어에 알린다.
+  ///
+  /// 구간을 직접 다루는 플레이어면 끝을 정확히 잡아 준다. 화면 쪽에서
+  /// 0.2초마다 보는 것으로는 구간 끝을 최대 0.2초까지 지나친다(5차).
+  @override
+  Future<void> syncPlaybackRange() async {
+    if (!engine.handlesClipRange) return;
+    final segmentScope = _scope == PlayScope.segment && _segments.isNotEmpty;
+    await engine.setRange(
+      clipBegin:
+          segmentScope ? Duration(milliseconds: currentSegment.startMs) : null,
+      clipEnd:
+          segmentScope ? Duration(milliseconds: currentSegment.endMs) : null,
+      loop: segmentScope ? _loopSegment : (_loopSegment && _scope == PlayScope.full),
+    );
   }
 
   void _onTick() {
@@ -350,6 +368,12 @@ class ClipPlayerViewModel extends ChangeNotifier
     final end = Duration(milliseconds: currentSegment.endMs);
 
     if (_scope == PlayScope.segment) {
+      // 구간을 플레이어가 직접 다루면 여기서 되돌리지 않는다. 두 곳이
+      // 같이 하면 어긋난다(5차 4단계).
+      if (engine.handlesClipRange) {
+        notifyListeners();
+        return;
+      }
       if (pos >= end) {
         if (_loopSegment) {
           engine.seekTo(start);

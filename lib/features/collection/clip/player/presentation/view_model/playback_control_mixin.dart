@@ -21,6 +21,9 @@ mixin PlaybackControlMixin on ChangeNotifier {
   // ─────────────────────────────────────────────────────────────────
 
   ClipPlayerEngine get engine;
+
+  /// 지금 구간과 반복을 플레이어에 알린다(메인 클래스에서 구현).
+  Future<void> syncPlaybackRange();
   List<Segment> get segments;
   Segment get currentSegment;
   bool get isInitialized;
@@ -117,6 +120,7 @@ mixin PlaybackControlMixin on ChangeNotifier {
       await engine.seekTo(Duration(milliseconds: segments[index].startMs));
     }
 
+    await syncPlaybackRange();
     if (autoplay || engine.isPlaying) {
       await engine.play();
     } else {
@@ -185,6 +189,7 @@ mixin PlaybackControlMixin on ChangeNotifier {
       await engine.setLooping(loopSegment);
       mutableScope = PlayScope.full;
     }
+    await syncPlaybackRange();
     notifyListeners();
   }
 
@@ -193,6 +198,7 @@ mixin PlaybackControlMixin on ChangeNotifier {
     if (isBackground || !engine.isReady) return;
     mutableLoopSegment = !loopSegment;
     await engine.setLooping(scope == PlayScope.full && loopSegment);
+    await syncPlaybackRange();
     notifyListeners();
   }
 
