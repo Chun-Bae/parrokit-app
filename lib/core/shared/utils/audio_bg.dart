@@ -1,4 +1,6 @@
 // audio_bg.dart
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -147,8 +149,15 @@ class _BgAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> setSpeed(double s) => _player.setSpeed(s);
 
+  // just_audio의 play()가 주는 Future는 '재생이 끝날 때'까지 끝나지 않는다.
+  // 그래서 await 하면 그 뒤 코드가 영영 안 돌았다. 플레이어를 나가서 소리를
+  // 넘길 때, 소리는 났지만 '듣는 중' 줄을 띄우는 코드까지 못 가서 첫 진입에는
+  // 줄이 안 뜨고, 다음에 들어가 멈출 때에야 뒤늦게 떴다(5차, 사용자 신고).
+  // 시작만 시키고 끝은 기다리지 않는다.
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    unawaited(_player.play().catchError((_) {}));
+  }
 
   @override
   Future<void> pause() => _player.pause();

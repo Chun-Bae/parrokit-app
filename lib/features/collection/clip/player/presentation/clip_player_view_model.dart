@@ -247,6 +247,9 @@ class ClipPlayerViewModel extends ChangeNotifier
       _clip = payload.clip;
       _segments = payload.segments;
 
+      // 나갈 때가 되어서야 소리 쪽을 띄우면 늦는다. 미리 깨워 둔다(5차).
+      unawaited(background?.warmUp() ?? Future<void>.value());
+
       await _initVideo();
       if (_disposed) return;
 
