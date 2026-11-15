@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -162,6 +163,8 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     }
 
     await _previewPlayer.setFilePath(path);
+    // 이어 듣던 클립이 있으면 멈춘다. 둘이 겹쳐 울리지 않게(5차).
+    await AudioFocus.instance.claim();
     await _previewPlayer.play();
     if (mounted) setState(() => _previewPlayingVoiceId = voiceId);
   }

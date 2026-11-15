@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
@@ -83,6 +84,8 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
       if (_player.processingState == ProcessingState.completed) {
         await _player.seek(Duration.zero);
       }
+      // 이어 듣던 클립이 있으면 멈춘다. 둘이 겹쳐 울리지 않게(5차).
+      await AudioFocus.instance.claim();
       await _player.play();
     }
   }
