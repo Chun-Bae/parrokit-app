@@ -16,6 +16,7 @@ import 'package:provider/single_child_widget.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/state/provider/theme_provider.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
+import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/providers/ad_provider.dart';
@@ -55,6 +56,10 @@ List<SingleChildWidget> buildProviders({
     ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
     ChangeNotifierProvider<IapProvider>.value(value: iapProvider),
     ChangeNotifierProvider<AdProvider>.value(value: adProvider),
+    // 플레이어를 나가도 소리가 이어지게 재생을 앱이 들고 있는다(5차).
+    ChangeNotifierProvider<BackgroundPlaybackProvider>(
+      create: (_) => BackgroundPlaybackProvider(),
+    ),
 
     // ─────────────────────────────────────────────────────────────────
     // 데이터베이스

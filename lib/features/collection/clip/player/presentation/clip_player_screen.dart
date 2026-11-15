@@ -19,6 +19,7 @@ import 'dart:math' as math;
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/collection/clip/export/presentation/subtitle_export_sheet.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -58,6 +59,8 @@ class ClipPlayerScreen extends StatelessWidget {
       create: (ctx) => ClipPlayerViewModel(
         clipId: clipId,
         clipProvider: ctx.read<ClipProvider>(),
+        // 나가면 소리를 여기로 넘기고, 다시 들어오면 돌려받는다(5차).
+        background: ctx.read<BackgroundPlaybackProvider>(),
         initialIndex: initialIndex,
       ),
       child: _ClipPlayerView(clipId: clipId),

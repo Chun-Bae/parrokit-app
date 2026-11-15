@@ -1,3 +1,4 @@
+import 'dart:async';
 // ============================================================================
 // lib/features/player/presentation/clip_player_view_model.dart
 // ============================================================================
@@ -27,6 +28,7 @@ import 'package:video_player/video_player.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/shared/utils/audio_bg.dart';
+import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
 
@@ -43,6 +45,7 @@ class ClipPlayerViewModel extends ChangeNotifier
   ClipPlayerViewModel({
     required this.clipId,
     required this.clipProvider,
+    this.background,
     this.initialIndex = 0,
   }) {
     _init();
@@ -54,7 +57,20 @@ class ClipPlayerViewModel extends ChangeNotifier
 
   final int clipId;
   final ClipProvider clipProvider;
+
+  /// 화면을 나가도 소리를 이어 가는 곳. 없으면 나갈 때 그냥 멈춘다(테스트).
+  final BackgroundPlaybackProvider? background;
   final int initialIndex;
+
+  /// 영상 파일의 절대 경로. 나갈 때 소리로 넘기려면 그때 다시 찾을 수 없어
+  /// 미리 들고 있는다(dispose는 기다릴 수 없다).
+  String _resolvedPath = '';
+
+  /// 표지 그림. 같은 까닭으로 미리 들고 있는다.
+  Uri? _resolvedArtUri;
+
+  /// 이어 듣다가 다시 들어왔을 때 돌아갈 자리.
+  Duration? _resumeFrom;
 
   // ─────────────────────────────────────────────────────────────────
   // State - Core
@@ -204,6 +220,17 @@ class ClipPlayerViewModel extends ChangeNotifier
   /// 클립 데이터 로드.
   Future<void> loadClip() async {
     try {
+      // 이어 듣던 클립을 다시 열었으면 소리를 멈추고 들은 자리를 받는다(5차).
+      final handOff = background;
+      Duration? resumeFrom;
+      if (handOff != null && handOff.current?.clipId == clipId) {
+        resumeFrom = await handOff.handBack();
+      } else if (handOff != null && handOff.isActive) {
+        // 다른 클립을 열면 듣던 것은 멈춘다. 둘이 같이 나지 않게.
+        await handOff.stop();
+      }
+      if (_disposed) return;
+      _resumeFrom = resumeFrom;
       final payload = await clipProvider.fetchClipById(clipId);
       if (_disposed) return;
 
@@ -267,6 +294,12 @@ class ClipPlayerViewModel extends ChangeNotifier
 
     final resolvedPath = await resolvedSourcePath();
     if (_disposed) return;
+    _resolvedPath = resolvedPath;
+    // 표지는 없어도 재생에 지장이 없다. 나갈 때 쓰려고 미리 찾아 둔다.
+    resolvedThumbUri().then((uri) => _resolvedArtUri = uri).catchError((_) {
+      _resolvedArtUri = null;
+      return null;
+    });
     final controller = VideoPlayerController.file(File(resolvedPath));
     _controller = controller;
 
@@ -282,7 +315,11 @@ class ClipPlayerViewModel extends ChangeNotifier
 
     if (_segments.isNotEmpty) {
       _segIndex = _segIndex.clamp(0, _segments.length - 1);
-      await controller.seekTo(Duration(milliseconds: currentSegment.startMs));
+      // 이어 듣다 들어왔으면 그 자리부터, 아니면 구간 처음부터.
+      final resume = _resumeFrom;
+      _resumeFrom = null;
+      await controller.seekTo(
+          resume ?? Duration(milliseconds: currentSegment.startMs));
       if (released()) return;
     }
 
@@ -361,10 +398,47 @@ class ClipPlayerViewModel extends ChangeNotifier
     }
   }
 
+  /// 화면을 나갈 때 소리를 앱에 넘긴다. 넘겼으면 true.
+  ///
+  /// dispose는 기다릴 수 없으므로 필요한 값(경로·위치·속도)을 먼저 읽어
+  /// 넘기고, 실제 재생은 provider가 이어서 한다(5차, 사용자 요청).
+  bool _handOffToBackground() {
+    final handOff = background;
+    final clip = _clip;
+    if (handOff == null || clip == null || _resolvedPath.isEmpty) return false;
+
+    final playingVideo = _controller?.value.isInitialized == true &&
+        _controller!.value.isPlaying;
+    // 앱을 내렸다가 바로 화면을 닫은 경우에도 소리는 이어 간다.
+    if (!playingVideo && !_isBackground) return false;
+
+    final position = _controller?.value.isInitialized == true
+        ? _controller!.value.position
+        : Duration(milliseconds: currentSegment.startMs);
+
+    unawaited(handOff.takeOver(
+      clipId: clipId,
+      title: clip.title,
+      absolutePath: _resolvedPath,
+      position: position,
+      speed: _playbackRate,
+      clipBegin: _scope == PlayScope.segment
+          ? Duration(milliseconds: currentSegment.startMs)
+          : null,
+      clipEnd: _scope == PlayScope.segment
+          ? Duration(milliseconds: currentSegment.endMs)
+          : null,
+      loop: _loopSegment,
+      artUri: _resolvedArtUri,
+    ));
+    return true;
+  }
+
   @override
   void dispose() {
     _disposed = true;
-    if (_isBackground) {
+    final handedOff = _handOffToBackground();
+    if (_isBackground && !handedOff) {
       BgAudio.instance.ensureAudioHandler().then((h) async {
         try {
           await h.stop();

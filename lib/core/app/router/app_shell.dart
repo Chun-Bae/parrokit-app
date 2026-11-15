@@ -14,6 +14,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/collection/clip/player/presentation/widgets/listening_bar.dart';
+import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/clip_backup_action.dart';
@@ -56,29 +58,53 @@ class AppShell extends StatelessWidget {
       body: child,
       // 모달 시트는 useRootNavigator로 띄워서 이 네비바 위를 덮는다.
       bottomNavigationBar: hideNav
-          ? null
+          ? _listeningBar(context)
           : showCollectionSelectionBar
               ? _buildCollectionSelectionBar(context)
               // 시트가 떠 있는 동안에는 숨긴다. 네이티브 탭 바가 자기 프레임
               // 위로 드리우는 그림자가 시트 위에 가로 띠로 비쳤다(5차).
               // 자리는 그대로 두어(maintainSize) 본문이 움찔거리지 않는다.
-              : ValueListenableBuilder<int>(
-                  valueListenable: openAppSheetCount,
-                  builder: (context, sheets, child) => Visibility(
-                    visible: sheets == 0,
-                    maintainState: true,
-                    maintainAnimation: true,
-                    maintainSize: true,
-                    maintainInteractivity: false,
-                    child: child!,
+              : Column(mainAxisSize: MainAxisSize.min, children: [
+                  // 플레이어를 나와도 듣고 있으면 무엇이 울리는지 알린다(5차).
+                  _listeningBar(context),
+                  ValueListenableBuilder<int>(
+                    valueListenable: openAppSheetCount,
+                    builder: (context, sheets, child) => Visibility(
+                      visible: sheets == 0,
+                      maintainState: true,
+                      maintainAnimation: true,
+                      maintainSize: true,
+                      maintainInteractivity: false,
+                      child: child!,
+                    ),
+                    child: AppBottomNavBar(
+                      currentIndex: currentIndex,
+                      onTap: (i) => _onTabTap(context, i,
+                          currentIndex: currentIndex,
+                          currentPath: GoRouterState.of(context).uri.path),
+                    ),
                   ),
-                  child: AppBottomNavBar(
-                    currentIndex: currentIndex,
-                    onTap: (i) => _onTabTap(context, i,
-                        currentIndex: currentIndex,
-                        currentPath: GoRouterState.of(context).uri.path),
-                  ),
-                ),
+                ]),
+    );
+  }
+
+  /// 듣는 중이면 줄을 그리고, 아니면 자리를 차지하지 않는다.
+  Widget _listeningBar(BuildContext context) {
+    final playback = context.watch<BackgroundPlaybackProvider>();
+    final current = playback.current;
+    if (current == null) return const SizedBox.shrink();
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: ListeningBar(
+        playback: current,
+        onOpen: () => context.push(
+            '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}'
+            '?clipId=${current.clipId}'),
+        onTogglePlay: () =>
+            current.playing ? playback.pause() : playback.resume(),
+        onClose: playback.stop,
+      ),
     );
   }
 
