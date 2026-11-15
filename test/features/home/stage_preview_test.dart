@@ -573,7 +573,8 @@ void main() {
     await tester.tap(find.byTooltip('이전 문장'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('다음 단계까지 1점'), findsOneWidget);
+    // 점수 없이 체크로 넘기면 1점만 오른다(5차: 점수에 비례해 오른다).
+    expect(find.text('다음 단계까지 2점'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('말풍선을 누르면 문장 정보 시트가 열린다', (tester) async {

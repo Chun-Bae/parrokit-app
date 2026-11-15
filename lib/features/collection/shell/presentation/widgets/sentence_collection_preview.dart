@@ -1625,6 +1625,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     await SentenceActivityStore.incrementPractice(
       widget.accountId,
       widget.sentence.id,
+      score: score,
     );
     final total = await addSpeakingXp(widget.accountId, score);
     if (!mounted) return;

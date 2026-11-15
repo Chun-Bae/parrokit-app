@@ -10,17 +10,19 @@ enum SentenceMastery {
   final String label;
 }
 
-/// 따라 말하기는 직접 소리 내는 연습이라 청취보다 두 배로 센다.
+/// 따라 말하기는 직접 소리 내는 연습이라 청취보다 많이 센다. 얼마나 비슷하게
+/// 말했는지에 따라 한 번에 0~2점이다(5차).
 const _familiarScore = 10;
 
 SentenceMastery masteryOf(SentenceActivity activity) {
-  final score = activity.listenCount + activity.practiceCount * 2;
+  final score = activity.listenCount + activity.practiceScore;
   if (score <= 0) return SentenceMastery.fresh;
   if (score < _familiarScore) return SentenceMastery.learning;
   return SentenceMastery.familiar;
 }
 
-/// 문장별 친밀도. 숙련도와 같은 점수(청취 1점, 따라 말하기 2점)로 계산하고 따로 저장하지 않는다.
+/// 문장별 친밀도. 숙련도와 같은 점수(청취 1점, 따라 말하기는 점수에 따라 0~2점)로
+/// 계산하고 따로 저장하지 않는다.
 /// 한 번 오른 단계는 내려가지 않는다.
 class SentenceAffinity {
   const SentenceAffinity._(
@@ -53,7 +55,7 @@ class SentenceAffinity {
 }
 
 SentenceAffinity affinityOf(SentenceActivity activity) {
-  final points = activity.listenCount + activity.practiceCount * 2;
+  final points = activity.listenCount + activity.practiceScore;
   var index = 0;
   for (var i = 0; i < SentenceAffinity._steps.length; i++) {
     if (points >= SentenceAffinity._steps[i].$1) index = i;

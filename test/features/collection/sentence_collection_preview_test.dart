@@ -342,9 +342,11 @@ void main() {
 
   testWidgets('친밀도 최고 단계 문장 카드만 금색 테두리가 된다', (tester) async {
     await seedSentences();
-    for (var i = 0; i < 25; i++) {
+    // 50점(=1점)씩 50번이면 50점이 쌓여 최고 단계가 된다(5차: 점수에 비례).
+    for (var i = 0; i < 50; i++) {
       await SentenceActivityStore.incrementPractice(
-          'guest', seedId('Hello there!'));
+          'guest', seedId('Hello there!'),
+          score: 0.5);
     }
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();

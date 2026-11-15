@@ -98,6 +98,44 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
   /// 스스로 듣는 중에 마이크를 눌러 멈췄다. 다시 누를 때까지는 혼자 켜지 않는다.
   bool autoStopped = false;
 
+  /// 이번 시도를 이미 완료로 넘겼다. 다시 말하기 전까지는 또 넘기지 않는다.
+  ///
+  /// 전에는 체크를 누를 때마다 같은 점수로 XP와 연습 수가 또 올라갔다
+  /// (5차, 사용자 신고).
+  bool completed = false;
+
+  /// 한 번 끝낸 뒤 처음으로 되돌린다. 다음 시도는 0점부터 시작한다.
+  void resetAttempt() {
+    passTimer?.cancel();
+    attemptStart = null;
+    setState(() {
+      score = 0;
+      heard = '';
+      level = 0;
+      message = null;
+    });
+  }
+
+  /// 체크를 눌렀을 때. 아직 말하지 않았으면 아무 일도 하지 않는다.
+  void completeByHand() {
+    autoTimer?.cancel();
+    widget.onBeforeStart();
+    if (completed && score == 0 && attemptStart == null) {
+      // 방금 완료하고 아직 다시 말하지 않았다. 또 올려 주지 않는다.
+      setState(() => message = '한 번 더 말하고 눌러 주세요.');
+      return;
+    }
+    // 이미 기록된 시도(말하고 끝난 경우)는 다시 기록하지 않는다.
+    if (attemptStart != null || score == 0) {
+      finishAttempt(success: true, manual: true);
+    }
+    final earned = score > 0 ? score : null;
+    unawaited(stopListening());
+    completed = true;
+    resetAttempt();
+    widget.onComplete(earned);
+  }
+
   /// 지금 스스로 듣고 넘어가도 되는지.
   bool get canAutoListen => widget.autoListen && widget.enabled && !autoStopped;
 
@@ -110,6 +148,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
     passTimer?.cancel();
     autoStopped = false;
     autoTries = 0;
+    completed = false;
     if (listening) {
       await stopListening();
       if (!mounted) return;
@@ -181,6 +220,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
       return;
     }
     attemptStart = DateTime.now();
+    completed = false;
     autoTries++;
     setState(() => listening = true);
   }
@@ -235,7 +275,10 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
     autoTimer?.cancel();
     autoTimer = Timer(_autoAdvanceDelay, () {
       if (!mounted || !canAutoListen) return;
-      widget.onComplete(score > 0 ? score : null);
+      final earned = score > 0 ? score : null;
+      completed = true;
+      resetAttempt();
+      widget.onComplete(earned);
     });
   }
 
@@ -381,18 +424,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
         IconButton(
             key: const ValueKey('complete-repeat'),
             tooltip: '따라 말하기 완료',
-            onPressed: widget.enabled
-                ? () {
-                    autoTimer?.cancel();
-                    widget.onBeforeStart();
-                    // 이미 기록된 시도(말하고 끝난 경우)는 다시 기록하지 않는다.
-                    if (attemptStart != null || score == 0) {
-                      finishAttempt(success: true, manual: true);
-                    }
-                    unawaited(stopListening());
-                    widget.onComplete(score > 0 ? score : null);
-                  }
-                : null,
+            onPressed: widget.enabled ? completeByHand : null,
             icon: Icon(Icons.check_circle_rounded, color: active, size: 30)),
       ]),
       if (heard.isNotEmpty)

@@ -759,6 +759,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
         await SentenceActivityStore.incrementPractice(
           widget.accountId,
           practicedSentence.id,
+          score: score,
         );
       }
       await widget.onPracticeCompleted?.call();

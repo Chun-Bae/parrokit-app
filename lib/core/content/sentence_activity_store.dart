@@ -7,6 +7,7 @@ class SentenceActivity {
   const SentenceActivity({
     this.parrotSpeakCount = 0,
     this.practiceCount = 0,
+    this.practicePoints,
     this.listenCount = 0,
     this.lastPracticedAt,
     this.routineEnabled = true,
@@ -16,6 +17,15 @@ class SentenceActivity {
 
   final int parrotSpeakCount;
   final int practiceCount;
+
+  /// 따라 말하기로 쌓은 점수. 잘 따라 할수록 많이 쌓인다(100점 2점, 50점 1점).
+  ///
+  /// 예전 기록에는 이 값이 없다. 그때는 횟수당 2점으로 보던 때라
+  /// [practiceScore]가 `practiceCount * 2`로 읽는다(5차).
+  final int? practicePoints;
+
+  /// 숙련도·친밀도에 쓰는 따라 말하기 점수.
+  int get practiceScore => practicePoints ?? practiceCount * 2;
 
   /// 듣기 모드에서 앵무새 음성을 끝까지 들은 횟수.
   final int listenCount;
@@ -33,6 +43,7 @@ class SentenceActivity {
   SentenceActivity copyWith({
     int? parrotSpeakCount,
     int? practiceCount,
+    int? practicePoints,
     int? listenCount,
     DateTime? lastPracticedAt,
     bool? routineEnabled,
@@ -42,6 +53,7 @@ class SentenceActivity {
       SentenceActivity(
         parrotSpeakCount: parrotSpeakCount ?? this.parrotSpeakCount,
         practiceCount: practiceCount ?? this.practiceCount,
+        practicePoints: practicePoints ?? this.practicePoints,
         listenCount: listenCount ?? this.listenCount,
         lastPracticedAt: lastPracticedAt ?? this.lastPracticedAt,
         routineEnabled: routineEnabled ?? this.routineEnabled,
@@ -54,6 +66,7 @@ class SentenceActivity {
           'lastPracticedAt': lastPracticedAt!.millisecondsSinceEpoch,
         'parrotSpeakCount': parrotSpeakCount,
         'practiceCount': practiceCount,
+        if (practicePoints != null) 'practicePoints': practicePoints!,
         'listenCount': listenCount,
         'routineEnabled': routineEnabled,
         if (liked) 'liked': true,
@@ -67,6 +80,8 @@ class SentenceActivity {
           (value['parrotSpeakCount'] as num?)?.clamp(0, 1 << 31).toInt() ?? 0,
       practiceCount:
           (value['practiceCount'] as num?)?.clamp(0, 1 << 31).toInt() ?? 0,
+      practicePoints:
+          (value['practicePoints'] as num?)?.clamp(0, 1 << 31).toInt(),
       listenCount:
           (value['listenCount'] as num?)?.clamp(0, 1 << 31).toInt() ?? 0,
       lastPracticedAt: switch (value['lastPracticedAt']) {
@@ -78,6 +93,13 @@ class SentenceActivity {
       memo: value['memo'] as String? ?? '',
     );
   }
+}
+
+/// 따라 말하기 한 번이 숙련도에 더하는 점수. 100점이면 2점, 50점이면 1점.
+/// 점수를 모르면 1점(예전 기본값의 절반).
+int practiceGain(double? score) {
+  if (score == null) return 1;
+  return (score.clamp(0.0, 1.0) * 2).round();
 }
 
 class SentenceActivityStore {
@@ -127,15 +149,21 @@ class SentenceActivityStore {
         ),
       );
 
+  /// 따라 말하기 한 번을 기록한다. [score](0~1)가 높을수록 숙련도가 많이 오른다.
+  ///
+  /// 점수를 모르면(체크로 그냥 넘긴 경우) 1점만 준다. 전에는 점수와 상관없이
+  /// 늘 2점이었다(5차, 사용자 요청).
   static Future<void> incrementPractice(
     String accountId,
-    String sentenceId,
-  ) =>
+    String sentenceId, {
+    double? score,
+  }) =>
       _update(
         accountId,
         sentenceId,
         (activity) => activity.copyWith(
           practiceCount: activity.practiceCount + 1,
+          practicePoints: activity.practiceScore + practiceGain(score),
           lastPracticedAt: DateTime.now(),
         ),
       );
