@@ -34,6 +34,10 @@ import 'package:parrokit/features/content-studio/tts/presentation/widgets/tts_ge
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_gemini_models.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
+/// 목소리 목록을 못 불러왔을 때, 그래도 만들 수 있다는 것을 알린다.
+/// 서버가 그 언어의 기본 목소리를 고른다(5차).
+const String ttsDefaultVoiceNotice = '목소리 목록을 못 불러왔어요. 그대로 만들면 기본 목소리로 읽어 줘요.';
+
 class TtsScreen extends StatelessWidget {
   const TtsScreen({super.key});
 
@@ -444,6 +448,17 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                       ),
                     ],
                   ),
+                  // 목록을 못 불러와도 만들 수는 있다. 서버가 그 언어의 기본
+                  // 목소리를 고른다(contentStudioAi의 defaultVoice). 버튼만
+                  // 켜져 있으면 눌러도 되는지 몰라 망설인다(5차).
+                  if (provider.voicesFailed) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      ttsDefaultVoiceNotice,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     width: double.infinity,
@@ -490,7 +505,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                               ),
                             )
                           : const Icon(Icons.auto_awesome_rounded),
-                      label: const Text('음성 생성'),
+                      // 화면 제목·아래 탭·보관함 추가 시트와 같은 이름으로(5차).
+                      label: const Text('음성 만들기'),
                     ),
                   ),
                 ],
