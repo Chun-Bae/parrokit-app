@@ -2,6 +2,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 
 /// 따라 말하기용 음성 인식. 테스트에서 바꿔 끼울 수 있게 인터페이스로 둔다.
 bool get _isIos => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
@@ -39,6 +40,9 @@ class SpeechToTextRecognizer implements PhraseRecognizer {
     void Function(double level)? onLevel,
   }) async {
     _onDone = onDone;
+    // 듣던 소리가 있으면 먼저 멈춘다. 안 그러면 마이크가 그 소리를 같이
+    // 듣고, 사용자도 자기 말과 겹쳐 들린다(5차).
+    await AudioFocus.instance.claim();
     if (!_ready) {
       _ready = await _speech.initialize(
         onStatus: (status) {
