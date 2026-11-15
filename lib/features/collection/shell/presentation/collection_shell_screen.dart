@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/library/presentation/clip_library_home.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -473,6 +474,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 icon: Icons.graphic_eq_rounded,
                 title: '음성 만들기',
                 subtitle: '문장을 읽어 주는 음성을 만들어요',
+                usesParrots: true,
                 onTap: () {
                   Navigator.pop(sheetContext);
                   context.push('${AppRoutes.contentStudioHubPath}?tab=1');
@@ -483,6 +485,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   icon: Icons.movie_creation_outlined,
                   title: '영상 만들기',
                   subtitle: '대본으로 짧은 영상을 만들어요',
+                  usesParrots: true,
                   onTap: () {
                     Navigator.pop(sheetContext);
                     context.push('${AppRoutes.contentStudioHubPath}?tab=2');
@@ -496,18 +499,43 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 }
 
+/// 패롯이 드는 줄에 붙이는 말. 그냥 저장하는 줄과 섞여 있어서, 누르기 전에
+/// 알 수 있어야 한다(5차).
+const String addSheetUsesParrotsLabel = '패롯 써요';
+
+/// 테스트에서 줄 하나만 그려 보려고 열어 둔다.
+@visibleForTesting
+Widget addMaterialTileForTest({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required VoidCallback onTap,
+  bool usesParrots = false,
+}) =>
+    _AddMaterialTile(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      onTap: onTap,
+      usesParrots: usesParrots,
+    );
+
 class _AddMaterialTile extends StatelessWidget {
   const _AddMaterialTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.usesParrots = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+
+  /// 누르면 패롯이 드는지. 만들기(음성·영상)만 든다.
+  final bool usesParrots;
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +550,25 @@ class _AddMaterialTile extends StatelessWidget {
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
       subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right_rounded),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (usesParrots)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: colors.secondaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Text(
+              addSheetUsesParrotsLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.onSecondaryContainer,
+              ),
+            ),
+          ),
+        const Icon(Icons.chevron_right_rounded),
+      ]),
     );
   }
 }
