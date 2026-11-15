@@ -13,14 +13,16 @@ Widget app() => MaterialApp(
     );
 
 void main() {
-  testWidgets('이용 안내는 서버·Drive 저장이 생긴 지금에 맞는 백업 안내를 한다',
+  testWidgets('이용 안내는 서버 저장이 생긴 지금에 맞는 백업 안내를 한다',
       (tester) async {
     await tester.pumpWidget(app());
     await tester.tap(find.text('열기'));
     await tester.pumpAndSettle();
     expect(find.text('기기에만 있는 클립은 백업해 두세요'), findsOneWidget);
     expect(find.textContaining('이 기기에만 저장돼요'), findsNothing);
-    expect(find.textContaining('Google Drive'), findsOneWidget);
+    // Google Drive는 5차에 걷어냈다. 옮길 곳으로 더 말하지 않는다.
+    expect(find.textContaining('Google Drive'), findsNothing);
+    expect(find.textContaining('서버에'), findsOneWidget);
     // 실제 버튼 이름('옮기기')으로 방법을 알려 준다.
     expect(find.textContaining("'옮기기'"), findsOneWidget);
   });

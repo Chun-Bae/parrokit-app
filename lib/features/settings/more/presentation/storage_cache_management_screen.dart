@@ -111,7 +111,7 @@ class _StorageCacheManagementScreenState
           ),
         ),
         content: Text(
-          '원본은 서버나 Google Drive에 그대로 있고, 기기에 받아 둔 파일만 지워요. 다음에 볼 때 다시 받아요.',
+          '원본은 그대로 있고, 기기에 받아 둔 파일만 지워요. 다음에 볼 때 다시 받아요.',
           style: theme.textTheme.bodyMedium?.copyWith(
             height: 1.5,
             color: theme.colorScheme.onSurfaceVariant,
@@ -186,7 +186,8 @@ class _StorageCacheManagementScreenState
           ),
           const SizedBox(height: 10),
           Text(
-            '서버나 Google Drive에 있는 원본은 그대로 두고, 기기에 받아 둔 파일만 지워요. 기기에만 있는 \'로컬\' 클립은 여기 없어요.',
+            '원본은 그대로 두고, 기기에 받아 둔 파일만 지워요. '
+            '이 기기에만 있는 클립은 여기 없어요.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                   height: 1.45,
