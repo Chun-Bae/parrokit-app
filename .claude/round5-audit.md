@@ -308,17 +308,26 @@
 
 ## 배포 필요 (사용자가 직접)
 
-- **구독 함수와 규칙 (a76dd90c)** — 배포 전에는 구독 상태가 서버에 쌓이지 않는다. 앱은 무료로 본다.
+- **구독 규칙 (a76dd90c)** — 함수는 2026-11-15에 배포했고(아래), 규칙은 아직이다.
+  배포 전에는 본인이 자기 `users/{uid}.subscription` 칸을 바꿀 수 있다(서버 전용이어야 한다).
   ```
-  npx -y firebase-tools@latest deploy --only functions:onSubscriptionEvent,firestore:rules --project parrokit-45126
+  npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126
   ```
-  배포한 뒤 RevenueCat 대시보드 > Integrations > Webhooks에 그 함수 주소를 넣는다.
-  비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다.
+
+- **RevenueCat 대시보드 설정 (사용자만 할 수 있음)** — 함수는 떠 있지만 아직 아무 이벤트도 오지 않는다.
+  1. 상품(월 구독 2개)과 entitlement `parrokit_sub_light` / `parrokit_sub_pro`, offering을 만든다
+  2. Integrations > Webhooks에 주소를 넣는다: `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`
+  3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
+  4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
   ```
+
+### 2026-11-15 16:3x 배포 완료 (사용자 요청 "함수배포 부탁해", 내가 돌림, Deploy complete 확인)
+- functions:onSubscriptionEvent — 새로 만들어짐(create). 주소 `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`
+- 아직 RevenueCat 쪽 설정이 없어 이벤트는 오지 않는다. 규칙(firestore:rules)은 함께 올리지 않았다
 
 ### 2026-11-14 15:24 테스트 배포 (사용자 요청, 내가 로컬에서 돌림)
 - **1.0.6 (110)을 Firebase App Distribution `testers` 그룹에 올렸다.** 5차 작업분이 처음으로 폰에 올라간다
@@ -1947,3 +1956,21 @@
 - 테스트: functions 12개, 규칙 에뮬레이터 41개(+2) 모두 통과. build·lint 통과
 - 앱은 아직 이 값을 읽지 않는다(다음 조각: SubscriptionProvider)
 - **배포 필요**에 명령과 대시보드 설정을 적어 뒀다
+
+## 반복 234 (2026-11-15 16:20~)
+- 구독 2단계: **앱이 서버가 정한 단계를 읽는다**(0f959f4c)
+  - `SubscriptionState` — 단계·상태(active/grace/canceled/expired)·기간 끝. 해지를 예약했거나 결제가 밀려도 기간 안에는 혜택을 쓴다
+  - `SubscriptionProvider` — `users/{uid}.subscription`을 지켜본다. 사람이 바뀌면 그 문서로 옮기고, 로그아웃하면 무료로
+  - 믿는 차례: 개발용 가짜 단계(PK_FAKE_TIER) > 서버 > RevenueCat entitlement > 무료
+  - 더보기 '구독' 줄이 이 값을 보여 준다. 테스트 17개
+- 사용자 요청으로 **onSubscriptionEvent 배포**(위 "배포 완료" 참고). 규칙은 아직
+- 남은 조각: RevenueCat `CustomerInfo`의 entitlement를 `applyEntitlements`로 넣어 주는 곳이 아직 없다(서버 값만 쓴다)
+- analyze 깨끗, 798개 통과. 라이트·다크 확인, 테마 라이트로 되돌림
+
+## 반복 235 (2026-11-15 16:45~)
+- 사용자 요청: **따라 말하기에서 내가 말한 텍스트 보이기**(0c692757)
+  - 점수만 보여서 어디가 틀렸는지 알 수 없었다 → 문장 아래에 '내가 말한 것'과 인식된 말을 그대로 적는다
+  - 마이크를 다시 켜면 지운다. 인식 전에는 줄이 아예 없다(무대·문장 상세 둘 다 같은 위젯이라 함께 바뀐다)
+  - 테스트 1개(인식이 끝나 '다시 한번 말해볼까요?'가 뜰 때 들은 말도 함께 보이는지)
+- 확인 방법: 시뮬레이터는 음성 인식을 못 해서, **임시로 `heard` 초깃값을 넣은 빌드**로 라이트·다크에서 글자가 읽히는지 보고 임시 수정은 되돌렸다(커밋에는 없다). 테마는 라이트로 되돌림
+- analyze 깨끗, 798개 통과
