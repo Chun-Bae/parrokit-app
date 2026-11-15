@@ -156,7 +156,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '패로킷을 설치해주셔서 감사합니다.',
+                    '패로킷을 설치해 주셔서 고마워요.',
                     style: context.texts.headlineSmall
                         .copyWith(letterSpacing: -0.5),
                   ),
@@ -317,7 +317,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           validator: (value) {
             if (value == null || value.isEmpty) return '비밀번호를 입력해주세요.';
-            if (value.length < 6) return '비밀번호는 6자 이상이어야 합니다.';
+            if (value.length < 6) return '비밀번호는 6자 이상이어야 해요.';
             return null;
           },
         ),

@@ -166,7 +166,7 @@ class _FileSectionState extends State<FileSection> {
 
   Future<void> _playInline() async {
     if (_vp == null) {
-      showToast('재생할 파일이 준비되지 않았습니다.');
+      showToast('재생할 파일이 아직 없어요.');
       return;
     }
     setState(() => _vpReady = true);

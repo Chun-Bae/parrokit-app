@@ -500,7 +500,7 @@ class _VideoRecommendationFilterSheetState
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  '외국어와 상황을 모두 직접 입력해 주세요. 두 항목이 모두 있어야 추천을 시작할 수 있습니다.',
+                  '외국어와 상황을 모두 적어 주세요. 둘 다 있어야 추천할 수 있어요.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: mutedText,
                     height: 1.45,
@@ -771,7 +771,7 @@ class _VideoPreviewState extends State<_VideoPreview> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        '생성 결과가 이 영역에 표시됩니다.',
+                        '만든 결과가 여기에 보여요.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: mutedText,
                         ),
@@ -976,7 +976,7 @@ class _VideoWarningBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '의도와 다르게 만들어진 영상에 대한 책임은 사용자에게 있습니다.',
+                  '생각과 다르게 만들어진 영상의 책임은 만든 사람에게 있어요.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: context.tokens.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -1025,13 +1025,13 @@ class _RecentVideoPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '일반 계정의 생성 영상은 24시간 동안 보관됩니다. 운영자 계정은 계속 보관되며, 같은 계정으로 다시 들어오면 이어서 볼 수 있습니다.',
+            '만든 영상은 24시간 동안 보관해요. 같은 계정으로 다시 들어오면 이어서 볼 수 있어요.',
             style: theme.textTheme.bodySmall?.copyWith(color: mutedText),
           ),
           const SizedBox(height: AppSpacing.md),
           if (recentVideos.isEmpty)
             Text(
-              '아직 저장된 영상이 없습니다.',
+              '아직 저장한 영상이 없어요.',
               style: theme.textTheme.bodyMedium?.copyWith(color: mutedText),
             )
           else

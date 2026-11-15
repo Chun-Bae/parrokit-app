@@ -46,7 +46,7 @@ class _SegmentsSectionState extends State<SegmentsSection> {
   void _deleteCurrentAndAdjust() {
     final total = widget.vm.segmentForms.length;
     if (total <= 1) {
-      showToast('마지막 구간은 삭제할 수 없습니다.');
+      showToast('마지막 구간은 지울 수 없어요.');
       return;
     }
 

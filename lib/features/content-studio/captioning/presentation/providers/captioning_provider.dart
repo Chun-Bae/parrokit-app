@@ -219,7 +219,7 @@ class CaptioningProvider extends ChangeNotifier
     durationMs ??= await extractDuration(path);
 
     if (durationMs == null || durationMs <= 0) {
-      showToast('영상 길이를 확인할 수 없습니다.');
+      showToast('영상 길이를 확인하지 못했어요.');
       _setSttState(SttProcessState.error);
       return;
     }
@@ -305,7 +305,7 @@ class CaptioningProvider extends ChangeNotifier
       return error.message?.toString() ?? '자동 자막 설정을 확인해 주세요.';
     }
 
-    return '자동 자막 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+    return '자동 자막을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.';
   }
 
   void _setSttState(SttProcessState state) {

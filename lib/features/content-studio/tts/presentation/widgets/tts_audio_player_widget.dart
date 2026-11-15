@@ -160,7 +160,7 @@ class _TtsAudioPlayerWidgetState extends State<TtsAudioPlayerWidget> {
                       ? '음성을 생성하는 중...'
                       : (widget.provider.generatedFilePath != null
                           ? '음성 생성 완료'
-                          : '아직 생성된 음성이 없습니다'),
+                          : '아직 만든 음성이 없어요'),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),

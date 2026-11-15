@@ -58,7 +58,7 @@ Future<void> showPremiumDialog(
               text: '쇼츠: 다음 영상으로 넘길 때 주기적으로 전면 광고',
             ),
             const _Bullet(
-              text: '프리미엄 구입 시 모든 광고가 비활성화됩니다',
+              text: '한 번 사면 광고가 모두 사라져요',
             ),
             const SizedBox(height: 16),
             SizedBox(

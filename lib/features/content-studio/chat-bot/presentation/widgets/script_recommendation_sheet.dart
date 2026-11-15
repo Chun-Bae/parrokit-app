@@ -34,7 +34,7 @@ Future<void> showScriptRecommendationSheet(
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '어떤 스크립트를 추가하시겠습니까?',
+                  '어떤 스크립트를 넣을까요?',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

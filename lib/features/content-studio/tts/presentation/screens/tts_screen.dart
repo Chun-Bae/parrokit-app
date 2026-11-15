@@ -168,7 +168,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                 maxLength: 240,
                 onChanged: (val) => _onTextChanged(val, provider),
                 decoration: const InputDecoration(
-                  hintText: '예: 오늘 배울 표현은 “Could you give me a hand?” 입니다.',
+                  hintText: '예: 오늘 배울 표현은 “Could you give me a hand?”예요.',
                   alignLabelWithHint: true,
                   counterText: '',
                 ),
@@ -531,11 +531,11 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                               mimeType: MimeType.mp3,
                             );
                             if (context.mounted) {
-                              showToast('음성 파일이 저장되었습니다.');
+                              showToast('음성 파일을 저장했어요.');
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              showToast('저장 중 오류가 발생했습니다.');
+                              showToast('저장하지 못했어요.');
                             }
                           }
                         },

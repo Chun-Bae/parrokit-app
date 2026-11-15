@@ -350,7 +350,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: codeText));
-                  showToast('추천 프롬프트가 복사되었습니다');
+                  showToast('추천 글을 복사했어요');
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),

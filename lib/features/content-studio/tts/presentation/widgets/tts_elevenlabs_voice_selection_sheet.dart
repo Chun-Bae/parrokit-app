@@ -105,7 +105,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                 if (voices.isEmpty) {
                   return const AppEmptyState(
                     icon: Icons.record_voice_over_outlined,
-                    title: '사용 가능한 목소리가 없습니다.',
+                    title: '쓸 수 있는 목소리가 없어요.',
                     compact: true,
                   );
                 }
@@ -142,7 +142,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                       child: filteredVoices.isEmpty
                           ? Center(
                               child: Text(
-                                '해당 억양의 목소리가 없습니다.',
+                                '그 억양의 목소리가 없어요.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: context.tokens.textSecondary,
                                 ),

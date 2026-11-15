@@ -78,7 +78,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     if (currentUser == null) {
-      showToast('로그인이 필요합니다.');
+      showToast('로그인이 필요해요.');
       return;
     }
 
@@ -328,7 +328,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             final user =
                                 context.read<UserProvider>().currentUser;
                             if (user == null) {
-                              showToast('로그인이 필요합니다.');
+                              showToast('로그인이 필요해요.');
                               return;
                             }
                             provider.toggleLike(widget.postId, user.id);
@@ -346,7 +346,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             final user =
                                 context.read<UserProvider>().currentUser;
                             if (user == null) {
-                              showToast('로그인이 필요합니다.');
+                              showToast('로그인이 필요해요.');
                               return;
                             }
                             provider.toggleScrap(widget.postId, user.id);

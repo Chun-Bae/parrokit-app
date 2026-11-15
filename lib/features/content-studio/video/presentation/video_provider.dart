@@ -208,7 +208,7 @@ class VideoProvider extends ChangeNotifier {
           if (await partialFile.exists()) await partialFile.delete();
         } catch (_) {}
       }
-      _errorMessage = '캡션 편집기로 보낼 영상을 준비하지 못했습니다.';
+      _errorMessage = '자막 편집기로 보낼 영상을 준비하지 못했어요.';
       notifyListeners();
       return null;
     } finally {

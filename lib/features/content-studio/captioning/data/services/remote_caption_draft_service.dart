@@ -66,7 +66,7 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
 
     final user = _auth.currentUser;
     if (user == null) {
-      throw ArgumentError('로그인이 필요합니다.');
+      throw ArgumentError('로그인이 필요해요.');
     }
 
     final normalizedPath =
@@ -153,11 +153,11 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
 
     return switch (error.code) {
       'resource-exhausted' => 'OpenAI API 할당량이 부족합니다. 결제 상태를 확인해 주세요.',
-      'unauthenticated' => '로그인이 필요합니다.',
+      'unauthenticated' => '로그인이 필요해요.',
       'permission-denied' => '자동 자막 파일 권한을 확인해 주세요.',
       'invalid-argument' => '자동 자막 요청 정보를 다시 확인해 주세요.',
       'failed-precondition' => '자동 자막 서버 설정을 확인해 주세요.',
-      _ => '자동 자막 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      _ => '자동 자막을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.',
     };
   }
 

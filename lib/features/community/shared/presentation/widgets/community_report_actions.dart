@@ -26,7 +26,7 @@ CommunityOptionAction buildCommunityReportAction({
       if (reason == null || !context.mounted) return;
       final reporterId = context.read<UserProvider?>()?.currentUser?.id;
       if (reporterId == null || reporterId.isEmpty) {
-        showToast('로그인이 필요합니다.');
+        showToast('로그인이 필요해요.');
         return;
       }
       // 개발 빌드 전용 가짜 글은 서버에 쓰지 않는다.

@@ -157,7 +157,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     setState(() => _previewLoadingVoiceId = null);
 
     if (path == null) {
-      showToast('미리듣기를 재생할 수 없습니다.');
+      showToast('미리듣기를 재생하지 못했어요.');
       return;
     }
 
@@ -238,7 +238,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
             Expanded(
               child: Center(
                 child: Text(
-                  '선택할 수 있는 목소리가 없습니다.',
+                  '고를 수 있는 목소리가 없어요.',
                   style: theme.textTheme.bodyMedium?.copyWith(color: mutedText),
                 ),
               ),
@@ -301,7 +301,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
               child: candidates.isEmpty
                   ? Center(
                       child: Text(
-                        '해당 조합의 목소리가 없습니다.',
+                        '그 조합의 목소리가 없어요.',
                         style: theme.textTheme.bodyMedium
                             ?.copyWith(color: mutedText),
                       ),

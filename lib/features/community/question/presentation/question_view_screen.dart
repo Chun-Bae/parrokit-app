@@ -89,7 +89,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     if (currentUser == null) {
-      showToast('로그인이 필요합니다.');
+      showToast('로그인이 필요해요.');
       return;
     }
 
@@ -534,7 +534,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 // 예전에는 users//likes 경로가 되어 예외가 났다.
                 onPressed: () {
                   if (currentUser == null) {
-                    showToast('로그인이 필요합니다.');
+                    showToast('로그인이 필요해요.');
                     return;
                   }
                   context
@@ -550,7 +550,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 active: isBookmarked,
                 onPressed: () {
                   if (currentUser == null) {
-                    showToast('로그인이 필요합니다.');
+                    showToast('로그인이 필요해요.');
                     return;
                   }
                   context
@@ -787,7 +787,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                   provider.toggleCommentLike(
                                       question.id, answer.id, currentUser.id);
                                 } else {
-                                  showToast('로그인이 필요합니다.');
+                                  showToast('로그인이 필요해요.');
                                 }
                               },
                               padding: EdgeInsets.zero,

@@ -392,7 +392,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
                     const SizedBox(height: 24),
                     SwitchListTile(
                       title: const Text('화면 슬라이딩 이동 켜기'),
-                      subtitle: const Text('스와이프하여 탭을 이동할 수 있습니다.'),
+                      subtitle: const Text('옆으로 밀어서 탭을 옮길 수 있어요.'),
                       value: _isSwipeEnabled,
                       onChanged: (val) {
                         setSheetState(() {

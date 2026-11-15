@@ -113,7 +113,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
 
     final user = context.read<UserProvider>().currentUser;
     if (user == null) {
-      showToast('로그인이 필요합니다.');
+      showToast('로그인이 필요해요.');
       return;
     }
 
@@ -210,14 +210,14 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       isPostScrapped: provider.isCurrentPostScrapped,
                       onTogglePostLike: () {
                         if (currentUser == null) {
-                          showToast('로그인이 필요합니다.');
+                          showToast('로그인이 필요해요.');
                           return;
                         }
                         provider.toggleLike(voteItem.id, currentUser.id);
                       },
                       onTogglePostScrap: () {
                         if (currentUser == null) {
-                          showToast('로그인이 필요합니다.');
+                          showToast('로그인이 필요해요.');
                           return;
                         }
                         provider.toggleScrap(voteItem.id, currentUser.id);

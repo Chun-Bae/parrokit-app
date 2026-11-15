@@ -235,7 +235,7 @@ class ChatBotProvider extends ChangeNotifier {
               e.message != null &&
               e.message!.trim().isNotEmpty
           ? e.message!
-          : '오류가 발생했습니다. 다시 시도해 주세요.';
+          : '잘 되지 않았어요. 다시 시도해 주세요.';
       _messages.insert(
         0,
         AiChatMessage(

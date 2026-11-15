@@ -70,12 +70,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     if (currentUser == null) return;
 
     if (_isParrotsToCrackers && currentUser.parrots < amount) {
-      showToast('보유하신 패롯이 부족합니다.');
+      showToast('가진 패롯이 모자라요.');
       return;
     }
 
     if (!_isParrotsToCrackers && currentUser.crackers < amount) {
-      showToast('보유하신 크래커가 부족합니다.');
+      showToast('가진 크래커가 모자라요.');
       return;
     }
 
@@ -87,7 +87,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           _isParrotsToCrackers ? amount * 1000 : (amount / 1000).floor();
 
       if (!_isParrotsToCrackers && amount % 1000 != 0) {
-        showToast('크래커에서 패롯으로의 환전은 1000 단위로만 가능합니다.');
+        showToast('크래커는 1,000개 단위로만 바꿀 수 있어요.');
         setState(() => _isExchanging = false);
         return;
       }
@@ -236,7 +236,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: '수량을 입력하세요',
+                  // 아래 안내는 '적어 주세요'인데 여기만 '입력'이라 말이 섞였다(5차).
+                  hintText: '수량을 적어 주세요',
                   filled: true,
                   fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(

@@ -61,7 +61,7 @@ class BlockProvider extends ChangeNotifier {
   Future<bool> blockUserByDisplayName(String displayName) async {
     final currentUser = _userProvider.currentUser;
     if (currentUser == null) {
-      _errorMessage = '로그인이 필요합니다.';
+      _errorMessage = '로그인이 필요해요.';
       notifyListeners();
       return false;
     }
@@ -116,7 +116,7 @@ class BlockProvider extends ChangeNotifier {
   Future<bool> blockUserByUid(String blockedUserId) async {
     final currentUser = _userProvider.currentUser;
     if (currentUser == null) {
-      _errorMessage = '로그인이 필요합니다.';
+      _errorMessage = '로그인이 필요해요.';
       notifyListeners();
       return false;
     }
@@ -158,7 +158,7 @@ class BlockProvider extends ChangeNotifier {
   Future<bool> unblockUser(String blockedUserId) async {
     final currentUser = _userProvider.currentUser;
     if (currentUser == null) {
-      _errorMessage = '로그인이 필요합니다.';
+      _errorMessage = '로그인이 필요해요.';
       notifyListeners();
       return false;
     }

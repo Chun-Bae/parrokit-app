@@ -146,7 +146,7 @@ mixin EditFileMixin on ChangeNotifier {
     if (!await file.exists()) {
       _isVideoLoading = false;
       notifyListeners();
-      showToast('기존 파일을 찾을 수 없습니다.');
+      showToast('예전 파일을 찾을 수 없어요.');
       return;
     }
 

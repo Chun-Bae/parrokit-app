@@ -192,7 +192,7 @@ class SegmentCard extends StatelessWidget {
   int? _currentPositionMs() {
     final c = playerController;
     if (c == null || !c.value.isInitialized) {
-      showToast('재생 위치를 확인할 수 없습니다.');
+      showToast('재생 위치를 확인하지 못했어요.');
       return null;
     }
     return c.value.position.inMilliseconds;

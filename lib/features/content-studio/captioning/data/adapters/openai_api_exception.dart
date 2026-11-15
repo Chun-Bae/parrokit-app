@@ -70,18 +70,18 @@ class OpenAIApiException implements Exception {
     }
 
     if (statusCode == 429 || code == 'rate_limit_exceeded') {
-      return 'OpenAI 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.';
+      return '요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.';
     }
 
     if (statusCode == 401 || code == 'invalid_api_key') {
-      return 'OpenAI API 키가 유효하지 않습니다. 설정된 키를 확인해 주세요.';
+      return '서버 열쇠가 맞지 않아요. 잠시 뒤 다시 시도해 주세요.';
     }
 
     if (statusCode == 400) {
-      return '$fallbackAction 요청 형식을 확인할 수 없습니다. 파일 형식이나 입력값을 다시 확인해 주세요.';
+      return '$fallbackAction 요청을 알아듣지 못했어요. 파일 형식이나 적은 값을 다시 확인해 주세요.';
     }
 
-    return '$fallbackAction 중 OpenAI API 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. ($statusCode)';
+    return '$fallbackAction 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요. ($statusCode)';
   }
 
   @override
