@@ -28,7 +28,6 @@ import '../widgets/clip_list_view.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
-import 'package:parrokit/features/collection/shared/drive_full_notice.dart';
 import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
 
 /// [역할]
@@ -444,7 +443,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                   ),
               ],
             ),
-            DriveFullNotice(hasQuota: hasQuota, remaining: remaining),
+            // 가득 참 경고는 뺐다(5차). Drive에 새로 올리지 않는다.
           ],
         ),
       ),

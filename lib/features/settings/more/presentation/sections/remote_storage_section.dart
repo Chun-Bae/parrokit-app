@@ -14,7 +14,6 @@ import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
-import 'package:parrokit/features/collection/shared/drive_full_notice.dart';
 import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
 
 /// 로컬·서버·Google Drive 저장 용량과 Drive 연동 버튼. 더보기 데이터 카드의
@@ -114,7 +113,6 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     final parrokitUsed = clipProvider.cloudStorageUsedBytes;
     final cloudQuota = clipProvider.cloudStorageQuotaBytes;
     final hasQuota = cloudQuota != null && cloudQuota > 0;
-    final isLinked = clipProvider.hasGoogleDriveLinked;
     final isBusy = clipProvider.isGoogleDriveLinking;
     final otherUsed = math.max(driveUsed - parrokitUsed, 0);
     final remaining = hasQuota ? math.max(cloudQuota - driveUsed, 0) : 0;
@@ -169,7 +167,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  isLinked ? 'Google Drive 연동됨' : 'Google Drive',
+                  'Google Drive (더 쓰지 않아요)',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: cs.onSurface,
@@ -177,11 +175,12 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                 ),
               ),
               TextButton(
+                key: const ValueKey('disconnect-google-drive'),
                 onPressed: isBusy
                     ? null
                     : () async {
                         final provider = context.read<ClipProvider>();
-                        if (provider.hasGoogleDriveLinked) {
+                        {
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (dialogContext) => AlertDialog(
@@ -213,17 +212,9 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                                 ? 'Google Drive 연동을 해제했어요.'
                                 : 'Google Drive 연동 해제에 실패했어요.',
                           );
-                        } else {
-                          final success = await provider.connectGoogleDrive();
-                          if (!context.mounted) return;
-                          showToast(
-                            success
-                                ? 'Google Drive 연동을 완료했어요.'
-                                : 'Google Drive 연동에 실패했어요.',
-                          );
                         }
                       },
-                child: Text(isLinked ? '연동 해제' : '구글 드라이브 연동하기'),
+                child: const Text('연동 해제'),
               ),
             ],
           ),
@@ -232,8 +223,8 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           const SizedBox(height: 8),
           Text(
             hasQuota
-                ? 'Drive 전체에서 Parrokit 폴더가 쓰는 만큼만 따로 보여 줘요.'
-                : 'Drive 전체 사용량을 다 못 가져와서 Parrokit 폴더 몫만 보여 줘요.',
+                ? '여기 있던 클립은 연동을 해제하면 기기로 옮겨요. Drive 전체에서 Parrokit 폴더 몫만 보여 줘요.'
+                : '여기 있던 클립은 연동을 해제하면 기기로 옮겨요. Drive 전체 사용량은 못 가져와 Parrokit 폴더 몫만 보여 줘요.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
@@ -261,7 +252,8 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                 ),
             ],
           ),
-          DriveFullNotice(hasQuota: hasQuota, remaining: remaining),
+          // 가득 참 경고는 뺐다(5차). 이제 Drive에 새로 올리지 않으므로
+          // '새 클립을 올릴 수 없어요'는 맞지 않는 말이다.
         ],
       ),
     );
@@ -322,8 +314,13 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           color: Theme.of(context).colorScheme.primary,
           progress: serverProgress,
         ),
-        const SizedBox(height: AppSpacing.sm),
-        _buildDriveUsageCard(context),
+        // Google Drive 저장은 더 쓰지 않는다(5차). 이미 연동한 사람에게만
+        // 남은 파일과 '연동 해제'를 보여 주고, 연동하지 않은 사람에게는
+        // 아예 보이지 않는다.
+        if (context.watch<ClipProvider>().hasGoogleDriveLinked) ...[
+          const SizedBox(height: AppSpacing.sm),
+          _buildDriveUsageCard(context),
+        ],
       ],
     );
   }

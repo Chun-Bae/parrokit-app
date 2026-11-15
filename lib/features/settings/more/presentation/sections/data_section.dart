@@ -162,16 +162,19 @@ class _DataSectionState extends State<DataSection> {
           const SizedBox(height: 4),
           NavTile(
             icon: Icons.cloud_outlined,
-            title: '저장 용량 · Google Drive',
+            // Google Drive는 더 쓰지 않으므로 제목에서 뺐다(5차). 아직 연동이
+            // 남아 있는 사람에게만 오른쪽에 그 사실을 적는다.
+            title: '저장 용량',
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  driveLinked ? '연동됨' : '연동 안 됨',
-                  style: context.texts.labelMedium.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                if (driveLinked)
+                  Text(
+                    'Drive 연동됨',
+                    style: context.texts.labelMedium.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
                 Icon(
                   Icons.chevron_right_rounded,
                   color: Theme.of(context)
