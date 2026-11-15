@@ -14,7 +14,8 @@
     "test:wallet": "npm run build && npx -y firebase-tools@latest --project=demo-parrokit emulators:exec --only firestore \"node --test test/wallet.test.mjs\"",
     "test:questions": "npm run build && node --test test/questionExpiry.test.mjs",
     "test:community": "npm run build && node --test test/communityNotificationText.test.mjs",
-    "test:adreward": "npm run build && node --test test/adReward.test.mjs"
+    "test:adreward": "npm run build && node --test test/adReward.test.mjs",
+    "test:subscription": "npm run build && node --test test/subscriptionEvent.test.mjs"
   },
   "engines": {
     "node": "22"

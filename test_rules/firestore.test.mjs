@@ -446,3 +446,45 @@ test("신고는 아무도 읽거나 고치거나 지울 수 없다", async () =>
   await assertFails(updateDoc(doc(alice(), "reports/r1"), { reason: "other" }));
   await assertFails(deleteDoc(doc(alice(), "reports/r1")));
 });
+
+// ------------------------------------------------------------------ 구독
+
+test("구독 단계는 앱이 쓸 수 없다", async () => {
+  await seed(testEnv, (db) =>
+    setDoc(doc(db, "users/bob"), {
+      nickname: "밥",
+      crackers: 0,
+      subscription: { tier: "free", status: "expired" },
+    })
+  );
+
+  // 서버만 쓰는 칸이다. 본인이어도 못 바꾼다.
+  await assertFails(
+    updateDoc(doc(bob(), "users/bob"), {
+      subscription: { tier: "pro", status: "active" },
+    })
+  );
+  await assertFails(
+    updateDoc(doc(bob(), "users/bob"), { "subscription.tier": "pro" })
+  );
+  // 남의 것은 더더욱 못 바꾼다.
+  await assertFails(
+    updateDoc(doc(alice(), "users/bob"), {
+      subscription: { tier: "pro", status: "active" },
+    })
+  );
+});
+
+test("구독 칸을 건드리지 않는 수정은 그대로 된다", async () => {
+  await seed(testEnv, (db) =>
+    setDoc(doc(db, "users/bob"), {
+      nickname: "밥",
+      crackers: 0,
+      subscription: { tier: "light", status: "active" },
+    })
+  );
+
+  await assertSucceeds(
+    updateDoc(doc(bob(), "users/bob"), { nickname: "밥2" })
+  );
+});

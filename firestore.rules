@@ -45,8 +45,14 @@ service cloud.firestore {
       // 자기 문서는 여전히 통째로 쓸 수 있으므로, 본인이 자기 크래커와
       // 패롯을 임의로 올리는 것은 이 규칙으로 막지 못한다. 그건 지급을
       // 서버로 옮겨야 하는 문제다.
+      //
+      // subscription(구독 단계)은 서버만 쓴다. 앱이 자기 문서를 통째로 쓸 수
+      // 있으므로, 그 칸만 따로 막는다. 값은 RevenueCat Webhook을 받는
+      // onSubscriptionEvent가 Admin SDK로 쓴다(이 규칙을 거치지 않는다).
       allow update: if request.auth != null && (
-        request.auth.uid == userId ||
+        (request.auth.uid == userId
+          && !('subscription' in
+                request.resource.data.diff(resource.data).affectedKeys())) ||
         (changesOnly(['crackers'])
           && request.resource.data.crackers > resource.data.crackers)
       );
