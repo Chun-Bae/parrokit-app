@@ -48,9 +48,7 @@ class AppShell extends StatelessWidget {
     final hideNav = appShellHidesNavBar(location);
     // 플레이어 화면에서는 '듣는 중' 줄을 띄우지 않는다. 새 플레이어는 화면을
     // 나가도 살아 있어서, 돌아왔을 때 줄이 겹쳐 보였다(5차 4단계).
-    // 편집 화면은 플레이어 위에 떠 있다. 거기서도 숨긴다.
-    final onPlayer = location.contains(AppRoutes.clipsPlayPath) ||
-        location.contains('/${AppRoutes.clipsEditPath}');
+    final onPlayer = appShellHidesListeningBar(location);
     final isCollectionRoute = location.startsWith(AppRoutes.collectionPath);
     final showCollectionSelectionBar = isCollectionRoute &&
         clipProvider.isCollectionMenuOpen &&
@@ -309,6 +307,14 @@ int appShellTabIndex(String location) {
 
 /// 이 경로에서 아래 탭 바를 숨기는지. 바텀시트가 탭 바를 피해 뜨려면
 /// (app_bottom_sheet.dart) 탭 바가 있는지 알아야 해서 따로 뺐다.
+/// 이 경로에서 '듣는 중' 줄을 숨기는지.
+///
+/// 새 플레이어는 화면을 나가도 살아 있어서, 플레이어와 편집 화면에서도 줄이
+/// 떴다. 거기서는 영상이 눈앞에 있으니 줄이 필요 없다(5차 4단계).
+bool appShellHidesListeningBar(String location) =>
+    location.contains(AppRoutes.clipsPlayPath) ||
+    location.contains('/${AppRoutes.clipsEditPath}');
+
 bool appShellHidesNavBar(String location) =>
     location.startsWith('/clips/') ||
     location == AppRoutes.recentsPath ||

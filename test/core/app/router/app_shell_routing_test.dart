@@ -12,6 +12,7 @@ class _User extends Fake implements UserProvider {
 }
 
 void main() {
+  _listeningBarRules();
   group('탭 칸 고르기', () {
     test('탭마다 제 칸이 켜진다', () {
       expect(appShellTabIndex(AppRoutes.explorePath), 0);
@@ -120,6 +121,23 @@ void main() {
       for (var i = 0; i < tabRootPaths.length; i++) {
         expect(appShellTabIndex(tabRootPaths[i]), i, reason: tabRootPaths[i]);
       }
+    });
+  });
+}
+
+void _listeningBarRules() {
+  group("'듣는 중' 줄을 숨기는 경로", () {
+    test('플레이어와 편집 화면에서는 숨긴다', () {
+      // 새 플레이어는 화면을 나가도 살아 있어 거기서도 줄이 떴다(5차 4단계).
+      expect(appShellHidesListeningBar('/clips/play?clipId=3'), isTrue);
+      expect(appShellHidesListeningBar('/clips/play/edit?clipId=3'), isTrue);
+    });
+
+    test('다른 곳에서는 보여 준다', () {
+      expect(appShellHidesListeningBar('/collection'), isFalse);
+      expect(appShellHidesListeningBar('/clips'), isFalse);
+      expect(appShellHidesListeningBar('/community'), isFalse);
+      expect(appShellHidesListeningBar('/more'), isFalse);
     });
   });
 }
