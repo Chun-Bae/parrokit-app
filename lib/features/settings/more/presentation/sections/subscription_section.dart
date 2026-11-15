@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_actions.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_status_sheet.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 import '../widgets/nav_tile.dart';
 
@@ -20,7 +23,8 @@ class SubscriptionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     // 단계는 서버가 정한다. 예전 1회 구매(광고 제거)는 단계를 올리지 않고
     // 광고만 없앤다.
-    final tier = context.watch<SubscriptionProvider>().tier;
+    final subscription = context.watch<SubscriptionProvider>();
+    final tier = subscription.tier;
     final paywall = presenter ?? resolvePaywallPresenter();
 
     return Padding(
@@ -37,7 +41,17 @@ class SubscriptionSection extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
-        onTap: () => paywall.show(context),
+        // 구독 중이면 고르는 화면이 아니라 지금 상태와 관리로 간다(5차 4단계).
+        onTap: () => subscription.isSubscribed
+            ? showSubscriptionStatusSheet(
+                context,
+                onManage: () => openStoreSubscriptions(context),
+                onRestore: () => restorePurchases(context),
+                onUpgrade: tier == SubscriptionTier.light
+                    ? () => paywall.show(context)
+                    : null,
+              )
+            : paywall.show(context),
       ),
     );
   }

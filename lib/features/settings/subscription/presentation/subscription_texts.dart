@@ -1,5 +1,6 @@
 // 구독 화면의 글귀. 한 곳에 모아 둔다(.claude/subscription-ux.md와 같은 말).
 
+import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 
 /// 단계 이름. 더보기 줄과 구독 화면이 같은 말을 쓴다.
@@ -82,3 +83,38 @@ const String subscriptionRestoreLabel = '이미 구독했다면 구매 복원';
 /// 아직 스토어에 상품이 없을 때.
 const String subscriptionPreviewNotice = '아직 구독 상품을 준비하는 중이에요. 화면만 미리 보고 있어요.';
 const String subscriptionNotReadyToast = '아직 구독 상품이 없어요. 준비되면 여기서 시작할 수 있어요.';
+
+// ─── 구독 중 화면 ───────────────────────────────────────────────
+// 글귀는 .claude/subscription-ux.md 3-3과 같다.
+
+/// 다음 결제일 한 줄. 기간 끝을 모르면 null.
+String? subscriptionRenewalLine(DateTime? periodEnd) => periodEnd == null
+    ? null
+    : '다음 결제일 ${periodEnd.month}월 ${periodEnd.day}일';
+
+/// 상태별 안내 한 줄. 멀쩡하면 null.
+String? subscriptionStatusNotice(
+    SubscriptionStatus status, DateTime? periodEnd) {
+  switch (status) {
+    case SubscriptionStatus.grace:
+      return '결제가 밀렸어요. 스토어에서 결제 수단을 확인해 주세요.';
+    case SubscriptionStatus.canceled:
+      final when = periodEnd == null
+          ? '기간이 끝나면'
+          : '${periodEnd.month}월 ${periodEnd.day}일에';
+      return '$when 끝나요. 그때까지는 그대로 쓸 수 있어요.';
+    case SubscriptionStatus.expired:
+      return '구독이 끝났어요. 받아 둔 영상은 기기에 남아 있어요.';
+    case SubscriptionStatus.active:
+      return null;
+  }
+}
+
+/// 남은 양을 '62 / 100 남음'으로 적는다. 쓴 양이 아니라 남은 양이다.
+String subscriptionRemainingText(int left, int total) => '$left / $total 남음';
+
+const String subscriptionManageLabel = '구독 관리';
+const String subscriptionRestoreButtonLabel = '구매 복원';
+const String subscriptionUpgradeLabel = '프로로 올리기';
+const String subscriptionParrotRowTitle = '이번 달 패롯';
+const String subscriptionStorageRowTitle = '서버 백업';
