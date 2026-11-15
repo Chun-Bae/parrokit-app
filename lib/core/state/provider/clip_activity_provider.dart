@@ -184,6 +184,10 @@ LIMIT 6;
         });
   }
 
+  /// dispose 뒤에는 알리지 않는다. 썸네일을 받아오는 동안(서버·클라우드
+  /// 클립이면 내려받기까지 한다) 화면이 사라지면, 돌아와서 알릴 곳이 없다.
+  bool _disposed = false;
+
   bool _buildingRecents = false;
   List<QueryRow>? _pendingRecentRows;
 
@@ -217,6 +221,7 @@ LIMIT 6;
         result.add((clipId, thumb, clipTitle, collectionName));
       }
 
+      if (_disposed) return;
       recent6 = result;
       isLoadingRecents = false;
       notifyListeners();
@@ -224,6 +229,7 @@ LIMIT 6;
       _buildingRecents = false;
     }
 
+    if (_disposed) return;
     final pending = _pendingRecentRows;
     if (pending != null) {
       _pendingRecentRows = null;
@@ -273,7 +279,7 @@ LIMIT 6;
       randomSegments = await getRandomSegments();
     } finally {
       loadingRandom = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -330,7 +336,7 @@ LIMIT 6;
       heroClip = list.isNotEmpty ? list.first : null;
     } finally {
       loadingHero = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -388,6 +394,7 @@ LIMIT 6;
 
   @override
   void dispose() {
+    _disposed = true;
     _countSub?.cancel();
     _collectionsSub?.cancel();
     _recentsSub?.cancel();
