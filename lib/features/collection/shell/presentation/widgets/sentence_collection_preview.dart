@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
@@ -1656,6 +1657,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         return;
       }
       await tts.setLanguage(locale);
+      // 이어 듣던 클립이 있으면 멈춘다. 둘이 겹쳐 울리지 않게(5차, 사용자 요청).
+      await AudioFocus.instance.claim();
       await tts.speak(widget.sentence.text);
     } catch (_) {
       _setSpeaking(false);

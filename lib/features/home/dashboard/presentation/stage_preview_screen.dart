@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
@@ -439,6 +440,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       typing.value = 0;
       voiceTyping = true;
       if (mounted) setState(() {});
+      // 이어 듣던 클립이 있으면 멈춘다. 둘이 겹쳐 울리지 않게(5차, 사용자 요청).
+      await AudioFocus.instance.claim();
       await tts.speak(text);
     } catch (_) {
       ttsSpeaking = false;

@@ -1,4 +1,3 @@
-// ============================================================================
 // lib/features/shorts/presentation/shorts_screen.dart
 // ============================================================================
 //
@@ -17,6 +16,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
@@ -64,6 +64,8 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
   void initState() {
     super.initState();
     _showSubtitle = AppConfig.shortsShowSubtitles;
+    // 쇼츠가 바로 재생되므로 이어 듣던 클립은 멈춘다(5차, 사용자 요청).
+    unawaited(AudioFocus.instance.claim());
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       context.read<ShortsProvider>().setAutoNext(AppConfig.autoNext);
