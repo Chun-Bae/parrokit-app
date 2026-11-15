@@ -5,11 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/speech/phrase_recognizer.dart';
+import 'package:parrokit/core/speech/presentation/speech_practice_view.dart';
 import 'package:parrokit/features/home/dashboard/presentation/stage_preview_screen.dart';
 
 class FakeRecognizer implements PhraseRecognizer {
   bool available = true;
   bool listening = false;
+
+  /// 몇 번 듣기 시작했는지. 자동으로 다시 듣는지 보는 데 쓴다.
+  int starts = 0;
   String? localeId;
   void Function(String)? onResult;
   void Function(String?)? onDone;
@@ -26,6 +30,7 @@ class FakeRecognizer implements PhraseRecognizer {
     this.onResult = onResult;
     this.onDone = onDone;
     this.onLevel = onLevel;
+    if (available) starts++;
     return listening = available;
   }
 
@@ -72,6 +77,7 @@ Finder currentPhrase(String phrase) => find.byWidgetPredicate((widget) =>
     widget is Semantics && widget.properties.label == '앵무새가 이야기해요. $phrase');
 const complete = ValueKey('complete-repeat');
 const microphone = ValueKey('preview-microphone');
+const restart = ValueKey('restart-practice');
 
 /// 기본으로 주던 예시 문장을 없앴으므로(5차), 무대 테스트는 내 문장을
 /// 몇 개 넣어 두고 시작한다. 순서는 저장한 차례 그대로다.
@@ -85,7 +91,10 @@ String sentenceId(String text) => MySentenceStore.idFor('영어', text);
 
 void main() {
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
+    // 자동으로 듣기는 아래 '자동으로 듣기' 묶음에서 따로 본다. 나머지 테스트는
+    // 마이크를 눌러서 하는 흐름이라 꺼 둔다(5차).
+    SharedPreferences.setMockInitialValues(
+        {'parrokit.speaking.auto_listen.v1.guest': false});
     MySentenceStore.cloud = null;
     for (final (text, translation) in _testSentences) {
       await MySentenceStore.add('guest',
@@ -167,8 +176,10 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('마이크 시안은 XP 없음, 체크 중복 지급 방지와 레벨 복원', (tester) async {
-    SharedPreferences.setMockInitialValues(
-        {'parrokit.speaking.xp.v1.guest': 9.95});
+    SharedPreferences.setMockInitialValues({
+      'parrokit.speaking.xp.v1.guest': 9.95,
+      'parrokit.speaking.auto_listen.v1.guest': false,
+    });
     await openPreview(tester);
     await tester.pump();
     await tapTooltip(tester, '따라 말하기 모드 켜기');
@@ -626,5 +637,151 @@ void main() {
     // 문장 정보 시트가 아니라 문장 추가 화면이 열린다.
     expect(find.byKey(const ValueKey('sentence-language')), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+  group('자동으로 듣기', () {
+    setUp(() {
+      // 기본값(켬)으로 돌려놓는다.
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    Future<FakeRecognizer> openWaiting(WidgetTester tester) async {
+      final recognizer = FakeRecognizer();
+      await openPreview(tester, recognizer: recognizer);
+      await tapTooltip(tester, '따라 말하기 모드 켜기');
+      await finishPhrase(tester);
+      // 내 차례가 된 뒤 스스로 켜지기까지 기다린다.
+      await tester.pump(const Duration(milliseconds: 600));
+      return recognizer;
+    }
+
+    testWidgets('내 차례가 되면 마이크를 누르지 않아도 듣는다', (tester) async {
+      final recognizer = await openWaiting(tester);
+
+      expect(recognizer.listening, isTrue);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('잘 따라 하면 누르지 않아도 다음 문장으로 넘어간다', (tester) async {
+      var completed = 0;
+      final recognizer = FakeRecognizer();
+      await openPreview(tester,
+          recognizer: recognizer,
+          onPracticeCompleted: () async => completed++);
+      await tapTooltip(tester, '따라 말하기 모드 켜기');
+      await finishPhrase(tester);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(recognizer.starts, 1);
+
+      // 지금 따라 말할 문장을 그대로 말했다고 친다.
+      final view =
+          tester.widget<SpeechPracticeView>(find.byType(SpeechPracticeView));
+      recognizer.onResult!(view.phrase);
+      await tester.pump();
+      // 다 맞췄으므로 바로 끝내고, 잠깐 보여 준 뒤에 넘어간다.
+      expect(find.text('잘했어요! 다음 문장으로 넘어가요.'), findsOneWidget);
+      expect(completed, 0);
+
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(completed, 1, reason: '체크를 누르지 않아도 넘어간다');
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('못 맞춘 채 끝나면 혼자 다시 듣는다', (tester) async {
+      final recognizer = await openWaiting(tester);
+
+      expect(recognizer.starts, 1);
+      recognizer.onResult!('good morning');
+      recognizer.onDone!(null);
+      await tester.pump();
+      expect(find.text('다시 한번 말해볼까요?'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(recognizer.starts, 2, reason: '혼자 다시 들어야 한다');
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('정해진 횟수를 넘기면 그만 듣고 기다린다', (tester) async {
+      final recognizer = await openWaiting(tester);
+
+      for (var i = 0; i < 4; i++) {
+        recognizer.onDone!(null);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1000));
+      }
+
+      expect(recognizer.starts, 3, reason: '처음 한 번과 다시 듣기 두 번까지만');
+      expect(find.text('다시 하기를 누르면 또 들을게요. 체크를 누르면 다음 문장으로 넘어가요.'),
+          findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('자동일 때는 마이크 버튼 대신 다시 하기 버튼이 있다', (tester) async {
+      await openWaiting(tester);
+
+      expect(find.byKey(microphone), findsNothing);
+      expect(find.byKey(restart), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('다시 하기를 누르면 들은 것을 버리고 처음부터 다시 듣는다', (tester) async {
+      final recognizer = await openWaiting(tester);
+      recognizer.onResult!('good');
+      await tester.pump();
+      expect(find.byKey(const ValueKey('speech-heard')), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(restart));
+      await tester.tap(find.byKey(restart));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('speech-heard')), findsNothing);
+      expect(find.byKey(const ValueKey('speech-score')), findsNothing);
+      expect(recognizer.starts, 2);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('그만 듣고 기다리는 중에도 다시 하기로 또 들을 수 있다', (tester) async {
+      final recognizer = await openWaiting(tester);
+      for (var i = 0; i < 4; i++) {
+        recognizer.onDone!(null);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1000));
+      }
+      expect(recognizer.starts, 3);
+
+      await tester.ensureVisible(find.byKey(restart));
+      await tester.tap(find.byKey(restart));
+      await tester.pump();
+      await tester.pump();
+      expect(recognizer.starts, 4, reason: '기다리는 중에도 다시 들을 수 있다');
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('말하기 설정에서 끄면 저장되고 스스로 듣지 않는다', (tester) async {
+      final recognizer = FakeRecognizer();
+      await openPreview(tester, recognizer: recognizer);
+      await tapTooltip(tester, '말하기 설정');
+      await tester.pump(const Duration(milliseconds: 400));
+
+      await tester.tap(find.byKey(const ValueKey('auto-listen-switch')));
+      await tester.pump();
+      await tester.tap(find.text('저장'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+          (await SharedPreferences.getInstance())
+              .getBool('parrokit.speaking.auto_listen.v1.guest'),
+          isFalse);
+
+      await tapTooltip(tester, '따라 말하기 모드 켜기');
+      await finishPhrase(tester);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(recognizer.listening, isFalse);
+      expect(find.byKey(microphone), findsOneWidget, reason: '끄면 마이크로 돌아간다');
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   });
 }

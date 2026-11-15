@@ -115,6 +115,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
 
   /// 끄면 앵무새 음성을 끝까지 들어도 들은 횟수를 올리지 않는다.
   bool countListen = true;
+
+  /// 켜면 내 차례에 마이크를 누르지 않아도 스스로 듣고, 통과하면 스스로 넘어간다(5차).
+  bool autoListen = true;
   Duration get _phraseGap => mode == _SpeakingMode.repeat
       ? _repeatGap
       : Duration(milliseconds: (gapSeconds * 1000).round());
@@ -171,6 +174,8 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   String get countListenKey =>
       'parrokit.speaking.count_listen.v1.${widget.accountId}';
   String get gapKey => 'parrokit.speaking.gap_seconds.v1.${widget.accountId}';
+  String get autoListenKey =>
+      'parrokit.speaking.auto_listen.v1.${widget.accountId}';
   String get phrasesKey =>
       'parrokit.speaking.phrases.v1.${widget.accountId}.${widget.language}';
   int get level => speakingLevel(totalXp);
@@ -184,6 +189,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
         gapSeconds = (prefs.getDouble(gapKey) ?? _defaultGapSeconds).clamp(
             _SpeakingSettingsDialog.minGap, _SpeakingSettingsDialog.maxGap);
         countListen = prefs.getBool(countListenKey) ?? true;
+        autoListen = prefs.getBool(autoListenKey) ?? true;
         phraseSettingsSeen = prefs.getBool(phraseSettingsSeenKey) ?? false;
         xpReady = true;
       });
@@ -194,20 +200,24 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
 
   Future<void> showSpeakingSettings() async {
     final next = await whilePaused(
-        () => showDialog<({double gap, bool countListen})>(
+        () => showDialog<({double gap, bool countListen, bool autoListen})>(
               context: context,
               builder: (context) => _SpeakingSettingsDialog(
-                  initialGap: gapSeconds, initialCountListen: countListen),
+                  initialGap: gapSeconds,
+                  initialCountListen: countListen,
+                  initialAutoListen: autoListen),
             ));
     if (!mounted || next == null) return;
     setState(() {
       gapSeconds = next.gap;
       countListen = next.countListen;
+      autoListen = next.autoListen;
     });
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble(gapKey, next.gap);
       await prefs.setBool(countListenKey, next.countListen);
+      await prefs.setBool(autoListenKey, next.autoListen);
     } catch (_) {/* 저장하지 못해도 이번 실행에서는 바뀐 설정을 쓴다. */}
   }
 
@@ -1076,7 +1086,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                   reduceMotion: reduceMotion,
                   onAttempt: recordAttempt,
                   onBeforeStart: interruptParrot,
-                  onComplete: completeRepeat),
+                  onComplete: completeRepeat,
+                  // 앵무새가 말을 마치고 내 차례가 된 뒤에만 스스로 듣는다.
+                  autoListen: autoListen && awaitingResponse),
             ])),
       const SizedBox(height: 16),
       const SizedBox(height: 16),
@@ -1105,9 +1117,12 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
 
 class _SpeakingSettingsDialog extends StatefulWidget {
   const _SpeakingSettingsDialog(
-      {required this.initialGap, required this.initialCountListen});
+      {required this.initialGap,
+      required this.initialCountListen,
+      required this.initialAutoListen});
   final double initialGap;
   final bool initialCountListen;
+  final bool initialAutoListen;
 
   static const minGap = 0.5;
   static const maxGap = 10.0;
@@ -1120,6 +1135,7 @@ class _SpeakingSettingsDialog extends StatefulWidget {
 class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
   late double gap = widget.initialGap;
   late bool countListen = widget.initialCountListen;
+  late bool autoListen = widget.initialAutoListen;
 
   @override
   Widget build(BuildContext context) {
@@ -1151,6 +1167,16 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
                 style: context.texts.bodySmall.copyWith(color: palette.muted)),
             const SizedBox(height: 8),
             SwitchListTile(
+                key: const ValueKey('auto-listen-switch'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('자동으로 듣기',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: Text(
+                    '내 차례가 되면 마이크를 누르지 않아도 듣고, 잘 따라 하면 다음 문장으로 넘어가요.',
+                    style: context.texts.bodySmall),
+                value: autoListen,
+                onChanged: (value) => setState(() => autoListen = value)),
+            SwitchListTile(
                 key: const ValueKey('count-listen-switch'),
                 contentPadding: EdgeInsets.zero,
                 title: const Text('듣기 횟수 기록',
@@ -1164,8 +1190,8 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
         TextButton(
             onPressed: () => Navigator.pop(context), child: const Text('취소')),
         FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, (gap: gap, countListen: countListen)),
+            onPressed: () => Navigator.pop(context,
+                (gap: gap, countListen: countListen, autoListen: autoListen)),
             child: const Text('저장')),
       ],
     );

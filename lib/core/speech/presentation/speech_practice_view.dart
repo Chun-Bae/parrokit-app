@@ -1,7 +1,10 @@
-// 마이크를 눌러 말하면 인식된 만큼 문장 색이 채워지고, 충분히 비슷하면
-// 완료하는 '따라 말하기' 위젯.
+// 말하면 인식된 만큼 문장 색이 채워지고, 충분히 비슷하면 완료하는 '따라 말하기' 위젯.
 //
 // 홈 무대에만 있던 것을 문장 상세에서도 쓰려고 따로 뺐다(5차). 화면은 그대로다.
+//
+// [autoListen]이면 버튼을 누르지 않아도 된다(5차, 사용자 요청). 내 차례가 되면
+// 스스로 듣기 시작하고, 통과선을 넘긴 뒤 말이 멎으면 끝내고 다음으로 넘어간다.
+// 못 맞춘 채 끝나면 정해진 횟수만큼 혼자 다시 듣는다. 그 뒤에는 멈춰서 기다린다.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -41,12 +44,16 @@ class SpeechPracticeView extends StatefulWidget {
       required this.reduceMotion,
       required this.onAttempt,
       required this.onBeforeStart,
-      required this.onComplete});
+      required this.onComplete,
+      this.autoListen = false});
   final String phrase;
   final String localeId;
   final PhraseRecognizer recognizer;
   final bool enabled;
   final bool reduceMotion;
+
+  /// 버튼을 누르지 않아도 스스로 듣고, 통과하면 스스로 넘어간다.
+  final bool autoListen;
   final void Function(double? score) onComplete;
 
   /// 마이크를 켜거나 체크를 누르기 직전에 부른다. 앵무새가 말하는 중이면 멈추게 한다.
@@ -73,15 +80,85 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
   DateTime? attemptStart;
   String heard = '';
 
+  /// 스스로 듣기까지 기다리는 시간. 앵무새 소리가 완전히 멎은 뒤 켜려고 둔다.
+  static const _autoStartDelay = Duration(milliseconds: 500);
+
+  /// 못 맞춘 채 끝났을 때 스스로 다시 듣기까지 기다리는 시간.
+  static const _autoRetryDelay = Duration(milliseconds: 900);
+
+  /// 통과한 뒤 '잘했어요'를 보여 주고 다음으로 넘어가기까지 기다리는 시간.
+  static const _autoAdvanceDelay = Duration(milliseconds: 1200);
+
+  /// 스스로 다시 듣는 최대 횟수. 끝없이 듣고 있지 않게 막는다.
+  static const _autoRetryLimit = 2;
+
+  Timer? autoTimer;
+  int autoTries = 0;
+
+  /// 스스로 듣는 중에 마이크를 눌러 멈췄다. 다시 누를 때까지는 혼자 켜지 않는다.
+  bool autoStopped = false;
+
+  /// 지금 스스로 듣고 넘어가도 되는지.
+  bool get canAutoListen => widget.autoListen && widget.enabled && !autoStopped;
+
+  /// 지금까지 들은 것을 버리고 처음부터 다시 듣는다('다시 하기').
+  ///
+  /// 자동으로 듣다 보면 엉뚱한 소리가 먼저 들어갈 수 있어서, 마이크 버튼
+  /// 대신 이 버튼을 둔다(5차, 사용자 요청).
+  Future<void> restartListening() async {
+    autoTimer?.cancel();
+    passTimer?.cancel();
+    autoStopped = false;
+    autoTries = 0;
+    if (listening) {
+      await stopListening();
+      if (!mounted) return;
+    }
+    setState(() {
+      score = 0;
+      heard = '';
+      message = null;
+    });
+    await toggleListening(byHand: true);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    scheduleAutoListen(_autoStartDelay);
+  }
+
   @override
   void didUpdateWidget(covariant SpeechPracticeView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!widget.enabled && listening) unawaited(stopListening());
+    // 내 차례가 되면(autoListen이 켜지면) 스스로 듣기 시작한다.
+    if (widget.autoListen && !oldWidget.autoListen) autoStopped = false;
+    scheduleAutoListen(_autoStartDelay);
   }
 
-  Future<void> toggleListening() async {
+  /// 듣고 있지도, 이미 예약돼 있지도 않으면 스스로 듣기를 예약한다.
+  void scheduleAutoListen(Duration delay) {
+    if (!canAutoListen || listening || (autoTimer?.isActive ?? false)) return;
+    if (autoTries > _autoRetryLimit) return;
+    autoTimer = Timer(delay, () {
+      if (!mounted || !canAutoListen || listening) return;
+      unawaited(toggleListening());
+    });
+  }
+
+  Future<void> toggleListening({bool byHand = false}) async {
     if (!widget.enabled) return;
-    if (listening) return stopListening();
+    autoTimer?.cancel();
+    if (listening) {
+      // 손으로 멈추면 혼자 다시 켜지 않는다. 마이크를 다시 누르면 이어서 한다.
+      if (byHand) autoStopped = true;
+      return stopListening();
+    }
+    if (byHand) {
+      autoStopped = false;
+      autoTries = 0;
+    }
     widget.onBeforeStart();
     setState(() {
       score = 0;
@@ -104,6 +181,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
       return;
     }
     attemptStart = DateTime.now();
+    autoTries++;
     setState(() => listening = true);
   }
 
@@ -150,7 +228,15 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
     if (!mounted || !listening) return;
     finishAttempt(success: true);
     unawaited(stopListening());
-    setState(() => message = '잘했어요! 체크를 누르면 다음 문장으로 넘어가요.');
+    final auto = canAutoListen;
+    setState(() => message =
+        auto ? '잘했어요! 다음 문장으로 넘어가요.' : '잘했어요! 체크를 누르면 다음 문장으로 넘어가요.');
+    if (!auto) return;
+    autoTimer?.cancel();
+    autoTimer = Timer(_autoAdvanceDelay, () {
+      if (!mounted || !canAutoListen) return;
+      widget.onComplete(score > 0 ? score : null);
+    });
   }
 
   /// 실제 입력 크기를 받아 막대에 반영한다. 급하게 튀지 않게 조금씩 따라가게 한다.
@@ -163,13 +249,25 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
     if (!mounted || !listening) return;
     passTimer?.cancel();
     finishAttempt(success: score >= speechPassScore);
+    final passed = score >= speechPassScore;
+    // 못 맞춘 채 끝났으면 정해진 횟수까지는 혼자 다시 듣는다.
+    final retry = !passed && canAutoListen && autoTries <= _autoRetryLimit;
     setState(() {
       listening = false;
       level = 0;
-      message = score < speechPassScore
-          ? '다시 한번 말해볼까요?'
-          : '잘했어요! 체크를 누르면 다음 문장으로 넘어가요.';
+      if (passed) {
+        message = canAutoListen
+            ? '잘했어요! 다음 문장으로 넘어가요.'
+            : '잘했어요! 체크를 누르면 다음 문장으로 넘어가요.';
+      } else if (retry) {
+        message = '다시 한번 말해볼까요?';
+      } else if (canAutoListen) {
+        message = '다시 하기를 누르면 또 들을게요. 체크를 누르면 다음 문장으로 넘어가요.';
+      } else {
+        message = '다시 한번 말해볼까요?';
+      }
     });
+    if (retry) scheduleAutoListen(_autoRetryDelay);
   }
 
   Future<void> stopListening() async {
@@ -188,6 +286,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
 
   @override
   void dispose() {
+    autoTimer?.cancel();
     passTimer?.cancel();
     unawaited(widget.recognizer.stop().catchError((Object _) {}));
     super.dispose();
@@ -221,20 +320,37 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
       ],
       const SizedBox(height: 16),
       Row(children: [
-        Semantics(
-            label: listening ? '음성 인식 중지' : '마이크를 누르고 따라 말하기',
-            button: true,
-            child: IconButton.filledTonal(
-                key: const ValueKey('preview-microphone'),
-                tooltip: listening ? '음성 인식 중지' : '따라 말하기 시작',
-                onPressed: widget.enabled ? toggleListening : null,
-                style: IconButton.styleFrom(
-                    backgroundColor: listening
-                        ? active
-                        : palette.primary.withValues(alpha: 0.12),
-                    foregroundColor: listening ? palette.surface : active),
-                icon:
-                    Icon(listening ? Icons.stop_rounded : Icons.mic_rounded))),
+        if (widget.autoListen)
+          // 자동으로 듣는 동안에는 켜고 끄는 버튼이 필요 없다. 잘못 들어갔을 때
+          // 처음부터 다시 하는 버튼만 둔다(5차, 사용자 요청).
+          Semantics(
+              label: '처음부터 다시 말하기',
+              button: true,
+              child: IconButton.filledTonal(
+                  key: const ValueKey('restart-practice'),
+                  tooltip: '다시 하기',
+                  onPressed: widget.enabled ? restartListening : null,
+                  style: IconButton.styleFrom(
+                      backgroundColor: palette.primary.withValues(alpha: 0.12),
+                      foregroundColor: active),
+                  icon: const Icon(Icons.refresh_rounded)))
+        else
+          Semantics(
+              label: listening ? '음성 인식 중지' : '마이크를 누르고 따라 말하기',
+              button: true,
+              child: IconButton.filledTonal(
+                  key: const ValueKey('preview-microphone'),
+                  tooltip: listening ? '음성 인식 중지' : '따라 말하기 시작',
+                  onPressed: widget.enabled
+                      ? () => toggleListening(byHand: true)
+                      : null,
+                  style: IconButton.styleFrom(
+                      backgroundColor: listening
+                          ? active
+                          : palette.primary.withValues(alpha: 0.12),
+                      foregroundColor: listening ? palette.surface : active),
+                  icon: Icon(
+                      listening ? Icons.stop_rounded : Icons.mic_rounded))),
         const SizedBox(width: 12),
         Expanded(
             child: SizedBox(
@@ -267,6 +383,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
             tooltip: '따라 말하기 완료',
             onPressed: widget.enabled
                 ? () {
+                    autoTimer?.cancel();
                     widget.onBeforeStart();
                     // 이미 기록된 시도(말하고 끝난 경우)는 다시 기록하지 않는다.
                     if (attemptStart != null || score == 0) {
