@@ -14,12 +14,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'package:parrokit/features/collection/library/presentation/widgets/clip_backup_action.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/navigation/app_bottom_navbar.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
-import 'package:parrokit/features/collection/library/presentation/widgets/storage_transfer_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
@@ -114,25 +116,20 @@ class AppShell extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
-                    tooltip: '전환',
-                    icon: const Icon(Icons.swap_horiz_rounded),
+                    // 위치를 고르지 않는다. 구독 중이면 서버에 백업한다(5차 5단계).
+                    tooltip: '백업',
+                    icon: const Icon(Icons.backup_rounded),
                     onPressed: selectedClipIds.isEmpty
                         ? null
                         : () async {
-                            final target = await showStorageTransferSheet(
-                              context,
-                              title: '선택한 ${selectedClipIds.length}개 클립 전환',
-                              subtitle:
-                                  '선택한 클립 ${selectedClipIds.length}개를 한 번에 옮길 위치를 고르세요.',
-                            );
-
-                            if (!context.mounted || target == null) return;
-
+                            if (!ensureBackupAllowed(context)) return;
+                            final count = selectedClipIds.length;
                             await clipProvider.moveClipsToStorage(
                               selectedClipIds,
-                              target,
+                              ClipStorageConstants.storageModeServer,
                             );
                             if (!context.mounted) return;
+                            showToast(backupDoneMessage(count));
                             clipProvider.closeCollectionMenu();
                           },
                   ),

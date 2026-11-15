@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'package:parrokit/features/collection/library/presentation/widgets/clip_backup_action.dart';
 import 'storage_state_label.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,6 @@ import 'package:provider/provider.dart';
 import 'episode_thumbnail.dart';
 import 'swipe_action_tile.dart';
 import 'mini_chip.dart';
-import 'storage_transfer_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/features/collection/clip/player/presentation/clip_time_format.dart';
@@ -94,17 +94,6 @@ class ClipListView extends StatelessWidget {
     await provider.selectCollection(provider.selectedCollectionId);
   }
 
-  Future<bool> _moveToLocal(
-    ClipProvider provider,
-    ClipItem item,
-  ) async {
-    final success = await provider.moveClipToLocal(item.clip.id);
-    if (!success) return false;
-
-    await _refreshClipListAfterStorageChange(provider);
-    return true;
-  }
-
   Future<bool> _moveToServer(
     ClipProvider provider,
     ClipItem item,
@@ -116,40 +105,23 @@ class ClipListView extends StatelessWidget {
     return true;
   }
 
-  void _showStorageModeSheet(
+  /// 저장 위치는 구독이 정한다(5차 5단계). 구독자는 누르면 서버에 백업하고,
+  /// 아니면 까닭과 구독 화면으로 가는 길을 알린다.
+  Future<void> _backUpClip(
     BuildContext context,
     ClipItem item, {
     required VoidCallback onApplied,
-  }) {
+  }) async {
+    onApplied();
+    if (isBackedUp(item.clip.storageMode)) {
+      showAlreadyBackedUp();
+      return;
+    }
+    if (!ensureBackupAllowed(context)) return;
     final provider = context.read<ClipProvider>();
-    showStorageTransferSheet(
-      context,
-      title: '저장 위치 바꾸기',
-      subtitle: '원하는 위치를 고르면, 기기 안에 남겨둘지도 함께 정할 수 있어요.',
-      initialMode: item.clip.storageMode,
-    ).then((target) async {
-      if (!context.mounted || target == null) return;
-      final success = switch (target) {
-        ClipStorageConstants.storageModeLocal =>
-          await _moveToLocal(provider, item),
-        ClipStorageConstants.storageModeServer =>
-          await _moveToServer(provider, item),
-        _ => false,
-      };
-
-      if (success) {
-        onApplied();
-        if (target == ClipStorageConstants.storageModeServer) {
-          showToast('서버에 저장했어요.');
-        } else if (target == ClipStorageConstants.storageModeLocal) {
-          showToast('로컬로 옮겼어요.');
-        }
-      } else if (target == ClipStorageConstants.storageModeServer) {
-        showToast('서버 저장에 실패했어요.');
-      } else if (target == ClipStorageConstants.storageModeLocal) {
-        showToast('로컬 전환에 실패했어요.');
-      }
-    });
+    final success = await _moveToServer(provider, item);
+    if (!success) return;
+    showToast(backupDoneMessage(1));
   }
 
   Widget _buildSwipeAction({
@@ -354,11 +326,10 @@ class ClipListView extends StatelessWidget {
                         ),
                         _buildSwipeAction(
                           color: context.tokens.warning,
-                          icon: Icons.swap_horiz_rounded,
-                          // '전환'은 무엇을 바꾸는지 몰랐다(5차). 시트 제목
-                          // '저장 위치 바꾸기'에 맞춘다.
-                          label: '옮기기',
-                          onTap: () => _showStorageModeSheet(
+                          icon: Icons.backup_rounded,
+                          // 위치를 고르는 것이 아니라 하는 일을 적는다(5차).
+                          label: '백업',
+                          onTap: () => _backUpClip(
                             context,
                             item,
                             onApplied: () => swipeKey.currentState?.close(),

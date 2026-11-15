@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 const _files = [
   'lib/features/collection/library/presentation/widgets/clip_list_view.dart',
   'lib/features/collection/library/presentation/widgets/storage_scope_tabs.dart',
-  'lib/features/collection/library/presentation/widgets/storage_transfer_sheet.dart',
+  'lib/features/collection/library/presentation/widgets/clip_backup_action.dart',
   'lib/features/collection/library/presentation/clip_library_home.dart',
   'lib/features/home/dashboard/presentation/widgets/collection_card.dart',
   'lib/features/settings/more/presentation/sections/remote_storage_section.dart',
