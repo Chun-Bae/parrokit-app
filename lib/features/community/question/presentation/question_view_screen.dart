@@ -11,6 +11,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_reply_button.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -786,17 +787,13 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                               style: context.texts.bodySmall.copyWith(
                                   color: colorScheme.onSurfaceVariant)),
                           const SizedBox(width: 12),
-                          IconButton(
-                            tooltip: '답글 쓰기',
-                            icon: Icon(Icons.mode_comment_outlined,
-                                size: 18, color: context.tokens.textSecondary),
-                            onPressed: () {
+                          CommentReplyButton(
+                            onTap: () {
                               provider.setReplyingTo(answer);
                               FocusScope.of(context)
                                   .requestFocus(_replyFocusNode);
                             },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            color: context.tokens.textSecondary,
                           ),
                         ],
                       ),

@@ -23,6 +23,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'vote_screen.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_reply_button.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -451,16 +452,12 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        GestureDetector(
+                        CommentReplyButton(
                           onTap: () {
                             provider.setReplyingTo(comment);
                             _focusCommentInput();
                           },
-                          child: Text(
-                            '답글 쓰기',
-                            style: context.texts.bodySmall
-                                .copyWith(color: colorScheme.onSurfaceVariant),
-                          ),
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ],
                     ),

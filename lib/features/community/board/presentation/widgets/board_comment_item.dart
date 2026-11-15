@@ -4,6 +4,7 @@ import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/features/community/shared/presentation/widgets/comment_reply_button.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
@@ -214,18 +215,9 @@ class BoardCommentItem extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 20),
-                      GestureDetector(
+                      CommentReplyButton(
                         onTap: onReply,
-                        child: Row(
-                          children: [
-                            Icon(Icons.chat_bubble_outline,
-                                size: 16, color: context.tokens.textDisabled),
-                            SizedBox(width: 4),
-                            Text('답글 쓰기',
-                                style: context.texts.labelMedium.copyWith(
-                                    color: context.tokens.textDisabled)),
-                          ],
-                        ),
+                        color: context.tokens.textDisabled,
                       ),
                     ],
                   ),
