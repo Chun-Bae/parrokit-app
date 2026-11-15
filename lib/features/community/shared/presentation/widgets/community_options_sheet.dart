@@ -8,13 +8,11 @@ class CommunityOptionAction {
   const CommunityOptionAction({
     required this.label,
     required this.onTap,
-    this.icon,
     this.isDestructive = false,
     this.enabled = true,
   });
 
   final String label;
-  final IconData? icon;
   final bool isDestructive;
 
   /// 지금 할 수 없는 일이면 false. 흐리게 보이고 눌러도 아무 일이 없다.

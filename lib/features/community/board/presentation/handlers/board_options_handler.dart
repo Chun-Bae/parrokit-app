@@ -22,7 +22,6 @@ class BoardOptionsHandler {
         if (isMyComment)
           CommunityOptionAction(
             label: '지우기',
-            icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
               final deleted = await onDelete();
@@ -61,7 +60,6 @@ class BoardOptionsHandler {
         if (isMyPost)
           CommunityOptionAction(
             label: '수정',
-            icon: Icons.edit_outlined,
             onTap: () async {
               onEdit();
             },
@@ -69,7 +67,6 @@ class BoardOptionsHandler {
         if (isMyPost)
           CommunityOptionAction(
             label: '지우기',
-            icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
               final deleted = await onDelete();

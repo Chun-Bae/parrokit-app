@@ -171,7 +171,6 @@ class _CommunityNotificationScreenState
       actions: [
         CommunityOptionAction(
           label: '모두 읽음',
-          icon: Icons.done_all_rounded,
           // 다 읽었으면 할 일이 없다. 전에는 눌러도 조용히 닫히기만 했다(5차).
           enabled: provider.unreadCount > 0,
           onTap:
@@ -179,7 +178,6 @@ class _CommunityNotificationScreenState
         ),
         CommunityOptionAction(
           label: '모두 지우기',
-          icon: Icons.delete_sweep_outlined,
           isDestructive: true,
           enabled: provider.hasNotifications,
           onTap: provider.hasNotifications
@@ -188,7 +186,6 @@ class _CommunityNotificationScreenState
         ),
         CommunityOptionAction(
           label: '새로 고침',
-          icon: Icons.refresh_rounded,
           onTap: provider.refresh,
         ),
       ],

@@ -183,7 +183,6 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
         if (isMyPost)
           CommunityOptionAction(
             label: '수정',
-            icon: Icons.edit_outlined,
             onTap: () async {
               if (!mounted) return;
               await Navigator.of(context).push(
@@ -196,7 +195,6 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
         if (isMyPost)
           CommunityOptionAction(
             label: '지우기',
-            icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
               final deleted = await context
@@ -239,7 +237,6 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
         if (isMyComment)
           CommunityOptionAction(
             label: '지우기',
-            icon: Icons.delete_outline_rounded,
             isDestructive: true,
             onTap: () async {
               final deleted = await context

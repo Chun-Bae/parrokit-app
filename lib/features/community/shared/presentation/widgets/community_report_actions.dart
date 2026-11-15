@@ -20,7 +20,6 @@ CommunityOptionAction buildCommunityReportAction({
 }) {
   return CommunityOptionAction(
     label: '신고',
-    icon: Icons.report_outlined,
     onTap: () async {
       final reason = await showReportReasonDialog(context);
       if (reason == null || !context.mounted) return;
