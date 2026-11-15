@@ -39,8 +39,12 @@ class ClipPlaybackHolder extends ChangeNotifier {
     return fromEngine.isNotEmpty ? fromEngine : _title;
   }
 
+  /// 한 번이라도 소리가 났는지. 열어만 두고 안 튼 클립에는 줄을 띄우지
+  /// 않는다(플레이어를 열기만 해도 줄이 떴다. 5차 4단계).
+  bool _everPlayed = false;
+
   /// 아래에 '듣는 중' 줄을 띄울 만큼 재생이 살아 있는지.
-  bool get isActive => _engine != null && _clipId != null;
+  bool get isActive => _engine != null && _clipId != null && _everPlayed;
 
   bool get isPlaying => _engine?.isPlaying ?? false;
 
@@ -62,6 +66,7 @@ class ClipPlaybackHolder extends ChangeNotifier {
     _engine?.dispose();
     final engine = _engineOf();
     _engine = engine;
+    _everPlayed = false;
     _clipId = clipId;
     _title = title;
     engine.addListener(_onEngineChanged);
@@ -69,7 +74,10 @@ class ClipPlaybackHolder extends ChangeNotifier {
     return (engine: engine, loaded: false);
   }
 
-  void _onEngineChanged() => _notify();
+  void _onEngineChanged() {
+    if (_engine?.isPlaying == true) _everPlayed = true;
+    _notify();
+  }
 
   Future<void> pause() async => _engine?.pause();
 
@@ -80,6 +88,7 @@ class ClipPlaybackHolder extends ChangeNotifier {
     final engine = _engine;
     _engine = null;
     _clipId = null;
+    _everPlayed = false;
     _title = '';
     if (engine != null) {
       engine.removeListener(_onEngineChanged);

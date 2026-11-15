@@ -41,13 +41,20 @@ void main() {
     expect(holder.clipId, isNull);
   });
 
+  test('열기만 하고 안 틀었으면 줄을 띄우지 않는다', () {
+    // 플레이어를 열기만 해도 '듣는 중' 줄이 떴다(5차 4단계).
+    holder.engineFor(clipId: 7, title: '카페에서');
+
+    expect(holder.isActive, isFalse);
+    expect(holder.clipId, 7, reason: '들고는 있다');
+  });
+
   test('같은 클립이면 쓰던 플레이어를 그대로 준다', () {
     final first = holder.engineFor(clipId: 7, title: '카페에서');
     final again = holder.engineFor(clipId: 7, title: '카페에서');
 
     expect(identical(first.engine, again.engine), isTrue);
     expect(first.loaded, isFalse, reason: '처음에는 읽은 것이 없다');
-    expect(holder.isActive, isTrue);
     expect(holder.clipId, 7);
   });
 
@@ -64,7 +71,6 @@ void main() {
 
     await holder.stop();
 
-    expect(holder.isActive, isFalse);
     expect(holder.clipId, isNull);
     expect(holder.engine, isNull);
   });
@@ -84,7 +90,7 @@ void main() {
 
     await AudioFocus.instance.claim();
 
-    expect(holder.isActive, isFalse);
+    expect(holder.engine, isNull);
   });
 
   test('들고 있는 것이 없으면 아무 일도 없다', () async {

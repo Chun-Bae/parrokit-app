@@ -65,6 +65,10 @@ class ClipPlayerViewModel extends ChangeNotifier
   /// 받은 창구가 이미 이 클립을 읽어 둔 상태인지. 그러면 다시 읽지 않는다.
   final bool engineAlreadyLoaded;
 
+  /// 들고 있던 것을 그대로 쓸 수 있는지. **처음 한 번만** 참이다.
+  /// 편집하고 돌아오면 영상이 바뀌었을 수 있어 반드시 다시 읽어야 한다(5차).
+  bool _canReuseLoaded = false;
+
   // ─────────────────────────────────────────────────────────────────
   // Dependencies
   // ─────────────────────────────────────────────────────────────────
@@ -210,6 +214,7 @@ class ClipPlayerViewModel extends ChangeNotifier
   // ─────────────────────────────────────────────────────────────────
 
   void _init() {
+    _canReuseLoaded = engineAlreadyLoaded;
     _segIndex = initialIndex;
     _scope = AppConfig.segmentLoop ? PlayScope.full : PlayScope.segment;
     _loopSegment = AppConfig.repeatAll;
@@ -281,6 +286,8 @@ class ClipPlayerViewModel extends ChangeNotifier
   /// 편집 화면에서 돌아온 뒤 바뀐 제목·구간·영상을 다시 읽는다(5차). 쓰던
   /// 컨트롤러를 먼저 놓아 플레이어가 둘 붙잡히지 않게 한다.
   Future<void> reloadAfterEdit() async {
+    // 영상이나 구간이 바뀌었을 수 있다. 들고 있던 것을 그대로 쓰지 않는다.
+    _canReuseLoaded = false;
     _disposeController();
     _isLoading = true;
     notifyListeners();
@@ -310,7 +317,9 @@ class ClipPlayerViewModel extends ChangeNotifier
 
     // 밖에서 받은 창구가 이미 이 클립을 들고 있으면 다시 읽지 않는다.
     // 다시 읽으면 듣던 자리가 끊긴다(5차 4단계).
-    final keepPlaying = engineAlreadyLoaded && engine.isReady;
+    final keepPlaying = _canReuseLoaded && engine.isReady;
+    // 한 번 쓰고 나면 더는 그대로 쓰지 않는다.
+    _canReuseLoaded = false;
     if (!keepPlaying) {
       await engine.open(resolvedPath,
           speed: _playbackRate, title: _clip?.title ?? '');

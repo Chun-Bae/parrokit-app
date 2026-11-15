@@ -48,7 +48,9 @@ class AppShell extends StatelessWidget {
     final hideNav = appShellHidesNavBar(location);
     // 플레이어 화면에서는 '듣는 중' 줄을 띄우지 않는다. 새 플레이어는 화면을
     // 나가도 살아 있어서, 돌아왔을 때 줄이 겹쳐 보였다(5차 4단계).
-    final onPlayer = location.contains(AppRoutes.clipsPlayPath);
+    // 편집 화면은 플레이어 위에 떠 있다. 거기서도 숨긴다.
+    final onPlayer = location.contains(AppRoutes.clipsPlayPath) ||
+        location.contains('/${AppRoutes.clipsEditPath}');
     final isCollectionRoute = location.startsWith(AppRoutes.collectionPath);
     final showCollectionSelectionBar = isCollectionRoute &&
         clipProvider.isCollectionMenuOpen &&
