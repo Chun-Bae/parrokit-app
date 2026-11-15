@@ -2232,3 +2232,18 @@
 - 미확인: 소리가 실제로 이어지는지(들어야 안다). 시뮬레이터에서는 줄이 뜨는 것까지 확인
 - analyze 깨끗, 899개 통과. 라이트·다크 확인, 테마 라이트로 되돌림
 
+
+## 반복 256 (2026-11-16 02:40~, 사용자 신고)
+- 신고: "듣는 중 하단 바가 2번째에서만 뜬다"(3회). 소리는 나는데 줄만 안 떴다
+- 까닭: **just_audio의 `play()`가 주는 Future는 '재생이 끝날 때'까지 끝나지 않는다.**
+  `await handler.play()` 뒤의 `_listenTo`·`_set`이 영영 안 돌았다. 다시 들어가
+  `handBack()`의 `stop()`이 그 Future를 끝내 주면 그제서야 `_set`이 돌아,
+  **두 번째 진입에 뜬 줄은 사실 첫 번째 진입이 늦게 띄운 것**이었다
+- 고친 것(ddd54998)
+  - `_BgAudioHandler.play()`는 시작만 시키고 끝은 안 기다린다(`unawaited`)
+  - `BackgroundPlaybackProvider`의 `takeOver`·`resume`도 `play()`를 안 기다린다
+  - 끝나지 않는 `play()`를 흉내 낸 회귀 테스트. 고치기 전에는 실패하는 것까지 확인
+  - 임시 진단 로그 3개(provider `_set`, app_shell, VM `_handOffToBackground`) 제거
+- 앞서 넣은 `warmUp()`·한 번 더 해 보기는 남겼다. 원인은 아니었지만 첫 소리가 늦는 것은 줄여 준다
+- analyze 깨끗, 903개 통과. 시뮬레이터 라이트·다크 모두 **첫 진입에서 바로** 줄이 떴다. 테마 라이트로 되돌림
+- 남은 것: 실제 기기에서 소리가 이어지는지, 자막 내보내기 한글(114에 들어감), `functions:onCommunityCommentCreated` 미배포
