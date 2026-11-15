@@ -12,47 +12,7 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import {appCheckOptions} from "./appCheck";
 import {ledgerExists, readWallet, writeWallet} from "./wallet";
 import {questionNeedsRefund} from "./questionExpiry";
-
-const MIN_REWARD = 100;
-const MAX_REWARD = 5000;
-const REWARD_STEP = 100;
-const MAX_DEADLINE_MS = 15 * 24 * 60 * 60 * 1000;
-const MAX_TAGS = 20;
-const MAX_TAG_LENGTH = 10;
-const MAX_IMAGES = 10;
-
-function text(value: unknown, field: string, max: number, required = true) {
-  if (value === undefined || value === null) {
-    if (required) {
-      throw new HttpsError("invalid-argument", `${field}이(가) 필요합니다.`);
-    }
-    return null;
-  }
-  if (typeof value !== "string" || value.length > max) {
-    throw new HttpsError("invalid-argument", `${field}을(를) 확인해주세요.`);
-  }
-  if (required && value.trim().length === 0) {
-    throw new HttpsError("invalid-argument", `${field}이(가) 필요합니다.`);
-  }
-  return value;
-}
-
-function stringList(
-  value: unknown,
-  field: string,
-  maxItems: number,
-  maxLength: number
-) {
-  if (value === undefined || value === null) return [];
-  if (
-    !Array.isArray(value) ||
-    value.length > maxItems ||
-    value.some((item) => typeof item !== "string" || item.length > maxLength)
-  ) {
-    throw new HttpsError("invalid-argument", `${field}을(를) 확인해주세요.`);
-  }
-  return value as string[];
-}
+import {buildQuestionDocument} from "./questionInput";
 
 /**
  * 질문 글을 만들고 보상 크래커를 맡긴다(작성자 잔액에서 뺀다).
@@ -70,64 +30,14 @@ export const createQuestion = onCall(appCheckOptions, async (request) => {
     throw new HttpsError("invalid-argument", "질문 내용이 필요합니다.");
   }
 
-  const postId = post.id;
-  if (typeof postId !== "string" || !/^[A-Za-z0-9]{10,40}$/.test(postId)) {
-    throw new HttpsError("invalid-argument", "질문 id를 확인해주세요.");
-  }
-  const reward = post.rewardCrackers;
-  if (
-    typeof reward !== "number" ||
-    !Number.isInteger(reward) ||
-    reward < MIN_REWARD ||
-    reward > MAX_REWARD ||
-    reward % REWARD_STEP !== 0
-  ) {
-    throw new HttpsError("invalid-argument", "보상 크래커를 확인해주세요.");
-  }
-  const expireAt = new Date(text(post.expireAt, "마감일", 40) as string);
   const now = Date.now();
-  if (
-    Number.isNaN(expireAt.getTime()) ||
-    expireAt.getTime() <= now ||
-    expireAt.getTime() > now + MAX_DEADLINE_MS
-  ) {
-    throw new HttpsError("invalid-argument", "마감일을 확인해주세요.");
-  }
-  const imageUrls = stringList(post.imageUrls, "사진", MAX_IMAGES, 2000);
-  if (imageUrls.some((url) => !url.startsWith("https://"))) {
-    throw new HttpsError("invalid-argument", "사진을 확인해주세요.");
-  }
-
-  const nowIso = new Date(now).toISOString();
-  const content = text(post.content, "내용", 20000) as string;
-  const document = {
-    id: postId,
-    postType: "question",
-    category: text(post.category, "분류", 30),
-    targetLanguage: text(post.targetLanguage, "언어", 30, false),
-    title: text(post.title, "제목", 200),
-    content,
-    tags: stringList(post.tags, "태그", MAX_TAGS, MAX_TAG_LENGTH),
-    authorId: uid,
-    authorNickname: text(post.authorNickname, "닉네임", 50, false) ?? "익명",
-    authorAvatarUrl: text(post.authorAvatarUrl, "프로필 사진", 2000, false),
-    snippet: content.length > 50 ? `${content.substring(0, 50)}...` : content,
-    hasImage: imageUrls.length > 0,
-    imageUrls,
-    viewCount: 0,
-    likeCount: 0,
-    commentCount: 0,
-    scrapCount: 0,
-    status: "active",
-    reportCount: 0,
-    createdAt: nowIso,
-    updatedAt: nowIso,
-    editHistory: [],
-    questionStatus: "waiting",
-    acceptedCommentId: null,
-    rewardCrackers: reward,
-    expireAt: expireAt.toISOString(),
-  };
+  const document = buildQuestionDocument({
+    post: post as Record<string, unknown>,
+    uid,
+    now,
+  });
+  const postId = document.id as string;
+  const reward = document.rewardCrackers as number;
 
   const db = admin.firestore();
   const postRef = db.collection("posts").doc(postId);
