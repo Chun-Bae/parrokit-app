@@ -14,6 +14,13 @@ import UserNotifications
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
 
+    // 영상과 소리를 한 플레이어로 다루는 네이티브 플레이어(5차).
+    if let controller = window?.rootViewController as? FlutterViewController {
+      registrar(forPlugin: "NativePlayer")?.register(
+        NativePlayerFactory(messenger: controller.binaryMessenger),
+        withId: NativePlayerFactory.viewType)
+    }
+
     // 앱을 보고 있는 동안에도 연습 알림이 배너로 뜨게 한다.
     // iOS는 앱이 앞에 있으면 알림을 앱에 넘기고 띄울지 말지를 앱이 정하는데,
     // 플러그인이 잡은 델리게이트가 아무것도 띄우지 않아 알림이 조용히

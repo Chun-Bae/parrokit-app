@@ -105,6 +105,9 @@ abstract class AppRoutes {
   static const paymentSuccessPath = '/payment/success';
   static const paymentFailPath = '/payment/fail';
 
+  /// 네이티브 플레이어 시험 화면. 개발 빌드에서만 등록된다(5차 1단계).
+  static const devNativePlayerPath = '/dev/native-player';
+
   static String communityBoardViewPathOf(String postId) =>
       '/community/board/$postId';
 

@@ -11,7 +11,10 @@
 // 구분선 없이 붙이고, 묶음은 여백과 머리말로만 나눈다.
 // ============================================================================
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -86,6 +89,16 @@ class _MoreScreenState extends State<MoreScreen> {
             const AppSettingsSection(),
             const _GroupLabel('정보'),
             const InfoSection(),
+            // 네이티브 플레이어 시험 자리. 출시 빌드에는 안 보인다(5차 1단계).
+            if (!kReleaseMode) ...[
+              const _GroupLabel('개발'),
+              TextButton(
+                key: const ValueKey('dev-native-player'),
+                onPressed: () =>
+                    context.push(AppRoutes.devNativePlayerPath),
+                child: const Text('네이티브 플레이어 시험'),
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

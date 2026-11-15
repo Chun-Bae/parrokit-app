@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 
+import 'package:parrokit/features/dev/native_player_test_screen.dart';
 import 'package:parrokit/features/auth/sign-in/sign_in_screen.dart';
 import 'package:parrokit/features/auth/sign-up/sign_up_screen.dart';
 import 'package:parrokit/features/auth/find-pw/find_pw_screen.dart';
@@ -82,6 +83,12 @@ GoRouter buildAppRouter({
       // 단독 라우트 (쉘 외부)
       // ─────────────────────────────────────────────────────────────────
       _authRoute,
+      // 네이티브 플레이어 시험 화면. 출시 빌드에는 넣지 않는다(5차 1단계).
+      if (!kReleaseMode)
+        GoRoute(
+          path: AppRoutes.devNativePlayerPath,
+          builder: (context, state) => const NativePlayerTestScreen(),
+        ),
       GoRoute(
         path: AppRoutes.communityBoardWritePath,
         name: AppRoutes.communityBoardWrite,
