@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 10분마다 예약된 세션 루프(사실상 연속). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- 클립 플레이어가 video_player 컨트롤러를 직접 만지던 90곳 남짓을 `ClipPlayerEngine` 창구 하나로 모음. 구현은 아직 video_player 하나뿐이라 동작은 그대로. 다음 단계에서 네이티브 플레이어를 여기에 끼운다 (다음 커밋)
 - **네이티브 플레이어 3단계**: 구간(clipBegin~clipEnd)만 틀고 반복한다. 구간 끝은 boundary 관찰자로 정확히 잡는다. 시뮬레이터에서 1~3초 반복과 전체 재생 모두 확인 (다음 커밋)
 - **네이티브 플레이어 2단계**: 앱을 내려도 같은 플레이어가 소리를 잇는다(오디오 세션 playback, 비디오 트랙만 끄기, iOS 17 `audiovisualBackgroundPlaybackPolicy`). 잠금화면 조작도 붙였다(실기기 확인 필요). 로그로 백그라운드 8초 완주 확인 (다음 커밋)
 - **네이티브 플레이어 1단계 끝**: 텍스처 방식으로 영상이 색·비율 그대로 그려진다. 까맣던 것은 시험 클립이 실제로 검은 영상이어서였다(ffprobe로 확인). 읽기·재생·멈춤·되감기·속도·길이까지 됨. 기존 플레이어는 그대로 (aea02e2b, 다음 커밋)
@@ -2429,3 +2430,18 @@
   시험 화면은 개발 빌드에만 보이므로 다크는 따로 보지 않았다
 - 다음: 4단계 — 클립 플레이어를 새 플레이어로 바꾼다(스위치로 되돌릴 수 있게).
   되면 `BackgroundPlaybackProvider`의 넘기기를 없앤다
+
+## 반복 267 (2026-11-16 07:00~)
+- 4단계(클립 플레이어 갈아끼우기)를 **두 조각으로 나눴다**. 한 번에 바꾸면 앱의 중심 화면을
+  확인 못 한 채 커밋하게 된다
+- 이번 조각: **창구(`ClipPlayerEngine`) 도입**. 화면·ViewModel·믹스인·타임라인이 만지던
+  `VideoPlayerController` 90곳 남짓을 창구 하나로 모았다. 구현은 `VideoPlayerEngine` 하나뿐이라
+  **동작은 그대로**다
+  - 창구가 주는 것: `isReady`·`isPlaying`·`position`·`duration`·`aspectRatio`·`size`,
+    `open`·`play`·`pause`·`seekTo`·`setSpeed`·`setLooping`·`close`·`dispose`, `surface()`
+  - ViewModel 생성자로 다른 구현을 넣을 수 있다 → 다음 조각에서 네이티브 플레이어를 끼운다
+- 확인: analyze 깨끗, 938개 통과. 시뮬레이터에서 클립 플레이어가 전과 같이 돈다
+  (영상·자막·0:00/0:08·재생·구간/전체 바꾸기·'한 줄씩 멈춤' 흐려짐·나가면 '듣는 중' 줄).
+  그림이 바뀌는 변경이 아니라 다크는 따로 보지 않았다
+- 다음: `NativeClipPlayerEngine`을 만들어 스위치로 켜고, 되면 `BackgroundPlaybackProvider`의
+  넘기기를 없앤다
