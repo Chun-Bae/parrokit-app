@@ -14,6 +14,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/utils/audio_focus.dart';
+import 'dart:async';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 
@@ -169,16 +171,22 @@ class _FileSectionState extends State<FileSection> {
       showToast('재생할 파일이 아직 없어요.');
       return;
     }
+    // 이어 듣던 소리를 먼저 멈춘다. 이 미리보기만 빠져 있어서, 백그라운드
+    // 재생 위에 영상 소리가 겹쳐 울렸다(5차).
+    await AudioFocus.instance.claim();
+    if (!mounted) return;
     setState(() => _vpReady = true);
     await _vp!.play();
   }
 
   void _toggleInline() {
     if (_vp == null) return;
+    final willPlay = !_vp!.value.isPlaying;
     setState(() {
       _vpReady = true;
-      _vp!.value.isPlaying ? _vp!.pause() : _vp!.play();
+      willPlay ? _vp!.play() : _vp!.pause();
     });
+    if (willPlay) unawaited(AudioFocus.instance.claim());
   }
 
   Future<void> _stopInline() async {
