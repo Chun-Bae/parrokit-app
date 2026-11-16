@@ -67,6 +67,10 @@ class _SpeakControlsState extends State<SpeakControls> {
   bool _ready = false;
   bool _speaking = false;
   bool _repeating = false;
+
+  /// 우리가 멈춘 것인지. iOS는 stop() 뒤에도 '다 읽었다'를 보내 와서,
+  /// 끝까지 듣지 않고 멈춰도 듣기 횟수가 올랐다(5차 344, 사용자 신고).
+  bool _stoppedByUs = false;
   Timer? _repeatTimer;
 
   @override
@@ -82,15 +86,21 @@ class _SpeakControlsState extends State<SpeakControls> {
     _repeatTimer?.cancel();
     _repeatTimer = null;
     if (mounted && _repeating) setState(() => _repeating = false);
+    _stoppedByUs = true;
     await _tts.stop();
   }
 
   Future<void> _setup() async {
     try {
-      _tts.setStartHandler(() => _setSpeaking(true));
+      _tts.setStartHandler(() {
+        _stoppedByUs = false;
+        _setSpeaking(true);
+      });
       _tts.setCompletionHandler(() {
         _setSpeaking(false);
-        widget.onListened?.call();
+        // 끝까지 들은 것만 센다. 우리가 멈춘 것이면 세지 않는다.
+        if (!_stoppedByUs) widget.onListened?.call();
+        _stoppedByUs = false;
         _scheduleRepeat();
       });
       _tts.setCancelHandler(() => _setSpeaking(false));
@@ -121,6 +131,7 @@ class _SpeakControlsState extends State<SpeakControls> {
     }
     if (_speaking || _repeating) {
       await _stopRepeat();
+      _stoppedByUs = true;
       await _tts.stop();
       return;
     }
