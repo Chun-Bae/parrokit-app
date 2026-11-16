@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/core/content/parrot_cost_text.dart';
 import 'package:parrokit/core/shared/utils/speed_label.dart';
 import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -448,6 +450,21 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                       ),
                     ],
                   ),
+                  // 모자라면 누른 뒤에야 시트가 떴다. 누르기 전에 알려 준다
+                  // (5차, 자동 자막과 같은 말).
+                  if (parrotShortfallLine(
+                        cost: provider.estimatedCost,
+                        coins: context.watch<UserProvider>().coins,
+                      )
+                      case final short?) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      short,
+                      key: const ValueKey('tts-short-line'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.error),
+                    ),
+                  ],
                   // 목록을 못 불러와도 만들 수는 있다. 서버가 그 언어의 기본
                   // 목소리를 고른다(contentStudioAi의 defaultVoice). 버튼만
                   // 켜져 있으면 눌러도 되는지 몰라 망설인다(5차).

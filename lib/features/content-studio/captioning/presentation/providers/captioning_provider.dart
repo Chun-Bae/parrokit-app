@@ -11,6 +11,7 @@ import 'dart:async';
 // Presentation Layer - Provider
 // ============================================================================
 
+import 'package:parrokit/core/content/parrot_cost_text.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
@@ -550,11 +551,11 @@ String sttCostLine(int? durationMs) => durationMs == null || durationMs <= 0
     : '이 영상은 ${captionParrotCost(durationMs)}패롯 들어요 · 10초에 1패롯';
 
 /// 가진 패롯으로 모자랄 때 덧붙일 한 줄. 넉넉하면 null.
+/// 글은 음성 만들기와 같은 곳(parrot_cost_text.dart)에서 가져온다.
 String? sttShortOfParrotsLine({required int? durationMs, required int coins}) {
   if (durationMs == null || durationMs <= 0) return null;
-  final cost = captionParrotCost(durationMs);
-  if (coins >= cost) return null;
-  return '지금 패롯이 $coins개예요. ${cost - coins}개가 더 있어야 해요.';
+  return parrotShortfallLine(
+      cost: captionParrotCost(durationMs), coins: coins);
 }
 
 /// 자동 자막 가격. 10초에 1패롯, 올림. functions/src/pricing.ts의 captionCost와 같다.
