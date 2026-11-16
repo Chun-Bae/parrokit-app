@@ -21,6 +21,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
@@ -29,18 +30,20 @@ enum BackupDialogType {
   restore,
 }
 
-/// 실패했을 때 보여 줄 안내를 고른다(5차).
+/// 실패했을 때 큰 글 아래에 덧붙일 안내를 고른다(5차).
 ///
 /// 전에는 `e.toString()`을 그대로 보여 줘서 사용자가 고칠 수 없는 내부 글이
-/// 화면에 떴다. 앱이 직접 던진 짧은 한국어 안내('파일 선택이 취소되었습니다.'
-/// 같은 것)는 도움이 되니 그대로 쓰고, 그 밖의 예외 글은 감추고 사람 말로
-/// 바꾼다. 자세한 내용은 AppLogger로 남긴다.
+/// 화면에 떴다. 앱이 직접 던진 짧은 한국어 안내는 도움이 되니 그대로 쓰고,
+/// 그 밖의 예외 글은 감추고 사람 말로 바꾼다. 자세한 내용은 AppLogger로 남긴다.
+///
+/// 큰 글이 이미 '백업하지 못했어요.'라고 말하므로 여기서는 되풀이하지 않고
+/// 다음에 할 것만 적는다(5차 362). 전에는 같은 말이 두 번 보였다.
 String backupFailureMessage(Object error, {required BackupDialogType type}) {
   final raw = error.toString().replaceFirst('Exception: ', '').trim();
   if (_isUserFacingMessage(raw)) return raw;
   return type == BackupDialogType.backup
-      ? '백업하지 못했어요. 저장 공간을 확인하고 다시 해 보세요.'
-      : '불러오지 못했어요. 백업 파일이 맞는지 확인하고 다시 해 보세요.';
+      ? '저장 공간을 확인하고 다시 해 보세요.'
+      : '백업 파일이 맞는지 확인하고 다시 해 보세요.';
 }
 
 bool _isUserFacingMessage(String message) {
@@ -194,6 +197,16 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
           _step = 2;
           _isSuccess = true;
           _currentState = BackupProgressState.done;
+        });
+      }
+    } on BackupCancelled {
+      // 사용자가 파일 고르기·저장 창을 닫은 것이다. 실패 화면 대신 처음
+      // 단계로 돌려놓아 다시 해 볼 수 있게 한다(5차 362).
+      if (mounted) {
+        setState(() {
+          _step = 0;
+          _currentState = BackupProgressState.idle;
+          _sizeLabel = null;
         });
       }
     } catch (e, stack) {

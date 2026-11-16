@@ -25,6 +25,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:restart_app/restart_app.dart';
 
 import 'package:parrokit/core/content/study_data_transfer.dart';
+import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart'
     show BackupProgress, BackupProgressState;
 
@@ -226,11 +227,16 @@ class BackupService {
     onProgress?.call(BackupProgress(state: BackupProgressState.saving));
     final saved = await _save(backupZip, name);
 
-    if (saved) {
+    if (saved == BackupSaveResult.saved) {
       try {
         await backupZip.delete();
       } catch (_) {}
     } else {
+      try {
+        await backupZip.delete();
+      } catch (_) {}
+      // 스스로 닫은 것은 실패가 아니다(5차 362).
+      if (saved == BackupSaveResult.cancelled) throw const BackupCancelled();
       throw Exception('파일을 저장하지 못했어요.');
     }
 
@@ -352,7 +358,7 @@ class BackupService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// 플랫폼별 파일 저장 다이얼로그 호출.
-  Future<bool> _save(File backupZip, String suggestedName) async {
+  Future<BackupSaveResult> _save(File backupZip, String suggestedName) async {
     try {
       if (Platform.isAndroid || Platform.isIOS) {
         final params = SaveFileDialogParams(
@@ -360,7 +366,10 @@ class BackupService {
           fileName: suggestedName,
         );
         final savedPath = await FlutterFileDialog.saveFile(params: params);
-        return savedPath != null;
+        // 저장 창을 그냥 닫으면 null이 온다. 실패와 가려 쓴다(5차 362).
+        return savedPath == null
+            ? BackupSaveResult.cancelled
+            : BackupSaveResult.saved;
       } else {
         final bytes = await backupZip.readAsBytes();
         await FileSaver.instance.saveFile(
@@ -368,10 +377,10 @@ class BackupService {
           bytes: bytes,
           mimeType: MimeType.zip,
         );
-        return true;
+        return BackupSaveResult.saved;
       }
     } catch (_) {
-      return false;
+      return BackupSaveResult.failed;
     }
   }
 
@@ -397,7 +406,8 @@ class BackupService {
       allowedExtensions: ['zip'],
     );
     if (res == null || res.files.isEmpty) {
-      throw Exception('파일을 고르지 않았어요.');
+      // 고르기 창을 그냥 닫은 것은 실패가 아니다(5차 362).
+      throw const BackupCancelled();
     }
 
     final appDir = await _appDocDir();
