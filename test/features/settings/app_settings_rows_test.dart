@@ -17,6 +17,8 @@ const _switch =
     'lib/features/settings/more/presentation/widgets/switch_tile.dart';
 
 void main() {
+  _nativePlayerSwitchTests();
+
   test('세 줄 모두 같은 LeadingIcon을 쓴다', () {
     for (final path in [_reminder, _theme, _switch]) {
       final code = _code(path);
@@ -34,5 +36,24 @@ void main() {
     }
     // 테마 줄만 쓰던 어긋난 값.
     expect(_code(_theme).contains('AppSpacing.sm + 2'), isFalse);
+  });
+}
+
+void _nativePlayerSwitchTests() {
+  test("새 플레이어 스위치는 출시 빌드에서도 보인다", () {
+    // 테스트 배포는 release 빌드라 '개발' 칸(!kReleaseMode)이 통째로 숨겨져,
+    // 실기기에서 켜 볼 길이 없었다(사용자 신고).
+    final app = _code(
+        'lib/features/settings/more/presentation/sections/app_settings_section.dart');
+    expect(app, contains("ValueKey('dev-native-player-switch')"));
+    expect(app, contains("title: '새 플레이어로 재생'"));
+
+    final more =
+        _code('lib/features/settings/more/presentation/more_screen.dart');
+    // 시험 화면 링크는 개발 빌드에만 둔다.
+    expect(more, contains('if (!kReleaseMode)'));
+    expect(more, contains("ValueKey('dev-native-player')"));
+    expect(more.contains('_NativePlayerSwitch'), isFalse,
+        reason: "스위치는 '앱' 칸으로 옮겼다");
   });
 }

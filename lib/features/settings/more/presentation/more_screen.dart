@@ -14,7 +14,6 @@
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
@@ -90,10 +89,11 @@ class _MoreScreenState extends State<MoreScreen> {
             const AppSettingsSection(),
             const _GroupLabel('정보'),
             const InfoSection(),
-            // 네이티브 플레이어 시험 자리. 출시 빌드에는 안 보인다(5차 1단계).
+            // 네이티브 플레이어 **시험 화면**은 출시 빌드에 안 보인다(5차 1단계).
+            // 스위치는 '앱' 칸으로 옮겼다 — 테스트 배포는 release 빌드라
+            // 이 칸이 통째로 숨겨져서, 켜 볼 길이 없었다.
             if (!kReleaseMode) ...[
               const _GroupLabel('개발'),
-              const _NativePlayerSwitch(),
               TextButton(
                 key: const ValueKey('dev-native-player'),
                 onPressed: () =>
@@ -146,26 +146,3 @@ class _GroupLabel extends StatelessWidget {
   }
 }
 
-/// 클립 플레이어를 새 플레이어로 돌릴지. 개발 빌드에만 보인다(5차 4단계).
-class _NativePlayerSwitch extends StatefulWidget {
-  const _NativePlayerSwitch();
-
-  @override
-  State<_NativePlayerSwitch> createState() => _NativePlayerSwitchState();
-}
-
-class _NativePlayerSwitchState extends State<_NativePlayerSwitch> {
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      key: const ValueKey('dev-native-player-switch'),
-      title: const Text('새 플레이어로 재생'),
-      subtitle: const Text('나가거나 앱을 내려도 끊기지 않아요. 만드는 중이에요.'),
-      value: AppConfig.nativePlayer,
-      onChanged: (value) {
-        setState(() => AppConfig.nativePlayer = value);
-        AppConfig.saveToPrefs();
-      },
-    );
-  }
-}
