@@ -124,7 +124,7 @@ void main() {
     expect(find.text('공유 문장'), findsWidgets);
     expect(find.text('직접 쓴 문장'), findsNothing);
     expect(find.text('내 문장'), findsNothing);
-    expect(find.text('@Mina'), findsOneWidget);
+    expect(find.textContaining('Mina'), findsOneWidget);
   });
 
   testWidgets('저장한 공유 문장은 카드에 내 문장 표시가 붙는다', (tester) async {
@@ -308,7 +308,7 @@ void main() {
     expect(find.text('Hello there!'), findsNothing);
     await tester.scrollUntilVisible(find.text('Could I get this to go?'), 300,
         scrollable: find.byType(Scrollable).first);
-    expect(find.text('@Mina'), findsOneWidget);
+    expect(find.textContaining('Mina'), findsOneWidget);
   });
 
   testWidgets('공유된 문장이 없으면 안내한다', (tester) async {

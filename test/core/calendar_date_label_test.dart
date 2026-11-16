@@ -19,23 +19,32 @@ void main() {
   });
 
   test('커뮤니티 글과 문장 친밀도도 같은 말을 쓴다', () {
-    expect(formatCommunityTimeAgo(DateTime(2025, 8, 4), now: now),
-        '2025년 8월 4일');
+    expect(
+        formatCommunityTimeAgo(DateTime(2025, 8, 4), now: now), '2025년 8월 4일');
     expect(relativeDayLabel(now, DateTime(2025, 8, 4)), '2025년 8월 4일');
     // 일주일 안쪽은 그대로 '며칠 전'이다.
-    expect(formatCommunityTimeAgo(now.subtract(const Duration(days: 3)),
-            now: now),
+    expect(
+        formatCommunityTimeAgo(now.subtract(const Duration(days: 3)), now: now),
         '3일 전');
     expect(relativeDayLabel(now, now.subtract(const Duration(days: 1))), '어제');
   });
 
-  test('홈 둘러보기 카드도 같은 곳에서 가져다 쓴다', () {
-    // 비공개 위젯이라 바로 부를 수 없어, 그 규칙을 쓰는지 코드로 확인한다.
-    final code = File(
-            'lib/features/home/dashboard/presentation/widgets/trending_sentences_preview.dart')
+  test('홈과 둘러보기 카드도 같은 곳에서 가져다 쓴다', () {
+    // 경과 시간 말은 sentence_age_label.dart 한 곳에 있다(5차 339).
+    // 그 안에서 일주일이 넘으면 calendarDateLabel을 부른다.
+    final age = File('lib/core/shared/utils/sentence_age_label.dart')
         .readAsStringSync();
-    expect(code, contains('calendarDateLabel(at, now)'));
-    expect(code.contains("return '\${at.month}월 \${at.day}일';"), isFalse);
+    expect(age, contains('calendarDateLabel(at, now)'));
+
+    for (final path in [
+      'lib/features/home/dashboard/presentation/widgets/trending_sentences_preview.dart',
+      'lib/features/collection/shell/presentation/widgets/sentence_collection_preview.dart',
+    ]) {
+      final code = File(path).readAsStringSync();
+      expect(code, contains('sentenceAgeLabel('), reason: path);
+      expect(code.contains("return '\${at.month}월 \${at.day}일';"), isFalse,
+          reason: path);
+    }
   });
 
   test('구독 날짜도 같은 규칙을 쓴다', () {
@@ -72,7 +81,9 @@ void main() {
       for (final line in entity.readAsLinesSync()) {
         if (line.trimLeft().startsWith('//')) continue;
         if (!line.contains('일')) continue;
-        if (pattern.hasMatch(line)) offenders.add('${entity.path}: ${line.trim()}');
+        if (pattern.hasMatch(line)) {
+          offenders.add('${entity.path}: ${line.trim()}');
+        }
       }
     }
     expect(offenders, isEmpty,
