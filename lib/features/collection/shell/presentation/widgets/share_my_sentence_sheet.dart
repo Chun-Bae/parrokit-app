@@ -50,6 +50,10 @@ class ShareMySentenceSheet extends StatefulWidget {
 }
 
 class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
+  /// 로그인하지 않았으면 공유할 수 없다(공유 문장은 서버에 올라간다).
+  bool get _guest =>
+      widget.accountId.trim().isEmpty || widget.accountId == 'guest';
+
   List<DefaultConversationSentence> mine = [];
   Set<String> published = {};
   bool loading = true;
@@ -166,9 +170,13 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
                 style: context.texts.titleLarge
                     .copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
-            Text('고른 문장이 둘러보기에 올라가요. 언제든 다시 눌러 내릴 수 있어요.',
-                style: context.texts.bodySmall
-                    .copyWith(color: colors.onSurfaceVariant)),
+            Text(
+                _guest
+                    ? sentenceShareNeedsLogin
+                    : '고른 문장이 둘러보기에 올라가요. 언제든 다시 눌러 내릴 수 있어요.',
+                key: const ValueKey('share-sheet-note'),
+                style: context.texts.bodySmall.copyWith(
+                    color: _guest ? colors.error : colors.onSurfaceVariant)),
             const SizedBox(height: 12),
             SizedBox(
               height: MediaQuery.sizeOf(context).height * 0.55,
@@ -213,7 +221,11 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
                                           child: const Text('공유 중'),
                                         )
                                       : FilledButton.tonal(
-                                          onPressed: () => _toggle(sentence),
+                                          // 게스트는 눌러도 안 되니 꺼 둔다.
+                                          // 까닭은 위 줄에 적혀 있다(5차 346).
+                                          onPressed: _guest
+                                              ? null
+                                              : () => _toggle(sentence),
                                           child: const Text('공유'),
                                         ),
                             );

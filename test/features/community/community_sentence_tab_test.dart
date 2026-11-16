@@ -122,4 +122,28 @@ void main() {
     expect(find.text('공유된 문장'), findsNothing);
     expect(find.text('저장해서 내 문장으로 연습해요'), findsOneWidget);
   });
+
+  testWidgets('로그인하지 않았으면 공유를 막고 까닭을 먼저 알린다', (tester) async {
+    await MySentenceStore.add('guest', language: '영어', text: 'Hello there!');
+    final repo =
+        FirestoreSharedSentenceRepository(firestore: FakeFirebaseFirestore());
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ShareMySentenceSheet(
+          accountId: 'guest',
+          authorName: '',
+          repository: repo,
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text(sentenceShareNeedsLogin), findsOneWidget);
+    // 내 문장은 보이지만 공유 단추는 꺼져 있다.
+    expect(find.text('Hello there!'), findsOneWidget);
+    final button =
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, '공유'));
+    expect(button.onPressed, isNull);
+  });
 }
