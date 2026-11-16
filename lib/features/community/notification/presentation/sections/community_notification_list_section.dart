@@ -21,8 +21,23 @@ class CommunityNotificationListSection extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // 빈 화면에서도 당겨서 새로 고칠 수 있게 둔다. 전에는 목록이 있을 때만
+    // 당길 수 있어서, 못 불러왔을 때 다시 해 볼 길이 없었다(5차).
     if (provider.notifications.isEmpty) {
-      return const CommunityNotificationEmptyState();
+      return RefreshIndicator(
+        onRefresh: provider.refresh,
+        child: LayoutBuilder(
+          builder: (context, constraints) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: const CommunityNotificationEmptyState(),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return RefreshIndicator(

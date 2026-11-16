@@ -77,11 +77,13 @@ class _CommunityNotificationScreenState
                 icon: Icon(Icons.settings_outlined,
                     size: 24, color: context.tokens.textPrimary),
               ),
+              // 알림이 없어도 연다. 전에는 흐리게 꺼져 있어서, 목록을 못
+              // 불러왔을 때 '새로 고침'에 갈 길이 아예 없었다(5차).
               IconButton(
-                tooltip: '알림 옵션',
-                onPressed: provider.hasNotifications
-                    ? () => _showNotificationActionsSheet(context, provider)
-                    : null,
+                key: const ValueKey('open-notification-actions'),
+                tooltip: '알림 메뉴',
+                onPressed: () =>
+                    _showNotificationActionsSheet(context, provider),
                 icon: Icon(Icons.more_vert_rounded,
                     size: 24, color: context.tokens.textPrimary),
               ),
@@ -216,7 +218,7 @@ class _NotificationSummaryBar extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '읽지 않은 알림 ${provider.unreadCount}',
+            '읽지 않은 알림 ${provider.unreadCount}개',
             style: theme.textTheme.labelLarge?.copyWith(
               color: colorScheme.onSurface,
               fontWeight: FontWeight.w700,
@@ -224,7 +226,7 @@ class _NotificationSummaryBar extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            '전체 ${provider.notifications.length}',
+            '전체 ${provider.notifications.length}개',
             style: theme.textTheme.labelLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,

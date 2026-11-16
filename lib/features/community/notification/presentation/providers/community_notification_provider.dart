@@ -10,6 +10,7 @@ import 'package:parrokit/features/community/notification/domain/usecases/fetch_n
 import 'package:parrokit/features/community/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
 import 'package:parrokit/features/community/notification/domain/usecases/mark_notification_read_usecase.dart';
 import 'package:parrokit/features/community/notification/domain/usecases/watch_notifications_usecase.dart';
+import 'package:parrokit/features/community/notification/presentation/notification_error_text.dart';
 
 class CommunityNotificationProvider extends ChangeNotifier {
   final WatchNotificationsUseCase _watchNotificationsUseCase;
@@ -115,7 +116,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       if (_currentUserId != userId) return;
-      _errorMessage = e.toString();
+      _errorMessage = notificationErrorText(NotificationJob.load, e);
       AppLogger.e(
         '[CommunityNotification][Provider] refresh failed userId=$userId',
         error: e,
@@ -138,7 +139,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
         notificationId: notificationId,
       );
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = notificationErrorText(NotificationJob.read, e);
       AppLogger.e(
         '[CommunityNotification][Provider] markAsRead failed notificationId=$notificationId',
         error: e,
@@ -154,7 +155,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
     try {
       await _markAllNotificationsReadUseCase.execute(userId);
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = notificationErrorText(NotificationJob.read, e);
       AppLogger.e(
         '[CommunityNotification][Provider] markAllAsRead failed userId=$userId',
         error: e,
@@ -173,7 +174,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
         notificationId: notificationId,
       );
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = notificationErrorText(NotificationJob.delete, e);
       AppLogger.e(
         '[CommunityNotification][Provider] deleteNotification failed notificationId=$notificationId',
         error: e,
@@ -189,7 +190,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
     try {
       await _deleteAllNotificationsUseCase.execute(userId);
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = notificationErrorText(NotificationJob.delete, e);
       AppLogger.e(
         '[CommunityNotification][Provider] deleteAllNotifications failed userId=$userId',
         error: e,
@@ -224,7 +225,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
           _notifyListenersSafe();
         },
         onError: (error) {
-          _errorMessage = error.toString();
+          _errorMessage = notificationErrorText(NotificationJob.load, error);
           _isLoading = false;
           AppLogger.e(
             '[CommunityNotification][Provider] watch stream failed userId=$userId',
@@ -235,7 +236,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
       );
     } catch (e) {
       if (_currentUserId != userId) return;
-      _errorMessage = e.toString();
+      _errorMessage = notificationErrorText(NotificationJob.load, e);
       AppLogger.e(
         '[CommunityNotification][Provider] init failed userId=$userId',
         error: e,
