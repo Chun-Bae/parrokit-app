@@ -3,8 +3,12 @@ import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 
 /// 가져오기 시트에서 "완료"로 확정한 결과. 취소하거나 닫으면 시트는 null을 돌려준다.
+/// 가져올 문장을 하나도 고르지 않고 눌렀을 때(5차).
+const String importNeedsPickHint = '가져올 문장을 하나 이상 골라 주세요.';
+
 class SentenceImportResult {
   const SentenceImportResult({required this.added});
 
@@ -405,7 +409,14 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
           const Spacer(),
           FilledButton(
             key: const ValueKey('import-start'),
-            onPressed: _selected.isEmpty ? null : _start,
+            // 하나도 안 골랐으면 눌러도 아무 일이 없었다. 까닭을 알린다(5차).
+            onPressed: _selected.isEmpty
+                ? () => showToast(importNeedsPickHint)
+                : _start,
+            style: _selected.isEmpty
+                ? FilledButton.styleFrom(
+                    backgroundColor: colors.primary.withValues(alpha: 0.4))
+                : null,
             child: Text('${_selected.length}개 가져오기'),
           ),
         ]);

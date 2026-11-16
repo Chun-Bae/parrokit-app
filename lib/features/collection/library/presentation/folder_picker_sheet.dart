@@ -4,6 +4,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 
 import 'folder_tree.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/collection/library/presentation/folder_name_rules.dart';
 
 /// 폴더 고르기. 폴더 경로('여행/일본')는 저장 방식일 뿐이라 사용자가 '/'를 직접
 /// 칠 일이 없게 한다(5차, 사용자 의견). 있는 폴더를 트리로 보여주고 눌러서 고르며,
@@ -186,16 +187,27 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
     super.dispose();
   }
 
+  /// 누르기 전부터 띄우는 것은 '/' 하나뿐이다. 빈 칸에 빨간 글을 띄우면
+  /// 아직 적지도 않았는데 혼나는 것처럼 보인다.
   String? get _error => _controller.text.contains('/') ? "'/'는 쓸 수 없어요" : null;
 
-  bool get _valid =>
-      _controller.text.trim().isNotEmpty &&
-      _error == null &&
-      // 이름 바꾸기에서 그대로면 할 일이 없다.
-      !(widget.renaming && _controller.text.trim() == widget.initialName);
+  /// 눌렀을 때 알려 줄 까닭.
+  String? get _blockedReason => folderNameBlockedReason(
+        _controller.text,
+        renaming: widget.renaming,
+        initialName: widget.initialName,
+      );
+
+  /// 꺼진 단추를 눌렀을 때 적어 주는 까닭.
+  String? _hint;
 
   void _submit() {
-    if (_valid) Navigator.pop(context, _controller.text.trim());
+    final reason = _blockedReason;
+    if (reason != null) {
+      setState(() => _hint = reason);
+      return;
+    }
+    Navigator.pop(context, _controller.text.trim());
   }
 
   @override
@@ -206,27 +218,44 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
           : widget.parentName == null
               ? '새 폴더'
               : "'${widget.parentName}' 안에 새 폴더"),
-      content: TextField(
-        key: const ValueKey('new-folder-name'),
-        controller: _controller,
-        autofocus: true,
-        maxLength: 40,
-        onChanged: (_) => setState(() {}),
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          labelText: '폴더 이름',
-          errorText: _error,
-          // 글자 수 표시와 한 줄을 나눠 쓰므로 짧게.
-          helperText:
-              widget.createsNow || widget.renaming ? null : '첫 클립을 넣으면 생겨요',
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            key: const ValueKey('new-folder-name'),
+            controller: _controller,
+            autofocus: true,
+            maxLength: 40,
+            onChanged: (_) => setState(() => _hint = null),
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: '폴더 이름',
+              errorText: _error,
+              // 글자 수 표시와 한 줄을 나눠 쓰므로 짧게.
+              helperText:
+                  widget.createsNow || widget.renaming ? null : '첫 클립을 넣으면 생겨요',
+            ),
+          ),
+          if (_hint case final hint?)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                hint,
+                key: const ValueKey('folder-name-hint'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ),
+        ],
       ),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context), child: const Text('취소')),
         FilledButton(
           key: const ValueKey('confirm-new-folder'),
-          onPressed: _valid ? _submit : null,
+          // 꺼져 있어도 눌리게 두고 까닭을 적는다(5차).
+          onPressed: _submit,
           child: Text(widget.renaming ? '바꾸기' : '만들기'),
         ),
       ],
