@@ -8,3 +8,6 @@ const String voteConfirmTitle = '투표하기';
 
 String voteConfirmMessage(String option) =>
     "'$option'에 투표할까요?\n한 번 투표하면 바꿀 수 없어요.";
+
+/// 투표가 막혔는데 까닭을 받지 못했을 때 쓰는 말(5차 381).
+const String voteFailedText = '투표하지 못했어요. 잠시 뒤 다시 해 주세요.';

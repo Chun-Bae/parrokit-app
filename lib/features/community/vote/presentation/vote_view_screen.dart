@@ -9,6 +9,7 @@
 //
 // [레이어]
 // Presentation Layer > Screens
+import 'package:parrokit/features/community/vote/presentation/vote_confirm_text.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
@@ -225,10 +226,17 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                         provider.toggleScrap(voteItem.id, currentUser.id);
                       },
                       onMorePressed: () => _showVoteOptionsSheet(voteItem),
-                      onSelect: (idx) {
+                      onSelect: (idx) async {
                         final user = context.read<UserProvider>().currentUser;
-                        if (user != null) {
-                          provider.votePost(voteItem.id, idx, user.id);
+                        if (user == null) {
+                          showToast(communityLoginRequiredText);
+                          return;
+                        }
+                        // 실패하면 고른 것이 조용히 되돌아갔다. 까닭을 알린다(5차 381).
+                        final ok =
+                            await provider.votePost(voteItem.id, idx, user.id);
+                        if (!ok) {
+                          showToast(provider.errorMessage ?? voteFailedText);
                         }
                       },
                       onToggleResult: () {},

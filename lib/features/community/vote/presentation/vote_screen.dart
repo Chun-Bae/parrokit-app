@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:go_router/go_router.dart';
@@ -400,12 +401,15 @@ class _VoteScreenState extends State<VoteScreen> {
     final user = context.read<UserProvider>().currentUser;
     if (user == null) return;
 
-    final success = await context.read<CommunityProvider>().votePost(
-          postId,
-          optionIndex,
-          user.id,
-        );
-    if (!mounted || !success) return;
+    final provider = context.read<CommunityProvider>();
+    final success = await provider.votePost(postId, optionIndex, user.id);
+    if (!mounted) return;
+    if (!success) {
+      // 투표가 막히면(이미 했거나 글이 지워졌거나) 고른 것이 조용히
+      // 되돌아갔다. 까닭을 알린다(5차 381).
+      showToast(provider.errorMessage ?? voteFailedText);
+      return;
+    }
 
     setState(() {
       _votedOnlyPostIds.add(postId);
