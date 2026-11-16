@@ -12,6 +12,7 @@ import 'package:parrokit/core/infrastructure/services/backup_service.dart';
 import 'package:parrokit/core/infrastructure/services/cache_service.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/utils/format_bytes.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/content/study_data_transfer.dart';
@@ -209,18 +210,6 @@ class _DataSectionState extends State<DataSection> {
       ),
     );
   }
-}
-
-String formatBytes(int bytes) {
-  if (bytes <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  var value = bytes.toDouble();
-  var unitIndex = 0;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-  return '${value.toStringAsFixed(value >= 10 || unitIndex == 0 ? 0 : 1)} ${units[unitIndex]}';
 }
 
 /// 아이콘 위, 이름 아래인 격자 한 칸. 필요하면 작은 숫자를 한 줄 더 붙인다.

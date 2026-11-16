@@ -6,6 +6,7 @@
 // 서버와 개인 Cloud의 원격 저장 상태를 보여주는 섹션.
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/format_bytes.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -28,18 +29,6 @@ class RemoteStorageDetails extends StatefulWidget {
 }
 
 class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
-  String _formatBytes(int bytes) {
-    if (bytes <= 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    var value = bytes.toDouble();
-    var unitIndex = 0;
-    while (value >= 1024 && unitIndex < units.length - 1) {
-      value /= 1024;
-      unitIndex++;
-    }
-    return '${value.toStringAsFixed(value >= 10 || unitIndex == 0 ? 0 : 1)} ${units[unitIndex]}';
-  }
-
   Widget _buildUsageCard(
     BuildContext context, {
     required IconData icon,
@@ -238,18 +227,18 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
             children: [
               _buildLegendChip(
                 context,
-                label: 'Parrokit ${_formatBytes(parrokitUsed)}',
+                label: 'Parrokit ${formatBytes(parrokitUsed)}',
                 color: cs.primary,
               ),
               _buildLegendChip(
                 context,
-                label: '기타 파일 ${_formatBytes(otherUsed)}',
+                label: '기타 파일 ${formatBytes(otherUsed)}',
                 color: cs.surfaceContainerHigh,
               ),
               if (hasQuota)
                 _buildLegendChip(
                   context,
-                  label: '남은 공간 ${_formatBytes(remaining)}',
+                  label: '남은 공간 ${formatBytes(remaining)}',
                   color: cs.surfaceContainerHighest,
                 ),
             ],
@@ -304,7 +293,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           icon: Icons.phone_android_rounded,
           title: '기기',
           subtitle: '이 기기에 있어 오프라인에서도 열 수 있는 파일',
-          usageText: _formatBytes(localUsed),
+          usageText: formatBytes(localUsed),
           color: Theme.of(context).colorScheme.tertiary,
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -314,8 +303,8 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           title: '서버',
           subtitle: serverStorageSubtitle(subscription.tier),
           usageText: serverTotal == 0
-              ? _formatBytes(serverUsed)
-              : '${_formatBytes(serverUsed)} / ${_formatBytes(serverTotal)}',
+              ? formatBytes(serverUsed)
+              : '${formatBytes(serverUsed)} / ${formatBytes(serverTotal)}',
           // secondary(primarySoft)는 라이트의 흰 카드 위에서 아이콘이 거의
           // 안 보였다. 막대와 아이콘 모두 브랜드 파랑으로 맞춘다.
           color: Theme.of(context).colorScheme.primary,

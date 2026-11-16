@@ -22,6 +22,7 @@ import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'cached_files_on_disk.dart';
 
 class ClipSourceRefDatasource {
   final AppDatabase db;
@@ -303,9 +304,12 @@ class ClipSourceRefDatasource {
 
     final liveClipIds =
         (await visibleRemoteClips()).map((clip) => clip.id).toSet();
-    return ownerMatched
+    final live = ownerMatched
         .where((entry) => liveClipIds.contains(entry.clipId))
         .toList();
+    // 파일이 사라진 줄은 세지 않는다(5차 363). '받아 둔 영상' 목록이 쓰는
+    // 규칙과 같아야 더보기의 개수·용량이 목록과 어긋나지 않는다.
+    return keepFilesStillOnDisk(live, filePathOf: (entry) => entry.filePath);
   }
 
   /// 서버(Firebase Storage)/Google Drive에 올라간 원본·썸네일 파일과 metadata.json을

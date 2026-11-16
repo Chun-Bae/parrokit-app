@@ -20,6 +20,7 @@ import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/domain/collection_clip/data/utils/clip_path_utils.dart';
+import 'cached_files_on_disk.dart';
 import 'clip_source_ref_datasource.dart';
 import 'clip_thumbnail_datasource.dart';
 
@@ -46,19 +47,18 @@ class ClipItemQueryDatasource {
 
   Future<List<Clip>> _fetchCachedRemoteClips() async {
     final remoteClips = await sourceRefDatasource.visibleRemoteClips();
-    final cachedClips = <Clip>[];
+    final pairs = <({Clip clip, String filePath})>[];
 
     for (final clip in remoteClips) {
       final cacheEntry = await sourceRefDatasource.getCurrentClipCacheEntry(clip);
       if (cacheEntry == null) continue;
-      final absPath = await ClipPathUtils.absolutePathFor(cacheEntry.filePath);
-      final file = File(absPath);
-      if (await file.exists() && await file.length() > 0) {
-        cachedClips.add(clip);
-      }
+      pairs.add((clip: clip, filePath: cacheEntry.filePath));
     }
 
-    return cachedClips;
+    // 파일이 남아 있는지 가리는 규칙은 한 곳에 둔다(5차 363).
+    final kept =
+        await keepFilesStillOnDisk(pairs, filePathOf: (pair) => pair.filePath);
+    return [for (final pair in kept) pair.clip];
   }
 
   Future<List<ClipItem>> buildClipItems(List<Clip> clips) async {

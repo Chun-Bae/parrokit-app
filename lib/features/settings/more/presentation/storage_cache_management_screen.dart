@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/shared/utils/format_bytes.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
@@ -65,18 +66,6 @@ class _StorageCacheManagementScreenState
         _isRefreshing = false;
       });
     }
-  }
-
-  String _formatBytes(int bytes) {
-    if (bytes <= 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    var value = bytes.toDouble();
-    var unitIndex = 0;
-    while (value >= 1024 && unitIndex < units.length - 1) {
-      value /= 1024;
-      unitIndex++;
-    }
-    return '${value.toStringAsFixed(value >= 10 || unitIndex == 0 ? 0 : 1)} ${units[unitIndex]}';
   }
 
   String _storageLabel(String storageMode) {
@@ -148,16 +137,15 @@ class _StorageCacheManagementScreenState
       if (!mounted) return;
       showToast('기기에서 지웠어요.');
     } else {
-      showToast('지우지 못했어요. 다시 시도해 주세요.');
+      showToast('지우지 못했어요. 다시 해 보세요.');
     }
   }
 
   Widget _buildTopSummary(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final usedBytes = _items.fold<int>(
-      0,
-      (total, item) => total + item.clip.storageBytes,
-    );
+    // 더보기 '받아 둔 영상 N개 · N MB'와 같은 값을 쓴다(5차 363). 전에는 이
+    // 화면만 클립 원본 크기를 더해서 두 곳의 용량이 달라 보였다.
+    final usedBytes = context.watch<ClipProvider>().cachedRemoteStorageUsedBytes;
 
     return CardContainer(
       child: Column(
@@ -195,7 +183,7 @@ class _StorageCacheManagementScreenState
           ),
           const SizedBox(height: 10),
           Text(
-            '보관 용량: ${_formatBytes(usedBytes)}',
+            '보관 용량: ${formatBytes(usedBytes)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -254,7 +242,7 @@ class _StorageCacheManagementScreenState
                       children: [
                         _Badge(label: label, color: color),
                         _Badge(
-                          label: _formatBytes(item.clip.storageBytes),
+                          label: formatBytes(item.clip.storageBytes),
                           color: cs.primary,
                         ),
                       ],
@@ -332,7 +320,7 @@ class _StorageCacheManagementScreenState
               else if (_items.isEmpty)
                 CardContainer(
                   child: Text(
-                    '지울 수 있는 기기 보관분이 아직 없어요.',
+                    '기기에 받아 둔 영상이 아직 없어요.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),
