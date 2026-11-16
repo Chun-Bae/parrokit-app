@@ -644,6 +644,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         failed: sharedFailed,
         onOpen: openCommunityDetails,
         onViewAll: () => openSharedSentences(context),
+        onRetry: loadShared,
       ),
     );
     // 머리줄에 올리는 건 그리는 중이 아니라 그린 뒤에 한다.
@@ -1385,6 +1386,7 @@ class _ExploreStrip extends StatelessWidget {
     required this.failed,
     required this.onOpen,
     required this.onViewAll,
+    required this.onRetry,
   });
 
   final List<SharedSentence> sentences;
@@ -1395,6 +1397,9 @@ class _ExploreStrip extends StatelessWidget {
   final bool failed;
   final ValueChanged<SharedSentence> onOpen;
   final VoidCallback onViewAll;
+
+  /// 못 불러왔을 때 다시 불러온다. 아래 목록에는 있던 길이 여기엔 없었다(5차 394).
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -1427,14 +1432,22 @@ class _ExploreStrip extends StatelessWidget {
                   child: SizedBox.square(
                       dimension: 22,
                       child: CircularProgressIndicator(strokeWidth: 2.4))))
-        else if (failed || sentences.isEmpty)
+        else if (failed)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-                failed
-                    ? '공유된 문장을 불러오지 못했어요.'
-                    : '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.',
-                style: muted),
+            child: Row(children: [
+              Expanded(child: Text('공유된 문장을 불러오지 못했어요.', style: muted)),
+              TextButton(
+                key: const ValueKey('explore-strip-retry'),
+                onPressed: onRetry,
+                child: const Text('다시 불러오기'),
+              ),
+            ]),
+          )
+        else if (sentences.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.', style: muted),
           )
         else
           SizedBox(

@@ -299,12 +299,36 @@ class _ShortsPageState extends State<ShortsPage>
     // 비디오 에러/플레이스홀더/플레이어
     Widget videoLayer() {
       if (_error != null) {
+        // 전에는 까닭만 적어 두고 끝이라, 넘기지 않는 한 되돌릴 길이
+        // 없었다. 그 자리에서 다시 불러 본다(5차 394).
         return Center(
-          child: Text(_error!,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.white)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: Colors.white)),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                key: const ValueKey('shorts-retry'),
+                onPressed: () {
+                  setState(() {
+                    _error = null;
+                    _init = false;
+                  });
+                  _initVideo();
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white54),
+                ),
+                child: const Text('다시 시도'),
+              ),
+            ],
+          ),
         );
       }
       if (!_init || c == null) return const VideoLayerPlaceholder();
