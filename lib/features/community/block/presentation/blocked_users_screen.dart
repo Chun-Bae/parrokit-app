@@ -4,6 +4,8 @@ import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/block/presentation/providers/block_provider.dart';
+import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
+import 'package:parrokit/features/community/shared/presentation/community_block_text.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -41,7 +43,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     if (currentDisplayName != null &&
         currentDisplayName.isNotEmpty &&
         currentDisplayName == identifier) {
-      showToast('본인 닉네임이에요.');
+      showToast(blockSelfMessage);
       return;
     }
 
@@ -50,7 +52,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     if (!mounted) return;
 
     if (!success) {
-      showToast(blockProvider.errorMessage ?? '차단에 실패했어요.');
+      showToast(blockProvider.errorMessage ?? blockFailedMessage);
       return;
     }
 
@@ -58,7 +60,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     if (!mounted) return;
 
     _identifierController.clear();
-    showToast('차단했어요.');
+    showToast(blockedMessage);
   }
 
   Future<void> _handleUnblock(String blockedUserId) async {
@@ -67,14 +69,14 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     if (!mounted) return;
 
     if (!success) {
-      showToast(blockProvider.errorMessage ?? '차단 해제에 실패했어요.');
+      showToast(blockProvider.errorMessage ?? unblockFailedMessage);
       return;
     }
 
     await context.read<CommunityProvider>().fetchPosts(refresh: true);
     if (!mounted) return;
 
-    showToast('차단을 해제했어요.');
+    showToast(unblockedMessage);
   }
 
   @override
@@ -85,7 +87,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('차단 사용자 관리'),
+        title: const Text(blockedUsersTitle),
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -175,12 +177,13 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                                       ? const Icon(Icons.person)
                                       : null,
                                 ),
-                                title: Text(user.displayName ?? '이름 없음'),
+                                title: Text(
+                                    user.displayName ?? commentUnknownNickname),
                                 trailing: TextButton(
                                   onPressed: blockProvider.isLoading
                                       ? null
                                       : () => _handleUnblock(user.id),
-                                  child: const Text('해제'),
+                                  child: const Text(unblockLabel),
                                 ),
                               );
                             },

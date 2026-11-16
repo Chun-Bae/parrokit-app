@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/shared/presentation/community_block_text.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/features/community/menu/domain/entities/community_menu_entry.dart';
 
@@ -41,7 +42,7 @@ class CommunityMenuSectionFactory {
                 routePath: AppRoutes.communityNotificationSettingsPath,
               ),
               CommunityMenuEntry(
-                title: '차단 사용자 관리',
+                title: blockedUsersTitle,
                 iconKey: 'shield',
                 colorKey: 'settings',
                 routePath: AppRoutes.communityBlockedUsersPath,

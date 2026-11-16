@@ -4,6 +4,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/community/block/presentation/providers/block_provider.dart';
+import 'package:parrokit/features/community/shared/presentation/community_block_text.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -60,11 +61,12 @@ CommunityOptionAction buildCommunityBlockAction({
       if (!context.mounted) return;
 
       if (!success) {
-        showToast(context.read<BlockProvider>().errorMessage ?? '차단에 실패했어요.');
+        showToast(
+            context.read<BlockProvider>().errorMessage ?? blockFailedMessage);
         return;
       }
 
-      showToast('차단했어요.');
+      showToast(blockedMessage);
       context.go(AppRoutes.communityPath);
     },
   );
