@@ -7,7 +7,7 @@ import 'package:parrokit/core/shared/utils/network_error.dart';
 /// 대괄호가 붙은 글이 그대로 떴다. 예외는 로그에만 남긴다.
 String ttsErrorText(Object error) {
   if (looksOffline(error)) {
-    return '인터넷이 안 되는 것 같아요. 연결을 확인하고 다시 해 주세요.';
+    return offlineMessage;
   }
   final message = _serverMessage(error);
   if (message.contains('패롯') && message.contains('부족')) {

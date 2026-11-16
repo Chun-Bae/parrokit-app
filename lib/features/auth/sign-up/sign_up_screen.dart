@@ -46,7 +46,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final nickname = _nicknameController.text.trim();
     if (nickname.isEmpty) {
       setState(() {
-        _nicknameCheckMessage = '닉네임을 입력해주세요.';
+        _nicknameCheckMessage = nicknameNeededMessage;
         _isNicknameAvailable = false;
         _hasCheckedNickname = true;
       });
@@ -66,7 +66,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _isNicknameAvailable = isAvailable;
         _hasCheckedNickname = true;
         _nicknameCheckMessage =
-            isAvailable ? '쓸 수 있는 이름이에요.' : '이미 누가 쓰고 있어요.';
+            isAvailable ? nicknameAvailableMessage : nicknameTakenMessage;
       });
     } catch (e) {
       AppLogger.e('[Auth] 닉네임 중복 확인 실패', error: e);
@@ -254,7 +254,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return '닉네임을 입력해주세요.';
+                    return nicknameNeededMessage;
                   }
                   return null;
                 },

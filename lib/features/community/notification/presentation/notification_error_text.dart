@@ -18,7 +18,7 @@ enum NotificationJob {
 
 String notificationErrorText(NotificationJob job, Object error) {
   if (looksOffline(error)) {
-    return '인터넷이 안 되는 것 같아요. 연결을 확인하고 다시 해 주세요.';
+    return offlineMessage;
   }
   return switch (job) {
     NotificationJob.load => '알림을 불러오지 못했어요. 잠시 뒤 다시 해 주세요.',

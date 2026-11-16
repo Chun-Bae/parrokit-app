@@ -1,6 +1,9 @@
 // 예외를 사람 말로 바꿀 때 쓰는 공통 판단(5차 310).
 // 화면마다 따로 적으면 한 곳만 고쳐지고 나머지는 남는다. 규칙은 여기 하나다.
 
+/// 인터넷이 끊겼을 때 사용자에게 보여줄 말. 화면마다 따로 적지 않는다.
+const String offlineMessage = '인터넷이 안 되는 것 같아요. 연결을 확인하고 다시 해 주세요.';
+
 /// 인터넷이 끊겼을 때 Firestore·네트워크가 주는 글들.
 bool looksOffline(Object error) {
   final text = error.toString().toLowerCase();

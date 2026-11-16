@@ -72,7 +72,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   Future<void> _checkDuplicate() async {
     final nickname = _nicknameController.text.trim();
     if (nickname.isEmpty) {
-      showToast('닉네임을 입력해주세요.');
+      showToast(nicknameNeededMessage);
       return;
     }
 
@@ -97,9 +97,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         _checkedNickname = nickname;
       });
       if (isAvailable) {
-        showToast('쓸 수 있는 이름이에요.');
+        showToast(nicknameAvailableMessage);
       } else {
-        showToast('이미 누가 쓰고 있어요.');
+        showToast(nicknameTakenMessage);
       }
     } catch (e) {
       if (!mounted) return;
@@ -112,7 +112,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   Future<void> _saveProfile() async {
     final newNickname = _nicknameController.text.trim();
     if (newNickname.isEmpty) {
-      showToast('닉네임을 입력해주세요.');
+      showToast(nicknameNeededMessage);
       return;
     }
 

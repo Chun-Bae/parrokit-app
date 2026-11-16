@@ -30,7 +30,7 @@ enum CommunityJob {
 
 String communityErrorText(CommunityJob job, Object error) {
   if (looksOffline(error)) {
-    return '인터넷이 안 되는 것 같아요. 연결을 확인하고 다시 해 주세요.';
+    return offlineMessage;
   }
   if (looksPermissionDenied(error)) {
     return '지금은 할 수 없어요. 로그인 상태를 확인하고 다시 해 주세요.';
