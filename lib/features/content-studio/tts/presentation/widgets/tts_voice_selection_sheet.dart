@@ -278,7 +278,8 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
               ),
             )
           else ...[
-            _SectionLabel(text: '모델 (Model)', mutedColor: mutedText),
+            // 영어 이름을 괄호로 덧붙이지 않는다(5차 412).
+            _SectionLabel(text: '목소리 종류', mutedColor: mutedText),
             const SizedBox(height: AppSpacing.sm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -300,7 +301,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            _SectionLabel(text: '성별 (Gender)', mutedColor: mutedText),
+            _SectionLabel(text: '성별', mutedColor: mutedText),
             const SizedBox(height: AppSpacing.sm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -355,7 +356,10 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
 
                         return ListTile(
                           title: Text(
-                            '목소리 ${index + 1}',
+                            // '목소리 1, 2, 3…'은 무엇인지 말해 주지
+                            // 않는다. 성별과 끝 글자로 부른다(5차 412).
+                            googleVoiceLabel(entry.voiceId,
+                                ssmlGender: entry.gender),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: isSelected
                                   ? FontWeight.bold

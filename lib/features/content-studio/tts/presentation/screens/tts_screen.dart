@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/tts/domain/models/tts_google_models.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/tts_file_name.dart';
 import 'dart:io';
 
@@ -228,8 +229,21 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                                     // 알 수 없었다(5차).
                                     ? '목록을 불러오지 못했어요'
                                     : (provider.voiceId.isEmpty
-                                        ? '선택 (기본값)'
-                                        : provider.voiceId),
+                                        ? '기본 목소리'
+                                        // 전에는 'en-US-Wavenet-A'가 그대로
+                                        // 떴다(5차 412).
+                                        : googleVoiceLabel(
+                                            provider.voiceId,
+                                            ssmlGender: provider.availableVoices
+                                                .cast<Map<String, dynamic>?>()
+                                                .firstWhere(
+                                                  (v) =>
+                                                      v?['name'] ==
+                                                      provider.voiceId,
+                                                  orElse: () => null,
+                                                )?['ssmlGender']
+                                                ?.toString(),
+                                          )),
                             accentColor: theme.colorScheme.primary,
                             onTap: () =>
                                 _showVoiceSelectionSheet(context, provider),
@@ -290,7 +304,8 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             icon: Icons.record_voice_over_rounded,
                             title: '목소리',
                             value: provider.voiceId.isEmpty
-                                ? '선택 (기본값)'
+                                // 구글 쪽과 같은 말로(5차 412).
+                                ? '기본 목소리'
                                 : (TtsVoiceCache()
                                         .elevenLabsVoices
                                         ?.firstWhere(

@@ -41,3 +41,17 @@ String googleGenderLabel(String? ssmlGender) {
       return '중립';
   }
 }
+
+/// 목소리 이름을 사람이 알아볼 수 있게 적는다(5차 412, 사용자 요청).
+///
+/// 전에는 고르는 목록이 '목소리 1, 목소리 2…'였고, 고른 뒤 화면에는
+/// `en-US-Wavenet-A`가 그대로 떴다. 둘 다 무엇인지 알 수 없는 이름이다.
+/// 구글 목소리 id는 `<언어>-<등급>-<글자>` 꼴이라 끝 글자가 목소리를
+/// 가른다. 성별과 그 글자로 부른다('여성 A').
+String googleVoiceLabel(String voiceId, {String? ssmlGender}) {
+  final id = voiceId.trim();
+  if (id.isEmpty) return '기본 목소리';
+  final tail = id.split('-').last;
+  if (ssmlGender == null || ssmlGender.isEmpty) return tail;
+  return '${googleGenderLabel(ssmlGender)} $tail';
+}
