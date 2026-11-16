@@ -364,6 +364,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('delete-word')));
     await tester.pumpAndSettle();
+    // 되돌릴 수 없어서 한 번 묻는다(5차 401).
+    expect(find.byKey(const ValueKey('delete-word-confirm')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('delete-word-ok')));
+    await tester.pumpAndSettle();
     expect(find.text('figure out'), findsNothing);
     expect(await MyWordStore.load('guest'), isEmpty);
   });

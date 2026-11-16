@@ -117,6 +117,7 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   }
 
   Future<void> remove(MyWord word) async {
+    if (!await confirmDeleteWord(context, word.word) || !mounted) return;
     await MyWordStore.remove(accountId, word.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -414,6 +415,37 @@ class _WordTile extends StatelessWidget {
   }
 }
 
+/// 단어를 지우기 전에 한 번 묻는다(5차 401).
+///
+/// 문장은 두 곳에서 모두 물으면서 단어는 밀어서 지우기도, 상세의 '단어
+/// 지우기'도 누르는 순간 사라졌다. 뜻·유의어·예문과 복습 진도까지 함께
+/// 없어지는데 되돌릴 수 없다.
+Future<bool> confirmDeleteWord(BuildContext context, String word) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      key: const ValueKey('delete-word-confirm'),
+      title: Text("'$word' 단어를 지울까요?"),
+      content: const Text('뜻과 유의어, 예문과 복습 기록도 함께 사라져요.\n'
+          '지우면 되돌릴 수 없어요.'),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소')),
+        FilledButton(
+          key: const ValueKey('delete-word-ok'),
+          style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('지우기'),
+        ),
+      ],
+    ),
+  );
+  return ok == true;
+}
+
 /// 단어 상세 창을 띄운다. 보관함 검색처럼 단어 탭 밖에서 열 때 쓴다(5차).
 /// 지우면 [MyWordStore.revision]이 올라가 단어 탭도 다시 읽는다.
 Future<void> showWordDetails(
@@ -431,6 +463,8 @@ Future<void> showWordDetails(
       review: reviews[word.id],
       accountId: accountId,
       onDelete: () async {
+        if (!context.mounted) return;
+        if (!await confirmDeleteWord(context, word.word)) return;
         await MyWordStore.remove(accountId, word.id);
         messenger
             ?.showSnackBar(SnackBar(content: Text("'${word.word}' 단어를 지웠어요.")));
