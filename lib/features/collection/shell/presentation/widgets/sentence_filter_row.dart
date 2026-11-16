@@ -26,6 +26,7 @@ class SentenceFilterRow extends StatelessWidget {
     required this.onLanguageChanged,
     required this.onCategoryChanged,
     this.padding = EdgeInsets.zero,
+    this.categories = sentenceCategories,
   });
 
   final String language;
@@ -33,6 +34,9 @@ class SentenceFilterRow extends StatelessWidget {
   final ValueChanged<String> onLanguageChanged;
   final ValueChanged<String> onCategoryChanged;
   final EdgeInsets padding;
+
+  /// 보여 줄 칩 목록. 문장 탭은 주제, 단어 탭은 '전체·문장에서·직접 추가'.
+  final List<String> categories;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +46,7 @@ class SentenceFilterRow extends StatelessWidget {
         height: 40,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          itemCount: sentenceCategories.length + 1,
+          itemCount: categories.length + 1,
           separatorBuilder: (_, __) => const SizedBox(width: 7),
           itemBuilder: (context, index) {
             // 학습 언어는 따로 한 줄을 쓰지 않고 주제 칩 맨 앞에 둔다.
@@ -55,7 +59,7 @@ class SentenceFilterRow extends StatelessWidget {
                 ),
               );
             }
-            final item = sentenceCategories[index - 1];
+            final item = categories[index - 1];
             return Center(
               child: ChoiceChip(
                 label: Text(item),

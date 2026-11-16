@@ -12,13 +12,14 @@ import 'package:parrokit/core/content/word_review_store.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
-import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
+import 'package:parrokit/core/shared/widgets/tiered_header.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
 
 /// 보관함 > 단어 탭. 문장 탭과 같은 구조로 "내 단어"를 보여준다(5차 6번).
 ///
@@ -138,42 +139,33 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
 
     return RefreshIndicator(
       onRefresh: reload,
-      child: ListView(
+      // 언어·필터 줄은 따로 접힌다(5차 334, 문장 탭과 같게).
+      child: CustomScrollView(
         key: const PageStorageKey('word-collection'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
-        children: [
-          // 문장 탭처럼 학습 언어는 칩 줄 맨 앞에 둔다.
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 7),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Center(
-                    child: LearningLanguagePicker(
-                      compact: true,
-                      value: language,
-                      onChanged: (value) => setState(() => language = value),
-                    ),
-                  );
-                }
-                final item = categories[index - 1];
-                return Center(
-                  child: ChoiceChip(
-                    label: Text(item),
-                    selected: category == item,
-                    showCheckmark: false,
-                    visualDensity: VisualDensity.compact,
-                    onSelected: (_) => setState(() => category = item),
-                  ),
-                );
-              },
-            ),
+        slivers: [
+          SliverPersistentHeader(
+            floating: true,
+            delegate: TieredHeaderDelegate(tiers: [
+              HeaderTier(
+                height: 54,
+                child: SentenceFilterRow(
+                  language: language,
+                  category: category,
+                  categories: categories,
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  onLanguageChanged: (value) =>
+                      setState(() => language = value),
+                  onCategoryChanged: (value) =>
+                      setState(() => category = value),
+                ),
+              ),
+            ]),
           ),
-          const SizedBox(height: 18),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
+            sliver: SliverList(
+                delegate: SliverChildListDelegate([
           if (due.isNotEmpty) ...[
             _ReviewSummary(count: due.length, onStart: () => startReview(due)),
             const SizedBox(height: 22),
@@ -224,6 +216,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
                 onOpen: () => openDetails(word),
                 onDelete: () => remove(word),
               ),
+        ])),
+          ),
         ],
       ),
     );
