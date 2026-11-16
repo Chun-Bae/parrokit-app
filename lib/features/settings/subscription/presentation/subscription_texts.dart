@@ -19,9 +19,7 @@ String subscriptionTierName(SubscriptionTier tier) {
 
 /// 더보기 '구독' 줄의 부제.
 String subscriptionRowSubtitle(SubscriptionTier tier) =>
-    tier == SubscriptionTier.free
-        ? '광고 없이, 매달 패롯을 받아요.'
-        : '구독 중이에요. 눌러서 관리해요.';
+    tier == SubscriptionTier.free ? '광고 없이, 매달 패롯을 받아요.' : '구독 중이에요. 눌러서 관리해요.';
 
 const String subscriptionScreenTitle = '구독';
 
@@ -81,13 +79,18 @@ const List<SubscriptionTierCopy> subscriptionTiers = [
 /// 스토어 심사가 요구하는 안내. 구독 화면에 늘 보인다.
 const String subscriptionRenewalNotice =
     '언제든 스토어에서 해지할 수 있어요. 해지하지 않으면 매달 자동으로 결제돼요.';
-const String subscriptionParrotNotice =
-    '받은 패롯은 그달 안에 써요. 남으면 다음 달로 넘어가지 않아요.';
+const String subscriptionParrotNotice = '받은 패롯은 그달 안에 써요. 남으면 다음 달로 넘어가지 않아요.';
 const String subscriptionRestoreLabel = '이미 구독했다면 구매 복원';
 
 /// 아직 스토어에 상품이 없을 때.
 const String subscriptionPreviewNotice = '아직 구독 상품을 준비하는 중이에요. 화면만 미리 보고 있어요.';
 const String subscriptionNotReadyToast = '아직 구독 상품이 없어요. 준비되면 여기서 시작할 수 있어요.';
+
+/// 이미 구독 중이라 구독 화면이 뜨지 않을 때(5차 355).
+const String subscriptionAlreadyToast = '이미 구독 중이에요. 자세한 것은 구독 칸에서 볼 수 있어요.';
+
+/// 구독 화면을 여는 데 실패했을 때.
+const String subscriptionOpenFailedToast = '구독 화면을 열지 못했어요. 잠시 뒤 다시 해 주세요.';
 
 // ─── 구독 중 화면 ───────────────────────────────────────────────
 // 글귀는 .claude/subscription-ux.md 3-3과 같다.
@@ -102,8 +105,7 @@ String? subscriptionRenewalLine(DateTime? periodEnd, {DateTime? now}) =>
         : '다음 결제일 ${calendarDateLabel(periodEnd, now ?? DateTime.now())}';
 
 /// 상태별 안내 한 줄. 멀쩡하면 null.
-String? subscriptionStatusNotice(
-    SubscriptionStatus status, DateTime? periodEnd,
+String? subscriptionStatusNotice(SubscriptionStatus status, DateTime? periodEnd,
     {DateTime? now}) {
   switch (status) {
     case SubscriptionStatus.grace:

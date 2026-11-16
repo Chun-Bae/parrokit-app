@@ -8,9 +8,12 @@
 
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_preview_sheet.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 abstract class PaywallPresenter {
   Future<void> show(BuildContext context);
@@ -19,9 +22,26 @@ abstract class PaywallPresenter {
 class RevenueCatPaywallPresenter implements PaywallPresenter {
   const RevenueCatPaywallPresenter();
 
+  /// 구독 화면이 뜨지 않으면 까닭을 알린다(5차 355).
+  ///
+  /// 스토어 상품이나 RevenueCat Paywall이 아직 없으면 이 함수는 조용히
+  /// `notPresented`를 돌려준다. 그러면 사용자가 '구독'을 눌러도 아무 일도
+  /// 일어나지 않아 고장처럼 보였다. 이미 구독 중일 때도 같은 값이 와서,
+  /// 그 둘을 나눠 말해 준다.
   @override
-  Future<void> show(BuildContext context) =>
-      RevenueCatUI.presentPaywallIfNeeded(IapProvider.entitlementId);
+  Future<void> show(BuildContext context) async {
+    final premium = context.read<IapProvider?>()?.isPremium ?? false;
+    PaywallResult result;
+    try {
+      result =
+          await RevenueCatUI.presentPaywallIfNeeded(IapProvider.entitlementId);
+    } catch (_) {
+      showToast(subscriptionOpenFailedToast);
+      return;
+    }
+    if (result != PaywallResult.notPresented) return;
+    showToast(premium ? subscriptionAlreadyToast : subscriptionNotReadyToast);
+  }
 }
 
 class PreviewPaywallPresenter implements PaywallPresenter {
@@ -45,7 +65,6 @@ PaywallPresenter resolvePaywallPresenter({
   bool releaseMode = kReleaseMode,
   bool realPaywallFlag = kRealPaywall,
 }) =>
-    usesRealPaywall(
-            releaseMode: releaseMode, realPaywallFlag: realPaywallFlag)
+    usesRealPaywall(releaseMode: releaseMode, realPaywallFlag: realPaywallFlag)
         ? const RevenueCatPaywallPresenter()
         : const PreviewPaywallPresenter();
