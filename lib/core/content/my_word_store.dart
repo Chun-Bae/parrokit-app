@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'word_base_form.dart';
 
 /// 단어의 예문 하나. 같은 단어를 여러 문장에서 만나므로 여러 개를 둔다(5차).
 @immutable
@@ -185,6 +186,9 @@ abstract class WordCloud {
 
   /// 유의어만 고친다(5차).
   Future<void> setSynonyms(String id, List<String> synonyms);
+
+  /// 예문 목록을 통째로 바꾼다(예문 더하기·지우기).
+  Future<void> setExamples(String id, List<WordExample> examples);
   Future<void> remove(String id);
 }
 
@@ -401,6 +405,75 @@ class MyWordStore {
       }
     }
     return false;
+  }
+
+  /// 이미 있는 단어에 예문 하나를 더한다(5차, 사용자 질문).
+  ///
+  /// 'projections'를 고를 때 단어장에 'projection'이 있으면, 새로 만들지 않고
+  /// 그 단어에 이 문장을 예문으로 붙인다. 같은 문장이면 더하지 않는다.
+  static Future<bool> addExample(
+    String accountId,
+    String id,
+    WordExample example,
+  ) async {
+    if (example.text.trim().isEmpty) return false;
+    final all = await load(accountId);
+    final index = all.indexWhere((w) => w.id == id);
+    if (index < 0) return false;
+    final before = all[index];
+    final already = before.examples
+        .any((e) => e.text.trim() == example.text.trim());
+    if (already) return false;
+    if (before.examples.length >= examplesMaxCount) return false;
+    final next = clipWordExamples([...before.examples, example]);
+
+    final device = await _loadDevice(accountId);
+    final deviceIndex = device.indexWhere((w) => w.id == id);
+    if (deviceIndex >= 0) {
+      device[deviceIndex] = MyWord(
+        id: before.id,
+        language: before.language,
+        word: before.word,
+        meaning: before.meaning,
+        examples: next,
+        synonyms: before.synonyms,
+        topic: before.topic,
+        addedAt: before.addedAt,
+      );
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setExamples(id, next);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /// 단어장에서 이 낱말(또는 짐작한 원형)과 같은 단어를 찾는다. 없으면 null.
+  static Future<MyWord?> findSameOrBaseForm(
+    String accountId, {
+    required String language,
+    required String word,
+  }) async {
+    final words = await loadFor(accountId, language);
+    final typed = _normalize(word);
+    for (final w in words) {
+      if (_normalize(w.word) == typed) return w;
+    }
+    if (!canGuessBaseForm(language)) return null;
+    for (final base in guessBaseForms(word)) {
+      for (final w in words) {
+        if (_normalize(w.word) == _normalize(base)) return w;
+      }
+    }
+    return null;
   }
 
   /// 단어만 지운다. 예문으로 붙은 원래 문장은 건드리지 않는다.

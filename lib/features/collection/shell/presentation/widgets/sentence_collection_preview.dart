@@ -38,6 +38,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
+import 'package:parrokit/core/content/my_word_store.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -1576,6 +1577,45 @@ String? sentenceEditBlockedReason({
   return null;
 }
 
+enum _SameWordChoice { addExample, addNew }
+
+/// 고른 낱말의 원형이 이미 단어장에 있을 때 묻는 창(5차, 사용자 질문).
+class _SameWordDialog extends StatelessWidget {
+  const _SameWordDialog({required this.picked, required this.existing});
+
+  final String picked;
+  final MyWord existing;
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        key: const ValueKey('same-word-dialog'),
+        title: Text("'${existing.word}'이(가) 이미 있어요"),
+        content: Text(existing.word.trim().toLowerCase() ==
+                picked.trim().toLowerCase()
+            ? '이 문장을 예문으로 더할까요?'
+            : "고른 낱말은 '$picked'예요. 같은 단어의 다른 꼴로 보여요.\n"
+                '이 문장을 예문으로 더하거나, 따로 저장할 수 있어요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            key: const ValueKey('same-word-add-new'),
+            onPressed: () =>
+                Navigator.pop(context, _SameWordChoice.addNew),
+            child: const Text('새 단어로 저장'),
+          ),
+          FilledButton(
+            key: const ValueKey('same-word-add-example'),
+            onPressed: () =>
+                Navigator.pop(context, _SameWordChoice.addExample),
+            child: const Text('예문만 더하기'),
+          ),
+        ],
+      );
+}
+
 class _SentenceDetailSheet extends StatefulWidget {
   const _SentenceDetailSheet({
     required this.sentence,
@@ -1964,6 +2004,40 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   /// 이 문장의 단어를 내 단어로 저장한다. 문장이 예문으로 붙는다(5차 6번).
   /// [word]가 비어 있으면 직접 입력.
   Future<void> saveWord(String word) async {
+    // 'projections'를 골랐는데 단어장에 'projection'이 있으면, 새로 만들지
+    // 물어본다. 자동으로 바꾸지 않는다(5차, 사용자 질문).
+    final same = await MyWordStore.findSameOrBaseForm(
+      widget.accountId,
+      language: widget.sentence.language,
+      word: word,
+    );
+    if (!mounted) return;
+    if (same != null) {
+      final choice = await showDialog<_SameWordChoice>(
+        context: context,
+        builder: (_) => _SameWordDialog(picked: word, existing: same),
+      );
+      if (!mounted || choice == null) return;
+      if (choice == _SameWordChoice.addExample) {
+        final added = await MyWordStore.addExample(
+          widget.accountId,
+          same.id,
+          WordExample(
+            text: widget.sentence.text,
+            translation: widget.sentence.translation,
+            sourceSentenceId: widget.sentence.id,
+          ),
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(added
+              ? "'${same.word}'에 예문을 더했어요."
+              : '이미 같은 예문이 있어요.'),
+        ));
+        return;
+      }
+    }
+
     final result = await showAppSheet(
       context: context,
       builder: (_) => AddWordSheet(
