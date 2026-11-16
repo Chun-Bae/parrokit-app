@@ -50,10 +50,18 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     super.initState();
     scrollController = ScrollController()..addListener(handleScroll);
     TabReselect.instance.addListener(_onTabReselected);
+    // 보관함 문장 창에서 따라 말해도 캘린더가 바로 따라오게 한다(5차 351).
+    PracticeCalendar.revision.addListener(_reloadPracticeStats);
     // 홈 첫 진입에서 한 번 팁을 보여준다 (예전에는 클래식 대시보드가 띄웠다).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) showTipDialog(context);
     });
+  }
+
+  void _reloadPracticeStats() {
+    final accountId = loadedAccountId;
+    if (accountId == null || !mounted) return;
+    unawaited(loadPracticeStats(accountId));
   }
 
   void handleScroll() {
@@ -94,41 +102,15 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
 
   Future<void> loadPracticeStats(String accountId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final rawHistory = prefs.getString(historyKey(accountId));
-      final rawGoals = prefs.getString(goalsKey(accountId));
-      final history = <String, int>{};
-      final goals = <String, int>{};
-      if (rawHistory != null) {
-        final decoded = jsonDecode(rawHistory);
-        if (decoded is Map<String, dynamic>) {
-          for (final entry in decoded.entries) {
-            final value = entry.value;
-            if (value is num && value >= 0) {
-              history[entry.key] = value.toInt();
-            }
-          }
-        }
-      }
-      if (rawGoals != null) {
-        final decoded = jsonDecode(rawGoals);
-        if (decoded is Map<String, dynamic>) {
-          for (final entry in decoded.entries) {
-            final value = entry.value;
-            if (value is num && value >= 1 && value <= 100) {
-              goals[entry.key] = value.toInt();
-            }
-          }
-        }
-      }
-      final legacyTotal =
-          prefs.getInt('parrokit.speaking.xp.v1.$accountId') ?? 0;
+      // 읽는 곳도 적는 곳과 같은 PracticeCalendar를 쓴다(5차 351). 전에는
+      // 홈이 따로 해독해서, 목표 키가 어긋나도 모르고 지냈다.
+      final data = await PracticeCalendar.load(accountId);
       if (!mounted || loadedAccountId != accountId) return;
       setState(() {
-        dailyGoal = (prefs.getInt(goalKey(accountId)) ?? 5).clamp(1, 100);
-        practiceCounts = history;
-        practiceGoals = goals;
-        totalPracticed = prefs.getInt(totalKey(accountId)) ?? legacyTotal;
+        dailyGoal = data.dailyGoal;
+        practiceCounts = data.counts;
+        practiceGoals = data.goals;
+        totalPracticed = data.total;
       });
     } catch (_) {
       // 기록을 읽지 못해도 현재 화면에서는 기본 목표로 계속 연습할 수 있다.
@@ -174,6 +156,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
 
   @override
   void dispose() {
+    PracticeCalendar.revision.removeListener(_reloadPracticeStats);
     TabReselect.instance.removeListener(_onTabReselected);
     scrollController
       ..removeListener(handleScroll)

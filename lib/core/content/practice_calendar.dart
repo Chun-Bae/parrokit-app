@@ -10,6 +10,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 하루치 기록을 읽어 온 값.
@@ -39,13 +40,21 @@ class PracticeCalendar {
 
   static const int defaultDailyGoal = 5;
 
+  /// 기록이 쌓일 때마다 오른다. 홈 캘린더가 이 값을 보고 다시 읽는다
+  /// (5차 351). 전에는 홈이 계정마다 한 번만 읽어서, 보관함에서 따라 말하면
+  /// 앱을 다시 켤 때까지 '학습 0일'로 남았다.
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
   static String dateKey(DateTime date) =>
       '${date.year.toString().padLeft(4, '0')}-'
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 
+  /// 하루 목표. 홈의 '목표 바꾸기'가 적는 자리와 같아야 한다(5차 351).
+  /// 전에는 여기만 다른 이름을 봐서, 보관함에서 따라 말하면 그날 목표가
+  /// 사용자가 정한 값이 아니라 늘 기본값 5로 적혔다.
   static String goalKey(String accountId) =>
-      'parrokit.practice.goal.v1.$accountId';
+      'parrokit.practice.daily_goal.v1.$accountId';
   static String historyKey(String accountId) =>
       'parrokit.practice.history.v1.$accountId';
   static String goalsKey(String accountId) =>
@@ -75,8 +84,7 @@ class PracticeCalendar {
   static Future<PracticeCalendarData> load(String accountId) async {
     final prefs = await SharedPreferences.getInstance();
     final counts = _decodeCounts(prefs.getString(historyKey(accountId)));
-    final goals =
-        _decodeCounts(prefs.getString(goalsKey(accountId)), max: 100);
+    final goals = _decodeCounts(prefs.getString(goalsKey(accountId)), max: 100);
     // 예전에는 XP 자리에 누적 문장 수를 적었다. 그 값도 읽어 준다.
     final legacyTotal = prefs.getInt('parrokit.speaking.xp.v1.$accountId') ?? 0;
     return PracticeCalendarData(
@@ -114,6 +122,7 @@ class PracticeCalendar {
     } catch (_) {
       // 지금 화면 기록은 살리고 다음에 다시 저장해 본다.
     }
+    revision.value++;
 
     return PracticeCalendarData(
       counts: counts,

@@ -4,6 +4,7 @@
 // 캘린더에 안 쌓였다. 바로 위 '내 문장 기록'과 어긋나 보였다.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/practice_calendar.dart';
@@ -95,5 +96,46 @@ void main() {
     final data = await PracticeCalendar.load('me');
 
     expect(data.counts, isEmpty);
+  });
+
+  group('홈 목표와 같은 자리를 본다(5차 351)', () {
+    test('홈이 적은 하루 목표를 그대로 읽는다', () async {
+      // 홈의 '목표 바꾸기'가 적는 자리.
+      SharedPreferences.setMockInitialValues({
+        'parrokit.practice.daily_goal.v1.me': 3,
+      });
+
+      final data = await PracticeCalendar.load('me');
+      expect(data.dailyGoal, 3);
+    });
+
+    test('그날 목표도 사용자가 정한 값으로 적힌다', () async {
+      SharedPreferences.setMockInitialValues({
+        'parrokit.practice.daily_goal.v1.me': 3,
+      });
+
+      final after =
+          await PracticeCalendar.recordOne('me', now: DateTime(2026, 11, 17));
+      expect(after.goals['2026-11-17'], 3, reason: '전에는 늘 기본값 5로 적혔다');
+    });
+
+    test('기록하면 revision이 올라 화면이 다시 읽는다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final before = PracticeCalendar.revision.value;
+
+      await PracticeCalendar.recordOne('me', now: DateTime(2026, 11, 17));
+
+      expect(PracticeCalendar.revision.value, before + 1);
+    });
+  });
+
+  test('홈도 같은 곳에서 읽는다', () {
+    final code = File(
+            'lib/features/home/dashboard/presentation/character_dashboard_screen.dart')
+        .readAsStringSync();
+    expect(code, contains('PracticeCalendar.load(accountId)'));
+    expect(code, contains('PracticeCalendar.revision.addListener'));
+    // 홈이 따로 해독하던 코드는 없앴다.
+    expect(code.contains("jsonDecode(rawHistory)"), isFalse);
   });
 }
