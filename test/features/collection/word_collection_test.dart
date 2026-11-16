@@ -57,6 +57,22 @@ Future<void> openWordTab(WidgetTester tester) async {
 void main() {
   _reviewProgressTests();
 
+  testWidgets('단어가 비면 저장이 꺼진 까닭을 버튼 아래에 적는다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await openAddSheet(tester, FakeAssist());
+
+    final save = find.byKey(const ValueKey('save-word'));
+    expect(tester.widget<FilledButton>(save).onPressed, isNull);
+    expect(find.text(addWordNeedsWordHint), findsOneWidget);
+
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
+    await tester.pump();
+
+    expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+    expect(find.text(addWordNeedsWordHint), findsNothing,
+        reason: '적고 나면 안내가 사라진다');
+  });
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     MyWordStore.cloud = null;

@@ -625,6 +625,9 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 }
 
 /// 단어 직접 추가. 단어만 넣어도 저장된다(뜻·예문은 선택).
+/// '단어 추가' 시트의 저장 버튼이 꺼져 있는 까닭.
+const String addWordNeedsWordHint = '단어를 적어야 저장할 수 있어요.';
+
 class AddWordSheet extends StatefulWidget {
   const AddWordSheet({
     super.key,
@@ -879,6 +882,18 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   child: const Text('저장'),
                 ),
               ),
+              // 버튼이 왜 꺼져 있는지 적는다(5차, 새 클립 화면과 같게).
+              // 예전에는 흐린 채 눌러도 아무 일이 없었다.
+              if (_word.text.trim().isEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  addWordNeedsWordHint,
+                  key: const ValueKey('save-word-hint'),
+                  textAlign: TextAlign.center,
+                  style: context.texts.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+              ],
             ],
           ),
         ),
