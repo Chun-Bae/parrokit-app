@@ -71,7 +71,7 @@ extension CommunityProviderPost on CommunityProvider {
         visiblePosts.map((p) => p.authorId).whereType<String>(),
       );
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.load, e);
     } finally {
       _isLoading = false;
       _notifyListenersSafe();
@@ -99,7 +99,7 @@ extension CommunityProviderPost on CommunityProvider {
         _notifyListenersSafe();
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.load, e);
     }
   }
 
@@ -142,7 +142,7 @@ extension CommunityProviderPost on CommunityProvider {
 
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.write, e);
       _isLoading = false;
       _notifyListenersSafe();
       return false;
@@ -196,7 +196,7 @@ extension CommunityProviderPost on CommunityProvider {
 
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.edit, e);
       _isLoading = false;
       _notifyListenersSafe();
       return false;
@@ -227,7 +227,7 @@ extension CommunityProviderPost on CommunityProvider {
       _notifyListenersSafe();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.delete, e);
       _isLoading = false;
       _notifyListenersSafe();
       return false;

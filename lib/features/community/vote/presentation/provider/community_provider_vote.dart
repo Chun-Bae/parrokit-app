@@ -78,7 +78,7 @@ extension CommunityProviderVote on CommunityProvider {
         myVotes[postId] = previousOption;
       }
       _isLoading = false;
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.vote, e);
       _notifyListenersSafe();
       return false;
     }

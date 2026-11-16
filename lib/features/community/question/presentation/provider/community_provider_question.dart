@@ -37,7 +37,7 @@ extension CommunityProviderQuestion on CommunityProvider {
       await fetchPosts(refresh: true);
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.write, e);
       _isLoading = false;
       _notifyListenersSafe();
       return false;
@@ -86,7 +86,7 @@ extension CommunityProviderQuestion on CommunityProvider {
       _notifyListenersSafe();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.accept, e);
       _isLoading = false;
       _notifyListenersSafe();
       return false;

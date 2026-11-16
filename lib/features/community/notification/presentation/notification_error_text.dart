@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/network_error.dart';
+
 /// 알림 화면에 띄울 말. 예외 글을 그대로 보여 주지 않는다(5차 309).
 ///
 /// 전에는 `[cloud_firestore/unavailable] Failed to get document because the
@@ -15,7 +17,7 @@ enum NotificationJob {
 }
 
 String notificationErrorText(NotificationJob job, Object error) {
-  if (_looksOffline(error)) {
+  if (looksOffline(error)) {
     return '인터넷이 안 되는 것 같아요. 연결을 확인하고 다시 해 주세요.';
   }
   return switch (job) {
@@ -23,12 +25,4 @@ String notificationErrorText(NotificationJob job, Object error) {
     NotificationJob.read => '읽음으로 바꾸지 못했어요. 잠시 뒤 다시 해 주세요.',
     NotificationJob.delete => '알림을 지우지 못했어요. 잠시 뒤 다시 해 주세요.',
   };
-}
-
-/// 인터넷이 끊겼을 때 Firestore가 주는 글들.
-bool _looksOffline(Object error) {
-  final text = error.toString().toLowerCase();
-  return text.contains('unavailable') ||
-      text.contains('offline') ||
-      text.contains('network');
 }

@@ -22,6 +22,7 @@ import 'package:parrokit/features/community/shell/domain/usecases/question/accep
 import 'package:parrokit/features/community/shell/domain/usecases/vote/vote_post_usecase.dart';
 import 'package:parrokit/features/community/shell/domain/usecases/user_action/user_action_usecases.dart';
 import 'dart:io';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 part '../../../board/presentation/provider/community_provider_post.dart';
 part '../../../vote/presentation/provider/community_provider_vote.dart';

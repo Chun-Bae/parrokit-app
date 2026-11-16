@@ -3,6 +3,7 @@ import '../../domain/entities/activity_item.dart';
 import '../../domain/entities/activity_cursor.dart';
 import '../../domain/usecases/get_activities_usecase.dart';
 import '../../data/repositories/activity_repository_impl.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class ActivityProvider extends ChangeNotifier {
   final GetActivitiesUseCase _getActivitiesUseCase;
@@ -114,7 +115,7 @@ class ActivityProvider extends ChangeNotifier {
       _nextCursor = page.nextCursor;
     } catch (e) {
       if (requestId != _loadRequestId) return;
-      _error = e.toString();
+      _error = communityErrorText(CommunityJob.load, e);
     } finally {
       if (requestId == _loadRequestId) {
         _isLoading = false;

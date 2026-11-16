@@ -46,7 +46,7 @@ extension CommunityProviderComment on CommunityProvider {
       _notifyListenersSafe();
     } catch (e) {
       if (stale()) return;
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.load, e);
       _notifyListenersSafe();
     }
   }
@@ -87,7 +87,7 @@ extension CommunityProviderComment on CommunityProvider {
       _notifyListenersSafe();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.write, e);
       _notifyListenersSafe();
       return false;
     }
@@ -113,7 +113,7 @@ extension CommunityProviderComment on CommunityProvider {
       _notifyListenersSafe();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.delete, e);
       _notifyListenersSafe();
       return false;
     }
@@ -161,7 +161,7 @@ extension CommunityProviderComment on CommunityProvider {
         _currentPostComments[rollbackIndex] =
             c.copyWith(likeCount: c.likeCount + (!targetState ? 1 : -1));
       }
-      _errorMessage = e.toString();
+      _errorMessage = communityErrorText(CommunityJob.like, e);
       _notifyListenersSafe();
     }
   }
