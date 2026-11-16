@@ -24,6 +24,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:restart_app/restart_app.dart';
 
+import 'package:parrokit/core/content/study_data_transfer.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart'
     show BackupProgress, BackupProgressState;
 
@@ -62,6 +63,12 @@ class BackupCompressParams {
   final String mediaRelativeDir;
   final String timestamp;
 
+  /// 문장·단어를 담은 글(없으면 담지 않는다, 5차 345).
+  final String? studyJson;
+
+  /// 이 백업에 담은 것('clips', 'sentences', 'words').
+  final List<String> parts;
+
   const BackupCompressParams({
     required this.zipPath,
     required this.dbPath,
@@ -70,6 +77,8 @@ class BackupCompressParams {
     required this.filePaths,
     required this.mediaRelativeDir,
     required this.timestamp,
+    this.studyJson,
+    this.parts = const ['clips'],
   });
 }
 
@@ -113,6 +122,9 @@ class BackupService {
     return d;
   }
 
+  /// 마지막 복원에서 들어온 문장·단어 수(화면에서 알려 줄 때 쓴다, 5차 345).
+  StudyRestoreCount lastStudyRestore = (sentences: 0, words: 0);
+
   /// 파일의 SHA256 해시 계산 (무결성 검증용).
   Future<String> _sha256OfFile(File f) async {
     if (!await f.exists()) return '';
@@ -129,7 +141,12 @@ class BackupService {
   /// 1. 데이터 확인: DB 및 미디어 파일 목록 수집, 용량 계산
   /// 2. 데이터 압축: Isolate에서 zip 파일 생성
   /// 3. 파일 저장: 사용자에게 저장 위치 선택
-  Future<File> createBackup({Function(BackupProgress)? onProgress}) async {
+  Future<File> createBackup({
+    Function(BackupProgress)? onProgress,
+    BackupParts parts = const BackupParts.all(),
+    String accountId = 'guest',
+  }) async {
+    if (parts.isEmpty) throw Exception('백업할 것을 하나는 골라 주세요.');
     // 1단계: 데이터 확인
     onProgress?.call(BackupProgress(state: BackupProgressState.checking));
 
@@ -151,11 +168,11 @@ class BackupService {
     int totalBytes = 0;
     final List<String> filePaths = [];
 
-    if (await db.exists()) {
+    if (parts.clips && await db.exists()) {
       totalBytes += await db.length();
     }
 
-    if (await media.exists()) {
+    if (parts.clips && await media.exists()) {
       await for (final ent in media.list(recursive: true, followLinks: false)) {
         if (ent is! File) continue;
         final base = p.basename(ent.path);
@@ -181,12 +198,20 @@ class BackupService {
         'backup_${ts.year}${pad2(ts.month)}${pad2(ts.day)}_${pad2(ts.hour)}${pad2(ts.minute)}${pad2(ts.second)}.zip';
     final backupZipPath = p.join(appDir.path, name);
 
+    // 문장·단어는 기기(또는 서버)에 따로 있어서 글로 만들어 함께 담는다(5차 345).
+    final studyJson = parts.needsStudyFile
+        ? await exportStudyData(accountId,
+            sentences: parts.sentences, words: parts.words)
+        : null;
+
     // compute()로 별도 Isolate에서 압축 실행
     await compute(
       compressBackup,
       BackupCompressParams(
         zipPath: backupZipPath,
-        dbPath: await db.exists() ? db.path : null,
+        dbPath: parts.clips && await db.exists() ? db.path : null,
+        studyJson: studyJson,
+        parts: parts.names,
         dbRelativePath: dbRelativePath,
         mediaPath: media.path,
         filePaths: filePaths,
@@ -290,11 +315,26 @@ class BackupService {
       }
     }
 
+    // 문장·단어 파일. 무결성 검사는 다른 파일과 같게 entries에 적는다.
+    final studyJson = params.studyJson;
+    if (studyJson != null) {
+      final bytes = utf8.encode(studyJson);
+      encoder.addArchiveFile(
+          a.ArchiveFile(studyDataFileName, bytes.length, bytes));
+      entries.add({
+        'path': studyDataFileName,
+        'sha256': sha256.convert(bytes).toString(),
+        'bytes': bytes.length,
+      });
+    }
+
     final manifest = {
       'createdAt': params.timestamp,
       'db': params.dbRelativePath,
       'mediaDir': params.mediaRelativeDir,
       'entries': entries,
+      // 무엇을 담았는지. 적혀 있지 않은 예전 백업은 클립만 담긴 것으로 읽는다.
+      'parts': params.parts,
       'version': 1,
     };
 
@@ -344,7 +384,11 @@ class BackupService {
   /// 1. 파일 분석: zip 파일 선택 및 manifest 확인
   /// 2. 압축 해제: 임시 디렉터리에 파일 추출
   /// 3. 데이터 복원: 파일 무결성 검증 후 이동, 앱 재시작
-  Future<void> restoreBackup({Function(BackupProgress)? onProgress}) async {
+  Future<void> restoreBackup({
+    Function(BackupProgress)? onProgress,
+    BackupParts only = const BackupParts.all(),
+    String accountId = 'guest',
+  }) async {
     // 1단계: 파일 분석
     onProgress?.call(BackupProgress(state: BackupProgressState.analyzing));
 
@@ -484,6 +528,35 @@ class BackupService {
       }
     }
 
+    // 백업에 무엇이 담겼는지. 예전 백업에는 이 칸이 없어 클립만 담긴 것으로 읽는다.
+    final inFile = BackupParts.fromManifest(manifestMap['parts']);
+    final restoring = only.intersect(inFile);
+
+    // 문장·단어 되돌리기. 파일 옮기기 전에 해 둔다(앱이 다시 켜지기 때문).
+    if (restoring.needsStudyFile) {
+      final studyFile = File(p.join(manifestDir.path, studyDataFileName));
+      if (await studyFile.exists()) {
+        try {
+          lastStudyRestore = await importStudyData(
+            accountId,
+            await studyFile.readAsString(),
+            sentences: restoring.sentences,
+            words: restoring.words,
+          );
+        } catch (_) {
+          // 문장·단어를 못 읽어도 클립 되돌리기는 이어 간다.
+        }
+      }
+    }
+
+    // 클립을 고르지 않았으면 파일은 건드리지 않는다(앱도 다시 켜지 않는다).
+    if (!restoring.clips) {
+      try {
+        await _deleteDir(tmpDir);
+      } catch (_) {}
+      return;
+    }
+
     // 현재 DB 백업
     try {
       final dbFile = await _dbFile();
@@ -508,6 +581,8 @@ class BackupService {
         }
 
         final rel = e['path'] as String;
+        // 문장·단어 글은 위에서 이미 읽었다. 앱 폴더에 남기지 않는다.
+        if (rel == studyDataFileName) continue;
         // manifest 디렉토리 기준으로 소스 파일 찾기
         final src = File(p.join(manifestDir.path, rel));
         final dst = File(p.join(appDir.path, rel));

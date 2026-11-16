@@ -147,20 +147,19 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
     return widget.type == BackupDialogType.backup ? '데이터 백업' : '데이터 불러오기';
   }
 
-  /// 백업이 실제로 담는 것은 클립과 자막(paro.db + 영상 파일)이다. 문장과
-  /// 단어는 로그인하면 서버에, 게스트면 기기 설정에 따로 있어 백업에 들어
-  /// 가지도, 불러오기로 지워지지도 않는다. 예전 안내는 '지금 앱에 있는 것'이
-  /// 모두 담기고 모두 지워지는 것처럼 읽혔다(5차).
+  /// 앞 화면에서 고른 것(문장·단어·클립)만 담거나 되돌린다(5차 345).
+  /// 클립과 자막은 paro.db와 영상 파일이라 파일이 크고, 되돌리면 지금 것이
+  /// 모두 바뀐다. 문장과 단어는 없는 것만 더한다.
   String get _description {
     if (widget.type == BackupDialogType.backup) {
-      return '이 기기에 있는 클립과 자막을 파일 하나로 묶어 둬요.\n\n'
+      return '앞에서 고른 것을 파일 하나로 묶어 둬요.\n\n'
           '묶은 파일은 앱 밖에 저장돼서, 나중에 \'불러오기\'로 다시 넣을 수 있어요.\n\n'
-          '문장과 단어는 따로 저장돼서 묶지 않아요.';
+          '클립과 자막은 영상 파일까지 담아서 파일이 커요.';
     }
-    return '백업해 둔 파일(.zip)을 골라 그때의 클립과 자막으로 되돌려요.\n\n'
-        '지금 기기에 있는 클립과 자막은 모두 지워지고 백업 때의 것으로 바뀌어요. '
-        '문장과 단어는 그대로예요.\n\n'
-        '다 되면 앱이 다시 시작돼요. 꺼지면 다시 열어 주세요.';
+    return '백업해 둔 파일(.zip)에서 앞에서 고른 것만 되돌려요.\n\n'
+        '문장과 단어는 없는 것만 더해요(같은 것은 건너뛰어요).\n\n'
+        '클립과 자막을 고르면 지금 기기의 클립과 자막은 모두 지워지고 백업 때의 '
+        '것으로 바뀌어요. 다 되면 앱이 다시 시작돼요. 꺼지면 다시 열어 주세요.';
   }
 
   String get _startLabel =>
@@ -387,12 +386,10 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
         isSuccess ? theme.colorScheme.primary : theme.colorScheme.error;
     final icon = isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
 
-    final successMessage = widget.type == BackupDialogType.backup
-        ? '백업했어요.'
-        : '다 불러왔어요.';
-    final failureMessage = widget.type == BackupDialogType.backup
-        ? '백업하지 못했어요.'
-        : '불러오지 못했어요.';
+    final successMessage =
+        widget.type == BackupDialogType.backup ? '백업했어요.' : '다 불러왔어요.';
+    final failureMessage =
+        widget.type == BackupDialogType.backup ? '백업하지 못했어요.' : '불러오지 못했어요.';
 
     return Center(
       child: Column(

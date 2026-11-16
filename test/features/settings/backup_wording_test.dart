@@ -1,16 +1,16 @@
-// 백업·불러오기 안내가 실제로 하는 일과 맞는지(5차).
+// 백업·불러오기 안내가 실제로 하는 일과 맞는지(5차 345에서 갱신).
 //
-// 백업은 paro.db(클립·자막)와 영상 파일만 담는다. 문장과 단어는 로그인하면
-// 서버에, 게스트면 기기 설정(SharedPreferences)에 따로 있어 백업에 들어가지도
-// 않고 불러오기로 지워지지도 않는다. 예전 안내는 '지금 앱에 있는 것'이 모두
-// 담기고 모두 지워지는 것처럼 읽혔다.
+// 이제 앞 시트에서 문장·단어·클립을 골라 담고 되돌린다. 클립과 자막은
+// paro.db와 영상 파일이라 되돌리면 지금 것이 모두 바뀌고, 문장과 단어는
+// 없는 것만 더한다. 안내가 그 차이를 말해야 한다.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart';
 
-Future<String> _descriptionOf(WidgetTester tester, BackupDialogType type) async {
+Future<String> _descriptionOf(
+    WidgetTester tester, BackupDialogType type) async {
   await tester.pumpWidget(MaterialApp(
     home: Scaffold(
       body: BackupProgressDialog(
@@ -28,28 +28,30 @@ Future<String> _descriptionOf(WidgetTester tester, BackupDialogType type) async 
 }
 
 void main() {
-  testWidgets('백업 안내는 담는 것(클립·자막)과 안 담는 것(문장·단어)을 말한다',
-      (tester) async {
+  testWidgets('백업 안내는 고른 것을 담는다고 말하고, 클립이 큰 것도 알린다', (tester) async {
     final text = await _descriptionOf(tester, BackupDialogType.backup);
+    expect(text, contains('고른 것'));
     expect(text, contains('클립과 자막'));
-    expect(text, contains('문장과 단어'));
-    // 예전 글: '지금 앱에 있는 것(클립, 자막 등)'
+    // 예전 글: '지금 앱에 있는 것(클립, 자막 등)', '문장과 단어는 묶지 않아요'
     expect(text.contains('지금 앱에 있는 것'), isFalse);
+    expect(text.contains('문장과 단어는 따로 저장돼서 묶지 않아요'), isFalse);
   });
 
-  testWidgets('불러오기 안내는 문장·단어가 그대로라는 것까지 말한다', (tester) async {
+  testWidgets('불러오기 안내는 문장·단어는 더하고 클립은 바뀐다고 말한다', (tester) async {
     final text = await _descriptionOf(tester, BackupDialogType.restore);
-    expect(text, contains('클립과 자막은 모두 지워지고'));
-    expect(text, contains('문장과 단어는 그대로'));
-    expect(text.contains('지금 앱에 있는 것은 모두 지워지고'), isFalse);
+    expect(text, contains('없는 것만 더해요'));
+    expect(text, contains('모두 지워지고'));
+    expect(text.contains('문장과 단어는 그대로예요'), isFalse);
   });
 
-  test('백업이 담는 것은 데이터베이스와 영상 파일뿐이다', () {
-    // 안내가 맞으려면 설정(SharedPreferences)은 백업에 들어가면 안 된다.
-    final code =
-        File('lib/core/infrastructure/services/backup_service.dart')
-            .readAsStringSync();
+  test('문장·단어는 study.json 한 곳을 거쳐 담긴다', () {
+    // 설정(SharedPreferences)을 통째로 담지 않는다. 담는 것은 study_data_transfer가
+    // 만든 글 하나뿐이고, 예전 백업에는 그 파일이 없다.
+    final code = File('lib/core/infrastructure/services/backup_service.dart')
+        .readAsStringSync();
     expect(code.contains('SharedPreferences'), isFalse,
         reason: '설정까지 담게 되면 안내도 함께 고쳐야 한다');
+    expect(code, contains('studyDataFileName'));
+    expect(code, contains('BackupParts.fromManifest'));
   });
 }

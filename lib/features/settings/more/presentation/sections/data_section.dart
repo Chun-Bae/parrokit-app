@@ -14,6 +14,9 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
+import 'package:parrokit/core/content/study_data_transfer.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
+import '../widgets/backup_parts_sheet.dart';
 import '../widgets/backup_progress_dialog.dart';
 import '../widgets/nav_tile.dart';
 import 'remote_storage_section.dart';
@@ -48,16 +51,32 @@ class _DataSectionState extends State<DataSection> {
     }
   }
 
-  Future<void> _runBackup(BackupDialogType type) => showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => BackupProgressDialog(
-          type: type,
-          onStart: (onProgress) => type == BackupDialogType.backup
-              ? BackupService.instance.createBackup(onProgress: onProgress)
-              : BackupService.instance.restoreBackup(onProgress: onProgress),
-        ),
-      );
+  /// 무엇을 담거나 되돌릴지 먼저 고르고(5차 345, 사용자 요청) 진행한다.
+  Future<void> _runBackup(BackupDialogType type) async {
+    final restoring = type == BackupDialogType.restore;
+    final parts = await showBackupPartsSheet(context, restoring: restoring);
+    if (parts == null || !mounted) return;
+
+    final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BackupProgressDialog(
+        type: type,
+        onStart: (onProgress) => restoring
+            ? BackupService.instance.restoreBackup(
+                onProgress: onProgress, only: parts, accountId: accountId)
+            : BackupService.instance.createBackup(
+                onProgress: onProgress, parts: parts, accountId: accountId),
+      ),
+    );
+    if (!mounted || !restoring) return;
+    // 클립만 되돌리면 앱이 다시 켜진다. 문장·단어만 되돌린 경우에만 알린다.
+    final count = BackupService.instance.lastStudyRestore;
+    if (count.sentences > 0 || count.words > 0) {
+      showToast(studyRestoreSummary(count));
+    }
+  }
 
   Future<void> _clearCache() async {
     final theme = Theme.of(context);
