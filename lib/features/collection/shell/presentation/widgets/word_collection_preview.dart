@@ -681,6 +681,7 @@ class _WordDetailSheet extends StatefulWidget {
 class _WordDetailSheetState extends State<_WordDetailSheet> {
   late String meaning = widget.word.meaning;
   late List<String> synonyms = widget.word.synonyms;
+  late List<WordExample> examples = widget.word.examples;
 
   /// 유의어를 적거나 고친다. 추가할 때만 적을 수 있으면 나중에 알게 된
   /// 유의어를 넣을 길이 없다(5차).
@@ -704,6 +705,38 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
       return;
     }
     setState(() => synonyms = parsed);
+  }
+
+  /// 예문 하나를 뺀다. 되돌릴 수 없으니 한 번 묻는다(5차 328).
+  Future<void> _removeExample(int index) async {
+    final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const ValueKey('remove-example-confirm'),
+        content: const Text('이 예문을 뺄까요?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소')),
+          FilledButton(
+              key: const ValueKey('remove-example-ok'),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('빼기')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    final removed = await MyWordStore.removeExample(
+        widget.accountId, widget.word.id, index);
+    if (!mounted) return;
+    if (!removed) {
+      messenger?.showSnackBar(
+          const SnackBar(content: Text('예문을 빼지 못했어요. 다시 시도해주세요.')));
+      return;
+    }
+    setState(() => examples = [...examples]..removeAt(index));
   }
 
   /// 뜻을 적거나 고친다. 전에는 뜻이 비어 있으면 지우고 다시 넣는 수밖에
@@ -814,7 +847,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
               ),
             ],
             // 예문은 여러 개일 수 있다(5차).
-            for (final (index, example) in word.examples.indexed) ...[
+            for (final (index, example) in examples.indexed) ...[
               SizedBox(height: index == 0 ? 16 : 8),
               Container(
                 key: ValueKey('word-detail-example-$index'),
@@ -824,17 +857,32 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                   color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(example.text,
-                          style: context.texts.bodyMedium
-                              .copyWith(fontWeight: FontWeight.w700)),
-                      if (example.translation.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(example.translation, style: muted),
-                      ],
-                    ]),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(example.text,
+                                style: context.texts.bodyMedium
+                                    .copyWith(fontWeight: FontWeight.w700)),
+                            if (example.translation.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(example.translation, style: muted),
+                            ],
+                          ]),
+                    ),
+                    // 더할 수는 있는데 뺄 길이 없었다(5차 328).
+                    IconButton(
+                      key: ValueKey('remove-word-example-$index'),
+                      tooltip: '이 예문 빼기',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => _removeExample(index),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                    ),
+                  ],
+                ),
               ),
             ],
             const SizedBox(height: 12),

@@ -456,6 +456,51 @@ class MyWordStore {
     return false;
   }
 
+  /// 저장해 둔 예문 하나를 뺀다(5차 328).
+  ///
+  /// 예문을 더할 수는 있는데 뺄 길이 없었다. '예문만 더하기'로 쌓이기 쉬워져
+  /// 더 눈에 띄었다. 단어와 뜻·유의어는 그대로 둔다.
+  static Future<bool> removeExample(
+    String accountId,
+    String id,
+    int index,
+  ) async {
+    final all = await load(accountId);
+    final found = all.indexWhere((w) => w.id == id);
+    if (found < 0) return false;
+    final before = all[found];
+    if (index < 0 || index >= before.examples.length) return false;
+    final next = [...before.examples]..removeAt(index);
+
+    final device = await _loadDevice(accountId);
+    final deviceIndex = device.indexWhere((w) => w.id == id);
+    if (deviceIndex >= 0) {
+      device[deviceIndex] = MyWord(
+        id: before.id,
+        language: before.language,
+        word: before.word,
+        meaning: before.meaning,
+        examples: next,
+        synonyms: before.synonyms,
+        topic: before.topic,
+        addedAt: before.addedAt,
+      );
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setExamples(id, next);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   /// 단어장에서 이 낱말과 같거나 어형만 다른 단어들(5차, 사용자 요청).
   ///
   /// 같은 낱말이 먼저, 그다음이 어형만 다른 것들이다. 양쪽으로 본다:
