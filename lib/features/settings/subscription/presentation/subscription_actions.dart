@@ -6,6 +6,7 @@ import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 /// 스토어의 구독 관리 화면(해지·단계 바꾸기)을 연다.
 Future<void> openStoreSubscriptions(BuildContext context) async {
@@ -21,9 +22,15 @@ Future<void> openStoreSubscriptions(BuildContext context) async {
 /// 이미 산 구독을 이 기기에 다시 가져온다.
 Future<void> restorePurchases(BuildContext context) async {
   final provider = context.read<IapProvider>();
-  await provider.restorePurchases();
+  // 실패와 '살 것이 없음'을 가려 말한다(5차 356). 전에는 둘 다 '찾지
+  // 못했어요'라고 해서, 인터넷이 끊겼을 때도 구독이 없는 줄 알았다.
+  final reached = await provider.restorePurchases();
   if (!context.mounted) return;
+  if (!reached) {
+    showToast(subscriptionRestoreFailedToast);
+    return;
+  }
   showToast(provider.activeEntitlements.isEmpty
-      ? '복원할 구독을 찾지 못했어요.'
-      : '구매를 복원했어요.');
+      ? subscriptionRestoreNoneToast
+      : subscriptionRestoreDoneToast);
 }

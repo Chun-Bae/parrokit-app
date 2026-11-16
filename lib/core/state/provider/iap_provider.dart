@@ -48,9 +48,8 @@ class IapProvider extends ChangeNotifier {
   void _applyCustomerInfo(CustomerInfo info) {
     final entitlements = info.entitlements.active.keys.toSet();
     final active = entitlements.contains(entitlementId);
-    final sameEntitlements =
-        entitlements.length == activeEntitlements.length &&
-            entitlements.containsAll(activeEntitlements);
+    final sameEntitlements = entitlements.length == activeEntitlements.length &&
+        entitlements.containsAll(activeEntitlements);
     if (isPremium == active && sameEntitlements) return;
     isPremium = active;
     activeEntitlements = entitlements;
@@ -58,13 +57,18 @@ class IapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 구매 내역 복원.
-  Future<void> restorePurchases() async {
+  /// 구매 내역 복원. 스토어까지 다녀왔으면 true, 실패했으면 false(5차 356).
+  ///
+  /// 전에는 실패해도 조용히 넘겨서, 화면이 '복원할 구독을 찾지 못했어요'라고
+  /// 말했다. 인터넷이 끊겼을 때와 살 것이 없을 때를 가려 말해야 한다.
+  Future<bool> restorePurchases() async {
     try {
       final info = await Purchases.restorePurchases();
       _applyCustomerInfo(info);
+      return true;
     } catch (e) {
       AppLogger.e('[IAP] 구매 복원 실패', error: e);
+      return false;
     }
   }
 

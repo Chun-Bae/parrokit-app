@@ -92,6 +92,12 @@ const String subscriptionAlreadyToast = '이미 구독 중이에요. 자세한 �
 /// 구독 화면을 여는 데 실패했을 때.
 const String subscriptionOpenFailedToast = '구독 화면을 열지 못했어요. 잠시 뒤 다시 해 주세요.';
 
+/// 구매 복원 결과(5차 356).
+const String subscriptionRestoreDoneToast = '구매를 복원했어요.';
+const String subscriptionRestoreNoneToast = '복원할 구독을 찾지 못했어요.';
+const String subscriptionRestoreFailedToast =
+    '구매를 복원하지 못했어요. 인터넷을 확인하고 다시 해 주세요.';
+
 // ─── 구독 중 화면 ───────────────────────────────────────────────
 // 글귀는 .claude/subscription-ux.md 3-3과 같다.
 
