@@ -3306,3 +3306,9 @@
   Distribution testers에. `uploaded new release` + `distributed` 확인.
   빌드 번호만 117 → 118, 서명용 project.pbxproj는 되돌렸다
 - 릴리스 노트에 318~329 변화를 사람 말로 적었다
+
+## 반복 331 (2026-11-17 04:20~)
+- 8번 이어서: 문장도 서버 경로가 비어 있었다 → 고치기(공개 여부·좋아요를 건드리지
+  않고 id 유지), 같은 문장이 있으면 고치지 않기, '공유 중' id만 돌려주기(남의
+  공개 문장 제외)를 FakeFirebaseFirestore로 덮었다(3개)
+- analyze 깨끗, 1147개 통과(+3). 화면 변화 없음
