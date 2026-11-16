@@ -4,8 +4,17 @@ import 'app_logger.dart';
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 /// 토스트 메시지 표시.
+///
+/// 화면이 아직 없거나(앱 시작 전) 테스트처럼 바인딩이 없는 데서 불러도
+/// 터지지 않는다. 알리지 못하면 로그만 남긴다(5차 382).
 void showToast(String msg) {
-  final messenger = scaffoldMessengerKey.currentState;
+  ScaffoldMessengerState? messenger;
+  try {
+    messenger = scaffoldMessengerKey.currentState;
+  } catch (error) {
+    AppLogger.w('🍞 Toast (no binding): $msg');
+    return;
+  }
   if (messenger == null) {
     AppLogger.w('🍞 Toast (no messenger): $msg');
     return;

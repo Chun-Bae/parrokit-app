@@ -5,6 +5,7 @@
 // 찾는 것도 중요하다 — 기다리는 사이 목록이 통째로 바뀌면 예전 자리(index)를
 // 그대로 쓰다가 엉뚱한 글의 수를 건드린다.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -129,5 +130,13 @@ void main() {
 
     expect(provider.isPostLiked('a'), isFalse);
     expect(provider.posts.firstWhere((p) => p.id == 'a').likeCount, 3);
+  });
+
+  test('되돌리기만 하지 않고 까닭을 띄운다(5차 382)', () {
+    // 화면마다 따로 알리면 빠지는 곳이 생긴다. provider가 한 번 알린다.
+    final code = File(
+            'lib/features/community/shell/presentation/providers/community_provider_user_action.dart')
+        .readAsStringSync();
+    expect('showToast(_errorMessage!);'.allMatches(code).length, 2);
   });
 }
