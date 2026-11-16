@@ -34,6 +34,7 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/features/collection/clip/player/domain/player_state.dart';
 
 import 'clip_player_view_model.dart';
+import 'pause_each_line_hint.dart';
 import 'widgets/circle_icon_button.dart';
 import 'widgets/segment_timeline.dart';
 import 'widgets/toggle_pill.dart';
@@ -651,20 +652,27 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                 ),
               ),
               // 한 줄씩 멈춤은 전체 재생에서만 뜻이 있다(구간 재생은 줄 끝에서
-              // 반복하거나 멈춘다). 구간일 때는 흐리게 두고 누를 수 없다.
+              // 반복하거나 멈춘다). 구간일 때는 흐리게 두되, 눌러도 아무 일이
+              // 없으면 왜 안 되는지 알 길이 없어 까닭을 말해 준다(5차).
               IgnorePointer(
-                ignoring: vm.isBackground || vm.scope != PlayScope.full,
+                ignoring: vm.isBackground,
                 child: Opacity(
                   opacity:
                       vm.isBackground || vm.scope != PlayScope.full ? 0.4 : 1.0,
-                  child: TogglePill(
-                    key: const ValueKey('pause-each-line'),
-                    icon: Icons.pause_circle_outline_rounded,
-                    label: '한 줄씩 멈춤',
-                    active: vm.pauseEachLine,
-                    onTap: vm.togglePauseEachLine,
-                    isLight: isLight,
-                  ),
+                  child: Builder(builder: (context) {
+                    final blockedReason =
+                        pauseEachLineDisabledReason(vm.scope);
+                    return TogglePill(
+                      key: const ValueKey('pause-each-line'),
+                      icon: Icons.pause_circle_outline_rounded,
+                      label: '한 줄씩 멈춤',
+                      active: blockedReason == null && vm.pauseEachLine,
+                      onTap: blockedReason == null
+                          ? vm.togglePauseEachLine
+                          : () => showToast(blockedReason),
+                      isLight: isLight,
+                    );
+                  }),
                 ),
               ),
               IgnorePointer(

@@ -3,8 +3,9 @@
 //   알 수 없었다.
 // - 아래 탐색 줄에 손잡이도 시각도 없어 끌 수 있는 줄인지, 어디로 가는지
 //   알 수 없었다.
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/sections/shorts_page_control_section.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/widgets/action_rail.dart';
@@ -26,17 +27,16 @@ void main() {
     )));
 
     final autoNext = tester.getSemantics(find.bySemanticsLabel(RegExp('자동 넘김')));
-    expect(autoNext.hasFlag(SemanticsFlag.hasToggledState), isTrue);
-    expect(autoNext.hasFlag(SemanticsFlag.isToggled), isTrue);
+    expect(autoNext.flagsCollection.isToggled, Tristate.isTrue);
 
     final subtitle = tester.getSemantics(find.bySemanticsLabel(RegExp('자막')));
-    expect(subtitle.hasFlag(SemanticsFlag.hasToggledState), isTrue);
-    expect(subtitle.hasFlag(SemanticsFlag.isToggled), isFalse,
+    expect(subtitle.flagsCollection.isToggled, Tristate.isFalse,
         reason: '꺼져 있으면 꺼졌다고 읽어야 한다');
 
     // '연습'은 켜고 끄는 것이 아니라 플레이어를 여는 버튼이다.
     final practice = tester.getSemantics(find.bySemanticsLabel(RegExp('연습')));
-    expect(practice.hasFlag(SemanticsFlag.hasToggledState), isFalse);
+    expect(practice.flagsCollection.isToggled, Tristate.none,
+        reason: '켜고 끄는 버튼이 아니다');
 
     handle.dispose();
   });
