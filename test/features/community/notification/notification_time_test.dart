@@ -58,7 +58,7 @@ void main() {
     await tester.pump();
 
     final local = utc.toLocal();
-    expect(find.textContaining('${local.month}월 ${local.day}일'),
-        findsOneWidget);
+    expect(
+        find.textContaining('${local.month}월 ${local.day}일'), findsOneWidget);
   });
 }

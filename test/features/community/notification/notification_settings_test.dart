@@ -95,8 +95,7 @@ void main() {
       expect(switchValue(tester, 'pref-comment-reply'), isTrue);
     });
 
-    testWidgets('휴대폰 설정에서 알림이 꺼져 있으면 알려주고 바로 갈 길을 준다',
-        (tester) async {
+    testWidgets('휴대폰 설정에서 알림이 꺼져 있으면 알려주고 바로 갈 길을 준다', (tester) async {
       await open(tester, osAllowed: false);
       expect(find.byKey(const ValueKey('os-push-off')), findsOneWidget);
       // 어디로 가야 하는지 적어만 두면 찾아가기 멀다(5차).

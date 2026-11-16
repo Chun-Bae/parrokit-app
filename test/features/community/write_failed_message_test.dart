@@ -1,4 +1,4 @@
-// 글쓰기 화면에서 못 올렸다는 말이 실제로 보이는지(5차 307).
+// 글을 올리지 못했을 때는 사라지는 토스트 대신 창으로 말한다(5차 308).
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,23 +11,29 @@ const writeScreens = [
   'lib/features/community/vote/presentation/vote_write_screen.dart',
 ];
 
+String _flat(String code) => code.replaceAll(RegExp(r'\s+'), ' ');
+
 void main() {
-  test('세 글쓰기 화면은 토스트로 말하지 않는다', () {
-    // 이 화면들에서는 토스트(SnackBar)가 실제 기기에서 그려지지 않았다.
-    // 로그인 안내와 '올리지 못했어요'가 그렇게 조용히 사라졌다.
+  test('올리지 못한 것과 로그인 안내는 창으로 띄운다', () {
+    // 2.5초 토스트를 놓치면 글이 올라간 줄 알고 화면을 닫는다.
     for (final path in writeScreens) {
-      final code = File(path).readAsStringSync();
-      expect(code.contains('showToast('), isFalse, reason: path);
-      expect(code, contains('showWriteFailedMessage('), reason: path);
+      final code = _flat(File(path).readAsStringSync());
+      expect(
+          code, contains("showWriteFailedMessage(context, '로그인하고 다시 해 주세요.')"),
+          reason: path);
+      expect(
+          code,
+          matches(RegExp(r'showWriteFailedMessage\( ?context, '
+              r'[a-zA-Z]*[Pp]rovider\.errorMessage')),
+          reason: path);
     }
   });
 
-  test('올리지 못한 까닭을 그대로 보여 준다', () {
-    for (final path in writeScreens) {
-      final code = File(path).readAsStringSync();
-      expect(code, contains('로그인하고 다시 해 주세요.'), reason: path);
-      expect(code, contains('errorMessage'), reason: path);
-    }
+  test('가벼운 안내는 토스트 그대로 쓴다', () {
+    // 창을 띄우면 태그 하나 넣을 때마다 확인을 눌러야 한다.
+    final board = _flat(File(writeScreens[0]).readAsStringSync());
+    expect(board, contains("showToast('사진은 5장까지 넣을 수 있어요.')"));
+    expect(board, contains("showToast('태그는 20개까지 붙일 수 있어요.')"));
   });
 
   testWidgets('창에 말이 적히고 확인을 누르면 닫힌다', (tester) async {

@@ -71,7 +71,6 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     });
   }
 
-
   void _submitComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;

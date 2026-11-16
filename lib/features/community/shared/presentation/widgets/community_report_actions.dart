@@ -44,8 +44,7 @@ CommunityOptionAction buildCommunityReportAction({
         showToast('신고가 접수되었어요. 운영자가 확인할게요.');
       } catch (e, st) {
         AppLogger.e('신고 저장 실패', error: e, stackTrace: st);
-        showToast(userErrorMessage(e,
-            fallback: '신고하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
+        showToast(userErrorMessage(e, fallback: '신고하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       }
     },
   );

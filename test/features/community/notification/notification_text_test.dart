@@ -22,15 +22,12 @@ void main() {
 
   group('예전 투표 마감 알림', () {
     test("'종료'라 적힌 제목을 앱과 같이 '마감'으로 보여준다", () {
-      expect(displayNotificationTitle('투표가 종료되었어요.', 'vote'),
-          '투표가 마감됐어요.');
-      expect(displayNotificationTitle('투표가 마감됐어요.', 'vote'),
-          '투표가 마감됐어요.');
+      expect(displayNotificationTitle('투표가 종료되었어요.', 'vote'), '투표가 마감됐어요.');
+      expect(displayNotificationTitle('투표가 마감됐어요.', 'vote'), '투표가 마감됐어요.');
     });
 
     test('투표가 아닌 알림의 같은 문장은 건드리지 않는다', () {
-      expect(displayNotificationTitle('투표가 종료되었어요.', 'board'),
-          '투표가 종료되었어요.');
+      expect(displayNotificationTitle('투표가 종료되었어요.', 'board'), '투표가 종료되었어요.');
     });
 
     test('본문에 이어 붙은 글 제목을 따옴표로 묶어 보여준다', () {
@@ -41,8 +38,7 @@ void main() {
     test('이미 묶여 있거나 제목이 없으면 그대로', () {
       expect(displayNotificationBody("'오늘 뭐 먹지' 결과를 확인해 보세요.", 'vote'),
           "'오늘 뭐 먹지' 결과를 확인해 보세요.");
-      expect(displayNotificationBody('결과를 확인해 보세요.', 'vote'),
-          '결과를 확인해 보세요.');
+      expect(displayNotificationBody('결과를 확인해 보세요.', 'vote'), '결과를 확인해 보세요.');
     });
 
     test('투표가 아닌 알림의 본문은 묶지 않는다', () {

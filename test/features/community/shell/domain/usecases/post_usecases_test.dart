@@ -18,7 +18,7 @@ void main() {
   group('PostUseCases', () {
     test('AddPostUseCase - 성공적으로 포스트가 추가되어야 한다', () async {
       final addPostUseCase = AddPostUseCase(mockRepository, mockImageService);
-      
+
       when(mockRepository.generatePostId()).thenReturn('post_123');
       final dummyPost = Post(
         id: 'post_123',
@@ -45,8 +45,9 @@ void main() {
     });
 
     test('DeletePostUseCase - 삭제 시 포스트와 이미지가 삭제되어야 한다', () async {
-      final deletePostUseCase = DeletePostUseCase(mockRepository, mockImageService);
-      
+      final deletePostUseCase =
+          DeletePostUseCase(mockRepository, mockImageService);
+
       final post = Post(
         id: 'post_123',
         postType: 'board',
@@ -60,7 +61,8 @@ void main() {
         snippet: 'snippet',
       );
 
-      when(mockImageService.deleteImageFromStorage(any)).thenAnswer((_) async => true);
+      when(mockImageService.deleteImageFromStorage(any))
+          .thenAnswer((_) async => true);
       when(mockRepository.deletePost(any)).thenAnswer((_) async => {});
 
       await deletePostUseCase.execute(post);
@@ -72,7 +74,7 @@ void main() {
 
     test('EditPostUseCase - 정상적으로 업데이트 되어야 한다', () async {
       final editPostUseCase = EditPostUseCase(mockRepository, mockImageService);
-      
+
       final post = Post(
         id: 'post_123',
         postType: 'board',
@@ -86,8 +88,7 @@ void main() {
         snippet: 'snippet',
       );
 
-      when(mockImageService.deleteImagesQuietly(any))
-          .thenAnswer((_) async {});
+      when(mockImageService.deleteImagesQuietly(any)).thenAnswer((_) async {});
       when(mockRepository.updatePost(any, any)).thenAnswer((_) async => {});
 
       await editPostUseCase.execute(
@@ -123,10 +124,8 @@ void main() {
         snippet: 'snippet',
       );
 
-      when(mockImageService.deleteImagesQuietly(any))
-          .thenAnswer((_) async {});
-      when(mockRepository.updatePost(any, any))
-          .thenThrow(Exception('저장 실패'));
+      when(mockImageService.deleteImagesQuietly(any)).thenAnswer((_) async {});
+      when(mockRepository.updatePost(any, any)).thenThrow(Exception('저장 실패'));
 
       await expectLater(
         editPostUseCase.execute(

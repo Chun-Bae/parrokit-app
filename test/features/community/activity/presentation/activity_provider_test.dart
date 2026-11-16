@@ -37,7 +37,8 @@ class _ManualActivityRepository implements ActivityRepository {
             items: ids.map(_item).toList(),
             hasMore: hasMore,
             nextCursor: hasMore
-                ? ActivityCursor(sortValue: DateTime(2026), documentId: ids.last)
+                ? ActivityCursor(
+                    sortValue: DateTime(2026), documentId: ids.last)
                 : null,
           ),
         );
@@ -117,8 +118,7 @@ void main() {
     repository.complete('written', ['w1']);
     await first;
 
-    expect(provider.isLoading, isTrue,
-        reason: '새 조회가 아직 안 끝났으므로 로딩이 유지돼야 한다');
+    expect(provider.isLoading, isTrue, reason: '새 조회가 아직 안 끝났으므로 로딩이 유지돼야 한다');
     expect(provider.activities, isEmpty);
 
     repository.complete('commented', ['c1']);

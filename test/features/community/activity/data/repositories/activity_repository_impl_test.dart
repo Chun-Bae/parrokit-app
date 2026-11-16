@@ -150,20 +150,20 @@ void main() {
           .collection('comment_likes')
           .doc('b1_c_board')
           .set({
-            'postId': 'b1',
-            'commentId': 'c_board',
-            'createdAt': DateTime(2026, 6, 1),
-          });
+        'postId': 'b1',
+        'commentId': 'c_board',
+        'createdAt': DateTime(2026, 6, 1),
+      });
       await firestore
           .collection('users')
           .doc('u1')
           .collection('comment_likes')
           .doc('q1_c_question')
           .set({
-            'postId': 'q1',
-            'commentId': 'c_question',
-            'createdAt': DateTime(2026, 6, 1),
-          });
+        'postId': 'q1',
+        'commentId': 'c_question',
+        'createdAt': DateTime(2026, 6, 1),
+      });
 
       final page = await repository.getActivities(
         userId: 'u1',
@@ -202,10 +202,10 @@ void main() {
           .collection('comment_likes')
           .doc('b1_c_same')
           .set({
-            'postId': 'b1',
-            'commentId': 'c_same',
-            'createdAt': DateTime(2026, 6, 1),
-          });
+        'postId': 'b1',
+        'commentId': 'c_same',
+        'createdAt': DateTime(2026, 6, 1),
+      });
 
       final page = await repository.getActivities(
         userId: 'u1',
@@ -292,7 +292,12 @@ Future<void> _seedComment(
   required String postType,
   String? parentId,
 }) async {
-  await firestore.collection('posts').doc(postId).collection('comments').doc(commentId).set({
+  await firestore
+      .collection('posts')
+      .doc(postId)
+      .collection('comments')
+      .doc(commentId)
+      .set({
     'authorId': authorId,
     'authorNickname': 'writer',
     'content': 'comment-$commentId',

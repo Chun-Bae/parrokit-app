@@ -27,7 +27,8 @@ void main() {
   });
 
   test('투표 화면이 그 글을 쓴다', () {
-    final code = _code('lib/features/community/vote/presentation/vote_screen.dart');
+    final code =
+        _code('lib/features/community/vote/presentation/vote_screen.dart');
     expect(code, contains('voteConfirmTitle'));
     expect(code, contains('voteConfirmMessage('));
     expect(code, isNot(contains('투표하시겠습니까')));

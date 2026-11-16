@@ -95,8 +95,10 @@ void main() {
     );
   });
 
-  int likesOf(String id) => provider.posts.firstWhere((p) => p.id == id).likeCount;
-  int scrapsOf(String id) => provider.posts.firstWhere((p) => p.id == id).scrapCount;
+  int likesOf(String id) =>
+      provider.posts.firstWhere((p) => p.id == id).likeCount;
+  int scrapsOf(String id) =>
+      provider.posts.firstWhere((p) => p.id == id).scrapCount;
   int commentLikesOf(String id) =>
       provider.currentPostComments.firstWhere((c) => c.id == id).likeCount;
 

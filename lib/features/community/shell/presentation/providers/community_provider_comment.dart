@@ -76,7 +76,8 @@ extension CommunityProviderComment on CommunityProvider {
       );
 
       _replyingTo = null;
-      _currentPostComments = List.from(_currentPostComments)..add(createdComment);
+      _currentPostComments = List.from(_currentPostComments)
+        ..add(createdComment);
 
       if (postIndex != -1) {
         final p = _posts[postIndex];
@@ -105,7 +106,8 @@ extension CommunityProviderComment on CommunityProvider {
           status: 'deleted',
           content: '이 댓글은 삭제된 댓글입니다.',
         );
-        _currentPostComments = List.from(_currentPostComments)..[index] = deletedComment;
+        _currentPostComments = List.from(_currentPostComments)
+          ..[index] = deletedComment;
       }
 
       _notifyListenersSafe();
@@ -117,7 +119,8 @@ extension CommunityProviderComment on CommunityProvider {
     }
   }
 
-  Future<void> toggleCommentLike(String postId, String commentId, String userId) async {
+  Future<void> toggleCommentLike(
+      String postId, String commentId, String userId) async {
     if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
 
     _errorMessage = null;
@@ -130,7 +133,8 @@ extension CommunityProviderComment on CommunityProvider {
       _likedCommentIds.remove(commentId);
     }
 
-    final commentIndex = _currentPostComments.indexWhere((c) => c.id == commentId);
+    final commentIndex =
+        _currentPostComments.indexWhere((c) => c.id == commentId);
     if (commentIndex != -1) {
       final c = _currentPostComments[commentIndex];
       _currentPostComments[commentIndex] =
@@ -139,7 +143,8 @@ extension CommunityProviderComment on CommunityProvider {
     _notifyListenersSafe();
 
     try {
-      await toggleCommentLikeUseCase.execute(postId, commentId, userId, targetState);
+      await toggleCommentLikeUseCase.execute(
+          postId, commentId, userId, targetState);
     } catch (e) {
       if (!targetState) {
         _likedCommentIds.add(commentId);

@@ -66,11 +66,7 @@ void main() {
       final code = _flat(File(path).readAsStringSync());
       expect(code, contains('writeBlockedReason('), reason: path);
       // 꺼진 채 눌러도 아무 일이 없던 자리에서 까닭을 말해 준다.
-      expect(
-          code,
-          matches(RegExp(r'showWriteFailedMessage\( ?context, '
-              r'_blockedReason')),
-          reason: path);
+      expect(code, contains("showToast(_blockedReason"), reason: path);
     }
   });
 
@@ -92,7 +88,7 @@ void main() {
   });
 
   test('세 글쓰기 화면 모두 까닭을 눈에 보이게 적는다', () {
-    // 이 화면들에서는 토스트가 그려지지 않는 것을 시뮬레이터에서 봤다(5차).
+    // 눌렀을 때 뜨는 토스트는 2.5초면 사라져서, 까닭은 화면에도 적어 둔다(5차).
     const keys = {
       'lib/features/community/board/presentation/board_write_screen.dart':
           'board-blocked-reason',
@@ -110,8 +106,7 @@ void main() {
   });
 
   test('질문 글쓰기는 까닭을 아래 줄에 눈으로 보이게 적는다', () {
-    // 이 화면에서는 토스트가 그려지지 않는 것을 시뮬레이터에서 봤다(5차).
-    // 그래서 글자 수 옆에 그대로 적는다.
+    // 토스트는 2.5초면 사라져서, 글자 수 옆에도 그대로 적는다(5차).
     final code = File(
             'lib/features/community/question/presentation/question_write_screen.dart')
         .readAsStringSync();

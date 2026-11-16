@@ -47,8 +47,8 @@ void main() {
         'lib/features/community/board/presentation/board_view_screen.dart');
     final question = _code(
         'lib/features/community/question/presentation/question_view_screen.dart');
-    final vote = _code(
-        'lib/features/community/vote/presentation/vote_view_screen.dart');
+    final vote =
+        _code('lib/features/community/vote/presentation/vote_view_screen.dart');
 
     expect(board.contains('게시글을 찾을 수 없습니다.'), isFalse);
     expect(question.contains('질문을 찾을 수 없습니다.'), isFalse);

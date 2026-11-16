@@ -6,7 +6,8 @@ import 'package:parrokit/core/shared/theme/app_theme.dart';
 import 'package:parrokit/features/community/board/presentation/widgets/board_comment_input_bar.dart';
 
 void main() {
-  Future<int Function()> pump(WidgetTester tester, {required bool canSubmit}) async {
+  Future<int Function()> pump(WidgetTester tester,
+      {required bool canSubmit}) async {
     var sent = 0;
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,

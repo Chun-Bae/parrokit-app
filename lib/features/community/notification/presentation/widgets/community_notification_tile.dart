@@ -45,7 +45,9 @@ class CommunityNotificationTile extends StatelessWidget {
                                 : displayNotificationTitle(
                                     item.title, item.boardType),
                             style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: item.isRead ? FontWeight.w500 : FontWeight.w700,
+                              fontWeight: item.isRead
+                                  ? FontWeight.w500
+                                  : FontWeight.w700,
                               color: colorScheme.onSurface,
                             ),
                           ),
@@ -89,8 +91,10 @@ class CommunityNotificationTile extends StatelessWidget {
 
   Widget _buildLeadingIcon(ColorScheme colorScheme) {
     final iconData = _iconForBoardType(item.boardType);
-    final backgroundColor = _backgroundColorForBoardType(colorScheme, item.boardType);
-    final foregroundColor = _foregroundColorForBoardType(colorScheme, item.boardType);
+    final backgroundColor =
+        _backgroundColorForBoardType(colorScheme, item.boardType);
+    final foregroundColor =
+        _foregroundColorForBoardType(colorScheme, item.boardType);
 
     return Container(
       width: 40,
@@ -114,7 +118,8 @@ class CommunityNotificationTile extends StatelessWidget {
     }
   }
 
-  Color _backgroundColorForBoardType(ColorScheme colorScheme, String boardType) {
+  Color _backgroundColorForBoardType(
+      ColorScheme colorScheme, String boardType) {
     switch (boardType) {
       case 'question':
         return colorScheme.secondaryContainer.withValues(alpha: 0.55);
@@ -125,7 +130,8 @@ class CommunityNotificationTile extends StatelessWidget {
     }
   }
 
-  Color _foregroundColorForBoardType(ColorScheme colorScheme, String boardType) {
+  Color _foregroundColorForBoardType(
+      ColorScheme colorScheme, String boardType) {
     switch (boardType) {
       case 'question':
         return colorScheme.onSecondaryContainer;

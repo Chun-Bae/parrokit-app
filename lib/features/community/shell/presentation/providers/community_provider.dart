@@ -48,33 +48,47 @@ class CommunityProvider with ChangeNotifier {
   final CommunityImageService _imageService;
   final FirebaseUserService _userService;
 
-  late final AddPostUseCase addPostUseCase = AddPostUseCase(_repository, _imageService);
-  late final EditPostUseCase editPostUseCase = EditPostUseCase(_repository, _imageService);
-  late final DeletePostUseCase deletePostUseCase = DeletePostUseCase(_repository, _imageService);
-  late final AddCommentUseCase addCommentUseCase = AddCommentUseCase(_repository);
-  late final DeleteCommentUseCase deleteCommentUseCase = DeleteCommentUseCase(_repository);
-  late final AddQuestionUseCase addQuestionUseCase = AddQuestionUseCase(_repository, _imageService);
-  late final AcceptAnswerUseCase acceptAnswerUseCase = AcceptAnswerUseCase(_repository);
+  late final AddPostUseCase addPostUseCase =
+      AddPostUseCase(_repository, _imageService);
+  late final EditPostUseCase editPostUseCase =
+      EditPostUseCase(_repository, _imageService);
+  late final DeletePostUseCase deletePostUseCase =
+      DeletePostUseCase(_repository, _imageService);
+  late final AddCommentUseCase addCommentUseCase =
+      AddCommentUseCase(_repository);
+  late final DeleteCommentUseCase deleteCommentUseCase =
+      DeleteCommentUseCase(_repository);
+  late final AddQuestionUseCase addQuestionUseCase =
+      AddQuestionUseCase(_repository, _imageService);
+  late final AcceptAnswerUseCase acceptAnswerUseCase =
+      AcceptAnswerUseCase(_repository);
   late final VotePostUseCase votePostUseCase = VotePostUseCase(_repository);
-  late final ToggleLikeUseCase toggleLikeUseCase = ToggleLikeUseCase(_repository);
-  late final ToggleScrapUseCase toggleScrapUseCase = ToggleScrapUseCase(_repository);
-  late final ToggleCommentLikeUseCase toggleCommentLikeUseCase = ToggleCommentLikeUseCase(_repository);
-  late final LoadUserActionsUseCase loadUserActionsUseCase = LoadUserActionsUseCase(_repository);
-  late final IncrementViewCountUseCase incrementViewCountUseCase = IncrementViewCountUseCase(_repository);
+  late final ToggleLikeUseCase toggleLikeUseCase =
+      ToggleLikeUseCase(_repository);
+  late final ToggleScrapUseCase toggleScrapUseCase =
+      ToggleScrapUseCase(_repository);
+  late final ToggleCommentLikeUseCase toggleCommentLikeUseCase =
+      ToggleCommentLikeUseCase(_repository);
+  late final LoadUserActionsUseCase loadUserActionsUseCase =
+      LoadUserActionsUseCase(_repository);
+  late final IncrementViewCountUseCase incrementViewCountUseCase =
+      IncrementViewCountUseCase(_repository);
 
   final Map<String, AppUser> _userCache = {};
   Set<String> _blockedUserIds = {};
 
   void setBlockedUserIds(Iterable<String> blockedUserIds) {
-    final nextBlockedUserIds = blockedUserIds.where((id) => id.isNotEmpty).toSet();
+    final nextBlockedUserIds =
+        blockedUserIds.where((id) => id.isNotEmpty).toSet();
     if (setEquals(_blockedUserIds, nextBlockedUserIds)) {
       return;
     }
 
     _blockedUserIds = nextBlockedUserIds;
     _posts = _posts.where((post) => !_isBlockedAuthor(post.authorId)).toList();
-    _currentPostComments =
-        _currentPostComments.where((comment) => !_isBlockedAuthor(comment.authorId)).toList();
+    _currentPostComments = _currentPostComments
+        .where((comment) => !_isBlockedAuthor(comment.authorId))
+        .toList();
     Future.microtask(notifyListeners);
   }
 
@@ -85,8 +99,9 @@ class CommunityProvider with ChangeNotifier {
   AppUser? getCachedUser(String uid) => _userCache[uid];
 
   Future<void> _fetchMissingUsers(Iterable<String> uids) async {
-    final missingUids =
-        uids.where((uid) => !_userCache.containsKey(uid) && uid.isNotEmpty).toSet();
+    final missingUids = uids
+        .where((uid) => !_userCache.containsKey(uid) && uid.isNotEmpty)
+        .toSet();
     if (missingUids.isEmpty) return;
 
     await Future.wait(missingUids.map((uid) async {

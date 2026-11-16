@@ -16,6 +16,7 @@ import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/shared/presentation/write_failed_message.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -73,7 +74,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     }
 
     if (user.crackers < _rewardCrackers) {
-      showWriteFailedMessage(context, '크래커가 모자라요. (가진 크래커 ${user.crackers}개)');
+      showToast('크래커가 모자라요. (가진 크래커 ${user.crackers}개)');
       return;
     }
 
@@ -157,8 +158,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                     ? null
                     : _isValid
                         ? _submitQuestion
-                        : () => showWriteFailedMessage(
-                            context, _blockedReason ?? ''),
+                        : () => showToast(_blockedReason ?? ''),
                 style: ElevatedButton.styleFrom(
                   // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
                   // 것은 색으로 그대로 보여 준다(5차).

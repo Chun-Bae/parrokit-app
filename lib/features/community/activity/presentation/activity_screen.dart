@@ -44,8 +44,7 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
 
   /// 빈 화면에 적을 말. 메뉴에서 누른 줄 이름을 그대로 쓴다.
   String _emptyText() {
-    final title =
-        communityActivityTitle(widget.boardType, widget.activityType);
+    final title = communityActivityTitle(widget.boardType, widget.activityType);
     if (title == null || title.isEmpty) return '아직 활동이 없어요.';
     return '아직 ${iGa(title)} 없어요.';
   }

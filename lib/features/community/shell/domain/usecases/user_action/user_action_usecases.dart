@@ -26,7 +26,8 @@ class ToggleCommentLikeUseCase {
 
   ToggleCommentLikeUseCase(this._repository);
 
-  Future<void> execute(String postId, String commentId, String userId, bool targetState) async {
+  Future<void> execute(
+      String postId, String commentId, String userId, bool targetState) async {
     await _repository.toggleCommentLike(postId, commentId, userId, targetState);
   }
 }

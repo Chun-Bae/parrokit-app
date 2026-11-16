@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/features/community/shared/presentation/write_failed_message.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
@@ -305,8 +306,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                         TextButton(
                           onPressed: _canComplete
                               ? _submitPost
-                              : () => showWriteFailedMessage(
-                                  context, _blockedReason ?? ''),
+                              : () => showToast(_blockedReason ?? ''),
                           child: context.watch<CommunityProvider>().isLoading
                               ? const SizedBox(
                                   width: 20,
@@ -532,13 +532,12 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                           final text = val.trim();
                           if (text.isNotEmpty && !_tags.contains(text)) {
                             if (text.length > PostValidator.maxTagLength) {
-                              showWriteFailedMessage(context,
+                              showToast(
                                   '태그는 ${PostValidator.maxTagLength}글자까지 쓸 수 있어요.');
                               return;
                             }
                             if (_tags.length >= PostValidator.maxTags) {
-                              showWriteFailedMessage(
-                                  context, '태그는 20개까지 붙일 수 있어요.');
+                              showToast('태그는 20개까지 붙일 수 있어요.');
                               return;
                             }
 
@@ -641,8 +640,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 _selectedImages.length;
                             final int remainingSlot = 5 - currentCount;
                             if (remainingSlot <= 0) {
-                              showWriteFailedMessage(
-                                  context, '사진은 5장까지 넣을 수 있어요.');
+                              showToast('사진은 5장까지 넣을 수 있어요.');
                               return;
                             }
 
@@ -655,8 +653,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               );
                             } catch (e) {
                               if (!context.mounted) return;
-                              showWriteFailedMessage(
-                                  context, '열 수 없는 사진이에요. 다른 사진을 골라 주세요.');
+                              showToast('열 수 없는 사진이에요. 다른 사진을 골라 주세요.');
                               return;
                             }
                             if (images.isEmpty) return;
@@ -687,8 +684,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                           ),
                         ),
                         // 아직 못 올리면 무엇이 빠졌는지 여기 적는다. 꺼진
-                        // '완료'만 보고는 알 수 없었고, 이 화면에서는 토스트가
-                        // 그려지지 않는다(5차).
+                        // '완료'만 보고는 알 수 없고, 눌렀을 때 뜨는 토스트는
+                        // 2.5초면 사라진다(5차).
                         if (_blockedReason case final reason?) ...[
                           const SizedBox(width: 12),
                           Expanded(

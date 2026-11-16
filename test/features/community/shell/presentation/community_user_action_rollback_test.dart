@@ -46,7 +46,8 @@ class _Repo extends CommunityRepository {
       PostPage(posts: posts, lastDocument: null, hasMore: false);
 
   @override
-  Future<Map<String, bool>> getUserPostActions(String postId, String userId) async =>
+  Future<Map<String, bool>> getUserPostActions(
+          String postId, String userId) async =>
       {'isLiked': false, 'isScrapped': false};
 
   @override
@@ -56,7 +57,8 @@ class _Repo extends CommunityRepository {
   }
 
   @override
-  Future<void> toggleScrap(String postId, String userId, bool isScrapped) async {
+  Future<void> toggleScrap(
+      String postId, String userId, bool isScrapped) async {
     if (fail) throw Exception('서버 오류');
   }
 }

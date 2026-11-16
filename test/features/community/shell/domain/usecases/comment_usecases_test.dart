@@ -23,7 +23,8 @@ void main() {
         content: '테스트 댓글',
       );
 
-      when(mockRepository.addComment(any, any)).thenAnswer((_) async => returnedComment);
+      when(mockRepository.addComment(any, any))
+          .thenAnswer((_) async => returnedComment);
 
       final result = await addCommentUseCase.execute(
         'post_123',

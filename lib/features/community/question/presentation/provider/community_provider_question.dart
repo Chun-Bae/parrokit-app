@@ -74,9 +74,11 @@ extension CommunityProviderQuestion on CommunityProvider {
         );
       }
 
-      final commentIndex = _currentPostComments.indexWhere((c) => c.id == commentId);
+      final commentIndex =
+          _currentPostComments.indexWhere((c) => c.id == commentId);
       if (commentIndex != -1) {
-        _currentPostComments[commentIndex] = _currentPostComments[commentIndex].copyWith(
+        _currentPostComments[commentIndex] =
+            _currentPostComments[commentIndex].copyWith(
           isAccepted: true,
         );
       }

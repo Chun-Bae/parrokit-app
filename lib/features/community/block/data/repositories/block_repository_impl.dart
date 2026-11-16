@@ -8,7 +8,8 @@ class BlockRepositoryImpl implements BlockRepository {
   BlockRepositoryImpl(this._firebaseUserService);
 
   @override
-  Future<List<BlockedUser>> loadBlockedUsers(List<String> blockedUserIds) async {
+  Future<List<BlockedUser>> loadBlockedUsers(
+      List<String> blockedUserIds) async {
     if (blockedUserIds.isEmpty) {
       return const [];
     }
@@ -34,7 +35,8 @@ class BlockRepositoryImpl implements BlockRepository {
   Future<String?> resolveUserIdByDisplayName(String displayName) async {
     if (displayName.isEmpty) return null;
 
-    final byDisplayName = await _firebaseUserService.loadUserDocumentByDisplayName(displayName);
+    final byDisplayName =
+        await _firebaseUserService.loadUserDocumentByDisplayName(displayName);
     return byDisplayName?.id;
   }
 
@@ -51,7 +53,8 @@ class BlockRepositoryImpl implements BlockRepository {
     required String uid,
     required String blockedUserId,
   }) {
-    return _firebaseUserService.blockUser(uid: uid, blockedUserId: blockedUserId);
+    return _firebaseUserService.blockUser(
+        uid: uid, blockedUserId: blockedUserId);
   }
 
   @override
@@ -59,6 +62,7 @@ class BlockRepositoryImpl implements BlockRepository {
     required String uid,
     required String blockedUserId,
   }) {
-    return _firebaseUserService.unblockUser(uid: uid, blockedUserId: blockedUserId);
+    return _firebaseUserService.unblockUser(
+        uid: uid, blockedUserId: blockedUserId);
   }
 }

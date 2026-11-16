@@ -30,7 +30,8 @@ class BlockProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<String> get blockedUserIds => _userProvider.currentUser?.blockedUserIds ?? const [];
+  List<String> get blockedUserIds =>
+      _userProvider.currentUser?.blockedUserIds ?? const [];
 
   Future<void> loadBlockedUsers() async {
     final currentUser = _userProvider.currentUser;
@@ -45,7 +46,8 @@ class BlockProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final users = await _loadBlockedUsersUseCase.execute(currentUser.blockedUserIds);
+      final users =
+          await _loadBlockedUsersUseCase.execute(currentUser.blockedUserIds);
       _blockedUsers
         ..clear()
         ..addAll(users);
@@ -73,7 +75,8 @@ class BlockProvider extends ChangeNotifier {
       return false;
     }
 
-    if (currentUser.displayName != null && currentUser.displayName!.trim() == trimmedDisplayName) {
+    if (currentUser.displayName != null &&
+        currentUser.displayName!.trim() == trimmedDisplayName) {
       _errorMessage = '본인 닉네임은 차단할 수 없습니다.';
       notifyListeners();
       return false;
@@ -96,7 +99,8 @@ class BlockProvider extends ChangeNotifier {
 
       await _syncCurrentUser(
         currentUser.copyWith(
-          blockedUserIds: _appendBlockedUserId(currentUser.blockedUserIds, blockedUserId),
+          blockedUserIds:
+              _appendBlockedUserId(currentUser.blockedUserIds, blockedUserId),
           updatedAt: DateTime.now(),
         ),
       );
@@ -138,7 +142,8 @@ class BlockProvider extends ChangeNotifier {
 
       await _syncCurrentUser(
         currentUser.copyWith(
-          blockedUserIds: _appendBlockedUserId(currentUser.blockedUserIds, resolvedUserId),
+          blockedUserIds:
+              _appendBlockedUserId(currentUser.blockedUserIds, resolvedUserId),
           updatedAt: DateTime.now(),
         ),
       );
@@ -168,12 +173,14 @@ class BlockProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _unblockUserUseCase.execute(uid: currentUser.id, blockedUserId: blockedUserId);
+      await _unblockUserUseCase.execute(
+          uid: currentUser.id, blockedUserId: blockedUserId);
 
       await _syncCurrentUser(
         currentUser.copyWith(
-          blockedUserIds:
-              currentUser.blockedUserIds.where((id) => id != blockedUserId).toList(),
+          blockedUserIds: currentUser.blockedUserIds
+              .where((id) => id != blockedUserId)
+              .toList(),
           updatedAt: DateTime.now(),
         ),
       );
@@ -194,7 +201,8 @@ class BlockProvider extends ChangeNotifier {
     await _userProvider.updateUser(user);
   }
 
-  List<String> _appendBlockedUserId(List<String> blockedUserIds, String blockedUserId) {
+  List<String> _appendBlockedUserId(
+      List<String> blockedUserIds, String blockedUserId) {
     final updated = List<String>.from(blockedUserIds);
     if (!updated.contains(blockedUserId)) {
       updated.add(blockedUserId);

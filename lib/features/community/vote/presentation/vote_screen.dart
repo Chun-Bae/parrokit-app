@@ -696,8 +696,7 @@ class VoteCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 // 게시판·질문 상세처럼 이름을 붙인다. 아이콘만 있으면 엄지가
                 // '공감'인지 '좋아요'인지 알기 어려웠다(5차).
-                Text('공감 ${item.likeCount}',
-                    style: context.texts.bodyMedium),
+                Text('공감 ${item.likeCount}', style: context.texts.bodyMedium),
                 if (enablePostActions) ...[
                   const SizedBox(width: 16),
                   GestureDetector(
@@ -752,7 +751,8 @@ class VoteCard extends StatelessWidget {
                 builder: (ctx) => AlertDialog(
                   // 다른 확인 창처럼 제목은 하는 일, 본문은 앱 말투로(5차).
                   // 예전: '투표 확인' / '…투표하시겠습니까? 수정할 수 없습니다.'
-                  title: Text(voteConfirmTitle, style: context.texts.titleLarge),
+                  title:
+                      Text(voteConfirmTitle, style: context.texts.titleLarge),
                   content: Text(voteConfirmMessage(options[i].text)),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg)),

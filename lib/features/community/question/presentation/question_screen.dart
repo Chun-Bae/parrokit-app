@@ -73,9 +73,8 @@ class _QuestionScreenState extends State<QuestionScreen> {
     }
 
     // 질문만 골라 필터에 맞게 거르고 정렬한다(question_filter.dart).
-    final questionPosts =
-        questionsFor(provider.posts,
-            status: widget.selectedStatus, sort: widget.selectedSort);
+    final questionPosts = questionsFor(provider.posts,
+        status: widget.selectedStatus, sort: widget.selectedSort);
 
     if (questionPosts.isEmpty) {
       // "답변 대기"·"채택 완료"는 읽어 온 페이지에서 거른 것이라, 이 페이지에

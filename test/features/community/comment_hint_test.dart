@@ -17,7 +17,8 @@ void main() {
     expect(commentInputHint(replying: false), '댓글을 남겨 보세요');
     expect(commentInputHint(replying: true), '답글을 남겨 보세요');
     expect(
-      _read('lib/features/community/board/presentation/widgets/board_comment_input_bar.dart'),
+      _read(
+          'lib/features/community/board/presentation/widgets/board_comment_input_bar.dart'),
       contains('hintText: commentInputHint('),
     );
     expect(
@@ -27,7 +28,8 @@ void main() {
     // 질문 화면은 220에서 '답변'과 '답글'을 나눴다. 질문에 바로 다는 것은
     // 답변, 답변에 다는 것은 답글이다.
     expect(
-      _read('lib/features/community/question/presentation/question_view_screen.dart'),
+      _read(
+          'lib/features/community/question/presentation/question_view_screen.dart'),
       contains('hintText: questionInputHint('),
     );
   });

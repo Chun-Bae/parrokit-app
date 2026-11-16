@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/features/community/shared/presentation/write_failed_message.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/vote_option.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -80,7 +81,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
 
   void _addOption() {
     if (_optionControllers.length >= 5) {
-      showWriteFailedMessage(context, '항목은 5개까지 넣을 수 있어요.');
+      showToast('항목은 5개까지 넣을 수 있어요.');
       return;
     }
 
@@ -284,8 +285,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                     ? null
                     : _isValid
                         ? _submitVote
-                        : () => showWriteFailedMessage(
-                            context, _blockedReason ?? ''),
+                        : () => showToast(_blockedReason ?? ''),
                 style: ElevatedButton.styleFrom(
                   // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
                   // 것은 색으로 그대로 보여 준다(5차).
@@ -320,7 +320,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
               Container(color: dividerColor, height: 1),
 
               // 아직 못 올리면 무엇이 빠졌는지 맨 위에 적는다. 꺼진 '투표 올리기'
-              // 만 보고는 알 수 없었고, 이 화면에서는 토스트가 안 그려진다(5차).
+              // 만 보고는 알 수 없다. 눌렀을 때 뜨는 토스트는 2.5초면 사라진다(5차).
               if (_blockedReason case final reason?)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),

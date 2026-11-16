@@ -8,7 +8,8 @@ extension CommunityProviderVote on CommunityProvider {
 
   // 여러 투표글에 대한 내 투표 기록 일괄 조회 및 캐싱
   Future<void> fetchMyVotes(String userId) async {
-    final votePosts = _posts.where((p) => p.postType == 'vote').map((p) => p.id).toList();
+    final votePosts =
+        _posts.where((p) => p.postType == 'vote').map((p) => p.id).toList();
     if (votePosts.isEmpty) return;
 
     final fetchedVotes = await _repository.getMyVotes(userId, votePosts);

@@ -12,7 +12,10 @@ class CommunityNotificationRepositoryImpl
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _collection(String userId) {
-    return _firestore.collection('users').doc(userId).collection('notifications');
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications');
   }
 
   DocumentReference<Map<String, dynamic>> _userDoc(String userId) {
@@ -41,7 +44,8 @@ class CommunityNotificationRepositoryImpl
   }
 
   @override
-  Future<List<CommunityNotificationItem>> fetchNotifications(String userId) async {
+  Future<List<CommunityNotificationItem>> fetchNotifications(
+      String userId) async {
     if (userId.isEmpty) return const [];
 
     try {
@@ -84,14 +88,20 @@ class CommunityNotificationRepositoryImpl
         final isRead = notificationData['isRead'] as bool? ?? false;
         if (isRead) return;
 
-        transaction.set(notificationRef, {
-          'isRead': true,
-          'readAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-        transaction.set(userRef, {
-          'unreadNotificationCount': FieldValue.increment(-1),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        transaction.set(
+            notificationRef,
+            {
+              'isRead': true,
+              'readAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
+        transaction.set(
+            userRef,
+            {
+              'unreadNotificationCount': FieldValue.increment(-1),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
       });
     } catch (e) {
       AppLogger.e(
@@ -113,9 +123,8 @@ class CommunityNotificationRepositoryImpl
     if (userId.isEmpty) return;
 
     try {
-      final unreadSnapshot = await _collection(userId)
-          .where('isRead', isEqualTo: false)
-          .get();
+      final unreadSnapshot =
+          await _collection(userId).where('isRead', isEqualTo: false).get();
 
       final docs = unreadSnapshot.docs;
       if (docs.isEmpty) return;
@@ -124,10 +133,13 @@ class CommunityNotificationRepositoryImpl
         final end = (i + _maxBatchWrites).clamp(0, docs.length);
         final batch = _firestore.batch();
         for (final doc in docs.sublist(i, end)) {
-          batch.set(doc.reference, {
-            'isRead': true,
-            'readAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          batch.set(
+              doc.reference,
+              {
+                'isRead': true,
+                'readAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
         }
         await batch.commit();
       }
@@ -167,10 +179,13 @@ class CommunityNotificationRepositoryImpl
 
         transaction.delete(notificationRef);
         if (!isRead) {
-          transaction.set(userRef, {
-            'unreadNotificationCount': FieldValue.increment(-1),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          transaction.set(
+              userRef,
+              {
+                'unreadNotificationCount': FieldValue.increment(-1),
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
         }
       });
     } catch (e) {

@@ -72,8 +72,8 @@ class _CommunityNotificationScreenState
               IconButton(
                 key: const ValueKey('open-notification-settings'),
                 tooltip: '알림 설정',
-                onPressed: () => context
-                    .push(AppRoutes.communityNotificationSettingsPath),
+                onPressed: () =>
+                    context.push(AppRoutes.communityNotificationSettingsPath),
                 icon: Icon(Icons.settings_outlined,
                     size: 24, color: context.tokens.textPrimary),
               ),
@@ -131,8 +131,8 @@ class _CommunityNotificationScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
         title: const Text('알림 모두 지우기',
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('알림을 모두 지울까요?\n지우면 되돌릴 수 없어요.'),
@@ -147,8 +147,7 @@ class _CommunityNotificationScreenState
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('모두 지우기',
                 style: TextStyle(
-                    color: context.tokens.danger,
-                    fontWeight: FontWeight.bold)),
+                    color: context.tokens.danger, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

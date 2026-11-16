@@ -21,8 +21,10 @@ class CommunityNotificationChip extends StatelessWidget {
           color: theme.colorScheme.primary,
         ),
       ),
-      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.16)),
-      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+      side:
+          BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.16)),
+      backgroundColor:
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
       padding: EdgeInsets.zero,

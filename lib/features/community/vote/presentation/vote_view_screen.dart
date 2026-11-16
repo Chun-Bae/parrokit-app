@@ -277,7 +277,6 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
     );
   }
 
-
   List<Widget> _buildStructuredComments(
       List<Comment> allComments, String postAuthorId) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -578,8 +577,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    replyingToLabel(
-                        provider.replyingTo?.authorNickname ?? ''),
+                    replyingToLabel(provider.replyingTo?.authorNickname ?? ''),
                     style: context.texts.labelMedium
                         .copyWith(color: context.tokens.textSecondary),
                   ),
@@ -655,8 +653,8 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  tooltip: commentSendTooltip(
-                      replying: provider.replyingTo != null),
+                  tooltip:
+                      commentSendTooltip(replying: provider.replyingTo != null),
                   icon: Icon(
                     Icons.send_rounded,
                     color: _canSubmitComment

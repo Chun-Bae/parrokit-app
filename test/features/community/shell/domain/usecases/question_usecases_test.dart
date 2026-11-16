@@ -16,7 +16,8 @@ void main() {
 
   group('QuestionUseCases', () {
     test('AddQuestionUseCase - 정상적으로 질문 포스트가 추가되어야 한다', () async {
-      final addQuestionUseCase = AddQuestionUseCase(mockRepository, mockImageService);
+      final addQuestionUseCase =
+          AddQuestionUseCase(mockRepository, mockImageService);
 
       when(mockRepository.generatePostId()).thenReturn('q_123');
       final dummyPost = Post(
@@ -29,7 +30,8 @@ void main() {
         authorNickname: 'Nickname',
         snippet: 'snippet',
       );
-      when(mockRepository.addQuestion(any, any, any)).thenAnswer((_) async => dummyPost);
+      when(mockRepository.addQuestion(any, any, any))
+          .thenAnswer((_) async => dummyPost);
 
       await addQuestionUseCase.execute(
         title: '질문 제목',

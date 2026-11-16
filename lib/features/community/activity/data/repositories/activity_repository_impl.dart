@@ -51,7 +51,8 @@ class ActivityRepositoryImpl implements ActivityRepository {
             votedAtByPostId[doc.id] = _parseDateTime(doc.data()['votedAt']);
           }
 
-          final votePosts = await _fetchPostsByIds(snap.docs.map((doc) => doc.id).toList());
+          final votePosts =
+              await _fetchPostsByIds(snap.docs.map((doc) => doc.id).toList());
           final votePostMap = {for (final post in votePosts) post.id: post};
 
           for (final doc in snap.docs) {
@@ -108,9 +109,12 @@ class ActivityRepositoryImpl implements ActivityRepository {
               fieldName: 'createdAt',
             );
           }
-          hasMore = snap.docs.isNotEmpty ? snap.docs.length == limit : fallbackPage.hasMore;
+          hasMore = snap.docs.isNotEmpty
+              ? snap.docs.length == limit
+              : fallbackPage.hasMore;
         }
-      } else if (activityType == 'commented' || activityType == 'commented_reply') {
+      } else if (activityType == 'commented' ||
+          activityType == 'commented_reply') {
         final query = _firestore
             .collectionGroup('comments')
             .where('authorId', isEqualTo: userId)
@@ -299,9 +303,10 @@ class ActivityRepositoryImpl implements ActivityRepository {
   }) {
     if (cursor == null) return query;
     final cursorValue = cursor.sortValue;
-    final firestoreCursorValue = cursorField == 'createdAt' || cursorField == 'votedAt'
-        ? Timestamp.fromDate(cursorValue)
-        : cursorValue;
+    final firestoreCursorValue =
+        cursorField == 'createdAt' || cursorField == 'votedAt'
+            ? Timestamp.fromDate(cursorValue)
+            : cursorValue;
     return query.startAfter([firestoreCursorValue]);
   }
 
@@ -369,8 +374,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
     return posts;
   }
 
-  Future<_FallbackPostDocsPage>
-      _fetchFallbackPostDocs({
+  Future<_FallbackPostDocsPage> _fetchFallbackPostDocs({
     required String userId,
     required String boardType,
     required int limit,
@@ -418,14 +422,14 @@ class ActivityRepositoryImpl implements ActivityRepository {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     if (value is String) {
-      return DateTime.tryParse(value) ??
-          DateTime.fromMillisecondsSinceEpoch(0);
+      return DateTime.tryParse(value) ?? DateTime.fromMillisecondsSinceEpoch(0);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   Map<String, dynamic> _normalizeFirestoreMap(Map<String, dynamic> data) {
-    return data.map((key, value) => MapEntry(key, _normalizeFirestoreValue(value)));
+    return data
+        .map((key, value) => MapEntry(key, _normalizeFirestoreValue(value)));
   }
 
   dynamic _normalizeFirestoreValue(dynamic value) {

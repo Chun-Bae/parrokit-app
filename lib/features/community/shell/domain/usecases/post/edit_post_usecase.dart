@@ -59,7 +59,8 @@ class EditPostUseCase {
       'tags': tags,
       'hasImage': finalImageUrls.isNotEmpty,
       'imageUrls': finalImageUrls,
-      'snippet': content.length > 50 ? '${content.substring(0, 50)}...' : content,
+      'snippet':
+          content.length > 50 ? '${content.substring(0, 50)}...' : content,
     };
 
     // 지울 이미지는 저장이 끝난 뒤에 지운다. 전에는 맨 먼저 지웠다.

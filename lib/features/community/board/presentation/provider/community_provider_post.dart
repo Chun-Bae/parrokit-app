@@ -220,7 +220,7 @@ extension CommunityProviderPost on CommunityProvider {
         return false;
       }
       await deletePostUseCase.execute(matched.first);
-      
+
       _posts.removeWhere((post) => post.id == postId);
 
       _isLoading = false;

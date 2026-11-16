@@ -25,10 +25,9 @@ void main() {
     expect(code, contains('지우면 되돌릴 수 없어요.'));
     // 메뉴에서 바로 지우지 않는다. 확인을 거치는 함수만 부른다.
     expect(code, contains('_confirmDeleteAll'));
-    final menuCall =
-        RegExp(r'onTap: provider\.hasNotifications\s*\n\s*\? \(\) => _confirmDeleteAll');
-    expect(menuCall.hasMatch(code), isTrue,
-        reason: '메뉴의 모두 지우기가 확인 창을 거쳐야 한다');
+    final menuCall = RegExp(
+        r'onTap: provider\.hasNotifications\s*\n\s*\? \(\) => _confirmDeleteAll');
+    expect(menuCall.hasMatch(code), isTrue, reason: '메뉴의 모두 지우기가 확인 창을 거쳐야 한다');
   });
 
   test('확인 창 버튼 이름이 하는 일과 같다', () {

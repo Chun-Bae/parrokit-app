@@ -95,11 +95,17 @@ mixin CommunityRepositoryComment {
     bool isLiked,
   ) async {
     try {
-      final commentRef =
-          _firestore.collection('posts').doc(postId).collection('comments').doc(commentId);
+      final commentRef = _firestore
+          .collection('posts')
+          .doc(postId)
+          .collection('comments')
+          .doc(commentId);
       final likeDocId = '${postId}_$commentId';
-      final likeRef =
-          _firestore.collection('users').doc(userId).collection('comment_likes').doc(likeDocId);
+      final likeRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('comment_likes')
+          .doc(likeDocId);
 
       await _firestore.runTransaction((transaction) async {
         if (isLiked) {
@@ -108,10 +114,12 @@ mixin CommunityRepositoryComment {
             'commentId': commentId,
             'createdAt': FieldValue.serverTimestamp(),
           });
-          transaction.update(commentRef, {'likeCount': FieldValue.increment(1)});
+          transaction
+              .update(commentRef, {'likeCount': FieldValue.increment(1)});
         } else {
           transaction.delete(likeRef);
-          transaction.update(commentRef, {'likeCount': FieldValue.increment(-1)});
+          transaction
+              .update(commentRef, {'likeCount': FieldValue.increment(-1)});
         }
       });
     } catch (e) {
@@ -121,18 +129,19 @@ mixin CommunityRepositoryComment {
 
   Future<Set<String>> getLikedCommentIds(String userId) async {
     try {
-      final snap =
-          await _firestore.collection('users').doc(userId).collection('comment_likes').get();
-      return snap.docs
-          .map((doc) {
-            final data = doc.data();
-            final commentId = data['commentId'] as String?;
-            if (commentId != null && commentId.isNotEmpty) {
-              return commentId;
-            }
-            return doc.id;
-          })
-          .toSet();
+      final snap = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('comment_likes')
+          .get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        final commentId = data['commentId'] as String?;
+        if (commentId != null && commentId.isNotEmpty) {
+          return commentId;
+        }
+        return doc.id;
+      }).toSet();
     } catch (e) {
       // 실패하면 좋아요가 전부 안 눌린 것처럼 보인다. 조용히 넘기지는 않는다.
       AppLogger.w('[CommunityRepository] 댓글 좋아요 목록 불러오기 실패 userId=$userId: $e');

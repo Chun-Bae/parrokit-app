@@ -38,7 +38,9 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     final currentDisplayName = currentUser?.displayName?.trim();
-    if (currentDisplayName != null && currentDisplayName.isNotEmpty && currentDisplayName == identifier) {
+    if (currentDisplayName != null &&
+        currentDisplayName.isNotEmpty &&
+        currentDisplayName == identifier) {
       showToast('본인 닉네임이에요.');
       return;
     }
@@ -139,7 +141,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Expanded(
-              child: blockProvider.isLoading && blockProvider.blockedUsers.isEmpty
+              child: blockProvider.isLoading &&
+                      blockProvider.blockedUsers.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : blockProvider.blockedUsers.isEmpty
                       // 다른 목록 화면과 같은 빈 화면 모양을 쓴다.
@@ -149,7 +152,8 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                           description: '차단하면 그 사람의 글과 댓글이 보이지 않아요.',
                         )
                       : RefreshIndicator(
-                          onRefresh: () => context.read<BlockProvider>().loadBlockedUsers(),
+                          onRefresh: () =>
+                              context.read<BlockProvider>().loadBlockedUsers(),
                           child: ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: blockProvider.blockedUsers.length,
@@ -160,12 +164,14 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                               return ListTile(
                                 contentPadding: EdgeInsets.zero,
                                 leading: CircleAvatar(
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                  backgroundColor:
+                                      colorScheme.surfaceContainerHighest,
                                   backgroundImage: user.photoUrl != null &&
                                           user.photoUrl!.isNotEmpty
                                       ? NetworkImage(user.photoUrl!)
                                       : null,
-                                  child: user.photoUrl == null || user.photoUrl!.isEmpty
+                                  child: user.photoUrl == null ||
+                                          user.photoUrl!.isEmpty
                                       ? const Icon(Icons.person)
                                       : null,
                                 ),

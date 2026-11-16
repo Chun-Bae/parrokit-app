@@ -18,13 +18,11 @@ void main() {
       expect(posts.every((p) => isFakePost(p.id) && p.postType == type), isTrue,
           reason: type);
     }
-    expect(
-        fakeCommunityPosts('question').map((p) => p.questionStatus).toSet(),
+    expect(fakeCommunityPosts('question').map((p) => p.questionStatus).toSet(),
         containsAll(['waiting', 'resolved']));
   });
 
-  test('가짜 글에 공감·스크랩·투표·댓글·조회수를 눌러도 서버에 아무것도 쓰지 않는다',
-      () async {
+  test('가짜 글에 공감·스크랩·투표·댓글·조회수를 눌러도 서버에 아무것도 쓰지 않는다', () async {
     final firestore = FakeFirebaseFirestore();
     final provider = CommunityProvider(
       repository: CommunityRepository(firestore: firestore),
@@ -75,8 +73,10 @@ void main() {
     final q = questions.firstWhere((p) => p.questionStatus == 'resolved').id;
     await provider.fetchComments(q, currentUserId: 'u1');
     expect(provider.currentPostComments, hasLength(3));
-    expect(provider.currentPostComments.where((c) => c.isAccepted), hasLength(1));
-    expect(provider.currentPostComments.where((c) => c.parentId != null), hasLength(1));
+    expect(
+        provider.currentPostComments.where((c) => c.isAccepted), hasLength(1));
+    expect(provider.currentPostComments.where((c) => c.parentId != null),
+        hasLength(1));
     expect(fakeCommunityComments('real-post'), isEmpty);
     expect(firestore.dump(), FakeFirebaseFirestore().dump());
   });

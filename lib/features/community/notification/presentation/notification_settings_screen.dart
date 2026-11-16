@@ -137,20 +137,18 @@ class _NotificationSettingsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.notifications_off_rounded, color: cs.error),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '휴대폰 설정에서 패로킷 알림이 꺼져 있어요. 아래를 켜도 '
-                            '휴대폰 설정 > 패로킷 > 알림을 켜야 받을 수 있어요.',
-                            style: context.texts.bodyMedium
-                                .copyWith(color: cs.onErrorContainer),
-                          ),
-                        ),
-                      ]),
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Icon(Icons.notifications_off_rounded, color: cs.error),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '휴대폰 설정에서 패로킷 알림이 꺼져 있어요. 아래를 켜도 '
+                        '휴대폰 설정 > 패로킷 > 알림을 켜야 받을 수 있어요.',
+                        style: context.texts.bodyMedium
+                            .copyWith(color: cs.onErrorContainer),
+                      ),
+                    ),
+                  ]),
                   const SizedBox(height: 10),
                   // 어디로 가야 하는지 적어만 두고 찾아가게 두면 멀다.
                   // 바로 그 화면을 연다(5차).

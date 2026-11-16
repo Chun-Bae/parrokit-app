@@ -32,9 +32,7 @@ String activityEmptyDescription(String boardType, String activityType) {
           ? '답변에 남긴 답글이 여기에 모여요.'
           : '댓글에 남긴 답글이 여기에 모여요.';
     case 'liked':
-      return boardType == 'question'
-          ? '공감한 질문이 여기에 모여요.'
-          : '공감한 글이 여기에 모여요.';
+      return boardType == 'question' ? '공감한 질문이 여기에 모여요.' : '공감한 글이 여기에 모여요.';
     case 'liked_comment':
       return boardType == 'question'
           ? '좋아요한 답변과 답글이 여기에 모여요.'

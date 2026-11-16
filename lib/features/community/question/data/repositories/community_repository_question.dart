@@ -8,7 +8,8 @@ mixin CommunityRepositoryQuestion {
   FirebaseFunctions get _functions;
 
   /// [requiredCrackers]는 [post]의 rewardCrackers와 같다. 서버는 글의 값을 쓴다.
-  Future<Post> addQuestion(Post post, String userId, int requiredCrackers) async {
+  Future<Post> addQuestion(
+      Post post, String userId, int requiredCrackers) async {
     try {
       final json = post.copyWith(rewardCrackers: requiredCrackers).toJson();
       // 서버는 시간대가 없는 문자열을 UTC로 읽는다. 마감 시각이 9시간
@@ -16,9 +17,8 @@ mixin CommunityRepositoryQuestion {
       if (post.expireAt != null) {
         json['expireAt'] = post.expireAt!.toUtc().toIso8601String();
       }
-      final result = await _functions
-          .httpsCallable('createQuestion')
-          .call({'post': json});
+      final result =
+          await _functions.httpsCallable('createQuestion').call({'post': json});
       final data = Map<String, dynamic>.from(result.data as Map);
       return Post.fromJson(Map<String, dynamic>.from(data['post'] as Map));
     } on FirebaseFunctionsException catch (e) {

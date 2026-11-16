@@ -20,8 +20,7 @@ class _ActionsRepository extends CommunityRepository {
       pending[postId]!.complete({'isLiked': liked, 'isScrapped': scrapped});
 
   @override
-  Future<Map<String, bool>> getUserPostActions(
-          String postId, String userId) =>
+  Future<Map<String, bool>> getUserPostActions(String postId, String userId) =>
       (pending[postId] = Completer()).future;
 
   @override
@@ -57,8 +56,7 @@ void main() {
     expect(provider.isPostScrapped('a'), isTrue);
   });
 
-  test('지금 글 값이 오기 전에 앞 글 값이 와도 지금 글 공감은 바르게 보낸다',
-      () async {
+  test('지금 글 값이 오기 전에 앞 글 값이 와도 지금 글 공감은 바르게 보낸다', () async {
     final a = provider.loadUserActions('a', userId: 'me');
     final b = provider.loadUserActions('b', userId: 'me');
 

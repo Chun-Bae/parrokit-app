@@ -4,7 +4,8 @@ import 'package:parrokit/features/community/shell/presentation/utils/community_p
 
 void main() {
   final now = DateTime(2026, 11, 14, 12);
-  String at(Duration ago) => formatCommunityTimeAgo(now.subtract(ago), now: now);
+  String at(Duration ago) =>
+      formatCommunityTimeAgo(now.subtract(ago), now: now);
 
   test('일주일 안은 지난 시간으로', () {
     expect(formatCommunityTimeAgo(null), '');
@@ -16,7 +17,7 @@ void main() {
 
   test('일주일이 넘으면 날짜, 올해가 아니면 연도까지', () {
     expect(at(const Duration(days: 7)), '11월 7일');
-    expect(formatCommunityTimeAgo(DateTime(2025, 3, 2), now: now),
-        '2025년 3월 2일');
+    expect(
+        formatCommunityTimeAgo(DateTime(2025, 3, 2), now: now), '2025년 3월 2일');
   });
 }

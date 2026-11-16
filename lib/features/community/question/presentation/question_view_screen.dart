@@ -263,7 +263,6 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -675,8 +674,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       child: Row(
                         children: [
                           Flexible(
-                            child: Text(
-                                isBlocked ? '차단한 사용자' : answererName,
+                            child: Text(isBlocked ? '차단한 사용자' : answererName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: context.texts.bodyLarge
@@ -768,7 +766,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       Row(
                         children: [
                           IconButton(
-                            tooltip: '좋아요',
+                              tooltip: '좋아요',
                               icon: Icon(
                                   // 답변(댓글) 좋아요는 하트(투표 댓글과 같게).
                                   provider.likedCommentIds.contains(answer.id)

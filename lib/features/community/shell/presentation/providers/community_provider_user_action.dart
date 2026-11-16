@@ -4,7 +4,8 @@ extension CommunityProviderUserAction on CommunityProvider {
   bool isPostLiked(String postId) => _postLikedStates[postId] ?? false;
   bool isPostScrapped(String postId) => _postScrappedStates[postId] ?? false;
 
-  Future<void> loadUserActionsForPosts(List<String> postIds, {String? userId}) async {
+  Future<void> loadUserActionsForPosts(List<String> postIds,
+      {String? userId}) async {
     if (postIds.isEmpty) return;
     if (userId == null) {
       for (final postId in postIds) {
@@ -60,7 +61,8 @@ extension CommunityProviderUserAction on CommunityProvider {
     if (isFakePost(postId)) return; // 가짜 글은 서버에 쓰지 않는다
 
     try {
-      final incremented = await incrementViewCountUseCase.execute(postId, userId: userId);
+      final incremented =
+          await incrementViewCountUseCase.execute(postId, userId: userId);
       if (incremented) {
         final postIndex = _posts.indexWhere((p) => p.id == postId);
         if (postIndex != -1) {
@@ -88,7 +90,8 @@ extension CommunityProviderUserAction on CommunityProvider {
     final postIndex = _posts.indexWhere((p) => p.id == postId);
     if (postIndex != -1) {
       final p = _posts[postIndex];
-      _posts[postIndex] = p.copyWith(likeCount: p.likeCount + (targetState ? 1 : -1));
+      _posts[postIndex] =
+          p.copyWith(likeCount: p.likeCount + (targetState ? 1 : -1));
     }
     _notifyListenersSafe();
 

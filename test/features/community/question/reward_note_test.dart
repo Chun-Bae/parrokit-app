@@ -4,8 +4,8 @@ import 'package:parrokit/features/community/question/presentation/question_write
 
 void main() {
   test('넉넉하면 보유량과 어디로 가는지', () {
-    expect(rewardNote(44900, 100),
-        '보유 44,900 · 질문을 올리면 바로 빠지고, 채택한 답변에 그대로 가요.');
+    expect(
+        rewardNote(44900, 100), '보유 44,900 · 질문을 올리면 바로 빠지고, 채택한 답변에 그대로 가요.');
   });
 
   test('모자라면 모자란 만큼', () {

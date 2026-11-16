@@ -23,7 +23,8 @@ void main() {
           category: '자유',
           tags: ['태그1'],
         ),
-        throwsA(isA<ArgumentError>().having((e) => e.message, 'message', '제목을 입력해주세요.')),
+        throwsA(isA<ArgumentError>()
+            .having((e) => e.message, 'message', '제목을 입력해주세요.')),
       );
     });
 
@@ -35,7 +36,8 @@ void main() {
           category: '자유',
           tags: ['태그1'],
         ),
-        throwsA(isA<ArgumentError>().having((e) => e.message, 'message', '내용을 입력해주세요.')),
+        throwsA(isA<ArgumentError>()
+            .having((e) => e.message, 'message', '내용을 입력해주세요.')),
       );
     });
 
@@ -47,12 +49,14 @@ void main() {
           category: '',
           tags: ['태그1'],
         ),
-        throwsA(isA<ArgumentError>().having((e) => e.message, 'message', '주제를 선택해주세요.')),
+        throwsA(isA<ArgumentError>()
+            .having((e) => e.message, 'message', '주제를 선택해주세요.')),
       );
     });
 
     test('태그가 최대 개수를 초과하면 ArgumentError를 던진다', () {
-      final tags = List.generate(PostValidator.maxTags + 1, (index) => '태그$index');
+      final tags =
+          List.generate(PostValidator.maxTags + 1, (index) => '태그$index');
       expect(
         () => PostValidator.validateForCreate(
           title: '정상 제목',
@@ -60,8 +64,8 @@ void main() {
           category: '자유',
           tags: tags,
         ),
-        throwsA(isA<ArgumentError>().having(
-            (e) => e.message, 'message', '태그는 최대 ${PostValidator.maxTags}개까지만 등록할 수 있습니다.')),
+        throwsA(isA<ArgumentError>().having((e) => e.message, 'message',
+            '태그는 최대 ${PostValidator.maxTags}개까지만 등록할 수 있습니다.')),
       );
     });
 
@@ -74,8 +78,8 @@ void main() {
           category: '자유',
           tags: [longTag],
         ),
-        throwsA(isA<ArgumentError>().having(
-            (e) => e.message, 'message', '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.')),
+        throwsA(isA<ArgumentError>().having((e) => e.message, 'message',
+            '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해주세요.')),
       );
     });
   });

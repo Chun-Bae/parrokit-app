@@ -11,7 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 final _contentLine = RegExp(r'(\w+\.content|answer\.content)\s*,\s*$');
 
 /// 긴 글에 쓰면 안 되는 굵은 역할.
-final _boldRole = RegExp(r'texts\.(titleMedium|titleLarge|bodyLarge|bodyMedium)');
+final _boldRole =
+    RegExp(r'texts\.(titleMedium|titleLarge|bodyLarge|bodyMedium)');
 
 void main() {
   test('커뮤니티 글 내용은 굵은 역할로 그리지 않는다', () {
@@ -32,7 +33,9 @@ void main() {
         // 목록 카드의 미리보기(maxLines로 잘라 보여 주는 줄)는 읽는 글이
         // 아니라 요약이라 그대로 둔다.
         if (block.contains('maxLines')) continue;
-        for (var j = i + 1; j < (i + 4 < lines.length ? i + 4 : lines.length); j++) {
+        for (var j = i + 1;
+            j < (i + 4 < lines.length ? i + 4 : lines.length);
+            j++) {
           if (_boldRole.hasMatch(lines[j])) {
             offenders.add('${file.path}:${j + 1}  ${lines[j].trim()}');
           }

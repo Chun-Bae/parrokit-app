@@ -31,8 +31,10 @@ void main() {
   final posts = [
     q('new-popular', likes: 7, at: day.add(const Duration(days: 3))),
     q('old-many', likes: 9, at: day, status: 'resolved'),
-    q('mid-tie-more-comments', likes: 5, comments: 4, at: day.add(const Duration(days: 1))),
-    q('mid-tie-less-comments', likes: 5, comments: 1, at: day.add(const Duration(days: 2))),
+    q('mid-tie-more-comments',
+        likes: 5, comments: 4, at: day.add(const Duration(days: 1))),
+    q('mid-tie-less-comments',
+        likes: 5, comments: 1, at: day.add(const Duration(days: 2))),
     q('no-date', likes: 0),
     q('board-post', likes: 99, at: day, type: 'board'),
   ];
@@ -96,7 +98,8 @@ void main() {
     // 전에는 질문만 'N일 남음'·'기한 지남'이고 투표는 'N일 뒤 마감'이었다(5차).
     final now = DateTime(2026, 11, 14, 12);
     expect(questionDeadlineLabel(null, now), isNull);
-    expect(questionDeadlineLabel(now.add(const Duration(days: 2, hours: 3)), now),
+    expect(
+        questionDeadlineLabel(now.add(const Duration(days: 2, hours: 3)), now),
         '2일 뒤 마감');
     expect(questionDeadlineLabel(now.add(const Duration(hours: 5)), now),
         '5시간 뒤 마감');

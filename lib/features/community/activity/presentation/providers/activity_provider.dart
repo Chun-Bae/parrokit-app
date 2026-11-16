@@ -8,7 +8,8 @@ class ActivityProvider extends ChangeNotifier {
   final GetActivitiesUseCase _getActivitiesUseCase;
 
   ActivityProvider({GetActivitiesUseCase? getActivitiesUseCase})
-      : _getActivitiesUseCase = getActivitiesUseCase ?? GetActivitiesUseCase(ActivityRepositoryImpl());
+      : _getActivitiesUseCase = getActivitiesUseCase ??
+            GetActivitiesUseCase(ActivityRepositoryImpl());
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

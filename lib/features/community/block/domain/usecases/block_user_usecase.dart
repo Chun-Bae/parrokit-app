@@ -10,7 +10,8 @@ class BlockUserUseCase {
     required List<String> blockedUserIds,
     required String displayName,
   }) async {
-    final blockedUserId = await _repository.resolveUserIdByDisplayName(displayName);
+    final blockedUserId =
+        await _repository.resolveUserIdByDisplayName(displayName);
     if (blockedUserId == null || blockedUserId.isEmpty) {
       return null;
     }

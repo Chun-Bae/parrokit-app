@@ -6,8 +6,11 @@ mixin CommunityRepositoryVote {
   Future<void> votePost(String postId, String userId, int optionIndex) async {
     final postRef = _firestore.collection('posts').doc(postId);
     final voterRef = postRef.collection('voters').doc(userId);
-    final userVotedPostRef =
-        _firestore.collection('users').doc(userId).collection('voted_posts').doc(postId);
+    final userVotedPostRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('voted_posts')
+        .doc(postId);
 
     try {
       await _firestore.runTransaction((transaction) async {
@@ -52,7 +55,8 @@ mixin CommunityRepositoryVote {
     }
   }
 
-  Future<Map<String, int>> getMyVotes(String userId, List<String> postIds) async {
+  Future<Map<String, int>> getMyVotes(
+      String userId, List<String> postIds) async {
     final myVotes = <String, int>{};
     if (postIds.isEmpty) return myVotes;
 
@@ -67,7 +71,8 @@ mixin CommunityRepositoryVote {
             .where(FieldPath.documentId, whereIn: chunk)
             .get();
         for (final doc in snapshot.docs) {
-          final selectedOption = (doc.data()['selectedOption'] as num?)?.toInt();
+          final selectedOption =
+              (doc.data()['selectedOption'] as num?)?.toInt();
           if (selectedOption != null) {
             myVotes[doc.id] = selectedOption;
           }

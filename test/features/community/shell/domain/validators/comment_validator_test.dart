@@ -13,7 +13,8 @@ void main() {
     test('내용이 비어있으면 ArgumentError를 던진다', () {
       expect(
         () => CommentValidator.validateForCreate('   '),
-        throwsA(isA<ArgumentError>().having((e) => e.message, 'message', '댓글 내용을 입력해주세요.')),
+        throwsA(isA<ArgumentError>()
+            .having((e) => e.message, 'message', '댓글 내용을 입력해주세요.')),
       );
     });
   });

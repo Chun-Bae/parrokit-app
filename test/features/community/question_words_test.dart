@@ -40,15 +40,15 @@ void main() {
 
   test('질문 머리 버튼은 답변 쓰기, 답변 아래는 답글 쓰기', () {
     expect(questionWriteAnswerLabel, '답변 쓰기');
-    final code =
-        _code('lib/features/community/question/presentation/question_view_screen.dart');
+    final code = _code(
+        'lib/features/community/question/presentation/question_view_screen.dart');
     expect(code, contains('label: questionWriteAnswerLabel'));
     expect(code, contains('CommentReplyButton('));
   });
 
   test('화면이 이 글들을 쓴다', () {
-    final code =
-        _code('lib/features/community/question/presentation/question_view_screen.dart');
+    final code = _code(
+        'lib/features/community/question/presentation/question_view_screen.dart');
     expect(code, contains('questionAcceptMessage('));
     expect(code, contains('questionNoAnswersMessage'));
     expect(code, contains('questionBlockedAnswerMessage'));
