@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/core/infrastructure/repositories/user_repository.dart';
+import 'package:parrokit/core/content/author_profile.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 /// 앱 전역에서 사용하는 "현재 유저" 상태를 관리하는 Provider.
@@ -27,7 +28,7 @@ class UserProvider extends ChangeNotifier {
 
   /// 라우터 새로고침 전용 Notifier (로그인 상태, 온보딩 상태 변경 시에만 호출)
   final ChangeNotifier routerRefreshNotifier = ChangeNotifier();
-  
+
   // 라우팅 상태 캐싱용 변수
   bool _lastIsLoggedIn = false;
   bool _lastHasNickname = false;
@@ -71,10 +72,11 @@ class UserProvider extends ChangeNotifier {
   /// 내부적으로 라우팅에 영향을 주는 상태가 바뀌었는지 확인하고 알림
   void _checkAndNotifyRouter() {
     final currentIsLoggedIn = isLoggedIn;
-    final currentHasNickname = _currentUser?.displayName != null && 
+    final currentHasNickname = _currentUser?.displayName != null &&
         _currentUser!.displayName!.isNotEmpty;
-        
-    if (_lastIsLoggedIn != currentIsLoggedIn || _lastHasNickname != currentHasNickname) {
+
+    if (_lastIsLoggedIn != currentIsLoggedIn ||
+        _lastHasNickname != currentHasNickname) {
       _lastIsLoggedIn = currentIsLoggedIn;
       _lastHasNickname = currentHasNickname;
       // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
@@ -118,12 +120,12 @@ class UserProvider extends ChangeNotifier {
         password: password,
         sendEmailVerification: sendEmailVerification,
       );
-      
+
       // 회원가입 직후 닉네임 설정이 있다면 연달아 세팅
       if (nickname != null && nickname.isNotEmpty) {
         await _userRepository.updateDisplayName(nickname);
       }
-      
+
       // 최신 상태 다시 불러오기
       final updatedUser = await _userRepository.getCurrentUser();
       if (updatedUser != null) {
@@ -270,6 +272,8 @@ class UserProvider extends ChangeNotifier {
         photoUrl: photoUrl,
         clearPhotoUrl: photoUrl == null,
       );
+      // 공유 문장 같은 다른 화면의 작은 프로필 사진도 바로 바뀌게 한다(5차 344).
+      AuthorProfiles.remember(_currentUser!.id, photoUrl);
       notifyListeners();
       _checkAndNotifyRouter();
     }
@@ -299,11 +303,11 @@ class UserProvider extends ChangeNotifier {
     required bool isParrotsToCrackers,
   }) async {
     if (_currentUser == null) return;
-    
+
     // 1. Optimistic Update (화면에 남은 돈/받은 돈 즉시 반영)
     int newParrots = _currentUser!.parrots;
     int newCrackers = _currentUser!.crackers;
-    
+
     if (isParrotsToCrackers) {
       newParrots -= amountToDeduct;
       newCrackers += amountToAdd;
@@ -311,7 +315,7 @@ class UserProvider extends ChangeNotifier {
       newCrackers -= amountToDeduct;
       newParrots += amountToAdd;
     }
-    
+
     _currentUser = _currentUser!.copyWith(
       parrots: newParrots,
       crackers: newCrackers,
@@ -434,22 +438,25 @@ class UserProvider extends ChangeNotifier {
     _userSubscription = _userRepository.watchUserById(userId).listen(
       (user) {
         if (user == null) return;
-        _currentUser = _currentUser == null ? user : _currentUser!.copyWith(
-          displayName: user.displayName,
-          email: user.email,
-          photoUrl: user.photoUrl,
-          parrots: user.parrots,
-          crackers: user.crackers,
-          unreadNotificationCount: user.unreadNotificationCount,
-          blockedUserIds: user.blockedUserIds,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-          lastNicknameChangedAt: user.lastNicknameChangedAt,
-        );
+        _currentUser = _currentUser == null
+            ? user
+            : _currentUser!.copyWith(
+                displayName: user.displayName,
+                email: user.email,
+                photoUrl: user.photoUrl,
+                parrots: user.parrots,
+                crackers: user.crackers,
+                unreadNotificationCount: user.unreadNotificationCount,
+                blockedUserIds: user.blockedUserIds,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                lastNicknameChangedAt: user.lastNicknameChangedAt,
+              );
         notifyListeners();
       },
       onError: (error) {
-        AppLogger.e('[UserProvider] user watch failed userId=$userId', error: error);
+        AppLogger.e('[UserProvider] user watch failed userId=$userId',
+            error: error);
       },
     );
   }

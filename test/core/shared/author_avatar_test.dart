@@ -44,4 +44,33 @@ void main() {
         tester.widget<CircleAvatar>(find.byType(CircleAvatar)).foregroundImage,
         isNull);
   });
+
+  testWidgets('프로필 사진을 바꾸면 그 자리도 바로 바뀐다', (tester) async {
+    await tester.pumpWidget(app('me'));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.person_rounded), findsOneWidget);
+
+    // 사용자가 프로필 사진을 바꾸면 UserProvider가 이렇게 알려 준다.
+    AuthorProfiles.remember('me', 'https://example.com/new.jpg');
+    await tester.pump();
+
+    expect(
+        (tester.widget<CircleAvatar>(find.byType(CircleAvatar)).foregroundImage
+                as NetworkImage?)
+            ?.url,
+        'https://example.com/new.jpg');
+  });
+
+  test('사진을 지우면 들고 있던 값도 비운다', () {
+    AuthorProfiles.remember('me', 'https://example.com/a.jpg');
+    expect(AuthorProfiles.cached('me'), 'https://example.com/a.jpg');
+    AuthorProfiles.remember('me', null);
+    expect(AuthorProfiles.cached('me'), isNull);
+
+    AuthorProfiles.remember('other', 'https://example.com/b.jpg');
+    final before = AuthorProfiles.revision.value;
+    AuthorProfiles.forget('other');
+    expect(AuthorProfiles.cached('other'), isNull);
+    expect(AuthorProfiles.revision.value, before + 1);
+  });
 }

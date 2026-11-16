@@ -19,6 +19,10 @@ class AuthorProfiles {
 
   static final Map<String, String?> _cache = {};
 
+  /// 들고 있던 사진이 바뀔 때마다 오른다. 사진을 보여 주는 쪽이 이 값을 보고
+  /// 다시 읽는다(5차 344, 사용자 신고: 프로필을 바꿔도 문장 쪽은 그대로였다).
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
   /// 이미 읽어 둔 값. 아직 안 읽었으면 null.
   static String? cached(String uid) => _cache[uid];
 
@@ -26,6 +30,21 @@ class AuthorProfiles {
   static void resetForTest() {
     _cache.clear();
     firestore = null;
+  }
+
+  /// 내 사진을 바꾼 뒤처럼, 들고 있던 값이 더는 맞지 않을 때 부른다.
+  static void remember(String uid, String? photoUrl) {
+    final id = uid.trim();
+    if (id.isEmpty) return;
+    final next = (photoUrl ?? '').trim();
+    _cache[id] = next.isEmpty ? null : next;
+    revision.value++;
+  }
+
+  /// 그 사람 사진을 다시 읽게 한다.
+  static void forget(String uid) {
+    if (_cache.remove(uid.trim()) == null) return;
+    revision.value++;
   }
 
   /// [uid]가 올린 사람의 프로필 사진 주소. 없거나 못 읽으면 null.

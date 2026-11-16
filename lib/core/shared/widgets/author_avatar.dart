@@ -31,7 +31,25 @@ class _AuthorAvatarState extends State<AuthorAvatar> {
   void initState() {
     super.initState();
     _url = AuthorProfiles.cached(widget.authorId);
+    // 프로필 사진이 바뀌면 다시 읽는다(5차 344, 사용자 신고).
+    AuthorProfiles.revision.addListener(_onProfilesChanged);
     _load();
+  }
+
+  void _onProfilesChanged() {
+    if (!mounted) return;
+    final next = AuthorProfiles.cached(widget.authorId);
+    setState(() {
+      _failed = false;
+      _url = next;
+    });
+    if (next == null) _load();
+  }
+
+  @override
+  void dispose() {
+    AuthorProfiles.revision.removeListener(_onProfilesChanged);
+    super.dispose();
   }
 
   @override
