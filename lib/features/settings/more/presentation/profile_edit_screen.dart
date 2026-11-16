@@ -223,7 +223,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         elevation: 0,
         actions: [
           TextButton(
-            onPressed: (_isLoading || !canSave) ? null : _saveProfile,
+            // 꺼진 '완료'를 눌러도 아무 일이 없으면 왜 안 되는지 알 수 없다
+            // (5차, 플레이어·환전소와 같게). 눌리면 까닭을 말해 준다.
+            onPressed: _isLoading
+                ? null
+                : canSave
+                    ? _saveProfile
+                    : () => showToast(profileSaveBlockedReason(
+                          hasChanges: hasChanges,
+                          hasNicknameChanged: hasNicknameChanged,
+                          nicknameChecked: isVerified,
+                          canChangeNickname: _canChangeNickname,
+                        )),
             child: _isLoading
                 ? const SizedBox(
                     width: 20,
@@ -406,6 +417,24 @@ String nicknameReadyNote(DateTime now, DateTime lastChangedAt) =>
     '지금 바꿀 수 있어요. 마지막으로 바꾼 날은 '
     '${relativeDayLabel(now, lastChangedAt)}이고, '
     '바꾸면 30일 동안 다시 바꿀 수 없어요.';
+
+/// 꺼진 '완료'를 눌렀을 때 들려줄 까닭. 저장할 수 있으면 부르지 않는다.
+@visibleForTesting
+String profileSaveBlockedReason({
+  required bool hasChanges,
+  required bool hasNicknameChanged,
+  required bool nicknameChecked,
+  required bool canChangeNickname,
+}) {
+  if (!hasChanges) return '바뀐 것이 없어요.';
+  if (hasNicknameChanged && !canChangeNickname) {
+    return '닉네임은 30일에 한 번 바꿀 수 있어요.';
+  }
+  if (hasNicknameChanged && !nicknameChecked) {
+    return "'중복 확인'을 먼저 눌러 주세요.";
+  }
+  return '지금은 저장할 수 없어요.';
+}
 
 String nicknameCooldownNote(int remainingDays) => remainingDays <= 1
     ? '닉네임은 30일에 한 번 바꿀 수 있어요. 내일부터 바꿀 수 있어요.'
