@@ -309,4 +309,42 @@ void main() {
     expect(roots.single.totalCount, 3);
     expect(byPath['여행/일본']!.children, isEmpty);
   });
+
+  test('클립을 지우면 영상과 썸네일 파일도 함께 사라진다(5차 389)', () async {
+    final drive = GoogleDriveStorageService();
+    final sourceRef = ClipSourceRefDatasource(db, drive);
+    final thumbs = ClipThumbnailDatasource(db, sourceRef, drive);
+    final repo = ClipRepositoryImpl(
+      db: db,
+      sourceRefDatasource: sourceRef,
+      thumbnailDatasource: thumbs,
+      fileSyncDatasource: ClipFileSyncDatasource(db, sourceRef, drive),
+      itemQueryDatasource: ClipItemQueryDatasource(db, sourceRef, thumbs),
+      firestoreMetadataDatasource:
+          ClipFirestoreMetadataDatasource(db, firestore: firestore),
+      libraryEntitySyncCoordinator: coordinatorFor(db),
+    );
+
+    final tmp = await Directory.systemTemp.createTemp('parrokit-clip-delete');
+    addTearDown(() async {
+      if (await tmp.exists()) await tmp.delete(recursive: true);
+    });
+    final video = File(p.join(tmp.path, 'clip.mp4'))..writeAsStringSync('v');
+    final thumb = File(p.join(tmp.path, 'clip.jpg'))..writeAsStringSync('t');
+
+    final collection = await db.collectionsDao.findOrCreate('여행', 'local');
+    final clipId = await db.into(db.clips).insert(ClipsCompanion.insert(
+          collectionId: Value(collection.id),
+          title: '지울 클립',
+          filePath: video.path,
+          durationMs: 1000,
+          thumbnailFilePath: Value(thumb.path),
+        ));
+
+    expect(await repo.deleteClipById(clipId), isTrue);
+
+    expect(video.existsSync(), isFalse);
+    // 전에는 썸네일만 남아 저장 용량에 계속 잡혔다.
+    expect(thumb.existsSync(), isFalse);
+  });
 }

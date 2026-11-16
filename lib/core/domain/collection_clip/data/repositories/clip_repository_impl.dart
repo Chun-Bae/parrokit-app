@@ -183,6 +183,20 @@ class ClipRepositoryImpl implements ClipRepository {
         }
       }
 
+      // 썸네일도 이 클립만 쓰는 파일이다(media/thumbnails/clip_<id>.jpg 또는
+      // 원격 문서 id). 전에는 지우지 않아, 클립을 지워도 그림만 남아 저장
+      // 용량에 계속 잡혔다(5차 389).
+      final thumbnailPath = target.thumbnailFilePath;
+      if (thumbnailPath != null && thumbnailPath.isNotEmpty) {
+        try {
+          final abs = await ClipPathUtils.absolutePathFor(thumbnailPath);
+          final f = File(abs);
+          if (await f.exists()) await f.delete();
+        } catch (e) {
+          AppLogger.w('[ClipRepository] 썸네일 삭제 실패 clipId=$clipId: $e');
+        }
+      }
+
       return true;
     } catch (e, st) {
       AppLogger.e('[ClipRepository] 클립 삭제 실패 clipId=$clipId',
