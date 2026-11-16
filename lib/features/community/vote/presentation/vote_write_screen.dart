@@ -17,7 +17,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/community/shared/presentation/write_failed_message.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/vote_option.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -60,9 +60,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
         hasTitle: _titleController.text.trim().isNotEmpty,
         hasContent: _contentController.text.trim().isNotEmpty,
         optionCount: _optionControllers.length,
-        filledOptionCount: _optionControllers
-            .where((c) => c.text.trim().isNotEmpty)
-            .length,
+        filledOptionCount:
+            _optionControllers.where((c) => c.text.trim().isNotEmpty).length,
       );
 
   @override
@@ -81,7 +80,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
 
   void _addOption() {
     if (_optionControllers.length >= 5) {
-      showToast('항목은 5개까지 넣을 수 있어요.');
+      showWriteFailedMessage(context, '항목은 5개까지 넣을 수 있어요.');
       return;
     }
 
@@ -179,7 +178,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final user = userProvider.currentUser;
 
     if (user == null) {
-      showToast('로그인하고 다시 해 주세요.');
+      showWriteFailedMessage(context, '로그인하고 다시 해 주세요.');
       return;
     }
 
@@ -216,7 +215,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     if (success && mounted) {
       Navigator.pop(context);
     } else if (mounted) {
-      showToast(communityProvider.errorMessage ?? '투표를 올리지 못했어요.');
+      showWriteFailedMessage(
+          context, communityProvider.errorMessage ?? '투표를 올리지 못했어요.');
     }
   }
 
@@ -259,286 +259,291 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     return DraftPopScope(
       hasDraft: _hasDraft,
       child: Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
         backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          '투표 만들기',
-          style:
-              context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
-        ),
-        leading: IconButton(
-          tooltip: '닫기',
-          onPressed: () => Navigator.maybePop(context),
-          icon:
-              Icon(Icons.close_rounded, size: 28, color: colorScheme.onSurface),
-        ),
-        actions: [
-          Padding(
-            padding:
-                const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
-            child: ElevatedButton(
-              onPressed: isLoading
-                  ? null
-                  : _isValid
-                      ? _submitVote
-                      : () => showToast(_blockedReason ?? ''),
-              style: ElevatedButton.styleFrom(
-                // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
-                // 것은 색으로 그대로 보여 준다(5차).
-                backgroundColor: _isValid
-                    ? blue600
-                    : blue600.withValues(alpha: 0.4),
-                disabledBackgroundColor: blue600.withValues(alpha: 0.4),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.xl)),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+        appBar: AppBar(
+          backgroundColor: colorScheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(
+            '투표 만들기',
+            style: context.texts.titleMedium
+                .copyWith(color: colorScheme.onSurface),
+          ),
+          leading: IconButton(
+            tooltip: '닫기',
+            onPressed: () => Navigator.maybePop(context),
+            icon: Icon(Icons.close_rounded,
+                size: 28, color: colorScheme.onSurface),
+          ),
+          actions: [
+            Padding(
+              padding:
+                  const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
+              child: ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : _isValid
+                        ? _submitVote
+                        : () => showWriteFailedMessage(
+                            context, _blockedReason ?? ''),
+                style: ElevatedButton.styleFrom(
+                  // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
+                  // 것은 색으로 그대로 보여 준다(5차).
+                  backgroundColor:
+                      _isValid ? blue600 : blue600.withValues(alpha: 0.4),
+                  disabledBackgroundColor: blue600.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xl)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text(
+                        '투표 올리기',
+                        style: context.texts.bodyMedium
+                            .copyWith(color: Colors.white),
+                      ),
               ),
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2),
-                    )
-                  : Text(
-                      '투표 올리기',
-                      style: context.texts.bodyMedium
-                          .copyWith(color: Colors.white),
-                    ),
-            ),
-          )
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Thin top divider
-            Container(color: dividerColor, height: 1),
+            )
+          ],
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Thin top divider
+              Container(color: dividerColor, height: 1),
 
-            // 아직 못 올리면 무엇이 빠졌는지 맨 위에 적는다. 꺼진 '투표 올리기'
-            // 만 보고는 알 수 없었고, 이 화면에서는 토스트가 안 그려진다(5차).
-            if (_blockedReason case final reason?)
-              Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    reason,
-                    key: const ValueKey('vote-blocked-reason'),
-                    style: context.texts.labelMedium.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+              // 아직 못 올리면 무엇이 빠졌는지 맨 위에 적는다. 꺼진 '투표 올리기'
+              // 만 보고는 알 수 없었고, 이 화면에서는 토스트가 안 그려진다(5차).
+              if (_blockedReason case final reason?)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      reason,
+                      key: const ValueKey('vote-blocked-reason'),
+                      style: context.texts.labelMedium.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
                   ),
                 ),
-              ),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title Input Field (Borderless)
-                    TextField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        hintText: '투표 제목을 적어 주세요',
-                        hintStyle: context.texts.headlineSmall
-                            .copyWith(color: colorScheme.onSurfaceVariant),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: context.texts.headlineSmall
-                          .copyWith(color: colorScheme.onSurface),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Content Input Field (Borderless)
-                    TextField(
-                      controller: _contentController,
-                      maxLines: null,
-                      keyboardType: TextInputType.multiline,
-                      decoration: InputDecoration(
-                        hintText: '무엇을 묻는 투표인지 적어 주세요',
-                        hintStyle: context.texts.titleMedium.copyWith(
-                            color: colorScheme.onSurfaceVariant, height: 1.5),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: context.texts.titleMedium
-                          .copyWith(color: colorScheme.onSurface, height: 1.5),
-                    ),
-                    const SizedBox(height: 24),
-
-                    Divider(color: dividerColor, height: 1, thickness: 1),
-                    const SizedBox(height: 24),
-
-                    // ── 투표 기간 설정 ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '투표 진행 기간',
-                          style: context.texts.bodyLarge
-                              .copyWith(color: colorScheme.onSurface),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title Input Field (Borderless)
+                      TextField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          hintText: '투표 제목을 적어 주세요',
+                          hintStyle: context.texts.headlineSmall
+                              .copyWith(color: colorScheme.onSurfaceVariant),
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
                         ),
-                        GestureDetector(
-                          onTap: () => _showExpirationPicker(context),
-                          child: Container(
-                            height: 36,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: periodChipBg,
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  '$_selectedExpirationDays일 동안',
-                                  style: context.texts.bodyMedium
-                                      .copyWith(color: colorScheme.onSurface),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(Icons.keyboard_arrow_down_rounded,
-                                    size: 20,
-                                    color: colorScheme.onSurfaceVariant),
-                              ],
-                            ),
-                          ),
+                        style: context.texts.headlineSmall
+                            .copyWith(color: colorScheme.onSurface),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Content Input Field (Borderless)
+                      TextField(
+                        controller: _contentController,
+                        maxLines: null,
+                        keyboardType: TextInputType.multiline,
+                        decoration: InputDecoration(
+                          hintText: '무엇을 묻는 투표인지 적어 주세요',
+                          hintStyle: context.texts.titleMedium.copyWith(
+                              color: colorScheme.onSurfaceVariant, height: 1.5),
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
+                        style: context.texts.titleMedium.copyWith(
+                            color: colorScheme.onSurface, height: 1.5),
+                      ),
+                      const SizedBox(height: 24),
 
-                    // Vote Options Section
-                    Text(
-                      '투표 대상 항목',
-                      style: context.texts.bodyLarge
-                          .copyWith(color: colorScheme.onSurface),
-                    ),
-                    const SizedBox(height: 16),
+                      Divider(color: dividerColor, height: 1, thickness: 1),
+                      const SizedBox(height: 24),
 
-                    // Dynamic Options Inputs
-                    ...List.generate(_optionControllers.length, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: optionCardColor,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: colorScheme.outlineVariant
-                                  .withValues(alpha: 0.45),
-                              width: 1,
-                            ),
-                            boxShadow: isLight
-                                ? [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.04),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ]
-                                : null,
+                      // ── 투표 기간 설정 ──
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '투표 진행 기간',
+                            style: context.texts.bodyLarge
+                                .copyWith(color: colorScheme.onSurface),
                           ),
-                          child: Row(
-                            children: [
-                              Text(
-                                '${index + 1}',
-                                style: context.texts.bodyMedium
-                                    .copyWith(color: blue600),
+                          GestureDetector(
+                            onTap: () => _showExpirationPicker(context),
+                            child: Container(
+                              height: 36,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: periodChipBg,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: TextField(
-                                  controller: _optionControllers[index],
-                                  decoration: InputDecoration(
-                                    hintText: '항목 ${index + 1}',
-                                    hintStyle: context.texts.bodyLarge.copyWith(
-                                        color: colorScheme.onSurfaceVariant),
-                                    filled: true,
-                                    fillColor: Colors.transparent,
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    isDense: true,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '$_selectedExpirationDays일 동안',
+                                    style: context.texts.bodyMedium
+                                        .copyWith(color: colorScheme.onSurface),
                                   ),
-                                  style: context.texts.bodyLarge
-                                      .copyWith(color: colorScheme.onSurface),
-                                ),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.keyboard_arrow_down_rounded,
+                                      size: 20,
+                                      color: colorScheme.onSurfaceVariant),
+                                ],
                               ),
-                              if (_optionControllers.length > 2)
-                                IconButton(
-                                  tooltip: '항목 빼기',
-                                  icon: Icon(
-                                      Icons.remove_circle_outline_rounded,
-                                      color: context.tokens.danger,
-                                      size: 20),
-                                  onPressed: () => _removeOption(index),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                            ],
+                            ),
                           ),
-                        ),
-                      );
-                    }),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
 
-                    // Add Option Button
-                    if (_optionControllers.length < 5)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: InkWell(
-                          onTap: _addOption,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                      // Vote Options Section
+                      Text(
+                        '투표 대상 항목',
+                        style: context.texts.bodyLarge
+                            .copyWith(color: colorScheme.onSurface),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Dynamic Options Inputs
+                      ...List.generate(_optionControllers.length, (index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
                           child: Container(
-                            height: 48,
-                            width: double.infinity,
-                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
                             decoration: BoxDecoration(
-                              color: addOptionBg,
+                              color: optionCardColor,
                               borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(color: addOptionBorder),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant
+                                    .withValues(alpha: 0.45),
+                                width: 1,
+                              ),
+                              boxShadow: isLight
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.black
+                                            .withValues(alpha: 0.04),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_circle_outline_rounded,
-                                    size: 18, color: blue600),
-                                const SizedBox(width: 8),
                                 Text(
-                                  '항목 추가하기',
+                                  '${index + 1}',
                                   style: context.texts.bodyMedium
                                       .copyWith(color: blue600),
                                 ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _optionControllers[index],
+                                    decoration: InputDecoration(
+                                      hintText: '항목 ${index + 1}',
+                                      hintStyle: context.texts.bodyLarge
+                                          .copyWith(
+                                              color:
+                                                  colorScheme.onSurfaceVariant),
+                                      filled: true,
+                                      fillColor: Colors.transparent,
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      isDense: true,
+                                    ),
+                                    style: context.texts.bodyLarge
+                                        .copyWith(color: colorScheme.onSurface),
+                                  ),
+                                ),
+                                if (_optionControllers.length > 2)
+                                  IconButton(
+                                    tooltip: '항목 빼기',
+                                    icon: Icon(
+                                        Icons.remove_circle_outline_rounded,
+                                        color: context.tokens.danger,
+                                        size: 20),
+                                    onPressed: () => _removeOption(index),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
                               ],
                             ),
                           ),
+                        );
+                      }),
+
+                      // Add Option Button
+                      if (_optionControllers.length < 5)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: InkWell(
+                            onTap: _addOption,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: Container(
+                              height: 48,
+                              width: double.infinity,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: addOptionBg,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                                border: Border.all(color: addOptionBorder),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_circle_outline_rounded,
+                                      size: 18, color: blue600),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '항목 추가하기',
+                                    style: context.texts.bodyMedium
+                                        .copyWith(color: blue600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

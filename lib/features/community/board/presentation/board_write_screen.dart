@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/community/shared/presentation/write_failed_message.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:provider/provider.dart';
@@ -153,7 +153,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     final currentUser = userProvider.currentUser;
 
     if (currentUser == null) {
-      showToast('로그인하고 다시 해 주세요.');
+      showWriteFailedMessage(context, '로그인하고 다시 해 주세요.');
       return;
     }
 
@@ -245,7 +245,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
       // 저장했으니 쓰던 내용 확인(DraftPopScope)을 거치지 않고 바로 닫는다.
       Navigator.pop(context);
     } else if (mounted && provider.errorMessage != null) {
-      showToast(provider.errorMessage!);
+      showWriteFailedMessage(context, provider.errorMessage!);
     }
   }
 
@@ -305,7 +305,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                         TextButton(
                           onPressed: _canComplete
                               ? _submitPost
-                              : () => showToast(_blockedReason ?? ''),
+                              : () => showWriteFailedMessage(
+                                  context, _blockedReason ?? ''),
                           child: context.watch<CommunityProvider>().isLoading
                               ? const SizedBox(
                                   width: 20,
@@ -531,12 +532,13 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                           final text = val.trim();
                           if (text.isNotEmpty && !_tags.contains(text)) {
                             if (text.length > PostValidator.maxTagLength) {
-                              showToast(
+                              showWriteFailedMessage(context,
                                   '태그는 ${PostValidator.maxTagLength}글자까지 쓸 수 있어요.');
                               return;
                             }
                             if (_tags.length >= PostValidator.maxTags) {
-                              showToast('태그는 20개까지 붙일 수 있어요.');
+                              showWriteFailedMessage(
+                                  context, '태그는 20개까지 붙일 수 있어요.');
                               return;
                             }
 
@@ -639,7 +641,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 _selectedImages.length;
                             final int remainingSlot = 5 - currentCount;
                             if (remainingSlot <= 0) {
-                              showToast('사진은 5장까지 넣을 수 있어요.');
+                              showWriteFailedMessage(
+                                  context, '사진은 5장까지 넣을 수 있어요.');
                               return;
                             }
 
@@ -652,8 +655,8 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               );
                             } catch (e) {
                               if (!context.mounted) return;
-                              showToast(
-                                  '열 수 없는 사진이에요. 다른 사진을 골라 주세요.');
+                              showWriteFailedMessage(
+                                  context, '열 수 없는 사진이에요. 다른 사진을 골라 주세요.');
                               return;
                             }
                             if (images.isEmpty) return;

@@ -4,15 +4,17 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 
+/// 포매터가 어디서 줄을 바꿔도 같은 코드로 보이게 띄어쓰기를 하나로 만든다.
+String _flat(String code) => code.replaceAll(RegExp(r'\s+'), ' ');
+
 void main() {
   test('빠진 것을 위에서부터 하나씩 알려 준다', () {
-    expect(writeBlockedReason(hasTitle: false, hasContent: false),
-        '제목을 적어 주세요.');
-    expect(writeBlockedReason(hasTitle: true, hasContent: false),
-        '내용을 적어 주세요.');
     expect(
-        writeBlockedReason(
-            hasTitle: true, hasContent: true, hasTopic: false),
+        writeBlockedReason(hasTitle: false, hasContent: false), '제목을 적어 주세요.');
+    expect(
+        writeBlockedReason(hasTitle: true, hasContent: false), '내용을 적어 주세요.');
+    expect(
+        writeBlockedReason(hasTitle: true, hasContent: true, hasTopic: false),
         '게시판을 골라 주세요.');
   });
 
@@ -61,10 +63,14 @@ void main() {
       'lib/features/community/question/presentation/question_write_screen.dart',
       'lib/features/community/vote/presentation/vote_write_screen.dart',
     ]) {
-      final code = File(path).readAsStringSync();
+      final code = _flat(File(path).readAsStringSync());
       expect(code, contains('writeBlockedReason('), reason: path);
-      // 꺼진 채 눌러도 아무 일이 없던 자리를 토스트로 바꿨다.
-      expect(code, contains('showToast(_blockedReason'), reason: path);
+      // 꺼진 채 눌러도 아무 일이 없던 자리에서 까닭을 말해 준다.
+      expect(
+          code,
+          matches(RegExp(r'showWriteFailedMessage\( ?context, '
+              r'_blockedReason')),
+          reason: path);
     }
   });
 
@@ -75,12 +81,13 @@ void main() {
       'lib/features/community/question/presentation/question_write_screen.dart',
       'lib/features/community/vote/presentation/vote_write_screen.dart',
     ]) {
-      final code = File(path).readAsStringSync();
+      // 줄바꿈은 포매터가 정한다. 띄어쓰기를 하나로 눌러서 본다.
+      final code = _flat(File(path).readAsStringSync());
       expect(code, contains('backgroundColor: _isValid'), reason: path);
     }
-    final board = File(
+    final board = _flat(File(
             'lib/features/community/board/presentation/board_write_screen.dart')
-        .readAsStringSync();
+        .readAsStringSync());
     expect(board, contains('color: _canComplete'));
   });
 

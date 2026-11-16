@@ -15,7 +15,7 @@ import 'package:parrokit/features/community/shared/presentation/write_blocked_re
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:provider/provider.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/community/shared/presentation/write_failed_message.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -68,12 +68,12 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.currentUser;
     if (user == null) {
-      showToast('로그인하고 다시 해 주세요.');
+      showWriteFailedMessage(context, '로그인하고 다시 해 주세요.');
       return;
     }
 
     if (user.crackers < _rewardCrackers) {
-      showToast('크래커가 모자라요. (가진 크래커 ${user.crackers}개)');
+      showWriteFailedMessage(context, '크래커가 모자라요. (가진 크래커 ${user.crackers}개)');
       return;
     }
 
@@ -99,7 +99,8 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
       userProvider.updateUser(user.addCrackers(-_rewardCrackers));
       Navigator.pop(context);
     } else {
-      showToast(commProvider.errorMessage ?? '질문을 올리지 못했어요.');
+      showWriteFailedMessage(
+          context, commProvider.errorMessage ?? '질문을 올리지 못했어요.');
     }
   }
 
@@ -126,237 +127,239 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     return DraftPopScope(
       hasDraft: _hasDraft,
       child: Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
         backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          '질문하기',
-          style:
-              context.texts.titleMedium.copyWith(color: colorScheme.onSurface),
-        ),
-        leading: IconButton(
-          tooltip: '닫기',
-          onPressed: () => Navigator.maybePop(context),
-          icon: Icon(
-            Icons.close_rounded,
-            size: 28,
-            color: context.tokens.textPrimary,
+        appBar: AppBar(
+          backgroundColor: colorScheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(
+            '질문하기',
+            style: context.texts.titleMedium
+                .copyWith(color: colorScheme.onSurface),
           ),
-        ),
-        actions: [
-          Padding(
-            padding:
-                const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
-            child: ElevatedButton(
-              // 꺼진 단추를 눌러도 아무 일이 없으면 무엇이 빠졌는지
-              // 알 수 없다(5차). 눌리면 까닭을 말해 준다.
-              onPressed: _isSubmitting
-                  ? null
-                  : _isValid
-                      ? _submitQuestion
-                      : () => showToast(_blockedReason ?? ''),
-              style: ElevatedButton.styleFrom(
-                // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
-                // 것은 색으로 그대로 보여 준다(5차).
-                backgroundColor: _isValid
-                    ? accentBlue
-                    : accentBlue.withValues(alpha: 0.4),
-                disabledBackgroundColor: accentBlue.withValues(alpha: 0.4),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.xl)),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
-              child: _isSubmitting
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          color: colorScheme.onPrimary, strokeWidth: 2),
-                    )
-                  : Text(
-                      '질문하기',
-                      style: context.texts.bodyMedium
-                          .copyWith(color: colorScheme.onPrimary),
-                    ),
+          leading: IconButton(
+            tooltip: '닫기',
+            onPressed: () => Navigator.maybePop(context),
+            icon: Icon(
+              Icons.close_rounded,
+              size: 28,
+              color: context.tokens.textPrimary,
             ),
-          )
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Thin top divider
-            Container(color: tokens.divider, height: 1),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title Input Field (Borderless)
-                    TextField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        hintText: '제목을 적어 주세요',
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        hintStyle: context.texts.headlineSmall
-                            .copyWith(color: tokens.textDisabled),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
+          ),
+          actions: [
+            Padding(
+              padding:
+                  const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
+              child: ElevatedButton(
+                // 꺼진 단추를 눌러도 아무 일이 없으면 무엇이 빠졌는지
+                // 알 수 없다(5차). 눌리면 까닭을 말해 준다.
+                onPressed: _isSubmitting
+                    ? null
+                    : _isValid
+                        ? _submitQuestion
+                        : () => showWriteFailedMessage(
+                            context, _blockedReason ?? ''),
+                style: ElevatedButton.styleFrom(
+                  // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
+                  // 것은 색으로 그대로 보여 준다(5차).
+                  backgroundColor:
+                      _isValid ? accentBlue : accentBlue.withValues(alpha: 0.4),
+                  disabledBackgroundColor: accentBlue.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xl)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: _isSubmitting
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            color: colorScheme.onPrimary, strokeWidth: 2),
+                      )
+                    : Text(
+                        '질문하기',
+                        style: context.texts.bodyMedium
+                            .copyWith(color: colorScheme.onPrimary),
                       ),
-                      style: context.texts.headlineSmall
-                          .copyWith(color: colorScheme.onSurface),
-                    ),
-                    const SizedBox(height: 16),
+              ),
+            )
+          ],
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Thin top divider
+              Container(color: tokens.divider, height: 1),
 
-                    // Content Input Field (Borderless)
-                    TextField(
-                      controller: _contentController,
-                      maxLines: null,
-                      keyboardType: TextInputType.multiline,
-                      decoration: InputDecoration(
-                        hintText:
-                            '무엇이 궁금한가요? 단어 뜻, 문맥에 맞는 의미, 억양 차이처럼 무엇이든 물어보세요.',
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        hintStyle: context.texts.titleMedium
-                            .copyWith(color: tokens.textDisabled, height: 1.5),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title Input Field (Borderless)
+                      TextField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          hintText: '제목을 적어 주세요',
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          hintStyle: context.texts.headlineSmall
+                              .copyWith(color: tokens.textDisabled),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        style: context.texts.headlineSmall
+                            .copyWith(color: colorScheme.onSurface),
                       ),
-                      style: context.texts.titleMedium
-                          .copyWith(color: colorScheme.onSurface, height: 1.5),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
-                    // --- Q&A Settings Box ---
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: tokens.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: tokens.divider),
+                      // Content Input Field (Borderless)
+                      TextField(
+                        controller: _contentController,
+                        maxLines: null,
+                        keyboardType: TextInputType.multiline,
+                        decoration: InputDecoration(
+                          hintText:
+                              '무엇이 궁금한가요? 단어 뜻, 문맥에 맞는 의미, 억양 차이처럼 무엇이든 물어보세요.',
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          hintStyle: context.texts.titleMedium.copyWith(
+                              color: tokens.textDisabled, height: 1.5),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        style: context.texts.titleMedium.copyWith(
+                            color: colorScheme.onSurface, height: 1.5),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(children: [
-                                Text('보상 크래커',
+                      const SizedBox(height: 24),
+
+                      // --- Q&A Settings Box ---
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: tokens.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: tokens.divider),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(children: [
+                                  Text('보상 크래커',
+                                      style: context.texts.titleMedium.copyWith(
+                                          color: colorScheme.onSurface)),
+                                  const SizedBox(width: 6),
+                                  const CurrencyIcon(Currency.cracker,
+                                      size: 20),
+                                ]),
+                                Text('$_rewardCrackers', style: valueTextStyle),
+                              ],
+                            ),
+                            Slider(
+                              value: _rewardCrackers.toDouble(),
+                              min: 100,
+                              max: 5000,
+                              divisions: 49,
+                              activeColor: accentBlue,
+                              inactiveColor: accentBlue.withValues(alpha: 0.2),
+                              onChanged: (val) =>
+                                  setState(() => _rewardCrackers = val.toInt()),
+                            ),
+                            // 보상이 언제 빠지고 어디로 가는지, 지금 얼마 있는지 몰랐다(5차).
+                            // 모자라면 올리기 전에 미리 알린다(예전엔 누른 뒤 토스트).
+                            Builder(builder: (context) {
+                              final owned = context
+                                      .watch<UserProvider>()
+                                      .currentUser
+                                      ?.crackers ??
+                                  0;
+                              final short = owned < _rewardCrackers;
+                              return Text(
+                                rewardNote(owned, _rewardCrackers),
+                                key: const ValueKey('reward-note'),
+                                style: context.texts.bodySmall.copyWith(
+                                    color: short
+                                        ? colorScheme.error
+                                        : colorScheme.onSurfaceVariant),
+                              );
+                            }),
+                            Divider(height: 32, color: tokens.divider),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('마감 기한 ⏳',
                                     style: context.texts.titleMedium.copyWith(
                                         color: colorScheme.onSurface)),
-                                const SizedBox(width: 6),
-                                const CurrencyIcon(Currency.cracker, size: 20),
-                              ]),
-                              Text('$_rewardCrackers', style: valueTextStyle),
-                            ],
-                          ),
-                          Slider(
-                            value: _rewardCrackers.toDouble(),
-                            min: 100,
-                            max: 5000,
-                            divisions: 49,
-                            activeColor: accentBlue,
-                            inactiveColor: accentBlue.withValues(alpha: 0.2),
-                            onChanged: (val) =>
-                                setState(() => _rewardCrackers = val.toInt()),
-                          ),
-                          // 보상이 언제 빠지고 어디로 가는지, 지금 얼마 있는지 몰랐다(5차).
-                          // 모자라면 올리기 전에 미리 알린다(예전엔 누른 뒤 토스트).
-                          Builder(builder: (context) {
-                            final owned = context
-                                    .watch<UserProvider>()
-                                    .currentUser
-                                    ?.crackers ??
-                                0;
-                            final short = owned < _rewardCrackers;
-                            return Text(
-                              rewardNote(owned, _rewardCrackers),
-                              key: const ValueKey('reward-note'),
-                              style: context.texts.bodySmall.copyWith(
-                                  color: short
-                                      ? colorScheme.error
-                                      : colorScheme.onSurfaceVariant),
-                            );
-                          }),
-                          Divider(height: 32, color: tokens.divider),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('마감 기한 ⏳',
-                                  style: context.texts.titleMedium
-                                      .copyWith(color: colorScheme.onSurface)),
-                              Text('$_deadlineDays일 후', style: valueTextStyle),
-                            ],
-                          ),
-                          Slider(
-                            value: _deadlineDays.toDouble(),
-                            min: 1,
-                            max: 14,
-                            divisions: 13,
-                            activeColor: accentBlue,
-                            inactiveColor: accentBlue.withValues(alpha: 0.2),
-                            onChanged: (val) =>
-                                setState(() => _deadlineDays = val.toInt()),
-                          ),
-                        ],
+                                Text('$_deadlineDays일 후',
+                                    style: valueTextStyle),
+                              ],
+                            ),
+                            Slider(
+                              value: _deadlineDays.toDouble(),
+                              min: 1,
+                              max: 14,
+                              divisions: 13,
+                              activeColor: accentBlue,
+                              inactiveColor: accentBlue.withValues(alpha: 0.2),
+                              onChanged: (val) =>
+                                  setState(() => _deadlineDays = val.toInt()),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Bottom Attachment Toolbar
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: tokens.divider)),
+                  color: tokens.surface,
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    // 이미지·음성·링크·태그 버튼은 뺐다(5차). 넷 다 동작이 없어
+                    // 흐린 아이콘만 있었다(원칙 5). 글자 수만 남긴다.
+                    // 아직 못 올리면 무엇이 빠졌는지 여기 적는다. 꺼진 단추만
+                    // 보고는 알 수 없었다(5차).
+                    if (_blockedReason case final reason?)
+                      Expanded(
+                        child: Text(
+                          reason,
+                          key: const ValueKey('question-blocked-reason'),
+                          style: context.texts.labelMedium
+                              .copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      )
+                    else
+                      const Spacer(),
+                    // 아이콘이 빠져 빈 줄이 되지 않게 글자 수는 0자부터 늘 보인다.
+                    Text(
+                      '${_contentController.text.length}자',
+                      style: context.texts.labelMedium.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.75)),
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-            ),
-
-            // Bottom Attachment Toolbar
-            Container(
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: tokens.divider)),
-                color: tokens.surface,
-              ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  // 이미지·음성·링크·태그 버튼은 뺐다(5차). 넷 다 동작이 없어
-                  // 흐린 아이콘만 있었다(원칙 5). 글자 수만 남긴다.
-                  // 아직 못 올리면 무엇이 빠졌는지 여기 적는다. 꺼진 단추만
-                  // 보고는 알 수 없었다(5차).
-                  if (_blockedReason case final reason?)
-                    Expanded(
-                      child: Text(
-                        reason,
-                        key: const ValueKey('question-blocked-reason'),
-                        style: context.texts.labelMedium
-                            .copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                    )
-                  else
-                    const Spacer(),
-                  // 아이콘이 빠져 빈 줄이 되지 않게 글자 수는 0자부터 늘 보인다.
-                  Text(
-                    '${_contentController.text.length}자',
-                    style: context.texts.labelMedium.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.75)),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -371,5 +374,5 @@ String rewardNote(int owned, int reward) {
   return '보유 $ownedText · 질문을 올리면 바로 빠지고, 채택한 답변에 그대로 가요.';
 }
 
-String _comma(int n) => n.toString().replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+String _comma(int n) =>
+    n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
