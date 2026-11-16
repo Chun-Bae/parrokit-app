@@ -37,6 +37,7 @@ class SpeakControls extends StatefulWidget {
     this.repeatKey = const ValueKey('repeat-text'),
     this.speechRate = 0.45,
     this.showRepeat = true,
+    this.onListened,
   });
 
   /// 읽어 줄 글.
@@ -51,6 +52,11 @@ class SpeakControls extends StatefulWidget {
 
   /// 반복 단추를 함께 둘지. 복습 카드처럼 한 번만 듣는 자리에서는 끈다(5차 329).
   final bool showRepeat;
+
+  /// 한 번 끝까지 읽어 준 뒤에 부른다. 듣기 횟수를 적는 데 쓴다(5차 338,
+  /// 사용자 신고: 문장 상세에서 들어도 '듣기 0회'였다). 홈 무대와 같은 규칙
+  /// (끝까지 들은 것만 센다)이라 중간에 멈추면 세지 않는다.
+  final VoidCallback? onListened;
 
   @override
   State<SpeakControls> createState() => _SpeakControlsState();
@@ -84,6 +90,7 @@ class _SpeakControlsState extends State<SpeakControls> {
       _tts.setStartHandler(() => _setSpeaking(true));
       _tts.setCompletionHandler(() {
         _setSpeaking(false);
+        widget.onListened?.call();
         _scheduleRepeat();
       });
       _tts.setCancelHandler(() => _setSpeaking(false));
