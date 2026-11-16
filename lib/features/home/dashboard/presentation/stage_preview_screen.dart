@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/widgets/speak_controls.dart' show ttsNoVoiceHint;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
@@ -136,6 +138,9 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
   late final typing = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 260));
   final _ttsLocaleAvailable = <String, bool>{};
+
+  /// 목소리가 없다고 이미 알린 언어. 자동으로 돌 때마다 되풀이하지 않는다(5차 367).
+  final _noVoiceTold = <String>{};
   static const _ttsLocales = {'영어': 'en-US', '일본어': 'ja-JP', '중국어': 'zh-CN'};
   int phraseIndex = 0;
   _PlayOrder playOrder = _PlayOrder.sequential;
@@ -431,7 +436,13 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     try {
       final available = _ttsLocaleAvailable[locale] ??=
           (await tts.isLanguageAvailable(locale)) == true;
-      if (!available || !mounted) return;
+      if (!available) {
+        // 전에는 아무 말 없이 돌아와서, 앵무새가 입만 벙긋하고 소리가 안 나는
+        // 것처럼 보였다(5차 367). 문장 상세의 읽어 주기와 같은 말로 알린다.
+        if (mounted && _noVoiceTold.add(locale)) showToast(ttsNoVoiceHint);
+        return;
+      }
+      if (!mounted) return;
       await tts.stop();
       await tts.setLanguage(locale);
       ttsSpeaking = true;
