@@ -23,6 +23,7 @@ import '../widgets/exit_confirm_sheet.dart';
 import '../../../hub/presentation/content_studio_app_bar.dart';
 import '../../../hub/presentation/studio_hub_provider.dart';
 import '../sections/sections.dart';
+import 'package:parrokit/features/content-studio/captioning/domain/validators/clip_validator.dart';
 
 /// 클립 에디터 화면.
 class CaptioningScreen extends StatelessWidget {
@@ -146,7 +147,11 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
                     child: ListenableBuilder(
                       listenable: vm.saveWatchables,
                       builder: (context, _) {
-                        final blocked = vm.saveBlockedReason;
+                        // 자막을 만드는 중에도 단추가 꺼진다. 그때는 그
+                        // 까닭을 적는다(5차 318).
+                        final blocked = vm.isSttProcessing
+                            ? ClipValidator.sttRunningMessage
+                            : vm.saveBlockedReason;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [

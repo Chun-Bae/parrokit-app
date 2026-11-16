@@ -50,6 +50,10 @@ class ClipValidator {
   }
 
   static const noFileMessage = '영상 파일을 먼저 선택해 주세요.';
+
+  /// 자막을 만드는 중이라 아직 저장할 수 없을 때(5차 318).
+  /// 전에는 이때 저장 단추가 말없이 꺼져 있어, 왜 안 눌리는지 알 수 없었다.
+  static const sttRunningMessage = '자막을 만드는 중이에요. 끝나면 저장할 수 있어요.';
   static const noFolderMessage = '폴더를 골라 주세요.';
   static const noTitleMessage = '클립 제목을 적어 주세요.';
 
