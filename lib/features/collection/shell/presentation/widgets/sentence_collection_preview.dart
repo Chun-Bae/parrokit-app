@@ -313,7 +313,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     try {
       if (isSaved(sentence)) {
         if (isMine(sentence)) {
-          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해 주세요.');
+          toast('내가 올린 문장이에요. 지우려면 내 문장에서 지워 주세요.');
           return;
         }
         await MySentenceStore.remove(accountId, communityId(sentence));
@@ -1190,7 +1190,7 @@ class _MySentenceTile extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('내 문장에서 지울까요?'),
-        content: const Text('삭제하면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요. '
+        content: const Text('지우면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요. '
             '둘러보기에 공유 중이었다면 거기서도 사라져요.'),
         actions: [
           TextButton(
@@ -1209,7 +1209,7 @@ class _MySentenceTile extends StatelessWidget {
     try {
       await MySentenceStore.remove(accountId, sentence.id);
     } catch (_) {
-      if (context.mounted) _toast(context, '삭제하지 못했어요. 다시 시도해 주세요.');
+      if (context.mounted) _toast(context, '지우지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -2069,9 +2069,9 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         key: const ValueKey('delete-dialog'),
         title: const Text('내 문장에서 지울까요?'),
         content: Text(published == true
-            ? '지금 둘러보기에 공유 중인 문장이에요. 삭제하면 둘러보기에서도 사라지고 '
+            ? '지금 둘러보기에 공유 중인 문장이에요. 지우면 둘러보기에서도 사라지고 '
                 '좋아요 수와 가져간 수도 함께 사라져요.\n이미 가져간 사람의 문장은 그대로 남아요.'
-            : '삭제하면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요.'),
+            : '지우면 이 문장의 연습 기록과 메모도 더 이상 볼 수 없어요.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -2087,7 +2087,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       await MySentenceStore.remove(widget.accountId, widget.sentence.id);
       navigator.pop();
     } catch (_) {
-      showNotice('삭제하지 못했어요. 다시 시도해 주세요.');
+      showNotice('지우지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -2468,7 +2468,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 TextButton.icon(
                   onPressed: removeSentence,
                   icon: const Icon(Icons.delete_outline_rounded),
-                  label: const Text('내 문장에서 삭제'),
+                  label: const Text('내 문장에서 지우기'),
                 ),
               ],
               const SizedBox(height: 10),

@@ -61,7 +61,7 @@ class EditableAvatar extends StatelessWidget {
                   ListTile(
                     leading: Icon(Icons.delete_outline,
                         color: context.tokens.danger),
-                    title: Text('현재 사진 삭제',
+                    title: Text('지금 사진 지우기',
                         style: TextStyle(color: context.tokens.danger)),
                     onTap: () => Navigator.pop(context, 2),
                   ),

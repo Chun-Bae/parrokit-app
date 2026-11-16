@@ -573,7 +573,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('그룹 삭제'),
+        title: const Text('그룹 지우기'),
         content: Text("'$name' 그룹을 지울까요?\n(그룹 안의 폴더와 클립은 지워지지 않아요)"),
         actions: [
           TextButton(
@@ -738,7 +738,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('폴더 삭제'),
+        title: const Text('폴더 지우기'),
         content: Text(content),
         actions: [
           TextButton(

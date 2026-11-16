@@ -193,7 +193,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
     try {
       if (saved != null) {
         if (isMine(sentence)) {
-          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해 주세요.');
+          toast('내가 올린 문장이에요. 지우려면 내 문장에서 지워 주세요.');
           return;
         }
         await MySentenceStore.remove(account, saved.id);

@@ -99,15 +99,15 @@ void main() {
     await tester.tap(find.text('공유'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('내 문장에서 삭제'));
-    await tester.tap(find.text('내 문장에서 삭제'));
+    await tester.ensureVisible(find.text('내 문장에서 지우기'));
+    await tester.tap(find.text('내 문장에서 지우기'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('delete-dialog')), findsOneWidget);
     expect(find.textContaining('둘러보기에서도 사라지고'), findsOneWidget);
     await tester.tap(find.text('취소'));
     await tester.pumpAndSettle();
     // 취소하면 시트가 그대로 열려 있다.
-    expect(find.text('내 문장에서 삭제'), findsOneWidget);
+    expect(find.text('내 문장에서 지우기'), findsOneWidget);
   });
 
   testWidgets('둘러보기에서 연 내 문장에도 공유 취소 버튼이 있다', (tester) async {
