@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/tts/presentation/tts_provider_text.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_google_models.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/tts_file_name.dart';
 import 'dart:io';
@@ -186,6 +187,13 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             TtsProviderSelector(
               selectedType: provider.providerType,
               onTypeChanged: provider.updateProviderType,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            // 회사 이름만 셋 있으면 무엇이 다른지 알 수 없다(5차 413).
+            Text(
+              ttsProviderBlurb(provider.providerType),
+              key: const ValueKey('tts-provider-blurb'),
+              style: theme.textTheme.bodySmall?.copyWith(color: mutedText),
             ),
             const SizedBox(height: AppSpacing.lg),
             TtsPanel(
