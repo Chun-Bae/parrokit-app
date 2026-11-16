@@ -1,5 +1,6 @@
 // 구독 화면의 글귀. 한 곳에 모아 둔다(.claude/subscription-ux.md와 같은 말).
 
+import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 
@@ -88,20 +89,25 @@ const String subscriptionNotReadyToast = '아직 구독 상품이 없어요. 준
 // 글귀는 .claude/subscription-ux.md 3-3과 같다.
 
 /// 다음 결제일 한 줄. 기간 끝을 모르면 null.
-String? subscriptionRenewalLine(DateTime? periodEnd) => periodEnd == null
-    ? null
-    : '다음 결제일 ${periodEnd.month}월 ${periodEnd.day}일';
+///
+/// 날짜는 앱의 다른 곳과 같은 규칙을 쓴다(해가 넘어가면 연도까지). 12월에
+/// 보는 '1월 5일'이 올해인지 내년인지 알 수 없었다(5차).
+String? subscriptionRenewalLine(DateTime? periodEnd, {DateTime? now}) =>
+    periodEnd == null
+        ? null
+        : '다음 결제일 ${calendarDateLabel(periodEnd, now ?? DateTime.now())}';
 
 /// 상태별 안내 한 줄. 멀쩡하면 null.
 String? subscriptionStatusNotice(
-    SubscriptionStatus status, DateTime? periodEnd) {
+    SubscriptionStatus status, DateTime? periodEnd,
+    {DateTime? now}) {
   switch (status) {
     case SubscriptionStatus.grace:
       return '결제가 밀렸어요. 스토어에서 결제 수단을 확인해 주세요.';
     case SubscriptionStatus.canceled:
       final when = periodEnd == null
           ? '기간이 끝나면'
-          : '${periodEnd.month}월 ${periodEnd.day}일에';
+          : '${calendarDateLabel(periodEnd, now ?? DateTime.now())}에';
       return '$when 끝나요. 그때까지는 그대로 쓸 수 있어요.';
     case SubscriptionStatus.expired:
       return '구독이 끝났어요. 받아 둔 영상은 기기에 남아 있어요.';

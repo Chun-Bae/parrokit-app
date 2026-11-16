@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 void main() {
   final now = DateTime(2026, 11, 16, 12);
@@ -34,5 +36,47 @@ void main() {
         .readAsStringSync();
     expect(code, contains('calendarDateLabel(at, now)'));
     expect(code.contains("return '\${at.month}월 \${at.day}일';"), isFalse);
+  });
+
+  test('구독 날짜도 같은 규칙을 쓴다', () {
+    // 12월에 보는 다음 결제일 1월 5일은 내년이다.
+    final december = DateTime(2026, 12, 20);
+    expect(
+      subscriptionRenewalLine(DateTime(2027, 1, 5), now: december),
+      '다음 결제일 2027년 1월 5일',
+    );
+    expect(
+      subscriptionStatusNotice(
+          SubscriptionStatus.canceled, DateTime(2027, 1, 5),
+          now: december),
+      startsWith('2027년 1월 5일에'),
+    );
+    // 올해 안이면 그대로 월·일만.
+    expect(subscriptionRenewalLine(DateTime(2026, 12, 15), now: december),
+        '다음 결제일 12월 15일');
+  });
+
+  test('날짜를 손으로 조립하는 곳이 더 생기지 않게 한다', () {
+    // 같은 규칙을 화면마다 따로 적다가 한쪽만 고쳐진 적이 여러 번 있었다
+    // (자막 글꼴, 글 날짜, 숫자 이름, 서버 한도).
+    const allowed = {
+      'lib/core/shared/utils/calendar_date_label.dart',
+      // 달력 칸 안이라 '2026년 11월' 머리말이 이미 위에 있다.
+      'lib/features/home/dashboard/presentation/widgets/study_garden_preview.dart',
+    };
+    final pattern = RegExp(r'월 \$?\{?\w');
+    final offenders = <String>[];
+    for (final entity in Directory('lib').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      if (allowed.contains(entity.path)) continue;
+      for (final line in entity.readAsLinesSync()) {
+        if (line.trimLeft().startsWith('//')) continue;
+        if (!line.contains('일')) continue;
+        if (pattern.hasMatch(line)) offenders.add('${entity.path}: ${line.trim()}');
+      }
+    }
+    expect(offenders, isEmpty,
+        reason: 'calendarDateLabel을 쓰세요(올해가 아니면 연도까지):\n'
+            '${offenders.join('\n')}');
   });
 }
