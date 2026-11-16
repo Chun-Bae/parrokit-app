@@ -102,8 +102,15 @@ class AddSentenceController extends ChangeNotifier {
   }
 
   /// 원문과 뜻이 있어야 저장할 수 있다. 발음은 선택이다.
-  bool get canSave =>
-      text.text.trim().isNotEmpty && translation.text.trim().isNotEmpty;
+  bool get canSave => blockedReason == null;
+
+  /// 아직 추가할 수 없는 까닭. 추가할 수 있으면 null.
+  /// 커뮤니티 글쓰기와 같은 결로 적는다(5차).
+  String? get blockedReason {
+    if (text.text.trim().isEmpty) return '문장을 적어 주세요.';
+    if (translation.text.trim().isEmpty) return '뜻을 적어 주세요.';
+    return null;
+  }
 
   /// 언어를 바꾼다. 원문과 뜻은 그대로 두고, 아직 오지 않은 이전 언어의 응답은 버린다.
   void setLanguage(String next) {

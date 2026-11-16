@@ -36,6 +36,22 @@ AddSentenceController make(FakeAssist assist, {String language = '영어'}) =>
     AddSentenceController(language: language, assist: assist);
 
 void main() {
+  test('추가할 수 없으면 무엇이 빠졌는지 알려 준다', () {
+    // 꺼진 '추가'만 보고는 알 수 없었다(5차, 커뮤니티 글쓰기와 같은 결).
+    final c = make(FakeAssist());
+    addTearDown(c.dispose);
+
+    expect(c.blockedReason, '문장을 적어 주세요.');
+    expect(c.canSave, isFalse);
+
+    c.text.text = 'Could you give me a hand?';
+    expect(c.blockedReason, '뜻을 적어 주세요.');
+
+    c.translation.text = '도와줄 수 있어요?';
+    expect(c.blockedReason, isNull);
+    expect(c.canSave, isTrue);
+  });
+
   test('입력만으로는 요청하지 않아 횟수를 쓰지 않는다', () async {
     final assist = FakeAssist();
     final c = make(assist);

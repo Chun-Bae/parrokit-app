@@ -113,12 +113,28 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
               controller.text,
               controller.translation,
             ]),
-            builder: (context, _) => FilledButton(
-              key: const ValueKey('save-sentence'),
-              onPressed: controller.canSave ? save : null,
-              style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52)),
-              child: const Text('추가'),
+            builder: (context, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton(
+                  key: const ValueKey('save-sentence'),
+                  onPressed: controller.canSave ? save : null,
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52)),
+                  child: const Text('추가'),
+                ),
+                // 꺼진 버튼만 보고는 무엇이 빠졌는지 알 수 없었다(5차,
+                // 커뮤니티 글쓰기와 같게).
+                if (controller.blockedReason case final reason?) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    reason,
+                    key: const ValueKey('add-sentence-blocked-reason'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ],
             ),
           ),
         ),
