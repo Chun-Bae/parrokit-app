@@ -51,13 +51,17 @@ void main() {
       when(user.currentUser).thenReturn(const AppUser(id: 'u1'));
     });
 
-    Future<void> open(WidgetTester tester, {bool? osAllowed = true}) async {
+    Future<void> open(
+      WidgetTester tester, {
+      bool? osAllowed = true,
+      Future<bool?> Function()? osPushAllowed,
+    }) async {
       await tester.pumpWidget(ChangeNotifierProvider<UserProvider>.value(
         value: user,
         child: MaterialApp(
           home: NotificationSettingsScreen(
             repository: NotificationPrefsRepository(firestore: firestore),
-            osPushAllowed: () async => osAllowed,
+            osPushAllowed: osPushAllowed ?? () async => osAllowed,
           ),
         ),
       ));
@@ -110,6 +114,28 @@ void main() {
     testWidgets('휴대폰 허용 여부를 모르면 안내하지 않는다', (tester) async {
       await open(tester, osAllowed: null);
       expect(find.byKey(const ValueKey('os-push-off')), findsNothing);
+    });
+
+    testWidgets('설정에서 켜고 돌아오면 안내가 사라진다(5차 366)', (tester) async {
+      var allowed = false;
+      await open(tester, osPushAllowed: () async => allowed);
+      expect(find.byKey(const ValueKey('os-push-off')), findsOneWidget);
+
+      // 사용자가 휴대폰 설정에서 켜고 앱으로 돌아온다.
+      allowed = true;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('os-push-off')), findsNothing);
+    });
+
+    testWidgets('돌아왔는데 여전히 꺼져 있으면 안내도 그대로', (tester) async {
+      await open(tester, osAllowed: false);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(const ValueKey('os-push-off')), findsOneWidget);
     });
   });
 }

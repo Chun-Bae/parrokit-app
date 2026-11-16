@@ -31,8 +31,8 @@ class NotificationSettingsScreen extends StatefulWidget {
       _NotificationSettingsScreenState();
 }
 
-class _NotificationSettingsScreenState
-    extends State<NotificationSettingsScreen> {
+class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
+    with WidgetsBindingObserver {
   late final NotificationPrefsRepository _repository =
       widget.repository ?? NotificationPrefsRepository();
 
@@ -44,12 +44,29 @@ class _NotificationSettingsScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _uid = context.read<UserProvider?>()?.currentUser?.id;
       _load();
       _checkOsPermission();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// 휴대폰 설정에서 알림을 켜고 돌아오면 안내가 바로 사라져야 한다(5차 366).
+  ///
+  /// 전에는 화면을 열 때 한 번만 물어봐서, '휴대폰 설정 열기'로 켜고 와도
+  /// '꺼져 있어요' 상자가 그대로 남았다. 화면을 나갔다 다시 들어와야 바뀌었다.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) _checkOsPermission();
   }
 
   Future<void> _load() async {
