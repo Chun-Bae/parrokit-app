@@ -6,11 +6,13 @@ import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/practice_reminder.dart';
 import 'package:parrokit/core/infrastructure/services/local_notification_service.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/app_time_picker_sheet.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/features/settings/more/presentation/widgets/leading_icon.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/reminder_sentence_picker.dart';
 
 /// 더보기 > 앱의 '연습 알림' 줄. 켜면 정한 시각에 기기가 알려 준다.
@@ -73,38 +75,46 @@ class _PracticeReminderTileState extends State<PracticeReminderTile> {
   Widget build(BuildContext context) {
     final settings = _settings;
     final cs = Theme.of(context).colorScheme;
-    return ListTile(
+    // 같은 '앱' 칸의 테마·새 클립 화면 줄과 똑같이 그린다. 예전에는 이 줄만
+    // ListTile이라 아이콘과 글자가 오른쪽으로 더 들어가 있었다(5차).
+    return InkWell(
       key: const ValueKey('practice-reminder-tile'),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       onTap: settings == null || _busy ? null : _openSettings,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            const LeadingIcon(icon: Icons.alarm_rounded),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('연습 알림',
+                      style: context.texts.bodyLarge
+                          .copyWith(fontWeight: FontWeight.w700)),
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(
+                      settings == null
+                          ? '불러오는 중…'
+                          : settings.enabled
+                              ? '${settings.whenLabel} ${settings.pick.hint}'
+                              : '정한 시각에 따라 말할 문장을 알려 줘요',
+                      style: context.texts.bodySmall
+                          .copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              key: const ValueKey('practice-reminder-switch'),
+              value: settings?.enabled ?? false,
+              onChanged: settings == null || _busy ? null : _toggleFromTile,
+            ),
+          ],
         ),
-        child: Icon(Icons.alarm_rounded, size: 20, color: cs.onSurface),
-      ),
-      title:
-          const Text('연습 알림', style: TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text(
-        settings == null
-            ? '불러오는 중…'
-            : settings.enabled
-                ? '${settings.whenLabel} ${settings.pick.hint}'
-                : '정한 시각에 따라 말할 문장을 알려 줘요',
-        style: context.texts.bodySmall.copyWith(color: cs.onSurfaceVariant),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Switch(
-            key: const ValueKey('practice-reminder-switch'),
-            value: settings?.enabled ?? false,
-            onChanged: settings == null || _busy ? null : _toggleFromTile,
-          ),
-        ],
       ),
     );
   }

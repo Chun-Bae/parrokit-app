@@ -29,7 +29,8 @@ class ThemeTile extends StatelessWidget {
     return Row(
       children: [
         const LeadingIcon(icon: Icons.dark_mode_outlined),
-        const SizedBox(width: AppSpacing.sm + 2),
+        // 아이콘과 글자 사이는 같은 칸의 다른 줄과 같게 둔다(5차).
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Text(
             '테마',
