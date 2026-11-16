@@ -1,4 +1,6 @@
 // 보관함 검색(5차): 예전엔 입력칸만 있고 아무것도 찾지 않았다.
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/clip_sentence_match.dart';
@@ -210,5 +212,64 @@ void main() {
           all.sentences.length + all.words.length + all.clips.length);
     });
 
+    test('더 있어서 잘랐으면 칩도 구역 머리와 같이 +를 붙인다(5차 393)', () {
+      // 같은 글자가 든 문장을 한도보다 많이 만든다.
+      final many = [
+        for (var i = 0; i < 25; i++)
+          DefaultConversationSentence(
+            id: 'm$i',
+            language: '영어',
+            text: 'apple number $i',
+            translation: '사과 $i',
+            pronunciation: '애플 $i',
+            topic: '인사',
+          ),
+      ];
+      final results =
+          searchLibrary('apple', LibrarySearchData(sentences: many));
+
+      expect(results.sentences.length, 20);
+      expect(results.moreSentences, isTrue);
+      expect(kindHasMore(results, LibrarySearchKind.sentences), isTrue);
+      expect(kindHasMore(results, LibrarySearchKind.all), isTrue);
+      // 전에는 칩이 '문장 20개'라고만 해서 딱 20개뿐인 것처럼 보였다.
+      expect(kindCountText(results, LibrarySearchKind.sentences), '20+');
+      expect(kindCountText(results, LibrarySearchKind.all), '20+');
+    });
+
+    test('다 보여 줬으면 +를 붙이지 않는다', () {
+      final results = searchLibrary('meet', _data);
+      expect(kindHasMore(results, LibrarySearchKind.all), isFalse);
+      expect(kindCountText(results, LibrarySearchKind.sentences),
+          '${results.sentences.length}');
+    });
+
+    test('불러오지 못하면 다시 시도할 길을 준다', () {
+      final source = File('lib/features/collection/shell/presentation/'
+              'library_search.dart')
+          .readAsStringSync();
+      expect(source.contains("ValueKey('library-search-retry')"), isTrue);
+      final code = source
+          .split('\n')
+          .where((l) => !l.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(code.contains('창을 닫고 다시 열어 주세요'), isFalse,
+          reason: '다시 읽을 수 있는데 닫으라고만 하지 않는다');
+    });
+
+    test('목소리 시트도 닫으라고만 하지 않는다(5차 393)', () {
+      final source = File('lib/features/content-studio/tts/presentation/'
+              'widgets/tts_elevenlabs_voice_selection_sheet.dart')
+          .readAsStringSync();
+      expect(source.contains("ValueKey('retry-elevenlabs-voices')"), isTrue);
+      final code = source
+          .split('\n')
+          .where((l) => !l.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(code.contains('창을 닫고 다시 열어 주세요'), isFalse);
+      // 억양을 고를 때마다 목록을 다시 읽지 않도록 일을 들고 있는다.
+      expect(code.contains('late Future<List<TtsElevenLabsVoice>> _voices'),
+          isTrue);
+    });
   });
 }

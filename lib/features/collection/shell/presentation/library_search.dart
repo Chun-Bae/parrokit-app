@@ -87,8 +87,7 @@ LibrarySearchResults searchLibrary(
           has(w.word) ||
           has(w.meaning) ||
           // 예문은 여러 개일 수 있다(5차). 첫 예문만 보면 뒤 예문으로 못 찾는다.
-          w.examples
-              .any((e) => has(e.text) || has(e.translation)))
+          w.examples.any((e) => has(e.text) || has(e.translation)))
       .take(limit + 1)
       .toList();
 
@@ -156,13 +155,29 @@ LibrarySearchResults filterByKind(
 /// 종류 칩에 보일 수. 전체는 모두 더한 값.
 int kindCount(LibrarySearchResults results, LibrarySearchKind kind) =>
     switch (kind) {
-      LibrarySearchKind.all => results.sentences.length +
-          results.words.length +
-          results.clips.length,
+      LibrarySearchKind.all =>
+        results.sentences.length + results.words.length + results.clips.length,
       LibrarySearchKind.sentences => results.sentences.length,
       LibrarySearchKind.words => results.words.length,
       LibrarySearchKind.clips => results.clips.length,
     };
+
+/// 그 종류를 [limit]보다 많이 찾아 잘랐는지.
+bool kindHasMore(LibrarySearchResults results, LibrarySearchKind kind) =>
+    switch (kind) {
+      LibrarySearchKind.all =>
+        results.moreSentences || results.moreWords || results.moreClips,
+      LibrarySearchKind.sentences => results.moreSentences,
+      LibrarySearchKind.words => results.moreWords,
+      LibrarySearchKind.clips => results.moreClips,
+    };
+
+/// 칩과 구역 머리가 같은 수를 말하게 한다(5차 393).
+///
+/// 전에는 구역 머리만 '문장 20+'라 하고 칩은 '문장 20개'라 해서, 더 있는데도
+/// 딱 20개만 있는 것처럼 보였다.
+String kindCountText(LibrarySearchResults results, LibrarySearchKind kind) =>
+    '${kindCount(results, kind)}${kindHasMore(results, kind) ? '+' : ''}';
 
 class LibrarySearchSheet extends StatefulWidget {
   const LibrarySearchSheet({
@@ -207,7 +222,8 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
     final clipProvider = context.read<ClipProvider?>();
     final accountId = widget.accountId;
     final results = await Future.wait([
-      MySentenceStore.load(accountId).catchError((_) => <DefaultConversationSentence>[]),
+      MySentenceStore.load(accountId)
+          .catchError((_) => <DefaultConversationSentence>[]),
       MyWordStore.load(accountId).catchError((_) => <MyWord>[]),
     ]);
     var clips = const <(int, String)>[];
@@ -215,7 +231,8 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
     if (db != null && clipProvider != null) {
       final visible = await clipProvider.service.getAllVisibleClips();
       clips = [for (final c in visible) (c.id, c.title)];
-      segments = await DbClipSegmentSource(db, () async => visible).loadSegments();
+      segments =
+          await DbClipSegmentSource(db, () async => visible).loadSegments();
     }
     return LibrarySearchData(
       sentences: results[0] as List<DefaultConversationSentence>,
@@ -269,12 +286,27 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
 
     Widget body;
     if (_failed) {
-      body = Text('불러오지 못했어요. 창을 닫고 다시 열어 주세요.', style: muted);
+      // 전에는 '창을 닫고 다시 열어 주세요.'라고만 했다. 다시 읽을 수
+      // 있는데도 길을 주지 않았다(5차 393).
+      body = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('불러오지 못했어요.', style: muted),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            key: const ValueKey('library-search-retry'),
+            onPressed: () {
+              setState(() => _failed = false);
+              _reload();
+            },
+            child: const Text('다시 시도'),
+          ),
+        ],
+      );
     } else if (data == null) {
       body = const Center(
           child: Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator()));
+              padding: EdgeInsets.all(24), child: CircularProgressIndicator()));
     } else if (query.trim().isEmpty) {
       body = Text('내 문장·단어와 클립 제목·자막에서 찾아요.', style: muted);
     } else if (results.isEmpty) {
@@ -283,14 +315,16 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
               ? "'${query.trim()}' 검색 결과가 없어요."
               // '문장이(가)'처럼 두 가지를 함께 쓰지 않는다(5차).
               : "'${query.trim()}'에 맞는 ${iGa(_kind.label)} 없어요.",
-          key: const ValueKey('library-search-empty'), style: muted);
+          key: const ValueKey('library-search-empty'),
+          style: muted);
     } else {
       body = ListView(
         key: const ValueKey('library-search-results'),
         padding: EdgeInsets.zero,
         children: [
           if (results.sentences.isNotEmpty) ...[
-            _SectionLabel('문장 ${_count(results.sentences.length, results.moreSentences)}'),
+            _SectionLabel(
+                '문장 ${_count(results.sentences.length, results.moreSentences)}'),
             for (final s in results.sentences)
               _ResultTile(
                 icon: Icons.format_quote_rounded,
@@ -300,7 +334,8 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
               ),
           ],
           if (results.words.isNotEmpty) ...[
-            _SectionLabel('단어 ${_count(results.words.length, results.moreWords)}'),
+            _SectionLabel(
+                '단어 ${_count(results.words.length, results.moreWords)}'),
             for (final w in results.words)
               _ResultTile(
                 icon: Icons.spellcheck_rounded,
@@ -310,7 +345,8 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
               ),
           ],
           if (results.clips.isNotEmpty) ...[
-            _SectionLabel('클립 ${_count(results.clips.length, results.moreClips)}'),
+            _SectionLabel(
+                '클립 ${_count(results.clips.length, results.moreClips)}'),
             for (final c in results.clips)
               _ResultTile(
                 icon: Icons.play_circle_outline_rounded,
@@ -364,7 +400,7 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
                     child: ChoiceChip(
                       key: ValueKey('library-search-kind-${kind.name}'),
                       // 섹션 머리('문장 3')와 헷갈리지 않게 '개'를 붙인다.
-                      label: Text('${kind.label} ${kindCount(all, kind)}개'),
+                      label: Text('${kind.label} ${kindCountText(all, kind)}개'),
                       selected: _kind == kind,
                       onSelected: (_) => setState(() => _kind = kind),
                     ),

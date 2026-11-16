@@ -33,6 +33,14 @@ class _TtsElevenLabsVoiceSelectionSheetState
   /// null이면 전체보기.
   String? _selectedAccent;
 
+  /// 목소리 목록을 읽는 일. build에서 만들면 억양을 고를 때마다 새로
+  /// 만들어져 다시 읽는다. 한 번 만들어 들고 있다가 '다시 시도'에서만
+  /// 새로 만든다(5차 393).
+  late Future<List<TtsElevenLabsVoice>> _voices = _load();
+
+  Future<List<TtsElevenLabsVoice>> _load() =>
+      TtsVoiceCache().fetchElevenLabsVoicesIfNeeded(TtsRemoteDataSource());
+
   TtsProvider get provider => widget.provider;
 
   @override
@@ -81,8 +89,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
           const SizedBox(height: AppSpacing.md),
           Expanded(
             child: FutureBuilder<List<TtsElevenLabsVoice>>(
-              future: TtsVoiceCache()
-                  .fetchElevenLabsVoicesIfNeeded(TtsRemoteDataSource()),
+              future: _voices,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -90,13 +97,25 @@ class _TtsElevenLabsVoiceSelectionSheetState
 
                 if (snapshot.hasError) {
                   // 내부 오류 글을 그대로 보여 주지 않는다(5차).
-                  AppLogger.e('[TTS] 보이스 목록 읽기 실패',
-                      error: snapshot.error);
+                  AppLogger.e('[TTS] 보이스 목록 읽기 실패', error: snapshot.error);
+                  // 전에는 '창을 닫고 다시 열어 주세요.'라고만 했다. 구글
+                  // 목소리 시트처럼 그 자리에서 다시 읽게 한다(5차 393).
                   return Center(
-                    child: Text(
-                      '목소리 목록을 불러오지 못했어요.\n창을 닫고 다시 열어 주세요.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: theme.colorScheme.error),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '목소리 목록을 불러오지 못했어요.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        FilledButton.tonal(
+                          key: const ValueKey('retry-elevenlabs-voices'),
+                          onPressed: () => setState(() => _voices = _load()),
+                          child: const Text('다시 시도'),
+                        ),
+                      ],
                     ),
                   );
                 }
