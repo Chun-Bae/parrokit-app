@@ -90,10 +90,14 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
 
     if (shouldShow) {
       _pauseSignal.value = true;
-      AdService()
-          .showInterstitialAd(); // premium이면 incrementBy가 false를 반환 → 여기 안 옴
       ad.recordAdShown();
-      _pauseSignal.value = false;
+      // 광고가 닫힌 뒤에 다시 튼다. 전에는 바로 다음 줄에서 풀어서, 광고를
+      // 보는 내내 뒤에서 영상 소리가 났다(5차 372).
+      // premium이면 incrementBy가 false를 반환해 여기 오지 않는다.
+      AdService().showInterstitialAd(onClosed: () {
+        if (!mounted) return;
+        _pauseSignal.value = false;
+      });
     }
   }
 

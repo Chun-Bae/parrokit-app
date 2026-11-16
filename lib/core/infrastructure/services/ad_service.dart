@@ -1,6 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart'
-    show kReleaseMode, ValueNotifier, ValueListenable;
+    show kReleaseMode, ValueNotifier, ValueListenable, VoidCallback;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -68,7 +68,10 @@ class AdService {
   void loadInterstitialAd() => _interstitial.load();
 
   /// 전면 광고를 보여준다.
-  void showInterstitialAd() => _interstitial.show();
+  /// 전면 광고를 보여 준다. [onClosed]는 광고가 닫히거나, 띄우지 못했거나,
+  /// 준비된 광고가 없어 그냥 지나갈 때 불린다(5차 372).
+  void showInterstitialAd({VoidCallback? onClosed}) =>
+      _interstitial.show(onClosed: onClosed);
 
   /// 보상형 광고를 미리 로드한다.
   void loadRewardedAd() => _rewarded.load();
@@ -133,13 +136,34 @@ class _InterstitialAdController {
     );
   }
 
-  void show() {
-    if (_ad == null) {
+  /// [onClosed]는 광고가 닫힌 뒤(또는 띄우지 못했을 때) 한 번 불린다.
+  ///
+  /// 전에는 부르는 쪽이 show() 바로 다음 줄에서 영상을 다시 틀었다. 광고는
+  /// 그제야 올라오니, 광고를 보는 내내 뒤에서 소리가 났다(5차 372).
+  void show({VoidCallback? onClosed}) {
+    final ad = _ad;
+    if (ad == null) {
       load();
+      onClosed?.call();
       return;
     }
 
-    _ad!.show();
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _ad = null;
+        onClosed?.call();
+        load();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _ad = null;
+        AppLogger.e('[Ads][Interstitial] show failed', error: error);
+        onClosed?.call();
+        load();
+      },
+    );
+    ad.show();
     _ad = null;
   }
 }
