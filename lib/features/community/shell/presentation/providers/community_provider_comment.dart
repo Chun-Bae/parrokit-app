@@ -162,6 +162,9 @@ extension CommunityProviderComment on CommunityProvider {
             c.copyWith(likeCount: c.likeCount + (!targetState ? 1 : -1));
       }
       _errorMessage = communityErrorText(CommunityJob.like, e);
+      // 되돌리기만 하면 하트가 슬쩍 돌아갈 뿐이라 까닭을 알 수 없었다.
+      // 글 공감과 같게 여기서 한 번 알린다(5차 383).
+      showToast(_errorMessage!);
       _notifyListenersSafe();
     }
   }

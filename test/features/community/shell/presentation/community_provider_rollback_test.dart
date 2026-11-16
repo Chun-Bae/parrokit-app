@@ -7,6 +7,7 @@
 // 글 수정·삭제는 orElse 없는 firstWhere를 써서, 목록에 없는 글이면
 // "Bad state: No element"가 그대로 토스트에 떴다.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -195,5 +196,13 @@ void main() {
     expect(provider.errorMessage, contains('찾지 못했어요'));
     expect(repository.deletedPostIds, isEmpty);
     expect(provider.posts.map((p) => p.id), ['a']);
+  });
+
+  test('댓글 공감이 막히면 되돌리고 알린다(5차 383)', () {
+    // 화면마다 붙이면 빠지는 곳이 생겨서 provider가 한 번 알린다.
+    final code = File(
+            'lib/features/community/shell/presentation/providers/community_provider_comment.dart')
+        .readAsStringSync();
+    expect(code, contains('showToast(_errorMessage!);'));
   });
 }
