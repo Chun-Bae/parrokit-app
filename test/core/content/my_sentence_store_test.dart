@@ -84,6 +84,66 @@ void main() {
       expect(mine.single.addedAt, isNotNull);
     });
 
+    test('고치면 서버 문서가 바뀌고 id와 공개 여부는 그대로다(5차 331)', () async {
+      await MySentenceStore.add('u1',
+          language: '영어', text: 'Helo there', translation: '안녕');
+      final before = (await MySentenceStore.load('u1')).single;
+      await firestore
+          .collection('sentences')
+          .doc(before.id)
+          .update({'visibility': 'public', 'likeCount': 3});
+
+      expect(
+        await MySentenceStore.update('u1', before.id,
+            text: 'Hello there', pronunciation: '헬로 데어', translation: '안녕하세요'),
+        isTrue,
+      );
+
+      final data =
+          (await firestore.collection('sentences').doc(before.id).get()).data()!;
+      expect(data['text'], 'Hello there');
+      expect(data['pronunciation'], '헬로 데어');
+      expect(data['translation'], '안녕하세요');
+      // 고치기가 공개 여부나 좋아요를 건드리면 안 된다.
+      expect(data['visibility'], 'public');
+      expect(data['likeCount'], 3);
+
+      final after = (await MySentenceStore.load('u1')).single;
+      expect(after.id, before.id, reason: '연습 기록이 id로 묶여 있다');
+    });
+
+    test('같은 문장이 이미 있으면 고치지 않는다(5차 331)', () async {
+      await MySentenceStore.add('u1', language: '영어', text: 'One');
+      await MySentenceStore.add('u1', language: '영어', text: 'Two');
+      final two =
+          (await MySentenceStore.load('u1')).firstWhere((s) => s.text == 'Two');
+
+      expect(await MySentenceStore.update('u1', two.id, text: 'One'), isFalse);
+      final texts = (await MySentenceStore.load('u1')).map((s) => s.text);
+      expect(texts, containsAll(['One', 'Two']));
+    });
+
+    test('공유 중인 문장 id만 돌려준다(5차 331)', () async {
+      await MySentenceStore.add('u1', language: '영어', text: 'Shared one');
+      await MySentenceStore.add('u1', language: '영어', text: 'Private one');
+      final shared = (await MySentenceStore.load('u1'))
+          .firstWhere((s) => s.text == 'Shared one');
+      await firestore
+          .collection('sentences')
+          .doc(shared.id)
+          .update({'visibility': 'public'});
+
+      expect(await MySentenceStore.publishedIds('u1'), {shared.id});
+      // 남의 공개 문장은 들어오지 않는다.
+      await MySentenceStore.add('u2', language: '영어', text: 'Other');
+      final other = (await MySentenceStore.load('u2')).single;
+      await firestore
+          .collection('sentences')
+          .doc(other.id)
+          .update({'visibility': 'public'});
+      expect(await MySentenceStore.publishedIds('u1'), {shared.id});
+    });
+
     test('같은 언어의 같은 문장은 한 번만 들어가고 다른 계정은 서로 안 보인다', () async {
       await MySentenceStore.add('u1', language: '영어', text: 'See you');
       expect(
