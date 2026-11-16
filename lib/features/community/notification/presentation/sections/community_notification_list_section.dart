@@ -84,14 +84,7 @@ class CommunityNotificationListSection extends StatelessWidget {
     );
   }
 
-  String _resolveRoutePath(CommunityNotificationItem item) {
-    switch (item.boardType) {
-      case 'question':
-        return AppRoutes.communityQuestionViewPathOf(item.postId);
-      case 'vote':
-        return AppRoutes.communityVoteViewPathOf(item.postId);
-      default:
-        return AppRoutes.communityBoardViewPathOf(item.postId);
-    }
-  }
+  /// 서버가 푸시에 담아 보내는 길과 같은 규칙을 쓴다(5차 380).
+  String _resolveRoutePath(CommunityNotificationItem item) =>
+      AppRoutes.communityViewPathOf(item.boardType, item.postId);
 }

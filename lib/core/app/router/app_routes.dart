@@ -117,6 +117,18 @@ abstract class AppRoutes {
   static String communityVoteViewPathOf(String voteId) =>
       '/community/vote/$voteId';
 
+  /// 게시판 종류에 맞는 글 화면 길(5차 380).
+  ///
+  /// 알림을 누르면 이 길로 간다. 서버도 푸시에 같은 길을 담아 보내므로
+  /// (functions/src/communityNotifications.ts의 buildRoutePath) 규칙이
+  /// 어긋나면 알림마다 다른 화면이 열린다. 앱 쪽은 여기 한 곳만 쓴다.
+  static String communityViewPathOf(String boardType, String postId) =>
+      switch (boardType) {
+        'question' => communityQuestionViewPathOf(postId),
+        'vote' => communityVoteViewPathOf(postId),
+        _ => communityBoardViewPathOf(postId),
+      };
+
   static String communityActivityPathOf(
           {required String boardType, required String activityType}) =>
       '/community/activity?boardType=$boardType&activityType=$activityType';
