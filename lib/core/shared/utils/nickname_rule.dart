@@ -14,3 +14,10 @@ const String nicknameNeededMessage = '닉네임을 적어 주세요.';
 const String nicknameAvailableMessage = '쓸 수 있는 이름이에요.';
 const String nicknameTakenMessage = '이미 누가 쓰고 있어요.';
 
+/// 중복 확인을 하지 않고 저장·다음으로 가려 할 때(5차 409).
+///
+/// 네 화면이 세 가지 말을 쓰고 있었다. 프로필 편집은 토스트로
+/// '닉네임 중복 확인을 먼저 완료해 주세요.'라 하면서, 꺼진 단추의 까닭은
+/// "'중복 확인'을 먼저 눌러 주세요."라고 해 같은 화면 안에서도 달랐다.
+/// 무엇을 누르면 되는지 말하는 쪽으로 맞춘다.
+const String nicknameCheckNeededMessage = "'중복 확인'을 먼저 눌러 주세요.";

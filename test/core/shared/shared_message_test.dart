@@ -44,6 +44,26 @@ void main() {
     }
   });
 
+  test('중복 확인 안내도 네 자리가 같은 말을 쓴다(5차 409)', () {
+    // 무엇을 누르면 되는지 말한다.
+    expect(nicknameCheckNeededMessage, contains('중복 확인'));
+    expect(nicknameCheckNeededMessage, contains('눌러 주세요'));
+
+    for (final path in [
+      'lib/features/auth/onboarding/onboarding_screen.dart',
+      'lib/features/auth/sign-up/sign_up_screen.dart',
+      'lib/features/settings/more/presentation/profile_edit_screen.dart',
+    ]) {
+      final code = File(path).readAsStringSync();
+      expect(code, contains('nicknameCheckNeededMessage'), reason: path);
+      // 화면마다 따로 적던 말들.
+      expect(code, isNot(contains("'닉네임 중복 확인을 먼저 해 주세요.'")),
+          reason: path);
+      expect(code, isNot(contains("'닉네임 중복 확인을 먼저 완료해 주세요.'")),
+          reason: path);
+    }
+  });
+
   test('인터넷이 끊겼다는 말도 한 곳에서만 적는다', () {
     final hits = dartFiles('lib')
         .where((f) => !f.path.endsWith('network_error.dart'))

@@ -118,7 +118,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     // 중복 확인 여부 검증
     if (newNickname != _checkedNickname || !_isNicknameAvailable) {
-      showToast('닉네임 중복 확인을 먼저 완료해 주세요.');
+      showToast(nicknameCheckNeededMessage);
       return;
     }
 
@@ -408,6 +408,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
 /// 닉네임을 아직 바꿀 수 없을 때 안내. [remainingDays]일 뒤에 바꿀 수 있다.
 @visibleForTesting
+
 /// 30일이 지나 지금 바꿀 수 있을 때의 안내.
 ///
 /// 예전엔 '마지막 변경일: 2026년 5월 27일 · 바꾸면 30일 동안 다시 바꿀 수
@@ -431,7 +432,7 @@ String profileSaveBlockedReason({
     return '닉네임은 30일에 한 번 바꿀 수 있어요.';
   }
   if (hasNicknameChanged && !nicknameChecked) {
-    return "'중복 확인'을 먼저 눌러 주세요.";
+    return nicknameCheckNeededMessage;
   }
   return '지금은 저장할 수 없어요.';
 }

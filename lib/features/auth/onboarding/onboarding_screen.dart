@@ -80,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     if (!_hasCheckedNickname || !_isNicknameAvailable) {
-      showToast('닉네임 중복 확인을 먼저 해 주세요.');
+      showToast(nicknameCheckNeededMessage);
       return;
     }
 
