@@ -631,6 +631,11 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     final isMe = currentUser != null && question.authorId == currentUser.id;
     final provider = context.read<CommunityProvider>();
     final isBlocked = provider.isAuthorBlocked(answer.authorId);
+    // 지운 답변은 게시판·투표처럼 '지운 댓글이에요.' 한 줄만 보여 준다.
+    // 질문 화면만 아무 처리가 없어서, 지운 답변에 이름·시간·메뉴가 그대로
+    // 뜨고 서버가 넣어 둔 '이 댓글은 삭제된 댓글입니다.'가 그대로 보였다
+    // (5차 404).
+    final isDeleted = answer.status == 'deleted';
 
     final answererName = (answer.authorId == currentUser?.id)
         ? (currentUser?.displayName ?? answer.authorNickname)
@@ -685,16 +690,19 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Flexible(
-                            child: Text(isBlocked ? blockedAuthorName : answererName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.texts.bodyLarge
-                                    .copyWith(color: colorScheme.onSurface)),
-                          ),
+                          if (!isDeleted)
+                            Flexible(
+                              child: Text(
+                                  isBlocked ? blockedAuthorName : answererName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.texts.bodyLarge
+                                      .copyWith(color: colorScheme.onSurface)),
+                            ),
                           // 질문한 사람이 단 답글인지 알 수 없었다(5차). 게시판·
                           // 투표의 '작성자'처럼 표시한다.
                           if (!isBlocked &&
+                              !isDeleted &&
                               answer.authorId == question.authorId) ...[
                             const SizedBox(width: 6),
                             Container(
@@ -712,7 +720,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                         ],
                       ),
                     ),
-                    if (!isBlocked) ...[
+                    if (!isBlocked && !isDeleted) ...[
                       Text(formatCommunityTimeAgo(answer.createdAt),
                           style: context.texts.bodySmall
                               .copyWith(color: colorScheme.onSurfaceVariant)),
@@ -756,7 +764,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   ),
                   const SizedBox(height: 4),
                 ],
-                if (isReply && answer.replyToNickname != null && !isBlocked)
+                if (isReply &&
+                    answer.replyToNickname != null &&
+                    !isBlocked &&
+                    !isDeleted)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
@@ -766,12 +777,19 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                     ),
                   ),
                 Text(
-                  isBlocked ? questionBlockedAnswerMessage : answer.content,
-                  style: context.texts.bodyReading
-                      .copyWith(color: colorScheme.onSurface, height: 1.45),
+                  isDeleted
+                      ? deletedCommentText
+                      : isBlocked
+                          ? questionBlockedAnswerMessage
+                          : answer.content,
+                  style: context.texts.bodyReading.copyWith(
+                      color: isDeleted
+                          ? context.tokens.textDisabled
+                          : colorScheme.onSurface,
+                      height: 1.45),
                 ),
                 const SizedBox(height: 12),
-                if (!isBlocked)
+                if (!isBlocked && !isDeleted)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

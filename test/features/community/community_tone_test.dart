@@ -60,16 +60,24 @@ void main() {
     for (final path in const [
       'lib/features/community/board/presentation/widgets/board_comment_item.dart',
       'lib/features/community/vote/presentation/vote_view_screen.dart',
+      // 질문 화면은 지운 답변을 아예 가리지 않고 있었다(5차 404).
+      'lib/features/community/question/presentation/question_view_screen.dart',
     ]) {
       final code = File(path)
           .readAsLinesSync()
           .where((l) => !l.trimLeft().startsWith('//'))
           .join('\n');
       expect(code, contains('deletedCommentText'), reason: path);
-      expect(code, contains('blockedCommentText'), reason: path);
       // 지운 댓글에는 이름을 적지 않는다(5차 403).
       expect(code, isNot(contains("'(삭제됨)'")), reason: path);
       expect(code, contains('if (!isDeleted)'), reason: path);
+    }
+    for (final path in const [
+      'lib/features/community/board/presentation/widgets/board_comment_item.dart',
+      'lib/features/community/vote/presentation/vote_view_screen.dart',
+    ]) {
+      expect(File(path).readAsStringSync(), contains('blockedCommentText'),
+          reason: path);
     }
   });
 }
