@@ -54,6 +54,18 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     });
     _parseVoices();
     _initSelection();
+    // 시트는 provider를 보기만 하고 듣지는 않았다. 목록을 다 읽어도,
+    // '다시 시도'로 다시 읽어도 시트가 그대로였다(5차 395).
+    widget.provider.addListener(_onProviderChanged);
+  }
+
+  /// 목록이 들어오면 다시 그리고 고른 값을 맞춘다.
+  void _onProviderChanged() {
+    if (!mounted) return;
+    setState(() {
+      _parseVoices();
+      _initSelection();
+    });
   }
 
   @override
@@ -67,6 +79,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
 
   @override
   void dispose() {
+    widget.provider.removeListener(_onProviderChanged);
     _previewPlayer.dispose();
     super.dispose();
   }

@@ -122,6 +122,44 @@ void main() {
       return opened;
     }
 
+    testWidgets('못 불러오면 다시 시도할 수 있고, 되면 결과가 나온다(5차 395)',
+        (tester) async {
+      var attempts = 0;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            height: 500,
+            child: LibrarySearchSheet(
+              accountId: 'guest',
+              onOpenClip: (_) {},
+              load: () async {
+                attempts++;
+                // 첫 번만 실패한다. '다시 시도'가 정말 다시 읽는지 본다.
+                if (attempts == 1) throw Exception('network');
+                return _data;
+              },
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('불러오지 못했어요.'), findsOneWidget);
+      final retry = find.byKey(const ValueKey('library-search-retry'));
+      expect(retry, findsOneWidget);
+
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(attempts, 2);
+      expect(find.text('불러오지 못했어요.'), findsNothing);
+
+      await tester.enterText(
+          find.byKey(const ValueKey('library-search-field')), 'meet');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('library-search-results')),
+          findsOneWidget);
+    });
+
     testWidgets('치면 종류별로 결과가 나오고, 없으면 안내한다', (tester) async {
       await open(tester);
       expect(find.text('내 문장·단어와 클립 제목·자막에서 찾아요.'), findsOneWidget);

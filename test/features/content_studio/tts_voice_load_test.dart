@@ -1,10 +1,12 @@
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/content-studio/tts/domain/repositories/tts_generation_repository.dart';
 import 'package:parrokit/features/content-studio/tts/domain/usecases/generate_tts_usecase.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
+import 'package:parrokit/features/content-studio/tts/presentation/widgets/tts_voice_selection_sheet.dart';
 
 class _User extends Fake implements UserProvider {}
 
@@ -100,5 +102,35 @@ void main() {
       expect(vm.voicesFailed, isTrue);
       vm.dispose();
     });
+  });
+
+  testWidgets('목소리 시트는 실패하면 그 자리에서 다시 읽는다(5차 395)',
+      (tester) async {
+    final repo = _FakeRepo(fail: true);
+    final vm = _makeProvider(repo);
+    addTearDown(vm.dispose);
+    await vm.fetchAvailableVoices();
+    expect(vm.voicesFailed, isTrue);
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          height: 600,
+          child: TtsVoiceSelectionSheet(provider: vm),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    expect(find.text('목소리 목록을 불러오지 못했어요.'), findsOneWidget);
+    final retry = find.byKey(const ValueKey('retry-voices'));
+    expect(retry, findsOneWidget);
+
+    repo.fail = false;
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+    expect(repo.calls, 2);
+    expect(vm.voicesFailed, isFalse);
+    expect(find.text('목소리 목록을 불러오지 못했어요.'), findsNothing);
   });
 }
