@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:parrokit/core/content/script_splitter.dart';
 import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/content/sentence_url_import.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
@@ -422,6 +421,37 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   }
 
   /// 내 문장(가져온 문장 포함, 모든 언어)을 CSV나 엑셀(xlsx) 파일로 내보낸다.
+  /// 내보낼 파일 모양을 먼저 고르게 한다(5차 344, 사용자 요청).
+  Future<void> exportSentences() async {
+    if (mine.isEmpty) {
+      toast('내보낼 문장이 없어요.');
+      return;
+    }
+    final xlsx = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const ValueKey('export-format-dialog'),
+        title: const Text('어떤 파일로 내보낼까요?'),
+        content: const Text('둘 다 같은 양식이에요. 엑셀에서 바로 열려면 엑셀(xlsx), '
+            '다른 앱에서도 두루 쓰려면 CSV를 고르세요.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+          TextButton(
+              key: const ValueKey('export-csv'),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('CSV')),
+          FilledButton(
+              key: const ValueKey('export-xlsx'),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('엑셀(xlsx)')),
+        ],
+      ),
+    );
+    if (xlsx == null || !mounted) return;
+    await exportMySentences(xlsx: xlsx);
+  }
+
   Future<void> exportMySentences({required bool xlsx}) async {
     if (mine.isEmpty) {
       toast('내보낼 문장이 없어요.');
@@ -447,40 +477,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
 
   /// CSV나 엑셀(xlsx) 파일에서 문장을 가져온다. 원문만 있으면 되고 뜻은 있으면 함께 넣는다.
   /// 언어 열이 없거나 비어 있으면 지금 고른 언어로 들어가고, 이미 있는 문장은 건너뛴다.
-  /// 사용자가 복사해 붙여넣은 스크립트를 문장으로 나눠 고른 문장만 내 문장에 추가한다.
-  Future<void> addFromScript() async {
-    // 탭 바 그림자가 시트 위로 비치지 않게 시트가 떠 있는 동안 숨긴다(5차).
-    final picked = await withNavBarHiddenForSheet<List<String>>(
-      () => showModalBottomSheet<List<String>>(
-        context: context,
-        useRootNavigator: true,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (_) => const _ScriptImportSheet(),
-      ),
-    );
-    if (picked == null || picked.isEmpty) return;
-    try {
-      var added = 0;
-      for (final text in picked) {
-        final ok = await MySentenceStore.add(
-          accountId,
-          language: language,
-          text: text,
-          author: authorName,
-        );
-        if (ok) added++;
-      }
-      if (!mounted) return;
-      final skipped = picked.length - added;
-      toast(skipped == 0
-          ? '문장 $added개를 추가했어요.'
-          : '문장 $added개를 추가했어요. 이미 있는 $skipped개는 건너뛰었어요.');
-    } catch (_) {
-      if (mounted) toast('문장을 추가하지 못했어요. 다시 시도해주세요.');
-    }
-  }
-
   Future<void> importMySentences() async {
     try {
       final picked = await FilePicker.platform.pickFiles(
@@ -796,35 +792,23 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                     PopupMenuButton<String>(
                       tooltip: '가져오기·내보내기',
                       icon: const Icon(Icons.more_horiz_rounded),
+                      // 메뉴는 가져오기·내보내기 둘뿐이고, 어떤 파일로 할지는
+                      // 그다음에 고른다(5차 344, 사용자 요청).
                       onSelected: (value) => switch (value) {
-                        'script' => addFromScript(),
                         'import' => importSentences(),
-                        'xlsx' => exportMySentences(xlsx: true),
-                        _ => exportMySentences(xlsx: false),
+                        _ => exportSentences(),
                       },
                       itemBuilder: (_) => const [
-                        PopupMenuItem(
-                            value: 'script',
-                            child: ListTile(
-                                leading: Icon(Icons.content_paste_rounded),
-                                // 창 제목과 같은 말로(5차). 예전 '스크립트
-                                // 붙여넣어 문장 만들기'.
-                                title: Text('스크립트로 문장 만들기'))),
                         PopupMenuItem(
                             value: 'import',
                             child: ListTile(
                                 leading: Icon(Icons.file_download_outlined),
-                                title: Text('CSV·엑셀에서 가져오기'))),
+                                title: Text('문장 가져오기'))),
                         PopupMenuItem(
-                            value: 'csv',
+                            value: 'export',
                             child: ListTile(
                                 leading: Icon(Icons.file_upload_outlined),
-                                title: Text('CSV로 내보내기'))),
-                        PopupMenuItem(
-                            value: 'xlsx',
-                            child: ListTile(
-                                leading: Icon(Icons.table_chart_outlined),
-                                title: Text('엑셀(xlsx)로 내보내기'))),
+                                title: Text('문장 내보내기'))),
                       ],
                     ),
                   ]),
@@ -2659,176 +2643,6 @@ class _HistoryLine extends StatelessWidget {
   }
 }
 
-/// 붙여넣은 스크립트를 문장으로 나눠 보여주고, 체크한 문장만 돌려준다.
-class _ScriptImportSheet extends StatefulWidget {
-  const _ScriptImportSheet();
-
-  @override
-  State<_ScriptImportSheet> createState() => _ScriptImportSheetState();
-}
-
-class _ScriptImportSheetState extends State<_ScriptImportSheet> {
-  final input = TextEditingController();
-  List<String> sentences = [];
-  Set<int> selected = {};
-  bool split = false;
-
-  @override
-  void dispose() {
-    input.dispose();
-    super.dispose();
-  }
-
-  void runSplit() {
-    final result = ScriptSplitter.split(input.text);
-    setState(() {
-      split = true;
-      sentences = result;
-      selected = {for (var i = 0; i < result.length; i++) i};
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final height = MediaQuery.sizeOf(context).height * 0.8;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SizedBox(
-        height: height,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Expanded(
-                  child: Text('스크립트로 문장 만들기', style: context.texts.titleLarge),
-                ),
-                // 긴 글을 붙여 넣는 창인데 밀어 내리는 것 말고는 나갈 길이
-                // 없었다(5차).
-                IconButton(
-                  key: const ValueKey('close-script-sheet'),
-                  tooltip: '닫기',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ]),
-              const SizedBox(height: 8),
-              Container(
-                key: const ValueKey('script-notice'),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Text(
-                  '유튜브 주소로 자막을 자동으로 가져오지는 않아요. '
-                  '영상의 \'스크립트 표시\'에서 직접 복사해 붙여넣어 주세요. '
-                  '저작권이 있는 영상의 문장은 개인 학습용으로만 쓰고 공유하지 마세요.',
-                  style: context.texts.bodySmall
-                      .copyWith(color: colors.onSurfaceVariant, height: 1.4),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (!split) ...[
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('script-input'),
-                    controller: input,
-                    maxLines: null,
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      hintText: '복사한 스크립트를 여기에 붙여넣어 주세요',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    key: const ValueKey('script-split'),
-                    onPressed: input.text.trim().isEmpty ? null : runSplit,
-                    child: const Text('문장 나누기'),
-                  ),
-                ),
-              ] else if (sentences.isEmpty) ...[
-                const Expanded(child: Center(child: Text('나눌 문장을 찾지 못했어요.'))),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => setState(() => split = false),
-                    child: const Text('다시 붙여넣기'),
-                  ),
-                ),
-              ] else ...[
-                Row(children: [
-                  Text('${selected.length} / ${sentences.length}개 선택',
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => setState(() => selected =
-                        selected.length == sentences.length
-                            ? {}
-                            : {for (var i = 0; i < sentences.length; i++) i}),
-                    child: Text(selected.length == sentences.length
-                        ? '전체 해제'
-                        : '전체 선택'),
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() => split = false),
-                    child: const Text('다시 붙여넣기'),
-                  ),
-                ]),
-                Expanded(
-                  child: ListView.builder(
-                    key: const ValueKey('script-sentences'),
-                    itemCount: sentences.length,
-                    itemBuilder: (context, i) => CheckboxListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      value: selected.contains(i),
-                      title: Text(sentences[i]),
-                      onChanged: (value) => setState(() {
-                        if (value == true) {
-                          selected.add(i);
-                        } else {
-                          selected.remove(i);
-                        }
-                      }),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    key: const ValueKey('script-add'),
-                    onPressed: selected.isEmpty
-                        ? null
-                        : () => Navigator.pop(context, [
-                              for (final i in (selected.toList()..sort()))
-                                sentences[i],
-                            ]),
-                    child: Text('내 문장에 ${selected.length}개 추가'),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 문장 상세의 "단어 저장" 줄. 문장을 띄어쓰기로 나눈 단어 칩을 누르면 그 단어로
-/// 단어 추가 시트를 연다(표현을 넓히려면 시트에서 고치면 된다). 띄어쓰기가 없는
-/// 언어(일본어·중국어)는 '직접 입력'만 쓴다.
 class _WordPickRow extends StatelessWidget {
   const _WordPickRow({required this.sentence, required this.onPick});
 
