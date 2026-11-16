@@ -127,7 +127,8 @@ List<Post> fakeCommunityPosts(String postType, {DateTime? now}) {
   }
 }
 
-/// 가짜 글의 댓글. 글 상세·댓글 화면을 확인하려고 둔다. 답글과 채택된 답변을 섞는다.
+/// 가짜 글의 댓글. 글 상세·댓글 화면을 확인하려고 둔다. 답글과 채택된 답변,
+/// 지운 댓글을 섞는다(지운 댓글 표시를 기기에서 볼 길이 없었다, 5차 405).
 List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
   if (!isFakePost(postId)) return const [];
   final base = now ?? DateTime.now();
@@ -141,6 +142,7 @@ List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
           String? replyTo,
           int likes = 0,
           bool accepted = false,
+          String status = 'active',
           int ago = 1}) =>
       Comment(
         id: '$postId-c$id',
@@ -156,6 +158,7 @@ List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
         postType: type,
         likeCount: likes,
         isAccepted: accepted,
+        status: status,
         createdAt: base.subtract(Duration(hours: ago)),
       );
   return [
@@ -178,5 +181,8 @@ List<Comment> fakeCommunityComments(String postId, {DateTime? now}) {
         ago: 3),
     c('2', '테스트', '고마워요, 바로 해 볼게요.', parent: '1', replyTo: '앵무', ago: 2),
     c('3', '봄', '저는 하루 다섯 문장씩 하고 있어요.', likes: 1, ago: 1),
+    // 지운 댓글. 세 화면 모두 이름·시간·단추를 숨기고 '지운 댓글이에요.'
+    // 한 줄만 보여 줘야 한다(5차 403·404).
+    c('4', '민', '이 댓글은 삭제된 댓글입니다.', status: 'deleted', ago: 1),
   ];
 }

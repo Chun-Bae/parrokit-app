@@ -72,7 +72,8 @@ void main() {
     expect(provider.currentPostComments.where((c) => c.isAccepted), isEmpty);
     final q = questions.firstWhere((p) => p.questionStatus == 'resolved').id;
     await provider.fetchComments(q, currentUserId: 'u1');
-    expect(provider.currentPostComments, hasLength(3));
+    // 405에서 지운 댓글을 하나 더 넣었다(지운 댓글 표시 확인용).
+    expect(provider.currentPostComments, hasLength(4));
     expect(
         provider.currentPostComments.where((c) => c.isAccepted), hasLength(1));
     expect(provider.currentPostComments.where((c) => c.parentId != null),
@@ -86,5 +87,13 @@ void main() {
         fakeCommunityComments('$fakePostPrefix$id').first.content;
     expect(firstAnswer('question-2'), contains('out'));
     expect(firstAnswer('question-1'), contains('I’m good'));
+  });
+
+  test('지운 댓글이 하나 섞여 있다(5차 405)', () {
+    final comments = fakeCommunityComments('${fakePostPrefix}question-1');
+    final deleted = comments.where((c) => c.status == 'deleted');
+    expect(deleted, hasLength(1));
+    // 서버가 예전에 넣어 둔 글이 그대로 들어 있는 모습까지 흉내 낸다.
+    expect(deleted.first.content, '이 댓글은 삭제된 댓글입니다.');
   });
 }
