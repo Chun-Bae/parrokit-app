@@ -39,6 +39,7 @@ import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_topic_label.dart';
+import 'package:parrokit/core/shared/widgets/author_avatar.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
 import 'collection_header_slot.dart';
@@ -922,125 +923,123 @@ class _SentenceCard extends StatelessWidget {
   final VoidCallback onOpen;
 
   @override
-  Widget build(BuildContext context) => Material(
-        key: ValueKey(saved ? 'sentence-card-saved' : 'sentence-card-unsaved'),
-        // 내 문장으로 가져온 문장은 연한 색과 테두리로 구분한다.
-        color: saved
-            ? Theme.of(context)
-                .colorScheme
-                .primaryContainer
-                .withValues(alpha: 0.35)
-            : Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            side: BorderSide(
-                color: saved
-                    ? Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.5)
-                    : Theme.of(context).colorScheme.outlineVariant)),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onOpen,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 10, 8),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
+  Widget build(BuildContext context) {
+    final topicLabel = sentenceTopicLabel(sentence.topic, mine: mine);
+    return Material(
+      key: ValueKey(saved ? 'sentence-card-saved' : 'sentence-card-unsaved'),
+      // 내 문장으로 가져온 문장은 연한 색과 테두리로 구분한다.
+      color: saved
+          ? Theme.of(context)
+              .colorScheme
+              .primaryContainer
+              .withValues(alpha: 0.35)
+          : Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: BorderSide(
+              color: saved
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+                  : Theme.of(context).colorScheme.outlineVariant)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 10, 8),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondaryContainer
+                          .withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(AppRadius.xl)),
+                  child: Text(topicLabel, style: context.texts.labelSmall)),
+              if (saved) ...[
+                const SizedBox(width: 6),
                 Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    key: const ValueKey('saved-chip'),
+                    padding: const EdgeInsets.fromLTRB(6, 4, 8, 4),
                     decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .secondaryContainer
-                            .withValues(alpha: 0.55),
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(AppRadius.xl)),
-                    child: Text(sentenceTopicLabel(sentence.topic, mine: mine),
-                        style: context.texts.labelSmall)),
-                if (saved) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                      key: const ValueKey('saved-chip'),
-                      padding: const EdgeInsets.fromLTRB(6, 4, 8, 4),
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(AppRadius.xl)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.check_rounded,
-                            size: 12,
-                            color: Theme.of(context).colorScheme.onPrimary),
-                        const SizedBox(width: 3),
-                        Text('저장됨',
-                            style: context.texts.labelSmall.copyWith(
-                                color:
-                                    Theme.of(context).colorScheme.onPrimary)),
-                      ])),
-                ],
-                const Spacer(),
-                Text('@${sentence.authorName}',
-                    style: context.texts.labelSmall.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              ]),
-              const SizedBox(height: 12),
-              Text(sentence.text, style: context.texts.titleMedium),
-              const SizedBox(height: 5),
-              Text(sentence.translation,
-                  style: context.texts.labelMedium.copyWith(
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.check_rounded,
+                          size: 12,
+                          color: Theme.of(context).colorScheme.onPrimary),
+                      const SizedBox(width: 3),
+                      Text('저장됨',
+                          style: context.texts.labelSmall.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary)),
+                    ])),
+              ],
+              const Spacer(),
+              Text('@${sentence.authorName}',
+                  style: context.texts.labelSmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 8),
-              Row(children: [
-                IconButton(
-                    tooltip: '좋아요',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onLike,
-                    icon: Icon(
-                        sentence.liked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border,
-                        color: sentence.liked
-                            ? context.collectionTokens.liked
-                            : null)),
-                Text('${sentence.likeCount}', style: context.texts.bodySmall),
-                const SizedBox(width: 14),
-                Tooltip(
-                  message: '가져간 사람 수',
-                  child: Row(children: [
-                    Icon(Icons.download_rounded,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 3),
-                    Text('${sentence.importCount}',
-                        key: const ValueKey('shared-import-count'),
-                        style: context.texts.bodySmall),
-                  ]),
-                ),
-                const Spacer(),
-                IconButton(
-                    tooltip: '내 문장에 저장',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onSave,
-                    icon: Icon(
-                        saved
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_border_rounded,
-                        color: saved
-                            ? Theme.of(context).colorScheme.primary
-                            : null)),
-                IconButton(
-                    tooltip: '앵무새에게 보내기',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onParrot,
-                    icon: Icon(Icons.record_voice_over_rounded,
-                        color: active
-                            ? context.collectionTokens.voiceActive
-                            : null)),
-              ]),
             ]),
-          ),
+            const SizedBox(height: 12),
+            Text(sentence.text, style: context.texts.titleMedium),
+            const SizedBox(height: 5),
+            Text(sentence.translation,
+                style: context.texts.labelMedium.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 8),
+            Row(children: [
+              IconButton(
+                  tooltip: '좋아요',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onLike,
+                  icon: Icon(
+                      sentence.liked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border,
+                      color: sentence.liked
+                          ? context.collectionTokens.liked
+                          : null)),
+              Text('${sentence.likeCount}', style: context.texts.bodySmall),
+              const SizedBox(width: 14),
+              Tooltip(
+                message: '가져간 사람 수',
+                child: Row(children: [
+                  Icon(Icons.download_rounded,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 3),
+                  Text('${sentence.importCount}',
+                      key: const ValueKey('shared-import-count'),
+                      style: context.texts.bodySmall),
+                ]),
+              ),
+              const Spacer(),
+              IconButton(
+                  tooltip: '내 문장에 저장',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onSave,
+                  icon: Icon(
+                      saved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      color: saved
+                          ? Theme.of(context).colorScheme.primary
+                          : null)),
+              IconButton(
+                  tooltip: '앵무새에게 보내기',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onParrot,
+                  icon: Icon(Icons.record_voice_over_rounded,
+                      color: active
+                          ? context.collectionTokens.voiceActive
+                          : null)),
+            ]),
+          ]),
         ),
-      );
+      ),
+    );
+  }
 }
 
 /// 문장 상세 시트를 하단 네비바까지 덮도록 루트 네비게이터에 띄운다.
@@ -1474,8 +1473,10 @@ class _ExploreStrip extends StatelessWidget {
                                 color: colors.onSurfaceVariant),
                             const SizedBox(width: 3),
                             Text(
+                                // 이 카드에는 닉네임 줄이 따로 없어서, 주제가
+                                // 없는 남의 문장은 올린 사람을 보여 준다(338).
                                 '${item.likeCount} · '
-                                '${sentenceTopicLabel(item.topic, mine: item.authorId == accountId)}',
+                                '${item.topic.trim().isEmpty || item.topic.trim() == myOwnSentenceTopic ? (item.authorId == accountId ? myOwnSentenceTopic : (item.authorName.trim().isEmpty ? sharedSentenceTopic : '@${item.authorName}')) : item.topic.trim()}',
                                 style: context.texts.labelSmall
                                     .copyWith(color: colors.onSurfaceVariant)),
                           ]),
@@ -1951,6 +1952,16 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     if (mounted) Navigator.pop(context);
   }
 
+  /// 끝까지 들은 것을 기록한다. 실패해도 소리 흐름은 건드리지 않는다.
+  void countListen() {
+    unawaited(SentenceActivityStore.incrementListen(
+      widget.accountId,
+      widget.sentence.id,
+    ).then((_) {
+      if (mounted) loadActivity();
+    }).catchError((Object _) {}));
+  }
+
   Future<void> loadActivity() async {
     final loaded = await SentenceActivityStore.load(
       widget.accountId,
@@ -2152,6 +2163,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final liked = widget.shared != null ? sharedLiked : activity.liked;
+    // 주제를 고르지 않은 남의 문장에는 주제를 붙이지 않는다(5차 338).
+    final headerTopic = sentenceTopicLabel(
+      widget.sentence.topic,
+      mine:
+          widget.shared == null || widget.shared!.authorId == widget.accountId,
+    );
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -2171,8 +2188,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
-                  '${widget.sentence.language} · '
-                  '${sentenceTopicLabel(widget.sentence.topic, mine: widget.shared == null || widget.shared!.authorId == widget.accountId)}',
+                  '${widget.sentence.language} · $headerTopic',
                   style: context.texts.labelSmall,
                 ),
               ),
@@ -2234,6 +2250,9 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 language: widget.sentence.language,
                 speakKey: const ValueKey('speak-sentence'),
                 repeatKey: const ValueKey('repeat-sentence'),
+                // 끝까지 들으면 '듣기 N회'에 적는다. 홈 무대만 세고 있어서
+                // 여기서 들으면 0회 그대로였다(5차 338, 사용자 신고).
+                onListened: countListen,
               ),
             ],
           ),
@@ -2253,8 +2272,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
             Row(
               key: const ValueKey('sentence-author'),
               children: [
-                Icon(Icons.person_rounded,
-                    size: 16, color: colors.onSurfaceVariant),
+                // 올린 사람 프로필 사진. 없으면 사람 아이콘(5차 338, 사용자 요청).
+                AuthorAvatar(
+                    authorId:
+                        widget.shared?.authorId ?? widget.sentence.authorId,
+                    radius: 11,
+                    iconSize: 14),
                 const SizedBox(width: 6),
                 Text(
                   widget.sentence.author,

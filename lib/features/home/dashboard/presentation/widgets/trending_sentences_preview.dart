@@ -6,6 +6,7 @@ import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/sentence_topic_label.dart';
+import 'package:parrokit/core/shared/widgets/author_avatar.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -449,6 +450,8 @@ class _SentenceCard extends StatelessWidget {
     final ink = palette.ink;
     final muted = palette.muted;
     final author = item.authorName.trim().isEmpty ? '익명' : item.authorName;
+    // 주제를 고르지 않은 남의 문장에는 주제 칩을 붙이지 않는다(5차 338).
+    final topicLabel = sentenceTopicLabel(item.topic, mine: mine);
 
     return Container(
       width: 284,
@@ -478,7 +481,7 @@ class _SentenceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   child: Text(
-                    sentenceTopicLabel(item.topic, mine: mine),
+                    topicLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.texts.labelSmall
@@ -508,12 +511,8 @@ class _SentenceCard extends StatelessWidget {
           const Spacer(),
           Row(
             children: [
-              CircleAvatar(
-                radius: 11,
-                backgroundColor: palette.primary.withValues(alpha: 0.12),
-                child: Icon(Icons.person_rounded,
-                    size: 14, color: palette.primary),
-              ),
+              // 올린 사람 프로필 사진. 없으면 사람 아이콘(5차 338).
+              AuthorAvatar(authorId: item.authorId),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(author,

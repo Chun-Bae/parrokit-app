@@ -101,7 +101,7 @@ void main() {
         find.text('Brand new sentence', skipOffstage: false), findsOneWidget);
   });
 
-  testWidgets('남이 올린 문장은 주제가 내 문장이어도 그렇게 적지 않는다', (tester) async {
+  testWidgets("남이 올린 문장은 '내 문장'이 아니라 '공유 문장'이라 적는다", (tester) async {
     // 사용자 신고(5차 337): 'Where were we?'가 남의 문장인데 '내 문장'으로 떴다.
     // 직접 적은 문장은 주제가 '내 문장'으로 저장되는데 그 값이 그대로 보였다.
     await seedSentence(
@@ -119,8 +119,12 @@ void main() {
     await tester.scrollUntilVisible(find.text('Where were we?'), 300,
         scrollable: find.byType(Scrollable).first);
 
-    expect(find.text('직접 쓴 문장'), findsWidgets);
+    // 338: '직접 쓴 문장'은 보는 사람이 쓴 것처럼 읽히고, 칩을 빼면 그 카드만
+    // 비어 어색했다(사용자). '내 문장'과 짝이 되는 '공유 문장'으로 적는다.
+    expect(find.text('공유 문장'), findsWidgets);
+    expect(find.text('직접 쓴 문장'), findsNothing);
     expect(find.text('내 문장'), findsNothing);
+    expect(find.text('@Mina'), findsOneWidget);
   });
 
   testWidgets('저장한 공유 문장은 카드에 내 문장 표시가 붙는다', (tester) async {

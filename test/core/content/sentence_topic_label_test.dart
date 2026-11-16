@@ -1,15 +1,17 @@
-// 공유 문장 주제 이름(5차 337, 사용자 신고: 남이 올린 문장이 '내 문장'으로 보인다).
+// 공유 문장 주제 이름(5차 337·338, 사용자 신고).
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/sentence_topic_label.dart';
 
 void main() {
-  test('남이 직접 적어 올린 문장은 내 문장이라 하지 않는다', () {
-    expect(sentenceTopicLabel('내 문장', mine: false), '직접 쓴 문장');
-    expect(sentenceTopicLabel('', mine: false), '직접 쓴 문장');
+  test('남이 올린 문장은 공유 문장', () {
+    // '내 문장'도 '직접 쓴 문장'도 보는 사람이 쓴 것처럼 읽혔다. 칩을 빼 보니
+    // 그 카드만 비어 어색했다(사용자). '내 문장'과 짝이 되는 말로 적는다.
+    expect(sentenceTopicLabel('내 문장', mine: false), '공유 문장');
+    expect(sentenceTopicLabel('', mine: false), '공유 문장');
   });
 
-  test('내가 올린 문장은 그대로 내 문장', () {
+  test('내가 올린 문장은 내 문장', () {
     expect(sentenceTopicLabel('내 문장', mine: true), '내 문장');
     expect(sentenceTopicLabel('  ', mine: true), '내 문장');
   });
