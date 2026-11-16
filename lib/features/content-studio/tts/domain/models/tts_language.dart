@@ -1,3 +1,5 @@
+import 'package:parrokit/core/content/learning_languages.dart';
+
 class TtsLanguage {
   final String mlKitCode;
   final String ttsCode;
@@ -73,4 +75,16 @@ TtsLanguage getLanguageByTtsCode(String code) {
   } catch (e) {
     return supportedTtsLanguages.first; // 기본값 한국어
   }
+}
+
+/// 음성 만들기를 열었을 때 처음 고를 언어(5차 360).
+///
+/// 전에는 한국어였다. 이 앱에서 음성을 만드는 까닭은 대개 배우는 말(영어 등)을
+/// 들으려는 것이라, 배우는 말 목록의 첫 언어로 맞춘다. 짝이 없으면 한국어.
+String get defaultTtsLanguageCode {
+  final learning = availableLearningLanguages.first.code;
+  for (final language in supportedTtsLanguages) {
+    if (language.mlKitCode == learning) return language.ttsCode;
+  }
+  return supportedTtsLanguages.first.ttsCode;
 }

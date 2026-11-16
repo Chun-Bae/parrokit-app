@@ -42,7 +42,9 @@ class TtsProvider extends ChangeNotifier {
         TtsProviderType.gemini => _gemini.voiceId,
       };
 
-  String _language = 'ko-KR';
+  // 배우는 말로 시작한다(5차 360). 전에는 한국어로 열려서, 영어 문장을
+  // 그대로 만들면 한국어 목소리가 영어를 읽었다.
+  String _language = defaultTtsLanguageCode;
   String get language => _language;
 
   TtsProviderType _providerType = TtsProviderType.google;
