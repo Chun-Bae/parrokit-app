@@ -286,7 +286,7 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty) return '이메일을 입력해주세요.';
+            if (value == null || value.trim().isEmpty) return '이메일을 입력해 주세요.';
             if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
             return null;
           },
@@ -313,7 +313,7 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) return '비밀번호를 입력해주세요.';
+            if (value == null || value.isEmpty) return '비밀번호를 입력해 주세요.';
             if (value.length < 6) return '비밀번호는 6자 이상이어야 해요.';
             return null;
           },

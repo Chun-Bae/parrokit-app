@@ -84,7 +84,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_hasCheckedNickname || !_isNicknameAvailable) {
-      showToast('닉네임 중복 확인을 먼저 해주세요.');
+      showToast('닉네임 중복 확인을 먼저 해 주세요.');
       return;
     }
 
@@ -162,7 +162,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '패로킷 회원가입을 위해 이메일과 비밀번호 등록을 진행해주세요.',
+                    '패로킷 회원가입을 위해 이메일과 비밀번호 등록을 진행해 주세요.',
                     style: context.texts.bodyMedium.copyWith(
                         color: context.tokens.textSecondary,
                         letterSpacing: -0.5),
@@ -214,7 +214,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty) return '이메일을 입력해주세요.';
+            if (value == null || value.trim().isEmpty) return '이메일을 입력해 주세요.';
             if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
             return null;
           },
@@ -316,7 +316,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) return '비밀번호를 입력해주세요.';
+            if (value == null || value.isEmpty) return '비밀번호를 입력해 주세요.';
             if (value.length < 6) return '비밀번호는 6자 이상이어야 해요.';
             return null;
           },
@@ -343,7 +343,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) return '비밀번호를 다시 입력해주세요.';
+            if (value == null || value.isEmpty) return '비밀번호를 다시 입력해 주세요.';
             if (value != _passwordController.text) return '비밀번호가 서로 달라요.';
             return null;
           },

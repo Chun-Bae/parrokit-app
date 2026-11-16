@@ -27,7 +27,7 @@ String sentenceShareCancelLabel({required bool published}) =>
     published ? '그대로 두기' : '취소';
 
 /// 닉네임이 없으면 공유할 수 없다. 공개 목록에 이름이 함께 올라가기 때문이다.
-const String sentenceShareNeedsNickname = '닉네임을 먼저 설정해주세요.';
+const String sentenceShareNeedsNickname = '닉네임을 먼저 설정해 주세요.';
 
 /// 로그인하지 않으면 공유할 수 없다. 공유한 문장은 서버에 올라가기 때문이다
 /// (5차 346). 전에는 게스트에게도 '공유' 단추를 보여 주고, 누르면 닉네임이

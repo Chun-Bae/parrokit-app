@@ -255,7 +255,7 @@ class _AccentNoticeBanner extends StatelessWidget {
           Expanded(
             child: Text(
               '억양이 표시된 목소리는 다른 언어로 생성해도 그 억양이 남을 수 있어요. '
-              '다만 실제로는 큰 차이가 느껴지지 않는 경우도 많으니 참고만 해주세요. '
+              '다만 실제로는 큰 차이가 느껴지지 않는 경우도 많으니 참고만 해 주세요. '
               '학습 언어의 정확한 발음이 중요하면 Gemini 사용을 권장해요.',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurface,

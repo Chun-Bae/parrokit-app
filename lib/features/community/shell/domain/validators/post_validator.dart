@@ -9,19 +9,19 @@ class PostValidator {
     required List<String> tags,
   }) {
     if (title.trim().isEmpty) {
-      throw ArgumentError('제목을 입력해주세요.');
+      throw ArgumentError('제목을 입력해 주세요.');
     }
     if (content.trim().isEmpty) {
-      throw ArgumentError('내용을 입력해주세요.');
+      throw ArgumentError('내용을 입력해 주세요.');
     }
     if (category.trim().isEmpty) {
-      throw ArgumentError('주제를 선택해주세요.');
+      throw ArgumentError('주제를 선택해 주세요.');
     }
     if (tags.length > maxTags) {
       throw ArgumentError('태그는 최대 $maxTags개까지만 등록할 수 있습니다.');
     }
     if (tags.any((tag) => tag.length > maxTagLength)) {
-      throw ArgumentError('태그는 $maxTagLength글자 이하로 입력해주세요.');
+      throw ArgumentError('태그는 $maxTagLength글자 이하로 입력해 주세요.');
     }
   }
 }

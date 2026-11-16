@@ -172,7 +172,7 @@ void main() {
     await tester.ensureVisible(find.byKey(const ValueKey('publish-sentence')));
     await tester.tap(find.byKey(const ValueKey('publish-sentence')));
     await tester.pumpAndSettle();
-    expect(find.text('닉네임을 먼저 설정해주세요.'), findsOneWidget);
+    expect(find.text('닉네임을 먼저 설정해 주세요.'), findsOneWidget);
   });
 
   testWidgets('남의 문장을 저장한 사본에는 공유 버튼이 없다', (tester) async {

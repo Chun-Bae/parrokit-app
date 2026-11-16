@@ -73,7 +73,7 @@ class SentenceUrlImport {
   /// 애플이 문서로 공개한 방법이 아니라서 나중에 바뀌면 실패할 수 있다. 폴더 링크는 지원하지 않는다.
   static Future<Uri> _resolveICloud(Uri share, http.Client client) async {
     const fail = SentenceUrlException(
-        '아이클라우드 링크에서 파일을 찾지 못했어요. 폴더가 아니라 파일 하나를 "링크가 있는 모든 사용자"로 공유했는지 확인해주세요.');
+        '아이클라우드 링크에서 파일을 찾지 못했어요. 폴더가 아니라 파일 하나를 "링크가 있는 모든 사용자"로 공유했는지 확인해 주세요.');
     final response = await client
         .post(
           Uri.parse('https://ckdatabasews.icloud.com/database/1/'

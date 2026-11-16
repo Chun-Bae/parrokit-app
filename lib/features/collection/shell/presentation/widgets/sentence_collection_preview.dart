@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/shared_sentence_match.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -218,7 +219,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       if (!mounted) return;
       if (silent && shared.isNotEmpty) {
         // 새로고침에 실패해도 보던 목록은 그대로 둔다.
-        toast('새로고침하지 못했어요. 다시 시도해주세요.');
+        toast('새로고침하지 못했어요. 다시 시도해 주세요.');
         return;
       }
       setState(() {
@@ -255,7 +256,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     } catch (_) {
       if (mounted) {
         apply(!liked);
-        toast('좋아요를 저장하지 못했어요. 다시 시도해주세요.');
+        toast('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
       }
       rethrow;
     }
@@ -269,17 +270,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
 
   /// 이 공개 문장과 같은 내 문장. 내가 올린 문장(같은 문서)이거나, 저장한 사본이거나,
   /// 같은 언어에 같은 문장이면 저장한 것으로 본다. 없으면 null.
-  DefaultConversationSentence? savedCopyOf(SharedSentence sentence) {
-    for (final item in mine) {
-      if (item.id == sentence.id ||
-          item.sourceSharedId == sentence.id ||
-          (item.language == sentence.language &&
-              item.text.trim() == sentence.text.trim())) {
-        return item;
-      }
-    }
-    return null;
-  }
+  DefaultConversationSentence? savedCopyOf(SharedSentence sentence) =>
+      savedCopyOfShared(mine, sentence);
 
   /// 루틴·횟수 기록에 쓰는 문장 id. 저장했으면 내 문장의 id, 아니면 공개 문장의 id.
   String communityId(SharedSentence sentence) =>
@@ -321,7 +313,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     try {
       if (isSaved(sentence)) {
         if (isMine(sentence)) {
-          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해주세요.');
+          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해 주세요.');
           return;
         }
         await MySentenceStore.remove(accountId, communityId(sentence));
@@ -344,7 +336,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
       }
     } catch (_) {
-      if (mounted) toast('저장하지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('저장하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -402,7 +394,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           accountId, communityId(sentence), next);
       if (mounted) toast(next ? '앵무새가 다시 말해줘요.' : '앵무새 루틴에서 뺐어요.');
     } catch (_) {
-      if (mounted) toast('설정을 저장하지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('설정을 저장하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -416,7 +408,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       if (!mounted || result == null) return;
       toast(result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.');
     } catch (_) {
-      if (mounted) toast('문장을 저장하지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('문장을 저장하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -471,7 +463,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         title: 'Parrokit 내 문장',
       ));
     } catch (_) {
-      if (mounted) toast('문장을 내보내지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('문장을 내보내지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -489,9 +481,9 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       if (file == null || bytes == null) return;
       await saveImported(SentenceTransfer.parse(bytes, file.name));
     } on FormatException {
-      if (mounted) toast('파일을 읽지 못했어요. 문장, 뜻 열이 있는 CSV나 엑셀 파일인지 확인해주세요.');
+      if (mounted) toast('파일을 읽지 못했어요. 문장, 뜻 열이 있는 CSV나 엑셀 파일인지 확인해 주세요.');
     } catch (_) {
-      if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -552,9 +544,9 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     } on SentenceUrlException catch (e) {
       if (mounted) toast(e.message);
     } on FormatException {
-      if (mounted) toast('파일을 읽지 못했어요. 누구나 볼 수 있는 CSV·엑셀 파일 주소인지 확인해주세요.');
+      if (mounted) toast('파일을 읽지 못했어요. 누구나 볼 수 있는 CSV·엑셀 파일 주소인지 확인해 주세요.');
     } catch (_) {
-      if (mounted) toast('주소에서 파일을 내려받지 못했어요. 주소와 공개 설정을 확인해주세요.');
+      if (mounted) toast('주소에서 파일을 내려받지 못했어요. 주소와 공개 설정을 확인해 주세요.');
     }
   }
 
@@ -594,7 +586,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       if (!mounted || result == null) return;
       toast('문장 ${result.added}개를 가져왔어요.');
     } catch (_) {
-      if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('문장을 가져오지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -1155,7 +1147,7 @@ class _MySentenceTile extends StatelessWidget {
     try {
       published = await repo.isPublished(sentenceId: sentence.id);
     } catch (_) {
-      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해주세요.');
+      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해 주세요.');
       return;
     }
     if (!context.mounted) return;
@@ -1186,9 +1178,9 @@ class _MySentenceTile extends StatelessWidget {
         _toast(context, published ? '공유를 취소했어요.' : '둘러보기에 공유했어요.');
       }
     } on ShareLimitReachedException catch (e) {
-      if (context.mounted) _toast(context, '$e 내일 다시 공유해주세요.');
+      if (context.mounted) _toast(context, '$e 내일 다시 공유해 주세요.');
     } catch (_) {
-      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해주세요.');
+      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -1216,7 +1208,7 @@ class _MySentenceTile extends StatelessWidget {
     try {
       await MySentenceStore.remove(accountId, sentence.id);
     } catch (_) {
-      if (context.mounted) _toast(context, '삭제하지 못했어요. 다시 시도해주세요.');
+      if (context.mounted) _toast(context, '삭제하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -1892,10 +1884,10 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       messenger.showSnackBar(
           SnackBar(content: Text(next ? '둘러보기에 공유했어요.' : '공유를 취소했어요.')));
     } on ShareLimitReachedException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$e 내일 다시 공유해주세요.')));
+      messenger.showSnackBar(SnackBar(content: Text('$e 내일 다시 공유해 주세요.')));
     } catch (_) {
       messenger
-          .showSnackBar(const SnackBar(content: Text('처리하지 못했어요. 다시 시도해주세요.')));
+          .showSnackBar(const SnackBar(content: Text('처리하지 못했어요. 다시 시도해 주세요.')));
     } finally {
       if (mounted) setState(() => publishing = false);
     }
@@ -2078,7 +2070,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       navigator.pop();
     } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('삭제하지 못했어요. 다시 시도해주세요.')),
+        const SnackBar(content: Text('삭제하지 못했어요. 다시 시도해 주세요.')),
       );
     }
   }
@@ -2117,7 +2109,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       if (!mounted) return;
       setState(() => activity = before);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('좋아요를 저장하지 못했어요. 다시 시도해주세요.')),
+        const SnackBar(content: Text('좋아요를 저장하지 못했어요. 다시 시도해 주세요.')),
       );
     }
   }

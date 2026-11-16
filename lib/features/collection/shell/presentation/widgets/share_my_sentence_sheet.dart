@@ -148,11 +148,11 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
     } on ShareLimitReachedException catch (e) {
       if (!mounted) return;
       setState(() => working = null);
-      _toast('$e 내일 다시 공유해주세요.');
+      _toast('$e 내일 다시 공유해 주세요.');
     } catch (_) {
       if (!mounted) return;
       setState(() => working = null);
-      _toast('처리하지 못했어요. 다시 시도해주세요.');
+      _toast('처리하지 못했어요. 다시 시도해 주세요.');
     }
   }
 

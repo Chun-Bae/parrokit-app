@@ -151,7 +151,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty) return '이메일을 입력해주세요.';
+            if (value == null || value.trim().isEmpty) return '이메일을 입력해 주세요.';
             if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
             return null;
           },

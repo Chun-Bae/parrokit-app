@@ -98,7 +98,7 @@ class _ClipSentenceMatchesSectionState
               style: muted,
             ),
           _SearchState.failed => Text(
-              '클립을 찾지 못했어요. 다시 시도해주세요.',
+              '클립을 찾지 못했어요. 다시 시도해 주세요.',
               key: const ValueKey('clip-search-message'),
               style: muted,
             ),

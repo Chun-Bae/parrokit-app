@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/shared_sentence_match.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/utils/sentence_age_label.dart';
 import 'package:provider/provider.dart';
@@ -173,22 +174,13 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
     } catch (_) {
       if (!mounted) return;
       replace(next, sentence);
-      toast('좋아요를 저장하지 못했어요. 다시 시도해주세요.');
+      toast('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
   /// 이 공개 문장과 같은 내 문장. 보관함 둘러보기와 같은 기준으로 찾는다.
-  DefaultConversationSentence? savedCopyOf(SharedSentence sentence) {
-    for (final item in mine) {
-      if (item.id == sentence.id ||
-          item.sourceSharedId == sentence.id ||
-          (item.language == sentence.language &&
-              item.text.trim() == sentence.text.trim())) {
-        return item;
-      }
-    }
-    return null;
-  }
+  DefaultConversationSentence? savedCopyOf(SharedSentence sentence) =>
+      savedCopyOfShared(mine, sentence);
 
   bool isMine(SharedSentence sentence) =>
       signedIn && sentence.authorId == accountId;
@@ -201,7 +193,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
     try {
       if (saved != null) {
         if (isMine(sentence)) {
-          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해주세요.');
+          toast('내가 올린 문장이에요. 지우려면 내 문장에서 삭제해 주세요.');
           return;
         }
         await MySentenceStore.remove(account, saved.id);
@@ -224,7 +216,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
       await reloadMine();
       if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
     } catch (_) {
-      if (mounted) toast('저장하지 못했어요. 다시 시도해주세요.');
+      if (mounted) toast('저장하지 못했어요. 다시 시도해 주세요.');
     }
   }
 

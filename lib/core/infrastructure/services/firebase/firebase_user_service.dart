@@ -96,7 +96,7 @@ class FirebaseUserService {
       );
     } on FirebaseFunctionsException catch (e) {
       // 서버 문구("보유하신 패롯이 부족합니다." 등)를 화면에 그대로 보여준다.
-      throw Exception(e.message ?? '환전하지 못했어요. 다시 시도해주세요.');
+      throw Exception(e.message ?? '환전하지 못했어요. 다시 시도해 주세요.');
     }
   }
 

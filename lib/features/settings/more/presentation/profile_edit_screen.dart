@@ -118,7 +118,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     // 중복 확인 여부 검증
     if (newNickname != _checkedNickname || !_isNicknameAvailable) {
-      showToast('닉네임 중복 확인을 먼저 완료해주세요.');
+      showToast('닉네임 중복 확인을 먼저 완료해 주세요.');
       return;
     }
 

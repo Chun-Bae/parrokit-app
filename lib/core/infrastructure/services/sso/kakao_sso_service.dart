@@ -35,7 +35,7 @@ class KakaoSsoService {
       final idToken = token.idToken;
       if (idToken == null) {
         throw Exception(
-            'Kakao OpenID Connect가 활성화되지 않았습니다. 카카오 디벨로퍼스에서 OIDC를 활성화해주세요.');
+            'Kakao OpenID Connect가 활성화되지 않았습니다. 카카오 디벨로퍼스에서 OIDC를 활성화해 주세요.');
       }
 
       // Firebase OIDC Provider 사용 (Firebase Console에서 oidc.kakao로 등록해야 함)

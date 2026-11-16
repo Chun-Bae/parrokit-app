@@ -803,7 +803,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     if (!mounted) return;
     if (!saved) {
       widget.messenger?.showSnackBar(
-          const SnackBar(content: Text('유의어를 저장하지 못했어요. 다시 시도해주세요.')));
+          const SnackBar(content: Text('유의어를 저장하지 못했어요. 다시 시도해 주세요.')));
       return;
     }
     setState(() => synonyms = parsed);
@@ -849,7 +849,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     if (!mounted) return;
     if (!saved) {
       messenger?.showSnackBar(
-          const SnackBar(content: Text('예문을 고치지 못했어요. 다시 시도해주세요.')));
+          const SnackBar(content: Text('예문을 고치지 못했어요. 다시 시도해 주세요.')));
       return;
     }
     setState(() => examples = [...examples]..[index] = next);
@@ -881,7 +881,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     if (!mounted) return;
     if (!removed) {
       messenger?.showSnackBar(
-          const SnackBar(content: Text('예문을 빼지 못했어요. 다시 시도해주세요.')));
+          const SnackBar(content: Text('예문을 빼지 못했어요. 다시 시도해 주세요.')));
       return;
     }
     setState(() => examples = [...examples]..removeAt(index));
@@ -901,7 +901,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     if (!mounted) return;
     if (!saved) {
       widget.messenger?.showSnackBar(
-          const SnackBar(content: Text('뜻을 저장하지 못했어요. 다시 시도해주세요.')));
+          const SnackBar(content: Text('뜻을 저장하지 못했어요. 다시 시도해 주세요.')));
       return;
     }
     setState(() => meaning = next.trim());

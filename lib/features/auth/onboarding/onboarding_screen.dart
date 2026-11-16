@@ -80,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     if (!_hasCheckedNickname || !_isNicknameAvailable) {
-      showToast('닉네임 중복 확인을 먼저 해주세요.');
+      showToast('닉네임 중복 확인을 먼저 해 주세요.');
       return;
     }
 
@@ -137,7 +137,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '커뮤니티에서 사용할 멋진 닉네임을 설정해주세요.',
+                    '커뮤니티에서 사용할 멋진 닉네임을 설정해 주세요.',
                     style: context.texts.bodyMedium.copyWith(
                         color: context.tokens.textSecondary,
                         letterSpacing: -0.5),
