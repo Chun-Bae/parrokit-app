@@ -3,7 +3,6 @@ import 'package:parrokit/core/content/sentence_transfer.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 
 /// 가져오기 시트에서 "완료"로 확정한 결과. 취소하거나 닫으면 시트는 null을 돌려준다.
 /// 가져올 문장을 하나도 고르지 않고 눌렀을 때(5차).
@@ -126,6 +125,12 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
 
   /// 옮기는 도중 취소를 눌렀는지. 지금 옮기는 문장까지만 마치고 멈춘 뒤 되돌린다.
   bool _cancelRequested = false;
+
+  /// 고른 것이 없을 때 적어 두는 안내(5차 369).
+  ///
+  /// 전에는 토스트로 알렸는데 이 화면은 바텀시트라 시트가 아래를 덮어
+  /// 보이지 않았다(368에서 단어 시트로 확인). 시트 안에 적는다.
+  bool _showPickHint = false;
 
   /// 도중에 취소해서 옮기지 않은 문장 수.
   int _notStarted = 0;
@@ -400,7 +405,20 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
   Widget _footer(ColorScheme colors) {
     switch (_phase) {
       case _Phase.select:
-        return Row(children: [
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          if (_showPickHint && _selected.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                importNeedsPickHint,
+                key: const ValueKey('import-pick-hint'),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: colors.error),
+              ),
+            ),
+          Row(children: [
           TextButton(
             key: const ValueKey('import-cancel'),
             onPressed: () => Navigator.of(context).pop(),
@@ -411,7 +429,7 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
             key: const ValueKey('import-start'),
             // 하나도 안 골랐으면 눌러도 아무 일이 없었다. 까닭을 알린다(5차).
             onPressed: _selected.isEmpty
-                ? () => showToast(importNeedsPickHint)
+                ? () => setState(() => _showPickHint = true)
                 : _start,
             style: _selected.isEmpty
                 ? FilledButton.styleFrom(
@@ -419,6 +437,7 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
                 : null,
             child: Text('${_selected.length}개 가져오기'),
           ),
+          ]),
         ]);
       case _Phase.running:
       case _Phase.undoing:

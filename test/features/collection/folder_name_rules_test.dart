@@ -43,7 +43,9 @@ void main() {
   test('문장 가져오기도 하나도 안 골랐을 때 까닭을 알린다', () {
     final code = _flat(
         'lib/features/collection/shell/presentation/widgets/sentence_import_sheet.dart');
-    expect(code, contains('showToast(importNeedsPickHint)'));
+    // 바텀시트라 토스트는 가려진다. 시트 안에 적는다(5차 369).
+    expect(code, contains("ValueKey('import-pick-hint')"));
+    expect(code, contains('_showPickHint = true'));
     expect(code.contains('onPressed: _selected.isEmpty ? null : _start'), isFalse);
   });
 }

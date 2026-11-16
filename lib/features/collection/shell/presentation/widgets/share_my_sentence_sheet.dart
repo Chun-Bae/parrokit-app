@@ -91,19 +91,30 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
     }
   }
 
-  void _toast(String message) => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+  /// 알린 글. 시트 맨 위 안내 자리에 적는다(5차 369).
+  ///
+  /// 전에는 SnackBar로 알렸는데 이 화면은 바텀시트라 시트가 아래를 덮어
+  /// 보이지 않았다(368에서 단어 시트로 확인).
+  String? note;
+  bool noteBad = false;
+
+  void _say(String message, {bool bad = true}) {
+    if (!mounted) return;
+    setState(() {
+      note = message;
+      noteBad = bad;
+    });
+  }
 
   Future<void> _toggle(DefaultConversationSentence sentence) async {
     final repo = repository;
     if (repo == null) {
-      _toast('지금은 공유할 수 없어요. 잠시 뒤 다시 해 주세요.');
+      _say('지금은 공유할 수 없어요. 잠시 뒤 다시 해 주세요.');
       return;
     }
     final isPublished = published.contains(sentence.id);
     if (!isPublished && widget.authorName.trim().isEmpty) {
-      _toast(sentenceShareNeedsNickname);
+      _say(sentenceShareNeedsNickname);
       return;
     }
     final ok = await showDialog<bool>(
@@ -144,15 +155,15 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
           published.add(sentence.id);
         }
       });
-      _toast(isPublished ? '공유를 취소했어요.' : '둘러보기에 공유했어요.');
+      _say(isPublished ? '공유를 취소했어요.' : '둘러보기에 공유했어요.', bad: false);
     } on ShareLimitReachedException catch (e) {
       if (!mounted) return;
       setState(() => working = null);
-      _toast('$e 내일 다시 공유해 주세요.');
+      _say('$e 내일 다시 공유해 주세요.');
     } catch (_) {
       if (!mounted) return;
       setState(() => working = null);
-      _toast('처리하지 못했어요. 다시 시도해 주세요.');
+      _say('처리하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -171,12 +182,15 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
                     .copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
             Text(
-                _guest
-                    ? sentenceShareNeedsLogin
-                    : '고른 문장이 둘러보기에 올라가요. 언제든 다시 눌러 내릴 수 있어요.',
+                note ??
+                    (_guest
+                        ? sentenceShareNeedsLogin
+                        : '고른 문장이 둘러보기에 올라가요. 언제든 다시 눌러 내릴 수 있어요.'),
                 key: const ValueKey('share-sheet-note'),
                 style: context.texts.bodySmall.copyWith(
-                    color: _guest ? colors.error : colors.onSurfaceVariant)),
+                    color: note != null
+                        ? (noteBad ? colors.error : colors.primary)
+                        : (_guest ? colors.error : colors.onSurfaceVariant))),
             const SizedBox(height: 12),
             SizedBox(
               height: MediaQuery.sizeOf(context).height * 0.55,
