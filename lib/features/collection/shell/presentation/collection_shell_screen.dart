@@ -27,6 +27,7 @@ import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
+import 'widgets/collection_header_slot.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -52,6 +53,10 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   late final TabController _tabController;
 
   LibraryTab _clipView = LibraryTab.folder;
+
+  /// 탭 안쪽 화면이 올려 두는 머리줄 단(문장 탭, 단어 탭). 클립 탭은 아직 없다.
+  /// 이 단들이 앱바·탭 아래에 붙어, 커뮤니티처럼 덜 중요한 줄부터 접힌다(5차 336).
+  late final Map<int, CollectionHeaderSlot> _headerSlots;
   String _storageMode = ClipStorageConstants.storageModeLocal;
 
   @override
@@ -63,6 +68,12 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       initialIndex: AppConfig.libraryTab,
     );
     _tabController.addListener(_handleTabChanged);
+    _headerSlots = {
+      for (final tab in [0, 2])
+        tab: CollectionHeaderSlot(onHeightsChanged: () {
+          if (mounted) setState(() {});
+        }),
+    };
     CollectionShellScreen.requestedTab.addListener(_handleTabRequest);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -100,6 +111,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     CollectionShellScreen.requestedTab.removeListener(_handleTabRequest);
     _tabController.removeListener(_handleTabChanged);
     _tabController.dispose();
+    for (final slot in _headerSlots.values) {
+      slot.dispose();
+    }
     super.dispose();
   }
 
@@ -160,35 +174,47 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 isSelectionMode: isClipSelectionMode,
               ),
             ),
-            if (!isClipSelectionMode)
+            if (!isClipSelectionMode) ...[
               HeaderTier(
                 // 세그먼트 48 + 위 4 + 아래 8 + 테두리 여유.
                 height: 82,
+                // 문장·클립·단어 탭 줄은 맨 위에 붙어 마지막까지 버틴다.
+                // 어느 탭에 있는지가 가장 중요해서다(커뮤니티와 같다, 5차 336).
                 sticky: true,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: 8),
                   child: _buildCollectionTabs(context),
                 ),
               ),
+              // 탭 안쪽 화면이 올려 둔 줄(언어·주제, 둘러보기). 탭 줄 아래에
+              // 있어서 탭 줄보다 먼저 접힌다.
+              ...?_headerSlots[_tabController.index]?.tiers(),
+            ],
           ],
           body: TabBarView(
-                controller: _tabController,
-                children: [
-                  const _KeepAlive(child: SentenceCollectionPreview()),
-                  // 새 클립 화면(폴더 + 모든 클립). 더보기 > 앱에서 끄면 예전 화면.
-                  ValueListenableBuilder<bool>(
-                    valueListenable: AppConfig.newClipLibraryListenable,
-                    builder: (context, useNew, _) => useNew
-                        ? const ClipLibraryHome()
-                        : _buildClipPage(
-                            context,
-                            clipProvider,
-                            tagProvider,
-                            hideControls: isCollectionSelectionMode,
-                          ),
-                  ),
-                  const _KeepAlive(child: WordCollectionPreview()),
-                ],
+            controller: _tabController,
+            children: [
+              _KeepAlive(
+                child: SentenceCollectionPreview(
+                  headerSlot: _headerSlots[0],
+                ),
+              ),
+              // 새 클립 화면(폴더 + 모든 클립). 더보기 > 앱에서 끄면 예전 화면.
+              ValueListenableBuilder<bool>(
+                valueListenable: AppConfig.newClipLibraryListenable,
+                builder: (context, useNew, _) => useNew
+                    ? const ClipLibraryHome()
+                    : _buildClipPage(
+                        context,
+                        clipProvider,
+                        tagProvider,
+                        hideControls: isCollectionSelectionMode,
+                      ),
+              ),
+              _KeepAlive(
+                child: WordCollectionPreview(headerSlot: _headerSlots[2]),
+              ),
+            ],
           ),
         ),
       ),

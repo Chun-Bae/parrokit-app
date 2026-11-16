@@ -20,6 +20,7 @@ import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
+import 'collection_header_slot.dart';
 
 /// 보관함 > 단어 탭. 문장 탭과 같은 구조로 "내 단어"를 보여준다(5차 6번).
 ///
@@ -27,7 +28,10 @@ import 'package:parrokit/features/collection/shell/presentation/widgets/sentence
 /// 언어·칩으로 거르고, "오늘 다시 볼 단어"를 [WordReviewStore]로 계산한다.
 /// 둘러보기(다른 사람 단어)는 만들지 않는다(사용자 결정).
 class WordCollectionPreview extends StatefulWidget {
-  const WordCollectionPreview({super.key});
+  const WordCollectionPreview({super.key, this.headerSlot});
+
+  /// 언어·필터 줄을 보관함 머리줄로 올려 둘 자리(5차 336). 비우면 목록 안에 둔다.
+  final CollectionHeaderSlot? headerSlot;
 
   @override
   State<WordCollectionPreview> createState() => _WordCollectionPreviewState();
@@ -137,86 +141,92 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
         WordReviewStore.dueWords(languageWords, reviews, DateTime.now());
     final visible = visibleWords;
 
+    // 언어·필터 줄. 보관함 안에서는 머리줄로 올라간다(5차 336).
+    final filterRow = SentenceFilterRow(
+      language: language,
+      category: category,
+      categories: categories,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      onLanguageChanged: (value) => setState(() => language = value),
+      onCategoryChanged: (value) => setState(() => category = value),
+    );
+    final slot = widget.headerSlot;
+    if (slot != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        slot.put(heights: const [54], build: (_) => filterRow);
+      });
+    }
+
     return RefreshIndicator(
       onRefresh: reload,
-      // 언어·필터 줄은 따로 접힌다(5차 334, 문장 탭과 같게).
       child: CustomScrollView(
         key: const PageStorageKey('word-collection'),
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          SliverPersistentHeader(
-            floating: true,
-            delegate: TieredHeaderDelegate(tiers: [
-              HeaderTier(
-                height: 54,
-                child: SentenceFilterRow(
-                  language: language,
-                  category: category,
-                  categories: categories,
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                  onLanguageChanged: (value) =>
-                      setState(() => language = value),
-                  onCategoryChanged: (value) =>
-                      setState(() => category = value),
-                ),
-              ),
-            ]),
-          ),
+          if (slot == null)
+            SliverPersistentHeader(
+              floating: true,
+              delegate: TieredHeaderDelegate(tiers: [
+                HeaderTier(height: 54, child: filterRow),
+              ]),
+            ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
             sliver: SliverList(
                 delegate: SliverChildListDelegate([
-          if (due.isNotEmpty) ...[
-            _ReviewSummary(count: due.length, onStart: () => startReview(due)),
-            const SizedBox(height: 22),
-          ],
-          Row(children: [
-            Text('내 단어', style: context.texts.titleLarge),
-            const SizedBox(width: 6),
-            Text('${languageWords.length}',
-                style: context.texts.titleMedium
-                    .copyWith(color: colors.onSurfaceVariant)),
-            const Spacer(),
-            IconButton(
-              key: const ValueKey('add-word'),
-              tooltip: '단어 추가',
-              onPressed: addWord,
-              icon: const Icon(Icons.add_rounded),
-            ),
-          ]),
-          const SizedBox(height: 4),
-          if (languageWords.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: AppEmptyState(
-                icon: Icons.spellcheck_rounded,
-                title: '아직 모은 단어가 없어요',
-                description: '문장 상세에서 단어를 골라 저장하거나 직접 추가해요',
-                actionLabel: '단어 추가',
-                onAction: addWord,
-                compact: true,
-              ),
-            )
-          else if (visible.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text('이 조건에 맞는 단어가 없어요.',
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodySmall
-                      .copyWith(color: colors.onSurfaceVariant)),
-            )
-          else
-            for (final word in visible)
-              _WordTile(
-                key: ValueKey('word-${word.id}'),
-                word: word,
-                review: reviews[word.id],
-                swipeKey: _swipeKeys.putIfAbsent(
-                    word.id, GlobalKey<SwipeActionTileState>.new),
-                onOpen: () => openDetails(word),
-                onDelete: () => remove(word),
-              ),
-        ])),
+              if (due.isNotEmpty) ...[
+                _ReviewSummary(
+                    count: due.length, onStart: () => startReview(due)),
+                const SizedBox(height: 22),
+              ],
+              Row(children: [
+                Text('내 단어', style: context.texts.titleLarge),
+                const SizedBox(width: 6),
+                Text('${languageWords.length}',
+                    style: context.texts.titleMedium
+                        .copyWith(color: colors.onSurfaceVariant)),
+                const Spacer(),
+                IconButton(
+                  key: const ValueKey('add-word'),
+                  tooltip: '단어 추가',
+                  onPressed: addWord,
+                  icon: const Icon(Icons.add_rounded),
+                ),
+              ]),
+              const SizedBox(height: 4),
+              if (languageWords.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: AppEmptyState(
+                    icon: Icons.spellcheck_rounded,
+                    title: '아직 모은 단어가 없어요',
+                    description: '문장 상세에서 단어를 골라 저장하거나 직접 추가해요',
+                    actionLabel: '단어 추가',
+                    onAction: addWord,
+                    compact: true,
+                  ),
+                )
+              else if (visible.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text('이 조건에 맞는 단어가 없어요.',
+                      textAlign: TextAlign.center,
+                      style: context.texts.bodySmall
+                          .copyWith(color: colors.onSurfaceVariant)),
+                )
+              else
+                for (final word in visible)
+                  _WordTile(
+                    key: ValueKey('word-${word.id}'),
+                    word: word,
+                    review: reviews[word.id],
+                    swipeKey: _swipeKeys.putIfAbsent(
+                        word.id, GlobalKey<SwipeActionTileState>.new),
+                    onOpen: () => openDetails(word),
+                    onDelete: () => remove(word),
+                  ),
+            ])),
           ),
         ],
       ),

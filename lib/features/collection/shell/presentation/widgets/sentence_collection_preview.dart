@@ -40,10 +40,20 @@ import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
+import 'collection_header_slot.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
-  const SentenceCollectionPreview(
-      {super.key, this.repository, this.urlFetcher, this.exploreOnly = false});
+  const SentenceCollectionPreview({
+    super.key,
+    this.repository,
+    this.urlFetcher,
+    this.exploreOnly = false,
+    this.headerSlot,
+  });
+
+  /// 언어·주제 줄과 둘러보기 줄을 보관함 머리줄로 올려 둘 자리(5차 336).
+  /// 비우면 예전처럼 이 화면 목록 안에 둔다(둘러보기 전용 화면).
+  final CollectionHeaderSlot? headerSlot;
 
   /// true면 둘러보기 전용 화면(SentenceExploreScreen)으로 그린다.
   /// false면 보관함 문장 탭: 위에 둘러보기 한 줄, 아래 내 문장 목록.
@@ -95,7 +105,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       return null;
     }
   }
-
 
   @override
   void initState() {
@@ -604,9 +613,11 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       });
     }
     // 최근에 추가한 문장이 맨 위에 온다. 기본으로 주던 예시 문장은 없앴다(5차).
-    final mySentences =
-        mine.where((item) => item.language == language).toList().reversed
-            .toList();
+    final mySentences = mine
+        .where((item) => item.language == language)
+        .toList()
+        .reversed
+        .toList();
     final visibleShared = (category == '전체'
         ? [...shared]
         : shared.where((item) => item.topic == category).toList());
@@ -616,205 +627,211 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     final routineCount = mySentences
         .where((item) => activities[item.id]?.routineEnabled ?? true)
         .length;
+    // 언어·주제 줄과 둘러보기 줄. 보관함 안에서는 머리줄로 올라가고(5차 336),
+    // 둘러보기 전용 화면에서는 예전처럼 목록 맨 위에 둔다.
+    final filterRow = SentenceFilterRow(
+      language: language,
+      category: category,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      onLanguageChanged: (value) {
+        setState(() => language = value);
+        loadShared();
+      },
+      onCategoryChanged: (value) => setState(() => category = value),
+    );
+    final exploreRow = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: _ExploreStrip(
+        sentences: ([...visibleShared]
+              ..sort((a, b) => b.likeCount.compareTo(a.likeCount)))
+            .take(8)
+            .toList(),
+        loading: sharedLoading,
+        failed: sharedFailed,
+        onOpen: openCommunityDetails,
+        onViewAll: () => openSentenceExplore(context),
+      ),
+    );
+    // 머리줄에 올리는 건 그리는 중이 아니라 그린 뒤에 한다.
+    final slot = widget.headerSlot;
+    if (slot != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        slot.put(
+          // 언어·주제 54(여백 14 + 줄 40), 둘러보기 158(제목 + 카드 92 + 여백).
+          heights: [54, if (!explore) 158],
+          build: (index) => index == 0 ? filterRow : exploreRow,
+        );
+      });
+    }
+
     return RefreshIndicator(
         onRefresh: refreshExplore,
-        // 언어·주제 줄은 따로 접힌다(5차 333, 사용자 요청). 보관함 머리줄
-        // (앱바 · 탭)과 이어져, 네 줄이 차례로 스르륵 접혀 들어간다.
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           key: const PageStorageKey('sentence-collection-preview'),
           slivers: [
-            SliverPersistentHeader(
-              floating: true,
-              delegate: TieredHeaderDelegate(tiers: [
-                HeaderTier(
-                  height: 54,
-                  child: SentenceFilterRow(
-                    language: language,
-                    category: category,
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                    onLanguageChanged: (value) {
-                      setState(() => language = value);
-                      loadShared();
-                    },
-                    onCategoryChanged: (value) =>
-                        setState(() => category = value),
-                  ),
-                ),
-              ]),
-            ),
-            // 둘러보기 줄도 제 단으로 둔다. 네 줄(보관함 · 탭 · 언어·주제 ·
-            // 둘러보기)이 차례로 접힌다(5차 333, 사용자 요청).
-            if (!explore)
+            if (slot == null) ...[
               SliverPersistentHeader(
                 floating: true,
                 delegate: TieredHeaderDelegate(tiers: [
-                  HeaderTier(
-                    // 제목 줄 + 카드 92 + 여백. 모자라면 6px 넘쳤다.
-                    height: 158,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                      child: _ExploreStrip(
-                        sentences: ([...visibleShared]
-                              ..sort(
-                                  (a, b) => b.likeCount.compareTo(a.likeCount)))
-                            .take(8)
-                            .toList(),
-                        loading: sharedLoading,
-                        failed: sharedFailed,
-                        onOpen: openCommunityDetails,
-                        onViewAll: () => openSentenceExplore(context),
-                      ),
-                    ),
-                  ),
+                  HeaderTier(height: 54, child: filterRow),
                 ]),
               ),
+              if (!explore)
+                SliverPersistentHeader(
+                  floating: true,
+                  delegate: TieredHeaderDelegate(tiers: [
+                    HeaderTier(height: 158, child: exploreRow),
+                  ]),
+                ),
+            ],
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 140),
               sliver: SliverList(
                   delegate: SliverChildListDelegate([
-            if (explore) ...[
-              // 'Parrokit 제공' 문장 묶음 카드 셋은 뺐다(5차). '8문장 · 입문'처럼
-              // 보였지만 내용이 없는 자리표시라 눌러도 아무 일이 없었다(원칙 5).
-              // 실제 묶음이 생기면 이 자리에 다시 붙인다.
-              _SectionTitle(
-                  title: '공유된 문장',
-                  // 오른쪽 인기·최신 칩에 밀려 '연습해/요'로 꺾여서 줄였다(5차).
-                  subtitle: '저장해서 내 문장으로 연습해요',
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    for (final (popular, label) in [
-                      (true, '인기'),
-                      (false, '최신')
-                    ])
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: ChoiceChip(
-                          label: Text(label),
-                          selected: sortPopular == popular,
-                          showCheckmark: false,
-                          visualDensity: VisualDensity.compact,
-                          onSelected: (_) =>
-                              setState(() => sortPopular = popular),
-                        ),
+                if (explore) ...[
+                  // 'Parrokit 제공' 문장 묶음 카드 셋은 뺐다(5차). '8문장 · 입문'처럼
+                  // 보였지만 내용이 없는 자리표시라 눌러도 아무 일이 없었다(원칙 5).
+                  // 실제 묶음이 생기면 이 자리에 다시 붙인다.
+                  _SectionTitle(
+                      title: '공유된 문장',
+                      // 오른쪽 인기·최신 칩에 밀려 '연습해/요'로 꺾여서 줄였다(5차).
+                      subtitle: '저장해서 내 문장으로 연습해요',
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        for (final (popular, label) in [
+                          (true, '인기'),
+                          (false, '최신')
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: ChoiceChip(
+                              label: Text(label),
+                              selected: sortPopular == popular,
+                              showCheckmark: false,
+                              visualDensity: VisualDensity.compact,
+                              onSelected: (_) =>
+                                  setState(() => sortPopular = popular),
+                            ),
+                          ),
+                        IconButton(
+                            key: const ValueKey('refresh-shared'),
+                            tooltip: '새로고침',
+                            onPressed: sharedLoading ? null : refreshExplore,
+                            icon: const Icon(Icons.refresh_rounded)),
+                      ])),
+                  const SizedBox(height: 10),
+                  if (sharedLoading)
+                    const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: CircularProgressIndicator()))
+                  else if (sharedFailed)
+                    _SharedMessage(
+                        key: const ValueKey('shared-message'),
+                        text: '공유된 문장을 불러오지 못했어요.',
+                        actionLabel: '다시 불러오기',
+                        onAction: loadShared)
+                  else if (visibleShared.isEmpty)
+                    const _SharedMessage(
+                        key: ValueKey('shared-message'),
+                        text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.')
+                  else
+                    ...visibleShared.map((sentence) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _SentenceCard(
+                            sentence: sentence,
+                            saved: isSaved(sentence),
+                            active: isParrotActive(sentence),
+                            onLike: () => unawaited(
+                                setSharedLiked(sentence, !sentence.liked)
+                                    .catchError((Object _) {})),
+                            onSave: () => toggleSave(sentence),
+                            onParrot: () => toggleParrot(sentence),
+                            onOpen: () => openCommunityDetails(sentence),
+                          ),
+                        )),
+                ] else ...[
+                  Row(children: [
+                    Text('내 문장', style: context.texts.titleLarge),
+                    const SizedBox(width: 6),
+                    Text('${mySentences.length}',
+                        style: context.texts.titleMedium
+                            .copyWith(color: colors.onSurfaceVariant)),
+                    const Spacer(),
+                    // 전에는 "앵무새가 말할 문장 n개" 큰 배너가 따로 있었다.
+                    // '앵무새 62'만 적으니 옆의 '내 문장 63'과 무슨 관계인지
+                    // 알 수 없었다(5차). 몇 개 중 몇 개인지 함께 적는다.
+                    if (mySentences.isNotEmpty)
+                      Tooltip(
+                        message: '홈 앵무새가 순서대로 말해줘요',
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.record_voice_over_rounded,
+                              size: 16, color: colors.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text('앵무새 $routineCount/${mySentences.length}',
+                              style: context.texts.labelMedium
+                                  .copyWith(color: colors.onSurfaceVariant)),
+                        ]),
                       ),
                     IconButton(
-                        key: const ValueKey('refresh-shared'),
-                        tooltip: '새로고침',
-                        onPressed: sharedLoading ? null : refreshExplore,
-                        icon: const Icon(Icons.refresh_rounded)),
-                  ])),
-              const SizedBox(height: 10),
-              if (sharedLoading)
-                const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: CircularProgressIndicator()))
-              else if (sharedFailed)
-                _SharedMessage(
-                    key: const ValueKey('shared-message'),
-                    text: '공유된 문장을 불러오지 못했어요.',
-                    actionLabel: '다시 불러오기',
-                    onAction: loadShared)
-              else if (visibleShared.isEmpty)
-                const _SharedMessage(
-                    key: ValueKey('shared-message'),
-                    text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.')
-              else
-                ...visibleShared.map((sentence) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _SentenceCard(
+                        tooltip: '문장 추가',
+                        onPressed: addMySentence,
+                        icon: const Icon(Icons.add_rounded)),
+                    PopupMenuButton<String>(
+                      tooltip: '가져오기·내보내기',
+                      icon: const Icon(Icons.more_horiz_rounded),
+                      onSelected: (value) => switch (value) {
+                        'script' => addFromScript(),
+                        'import' => importSentences(),
+                        'xlsx' => exportMySentences(xlsx: true),
+                        _ => exportMySentences(xlsx: false),
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                            value: 'script',
+                            child: ListTile(
+                                leading: Icon(Icons.content_paste_rounded),
+                                // 창 제목과 같은 말로(5차). 예전 '스크립트
+                                // 붙여넣어 문장 만들기'.
+                                title: Text('스크립트로 문장 만들기'))),
+                        PopupMenuItem(
+                            value: 'import',
+                            child: ListTile(
+                                leading: Icon(Icons.file_download_outlined),
+                                title: Text('CSV·엑셀에서 가져오기'))),
+                        PopupMenuItem(
+                            value: 'csv',
+                            child: ListTile(
+                                leading: Icon(Icons.file_upload_outlined),
+                                title: Text('CSV로 내보내기'))),
+                        PopupMenuItem(
+                            value: 'xlsx',
+                            child: ListTile(
+                                leading: Icon(Icons.table_chart_outlined),
+                                title: Text('엑셀(xlsx)로 내보내기'))),
+                      ],
+                    ),
+                  ]),
+                  const SizedBox(height: 4),
+                  ...List.generate(mySentences.length, (index) {
+                    final sentence = mySentences[index];
+                    return Padding(
+                      padding: EdgeInsets.zero,
+                      child: _MySentenceTile(
                         sentence: sentence,
-                        saved: isSaved(sentence),
-                        active: isParrotActive(sentence),
-                        onLike: () => unawaited(
-                            setSharedLiked(sentence, !sentence.liked)
-                                .catchError((Object _) {})),
-                        onSave: () => toggleSave(sentence),
-                        onParrot: () => toggleParrot(sentence),
-                        onOpen: () => openCommunityDetails(sentence),
+                        accountId: accountId,
+                        activity:
+                            activities[sentence.id] ?? const SentenceActivity(),
+                        repository: repository,
+                        authorName: authorName,
+                        published: publishedIds.contains(sentence.id),
+                        swipeKey: _swipeKeys.putIfAbsent(
+                            sentence.id, GlobalKey<SwipeActionTileState>.new),
                       ),
-                    )),
-            ] else ...[
-              Row(children: [
-                Text('내 문장', style: context.texts.titleLarge),
-                const SizedBox(width: 6),
-                Text('${mySentences.length}',
-                    style: context.texts.titleMedium
-                        .copyWith(color: colors.onSurfaceVariant)),
-                const Spacer(),
-                // 전에는 "앵무새가 말할 문장 n개" 큰 배너가 따로 있었다.
-                // '앵무새 62'만 적으니 옆의 '내 문장 63'과 무슨 관계인지
-                // 알 수 없었다(5차). 몇 개 중 몇 개인지 함께 적는다.
-                if (mySentences.isNotEmpty)
-                  Tooltip(
-                    message: '홈 앵무새가 순서대로 말해줘요',
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.record_voice_over_rounded,
-                          size: 16, color: colors.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text('앵무새 $routineCount/${mySentences.length}',
-                          style: context.texts.labelMedium
-                              .copyWith(color: colors.onSurfaceVariant)),
-                    ]),
-                  ),
-                IconButton(
-                    tooltip: '문장 추가',
-                    onPressed: addMySentence,
-                    icon: const Icon(Icons.add_rounded)),
-                PopupMenuButton<String>(
-                  tooltip: '가져오기·내보내기',
-                  icon: const Icon(Icons.more_horiz_rounded),
-                  onSelected: (value) => switch (value) {
-                    'script' => addFromScript(),
-                    'import' => importSentences(),
-                    'xlsx' => exportMySentences(xlsx: true),
-                    _ => exportMySentences(xlsx: false),
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
-                        value: 'script',
-                        child: ListTile(
-                            leading: Icon(Icons.content_paste_rounded),
-                            // 창 제목과 같은 말로(5차). 예전 '스크립트
-                            // 붙여넣어 문장 만들기'.
-                            title: Text('스크립트로 문장 만들기'))),
-                    PopupMenuItem(
-                        value: 'import',
-                        child: ListTile(
-                            leading: Icon(Icons.file_download_outlined),
-                            title: Text('CSV·엑셀에서 가져오기'))),
-                    PopupMenuItem(
-                        value: 'csv',
-                        child: ListTile(
-                            leading: Icon(Icons.file_upload_outlined),
-                            title: Text('CSV로 내보내기'))),
-                    PopupMenuItem(
-                        value: 'xlsx',
-                        child: ListTile(
-                            leading: Icon(Icons.table_chart_outlined),
-                            title: Text('엑셀(xlsx)로 내보내기'))),
-                  ],
-                ),
-              ]),
-              const SizedBox(height: 4),
-              ...List.generate(mySentences.length, (index) {
-                final sentence = mySentences[index];
-                return Padding(
-                  padding: EdgeInsets.zero,
-                  child: _MySentenceTile(
-                    sentence: sentence,
-                    accountId: accountId,
-                    activity:
-                        activities[sentence.id] ?? const SentenceActivity(),
-                    repository: repository,
-                    authorName: authorName,
-                    published: publishedIds.contains(sentence.id),
-                    swipeKey: _swipeKeys.putIfAbsent(
-                        sentence.id, GlobalKey<SwipeActionTileState>.new),
-                  ),
-                );
-              }),
-            ],
-          ])),
+                    );
+                  }),
+                ],
+              ])),
             ),
           ],
         ));
@@ -1477,8 +1494,7 @@ class SentenceEditDialog extends StatefulWidget {
 
 class _SentenceEditDialogState extends State<SentenceEditDialog> {
   late final _text = TextEditingController(text: widget.sentence.text);
-  late final _pron =
-      TextEditingController(text: widget.sentence.pronunciation);
+  late final _pron = TextEditingController(text: widget.sentence.pronunciation);
   late final _meaning =
       TextEditingController(text: widget.sentence.translation);
   String? _hint;
@@ -1597,25 +1613,21 @@ class _SameWordDialog extends StatelessWidget {
 
   bool get _exactOnly =>
       candidates.length == 1 &&
-      candidates.first.word.trim().toLowerCase() ==
-          picked.trim().toLowerCase();
+      candidates.first.word.trim().toLowerCase() == picked.trim().toLowerCase();
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return AlertDialog(
       key: const ValueKey('same-word-dialog'),
-      title: Text(_exactOnly
-          ? "'$picked'이(가) 이미 있어요"
-          : "'$picked'과(와) 비슷한 단어가 있어요"),
+      title: Text(
+          _exactOnly ? "'$picked'이(가) 이미 있어요" : "'$picked'과(와) 비슷한 단어가 있어요"),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _exactOnly
-                ? '이 문장을 예문으로 더할까요?'
-                : '어느 단어에 이 문장을 예문으로 더할까요?',
+            _exactOnly ? '이 문장을 예문으로 더할까요?' : '어느 단어에 이 문장을 예문으로 더할까요?',
             style: context.texts.bodyMedium
                 .copyWith(color: colors.onSurfaceVariant),
           ),
@@ -1727,6 +1739,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   /// 마지막 연습 점수(100점 만점). 아직 안 했으면 null.
   int? lastPracticeScore;
+
   /// 따라 말하기를 시작할 때 읽어 주던 소리를 멈추려고 들고 있는다.
   final GlobalKey speakControlsKey = GlobalKey();
 
@@ -2082,9 +2095,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(added
-              ? "'${choice.word}'에 예문을 더했어요."
-              : '이미 같은 예문이 있어요.'),
+          content:
+              Text(added ? "'${choice.word}'에 예문을 더했어요." : '이미 같은 예문이 있어요.'),
         ));
         return;
       }
@@ -2606,8 +2618,7 @@ class _ScriptImportSheetState extends State<_ScriptImportSheet> {
             children: [
               Row(children: [
                 Expanded(
-                  child: Text('스크립트로 문장 만들기',
-                      style: context.texts.titleLarge),
+                  child: Text('스크립트로 문장 만들기', style: context.texts.titleLarge),
                 ),
                 // 긴 글을 붙여 넣는 창인데 밀어 내리는 것 말고는 나갈 길이
                 // 없었다(5차).
