@@ -96,6 +96,40 @@ class PracticeCalendar {
     );
   }
 
+  /// 하루 목표를 바꾼다. 오늘 자리의 목표도 함께 바꾼다(5차 352).
+  ///
+  /// 적는 자리를 화면마다 적지 않게 여기 둔다. 전에는 홈이 제 키를 들고
+  /// 있어서 이 파일과 어긋났고, 보관함에서 따라 말하면 그날 목표가 기본값으로
+  /// 적혔다(5차 351).
+  static Future<PracticeCalendarData> setDailyGoal(
+    String accountId,
+    int goal, {
+    DateTime? now,
+  }) async {
+    final next = goal.clamp(1, 100);
+    final data = await load(accountId);
+    final goals = Map<String, int>.from(data.goals);
+    goals[dateKey(now ?? DateTime.now())] = next;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await Future.wait([
+        prefs.setInt(goalKey(accountId), next),
+        prefs.setString(goalsKey(accountId), jsonEncode(goals)),
+      ]);
+    } catch (_) {
+      // 지금 화면에서는 바뀐 목표를 그대로 쓴다.
+    }
+    revision.value++;
+
+    return PracticeCalendarData(
+      counts: data.counts,
+      goals: goals,
+      total: data.total,
+      dailyGoal: next,
+    );
+  }
+
   /// 따라 말하기 한 문장을 오늘 자리에 더한다. 어느 화면에서 했든 같다.
   ///
   /// 돌려주는 값은 더한 뒤의 기록이다. 저장에 실패해도 더한 값을 돌려주어

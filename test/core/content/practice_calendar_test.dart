@@ -138,4 +138,41 @@ void main() {
     // 홈이 따로 해독하던 코드는 없앴다.
     expect(code.contains("jsonDecode(rawHistory)"), isFalse);
   });
+
+  group('목표 바꾸기도 한 곳에서(5차 352)', () {
+    test('바꾼 목표를 홈이 읽는 자리에 적고 오늘 목표도 바꾼다', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      final data = await PracticeCalendar.setDailyGoal('me', 3,
+          now: DateTime(2026, 11, 17));
+      expect(data.dailyGoal, 3);
+      expect(data.goals['2026-11-17'], 3);
+
+      final reloaded = await PracticeCalendar.load('me');
+      expect(reloaded.dailyGoal, 3);
+      expect(reloaded.goals['2026-11-17'], 3);
+    });
+
+    test('1~100 밖은 그 안으로 맞춘다', () async {
+      SharedPreferences.setMockInitialValues({});
+      expect((await PracticeCalendar.setDailyGoal('me', 0)).dailyGoal, 1);
+      expect((await PracticeCalendar.setDailyGoal('me', 999)).dailyGoal, 100);
+    });
+
+    test('목표를 바꿔도 revision이 올라 화면이 다시 읽는다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final before = PracticeCalendar.revision.value;
+      await PracticeCalendar.setDailyGoal('me', 4);
+      expect(PracticeCalendar.revision.value, before + 1);
+    });
+
+    test('연습 기록 키를 화면이 따로 들고 있지 않다', () {
+      final code = File(
+              'lib/features/home/dashboard/presentation/character_dashboard_screen.dart')
+          .readAsStringSync();
+      expect(code.contains("'parrokit.practice."), isFalse,
+          reason: '키는 practice_calendar.dart 한 곳에만 둔다(5차 351의 어긋남)');
+      expect(code, contains('PracticeCalendar.setDailyGoal('));
+    });
+  });
 }

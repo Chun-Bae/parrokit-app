@@ -1,6 +1,5 @@
 import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
@@ -9,7 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/practice_calendar.dart';
 
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -87,13 +85,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 
-  String goalKey(String accountId) =>
-      'parrokit.practice.daily_goal.v1.$accountId';
-  String historyKey(String accountId) =>
-      'parrokit.practice.history.v1.$accountId';
-  String goalsKey(String accountId) => 'parrokit.practice.goals.v1.$accountId';
-  String totalKey(String accountId) => 'parrokit.practice.total.v1.$accountId';
-
   void ensureStatsLoaded(String accountId) {
     if (loadedAccountId == accountId) return;
     loadedAccountId = accountId;
@@ -137,21 +128,13 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     );
     if (!mounted || next == null || next == dailyGoal) return;
     final accountId = loadedAccountId ?? 'guest';
-    final todayKey = dateKey(DateTime.now());
-    final nextGoals = Map<String, int>.from(practiceGoals)..[todayKey] = next;
+    // 적는 자리는 PracticeCalendar 한 곳이다(5차 352).
+    final data = await PracticeCalendar.setDailyGoal(accountId, next);
+    if (!mounted) return;
     setState(() {
-      dailyGoal = next;
-      practiceGoals = nextGoals;
+      dailyGoal = data.dailyGoal;
+      practiceGoals = data.goals;
     });
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await Future.wait([
-        prefs.setInt(goalKey(accountId), next),
-        prefs.setString(goalsKey(accountId), jsonEncode(nextGoals)),
-      ]);
-    } catch (_) {
-      // 현재 실행 중에는 변경한 목표를 유지한다.
-    }
   }
 
   @override
