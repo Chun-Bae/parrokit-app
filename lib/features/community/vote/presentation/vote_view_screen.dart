@@ -387,13 +387,17 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                         ),
                       ],
                       const Spacer(),
-                      if (comment.createdAt != null && !isBlocked)
+                      // 지운 댓글에는 시간도 적지 않는다. 게시판은 숨기는데
+                      // 투표만 남아서, 이름 없는 줄에 시간만 떠 있었다(5차 406).
+                      if (comment.createdAt != null && !isBlocked && !isDeleted)
                         Text(
                           formatCommunityTimeAgo(comment.createdAt),
                           style: context.texts.bodySmall
                               .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
-                      if (!isBlocked) ...[
+                      // 지운 댓글의 옵션 시트는 열리지 않는다(가드가 있다).
+                      // 눌러도 아무 일도 없는 단추를 보여 주지 않는다(5차 406).
+                      if (!isBlocked && !isDeleted) ...[
                         const SizedBox(width: 4),
                         IconButton(
                           tooltip: '댓글 옵션',

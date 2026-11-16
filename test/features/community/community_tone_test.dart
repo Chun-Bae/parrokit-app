@@ -71,6 +71,21 @@ void main() {
       // 지운 댓글에는 이름을 적지 않는다(5차 403).
       expect(code, isNot(contains("'(삭제됨)'")), reason: path);
       expect(code, contains('if (!isDeleted)'), reason: path);
+      // 지운 댓글에는 시간도, 눌러도 안 열리는 옵션 단추도 두지 않는다
+      // (5차 406). 투표 화면만 남아 있었다. 시간·옵션을 그리기 전 세 줄
+      // 안에 !isDeleted 가드가 있어야 한다.
+      final lines = code.split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        // 글(질문) 머리의 시간은 해당 없다. 댓글·답변의 시간만 본다.
+        final isTime = lines[i].contains('formatCommunityTimeAgo(comment') ||
+            lines[i].contains('formatCommunityTimeAgo(answer');
+        final isMenu = lines[i].contains("tooltip: '댓글 옵션'") ||
+            lines[i].contains("tooltip: '답변 옵션'");
+        if (!isTime && !isMenu) continue;
+        final before = lines.sublist(i < 9 ? 0 : i - 9, i).join('\n');
+        expect(before, contains('!isDeleted'),
+            reason: '$path ${i + 1}번째 줄: 지운 댓글에도 보인다');
+      }
     }
     for (final path in const [
       'lib/features/community/board/presentation/widgets/board_comment_item.dart',
