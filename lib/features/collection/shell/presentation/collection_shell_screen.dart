@@ -26,6 +26,7 @@ import 'package:parrokit/core/shared/widgets/app_segmented_tabs.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -147,21 +148,30 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       backgroundColor: colors.surface,
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            _buildTopBar(
-              context,
-              clipProvider,
-              isSelectionMode: isClipSelectionMode,
+        // 머리줄은 커뮤니티와 같은 방식으로 접힌다(5차 332, 사용자 요청).
+        // 단을 목록으로 넘기므로 나중에 언어·태그 줄을 한 단 더 얹을 수 있다.
+        child: TieredHeaderScroll(
+          tiers: [
+            HeaderTier(
+              height: 56,
+              child: _buildTopBar(
+                context,
+                clipProvider,
+                isSelectionMode: isClipSelectionMode,
+              ),
             ),
-            if (!isClipSelectionMode) ...[
-              // 탭 위 설명 배너는 뺐다. 칸만 차지했다(사용자 요청).
-              const SizedBox(height: 4),
-              _buildCollectionTabs(context),
-              const SizedBox(height: 8),
-            ],
-            Expanded(
-              child: TabBarView(
+            if (!isClipSelectionMode)
+              HeaderTier(
+                // 세그먼트 48 + 위 4 + 아래 8 + 테두리 여유.
+                height: 82,
+                sticky: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 8),
+                  child: _buildCollectionTabs(context),
+                ),
+              ),
+          ],
+          body: TabBarView(
                 controller: _tabController,
                 children: [
                   const _KeepAlive(child: SentenceCollectionPreview()),
@@ -179,9 +189,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   ),
                   const _KeepAlive(child: WordCollectionPreview()),
                 ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
