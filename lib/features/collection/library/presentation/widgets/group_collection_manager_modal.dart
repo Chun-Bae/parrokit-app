@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/local/app_database.dart';
+
+/// 저장하지 못했을 때 시트 안에 적는 말.
+const String groupCollectionSaveFailed = '저장하지 못했어요. 잠시 후 다시 해 주세요.';
 
 class GroupCollectionManagerModal extends StatefulWidget {
   final int? initialGroupId;
@@ -85,12 +89,23 @@ class _GroupCollectionManagerModalState
     });
   }
 
+  /// 저장하다 실패하면 시트 안에 적는다. 토스트는 시트 뒤에 깔려
+  /// 보이지 않는다(5차 391).
+  String? _error;
+
   Future<void> _saveTabA() async {
     if (_selectedGroupIdForTabA == null) return;
     final clipProvider = context.read<ClipProvider>();
-    await clipProvider.updateCollectionsForGroup(
-        _selectedGroupIdForTabA!, _checkedCollectionIdsForTabA.toList());
+    try {
+      await clipProvider.updateCollectionsForGroup(
+          _selectedGroupIdForTabA!, _checkedCollectionIdsForTabA.toList());
+    } catch (e) {
+      AppLogger.w('[GroupCollectionManager] 그룹 저장 실패: $e');
+      if (mounted) setState(() => _error = groupCollectionSaveFailed);
+      return;
+    }
     if (mounted) {
+      // 시트를 닫고 알리므로 토스트가 보인다
       showToast('그룹에 담을 폴더를 저장했어요.');
       Navigator.of(context).pop();
     }
@@ -99,10 +114,20 @@ class _GroupCollectionManagerModalState
   Future<void> _saveTabB() async {
     if (_selectedCollectionIdForTabB == null) return;
     final clipProvider = context.read<ClipProvider>();
-    await clipProvider.updateGroupsForCollection(
-        _selectedCollectionIdForTabB!, _checkedGroupIdsForTabB.toList());
+    try {
+      await clipProvider.updateGroupsForCollection(
+          _selectedCollectionIdForTabB!, _checkedGroupIdsForTabB.toList());
+    } catch (e) {
+      AppLogger.w('[GroupCollectionManager] 폴더 저장 실패: $e');
+      if (mounted) setState(() => _error = groupCollectionSaveFailed);
+      return;
+    }
     if (mounted) {
+      // 저장하고 시트를 닫는다. 전에는 닫지 않아, 알리는 말이 시트 뒤에
+      // 깔려 보이지 않았고 저장됐는지 알 수 없었다(5차 391).
+      // 시트를 닫고 알리므로 토스트가 보인다
       showToast('이 폴더가 들어갈 그룹을 저장했어요.');
+      Navigator.of(context).pop();
     }
   }
 
@@ -128,6 +153,16 @@ class _GroupCollectionManagerModalState
                   Tab(text: '폴더 기준'),
                 ],
               ),
+              if (_error case final message?)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Text(
+                    message,
+                    key: const ValueKey('group-collection-error'),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ),
               Expanded(
                 child: TabBarView(
                   children: [

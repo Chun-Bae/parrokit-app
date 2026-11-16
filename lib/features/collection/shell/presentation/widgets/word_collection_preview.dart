@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:parrokit/core/content/word_search_url.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
@@ -1200,9 +1199,11 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void _openWebSearch() {
     final word = _word.text.trim();
     if (word.isEmpty) {
-      showToast(wordSearchNeedsWordHint);
+      // 토스트는 시트 뒤에 깔려 보이지 않았다. 시트 안에 적는다(5차 391).
+      setState(() => fillNote = wordSearchNeedsWordHint);
       return;
     }
+    if (fillNote == wordSearchNeedsWordHint) setState(() => fillNote = null);
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (_) => WebDocumentScreen(

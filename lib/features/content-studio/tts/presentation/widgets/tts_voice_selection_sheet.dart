@@ -5,7 +5,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_google_models.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/providers/tts_provider.dart';
 
@@ -21,6 +20,9 @@ class _GoogleVoiceEntry {
   final String tier;
   final String gender;
 }
+
+/// 미리듣기를 못 들려줄 때 쓰는 말.
+const String voicePreviewFailed = '미리듣기를 재생하지 못했어요.';
 
 class TtsVoiceSelectionSheet extends StatefulWidget {
   const TtsVoiceSelectionSheet({super.key, required this.provider});
@@ -138,6 +140,9 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     setState(() => _selectedGender = gender);
   }
 
+  /// 미리듣기가 안 될 때 시트 안에 적는 말. 비어 있으면 아무것도 적지 않는다.
+  String? _previewError;
+
   Future<void> _onPreviewTap(String voiceId) async {
     if (_previewPlayingVoiceId == voiceId) {
       await _previewPlayer.pause();
@@ -158,9 +163,11 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
     setState(() => _previewLoadingVoiceId = null);
 
     if (path == null) {
-      showToast('미리듣기를 재생하지 못했어요.');
+      // 토스트는 시트 뒤에 깔려 보이지 않았다. 시트 안에 적는다(5차 391).
+      setState(() => _previewError = voicePreviewFailed);
       return;
     }
+    setState(() => _previewError = null);
 
     await _previewPlayer.setFilePath(path);
     // 이어 듣던 클립이 있으면 멈춘다. 둘이 겹쳐 울리지 않게(5차).
@@ -213,6 +220,17 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
+          if (_previewError case final message?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+              child: Text(
+                message,
+                key: const ValueKey('voice-preview-error'),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.error),
+              ),
+            ),
           const SizedBox(height: AppSpacing.md),
           if (widget.provider.isLoadingVoices)
             const Expanded(child: Center(child: CircularProgressIndicator()))
