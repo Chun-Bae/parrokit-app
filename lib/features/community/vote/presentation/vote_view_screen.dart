@@ -31,6 +31,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
 import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_text.dart';
 
 class VoteViewScreen extends StatefulWidget {
   final String voteId;
@@ -489,7 +490,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                   .read<CommunityProvider>()
                   .deleteComment(widget.voteId, comment.id);
               if (!mounted) return;
-              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
+              showToast(deleted ? commentDeletedMessage : deleteFailedMessage);
             },
           ),
         if (!isMyComment)
@@ -538,10 +539,10 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                   await context.read<CommunityProvider>().deletePost(vote.id);
               if (!mounted) return;
               if (deleted) {
-                showToast('투표가 삭제되었습니다.');
+                showToast(postDeletedMessage('투표'));
                 Navigator.maybePop(context);
               } else {
-                showToast('삭제에 실패했습니다.');
+                showToast(deleteFailedMessage);
               }
             },
           ),

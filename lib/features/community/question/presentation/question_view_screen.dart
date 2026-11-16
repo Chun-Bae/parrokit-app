@@ -19,6 +19,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
 import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_text.dart';
 
 class QuestionViewScreen extends StatefulWidget {
   final String questionId;
@@ -203,10 +204,10 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   .deletePost(question.id);
               if (!mounted) return;
               if (deleted) {
-                showToast('질문이 삭제되었습니다.');
+                showToast(postDeletedMessage('질문'));
                 Navigator.maybePop(context);
               } else {
-                showToast('삭제에 실패했습니다.');
+                showToast(deleteFailedMessage);
               }
             },
           ),
@@ -244,7 +245,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                   .read<CommunityProvider>()
                   .deleteComment(question.id, answer.id);
               if (!mounted) return;
-              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
+              showToast(deleted ? commentDeletedMessage : deleteFailedMessage);
             },
           ),
         if (!isMyComment)

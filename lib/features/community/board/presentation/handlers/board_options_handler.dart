@@ -4,6 +4,7 @@ import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_text.dart';
 
 class BoardOptionsHandler {
   static Future<void> showCommentOptionsSheet({
@@ -26,7 +27,7 @@ class BoardOptionsHandler {
             onTap: () async {
               final deleted = await onDelete();
               if (!context.mounted) return;
-              showToast(deleted ? '댓글이 삭제되었습니다.' : '삭제에 실패했습니다.');
+              showToast(deleted ? commentDeletedMessage : deleteFailedMessage);
             },
           ),
         if (!isMyComment)
@@ -72,10 +73,10 @@ class BoardOptionsHandler {
               final deleted = await onDelete();
               if (!context.mounted) return;
               if (deleted) {
-                showToast('게시글이 삭제되었습니다.');
+                showToast(postDeletedMessage('글'));
                 Navigator.maybePop(context);
               } else {
-                showToast('삭제에 실패했습니다.');
+                showToast(deleteFailedMessage);
               }
             },
           ),
