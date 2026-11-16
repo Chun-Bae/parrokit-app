@@ -35,6 +35,22 @@ class ContentStudioHubScreen extends StatefulWidget {
   State<ContentStudioHubScreen> createState() => _ContentStudioHubScreenState();
 }
 
+/// 영상 만들기를 숨겼을 때 알릴 말(5차 384).
+const String videoStudioRestingMessage = '영상 만들기는 지금 쉬고 있어요.';
+
+/// 들어온 탭 번호를 지금 열 수 있는 탭으로 맞춘다.
+///
+/// 영상 만들기를 숨기면 2번 탭이 없다. 전에는 말없이 음성 만들기로 밀어
+/// 넣어서, '영상 만들기' 길로 들어온 사람은 왜 다른 화면인지 몰랐다.
+({int index, bool moved}) studioInitialTab(
+  int requested, {
+  bool videoEnabled = kVideoStudioEnabled,
+}) {
+  final last = videoEnabled ? 2 : 1;
+  final index = requested.clamp(0, last);
+  return (index: index, moved: index != requested);
+}
+
 class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   late final PageController _pageController;
 
@@ -49,8 +65,15 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex.clamp(0, _lastIndex);
+    final start = studioInitialTab(widget.initialIndex);
+    _selectedIndex = start.index;
     _pageController = PageController(initialPage: _selectedIndex);
+    if (start.moved) {
+      // 영상 만들기 길로 들어왔는데 지금은 없다. 까닭을 알린다(5차 384).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showToast(videoStudioRestingMessage);
+      });
+    }
   }
 
   @override
@@ -118,7 +141,7 @@ class _ContentStudioHubScreenState extends State<ContentStudioHubScreen> {
     // 영상 만들기를 숨기면 챗봇이 영상 탭을 열려고 해도 열 곳이 없다.
     void openFromChatbot(int tabIndex) {
       if (tabIndex == 2 && !kVideoStudioEnabled) {
-        showToast('영상 만들기는 지금 쉬고 있어요.');
+        showToast(videoStudioRestingMessage);
         return;
       }
       _setPage(tabIndex);
