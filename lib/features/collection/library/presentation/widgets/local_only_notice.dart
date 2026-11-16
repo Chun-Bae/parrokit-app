@@ -10,36 +10,42 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 
 const String localOnlyNoticeTitle = '이 기기에만 있어요';
-const String localOnlyNoticeBody =
-    '폰을 바꾸면 클립이 사라져요. 백업 파일을 만들어 두면 다시 불러올 수 있어요.';
 const String localOnlyBackupLabel = '백업 파일 만들기';
 const String localOnlySubscribeLabel = '구독 보기';
 
+/// 몇 개가 사라지는지 적는다. 예전에는 '클립이 사라져요'라고만 해서, 서버에
+/// 올라간 클립이 섞여 있어도 전부 사라지는 것처럼 읽혔다(5차).
+String localOnlyNoticeBody(int localOnlyCount) =>
+    '폰을 바꾸면 클립 $localOnlyCount개가 사라져요. '
+    '백업 파일을 만들어 두면 다시 불러올 수 있어요.';
+
 /// 구독하면 서버에 자동으로 올라가므로 이 안내를 보여 주지 않는다.
-/// 클립이 하나도 없는 사람에게도 보여 줄 일이 없다.
+/// 이 기기에만 있는 클립이 없으면(예전 구독으로 서버에 다 올라가 있으면)
+/// 알릴 것도 없다.
 bool showsLocalOnlyNotice({
   required SubscriptionTier tier,
-  required int clipCount,
+  required int localOnlyCount,
 }) =>
-    tier == SubscriptionTier.free && clipCount > 0;
+    tier == SubscriptionTier.free && localOnlyCount > 0;
 
 class LocalOnlyNotice extends StatelessWidget {
   const LocalOnlyNotice({
     super.key,
     required this.tier,
-    required this.clipCount,
+    required this.localOnlyCount,
     required this.onBackup,
     required this.onSubscribe,
   });
 
   final SubscriptionTier tier;
-  final int clipCount;
+  /// 이 기기에만 있는 클립 수. 서버에 올라간 것은 세지 않는다.
+  final int localOnlyCount;
   final VoidCallback onBackup;
   final VoidCallback onSubscribe;
 
   @override
   Widget build(BuildContext context) {
-    if (!showsLocalOnlyNotice(tier: tier, clipCount: clipCount)) {
+    if (!showsLocalOnlyNotice(tier: tier, localOnlyCount: localOnlyCount)) {
       return const SizedBox.shrink();
     }
     final cs = Theme.of(context).colorScheme;
@@ -65,7 +71,7 @@ class LocalOnlyNotice extends StatelessWidget {
                       fontWeight: FontWeight.w800, color: cs.onSurface)),
             ]),
             const SizedBox(height: 6),
-            Text(localOnlyNoticeBody,
+            Text(localOnlyNoticeBody(localOnlyCount),
                 style: context.texts.bodySmall
                     .copyWith(color: cs.onSurfaceVariant, height: 1.5)),
             const SizedBox(height: 10),

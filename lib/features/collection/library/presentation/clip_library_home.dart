@@ -440,7 +440,11 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       SliverToBoxAdapter(
         child: LocalOnlyNotice(
           tier: context.watch<SubscriptionProvider>().tier,
-          clipCount: _clips.length,
+          localOnlyCount: _clips
+              .where((item) =>
+                  item.clip.storageMode ==
+                  ClipStorageConstants.storageModeLocal)
+              .length,
           onBackup: () => _runBackup(context),
           onSubscribe: () => resolvePaywallPresenter().show(context),
         ),

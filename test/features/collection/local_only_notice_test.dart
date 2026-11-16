@@ -9,7 +9,7 @@ import 'package:parrokit/features/settings/subscription/domain/subscription_tier
 Future<void> _open(
   WidgetTester tester, {
   required SubscriptionTier tier,
-  int clipCount = 3,
+  int localOnlyCount = 3,
   VoidCallback? onBackup,
   VoidCallback? onSubscribe,
 }) async {
@@ -20,7 +20,7 @@ Future<void> _open(
     home: Scaffold(
       body: LocalOnlyNotice(
         tier: tier,
-        clipCount: clipCount,
+        localOnlyCount: localOnlyCount,
         onBackup: onBackup ?? () {},
         onSubscribe: onSubscribe ?? () {},
       ),
@@ -32,22 +32,24 @@ Future<void> _open(
 void main() {
   test('무료이고 클립이 있을 때만 보여 준다', () {
     expect(
-        showsLocalOnlyNotice(tier: SubscriptionTier.free, clipCount: 1), isTrue);
-    expect(showsLocalOnlyNotice(tier: SubscriptionTier.free, clipCount: 0),
+        showsLocalOnlyNotice(tier: SubscriptionTier.free, localOnlyCount: 1), isTrue);
+    expect(showsLocalOnlyNotice(tier: SubscriptionTier.free, localOnlyCount: 0),
         isFalse,
-        reason: '클립이 없으면 알릴 것도 없다');
-    expect(showsLocalOnlyNotice(tier: SubscriptionTier.light, clipCount: 5),
+        reason: '이 기기에만 있는 클립이 없으면 알릴 것도 없다');
+    expect(showsLocalOnlyNotice(tier: SubscriptionTier.light, localOnlyCount: 5),
         isFalse,
         reason: '구독하면 서버에 올라간다');
     expect(
-        showsLocalOnlyNotice(tier: SubscriptionTier.pro, clipCount: 5), isFalse);
+        showsLocalOnlyNotice(tier: SubscriptionTier.pro, localOnlyCount: 5), isFalse);
   });
 
   testWidgets('무엇이 문제이고 무엇을 할 수 있는지 함께 적는다', (tester) async {
     await _open(tester, tier: SubscriptionTier.free);
 
     expect(find.text(localOnlyNoticeTitle), findsOneWidget);
-    expect(find.textContaining('폰을 바꾸면'), findsOneWidget);
+    // 몇 개가 사라지는지 적는다. 서버에 올라간 클립은 세지 않는다.
+    expect(find.text(localOnlyNoticeBody(3)), findsOneWidget);
+    expect(find.textContaining('클립 3개가 사라져요'), findsOneWidget);
     expect(find.text(localOnlyBackupLabel), findsOneWidget);
     expect(find.text(localOnlySubscribeLabel), findsOneWidget);
   });
