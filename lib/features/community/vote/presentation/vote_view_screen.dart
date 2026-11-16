@@ -23,7 +23,7 @@ import 'package:parrokit/data/models/comment.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'vote_screen.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
-import 'package:parrokit/features/community/shared/presentation/comment_delete_confirm.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_confirm.dart';
 import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/comment_reply_button.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_block_actions.dart';
@@ -549,8 +549,12 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             label: '지우기',
             isDestructive: true,
             onTap: () async {
-              final deleted =
-                  await context.read<CommunityProvider>().deletePost(vote.id);
+              // 되돌릴 수 없으니 한 번 묻는다. 게시판만 묻고 있었다(5차 400).
+              final provider = context.read<CommunityProvider>();
+              if (!await confirmDeletePost(context, kind: '투표') || !mounted) {
+                return;
+              }
+              final deleted = await provider.deletePost(vote.id);
               if (!mounted) return;
               if (deleted) {
                 showToast(postDeletedMessage('투표'));

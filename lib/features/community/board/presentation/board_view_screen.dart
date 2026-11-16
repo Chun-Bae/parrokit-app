@@ -18,11 +18,10 @@ import 'package:parrokit/features/community/board/presentation/sections/board_co
 import 'package:parrokit/features/community/board/presentation/handlers/board_options_handler.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
-import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
-import 'package:parrokit/features/community/shared/presentation/comment_delete_confirm.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_confirm.dart';
 import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 
 class BoardViewScreen extends StatefulWidget {
@@ -157,41 +156,18 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       context: context,
       post: post,
       isMyPost: isMyPost,
-      onEdit: () {
-        Navigator.push(
-          context,
+      onEdit: () async {
+        await Navigator.of(context).push(
           MaterialPageRoute(
-              builder: (context) => BoardWriteScreen(editPost: post)),
+            builder: (_) => BoardWriteScreen(editPost: post),
+          ),
         );
       },
       onDelete: () async {
         final provider = context.read<CommunityProvider>();
-        final colorScheme = Theme.of(context).colorScheme;
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg)),
-            title: const Text('글 지우기',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            content: const Text('이 글을 지울까요?\n지우면 되돌릴 수 없어요.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text('취소',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text('지우기',
-                    style: TextStyle(
-                        color: context.tokens.danger,
-                        fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-        if (confirm != true || !mounted) return false;
+        if (!await confirmDeletePost(context, kind: '글') || !mounted) {
+          return false;
+        }
         return provider.deletePost(post.id);
       },
     );

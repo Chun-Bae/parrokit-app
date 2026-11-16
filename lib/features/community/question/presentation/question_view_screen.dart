@@ -18,7 +18,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
-import 'package:parrokit/features/community/shared/presentation/comment_delete_confirm.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_confirm.dart';
 import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 import 'package:parrokit/features/community/shared/presentation/community_delete_text.dart';
@@ -201,9 +201,12 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             label: '지우기',
             isDestructive: true,
             onTap: () async {
-              final deleted = await context
-                  .read<CommunityProvider>()
-                  .deletePost(question.id);
+              // 되돌릴 수 없으니 한 번 묻는다. 게시판만 묻고 있었다(5차 400).
+              final provider = context.read<CommunityProvider>();
+              if (!await confirmDeletePost(context, kind: '질문') || !mounted) {
+                return;
+              }
+              final deleted = await provider.deletePost(question.id);
               if (!mounted) return;
               if (deleted) {
                 showToast(postDeletedMessage('질문'));
