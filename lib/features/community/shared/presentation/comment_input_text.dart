@@ -20,3 +20,14 @@ String? commentBlockedReason({required bool hasText, required bool replying}) {
   if (hasText) return null;
   return replying ? '답글을 적어야 보낼 수 있어요.' : '댓글을 적어야 보낼 수 있어요.';
 }
+
+/// 못 올렸을 때 알릴 말. 화면마다 달랐다('댓글 등록 실패' 같은 내부 말까지,
+/// 5차 398). 답글이면 '답글'이라고 부른다.
+String commentSendFailedText({required bool replying}) =>
+    replying ? '답글을 올리지 못했어요. 다시 해 주세요.' : '댓글을 올리지 못했어요. 다시 해 주세요.';
+
+/// 닉네임이 없을 때 댓글에 적을 이름.
+///
+/// 투표 화면만 빈 문자열을 넘겨, 닉네임이 없으면 **이름 없이** 올라갔다
+/// (5차 398). 게시판은 '알 수 없음', 질문은 '익명'이라 셋이 다 달랐다.
+const String commentUnknownNickname = '알 수 없음';

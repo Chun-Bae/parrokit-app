@@ -40,4 +40,41 @@ void main() {
       expect(code, isNot(contains('답글 남기는 중\'')), reason: path);
     }
   });
+
+  test('못 올렸을 때 알리는 말도 댓글·답글을 가린다(5차 398)', () {
+    expect(commentSendFailedText(replying: false), '댓글을 올리지 못했어요. 다시 해 주세요.');
+    expect(commentSendFailedText(replying: true), '답글을 올리지 못했어요. 다시 해 주세요.');
+  });
+
+  test('세 화면이 같은 실패 안내와 같은 이름 기본값을 쓴다(5차 398)', () {
+    const paths = [
+      'lib/features/community/board/presentation/board_view_screen.dart',
+      'lib/features/community/question/presentation/question_view_screen.dart',
+      'lib/features/community/vote/presentation/vote_view_screen.dart',
+    ];
+    for (final path in paths) {
+      final code = _code(path);
+      expect(code, contains('commentSendFailedText('), reason: path);
+      expect(code, contains('commentUnknownNickname'), reason: path);
+      // 화면마다 손으로 적던 말들. '댓글 등록 실패'는 내부 말이었다.
+      expect(code, isNot(contains("'댓글 등록 실패'")), reason: path);
+      expect(code, isNot(contains("?? '익명'")), reason: path);
+      // 닉네임이 없다고 이름 없이 올리지 않는다.
+      expect(code, isNot(contains("displayName ?? ''")), reason: path);
+    }
+  });
+
+  test('답글을 쓰는 중이었는지 보내기 전에 잡아 둔다', () {
+    const paths = [
+      'lib/features/community/board/presentation/board_view_screen.dart',
+      'lib/features/community/vote/presentation/vote_view_screen.dart',
+    ];
+    for (final path in paths) {
+      final code = _code(path);
+      expect(code, contains('final replying = provider.replyingTo != null;'),
+          reason: path);
+      expect(code, isNot(contains('commentSendFailedText(replying: false)')),
+          reason: path);
+    }
+  });
 }

@@ -18,6 +18,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
+import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 import 'package:parrokit/features/community/shared/presentation/community_delete_text.dart';
 
@@ -103,7 +104,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       widget.questionId,
       text,
       authorId: currentUser.id,
-      authorNickname: currentUser.displayName ?? '익명',
+      authorNickname: currentUser.displayName ?? commentUnknownNickname,
       authorAvatarUrl: currentUser.photoUrl,
     );
 
@@ -113,7 +114,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       // 미리 비우는 건 반응이 빨라 보이려는 것이지, 실패했을 때 사용자가
       // 다시 타이핑해야 한다는 뜻은 아니다. 쓴 글을 돌려준다.
       _replyController.text = text;
-      showToast(provider.errorMessage ?? '답글을 올리지 못했어요. 다시 해 주세요.');
+      showToast(provider.errorMessage ?? commentSendFailedText(replying: true));
     }
   }
 

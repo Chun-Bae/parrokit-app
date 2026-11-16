@@ -87,11 +87,14 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
     _commentFocusNode.unfocus();
 
     final provider = context.read<CommunityProvider>();
+    // 답글을 쓰는 중이었는지는 보내기 전에 잡아 둔다. 성공하면 provider가
+    // 지운다. 입력칸·툴팁은 '답글'이라 하면서 실패 안내만 '댓글'이었다(5차 398).
+    final replying = provider.replyingTo != null;
     final success = await provider.addComment(
       widget.postId,
       text,
       authorId: currentUser.id,
-      authorNickname: currentUser.displayName ?? '알 수 없음',
+      authorNickname: currentUser.displayName ?? commentUnknownNickname,
       authorAvatarUrl: currentUser.photoUrl,
     );
 
@@ -101,7 +104,8 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       // 미리 비우는 건 반응이 빨라 보이려는 것이지, 실패했을 때 사용자가
       // 다시 타이핑해야 한다는 뜻은 아니다. 쓴 글을 돌려준다.
       _commentController.text = text;
-      showToast(provider.errorMessage ?? '댓글을 올리지 못했어요.');
+      showToast(
+          provider.errorMessage ?? commentSendFailedText(replying: replying));
     }
   }
 
