@@ -69,6 +69,9 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   String language = '영어';
   String category = '전체';
   String accountId = 'guest';
+
+  /// 지금 둘러보기에 공개 중인 내 문장 id들('공유 중' 칩, 5차).
+  Set<String> publishedIds = <String>{};
   bool loadedOnce = false;
   List<DefaultConversationSentence> mine = [];
   Map<String, SentenceActivity> activities = {};
@@ -118,6 +121,19 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   /// 공개·공개 취소·공개한 문장 삭제가 있으면 둘러보기 목록을 조용히 다시 읽는다.
   void reloadSharedQuietly() {
     if (loadedOnce) loadShared(silent: true);
+    unawaited(loadPublishedIds());
+  }
+
+  /// 내 문장 목록에 '공유 중' 칩을 붙이려고 읽는다(5차, 사용자 요청).
+  Future<void> loadPublishedIds() async {
+    final requested = accountId;
+    try {
+      final ids = await MySentenceStore.publishedIds(requested);
+      if (!mounted || requested != accountId) return;
+      setState(() => publishedIds = ids);
+    } catch (_) {
+      // 못 읽으면 칩만 안 보인다.
+    }
   }
 
   @override
@@ -134,11 +150,13 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       final results = await Future.wait([
         MySentenceStore.load(requested),
         SentenceActivityStore.loadAll(requested),
+        MySentenceStore.publishedIds(requested),
       ]);
       if (!mounted || requested != accountId) return;
       setState(() {
         mine = results[0] as List<DefaultConversationSentence>;
         activities = results[1] as Map<String, SentenceActivity>;
+        publishedIds = results[2] as Set<String>;
       });
     } catch (_) {
       // 읽지 못하면 기본 문장만 보여준다.
@@ -782,6 +800,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                         activities[sentence.id] ?? const SentenceActivity(),
                     repository: repository,
                     authorName: authorName,
+                    published: publishedIds.contains(sentence.id),
                     swipeKey: _swipeKeys.putIfAbsent(
                         sentence.id, GlobalKey<SwipeActionTileState>.new),
                   ),
@@ -1025,6 +1044,7 @@ class _MySentenceTile extends StatelessWidget {
     required this.activity,
     required this.repository,
     required this.authorName,
+    this.published = false,
     required GlobalKey<SwipeActionTileState> swipeKey,
   }) : _swipeKey = swipeKey;
 
@@ -1033,6 +1053,9 @@ class _MySentenceTile extends StatelessWidget {
   final SentenceActivity activity;
   final SharedSentenceRepository? repository;
   final String authorName;
+
+  /// 지금 둘러보기에 공개 중인지. 목록에서 한눈에 보이게 칩을 붙인다(5차).
+  final bool published;
 
   /// 밀어서 연 동작 칸을 버튼을 누른 뒤 닫으려고 부모가 문장마다 하나씩 준다.
   final GlobalKey<SwipeActionTileState> _swipeKey;
@@ -1205,9 +1228,30 @@ class _MySentenceTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sentence.text,
-                    style: context.texts.bodyLarge.copyWith(
-                        color: colors.onSurface, fontWeight: FontWeight.w700)),
+                Row(children: [
+                  Flexible(
+                    child: Text(sentence.text,
+                        style: context.texts.bodyLarge.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                  // 공개 중인 문장은 목록에서 바로 알아보게 한다(5차, 사용자 요청).
+                  if (published) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      key: const ValueKey('shared-chip'),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer,
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: Text('공유 중',
+                          style: context.texts.labelSmall
+                              .copyWith(color: colors.onPrimaryContainer)),
+                    ),
+                  ],
+                ]),
                 const SizedBox(height: 3),
                 Row(children: [
                   Flexible(
@@ -1407,6 +1451,129 @@ class _ExploreStrip extends StatelessWidget {
       ],
     );
   }
+}
+
+/// 저장한 문장을 고치는 창(5차, 사용자 요청).
+///
+/// 전에는 고치는 길이 아예 없어서, 오타 하나를 고치려면 지우고 다시 넣어야
+/// 했다. 그러면 연습 기록과 친밀도가 함께 사라졌다.
+class SentenceEditDialog extends StatefulWidget {
+  const SentenceEditDialog({super.key, required this.sentence});
+
+  final DefaultConversationSentence sentence;
+
+  @override
+  State<SentenceEditDialog> createState() => _SentenceEditDialogState();
+}
+
+class _SentenceEditDialogState extends State<SentenceEditDialog> {
+  late final _text = TextEditingController(text: widget.sentence.text);
+  late final _pron =
+      TextEditingController(text: widget.sentence.pronunciation);
+  late final _meaning =
+      TextEditingController(text: widget.sentence.translation);
+  String? _hint;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    _pron.dispose();
+    _meaning.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final reason = sentenceEditBlockedReason(
+      text: _text.text,
+      before: widget.sentence,
+      pronunciation: _pron.text,
+      translation: _meaning.text,
+    );
+    if (reason != null) {
+      setState(() => _hint = reason);
+      return;
+    }
+    Navigator.pop(context, (
+      text: _text.text.trim(),
+      pronunciation: _pron.text.trim(),
+      translation: _meaning.text.trim(),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('문장 고치기'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                key: const ValueKey('edit-sentence-text'),
+                controller: _text,
+                autofocus: true,
+                maxLines: 3,
+                minLines: 1,
+                onChanged: (_) => setState(() => _hint = null),
+                decoration: const InputDecoration(labelText: '문장'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey('edit-sentence-pron'),
+                controller: _pron,
+                onChanged: (_) => setState(() => _hint = null),
+                decoration: const InputDecoration(labelText: '발음 (선택)'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey('edit-sentence-meaning'),
+                controller: _meaning,
+                maxLines: 2,
+                minLines: 1,
+                onChanged: (_) => setState(() => _hint = null),
+                decoration: const InputDecoration(labelText: '뜻 (선택)'),
+              ),
+              if (_hint case final hint?)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    hint,
+                    key: const ValueKey('edit-sentence-hint'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            key: const ValueKey('save-sentence-edit'),
+            // 꺼진 채 두지 않고 까닭을 적는다(5차).
+            onPressed: _submit,
+            child: const Text('저장'),
+          ),
+        ],
+      );
+}
+
+/// 고칠 수 없는 까닭. 없으면 null.
+String? sentenceEditBlockedReason({
+  required String text,
+  required DefaultConversationSentence before,
+  String pronunciation = '',
+  String translation = '',
+}) {
+  if (text.trim().isEmpty) return '문장을 적어 주세요.';
+  final same = text.trim() == before.text.trim() &&
+      pronunciation.trim() == before.pronunciation.trim() &&
+      translation.trim() == before.translation.trim();
+  if (same) return '바뀐 것이 없어요.';
+  return null;
 }
 
 class _SentenceDetailSheet extends StatefulWidget {
@@ -1638,6 +1805,34 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     super.dispose();
   }
 
+  /// 문장을 고친다. 내 문장일 때만 보인다.
+  Future<void> editSentence() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final next = await showDialog<
+        ({String text, String pronunciation, String translation})>(
+      context: context,
+      builder: (_) => SentenceEditDialog(sentence: widget.sentence),
+    );
+    if (!mounted || next == null) return;
+
+    final saved = await MySentenceStore.update(
+      widget.accountId,
+      widget.sentence.id,
+      text: next.text,
+      pronunciation: next.pronunciation,
+      translation: next.translation,
+    );
+    if (!mounted) return;
+    if (!saved) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('고치지 못했어요. 같은 문장이 이미 있는지 확인해 주세요.')));
+      return;
+    }
+    messenger.showSnackBar(const SnackBar(content: Text('문장을 고쳤어요.')));
+    // 고친 내용으로 목록과 앵무새가 다시 읽도록, 창을 닫는다.
+    if (mounted) Navigator.pop(context);
+  }
+
   Future<void> loadActivity() async {
     final loaded = await SentenceActivityStore.load(
       widget.accountId,
@@ -1854,6 +2049,14 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                     key: const ValueKey('detail-import-count'),
                     style: context.texts.bodySmall),
               ],
+              // 내가 저장한 문장만 고칠 수 있다(5차, 사용자 요청).
+              if (widget.saved && widget.shared == null)
+                IconButton(
+                  key: const ValueKey('edit-sentence'),
+                  tooltip: '문장 고치기',
+                  onPressed: editSentence,
+                  icon: const Icon(Icons.edit_outlined),
+                ),
               IconButton(
                 tooltip: '문장 공유',
                 onPressed: shareSentence,

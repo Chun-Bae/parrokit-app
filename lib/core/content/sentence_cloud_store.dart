@@ -72,6 +72,28 @@ class SentenceCloudStore {
     return true;
   }
 
+  /// 문장·발음·뜻을 고친다. 공개 여부와 좋아요 수는 건드리지 않는다.
+  Future<void> update(
+    String id, {
+    required String text,
+    required String pronunciation,
+    required String translation,
+  }) =>
+      _sentences.doc(id).update({
+        'text': text.trim(),
+        'pronunciation': pronunciation.trim(),
+        'translation': translation.trim(),
+      });
+
+  /// 지금 둘러보기에 공개 중인 내 문장 id들.
+  Future<Set<String>> publishedIds(String ownerId) async {
+    final snapshot = await _sentences
+        .where('ownerId', isEqualTo: ownerId)
+        .where('visibility', isEqualTo: public)
+        .get();
+    return {for (final doc in snapshot.docs) doc.id};
+  }
+
   Future<void> remove(String id) => _sentences.doc(id).delete();
 
   DefaultConversationSentence _fromDoc(String id, Map<String, dynamic> data) =>

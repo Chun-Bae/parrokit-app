@@ -113,6 +113,64 @@ class MySentenceStore {
     return true;
   }
 
+  /// 저장해 둔 문장을 고친다(5차, 사용자 요청).
+  ///
+  /// id는 그대로 두므로 연습 기록·루틴 켜짐·친밀도가 따라온다. 같은 언어에
+  /// 같은 문장이 이미 있으면 고치지 않고 false를 돌려준다.
+  static Future<bool> update(
+    String accountId,
+    String id, {
+    required String text,
+    String pronunciation = '',
+    String translation = '',
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return false;
+
+    final all = await load(accountId);
+    final index = all.indexWhere((s) => s.id == id);
+    if (index < 0) return false;
+    final before = all[index];
+    final duplicated = all.any((s) =>
+        s.id != id &&
+        s.language == before.language &&
+        s.text.trim() == trimmed);
+    if (duplicated) return false;
+
+    if (_useCloud(accountId)) {
+      await cloud!.update(
+        id,
+        text: trimmed,
+        pronunciation: pronunciation,
+        translation: translation,
+      );
+      SentenceActivityStore.revision.value++;
+      // 공개한 문장이면 둘러보기에 보이는 글도 같이 바뀐다.
+      SharedSentenceRepository.revision.value++;
+      return true;
+    }
+
+    all[index] = DefaultConversationSentence(
+      id: before.id,
+      language: before.language,
+      text: trimmed,
+      translation: translation.trim(),
+      pronunciation: pronunciation.trim(),
+      topic: before.topic,
+      author: before.author,
+      addedAt: before.addedAt,
+    );
+    await _save(accountId, all);
+    return true;
+  }
+
+  /// 지금 둘러보기에 공개 중인 문장 id들. 기기에만 두는 게스트는 없다
+  /// (공개는 로그인해야 한다).
+  static Future<Set<String>> publishedIds(String accountId) async {
+    if (!_useCloud(accountId)) return <String>{};
+    return cloud!.publishedIds(accountId);
+  }
+
   static Future<void> remove(String accountId, String id) async {
     if (_useCloud(accountId)) {
       await cloud!.remove(id);
