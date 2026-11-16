@@ -84,6 +84,24 @@ void main() {
     expect(board, contains('color: _canComplete'));
   });
 
+  test('세 글쓰기 화면 모두 까닭을 눈에 보이게 적는다', () {
+    // 이 화면들에서는 토스트가 그려지지 않는 것을 시뮬레이터에서 봤다(5차).
+    const keys = {
+      'lib/features/community/board/presentation/board_write_screen.dart':
+          'board-blocked-reason',
+      'lib/features/community/question/presentation/question_write_screen.dart':
+          'question-blocked-reason',
+      'lib/features/community/vote/presentation/vote_write_screen.dart':
+          'vote-blocked-reason',
+    };
+    keys.forEach((path, key) {
+      final code = File(path).readAsStringSync();
+      expect(code, contains("ValueKey('$key')"), reason: path);
+      expect(code, contains('if (_blockedReason case final reason?)'),
+          reason: path);
+    });
+  });
+
   test('질문 글쓰기는 까닭을 아래 줄에 눈으로 보이게 적는다', () {
     // 이 화면에서는 토스트가 그려지지 않는 것을 시뮬레이터에서 봤다(5차).
     // 그래서 글자 수 옆에 그대로 적는다.

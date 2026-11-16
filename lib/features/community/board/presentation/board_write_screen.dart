@@ -683,6 +683,21 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                             isActive: _isTagInputActive,
                           ),
                         ),
+                        // 아직 못 올리면 무엇이 빠졌는지 여기 적는다. 꺼진
+                        // '완료'만 보고는 알 수 없었고, 이 화면에서는 토스트가
+                        // 그려지지 않는다(5차).
+                        if (_blockedReason case final reason?) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              reason,
+                              key: const ValueKey('board-blocked-reason'),
+                              textAlign: TextAlign.right,
+                              style: context.texts.labelMedium.copyWith(
+                                  color: colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

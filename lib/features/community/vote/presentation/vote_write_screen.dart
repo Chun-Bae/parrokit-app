@@ -319,6 +319,23 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
             // Thin top divider
             Container(color: dividerColor, height: 1),
 
+            // 아직 못 올리면 무엇이 빠졌는지 맨 위에 적는다. 꺼진 '투표 올리기'
+            // 만 보고는 알 수 없었고, 이 화면에서는 토스트가 안 그려진다(5차).
+            if (_blockedReason case final reason?)
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    reason,
+                    key: const ValueKey('vote-blocked-reason'),
+                    style: context.texts.labelMedium.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              ),
+
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),
