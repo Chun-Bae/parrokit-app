@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 10분마다 예약된 세션 루프(사실상 연속). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- **1.0.6 (119) 테스트 배포**(사용자 요청): 335~341 변화가 모두 담겼다. 로컬 archive·export → App Distribution testers (02c92179)
 - **글쓰기 시트에도 '문장 공유하기'**(차례도 탭과 같게)와 **공유 목록에 언어 표시**. 커뮤니티 탭·공유 길 테스트 5개 (1c2925e7)
 - **공유 문장이 커뮤니티 '문장' 탭으로**(사용자 제안): 커뮤니티가 게시판·문장·질문·투표 넷. 떠 있는 단추는 '문장 공유하기'(내 문장 골라 공개). 보관함·홈 '전체 보기'도 이 탭으로. 따로 띄우던 둘러보기 화면은 삭제 (e1c76566)
 - **둘러보기 줄 카드도 목록 카드와 같은 결**: 사진+닉네임 아래줄, 문장 크게 (이번 커밋)
@@ -3438,3 +3439,14 @@
   돌아가는 길(차단 뒤)은 게시판으로 가는 기존 동작 그대로 둔다
 - 테스트 5개 추가(탭 차례·전체 보기 이동·공유 묻는 말 한 곳·언어 표시·닉네임 없을 때)
 - analyze 깨끗, 1180개 통과. 밝기·어둠 확인, 라이트로 되돌림. 실제 공개는 누르지 않음
+
+## 반복 342 (2026-11-17 01:10~, 사용자 요청: 로컬 빌드 배포)
+- 빌드 번호 118 → 119(pubspec). 118은 이미 올라가 있어 같은 번호면 기존 릴리스를 덮어쓴다
+- `flutter build ios --release --no-codesign --config-only` → `ruby /tmp/sign_runner.rb`
+  → `xcodebuild archive`(약 20분) → `-exportArchive`(ad hoc) → `appdistribution:distribute`
+- **ARCHIVE SUCCEEDED / EXPORT SUCCEEDED**, `uploaded new release 1.0.6 (119) successfully`,
+  `distributed to testers/groups successfully`. IPA 73MB
+- 담긴 변화: 보관함·커뮤니티 n단 머리줄, 접히는 순서, 공유 문장 라벨('공유 문장')과 올린
+  사람 프로필 사진, 문장 상세 듣기 횟수, 단어 예문 추가·고치기, 둘러보기 카드 새 디자인,
+  커뮤니티 '문장' 탭과 문장 공유하기
+- 서명용으로 바꾼 `ios/Runner.xcodeproj/project.pbxproj`는 되돌렸다. 기기 설치 확인은 사용자 몫
