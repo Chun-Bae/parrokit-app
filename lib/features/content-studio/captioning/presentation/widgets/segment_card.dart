@@ -65,6 +65,7 @@ class SegmentCard extends StatelessWidget {
                       children: [
                         _SegmentTimeButton(
                           label: 'A',
+                          hint: '지금 보고 있는 자리를 시작으로',
                           onPressed: _registerA,
                           color: theme.colorScheme.primary,
                           isDark: isDark,
@@ -80,6 +81,7 @@ class SegmentCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         _SegmentTimeButton(
                           label: 'B',
+                          hint: '지금 보고 있는 자리를 끝으로',
                           onPressed: _registerB,
                           color: theme.colorScheme.primary,
                           isDark: isDark,
@@ -212,12 +214,16 @@ class SegmentCard extends StatelessWidget {
 class _SegmentTimeButton extends StatelessWidget {
   const _SegmentTimeButton({
     required this.label,
+    required this.hint,
     required this.onPressed,
     required this.color,
     required this.isDark,
   });
 
   final String label;
+
+  /// 길게 눌렀을 때와 화면 읽기에 들려줄 말.
+  final String hint;
   final VoidCallback? onPressed;
   final Color color;
   final bool isDark;
@@ -226,36 +232,47 @@ class _SegmentTimeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final symbol = label.isNotEmpty ? label.substring(0, 1) : '';
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              child: Text(
-                symbol,
-                style: context.texts.bodyMedium.copyWith(color: color),
+    // 이 단추는 구간을 더하는 것이 아니라 **지금 보고 있는 자리**를 시작·끝에
+    // 넣는다. 아래 글이 '추가'라서 옆의 '+ 추가'(구간 더하기)와 같은 일로
+    // 읽혔다(5차).
+    return Semantics(
+      button: true,
+      label: '$symbol, $hint',
+      excludeSemantics: true,
+      child: Tooltip(
+        message: hint,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Material(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onPressed,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  child: Text(
+                    symbol,
+                    style: context.texts.bodyMedium.copyWith(color: color),
+                  ),
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 2),
+            Text(
+              '지금',
+              style: context.texts.labelSmall.copyWith(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.5)),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          '추가',
-          style: context.texts.labelSmall.copyWith(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.5)),
-        ),
-      ],
+      ),
     );
   }
 }
