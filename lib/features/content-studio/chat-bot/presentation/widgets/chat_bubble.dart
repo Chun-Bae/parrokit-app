@@ -4,21 +4,27 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../../domain/entities/ai_chat_message.dart';
 import 'gradient_helper.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+
+/// 갈 길이 없을 때 알리는 말(5차 371).
+const String chatbotNoRouteNotice = '여기서는 바로 갈 수 없어요. 스튜디오에서 열어 주세요.';
 
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
     required this.message,
     this.onTriggerAction,
+    this.onNotice,
   });
 
   final AiChatMessage message;
   final void Function(int tabIndex, Map<String, dynamic>? actionData)?
       onTriggerAction;
+
+  /// 알릴 말을 시트가 받아서 시트 안에 적는다. 토스트는 시트에 가린다.
+  final void Function(String message)? onNotice;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +127,8 @@ class ChatBubble extends StatelessWidget {
                           shrinkWrap: true,
                           selectable: true,
                           builders: {
-                            'code': CodeElementBuilder(context),
+                            'code':
+                                CodeElementBuilder(context, onNotice: onNotice),
                           },
                           styleSheet:
                               MarkdownStyleSheet.fromTheme(theme).copyWith(
@@ -191,14 +198,10 @@ class ChatBubble extends StatelessWidget {
                                 }
                                 Navigator.of(context).pop();
                               } else {
-                                showToast(
-                                  message.actionType == 'video_trigger'
-                                      ? '영상 만들기 화면으로 이동합니다'
-                                      : message.actionType ==
-                                              'video_prompt_recommendation'
-                                          ? '영상 프롬프트 추천을 적용합니다'
-                                          : '음성 만들기 화면으로 가요',
-                                );
+                                // 여기로 오면 갈 길이 없다. 전에는 '이동합니다'
+                                // 라고만 하고 아무 일도 없었고, 그 말마저
+                                // 시트에 가려 보이지 않았다(5차 371).
+                                onNotice?.call(chatbotNoRouteNotice);
                               }
                             },
                             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -285,7 +288,11 @@ class ChatBubble extends StatelessWidget {
 
 class CodeElementBuilder extends MarkdownElementBuilder {
   final BuildContext context;
-  CodeElementBuilder(this.context);
+
+  /// 복사했다고 알릴 곳. 시트가 받아 시트 안에 적는다(5차 371).
+  final void Function(String message)? onNotice;
+
+  CodeElementBuilder(this.context, {this.onNotice});
 
   @override
   Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
@@ -350,7 +357,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: codeText));
-                  showToast('추천 글을 복사했어요');
+                  onNotice?.call('추천 글을 복사했어요.');
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),

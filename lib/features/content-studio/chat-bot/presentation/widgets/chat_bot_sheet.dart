@@ -61,6 +61,17 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
   final FocusNode _focusNode = FocusNode();
   bool _hasText = false;
 
+  /// 말풍선에서 알릴 말(복사했어요 등). 시트 안에 적는다(5차 371).
+  ///
+  /// 전에는 토스트로 띄웠는데 도우미는 바텀시트라 시트가 아래를 덮어
+  /// 보이지 않았다(368~370에서 다른 시트로 확인).
+  String? _notice;
+
+  void _showNotice(String message) {
+    if (!mounted) return;
+    setState(() => _notice = message);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -377,12 +388,24 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                       return ChatBubble(
                         message: msg,
                         onTriggerAction: widget.onTriggerAction,
+                        onNotice: _showNotice,
                       );
                     },
                   );
                 },
               ),
             ),
+
+            if (_notice != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+                child: Text(
+                  _notice!,
+                  key: const ValueKey('chatbot-notice'),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: context.tokens.textSecondary),
+                ),
+              ),
 
             // Input area
             Padding(
