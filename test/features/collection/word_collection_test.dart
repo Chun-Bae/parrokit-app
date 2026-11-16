@@ -80,6 +80,30 @@ void main() {
     expect(find.text('large'), findsOneWidget);
   });
 
+  testWidgets('상세에서 유의어를 나중에 적을 수 있다', (tester) async {
+    await MyWordStore.add('guest', language: '영어', word: 'huge');
+    await openWordTab(tester);
+    await tester.tap(find.text('huge'));
+    await tester.pumpAndSettle();
+
+    // 아직 없으면 '유의어 적기'.
+    expect(find.byKey(const ValueKey('word-detail-synonyms-empty')),
+        findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('edit-word-synonyms')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.byKey(const ValueKey('word-synonyms-input')), 'big, large');
+    await tester.tap(find.byKey(const ValueKey('word-synonyms-save')));
+    await tester.pumpAndSettle();
+
+    expect((await MyWordStore.load('guest')).single.synonyms, ['big', 'large']);
+    expect(find.text('big'), findsOneWidget);
+    expect(find.text('large'), findsOneWidget);
+    // 적고 나면 '유의어 고치기'로 바뀐다.
+    expect(find.text('유의어 고치기'), findsOneWidget);
+  });
+
   testWidgets('웹에서 찾기는 단어를 적어야 열린다', (tester) async {
     await openWordTab(tester);
     await tester.tap(find.byKey(const ValueKey('add-word')));

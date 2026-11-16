@@ -78,5 +78,9 @@ class FirestoreWordCloud implements WordCloud {
       _words.doc(id).update({'meaning': meaning});
 
   @override
+  Future<void> setSynonyms(String id, List<String> synonyms) =>
+      _words.doc(id).update({'synonyms': synonyms});
+
+  @override
   Future<void> remove(String id) => _words.doc(id).delete();
 }

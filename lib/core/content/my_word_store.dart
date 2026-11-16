@@ -182,6 +182,9 @@ abstract class WordCloud {
 
   /// 뜻만 고친다. 규칙(firestore.rules의 words)에서 update를 허용한다.
   Future<void> setMeaning(String id, String meaning);
+
+  /// 유의어만 고친다(5차).
+  Future<void> setSynonyms(String id, List<String> synonyms);
   Future<void> remove(String id);
 }
 
@@ -341,6 +344,8 @@ class MyWordStore {
         word: device[index].word,
         meaning: clipped,
         examples: device[index].examples,
+        // 뜻만 고치는 것이라 유의어는 그대로 둔다. 안 넘기면 지워졌다(5차).
+        synonyms: device[index].synonyms,
         topic: device[index].topic,
         addedAt: device[index].addedAt,
       );
@@ -351,6 +356,44 @@ class MyWordStore {
     if (_useCloud(accountId)) {
       try {
         await cloud!.setMeaning(id, clipped);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /// 저장해 둔 단어의 유의어를 고친다. 고쳤으면 true.
+  ///
+  /// 추가할 때만 적을 수 있으면, 나중에 알게 된 유의어를 넣을 길이 없다(5차).
+  static Future<bool> setSynonyms(
+    String accountId,
+    String id,
+    List<String> synonyms,
+  ) async {
+    final clipped = clipWordSynonyms(synonyms);
+    final device = await _loadDevice(accountId);
+    final index = device.indexWhere((w) => w.id == id);
+    if (index >= 0) {
+      device[index] = MyWord(
+        id: device[index].id,
+        language: device[index].language,
+        word: device[index].word,
+        meaning: device[index].meaning,
+        examples: device[index].examples,
+        synonyms: clipped,
+        topic: device[index].topic,
+        addedAt: device[index].addedAt,
+      );
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setSynonyms(id, clipped);
         revision.value++;
         return true;
       } catch (_) {

@@ -84,4 +84,42 @@ void main() {
       expect(word!.synonyms, ['big', 'large']);
     });
   });
+
+  group('나중에 고치기', () {
+    test('기기에 있는 단어의 유의어를 고친다', () async {
+      await MyWordStore.add('guest', language: '영어', word: 'huge');
+      final id = MyWordStore.idFor('영어', 'huge');
+
+      expect(await MyWordStore.setSynonyms('guest', id, ['big', 'large']),
+          isTrue);
+      expect((await MyWordStore.load('guest')).single.synonyms,
+          ['big', 'large']);
+
+      // 다시 비우면 지워진다.
+      expect(await MyWordStore.setSynonyms('guest', id, []), isTrue);
+      expect((await MyWordStore.load('guest')).single.synonyms, isEmpty);
+    });
+
+    test('뜻을 고쳐도 유의어가 지워지지 않는다', () async {
+      await MyWordStore.add('guest',
+          language: '영어', word: 'huge', synonyms: ['big']);
+      final id = MyWordStore.idFor('영어', 'huge');
+
+      await MyWordStore.setMeaning('guest', id, '거대한');
+
+      final saved = (await MyWordStore.load('guest')).single;
+      expect(saved.meaning, '거대한');
+      expect(saved.synonyms, ['big'], reason: '뜻만 고치는 것이다');
+    });
+
+    test('고칠 때도 길이와 개수를 줄인다', () async {
+      await MyWordStore.add('guest', language: '영어', word: 'huge');
+      final id = MyWordStore.idFor('영어', 'huge');
+
+      await MyWordStore.setSynonyms(
+          'guest', id, List.generate(synonymsMaxCount + 3, (i) => 'w$i'));
+      expect((await MyWordStore.load('guest')).single.synonyms.length,
+          synonymsMaxCount);
+    });
+  });
 }

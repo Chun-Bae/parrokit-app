@@ -494,6 +494,51 @@ class _MeaningDialogState extends State<_MeaningDialog> {
       );
 }
 
+/// 유의어를 적는 창. 뜻 고치기 창과 같은 모양으로 둔다(5차).
+class _SynonymsDialog extends StatefulWidget {
+  const _SynonymsDialog({required this.word, required this.synonyms});
+
+  final String word;
+  final List<String> synonyms;
+
+  @override
+  State<_SynonymsDialog> createState() => _SynonymsDialogState();
+}
+
+class _SynonymsDialogState extends State<_SynonymsDialog> {
+  late final _controller =
+      TextEditingController(text: synonymInputText(widget.synonyms));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text(widget.synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
+        content: TextField(
+          key: const ValueKey('word-synonyms-input'),
+          controller: _controller,
+          autofocus: true,
+          maxLength: synonymMaxLength * synonymsMaxCount,
+          decoration: const InputDecoration(hintText: '쉼표로 여러 개 — big, large'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            key: const ValueKey('word-synonyms-save'),
+            onPressed: () => Navigator.pop(context, _controller.text),
+            child: const Text('저장'),
+          ),
+        ],
+      );
+}
+
 class _WordDetailSheet extends StatefulWidget {
   const _WordDetailSheet({
     required this.word,
@@ -515,6 +560,31 @@ class _WordDetailSheet extends StatefulWidget {
 
 class _WordDetailSheetState extends State<_WordDetailSheet> {
   late String meaning = widget.word.meaning;
+  late List<String> synonyms = widget.word.synonyms;
+
+  /// 유의어를 적거나 고친다. 추가할 때만 적을 수 있으면 나중에 알게 된
+  /// 유의어를 넣을 길이 없다(5차).
+  Future<void> _editSynonyms() async {
+    final next = await showDialog<String>(
+      context: context,
+      builder: (_) => _SynonymsDialog(
+        word: widget.word.word,
+        synonyms: synonyms,
+      ),
+    );
+    if (!mounted || next == null) return;
+
+    final parsed = parseSynonymInput(next);
+    final saved = await MyWordStore.setSynonyms(
+        widget.accountId, widget.word.id, parsed);
+    if (!mounted) return;
+    if (!saved) {
+      widget.messenger?.showSnackBar(
+          const SnackBar(content: Text('유의어를 저장하지 못했어요. 다시 시도해주세요.')));
+      return;
+    }
+    setState(() => synonyms = parsed);
+  }
 
   /// 뜻을 적거나 고친다. 전에는 뜻이 비어 있으면 지우고 다시 넣는 수밖에
   /// 없었다(문장에서 단어만 고르면 뜻이 비어 있다, 5차).
@@ -572,16 +642,30 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
               ],
             ),
             // 유의어는 칩으로 한 줄에 모아 보여 준다(5차, 사용자 요청).
-            if (word.synonyms.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text('유의어', style: muted),
-              const SizedBox(height: 6),
+            // 없어도 적을 수 있게 줄은 늘 둔다.
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: Text('유의어', style: muted)),
+                TextButton(
+                  key: const ValueKey('edit-word-synonyms'),
+                  onPressed: _editSynonyms,
+                  child: Text(synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
+                ),
+              ],
+            ),
+            if (synonyms.isEmpty)
+              Text('아직 적지 않았어요',
+                  key: const ValueKey('word-detail-synonyms-empty'),
+                  style: muted)
+            else ...[
+              const SizedBox(height: 2),
               Wrap(
                 key: const ValueKey('word-detail-synonyms'),
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  for (final one in word.synonyms)
+                  for (final one in synonyms)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),

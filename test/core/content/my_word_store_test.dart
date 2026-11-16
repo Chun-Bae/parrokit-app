@@ -39,6 +39,25 @@ class FakeWordCloud implements WordCloud {
       word: before.word,
       meaning: meaning,
       examples: before.examples,
+      synonyms: before.synonyms,
+      topic: before.topic,
+      addedAt: before.addedAt,
+    );
+  }
+
+  @override
+  Future<void> setSynonyms(String id, List<String> synonyms) async {
+    if (fail) throw Exception('permission-denied');
+    final index = stored.indexWhere((w) => w.id == id);
+    if (index < 0) throw Exception('not-found');
+    final before = stored[index];
+    stored[index] = MyWord(
+      id: before.id,
+      language: before.language,
+      word: before.word,
+      meaning: before.meaning,
+      examples: before.examples,
+      synonyms: synonyms,
       topic: before.topic,
       addedAt: before.addedAt,
     );
