@@ -30,6 +30,9 @@ class EditStrings {
   static const addTagButtonLabel = '태그 추가';
   static const tagsLabel = '태그';
   static const tagsHint = '태그를 적어 주세요';
+
+  /// 이미 넣은 태그를 다시 넣으려 할 때(5차 361).
+  static const duplicateTagMessage = '이미 넣은 태그예요.';
   static const clearAllTagsButtonLabel = '모두 지우기';
 
   // 세그먼트 섹션

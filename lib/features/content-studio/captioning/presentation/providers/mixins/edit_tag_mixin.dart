@@ -23,12 +23,16 @@ mixin EditTagMixin on ChangeNotifier {
   // ─────────────────────────────────────────────────────────────────
 
   /// 태그 하나를 추가합니다 (중복 방지).
-  void addTag(String tag) {
+  ///
+  /// 더했으면 true. 비었거나 이미 있는 태그면 false를 돌려준다(5차 361).
+  /// 전에는 아무 말 없이 돌아와서, 이미 넣은 태그를 다시 적으면 칸만
+  /// 비워지고 아무 일도 일어나지 않은 것처럼 보였다.
+  bool addTag(String tag) {
     final trimmed = tag.trim();
-    if (trimmed.isNotEmpty && !tags.contains(trimmed)) {
-      tags.add(trimmed);
-      notifyListeners();
-    }
+    if (trimmed.isEmpty || tags.contains(trimmed)) return false;
+    tags.add(trimmed);
+    notifyListeners();
+    return true;
   }
 
   /// 태그 하나를 제거합니다.

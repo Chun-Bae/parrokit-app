@@ -5,6 +5,7 @@ import 'package:parrokit/features/collection/library/presentation/folder_picker_
 import 'package:parrokit/features/collection/library/presentation/folder_tree.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 
 class MetadataInputsSection extends StatelessWidget {
   const MetadataInputsSection({super.key, required this.vm});
@@ -40,23 +41,18 @@ class MetadataInputsSection extends StatelessWidget {
             label: EditStrings.tagsLabel,
             hint: EditStrings.tagsHint,
             controller: vm.tagsCtl,
-            trailing: TextButton(
-              onPressed: () {
-                final tag = vm.tagsCtl.text.trim();
-                if (tag.isNotEmpty) {
-                  vm.addTag(tag);
-                  vm.tagsCtl.clear();
-                }
-              },
-              child: const Text('추가'),
+            // 칸이 비었으면 '추가'를 꺼 둔다. 전에는 켜져 있는데 눌러도
+            // 아무 일이 없었다(5차 361).
+            trailing: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: vm.tagsCtl,
+              builder: (context, value, _) => TextButton(
+                key: const ValueKey('caption-add-tag'),
+                onPressed:
+                    value.text.trim().isEmpty ? null : () => _submitTag(vm),
+                child: const Text('추가'),
+              ),
             ),
-            onSubmitted: (val) {
-              final tag = val.trim();
-              if (tag.isNotEmpty) {
-                vm.addTag(tag);
-                vm.tagsCtl.clear();
-              }
-            },
+            onSubmitted: (_) => _submitTag(vm),
           ),
 
           if (vm.tags.isNotEmpty) ...[
@@ -83,6 +79,15 @@ class MetadataInputsSection extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 칸에 적은 태그를 더한다. 이미 있는 태그면 까닭을 말한다(5차 361).
+void _submitTag(CaptioningProvider vm) {
+  final tag = vm.tagsCtl.text.trim();
+  if (tag.isEmpty) return;
+  final added = vm.addTag(tag);
+  vm.tagsCtl.clear();
+  if (!added) showToast(EditStrings.duplicateTagMessage);
 }
 
 class _LinearInputField extends StatefulWidget {
