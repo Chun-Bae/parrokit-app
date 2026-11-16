@@ -1439,7 +1439,17 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                   key: const ValueKey('review-word'),
                   textAlign: TextAlign.center,
                   style: context.texts.headlineMedium),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              // 외우면서 발음도 듣는다. 복습은 한 번만 들으면 되니 반복은 뺀다
+              // (5차 329).
+              SpeakControls(
+                key: ValueKey('review-speak-${queue[index].id}'),
+                text: queue[index].word,
+                language: queue[index].language,
+                speakKey: const ValueKey('speak-review-word'),
+                showRepeat: false,
+              ),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 96,
                 child: revealed

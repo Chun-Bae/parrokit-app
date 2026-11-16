@@ -36,6 +36,7 @@ class SpeakControls extends StatefulWidget {
     this.speakKey = const ValueKey('speak-text'),
     this.repeatKey = const ValueKey('repeat-text'),
     this.speechRate = 0.45,
+    this.showRepeat = true,
   });
 
   /// 읽어 줄 글.
@@ -47,6 +48,9 @@ class SpeakControls extends StatefulWidget {
   final Key speakKey;
   final Key repeatKey;
   final double speechRate;
+
+  /// 반복 단추를 함께 둘지. 복습 카드처럼 한 번만 듣는 자리에서는 끈다(5차 329).
+  final bool showRepeat;
 
   @override
   State<SpeakControls> createState() => _SpeakControlsState();
@@ -185,16 +189,18 @@ class _SpeakControlsState extends State<SpeakControls> {
           icon: const Icon(Icons.volume_up_rounded),
           selectedIcon: const Icon(Icons.graphic_eq_rounded),
         ),
-        const SizedBox(width: 4),
-        IconButton.filledTonal(
-          key: widget.repeatKey,
-          tooltip: _repeating ? '반복 멈추기' : '반복 듣기',
-          onPressed: _toggleRepeat,
-          isSelected: _repeating,
-          style: _repeating ? onStyle() : null,
-          icon: const Icon(Icons.repeat_rounded),
-          selectedIcon: const Icon(Icons.repeat_on_rounded),
-        ),
+        if (widget.showRepeat) ...[
+          const SizedBox(width: 4),
+          IconButton.filledTonal(
+            key: widget.repeatKey,
+            tooltip: _repeating ? '반복 멈추기' : '반복 듣기',
+            onPressed: _toggleRepeat,
+            isSelected: _repeating,
+            style: _repeating ? onStyle() : null,
+            icon: const Icon(Icons.repeat_rounded),
+            selectedIcon: const Icon(Icons.repeat_on_rounded),
+          ),
+        ],
       ],
     );
   }
