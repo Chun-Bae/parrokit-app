@@ -13,6 +13,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -70,9 +72,12 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final clipProvider = context.watch<ClipProvider>();
     final cs = Theme.of(context).colorScheme;
     final used = clipProvider.serverStorageUsedBytes;
-    final total = ClipProvider.serverStorageQuotaBytes;
+    // 담을 수 있는 양은 구독 단계가 정한다(무료 0 · 라이트 5GB · 프로 30GB).
+    // 예전에는 1GB로 박아 둬서, 구독자에게 2GB만 써도 '가득 찼다'고 했다(5차).
+    final tier = context.watch<SubscriptionProvider>().tier;
+    final total = serverStorageQuotaBytes(tier);
     final progress = total == 0 ? 0.0 : (used / total).clamp(0.0, 1.0);
-    final isFull = used >= total;
+    final isFull = total > 0 && used >= total;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
@@ -106,7 +111,9 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                   ),
                 ),
                 Text(
-                  '${_formatBytes(used)} / ${_formatBytes(total)}',
+                  total == 0
+                      ? _formatBytes(used)
+                      : '${_formatBytes(used)} / ${_formatBytes(total)}',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: cs.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -128,9 +135,12 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
             ),
             const SizedBox(height: 8),
             Text(
-              isFull
-                  ? '서버 용량이 가득 찼습니다. 새 파일을 저장하려면 공간을 확보하세요.'
-                  : '서버에 저장 가능한 공간이 제한되어 있습니다.',
+              // 말투도 다른 화면과 맞춘다(5차).
+              total == 0
+                  ? serverStorageSubtitle(tier)
+                  : isFull
+                      ? '서버가 가득 찼어요. 지우거나 구독을 올리면 더 담을 수 있어요.'
+                      : '구독 단계에 따라 서버에 담을 수 있는 양이에요.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),

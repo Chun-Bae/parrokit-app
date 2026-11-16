@@ -45,8 +45,6 @@ import 'mixins/clip_tag_mixin.dart';
 import 'mixins/clip_action_mixin.dart';
 
 class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
-  static const int serverStorageQuotaBytes = 1024 * 1024 * 1024;
-
   @override
   final AppDatabase db;
   late final ClipRepository _clipRepository;
