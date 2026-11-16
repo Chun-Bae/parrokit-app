@@ -396,8 +396,8 @@ void main() {
     expect(wordAssistUsageLabel(used: null, limit: null, failed: true), '');
   });
 
-  testWidgets('이미 적은 뜻은 덮지 않고, 횟수를 다 쓰면 안내한다', (tester) async {
-    final assist = FakeAssist(quota: true);
+  testWidgets('이미 적은 뜻이 있으면 묻지 않고 그렇게 말한다(5차 368)', (tester) async {
+    final assist = FakeAssist();
     await openAddSheet(tester, assist);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
     await tester.enterText(find.byKey(const ValueKey('word-meaning')), '내 뜻');
@@ -405,7 +405,24 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('fill-word-meaning')));
     await tester.pumpAndSettle();
     expect(find.text('내 뜻'), findsOneWidget);
-    expect(find.textContaining('오늘 자동 채우기를 모두 썼어요'), findsOneWidget);
+    // 전에는 서버에 묻고(하루 횟수를 쓰고) 아무 말 없이 끝났다.
+    expect(assist.calls, isEmpty);
+    // 시트가 아래를 덮어 SnackBar는 보이지 않는다. 시트 안에 적는다(5차 368).
+    expect(find.byKey(const ValueKey('word-fill-note')), findsOneWidget);
+    expect(find.text(wordMeaningAlreadyHint), findsOneWidget);
+  });
+
+  testWidgets('뜻이 비어 있을 때 횟수를 다 썼으면 그렇게 안내한다', (tester) async {
+    final assist = FakeAssist(quota: true);
+    await openAddSheet(tester, assist);
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('fill-word-meaning')));
+    await tester.pumpAndSettle();
+    expect(assist.calls, ['영어:nuance']);
+    expect(
+        tester.widget<Text>(find.byKey(const ValueKey('word-fill-note'))).data,
+        contains('오늘 자동 채우기를 모두 썼어요'));
   });
 
   test('다음 복습 안내는 달력 날짜로 센다', () {

@@ -1085,6 +1085,12 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 /// '웹에서 찾기'를 단어 없이 눌렀을 때.
 const String wordSearchNeedsWordHint = '먼저 찾을 단어를 적어 주세요.';
 
+/// 뜻을 이미 적어 둔 채로 '뜻 채우기'를 눌렀을 때(5차 368).
+///
+/// 전에는 서버에 묻고(하루 횟수를 써 놓고) 이미 적은 뜻은 덮지 않아서
+/// 아무 일도 일어나지 않은 것처럼 보였다.
+const String wordMeaningAlreadyHint = '이미 뜻을 적어 두셨어요. 지우고 누르면 채워 드려요.';
+
 /// '단어 추가' 시트의 저장 버튼이 꺼져 있는 까닭.
 const String addWordNeedsWordHint = '단어를 적어야 저장할 수 있어요.';
 
@@ -1138,33 +1144,52 @@ class _AddWordSheetState extends State<AddWordSheet> {
   bool saving = false;
   bool filling = false;
 
+  /// 뜻 채우기 결과를 칸 아래에 적는다(5차 368).
+  ///
+  /// 전에는 SnackBar로 알렸는데, 이 화면은 바텀시트라 시트가 아래를 덮어
+  /// 사용자에게 보이지 않았다. 시트 안에 적어야 보인다.
+  String? fillNote;
+
   /// 단어의 뜻을 서버에 물어 채운다. 이미 적은 뜻은 덮지 않는다.
   Future<void> fillMeaning() async {
     final word = _word.text.trim();
     if (word.isEmpty || filling) return;
-    setState(() => filling = true);
-    final messenger = ScaffoldMessenger.of(context);
+    // 이미 적은 뜻은 덮지 않는다. 묻기 전에 알려서 하루 횟수도 아낀다(5차 368).
+    if (_meaning.text.trim().isNotEmpty) {
+      setState(() => fillNote = wordMeaningAlreadyHint);
+      return;
+    }
+    setState(() {
+      filling = true;
+      fillNote = null;
+    });
+    String? note;
     try {
       final suggestion =
           await _assist.suggest(language: widget.language, text: word);
       final meaning = suggestion.translation?.trim() ?? '';
       if (!mounted) return;
       if (meaning.isEmpty) {
-        messenger.showSnackBar(
-            const SnackBar(content: Text('뜻을 찾지 못했어요. 직접 적어 주세요.')));
+        note = '뜻을 찾지 못했어요. 직접 적어 주세요.';
       } else if (_meaning.text.trim().isEmpty) {
         _meaning.text = meaning;
+      } else {
+        // 기다리는 동안 직접 적었으면 그 글을 지킨다.
+        note = wordMeaningAlreadyHint;
       }
     } on SentenceAssistQuotaExceeded {
-      messenger.showSnackBar(
-          const SnackBar(content: Text('오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.')));
+      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
     } on SentenceAssistUnavailable catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.reason)));
+      note = e.reason;
     } catch (_) {
-      messenger.showSnackBar(
-          const SnackBar(content: Text('뜻을 채우지 못했어요. 직접 적어 주세요.')));
+      note = '뜻을 채우지 못했어요. 직접 적어 주세요.';
     } finally {
-      if (mounted) setState(() => filling = false);
+      if (mounted) {
+        setState(() {
+          filling = false;
+          fillNote = note;
+        });
+      }
     }
   }
 
@@ -1341,6 +1366,16 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     ),
                   ],
                 ),
+                if (fillNote != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: Text(
+                      fillNote!,
+                      key: const ValueKey('word-fill-note'),
+                      style: context.texts.bodySmall.copyWith(
+                          color: Theme.of(context).colorScheme.error),
+                    ),
+                  ),
                 // 뜻을 서버에 물어보는 것 말고, 웹 사전을 직접 열어 보고
                 // 싶을 때가 있다(5차, 사용자 요청). 패롯이 들지 않는다.
                 // 어디서 찾을지도 고를 수 있다(5차, 사용자 요청).
