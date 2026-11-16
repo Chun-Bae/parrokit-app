@@ -3,6 +3,7 @@
 // firebase_auth accessed via FirebaseAuthService
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/local/prefs/user_prefs.dart';
+import 'package:parrokit/core/infrastructure/repositories/account_delete_guard.dart';
 import 'package:parrokit/core/infrastructure/repositories/app_user_merge.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_auth_service.dart';
@@ -544,8 +545,16 @@ class UserRepository {
   /// - Firebase Auth 계정 삭제
   /// - 로컬 캐시 삭제
   Future<void> deleteAccount() async {
-    final uid = _authService.currentUser?.uid;
+    final fbUser = _authService.currentUser;
+    final uid = fbUser?.uid;
     final nickname = _userPrefs.loadUser()?.displayName;
+
+    // 지우기 전에 멈출 수 있을 때 멈춘다(5차 386). 계정 삭제가 거절되면
+    // 사용자 문서만 사라지고 계정은 남아 자료를 잃는다.
+    if (needsRecentLoginToDelete(
+        fbUser?.metadata.lastSignInTime, DateTime.now())) {
+      throw Exception(recentLoginNeededMessage);
+    }
 
     if (uid != null) {
       await _firebaseUserService.deleteUserDocument(uid: uid);
