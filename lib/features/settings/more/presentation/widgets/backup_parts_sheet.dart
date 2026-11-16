@@ -13,24 +13,32 @@ import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 Future<BackupParts?> showBackupPartsSheet(
   BuildContext context, {
   required bool restoring,
+  BackupParts initial = const BackupParts.all(),
 }) =>
     showAppSheet<BackupParts>(
       context: context,
-      builder: (_) => BackupPartsSheet(restoring: restoring),
+      builder: (_) => BackupPartsSheet(restoring: restoring, initial: initial),
     );
 
 class BackupPartsSheet extends StatefulWidget {
-  const BackupPartsSheet({super.key, required this.restoring});
+  const BackupPartsSheet({
+    super.key,
+    required this.restoring,
+    this.initial = const BackupParts.all(),
+  });
 
   /// true면 불러오기, false면 백업.
   final bool restoring;
+
+  /// 처음 켜져 있을 것. 클립 화면에서 열면 클립만 켜 둔다(5차 349).
+  final BackupParts initial;
 
   @override
   State<BackupPartsSheet> createState() => _BackupPartsSheetState();
 }
 
 class _BackupPartsSheetState extends State<BackupPartsSheet> {
-  BackupParts parts = const BackupParts.all();
+  late BackupParts parts = widget.initial;
 
   @override
   Widget build(BuildContext context) {

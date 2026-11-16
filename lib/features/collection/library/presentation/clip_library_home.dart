@@ -15,7 +15,10 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/study_data_transfer.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/infrastructure/services/backup_service.dart';
+import 'package:parrokit/features/settings/more/presentation/widgets/backup_parts_sheet.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
@@ -117,15 +120,27 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
   /// Drive에 남은 클립을 모두 기기로 가져온다. 가져오면 Drive 파일은
   /// 지워지므로 먼저 묻는다.
   /// 더보기의 '백업'과 같은 창을 띄운다. 보관함에서 바로 만들 수 있게(5차).
-  Future<void> _runBackup(BuildContext context) => showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => BackupProgressDialog(
-          type: BackupDialogType.backup,
-          onStart: (onProgress) =>
-              BackupService.instance.createBackup(onProgress: onProgress),
-        ),
-      );
+  /// 클립 카드에서 부르는 백업. 여기서는 클립만 켜 둔 채로 고르게 한다
+  /// (5차 349). 345에서 백업이 문장·단어까지 담게 되면서, 이 단추는 묻지도
+  /// 않고 다 담고 있었다.
+  Future<void> _runBackup(BuildContext context) async {
+    final parts = await showBackupPartsSheet(
+      context,
+      restoring: false,
+      initial: const BackupParts(clips: true, sentences: false, words: false),
+    );
+    if (parts == null || !context.mounted) return;
+    final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BackupProgressDialog(
+        type: BackupDialogType.backup,
+        onStart: (onProgress) => BackupService.instance.createBackup(
+            onProgress: onProgress, parts: parts, accountId: accountId),
+      ),
+    );
+  }
 
   Future<void> _importDriveClips(BuildContext context) async {
     final targets = _clips
