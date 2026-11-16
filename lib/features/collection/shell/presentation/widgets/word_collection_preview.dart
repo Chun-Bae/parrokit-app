@@ -499,6 +499,104 @@ class _MeaningDialogState extends State<_MeaningDialog> {
       );
 }
 
+/// 예문을 적거나 고치는 작은 창(5차 338, 사용자 요청).
+///
+/// 전에는 단어를 만들 때만 예문을 적을 수 있었다. 이미 만든 단어는 문장에서
+/// 저장할 때나 예문이 붙었고, 직접 더하거나 오타를 고칠 길이 없었다.
+class WordExampleDialog extends StatefulWidget {
+  const WordExampleDialog({super.key, required this.word, this.example});
+
+  final String word;
+
+  /// 고칠 예문. 비우면 새로 적는 것이다.
+  final WordExample? example;
+
+  @override
+  State<WordExampleDialog> createState() => _WordExampleDialogState();
+}
+
+class _WordExampleDialogState extends State<WordExampleDialog> {
+  late final _text = TextEditingController(text: widget.example?.text ?? '');
+  late final _translation =
+      TextEditingController(text: widget.example?.translation ?? '');
+  String? _hint;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    _translation.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final text = _text.text.trim();
+    if (text.isEmpty) {
+      setState(() => _hint = '예문을 적어야 저장할 수 있어요.');
+      return;
+    }
+    Navigator.pop(
+      context,
+      WordExample(
+        text: text,
+        translation: _translation.text.trim(),
+        // 문장에서 저장한 예문이면 그 문장과의 연결을 그대로 둔다.
+        sourceSentenceId: widget.example?.sourceSentenceId ?? '',
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text(widget.example == null ? '예문 추가' : '예문 고치기'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              key: const ValueKey('word-example-input'),
+              controller: _text,
+              autofocus: true,
+              maxLines: 3,
+              minLines: 1,
+              maxLength: exampleMaxLength,
+              decoration: InputDecoration(
+                labelText: '예문',
+                hintText: widget.word,
+              ),
+            ),
+            TextField(
+              key: const ValueKey('word-example-translation-input'),
+              controller: _translation,
+              maxLines: 2,
+              minLines: 1,
+              maxLength: exampleMaxLength,
+              decoration: const InputDecoration(labelText: '뜻 (선택)'),
+            ),
+            if (_hint != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _hint!,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.error, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            key: const ValueKey('word-example-save'),
+            onPressed: _save,
+            child: const Text('저장'),
+          ),
+        ],
+      );
+}
+
 /// 유의어를 하나씩 넣는 칸(5차, 사용자 요청).
 ///
 /// 전에는 한 줄에 쉼표로 적게 했는데, 쉼표를 찍어야 하는 줄 모르면 한 덩어리로
@@ -711,6 +809,52 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     setState(() => synonyms = parsed);
   }
 
+  /// 예문을 새로 적는다(5차 338, 사용자 요청).
+  Future<void> _addExample() async {
+    final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
+    if (examples.length >= examplesMaxCount) {
+      messenger?.showSnackBar(
+          SnackBar(content: Text('예문은 $examplesMaxCount개까지 넣을 수 있어요.')));
+      return;
+    }
+    final example = await showDialog<WordExample>(
+      context: context,
+      builder: (_) => WordExampleDialog(word: widget.word.word),
+    );
+    if (!mounted || example == null) return;
+
+    final added =
+        await MyWordStore.addExample(widget.accountId, widget.word.id, example);
+    if (!mounted) return;
+    if (!added) {
+      messenger?.showSnackBar(
+          const SnackBar(content: Text('예문을 더하지 못했어요. 같은 예문이 이미 있는지 봐 주세요.')));
+      return;
+    }
+    setState(() => examples = [...examples, example]);
+  }
+
+  /// 예문 하나를 고친다(5차 338, 사용자 요청).
+  Future<void> _editExample(int index) async {
+    final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
+    final next = await showDialog<WordExample>(
+      context: context,
+      builder: (_) =>
+          WordExampleDialog(word: widget.word.word, example: examples[index]),
+    );
+    if (!mounted || next == null) return;
+
+    final saved = await MyWordStore.updateExample(
+        widget.accountId, widget.word.id, index, next);
+    if (!mounted) return;
+    if (!saved) {
+      messenger?.showSnackBar(
+          const SnackBar(content: Text('예문을 고치지 못했어요. 다시 시도해주세요.')));
+      return;
+    }
+    setState(() => examples = [...examples]..[index] = next);
+  }
+
   /// 예문 하나를 뺀다. 되돌릴 수 없으니 한 번 묻는다(5차 328).
   Future<void> _removeExample(int index) async {
     final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
@@ -864,18 +1008,23 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 예문을 누르면 고친다(5차 338, 사용자 요청).
                     Expanded(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(example.text,
-                                style: context.texts.bodyMedium
-                                    .copyWith(fontWeight: FontWeight.w700)),
-                            if (example.translation.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(example.translation, style: muted),
-                            ],
-                          ]),
+                      child: InkWell(
+                        key: ValueKey('edit-word-example-$index'),
+                        onTap: () => _editExample(index),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(example.text,
+                                  style: context.texts.bodyMedium
+                                      .copyWith(fontWeight: FontWeight.w700)),
+                              if (example.translation.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(example.translation, style: muted),
+                              ],
+                            ]),
+                      ),
                     ),
                     // 더할 수는 있는데 뺄 길이 없었다(5차 328).
                     IconButton(
@@ -889,7 +1038,18 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
+            // 이미 만든 단어에도 예문을 더할 수 있어야 한다(5차 338, 사용자 요청).
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('add-word-example'),
+                onPressed: _addExample,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(examples.isEmpty ? '예문 넣기' : '예문 더 넣기'),
+              ),
+            ),
+            const SizedBox(height: 4),
             Text(
                 [
                   if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',

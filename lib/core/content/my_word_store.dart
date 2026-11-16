@@ -142,8 +142,7 @@ class MyWord {
       ),
       synonyms: parseWordSynonyms(json['synonyms']),
       topic: text('topic').isEmpty ? '내 단어' : text('topic'),
-      addedAt:
-          added is int ? DateTime.fromMillisecondsSinceEpoch(added) : null,
+      addedAt: added is int ? DateTime.fromMillisecondsSinceEpoch(added) : null,
     );
   }
 }
@@ -255,18 +254,21 @@ class MyWordStore {
     } catch (_) {
       remote = const [];
     }
-    final seen = {for (final w in remote) '${w.language}|${_normalize(w.word)}'};
+    final seen = {
+      for (final w in remote) '${w.language}|${_normalize(w.word)}'
+    };
     final merged = [
       ...remote,
       for (final w in device)
         if (!seen.contains('${w.language}|${_normalize(w.word)}')) w,
     ];
-    merged.sort((a, b) => (a.addedAt ?? DateTime(0))
-        .compareTo(b.addedAt ?? DateTime(0)));
+    merged.sort((a, b) =>
+        (a.addedAt ?? DateTime(0)).compareTo(b.addedAt ?? DateTime(0)));
     return merged;
   }
 
-  static Future<List<MyWord>> loadFor(String accountId, String language) async =>
+  static Future<List<MyWord>> loadFor(
+          String accountId, String language) async =>
       (await load(accountId))
           .where((w) => w.language == language)
           .toList(growable: false);
@@ -421,8 +423,8 @@ class MyWordStore {
     final index = all.indexWhere((w) => w.id == id);
     if (index < 0) return false;
     final before = all[index];
-    final already = before.examples
-        .any((e) => e.text.trim() == example.text.trim());
+    final already =
+        before.examples.any((e) => e.text.trim() == example.text.trim());
     if (already) return false;
     if (before.examples.length >= examplesMaxCount) return false;
     final next = clipWordExamples([...before.examples, example]);
@@ -501,6 +503,51 @@ class MyWordStore {
     return false;
   }
 
+  /// 예문 하나를 고친다(5차 338, 사용자 요청: 이미 만든 단어도 예문을 고칠 수
+  /// 있어야 한다). 글이 비면 고치지 않는다. 뺄 때는 [removeExample]을 쓴다.
+  static Future<bool> updateExample(
+    String accountId,
+    String id,
+    int index,
+    WordExample example,
+  ) async {
+    if (example.text.trim().isEmpty) return false;
+    final all = await load(accountId);
+    final found = all.indexWhere((w) => w.id == id);
+    if (found < 0) return false;
+    final before = all[found];
+    if (index < 0 || index >= before.examples.length) return false;
+    final next = clipWordExamples([...before.examples]..[index] = example);
+
+    final device = await _loadDevice(accountId);
+    final deviceIndex = device.indexWhere((w) => w.id == id);
+    if (deviceIndex >= 0) {
+      device[deviceIndex] = MyWord(
+        id: before.id,
+        language: before.language,
+        word: before.word,
+        meaning: before.meaning,
+        examples: next,
+        synonyms: before.synonyms,
+        topic: before.topic,
+        addedAt: before.addedAt,
+      );
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setExamples(id, next);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   /// 단어장에서 이 낱말과 같거나 어형만 다른 단어들(5차, 사용자 요청).
   ///
   /// 같은 낱말이 먼저, 그다음이 어형만 다른 것들이다. 양쪽으로 본다:
@@ -544,8 +591,8 @@ class MyWordStore {
     required String language,
     required String word,
   }) async {
-    final found = await findRelatedWords(accountId,
-        language: language, word: word);
+    final found =
+        await findRelatedWords(accountId, language: language, word: word);
     return found.isEmpty ? null : found.first;
   }
 
@@ -611,8 +658,7 @@ List<WordExample> clipWordExamples(List<WordExample> examples) => [
         if (!e.isEmpty)
           WordExample(
             text: clipToLength(e.text.trim(), exampleMaxLength),
-            translation:
-                clipToLength(e.translation.trim(), exampleMaxLength),
+            translation: clipToLength(e.translation.trim(), exampleMaxLength),
             sourceSentenceId: e.sourceSentenceId,
           ),
     ].take(examplesMaxCount).toList();
