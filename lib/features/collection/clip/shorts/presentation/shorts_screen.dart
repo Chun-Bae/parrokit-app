@@ -22,6 +22,8 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 
 import 'package:parrokit/core/app/config/app_config.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'shorts_texts.dart';
 import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/providers/ad_provider.dart';
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
@@ -281,6 +283,11 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                     });
                     AppConfig.shortsShowSubtitles = enabled;
                     AppConfig.saveToPrefs();
+                    // 자막이 없는 영상에서 켜면 아무 일도 안 일어나 고장처럼
+                    // 보였다. 왜 안 보이는지 알린다(5차 354).
+                    if (enabled && shorts.shorts[current].segments.isEmpty) {
+                      showToast(shortsNoSubtitleHint);
+                    }
                   },
                 ),
               ),
