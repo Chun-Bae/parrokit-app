@@ -415,18 +415,11 @@ class BackupService {
     final zipPath = res.files.single.path!;
     final ts = DateTime.now().millisecondsSinceEpoch;
 
-    // 이전 임시 폴더 정리
-    try {
-      await for (final ent
-          in appDir.list(recursive: false, followLinks: false)) {
-        if (ent is Directory &&
-            p.basename(ent.path).startsWith('.restore_tmp_')) {
-          try {
-            await ent.delete(recursive: true);
-          } catch (_) {}
-        }
-      }
-    } catch (_) {}
+    // 이전 임시 폴더와 예전에 떠 둔 DB 사본 정리(5차 388).
+    //
+    // 사본(paro.db.bak_*)은 387 전까지 지워지지 않아 되돌릴 때마다 쌓였다.
+    // DB 하나가 수십 MB라 그대로 두면 기기 용량을 갉아먹는다.
+    await cleanRestoreLeftovers(appDir);
 
     final tmpDir = Directory(p.join(appDir.path, '.restore_tmp_$ts'));
     await tmpDir.create(recursive: true);
@@ -676,6 +669,30 @@ class BackupService {
   // ───────────────────────────────────────────────────────────────────────────
   // Utilities
   // ───────────────────────────────────────────────────────────────────────────
+
+  /// 되돌리기가 남긴 임시 폴더와 예전 DB 사본을 치운다(5차 388).
+  ///
+  /// 되돌리기를 시작할 때 한 번 부른다. 지금 쓰는 paro.db는 건드리지 않는다.
+  @visibleForTesting
+  Future<void> cleanRestoreLeftovers(Directory appDir) async {
+    try {
+      await for (final ent
+          in appDir.list(recursive: false, followLinks: false)) {
+        final name = p.basename(ent.path);
+        final isTempDir = ent is Directory && name.startsWith('.restore_tmp_');
+        final isOldDbCopy =
+            ent is File && name.startsWith('$dbRelativePath.bak_');
+        if (!isTempDir && !isOldDbCopy) continue;
+        try {
+          if (ent is Directory) {
+            await ent.delete(recursive: true);
+          } else {
+            await ent.delete();
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
 
   /// 디렉터리 삭제 (존재 시).
   Future<void> _deleteDir(Directory dir) async {
