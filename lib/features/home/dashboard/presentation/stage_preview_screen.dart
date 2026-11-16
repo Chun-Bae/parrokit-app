@@ -1554,6 +1554,21 @@ class _GameMenuButton extends StatelessWidget {
   }
 }
 
+/// 말풍선이 그려지는 영역(테스트에서도 쓴다, 5차 324).
+///
+/// 긴 문장은 [_GrowthPainter.speechMaxLines] 줄에서 멈추므로, 200자든
+/// 600자든 말풍선 높이가 더 늘지 않는다.
+Rect stageBubbleRect(Size size, String phrase) {
+  final speech = _GrowthPainter._speechPainter(size, phrase);
+  final bubbleWidth = speech.width + 24;
+  final left = ((size.width - bubbleWidth) / 2)
+      .clamp(4.0, math.max(4.0, size.width - bubbleWidth - 4));
+  final rect = Rect.fromLTWH(
+      left.toDouble(), 16, bubbleWidth, speech.height + 16);
+  speech.dispose();
+  return rect;
+}
+
 class _GrowthPainter extends CustomPainter {
   _GrowthPainter(
       {this.birdPhase = 0,
@@ -1581,20 +1596,21 @@ class _GrowthPainter extends CustomPainter {
   static final _speechStyle =
       AppTextScale.labelMedium.copyWith(color: const Color(0xFF253C34));
 
+  /// 말풍선에 보여 줄 수 있는 줄 수. 문장을 200자까지 쓸 수 있게 하면서
+  /// 긴 문장이 무대를 다 덮었다(5차 324). 넘치면 '…'로 줄이고, 말풍선을
+  /// 누르면 상세에서 다 볼 수 있다.
+  static const speechMaxLines = 4;
+
   static TextPainter _speechPainter(Size size, String phrase) => TextPainter(
       text: TextSpan(text: phrase, style: _speechStyle),
-      textDirection: TextDirection.ltr)
+      textDirection: TextDirection.ltr,
+      maxLines: speechMaxLines,
+      ellipsis: '…')
     ..layout(maxWidth: size.width * 0.58);
 
   /// 말풍선이 그려지는 영역. 터치 판정에도 같이 쓴다.
-  static Rect bubbleRect(Size size, String phrase) {
-    final fullSpeech = _speechPainter(size, phrase);
-    final bubbleWidth = fullSpeech.width + 24;
-    final left = ((size.width - bubbleWidth) / 2)
-        .clamp(4.0, math.max(4.0, size.width - bubbleWidth - 4));
-    return Rect.fromLTWH(
-        left.toDouble(), 16, bubbleWidth, fullSpeech.height + 16);
-  }
+  static Rect bubbleRect(Size size, String phrase) =>
+      stageBubbleRect(size, phrase);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1623,7 +1639,9 @@ class _GrowthPainter extends CustomPainter {
               : letters.length;
       final speech = TextPainter(
           text: TextSpan(text: letters.take(typed).join(), style: speechStyle),
-          textDirection: TextDirection.ltr)
+          textDirection: TextDirection.ltr,
+          maxLines: speechMaxLines,
+          ellipsis: '…')
         ..layout(minWidth: fullSpeech.width, maxWidth: fullSpeech.width);
       final bubble = bubbleRect(size, phrase);
       final opacity = !animate
