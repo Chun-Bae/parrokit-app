@@ -22,4 +22,6 @@ bool needsRecentLoginToDelete(
 }
 
 /// 멈출 때 사용자에게 보여 줄 말.
-const String recentLoginNeededMessage = '보안을 위해 다시 로그인한 뒤 탈퇴할 수 있어요.';
+/// Firebase가 같은 상황에서 보내는 코드('requires-recent-login')의 안내와
+/// 같은 말을 쓴다(5차 387).
+const String recentLoginNeededMessage = '보안을 위해 로그아웃 후 다시 로그인한 뒤 탈퇴해 주세요.';

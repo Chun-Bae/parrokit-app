@@ -25,6 +25,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:restart_app/restart_app.dart';
 
 import 'package:parrokit/core/content/study_data_transfer.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart'
     show BackupProgress, BackupProgressState;
@@ -567,12 +568,13 @@ class BackupService {
       return;
     }
 
-    // 현재 DB 백업
+    // 현재 DB 백업. 되돌리다 멈추면 이 파일로 제자리에 돌려놓는다(5차 387).
+    final dbFileNow = await _dbFile();
+    String? dbBackupPath;
     try {
-      final dbFile = await _dbFile();
-      if (await dbFile.exists()) {
-        final bakPath = '${dbFile.path}.bak_$ts';
-        await dbFile.copy(bakPath);
+      if (await dbFileNow.exists()) {
+        dbBackupPath = '${dbFileNow.path}.bak_$ts';
+        await dbFileNow.copy(dbBackupPath);
       }
     } catch (_) {
       try {
@@ -584,6 +586,7 @@ class BackupService {
     // 3단계: 데이터 복원
     onProgress?.call(BackupProgress(state: BackupProgressState.restoring));
 
+    var restored = false;
     try {
       for (final e in entries) {
         if (entries.indexOf(e) % 5 == 0) {
@@ -641,13 +644,32 @@ class BackupService {
           await out.close();
         }
       }
+      restored = true;
     } catch (e) {
+      // 되돌리다 멈췄다. 백업해 둔 paro.db를 제자리로 돌려놓는다(5차 387).
+      // 전에는 여기서도 앱을 다시 켜서, 반쯤 섞인 자료로 돌아왔다.
+      if (dbBackupPath != null) {
+        try {
+          final bak = File(dbBackupPath);
+          if (await bak.exists()) await bak.copy(dbFileNow.path);
+        } catch (error) {
+          AppLogger.e('[Backup] 되돌리기 실패 뒤 DB 복구도 실패', error: error);
+        }
+      }
       rethrow;
     } finally {
       try {
         await _deleteDir(tmpDir);
       } catch (_) {}
-      Restart.restartApp();
+      // 다 끝났을 때만 앱을 다시 켠다. 실패하면 화면이 까닭을 보여 줘야 한다.
+      if (restored) {
+        if (dbBackupPath != null) {
+          try {
+            await File(dbBackupPath).delete();
+          } catch (_) {}
+        }
+        Restart.restartApp();
+      }
     }
   }
 

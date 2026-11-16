@@ -35,7 +35,7 @@ void main() {
   });
 
   test('멈출 때는 다시 로그인하라고 말한다', () {
-    expect(recentLoginNeededMessage, contains('다시 로그인'));
+    expect(recentLoginNeededMessage, contains('로그아웃 후 다시 로그인'));
   });
 
   test('탈퇴는 지우기 전에 이 검사를 먼저 한다', () {
