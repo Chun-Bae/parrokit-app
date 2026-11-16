@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shared/presentation/community_delete_text.dart';
 import 'package:parrokit/data/models/comment.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:shimmer/shimmer.dart';
@@ -48,7 +49,7 @@ class BoardCommentItem extends StatelessWidget {
         : (isMyComment ? currentUser?.photoUrl : cachedUser?.photoUrl) ??
             comment.authorAvatarUrl;
     final displayName = isBlocked
-        ? '차단한 사용자'
+        ? blockedAuthorName
         : (isMyComment ? currentUser?.displayName : cachedUser?.displayName) ??
             comment.authorNickname;
 
@@ -101,17 +102,16 @@ class BoardCommentItem extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      isDeleted
-                          ? '(삭제됨)'
-                          : isBlocked
-                              ? '차단한 사용자'
-                              : displayName,
-                      style: context.texts.titleMedium.copyWith(
-                          color: isDeleted
-                              ? context.tokens.textDisabled
-                              : colorScheme.onSurface),
-                    ),
+                    // 지운 댓글에는 이름을 적지 않는다. 게시판은 '(삭제됨)',
+                    // 투표는 '알 수 없음'이라 적었는데, 앞은 예전 말이고
+                    // 뒤는 닉네임 없는 사람과 헷갈렸다. 아래 '지운 댓글이에요.'
+                    // 한 줄이면 충분하다(5차 403).
+                    if (!isDeleted)
+                      Text(
+                        isBlocked ? blockedAuthorName : displayName,
+                        style: context.texts.titleMedium
+                            .copyWith(color: colorScheme.onSurface),
+                      ),
                     if (!isDeleted && !isBlocked && isAuthor) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -165,9 +165,9 @@ class BoardCommentItem extends StatelessWidget {
                   ),
                 Text(
                   isDeleted
-                      ? '지운 댓글이에요.'
+                      ? deletedCommentText
                       : isBlocked
-                          ? '차단한 사람의 댓글이에요.'
+                          ? blockedCommentText
                           : comment.content,
                   // 댓글도 이름·날짜와 같이 굵어서 위아래 구분이 없었다(5차).
                   style: context.texts.bodyReading.copyWith(

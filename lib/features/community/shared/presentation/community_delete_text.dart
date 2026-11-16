@@ -14,3 +14,12 @@ const String deleteFailedMessage = '지우지 못했어요. 잠시 뒤 다시 �
 
 /// 글을 지웠을 때. [kind]는 '글'·'질문'·'투표'.
 String postDeletedMessage(String kind) => '${eulReul(kind)} 지웠어요.';
+
+/// 지운 댓글 자리에 적는 말(5차 403).
+const String deletedCommentText = '지운 댓글이에요.';
+
+/// 차단한 사람의 댓글 자리에 적는 말.
+const String blockedCommentText = '차단한 사람의 댓글이에요.';
+
+/// 차단한 사람의 이름 자리에 적는 말.
+const String blockedAuthorName = '차단한 사용자';

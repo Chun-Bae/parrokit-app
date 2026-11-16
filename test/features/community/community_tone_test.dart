@@ -50,10 +50,26 @@ void main() {
     expect(block, contains('차단할까요?'));
 
     // 지운 댓글·차단한 사람의 댓글 자리도 같은 말투로(5차 375).
-    final comment = File(
-            'lib/features/community/board/presentation/widgets/board_comment_item.dart')
+    // 403에서 글귀를 community_delete_text 한 곳으로 모았다.
+    final texts = File(
+            'lib/features/community/shared/presentation/community_delete_text.dart')
         .readAsStringSync();
-    expect(comment, contains('지운 댓글이에요.'));
-    expect(comment, contains('차단한 사람의 댓글이에요.'));
+    expect(texts, contains('지운 댓글이에요.'));
+    expect(texts, contains('차단한 사람의 댓글이에요.'));
+
+    for (final path in const [
+      'lib/features/community/board/presentation/widgets/board_comment_item.dart',
+      'lib/features/community/vote/presentation/vote_view_screen.dart',
+    ]) {
+      final code = File(path)
+          .readAsLinesSync()
+          .where((l) => !l.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(code, contains('deletedCommentText'), reason: path);
+      expect(code, contains('blockedCommentText'), reason: path);
+      // 지운 댓글에는 이름을 적지 않는다(5차 403).
+      expect(code, isNot(contains("'(삭제됨)'")), reason: path);
+      expect(code, contains('if (!isDeleted)'), reason: path);
+    }
   });
 }

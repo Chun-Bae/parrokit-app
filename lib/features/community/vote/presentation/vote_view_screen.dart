@@ -359,15 +359,15 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        isDeleted
-                            ? '알 수 없음'
-                            : isBlocked
-                                ? '차단한 사용자'
-                                : comment.authorNickname,
-                        style: context.texts.bodyMedium
-                            .copyWith(color: colorScheme.onSurface),
-                      ),
+                      // 지운 댓글에는 이름을 적지 않는다(5차 403).
+                      if (!isDeleted)
+                        Text(
+                          isBlocked
+                              ? blockedAuthorName
+                              : comment.authorNickname,
+                          style: context.texts.bodyMedium
+                              .copyWith(color: colorScheme.onSurface),
+                        ),
                       if (comment.authorId == postAuthorId &&
                           !isDeleted &&
                           !isBlocked) ...[
@@ -421,9 +421,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                     ),
                   Text(
                     isDeleted
-                        ? '지운 댓글이에요.'
+                        ? deletedCommentText
                         : isBlocked
-                            ? '차단한 사람의 댓글이에요.'
+                            ? blockedCommentText
                             : comment.content,
                     // 게시판 댓글과 같은 크기·굵기로(5차).
                     style: context.texts.bodyReading.copyWith(

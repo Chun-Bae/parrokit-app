@@ -686,7 +686,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                       child: Row(
                         children: [
                           Flexible(
-                            child: Text(isBlocked ? '차단한 사용자' : answererName,
+                            child: Text(isBlocked ? blockedAuthorName : answererName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: context.texts.bodyLarge
