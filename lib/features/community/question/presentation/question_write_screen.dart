@@ -22,6 +22,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class QuestionWriteScreen extends StatefulWidget {
   const QuestionWriteScreen({super.key});
@@ -69,7 +70,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     final userProvider = context.read<UserProvider>();
     final user = userProvider.currentUser;
     if (user == null) {
-      showWriteFailedMessage(context, '로그인하고 다시 해 주세요.');
+      showWriteFailedMessage(context, communityLoginRequiredText);
       return;
     }
 

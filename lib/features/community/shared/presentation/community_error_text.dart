@@ -45,3 +45,10 @@ String communityErrorText(CommunityJob job, Object error) {
     CommunityJob.accept => '답변을 채택하지 못했어요. 잠시 뒤 다시 해 주세요.',
   };
 }
+
+/// 로그인해야 할 수 있는 일을 눌렀을 때 쓰는 말(5차 312).
+///
+/// 전에는 화면마다 '로그인이 필요해요.'와 '로그인하고 다시 해 주세요.'가 섞여
+/// 있었다. 필요하다는 말만으로는 무엇을 하라는 것인지 알기 어려워, 할 일을
+/// 적은 쪽으로 맞췄다.
+const String communityLoginRequiredText = '로그인하고 다시 해 주세요.';

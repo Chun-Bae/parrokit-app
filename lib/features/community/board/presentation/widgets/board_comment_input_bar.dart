@@ -14,6 +14,7 @@ class BoardCommentInputBar extends StatelessWidget {
     required this.onFocusInput,
     required this.onChanged,
     required this.onSubmit,
+    required this.onBlocked,
     required this.canSubmit,
     required this.sendAccent,
     this.backgroundColor,
@@ -26,6 +27,10 @@ class BoardCommentInputBar extends StatelessWidget {
   final VoidCallback onFocusInput;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
+
+  /// 아직 보낼 수 없을 때 눌렀을 때. 까닭을 알린다(5차 312).
+  final VoidCallback onBlocked;
+
   final bool canSubmit;
   final Color sendAccent;
 
@@ -115,7 +120,7 @@ class BoardCommentInputBar extends StatelessWidget {
                             key: const ValueKey('comment-send'),
                             tooltip: commentSendTooltip(
                                 replying: replyingTo != null),
-                            onPressed: canSubmit ? onSubmit : null,
+                            onPressed: canSubmit ? onSubmit : onBlocked,
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,
                             icon: Icon(

@@ -30,6 +30,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/comment_row.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class VoteViewScreen extends StatefulWidget {
   final String voteId;
@@ -113,7 +114,7 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
 
     final user = context.read<UserProvider>().currentUser;
     if (user == null) {
-      showToast('로그인이 필요해요.');
+      showToast(communityLoginRequiredText);
       return;
     }
 
@@ -210,14 +211,14 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                       isPostScrapped: provider.isCurrentPostScrapped,
                       onTogglePostLike: () {
                         if (currentUser == null) {
-                          showToast('로그인이 필요해요.');
+                          showToast(communityLoginRequiredText);
                           return;
                         }
                         provider.toggleLike(voteItem.id, currentUser.id);
                       },
                       onTogglePostScrap: () {
                         if (currentUser == null) {
-                          showToast('로그인이 필요해요.');
+                          showToast(communityLoginRequiredText);
                           return;
                         }
                         provider.toggleScrap(voteItem.id, currentUser.id);
@@ -662,7 +663,13 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                         : colorScheme.onSurfaceVariant,
                     size: 22,
                   ),
-                  onPressed: _canSubmitComment ? _submitComment : null,
+                  // 꺼진 단추를 눌러도 아무 일이 없던 자리에서 까닭을 말한다(5차).
+                  onPressed: _canSubmitComment
+                      ? _submitComment
+                      : () => showToast(commentBlockedReason(
+                            hasText: _canSubmitComment,
+                            replying: provider.replyingTo != null,
+                          )!),
                 ),
               ],
             ),

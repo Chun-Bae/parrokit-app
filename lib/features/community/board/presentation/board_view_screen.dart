@@ -21,6 +21,8 @@ import 'package:parrokit/features/community/shell/presentation/missing_post_view
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
+import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 
 class BoardViewScreen extends StatefulWidget {
   final String postId;
@@ -77,7 +79,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     if (currentUser == null) {
-      showToast('로그인이 필요해요.');
+      showToast(communityLoginRequiredText);
       return;
     }
 
@@ -327,7 +329,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             final user =
                                 context.read<UserProvider>().currentUser;
                             if (user == null) {
-                              showToast('로그인이 필요해요.');
+                              showToast(communityLoginRequiredText);
                               return;
                             }
                             provider.toggleLike(widget.postId, user.id);
@@ -345,7 +347,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
                             final user =
                                 context.read<UserProvider>().currentUser;
                             if (user == null) {
-                              showToast('로그인이 필요해요.');
+                              showToast(communityLoginRequiredText);
                               return;
                             }
                             provider.toggleScrap(widget.postId, user.id);
@@ -374,6 +376,11 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
               onFocusInput: _focusCommentInput,
               onChanged: (_) => setState(() {}),
               onSubmit: _submitComment,
+              onBlocked: () => showToast(commentBlockedReason(
+                    hasText: _canSubmitComment,
+                    replying: provider.replyingTo != null,
+                  ) ??
+                  ''),
               canSubmit: _canSubmitComment,
               sendAccent: sendAccent,
               backgroundColor: backgroundColor,

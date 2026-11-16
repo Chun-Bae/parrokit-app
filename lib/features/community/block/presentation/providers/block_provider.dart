@@ -8,6 +8,7 @@ import 'package:parrokit/features/community/block/domain/entities/blocked_user.d
 import 'package:parrokit/features/community/block/domain/usecases/block_user_usecase.dart';
 import 'package:parrokit/features/community/block/domain/usecases/load_blocked_users_usecase.dart';
 import 'package:parrokit/features/community/block/domain/usecases/unblock_user_usecase.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class BlockProvider extends ChangeNotifier {
   final BlockRepositoryImpl _repository;
@@ -63,7 +64,7 @@ class BlockProvider extends ChangeNotifier {
   Future<bool> blockUserByDisplayName(String displayName) async {
     final currentUser = _userProvider.currentUser;
     if (currentUser == null) {
-      _errorMessage = '로그인이 필요해요.';
+      _errorMessage = communityLoginRequiredText;
       notifyListeners();
       return false;
     }
@@ -120,7 +121,7 @@ class BlockProvider extends ChangeNotifier {
   Future<bool> blockUserByUid(String blockedUserId) async {
     final currentUser = _userProvider.currentUser;
     if (currentUser == null) {
-      _errorMessage = '로그인이 필요해요.';
+      _errorMessage = communityLoginRequiredText;
       notifyListeners();
       return false;
     }
@@ -163,7 +164,7 @@ class BlockProvider extends ChangeNotifier {
   Future<bool> unblockUser(String blockedUserId) async {
     final currentUser = _userProvider.currentUser;
     if (currentUser == null) {
-      _errorMessage = '로그인이 필요해요.';
+      _errorMessage = communityLoginRequiredText;
       notifyListeners();
       return false;
     }

@@ -18,6 +18,7 @@ import 'package:parrokit/features/community/shared/presentation/widgets/communit
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/community/shell/presentation/missing_post_view.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class QuestionViewScreen extends StatefulWidget {
   final String questionId;
@@ -89,7 +90,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
 
     final currentUser = context.read<UserProvider>().currentUser;
     if (currentUser == null) {
-      showToast('로그인이 필요해요.');
+      showToast(communityLoginRequiredText);
       return;
     }
 
@@ -530,7 +531,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 // 예전에는 users//likes 경로가 되어 예외가 났다.
                 onPressed: () {
                   if (currentUser == null) {
-                    showToast('로그인이 필요해요.');
+                    showToast(communityLoginRequiredText);
                     return;
                   }
                   context
@@ -546,7 +547,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                 active: isBookmarked,
                 onPressed: () {
                   if (currentUser == null) {
-                    showToast('로그인이 필요해요.');
+                    showToast(communityLoginRequiredText);
                     return;
                   }
                   context
@@ -782,7 +783,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
                                   provider.toggleCommentLike(
                                       question.id, answer.id, currentUser.id);
                                 } else {
-                                  showToast('로그인이 필요해요.');
+                                  showToast(communityLoginRequiredText);
                                 }
                               },
                               padding: EdgeInsets.zero,

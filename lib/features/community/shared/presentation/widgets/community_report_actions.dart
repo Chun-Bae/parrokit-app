@@ -7,6 +7,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/shared/data/community_report_repository.dart';
 import 'package:parrokit/features/community/shell/data/debug_fake_community.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_options_sheet.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 /// 글·댓글 옵션 시트의 '신고'. 사유를 고르면 reports에 남긴다. 예전에는 누르자마자
 /// "신고가 접수되었습니다." 토스트만 띄우고 아무것도 남기지 않았다(5차).
@@ -25,7 +26,7 @@ CommunityOptionAction buildCommunityReportAction({
       if (reason == null || !context.mounted) return;
       final reporterId = context.read<UserProvider?>()?.currentUser?.id;
       if (reporterId == null || reporterId.isEmpty) {
-        showToast('로그인이 필요해요.');
+        showToast(communityLoginRequiredText);
         return;
       }
       // 개발 빌드 전용 가짜 글은 서버에 쓰지 않는다.

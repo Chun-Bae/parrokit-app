@@ -14,3 +14,9 @@ String commentSendTooltip({required bool replying}) =>
 
 /// 입력칸 위에 띄우는 답글 대상 안내.
 String replyingToLabel(String nickname) => '$nickname님에게 답글 남기는 중';
+
+/// 보내기가 꺼진 까닭. 꺼진 단추만 보고는 왜 안 되는지 알 수 없었다(5차 312).
+String? commentBlockedReason({required bool hasText, required bool replying}) {
+  if (hasText) return null;
+  return replying ? '답글을 적어야 보낼 수 있어요.' : '댓글을 적어야 보낼 수 있어요.';
+}

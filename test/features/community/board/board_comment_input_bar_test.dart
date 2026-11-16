@@ -6,9 +6,12 @@ import 'package:parrokit/core/shared/theme/app_theme.dart';
 import 'package:parrokit/features/community/board/presentation/widgets/board_comment_input_bar.dart';
 
 void main() {
+  var blocked = 0;
+
   Future<int Function()> pump(WidgetTester tester,
       {required bool canSubmit}) async {
     var sent = 0;
+    blocked = 0;
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
@@ -20,6 +23,7 @@ void main() {
           onFocusInput: () {},
           onChanged: (_) {},
           onSubmit: () => sent++,
+          onBlocked: () => blocked++,
           canSubmit: canSubmit,
           sendAccent: Colors.blue,
         ),
@@ -37,6 +41,8 @@ void main() {
     final none = await pump(tester, canSubmit: false);
     await tester.tap(find.byKey(const ValueKey('comment-send')));
     expect(none(), 0);
+    // 보내지는 않지만, 눌리기는 해야 까닭을 말해 줄 수 있다(5차 312).
+    expect(blocked, 1);
   });
 
   testWidgets('안내 글자는 친 글자와 같은 크기', (tester) async {

@@ -16,6 +16,7 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class BoardWriteScreen extends StatefulWidget {
   final Post? editPost;
@@ -154,7 +155,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
     final currentUser = userProvider.currentUser;
 
     if (currentUser == null) {
-      showWriteFailedMessage(context, '로그인하고 다시 해 주세요.');
+      showWriteFailedMessage(context, communityLoginRequiredText);
       return;
     }
 

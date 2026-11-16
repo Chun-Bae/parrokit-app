@@ -18,8 +18,11 @@ void main() {
     // 2.5초 토스트를 놓치면 글이 올라간 줄 알고 화면을 닫는다.
     for (final path in writeScreens) {
       final code = _flat(File(path).readAsStringSync());
+      // 말은 communityLoginRequiredText 한 곳에서 정한다(5차 312).
       expect(
-          code, contains("showWriteFailedMessage(context, '로그인하고 다시 해 주세요.')"),
+          code,
+          contains(
+              'showWriteFailedMessage(context, communityLoginRequiredText)'),
           reason: path);
       expect(
           code,

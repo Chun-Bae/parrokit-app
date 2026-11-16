@@ -24,6 +24,7 @@ import 'package:parrokit/data/models/vote_option.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
 
 class VoteWriteScreen extends StatefulWidget {
   const VoteWriteScreen({super.key});
@@ -179,7 +180,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
     final user = userProvider.currentUser;
 
     if (user == null) {
-      showWriteFailedMessage(context, '로그인하고 다시 해 주세요.');
+      showWriteFailedMessage(context, communityLoginRequiredText);
       return;
     }
 
