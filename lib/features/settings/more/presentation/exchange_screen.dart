@@ -70,13 +70,15 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     final currentUser = provider.currentUser;
     if (currentUser == null) return;
 
-    if (_isParrotsToCrackers && currentUser.parrots < amount) {
-      showToast('가진 패롯이 모자라요.');
-      return;
-    }
-
-    if (!_isParrotsToCrackers && currentUser.crackers < amount) {
-      showToast('가진 크래커가 모자라요.');
+    // 막는 규칙은 칸 아래 안내와 똑같이 둔다(5차 365). 전에는 여기에 같은
+    // 규칙이 다른 말로 한 벌 더 있었고, 1,000이라는 수도 따로 적혀 있었다.
+    final problem = exchangeInputProblem(
+      parrotsToCrackers: _isParrotsToCrackers,
+      amount: amount,
+      balance: _isParrotsToCrackers ? currentUser.parrots : currentUser.crackers,
+    );
+    if (problem != null) {
+      showToast(problem);
       return;
     }
 
@@ -84,14 +86,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
     try {
       final deduct = amount;
-      final add =
-          _isParrotsToCrackers ? amount * 1000 : (amount / 1000).floor();
-
-      if (!_isParrotsToCrackers && amount % 1000 != 0) {
-        showToast('크래커는 1,000개 단위로만 바꿀 수 있어요.');
-        setState(() => _isExchanging = false);
-        return;
-      }
+      final add = _isParrotsToCrackers
+          ? amount * exchangeRate
+          : amount ~/ exchangeRate;
 
       await provider.exchangeCurrency(
         amountToDeduct: deduct,
@@ -101,7 +98,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
       if (!mounted) return;
       _amountController.clear();
-      showToast('환전이 완료되었습니다!');
+      showToast('환전했어요.');
       Navigator.pop(context);
     } catch (e, st) {
       AppLogger.e('환전 실패', error: e, stackTrace: st);

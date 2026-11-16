@@ -36,8 +36,10 @@ void main() {
     final exchange = File(
             'lib/features/settings/more/presentation/exchange_screen.dart')
         .readAsStringSync();
-    expect(exchange, contains('가진 패롯이 모자라요.'));
-    expect(exchange, contains('1,000개 단위로만 바꿀 수 있어요.'));
+    // 막는 말은 이제 exchangeInputProblem 한 곳에서 나온다(5차 365).
+    expect(exchange, contains('가진 \$name보다 많아요'));
+    expect(exchange, contains('개 단위로 바꿀 수 있어요'));
+    expect(exchange, contains('환전했어요.'));
 
     final signUp =
         File('lib/features/auth/sign-up/sign_up_screen.dart').readAsStringSync();
