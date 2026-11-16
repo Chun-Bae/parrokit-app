@@ -13,6 +13,8 @@ import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart'
+    show showSentenceDetails;
 
 /// 홈의 "인기 공유 문장". 보관함 둘러보기에 공개된 문장 중 좋아요가 많은 것을 보여준다.
 /// 전에는 코드에 박힌 예시 문장과 가짜 사용자·좋아요 수였다.
@@ -220,6 +222,38 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
     }
   }
 
+  /// 카드를 누르면 보관함 둘러보기와 같은 상세 시트를 연다(5차 410, 사용자 신고).
+  ///
+  /// 전에는 홈의 공유 문장 카드만 누를 수 없었다. 좋아요·저장 단추만 있고
+  /// 카드 자체에는 아무 동작이 없어서, 문장을 자세히 볼 길이 없었다.
+  Future<void> openDetails(SharedSentence sentence) async {
+    final account = accountId;
+    if (account == null) return;
+    final saved = savedCopyOf(sentence);
+    await showSentenceDetails(
+      context,
+      accountId: account,
+      saved: saved != null,
+      repository: repository,
+      authorName: context.read<UserProvider?>()?.currentUser?.displayName ?? '',
+      shared: sentence,
+      onSharedLike: (_) => toggleLike(sentence),
+      onSaveShared: () => toggleSave(sentence),
+      sentence: DefaultConversationSentence(
+        // 내 문장으로 저장했으면 그 문장의 기록을 보여 준다.
+        id: saved?.id ?? sentence.id,
+        language: sentence.language,
+        text: sentence.text,
+        translation: sentence.translation,
+        pronunciation: sentence.pronunciation,
+        topic: sentence.topic,
+        author: sentence.authorName,
+        authorId: sentence.authorId,
+      ),
+    );
+    if (mounted) await reloadMine();
+  }
+
   /// 가져간 사람 수를 올린다. 세지 못해도 저장은 그대로 둔다.
   Future<void> countImport(SharedSentence sentence) async {
     final repo = repository;
@@ -341,6 +375,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
                   saved: savedCopyOf(item) != null,
                   onLike: () => toggleLike(item),
                   onSave: () => toggleSave(item),
+                  onOpen: () => openDetails(item),
                 );
               },
             ),
@@ -413,6 +448,7 @@ class _SentenceCard extends StatelessWidget {
     required this.saved,
     required this.onLike,
     required this.onSave,
+    required this.onOpen,
   });
 
   final SharedSentence item;
@@ -423,6 +459,9 @@ class _SentenceCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onSave;
 
+  /// 카드를 누르면 상세를 연다.
+  final VoidCallback onOpen;
+
   @override
   Widget build(BuildContext context) {
     final palette = HomeTokens.of(context);
@@ -432,102 +471,108 @@ class _SentenceCard extends StatelessWidget {
     // 주제를 고르지 않은 남의 문장에는 주제 칩을 붙이지 않는다(5차 338).
     final topicLabel = sentenceTopicLabel(item.topic, mine: mine);
 
-    return Container(
-      width: 284,
-      padding: const EdgeInsets.fromLTRB(16, 14, 10, 9),
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: [
-          BoxShadow(
-            color: palette.shadow.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Flexible(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: palette.surfaceAlt,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                  ),
-                  child: Text(
-                    topicLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.texts.labelSmall
-                        .copyWith(color: palette.inkSoft),
+    return GestureDetector(
+      key: ValueKey('trending-card-${item.id}'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onOpen,
+      child: Container(
+        width: 284,
+        padding: const EdgeInsets.fromLTRB(16, 14, 10, 9),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: palette.shadow.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Flexible(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: palette.surfaceAlt,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                    ),
+                    child: Text(
+                      topicLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.texts.labelSmall
+                          .copyWith(color: palette.inkSoft),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(sentenceAgeLabel(item.createdAt, DateTime.now()),
-                  style: context.texts.labelSmall.copyWith(color: muted)),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Text(
-            item.text,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: context.texts.titleLarge.copyWith(color: ink, height: 1.25),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            item.translation,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.texts.bodySmall.copyWith(color: muted),
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              // 올린 사람 프로필 사진. 없으면 사람 아이콘(5차 338).
-              AuthorAvatar(authorId: item.authorId),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(author,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 8),
+                Text(sentenceAgeLabel(item.createdAt, DateTime.now()),
                     style: context.texts.labelSmall.copyWith(color: muted)),
-              ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: '좋아요',
-                onPressed: onLike,
-                icon: Icon(
-                  item.liked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  size: 20,
-                  color: item.liked ? palette.like : muted,
+              ],
+            ),
+            const SizedBox(height: 13),
+            Text(
+              item.text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  context.texts.titleLarge.copyWith(color: ink, height: 1.25),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              item.translation,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.texts.bodySmall.copyWith(color: muted),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                // 올린 사람 프로필 사진. 없으면 사람 아이콘(5차 338).
+                AuthorAvatar(authorId: item.authorId),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(author,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.texts.labelSmall.copyWith(color: muted)),
                 ),
-              ),
-              Text('${item.likeCount}',
-                  style: context.texts.labelSmall.copyWith(color: muted)),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: saved ? '내 문장에서 빼기' : '내 문장에 저장',
-                onPressed: onSave,
-                icon: Icon(
-                  saved
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  size: 20,
-                  color: saved ? palette.primary : muted,
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: '좋아요',
+                  onPressed: onLike,
+                  icon: Icon(
+                    item.liked
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    size: 20,
+                    color: item.liked ? palette.like : muted,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                Text('${item.likeCount}',
+                    style: context.texts.labelSmall.copyWith(color: muted)),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: saved ? '내 문장에서 빼기' : '내 문장에 저장',
+                  onPressed: onSave,
+                  icon: Icon(
+                    saved
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
+                    size: 20,
+                    color: saved ? palette.primary : muted,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

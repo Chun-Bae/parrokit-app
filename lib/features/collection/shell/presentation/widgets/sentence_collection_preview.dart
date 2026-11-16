@@ -1998,7 +1998,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   }
 
   /// 끝까지 들은 것을 기록한다. 실패해도 소리 흐름은 건드리지 않는다.
+  ///
+  /// **내 문장일 때만 센다**(5차 410, 사용자 신고). 둘러보기에서 남의 문장을
+  /// 듣기만 해도 그 문장의 듣기 수가 쌓여 친밀도가 올라갔다. 아래 기록
+  /// 칸과 따라 말하기는 이미 내 문장일 때만 보이는데 듣기만 새어 나갔다.
   void countListen() {
+    if (!widget.saved) return;
     unawaited(SentenceActivityStore.incrementListen(
       widget.accountId,
       widget.sentence.id,
@@ -2233,9 +2238,12 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _MasteryBadge(
-                      mastery: masteryOf(activity),
-                      affinity: affinityOf(activity)),
+                  // 친밀도는 내 문장에만 쌓인다. 저장하지 않은 남의 문장에
+                  // 'Lv.1 낯선'이 뜨면 내 기록처럼 보인다(5차 410).
+                  if (widget.saved)
+                    _MasteryBadge(
+                        mastery: masteryOf(activity),
+                        affinity: affinityOf(activity)),
                   const Spacer(),
                   IconButton(
                     key: const ValueKey('like-sentence'),
