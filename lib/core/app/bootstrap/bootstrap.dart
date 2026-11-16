@@ -65,5 +65,9 @@ Future<void> bootstrap() async {
     ),
   );
 
+  // 알림을 눌러서 열렸으면 그 화면으로 옮긴다(5차 378). 화면이 올라온 뒤에
+  // 해야 해서 기다리지 않고 띄운다.
+  unawaited(LocalNotificationService.handleLaunchByNotification());
+
   AppLogger.i('[Bootstrap][Done] app started');
 }

@@ -5,11 +5,24 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:go_router/go_router.dart';
+
+import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/content/practice_reminder.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
+
+/// 연습 알림에 붙이는 표. 눌렀을 때 어디로 갈지 가린다(5차 378).
+const String practiceReminderPayload = 'practice_reminder';
+
+/// 연습 알림을 눌렀을 때 열 화면. 그 밖의 표는 null(그냥 앱만 연다).
+///
+/// 전에는 표가 없어서 눌러도 보던 화면이 그대로였다. 연습하라고 부른
+/// 알림이니 앵무새가 있는 홈으로 간다.
+String? reminderRouteFor(String? payload) =>
+    payload == practiceReminderPayload ? AppRoutes.dashboardPath : null;
 
 /// 기기에서 예약하는 알림. 서버(FCM)를 거치지 않는다.
 ///
@@ -26,10 +39,41 @@ class LocalNotificationService {
 
   static bool _ready = false;
 
+  /// 알림을 눌렀을 때 화면을 옮기는 길. 테스트에서 바꿔 끼운다.
+  @visibleForTesting
+  static void Function(String route) go = _goWithRouter;
+
+  static void _goWithRouter(String route) {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+    context.go(route);
+  }
+
+  /// 알림을 눌렀을 때. 표가 연습 알림이면 홈으로 간다(5차 378).
+  static void handleTap(String? payload) {
+    final route = reminderRouteFor(payload);
+    if (route == null) return;
+    go(route);
+  }
+
+  /// 알림을 눌러서 앱이 켜진 경우. 화면이 올라온 뒤에 옮긴다.
+  static Future<void> handleLaunchByNotification() async {
+    try {
+      await init();
+      final details = await plugin.getNotificationAppLaunchDetails();
+      if (details?.didNotificationLaunchApp != true) return;
+      handleTap(details?.notificationResponse?.payload);
+    } catch (error) {
+      AppLogger.w('[Reminder] 알림으로 열렸는지 보지 못했어요: $error');
+    }
+  }
+
   static Future<void> init() async {
     if (_ready) return;
     tzdata.initializeTimeZones();
     await plugin.initialize(
+      onDidReceiveNotificationResponse: (response) =>
+          handleTap(response.payload),
       const InitializationSettings(
         iOS: DarwinInitializationSettings(
           // 권한은 설정을 켤 때 따로 묻는다. 앱을 처음 켤 때 묻지 않는다.
@@ -107,6 +151,7 @@ class LocalNotificationService {
           tz.TZDateTime.from(times[i], tz.UTC),
           details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: practiceReminderPayload,
         );
       } catch (e) {
         AppLogger.e('[Reminder] 알림 예약 실패', error: e);
