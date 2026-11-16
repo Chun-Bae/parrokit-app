@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
@@ -56,6 +57,52 @@ Future<void> openWordTab(WidgetTester tester) async {
 
 void main() {
   _reviewProgressTests();
+
+  testWidgets('유의어를 적어 저장하면 상세에 칩으로 보인다', (tester) async {
+    await openWordTab(tester);
+    await tester.tap(find.byKey(const ValueKey('add-word')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'huge');
+    await tester.enterText(
+        find.byKey(const ValueKey('word-synonyms')), 'big, large');
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('save-word')));
+    await tester.pumpAndSettle();
+
+    expect((await MyWordStore.load('guest')).single.synonyms, ['big', 'large']);
+
+    await tester.tap(find.text('huge'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('word-detail-synonyms')), findsOneWidget);
+    expect(find.text('big'), findsOneWidget);
+    expect(find.text('large'), findsOneWidget);
+  });
+
+  testWidgets('웹에서 찾기는 단어를 적어야 열린다', (tester) async {
+    await openWordTab(tester);
+    await tester.tap(find.byKey(const ValueKey('add-word')));
+    await tester.pumpAndSettle();
+
+    // 단어가 비었으면 웹 화면을 열지 않는다(까닭은 토스트로 알린다 —
+    // 토스트는 앱 전역 messenger를 쓰므로 여기서는 열리지 않는 것만 본다).
+    await tester.tap(find.byKey(const ValueKey('search-word-web')));
+    await tester.pumpAndSettle();
+    expect(find.byType(WebDocumentScreen), findsNothing);
+    // 시트는 그대로 열려 있다.
+    expect(find.byKey(const ValueKey('word-input')), findsOneWidget);
+    expect(wordSearchNeedsWordHint, isNotEmpty);
+  });
+
+  testWidgets('유의어가 없으면 상세에 그 칸을 두지 않는다', (tester) async {
+    await MyWordStore.add('guest', language: '영어', word: 'slowly');
+    await openWordTab(tester);
+    await tester.tap(find.text('slowly'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('word-detail-synonyms')), findsNothing);
+  });
 
   testWidgets('단어가 비면 저장이 꺼진 까닭을 버튼 아래에 적는다', (tester) async {
     SharedPreferences.setMockInitialValues({});

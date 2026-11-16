@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
+import 'package:parrokit/core/content/word_search_url.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
@@ -568,6 +571,30 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 ),
               ],
             ),
+            // 유의어는 칩으로 한 줄에 모아 보여 준다(5차, 사용자 요청).
+            if (word.synonyms.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text('유의어', style: muted),
+              const SizedBox(height: 6),
+              Wrap(
+                key: const ValueKey('word-detail-synonyms'),
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final one in word.synonyms)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerHighest
+                            .withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: Text(one, style: context.texts.bodySmall),
+                    ),
+                ],
+              ),
+            ],
             // 예문은 여러 개일 수 있다(5차).
             for (final (index, example) in word.examples.indexed) ...[
               SizedBox(height: index == 0 ? 16 : 8),
@@ -625,6 +652,9 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 }
 
 /// 단어 직접 추가. 단어만 넣어도 저장된다(뜻·예문은 선택).
+/// '웹에서 찾기'를 단어 없이 눌렀을 때.
+const String wordSearchNeedsWordHint = '먼저 찾을 단어를 적어 주세요.';
+
 /// '단어 추가' 시트의 저장 버튼이 꺼져 있는 까닭.
 const String addWordNeedsWordHint = '단어를 적어야 저장할 수 있어요.';
 
@@ -660,6 +690,8 @@ class AddWordSheet extends StatefulWidget {
 class _AddWordSheetState extends State<AddWordSheet> {
   late final _word = TextEditingController(text: widget.initialWord);
   final _meaning = TextEditingController();
+  /// 유의어·동의어. 한 줄에 쉼표로 여러 개 적는다(5차, 사용자 요청).
+  final _synonyms = TextEditingController();
   /// 예문 입력칸. 같은 단어를 여러 문장에서 만나므로 여러 개를 적을 수 있다(5차).
   late final List<TextEditingController> _examples = [
     TextEditingController(text: widget.example)
@@ -698,6 +730,23 @@ class _AddWordSheetState extends State<AddWordSheet> {
     }
   }
 
+  /// 웹 사전을 앱 안에서 연다. 단어를 적지 않았으면 까닭을 알린다(5차).
+  void _openWebSearch() {
+    final word = _word.text.trim();
+    if (word.isEmpty) {
+      showToast(wordSearchNeedsWordHint);
+      return;
+    }
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (_) => WebDocumentScreen(
+          title: wordSearchTitle(word),
+          url: wordSearchUrl(language: widget.language, word: word),
+        ),
+      ),
+    );
+  }
+
   /// 서버에서 횟수를 받아왔는지. 못 받아오면 안내를 지운다.
   bool _usageChecked = false;
   bool _usageFailed = false;
@@ -727,6 +776,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void dispose() {
     _word.dispose();
     _meaning.dispose();
+    _synonyms.dispose();
     for (final c in _examples) {
       c.dispose();
     }
@@ -751,6 +801,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
       language: widget.language,
       word: _word.text,
       meaning: _meaning.text,
+      synonyms: parseSynonymInput(_synonyms.text),
       examples: [
         for (final c in _examples)
           WordExample(
@@ -821,7 +872,16 @@ class _AddWordSheetState extends State<AddWordSheet> {
                         : const Icon(Icons.auto_awesome_rounded, size: 18),
                     label: const Text('뜻 채우기'),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
+                  // 뜻을 서버에 물어보는 것 말고, 웹 사전을 직접 열어 보고
+                  // 싶을 때가 있다(5차, 사용자 요청). 패롯이 들지 않는다.
+                  FilledButton.tonalIcon(
+                    key: const ValueKey('search-word-web'),
+                    onPressed: _openWebSearch,
+                    icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                    label: const Text('웹에서 찾기'),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       wordAssistUsageLabel(
@@ -835,6 +895,17 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey('word-synonyms'),
+                controller: _synonyms,
+                maxLength: synonymMaxLength * synonymsMaxCount,
+                decoration: const InputDecoration(
+                  labelText: '유의어 (선택)',
+                  hintText: '쉼표로 여러 개 — big, large',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 8),
               for (final (index, controller) in _examples.indexed) ...[

@@ -35,6 +35,8 @@ class FirestoreWordCloud implements WordCloud {
             legacySentenceId:
                 doc.data()['sourceSentenceId'] as String? ?? '',
           ),
+          // 유의어는 나중에 생긴 칸이라, 예전 문서에는 없다(5차).
+          synonyms: parseWordSynonyms(doc.data()['synonyms']),
           topic: doc.data()['topic'] as String? ?? '내 단어',
           addedAt: (doc.data()['createdAt'] as Timestamp?)?.toDate() ??
               DateTime.now(),
@@ -64,6 +66,7 @@ class FirestoreWordCloud implements WordCloud {
       'exampleTranslation': word.exampleTranslation,
       'sourceSentenceId': word.sourceSentenceId,
       'examples': [for (final e in word.examples) e.toJson()],
+      'synonyms': word.synonyms,
       'topic': word.topic,
       'createdAt': FieldValue.serverTimestamp(),
     });

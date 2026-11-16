@@ -201,6 +201,10 @@ service cloud.firestore {
           // (my_word_store.dart의 clipWordExamples).
           && d.get('examples', []) is list
           && d.get('examples', []).size() <= 5
+          // 유의어(5차, 사용자 요청). 한 단어에 10개까지. 글자 수는 앱이
+          // 줄여서 올린다(my_word_store.dart의 clipWordSynonyms).
+          && d.get('synonyms', []) is list
+          && d.get('synonyms', []).size() <= 10
           && d.get('topic', '') is string && d.get('topic', '').size() <= 40;
       }
       allow read, delete: if request.auth != null

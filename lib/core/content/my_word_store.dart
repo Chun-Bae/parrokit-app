@@ -64,9 +64,11 @@ class MyWord {
     String exampleTranslation = '',
     String sourceSentenceId = '',
     List<WordExample>? examples,
+    List<String>? synonyms,
     this.topic = '내 단어',
     this.addedAt,
-  }) : examples = examples ??
+  })  : synonyms = synonyms ?? const [],
+        examples = examples ??
             // 예전처럼 예문 하나만 넘기는 곳이 많아 그대로 받는다.
             (example.trim().isEmpty
                 ? const []
@@ -85,6 +87,10 @@ class MyWord {
 
   /// 예문 목록. 비어 있을 수 있다.
   final List<WordExample> examples;
+
+  /// 유의어·동의어. 비어 있을 수 있다. 예전에 저장한 단어에는 없어서,
+  /// 읽을 때 없으면 빈 목록이 된다(5차).
+  final List<String> synonyms;
 
   /// 첫 예문. 예전 저장 방식과 화면을 그대로 두려고 남긴다.
   String get example => examples.isEmpty ? '' : examples.first.text;
@@ -109,6 +115,7 @@ class MyWord {
         'exampleTranslation': exampleTranslation,
         'sourceSentenceId': sourceSentenceId,
         'examples': [for (final e in examples) e.toJson()],
+        'synonyms': synonyms,
         'topic': topic,
         if (addedAt != null) 'addedAt': addedAt!.millisecondsSinceEpoch,
       };
@@ -132,6 +139,7 @@ class MyWord {
         legacyTranslation: text('exampleTranslation'),
         legacySentenceId: text('sourceSentenceId'),
       ),
+      synonyms: parseWordSynonyms(json['synonyms']),
       topic: text('topic').isEmpty ? '내 단어' : text('topic'),
       addedAt:
           added is int ? DateTime.fromMillisecondsSinceEpoch(added) : null,
@@ -265,6 +273,7 @@ class MyWordStore {
     String exampleTranslation = '',
     String sourceSentenceId = '',
     List<WordExample>? examples,
+    List<String> synonyms = const [],
     String topic = '내 단어',
     DateTime? now,
   }) async {
@@ -292,6 +301,7 @@ class MyWordStore {
       word: clipToLength(trimmed, wordMaxLength),
       meaning: clipToLength(meaning.trim(), meaningMaxLength),
       examples: clipWordExamples(given),
+      synonyms: clipWordSynonyms(synonyms),
       topic: clipToLength(topic, topicMaxLength),
       addedAt: now ?? DateTime.now(),
     );
@@ -372,6 +382,39 @@ const int topicMaxLength = 40;
 
 /// 한 단어에 둘 수 있는 예문 수. 서버에 올리는 양을 묶어 두려고 정한다.
 const int examplesMaxCount = 5;
+
+/// 유의어 하나의 길이와 개수.
+const int synonymMaxLength = 40;
+const int synonymsMaxCount = 10;
+
+/// 저장된 유의어 목록을 읽는다. 예전에 저장한 단어에는 이 칸이 없다.
+List<String> parseWordSynonyms(Object? raw) {
+  if (raw is! List) return const [];
+  return clipWordSynonyms([
+    for (final item in raw)
+      if (item is String) item,
+  ]);
+}
+
+/// 빈 것과 겹치는 것을 버리고, 길이와 개수를 한도 안으로 줄인다.
+List<String> clipWordSynonyms(List<String> synonyms) {
+  final seen = <String>{};
+  final out = <String>[];
+  for (final raw in synonyms) {
+    final one = clipToLength(raw.trim(), synonymMaxLength);
+    if (one.isEmpty || !seen.add(one)) continue;
+    out.add(one);
+    if (out.length >= synonymsMaxCount) break;
+  }
+  return out;
+}
+
+/// 사람이 적은 한 줄('big, large')을 목록으로 나눈다. 쉼표·가운뎃점으로 나눈다.
+List<String> parseSynonymInput(String text) =>
+    clipWordSynonyms(text.split(RegExp(r'[,，·/]')).toList());
+
+/// 목록을 다시 한 줄로. 고치기 칸에 되돌려 넣을 때 쓴다.
+String synonymInputText(List<String> synonyms) => synonyms.join(', ');
 
 /// 빈 예문을 버리고, 길이와 개수를 한도 안으로 줄인다.
 List<WordExample> clipWordExamples(List<WordExample> examples) => [
