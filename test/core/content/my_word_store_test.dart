@@ -192,6 +192,57 @@ void main() {
     });
   });
 
+  group('로그인 사용자의 예문 더하기·빼기(5차 330)', () {
+    late FakeWordCloud cloud;
+
+    setUp(() {
+      cloud = FakeWordCloud();
+      MyWordStore.cloud = cloud;
+    });
+
+    Future<String> seed() async {
+      await MyWordStore.add('uid1',
+          language: '영어', word: 'projection', example: '첫 예문');
+      return cloud.stored.single.id;
+    }
+
+    test('서버 단어에 예문을 더한다', () async {
+      final id = await seed();
+      expect(
+          await MyWordStore.addExample(
+              'uid1', id, const WordExample(text: '두 번째 예문')),
+          isTrue);
+      expect(cloud.stored.single.examples.map((e) => e.text),
+          ['첫 예문', '두 번째 예문']);
+    });
+
+    test('서버 단어의 예문을 뺀다', () async {
+      final id = await seed();
+      await MyWordStore.addExample(
+          'uid1', id, const WordExample(text: '두 번째 예문'));
+      expect(await MyWordStore.removeExample('uid1', id, 0), isTrue);
+      expect(cloud.stored.single.examples.map((e) => e.text), ['두 번째 예문']);
+    });
+
+    test('서버가 막히면 거짓을 돌려주고 그대로 둔다', () async {
+      final id = await seed();
+      cloud.fail = true;
+      expect(
+          await MyWordStore.addExample(
+              'uid1', id, const WordExample(text: '안 들어감')),
+          isFalse);
+      cloud.fail = false;
+      expect(cloud.stored.single.examples.map((e) => e.text), ['첫 예문']);
+    });
+
+    test('어형이 다른 단어도 서버 목록에서 찾는다', () async {
+      await seed();
+      final found = await MyWordStore.findRelatedWords('uid1',
+          language: '영어', word: 'projections');
+      expect(found.map((w) => w.word), ['projection']);
+    });
+  });
+
   group('예문 여러 개', () {
     test('예문을 여러 개 저장하고 순서대로 읽는다', () async {
       await MyWordStore.add('guest',
