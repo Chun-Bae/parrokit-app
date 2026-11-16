@@ -65,6 +65,10 @@ Future<void> bootstrap() async {
     ),
   );
 
+  // 커뮤니티 푸시를 눌러서 들어오는 길도 듣는다(5차 379). 서버가 보내는
+  // routePath로 옮긴다.
+  unawaited(FirebaseMessagingService().listenForNotificationTaps());
+
   // 알림을 눌러서 열렸으면 그 화면으로 옮긴다(5차 378). 화면이 올라온 뒤에
   // 해야 해서 기다리지 않고 띄운다.
   unawaited(LocalNotificationService.handleLaunchByNotification());

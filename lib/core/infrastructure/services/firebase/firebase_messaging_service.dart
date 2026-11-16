@@ -12,7 +12,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:parrokit/core/app/config/firebase_options.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_user_service.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:parrokit/core/app/router/app_router.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -27,6 +31,19 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } catch (e) {
     AppLogger.e('[CommunityNotification][FCM] background handler failed', error: e);
   }
+}
+
+/// 푸시에 담겨 오는 길(routePath)을 읽는다. 열 수 없는 값이면 null(5차 379).
+///
+/// 서버가 `routePath`를 보내는데 앱은 읽지 않았다. 그래서 커뮤니티 알림을
+/// 눌러도 앱만 열리고 보던 화면 그대로였다. 앱 안의 길('/'로 시작하는 것)만
+/// 받는다. 바깥 주소(http://…)나 이상한 값은 받지 않는다.
+String? pushRoute(Map<String, dynamic>? data) {
+  final raw = (data?['routePath'] as Object?)?.toString().trim() ?? '';
+  if (raw.isEmpty) return null;
+  if (!raw.startsWith('/')) return null;
+  if (raw.startsWith('//') || raw.contains('://')) return null;
+  return raw;
 }
 
 class FirebaseMessagingService {
@@ -45,6 +62,34 @@ class FirebaseMessagingService {
 
   static void registerBackgroundHandler() {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
+
+  /// 알림을 눌렀을 때 화면을 옮기는 길. 테스트에서 바꿔 끼운다.
+  @visibleForTesting
+  static void Function(String route) go = _goWithRouter;
+
+  static void _goWithRouter(String route) {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+    context.push(route);
+  }
+
+  /// 눌러서 연 알림 하나를 처리한다.
+  static void handleOpened(RemoteMessage? message) {
+    final route = pushRoute(message?.data);
+    if (route == null) return;
+    AppLogger.i('[CommunityNotification][FCM] open route=$route');
+    go(route);
+  }
+
+  /// 알림을 눌러 들어오는 길을 듣는다. 앱이 알림으로 켜진 경우도 본다.
+  Future<void> listenForNotificationTaps() async {
+    try {
+      FirebaseMessaging.onMessageOpenedApp.listen(handleOpened);
+      handleOpened(await _messaging.getInitialMessage());
+    } catch (error) {
+      AppLogger.w('[CommunityNotification][FCM] 알림 누름을 듣지 못했어요: $error');
+    }
   }
 
   Future<void> syncUserToken(String userId) async {
