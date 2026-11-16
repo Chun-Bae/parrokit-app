@@ -1939,6 +1939,9 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   /// 한 번 따라 말하기를 마쳤다. 연습 수를 올리고 XP를 더한다.
   Future<void> completePractice(double? score) async {
+    // 따라 말하기 자리는 내 문장일 때만 보이지만, 기록을 쌓는 쪽에서도
+    // 한 번 더 따진다. 듣기도 같은 자리를 빠뜨려 새어 나갔다(5차 410).
+    if (!widget.saved) return;
     await SentenceActivityStore.incrementPractice(
       widget.accountId,
       widget.sentence.id,
