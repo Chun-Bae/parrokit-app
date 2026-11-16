@@ -11,6 +11,7 @@ class StudyGardenPreview extends StatefulWidget {
     required this.practiceGoals,
     required this.dailyGoal,
     required this.totalPracticed,
+    this.now,
   });
 
   final Map<String, int> practiceCounts;
@@ -18,20 +19,30 @@ class StudyGardenPreview extends StatefulWidget {
   final int dailyGoal;
   final int totalPracticed;
 
+  /// '오늘'로 볼 때. 테스트에서 고정한다. 비우면 그릴 때마다 지금을 본다.
+  final DateTime? now;
+
   @override
   State<StudyGardenPreview> createState() => _StudyGardenPreviewState();
 }
 
 class _StudyGardenPreviewState extends State<StudyGardenPreview> {
-  late final DateTime today;
   late DateTime month;
   DateTime? selected;
+
+  /// 오늘 날짜. 그릴 때마다 다시 본다(5차 377).
+  ///
+  /// 전에는 initState에서 한 번만 정했다. 앱을 켜 둔 채 자정을 넘기면 어제가
+  /// '오늘'로 남아, 새 날에 연습해도 그 칸이 '아직 오지 않은 날'로 흐리게
+  /// 보이고 눌리지도 않았다.
+  DateTime get today {
+    final now = widget.now ?? DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
 
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    today = DateTime(now.year, now.month, now.day);
     month = DateTime(today.year, today.month);
   }
 
