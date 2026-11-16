@@ -9,6 +9,7 @@ import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_share_text.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/share_my_sentence_sheet.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -103,5 +104,22 @@ void main() {
     await tester.pump();
     expect(find.text(sentenceShareNeedsNickname), findsOneWidget);
     expect(find.text(sentenceShareTitle(published: false)), findsNothing);
+  });
+
+  testWidgets('공유된 문장이 없으면 바로 공유할 수 있게 안내한다', (tester) async {
+    final repo =
+        FirestoreSharedSentenceRepository(firestore: FakeFirebaseFirestore());
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SentenceCollectionPreview(repository: repo, exploreOnly: true),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.'), findsOneWidget);
+    expect(find.text('내 문장 공유하기'), findsOneWidget);
+    // 큰 제목은 커뮤니티 탭 이름과 겹쳐서 뺐다(5차 343).
+    expect(find.text('공유된 문장'), findsNothing);
+    expect(find.text('저장해서 내 문장으로 연습해요'), findsOneWidget);
   });
 }

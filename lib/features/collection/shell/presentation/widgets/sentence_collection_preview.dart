@@ -39,6 +39,7 @@ import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_share_text.dart';
+import 'share_my_sentence_sheet.dart';
 import 'package:parrokit/core/content/sentence_topic_label.dart';
 import 'package:parrokit/core/shared/widgets/author_avatar.dart';
 import 'package:parrokit/core/shared/utils/sentence_age_label.dart';
@@ -699,32 +700,37 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                   // 'Parrokit 제공' 문장 묶음 카드 셋은 뺐다(5차). '8문장 · 입문'처럼
                   // 보였지만 내용이 없는 자리표시라 눌러도 아무 일이 없었다(원칙 5).
                   // 실제 묶음이 생기면 이 자리에 다시 붙인다.
-                  _SectionTitle(
-                      title: '공유된 문장',
-                      // 오른쪽 인기·최신 칩에 밀려 '연습해/요'로 꺾여서 줄였다(5차).
-                      subtitle: '저장해서 내 문장으로 연습해요',
-                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                        for (final (popular, label) in [
-                          (true, '인기'),
-                          (false, '최신')
-                        ])
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: ChoiceChip(
-                              label: Text(label),
-                              selected: sortPopular == popular,
-                              showCheckmark: false,
-                              visualDensity: VisualDensity.compact,
-                              onSelected: (_) =>
-                                  setState(() => sortPopular = popular),
-                            ),
-                          ),
-                        IconButton(
-                            key: const ValueKey('refresh-shared'),
-                            tooltip: '새로고침',
-                            onPressed: sharedLoading ? null : refreshExplore,
-                            icon: const Icon(Icons.refresh_rounded)),
-                      ])),
+                  // 커뮤니티 '문장' 탭 안이라 큰 제목('공유된 문장')은 탭 이름과
+                  // 겹쳤다(5차 343). 안내 한 줄과 고르는 칩만 남긴다.
+                  Row(children: [
+                    Expanded(
+                      child: Text('저장해서 내 문장으로 연습해요',
+                          style: context.texts.bodySmall.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant)),
+                    ),
+                    for (final (popular, label) in [
+                      (true, '인기'),
+                      (false, '최신')
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: ChoiceChip(
+                          label: Text(label),
+                          selected: sortPopular == popular,
+                          showCheckmark: false,
+                          visualDensity: VisualDensity.compact,
+                          onSelected: (_) =>
+                              setState(() => sortPopular = popular),
+                        ),
+                      ),
+                    IconButton(
+                        key: const ValueKey('refresh-shared'),
+                        tooltip: '새로고침',
+                        onPressed: sharedLoading ? null : refreshExplore,
+                        icon: const Icon(Icons.refresh_rounded)),
+                  ]),
                   const SizedBox(height: 10),
                   if (sharedLoading)
                     const Padding(
@@ -737,9 +743,13 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                         actionLabel: '다시 불러오기',
                         onAction: loadShared)
                   else if (visibleShared.isEmpty)
-                    const _SharedMessage(
-                        key: ValueKey('shared-message'),
-                        text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.')
+                    // 빈 화면에서 바로 공유할 수 있게 한다. 전에는 안내만 있고
+                    // 어디서 공유하는지 말하지 않았다(5차 343).
+                    _SharedMessage(
+                        key: const ValueKey('shared-message'),
+                        text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.',
+                        actionLabel: '내 문장 공유하기',
+                        onAction: () => showShareMySentenceSheet(context))
                   else
                     ...visibleShared.map((sentence) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -876,29 +886,6 @@ class _ImportProgressDialog extends StatelessWidget {
           ),
         ),
       );
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(
-      {required this.title, required this.subtitle, this.trailing});
-
-  final String title;
-  final String subtitle;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) => Row(children: [
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: context.texts.titleLarge),
-          const SizedBox(height: 3),
-          Text(subtitle,
-              style: context.texts.bodySmall.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        ])),
-        if (trailing != null) trailing!,
-      ]);
 }
 
 class _SentenceCard extends StatelessWidget {
