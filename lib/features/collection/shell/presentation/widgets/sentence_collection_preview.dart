@@ -16,7 +16,6 @@ import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
-import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/content/speaking_xp.dart';
 import 'package:parrokit/core/content/practice_calendar.dart';
 import 'package:parrokit/core/content/practice_log.dart';
@@ -39,6 +38,8 @@ import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/shared/widgets/tiered_header.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -95,7 +96,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     }
   }
 
-  static const categories = ['전체', '일상', '여행', '카페', '감정', '회사', '학교'];
 
   @override
   void initState() {
@@ -618,44 +618,61 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         .length;
     return RefreshIndicator(
         onRefresh: refreshExplore,
-        child: ListView(
+        // 언어·주제 줄은 따로 접힌다(5차 333, 사용자 요청). 보관함 머리줄
+        // (앱바 · 탭)과 이어져, 네 줄이 차례로 스르륵 접혀 들어간다.
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           key: const PageStorageKey('sentence-collection-preview'),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 140),
-          children: [
-            // 학습 언어는 따로 한 줄을 쓰지 않고 주제 칩 맨 앞에 둔다.
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length + 1,
-                separatorBuilder: (_, __) => const SizedBox(width: 7),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Center(
-                      child: LearningLanguagePicker(
-                        compact: true,
-                        value: language,
-                        onChanged: (value) {
-                          setState(() => language = value);
-                          loadShared();
-                        },
-                      ),
-                    );
-                  }
-                  final item = categories[index - 1];
-                  return Center(
-                    child: ChoiceChip(
-                        label: Text(item),
-                        selected: category == item,
-                        showCheckmark: false,
-                        visualDensity: VisualDensity.compact,
-                        onSelected: (_) => setState(() => category = item)),
-                  );
-                },
-              ),
+          slivers: [
+            SliverPersistentHeader(
+              floating: true,
+              delegate: TieredHeaderDelegate(tiers: [
+                HeaderTier(
+                  height: 54,
+                  child: SentenceFilterRow(
+                    language: language,
+                    category: category,
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    onLanguageChanged: (value) {
+                      setState(() => language = value);
+                      loadShared();
+                    },
+                    onCategoryChanged: (value) =>
+                        setState(() => category = value),
+                  ),
+                ),
+              ]),
             ),
-            const SizedBox(height: 24),
+            // 둘러보기 줄도 제 단으로 둔다. 네 줄(보관함 · 탭 · 언어·주제 ·
+            // 둘러보기)이 차례로 접힌다(5차 333, 사용자 요청).
+            if (!explore)
+              SliverPersistentHeader(
+                floating: true,
+                delegate: TieredHeaderDelegate(tiers: [
+                  HeaderTier(
+                    // 제목 줄 + 카드 92 + 여백. 모자라면 6px 넘쳤다.
+                    height: 158,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: _ExploreStrip(
+                        sentences: ([...visibleShared]
+                              ..sort(
+                                  (a, b) => b.likeCount.compareTo(a.likeCount)))
+                            .take(8)
+                            .toList(),
+                        loading: sharedLoading,
+                        failed: sharedFailed,
+                        onOpen: openCommunityDetails,
+                        onViewAll: () => openSentenceExplore(context),
+                      ),
+                    ),
+                  ),
+                ]),
+              ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 140),
+              sliver: SliverList(
+                  delegate: SliverChildListDelegate([
             if (explore) ...[
               // 'Parrokit 제공' 문장 묶음 카드 셋은 뺐다(5차). '8문장 · 입문'처럼
               // 보였지만 내용이 없는 자리표시라 눌러도 아무 일이 없었다(원칙 5).
@@ -717,17 +734,6 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                       ),
                     )),
             ] else ...[
-              _ExploreStrip(
-                sentences: ([...visibleShared]
-                      ..sort((a, b) => b.likeCount.compareTo(a.likeCount)))
-                    .take(8)
-                    .toList(),
-                loading: sharedLoading,
-                failed: sharedFailed,
-                onOpen: openCommunityDetails,
-                onViewAll: () => openSentenceExplore(context),
-              ),
-              const SizedBox(height: 24),
               Row(children: [
                 Text('내 문장', style: context.texts.titleLarge),
                 const SizedBox(width: 6),
@@ -808,6 +814,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                 );
               }),
             ],
+          ])),
+            ),
           ],
         ));
   }
