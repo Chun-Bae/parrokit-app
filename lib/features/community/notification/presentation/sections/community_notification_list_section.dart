@@ -63,12 +63,14 @@ class CommunityNotificationListSection extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            onDismissed: (_) async {
-              await provider.deleteNotification(item.id);
-              if (!context.mounted) return;
-              if (provider.errorMessage == null) {
-                showToast('알림을 지웠어요.');
-              }
+            // 지우기는 밀어서 치우기 전에 한다. 전에는 먼저 치우고 지웠는데,
+            // 지우기가 실패하면 목록에 그 알림이 그대로 남아 다시 그려지고
+            // 'A dismissed Dismissible widget is still part of the tree'로
+            // 화면이 깨졌다(5차 396). 실패하면 false를 돌려 제자리로 돌린다.
+            confirmDismiss: (_) async {
+              final deleted = await provider.deleteNotification(item.id);
+              if (context.mounted && deleted) showToast('알림을 지웠어요.');
+              return deleted;
             },
             child: CommunityNotificationTile(
               item: item,

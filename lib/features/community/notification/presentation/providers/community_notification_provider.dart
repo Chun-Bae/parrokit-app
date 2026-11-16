@@ -164,15 +164,22 @@ class CommunityNotificationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteNotification(String notificationId) async {
+  /// 지웠으면 true. 화면은 이 값으로 밀어서 치울지 되돌릴지 정한다(5차 396).
+  ///
+  /// 예전에는 돌려주는 값이 없어, 화면이 `errorMessage`가 비었는지로
+  /// 짐작했다. 앞서 다른 일로 난 오류가 남아 있으면 지웠는데도 실패로 봤다.
+  Future<bool> deleteNotification(String notificationId) async {
     final userId = _currentUserId;
-    if (userId == null || userId.isEmpty || notificationId.isEmpty) return;
+    if (userId == null || userId.isEmpty || notificationId.isEmpty) {
+      return false;
+    }
 
     try {
       await _deleteNotificationUseCase.execute(
         userId: userId,
         notificationId: notificationId,
       );
+      return true;
     } catch (e) {
       _errorMessage = notificationErrorText(NotificationJob.delete, e);
       AppLogger.e(
@@ -180,6 +187,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
         error: e,
       );
       _notifyListenersSafe();
+      return false;
     }
   }
 
