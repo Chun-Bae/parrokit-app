@@ -186,6 +186,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('문장 상세에 반복 듣기 단추가 있고 켜고 끌 수 있다', (tester) async {
+    // 한 번 듣기만 있어서, 따라 말하려면 계속 눌러야 했다(사용자 요청).
+    await seedSentences();
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 문장'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hello there!'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('repeat-sentence')), findsOneWidget);
+    expect(find.byTooltip('반복 듣기'), findsOneWidget);
+
+    // 음성 플러그인이 없는 테스트 환경에서도 예외 없이 동작하고,
+    // 소리를 낼 수 없으면 까닭을 알린다(토스트는 앱 전역 messenger를 쓴다).
+    await tester.tap(find.byKey(const ValueKey('repeat-sentence')));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(ttsNotReadyHint, isNotEmpty);
+  });
+
   testWidgets('문장 상세에 닉네임이 보이고 좋아요가 저장된다', (tester) async {
     await MySentenceStore.add('guest',
         language: '영어',
