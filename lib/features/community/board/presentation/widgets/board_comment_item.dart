@@ -165,9 +165,9 @@ class BoardCommentItem extends StatelessWidget {
                   ),
                 Text(
                   isDeleted
-                      ? '삭제된 댓글입니다.'
+                      ? '지운 댓글이에요.'
                       : isBlocked
-                          ? '차단된 사용자의 댓글입니다.'
+                          ? '차단한 사람의 댓글이에요.'
                           : comment.content,
                   // 댓글도 이름·날짜와 같이 굵어서 위아래 구분이 없었다(5차).
                   style: context.texts.bodyReading.copyWith(

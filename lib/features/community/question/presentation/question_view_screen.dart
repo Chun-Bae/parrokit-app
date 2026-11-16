@@ -113,7 +113,7 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
       // 미리 비우는 건 반응이 빨라 보이려는 것이지, 실패했을 때 사용자가
       // 다시 타이핑해야 한다는 뜻은 아니다. 쓴 글을 돌려준다.
       _replyController.text = text;
-      showToast(provider.errorMessage ?? '답글 등록에 실패했습니다.');
+      showToast(provider.errorMessage ?? '답글을 올리지 못했어요. 다시 해 주세요.');
     }
   }
 
@@ -122,11 +122,11 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     if (currentUser == null) return;
 
     if (question.questionStatus == 'resolved') {
-      showToast('이미 채택된 질문입니다.');
+      showToast('이미 답변을 채택한 질문이에요.');
       return;
     }
     if (question.questionStatus == 'expired') {
-      showToast('마감 기한이 지난 질문입니다.');
+      showToast('마감 기한이 지난 질문이에요.');
       return;
     }
 
@@ -168,9 +168,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
     setState(() => _isAccepting = false);
 
     if (success) {
-      showToast('채택이 완료되었습니다! 🍪');
+      showToast('답변을 채택했어요! 🍪');
     } else {
-      showToast(provider.errorMessage ?? '채택 처리에 실패했습니다.');
+      showToast(provider.errorMessage ?? '채택하지 못했어요. 다시 해 주세요.');
     }
   }
 

@@ -409,9 +409,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
                     ),
                   Text(
                     isDeleted
-                        ? '삭제된 댓글입니다.'
+                        ? '지운 댓글이에요.'
                         : isBlocked
-                            ? '차단된 사용자의 댓글입니다.'
+                            ? '차단한 사람의 댓글이에요.'
                             : comment.content,
                     // 게시판 댓글과 같은 크기·굵기로(5차).
                     style: context.texts.bodyReading.copyWith(

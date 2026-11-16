@@ -161,7 +161,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
 
     // 다이얼로그 텍스트와 퍼센티지를 업데이트하기 위한 변수 및 함수
     String statusText = _selectedImages.isEmpty
-        ? (_isEditMode ? '게시글을 수정하는 중입니다...' : '게시글을 등록하는 중입니다...')
+        ? (_isEditMode ? '글을 고치는 중이에요…' : '글을 올리는 중이에요…')
         : '사진 업로드 준비 중...';
     double? currentProgress;
     StateSetter? dialogSetState;

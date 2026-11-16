@@ -78,7 +78,7 @@ class BlockProvider extends ChangeNotifier {
 
     if (currentUser.displayName != null &&
         currentUser.displayName!.trim() == trimmedDisplayName) {
-      _errorMessage = '본인 닉네임은 차단할 수 없습니다.';
+      _errorMessage = '내 닉네임은 차단할 수 없어요.';
       notifyListeners();
       return false;
     }

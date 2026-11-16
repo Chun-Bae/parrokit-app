@@ -28,8 +28,8 @@ CommunityOptionAction buildCommunityBlockAction({
             title: const Text('사용자 차단'),
             content: Text(
               displayName.isEmpty
-                  ? '정말 이 사용자를 차단하시겠습니까?\n차단한 사용자의 글과 댓글이 더 이상 보이지 않습니다.'
-                  : '$displayName 님을 차단하시겠습니까?\n차단한 사용자의 글과 댓글이 더 이상 보이지 않습니다.',
+                  ? '이 사람을 차단할까요?\n차단하면 그 사람의 글과 댓글이 더 보이지 않아요.'
+                  : '$displayName 님을 차단할까요?\n차단하면 그 사람의 글과 댓글이 더 보이지 않아요.',
             ),
             actions: [
               TextButton(
