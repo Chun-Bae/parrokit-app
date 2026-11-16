@@ -23,6 +23,19 @@ String _detailSheetStateBody() {
   return source.substring(from, to == -1 ? source.length : to);
 }
 
+/// `_WordDetailSheetState` 클래스 몸통만 잘라 온다(5차 392).
+String _wordDetailSheetStateBody() {
+  final source = File(
+    'lib/features/collection/shell/presentation/widgets/'
+    'word_collection_preview.dart',
+  ).readAsStringSync();
+  const start = 'class _WordDetailSheetState';
+  final from = source.indexOf(start);
+  expect(from, greaterThan(0), reason: '단어 상세 시트 상태 클래스를 찾지 못했다');
+  final to = source.indexOf('\nclass ', from + start.length);
+  return source.substring(from, to == -1 ? source.length : to);
+}
+
 void main() {
   test('상세 시트는 알릴 말을 시트 안에 적는다', () {
     final body = _detailSheetStateBody();
@@ -51,5 +64,21 @@ void main() {
     expect(wordAddResultText(WordAddResult.duplicate), '이미 저장한 단어예요.');
     expect(wordAddResultText(WordAddResult.savedOnDevice),
         '서버에 저장하지 못해 이 기기에 저장했어요.');
+  });
+
+  test('단어 상세 시트도 알릴 말을 시트 안에 적는다', () {
+    final body = _wordDetailSheetStateBody();
+    expect(body.contains("ValueKey('word-detail-notice')"), isTrue,
+        reason: '시트 안에 알림을 그리는 자리가 있어야 한다');
+    expect(body.contains('void showNotice(String message)'), isTrue);
+  });
+
+  test('단어 상세 시트는 SnackBar를 쓰지 않는다', () {
+    final offenders = _wordDetailSheetStateBody()
+        .split('\n')
+        .where((l) => l.contains('ScaffoldMessenger') || l.contains('SnackBar'))
+        .where((l) => !l.trimLeft().startsWith('//'));
+    expect(offenders, isEmpty,
+        reason: '시트가 떠 있는 채로 띄우면 시트 뒤에 깔려 보이지 않는다');
   });
 }

@@ -111,7 +111,6 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
         word: word,
         review: reviews[word.id],
         accountId: accountId,
-        messenger: ScaffoldMessenger.maybeOf(context),
         onDelete: () => remove(word),
       ),
     );
@@ -431,7 +430,6 @@ Future<void> showWordDetails(
       word: word,
       review: reviews[word.id],
       accountId: accountId,
-      messenger: messenger,
       onDelete: () async {
         await MyWordStore.remove(accountId, word.id);
         messenger
@@ -768,14 +766,12 @@ class _WordDetailSheet extends StatefulWidget {
     required this.word,
     required this.review,
     required this.accountId,
-    required this.messenger,
     required this.onDelete,
   });
 
   final MyWord word;
   final WordReview? review;
   final String accountId;
-  final ScaffoldMessengerState? messenger;
   final VoidCallback onDelete;
 
   @override
@@ -784,6 +780,27 @@ class _WordDetailSheet extends StatefulWidget {
 
 class _WordDetailSheetState extends State<_WordDetailSheet> {
   late String meaning = widget.word.meaning;
+
+  /// 시트 안에 적는 알림. 스낵바는 시트 뒤에 깔려 보이지 않는다(5차 392).
+  String? notice;
+  Timer? noticeTimer;
+
+  /// 잠시 뒤 스스로 사라지고, 누르면 바로 사라진다. 문장 상세와 같다(390).
+  void showNotice(String message) {
+    if (!mounted) return;
+    setState(() => notice = message);
+    noticeTimer?.cancel();
+    noticeTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => notice = null);
+    });
+  }
+
+  @override
+  void dispose() {
+    noticeTimer?.cancel();
+    super.dispose();
+  }
+
   late List<String> synonyms = widget.word.synonyms;
   late List<WordExample> examples = widget.word.examples;
 
@@ -804,8 +821,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         await MyWordStore.setSynonyms(widget.accountId, widget.word.id, parsed);
     if (!mounted) return;
     if (!saved) {
-      widget.messenger?.showSnackBar(
-          const SnackBar(content: Text('유의어를 저장하지 못했어요. 다시 시도해 주세요.')));
+      showNotice('유의어를 저장하지 못했어요. 다시 시도해 주세요.');
       return;
     }
     setState(() => synonyms = parsed);
@@ -813,10 +829,8 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 
   /// 예문을 새로 적는다(5차 338, 사용자 요청).
   Future<void> _addExample() async {
-    final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
     if (examples.length >= examplesMaxCount) {
-      messenger?.showSnackBar(
-          SnackBar(content: Text('예문은 $examplesMaxCount개까지 넣을 수 있어요.')));
+      showNotice('예문은 $examplesMaxCount개까지 넣을 수 있어요.');
       return;
     }
     final example = await showDialog<WordExample>(
@@ -829,8 +843,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         await MyWordStore.addExample(widget.accountId, widget.word.id, example);
     if (!mounted) return;
     if (!added) {
-      messenger?.showSnackBar(
-          const SnackBar(content: Text('예문을 더하지 못했어요. 같은 예문이 이미 있는지 봐 주세요.')));
+      showNotice('예문을 더하지 못했어요. 같은 예문이 이미 있는지 봐 주세요.');
       return;
     }
     setState(() => examples = [...examples, example]);
@@ -838,7 +851,6 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 
   /// 예문 하나를 고친다(5차 338, 사용자 요청).
   Future<void> _editExample(int index) async {
-    final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
     final next = await showDialog<WordExample>(
       context: context,
       builder: (_) =>
@@ -850,8 +862,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         widget.accountId, widget.word.id, index, next);
     if (!mounted) return;
     if (!saved) {
-      messenger?.showSnackBar(
-          const SnackBar(content: Text('예문을 고치지 못했어요. 다시 시도해 주세요.')));
+      showNotice('예문을 고치지 못했어요. 다시 시도해 주세요.');
       return;
     }
     setState(() => examples = [...examples]..[index] = next);
@@ -859,7 +870,6 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 
   /// 예문 하나를 뺀다. 되돌릴 수 없으니 한 번 묻는다(5차 328).
   Future<void> _removeExample(int index) async {
-    final messenger = widget.messenger ?? ScaffoldMessenger.maybeOf(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -882,8 +892,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         widget.accountId, widget.word.id, index);
     if (!mounted) return;
     if (!removed) {
-      messenger?.showSnackBar(
-          const SnackBar(content: Text('예문을 빼지 못했어요. 다시 시도해 주세요.')));
+      showNotice('예문을 빼지 못했어요. 다시 시도해 주세요.');
       return;
     }
     setState(() => examples = [...examples]..removeAt(index));
@@ -902,8 +911,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         await MyWordStore.setMeaning(widget.accountId, widget.word.id, next);
     if (!mounted) return;
     if (!saved) {
-      widget.messenger?.showSnackBar(
-          const SnackBar(content: Text('뜻을 저장하지 못했어요. 다시 시도해 주세요.')));
+      showNotice('뜻을 저장하지 못했어요. 다시 시도해 주세요.');
       return;
     }
     setState(() => meaning = next.trim());
@@ -916,168 +924,203 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     final colors = Theme.of(context).colorScheme;
     final muted =
         context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant);
+    final sheetNotice = notice;
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(word.word, style: context.texts.headlineSmall),
-                ),
-                // 단어에는 소리가 아예 없었다. 문장 상세와 같은 단추를 둔다
-                // (5차 320).
-                SpeakControls(
-                  text: word.word,
-                  language: word.language,
-                  speakKey: const ValueKey('speak-word'),
-                  repeatKey: const ValueKey('repeat-word'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(meaning.isEmpty ? '뜻을 아직 적지 않았어요' : meaning,
-                      key: const ValueKey('word-detail-meaning'),
-                      style: context.texts.bodyLarge.copyWith(
-                          color: meaning.isEmpty
-                              ? colors.onSurfaceVariant
-                              : null)),
-                ),
-                TextButton(
-                  key: const ValueKey('edit-word-meaning'),
-                  onPressed: _editMeaning,
-                  child: Text(meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
-                ),
-              ],
-            ),
-            // 유의어는 칩으로 한 줄에 모아 보여 준다(5차, 사용자 요청).
-            // 없어도 적을 수 있게 줄은 늘 둔다.
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: Text('유의어', style: muted)),
-                TextButton(
-                  key: const ValueKey('edit-word-synonyms'),
-                  onPressed: _editSynonyms,
-                  child: Text(synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
-                ),
-              ],
-            ),
-            if (synonyms.isEmpty)
-              Text('아직 적지 않았어요',
-                  key: const ValueKey('word-detail-synonyms-empty'),
-                  style: muted)
-            else ...[
-              const SizedBox(height: 2),
-              Wrap(
-                key: const ValueKey('word-detail-synonyms'),
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final one in synonyms)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest
-                            .withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: Text(one, style: context.texts.bodySmall),
-                    ),
-                ],
-              ),
-            ],
-            // 예문은 여러 개일 수 있다(5차).
-            for (final (index, example) in examples.indexed) ...[
-              SizedBox(height: index == 0 ? 16 : 8),
-              Container(
-                key: ValueKey('word-detail-example-$index'),
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 예문을 누르면 고친다(5차 338, 사용자 요청).
                     Expanded(
-                      child: InkWell(
-                        key: ValueKey('edit-word-example-$index'),
-                        onTap: () => _editExample(index),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(example.text,
-                                  style: context.texts.bodyMedium
-                                      .copyWith(fontWeight: FontWeight.w700)),
-                              if (example.translation.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(example.translation, style: muted),
-                              ],
-                            ]),
-                      ),
+                      child:
+                          Text(word.word, style: context.texts.headlineSmall),
                     ),
-                    // 더할 수는 있는데 뺄 길이 없었다(5차 328).
-                    IconButton(
-                      key: ValueKey('remove-word-example-$index'),
-                      tooltip: '이 예문 빼기',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => _removeExample(index),
-                      icon: const Icon(Icons.close_rounded, size: 18),
+                    // 단어에는 소리가 아예 없었다. 문장 상세와 같은 단추를 둔다
+                    // (5차 320).
+                    SpeakControls(
+                      text: word.word,
+                      language: word.language,
+                      speakKey: const ValueKey('speak-word'),
+                      repeatKey: const ValueKey('repeat-word'),
                     ),
                   ],
                 ),
-              ),
-            ],
-            // 이미 만든 단어에도 예문을 더할 수 있어야 한다(5차 338, 사용자 요청).
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: const ValueKey('add-word-example'),
-                onPressed: _addExample,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(examples.isEmpty ? '예문 넣기' : '예문 더 넣기'),
-              ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(meaning.isEmpty ? '뜻을 아직 적지 않았어요' : meaning,
+                          key: const ValueKey('word-detail-meaning'),
+                          style: context.texts.bodyLarge.copyWith(
+                              color: meaning.isEmpty
+                                  ? colors.onSurfaceVariant
+                                  : null)),
+                    ),
+                    TextButton(
+                      key: const ValueKey('edit-word-meaning'),
+                      onPressed: _editMeaning,
+                      child: Text(meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
+                    ),
+                  ],
+                ),
+                // 유의어는 칩으로 한 줄에 모아 보여 준다(5차, 사용자 요청).
+                // 없어도 적을 수 있게 줄은 늘 둔다.
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: Text('유의어', style: muted)),
+                    TextButton(
+                      key: const ValueKey('edit-word-synonyms'),
+                      onPressed: _editSynonyms,
+                      child: Text(synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
+                    ),
+                  ],
+                ),
+                if (synonyms.isEmpty)
+                  Text('아직 적지 않았어요',
+                      key: const ValueKey('word-detail-synonyms-empty'),
+                      style: muted)
+                else ...[
+                  const SizedBox(height: 2),
+                  Wrap(
+                    key: const ValueKey('word-detail-synonyms'),
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final one in synonyms)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceContainerHighest
+                                .withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                          ),
+                          child: Text(one, style: context.texts.bodySmall),
+                        ),
+                    ],
+                  ),
+                ],
+                // 예문은 여러 개일 수 있다(5차).
+                for (final (index, example) in examples.indexed) ...[
+                  SizedBox(height: index == 0 ? 16 : 8),
+                  Container(
+                    key: ValueKey('word-detail-example-$index'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color:
+                          colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 예문을 누르면 고친다(5차 338, 사용자 요청).
+                        Expanded(
+                          child: InkWell(
+                            key: ValueKey('edit-word-example-$index'),
+                            onTap: () => _editExample(index),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(example.text,
+                                      style: context.texts.bodyMedium.copyWith(
+                                          fontWeight: FontWeight.w700)),
+                                  if (example.translation.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(example.translation, style: muted),
+                                  ],
+                                ]),
+                          ),
+                        ),
+                        // 더할 수는 있는데 뺄 길이 없었다(5차 328).
+                        IconButton(
+                          key: ValueKey('remove-word-example-$index'),
+                          tooltip: '이 예문 빼기',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _removeExample(index),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                // 이미 만든 단어에도 예문을 더할 수 있어야 한다(5차 338, 사용자 요청).
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const ValueKey('add-word-example'),
+                    onPressed: _addExample,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text(examples.isEmpty ? '예문 넣기' : '예문 더 넣기'),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                    [
+                      if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',
+                      // 목록에는 단계가 보이는데 상세에는 없었다(5차). 목록과
+                      // 같은 말로 적는다. 한 번도 안 했으면 아래 기한 글이
+                      // '아직 복습 전'이라 겹치지 않게 뺀다.
+                      if ((review?.step ?? 0) > 0) '복습 ${review!.step}단계',
+                      wordDueLabel(review?.dueAt, DateTime.now()),
+                    ].join(' · '),
+                    key: const ValueKey('word-detail-meta'),
+                    style: muted),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('delete-word'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onDelete();
+                    },
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    label: const Text('단어 지우기'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-                [
-                  if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',
-                  // 목록에는 단계가 보이는데 상세에는 없었다(5차). 목록과
-                  // 같은 말로 적는다. 한 번도 안 했으면 아래 기한 글이
-                  // '아직 복습 전'이라 겹치지 않게 뺀다.
-                  if ((review?.step ?? 0) > 0) '복습 ${review!.step}단계',
-                  wordDueLabel(review?.dueAt, DateTime.now()),
-                ].join(' · '),
-                key: const ValueKey('word-detail-meta'),
-                style: muted),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                key: const ValueKey('delete-word'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  widget.onDelete();
+          ),
+          // 시트 안에 띄운다. 아래가 아니라 위에 둬야 '단어 지우기' 같은
+          // 맨 밑 단추를 가리지 않는다(5차 392).
+          if (sheetNotice != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              top: 8,
+              child: GestureDetector(
+                onTap: () {
+                  noticeTimer?.cancel();
+                  setState(() => notice = null);
                 },
-                icon: const Icon(Icons.delete_outline_rounded),
-                label: const Text('단어 지우기'),
+                child: Material(
+                  color: colors.inverseSurface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 11),
+                    child: Text(
+                      sheetNotice,
+                      key: const ValueKey('word-detail-notice'),
+                      style: context.texts.bodyMedium
+                          .copyWith(color: colors.onInverseSurface),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
