@@ -3,6 +3,7 @@
 // firebase_auth accessed via FirebaseAuthService
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/local/prefs/user_prefs.dart';
+import 'package:parrokit/core/infrastructure/repositories/app_user_merge.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_auth_service.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_user_service.dart';
@@ -64,27 +65,14 @@ class UserRepository {
     // 3. 로컬 캐시(SharedPreferences)에 저장된 유저 (폴백용)
     final localUser = _userPrefs.loadUser();
 
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        localUser?.unreadNotificationCount ??
-        0;
-
-    // 4. 최종적으로 앱에서 쓸 AppUser 조합
-    final user = AppUser(
-      id: fbUser.uid,
-      displayName: fbUser.displayName ??
-          serverUser?.displayName ??
-          localUser?.displayName,
-      email: fbUser.email ?? serverUser?.email ?? localUser?.email,
-      photoUrl: fbUser.photoURL ?? serverUser?.photoUrl ?? localUser?.photoUrl,
-      parrots: serverUser?.parrots ?? localUser?.parrots ?? 0,
-      subParrots: serverUser?.subParrots ?? localUser?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? localUser?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? localUser?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? localUser?.createdAt,
-      updatedAt: DateTime.now(),
-      lastNicknameChangedAt: serverUser?.lastNicknameChangedAt ?? localUser?.lastNicknameChangedAt,
+    // 4. 최종적으로 앱에서 쓸 AppUser 조합(합치는 규칙은 한 곳에서, 5차 385)
+    final user = mergeAppUser(
+      uid: fbUser.uid,
+      authDisplayName: fbUser.displayName,
+      authEmail: fbUser.email,
+      authPhotoUrl: fbUser.photoURL,
+      server: serverUser,
+      local: localUser,
     );
 
     // 5. 최신 상태를 로컬에도 다시 캐싱
@@ -185,27 +173,13 @@ class UserRepository {
 
     // 2) 로컬에 저장된 유저는 캐시/폴백 용도로만 사용
     final existingLocal = _userPrefs.loadUser();
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        existingLocal?.unreadNotificationCount ??
-        0;
-
-    final user = AppUser(
-      id: fbUser.uid,
-      displayName: fbUser.displayName ??
-          serverUser?.displayName ??
-          existingLocal?.displayName,
-      email: fbUser.email ?? serverUser?.email ?? existingLocal?.email,
-      photoUrl:
-          fbUser.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
-      subParrots:
-          serverUser?.subParrots ?? existingLocal?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? existingLocal?.createdAt,
-      updatedAt: DateTime.now(),
+    final user = mergeAppUser(
+      uid: fbUser.uid,
+      authDisplayName: fbUser.displayName,
+      authEmail: fbUser.email,
+      authPhotoUrl: fbUser.photoURL,
+      server: serverUser,
+      local: existingLocal,
     );
 
     await _userPrefs.saveUser(user);
@@ -247,27 +221,15 @@ class UserRepository {
 
     // 4) 로컬 캐시 조회
     final existingLocal = _userPrefs.loadUser();
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        existingLocal?.unreadNotificationCount ??
-        0;
-
-    final user = AppUser(
-      id: fbUser.uid,
-      displayName: fbUser.displayName ??
-          serverUser?.displayName ??
-          existingLocal?.displayName,
-      email: fbUser.email ?? serverUser?.email ?? existingLocal?.email ?? '',
-      photoUrl:
-          fbUser.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
-      subParrots:
-          serverUser?.subParrots ?? existingLocal?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? existingLocal?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
+    final user = mergeAppUser(
+      uid: fbUser.uid,
+      authDisplayName: fbUser.displayName,
+      authEmail: fbUser.email,
+      authPhotoUrl: fbUser.photoURL,
+      server: serverUser,
+      local: existingLocal,
+      createdAtDefaultsToNow: true,
+      emailDefaultsToEmpty: true,
     );
 
     await _userPrefs.saveUser(user);
@@ -309,27 +271,15 @@ class UserRepository {
 
     // 4) 로컬 캐시 조회
     final existingLocal = _userPrefs.loadUser();
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        existingLocal?.unreadNotificationCount ??
-        0;
-
-    final user = AppUser(
-      id: fbUser.uid,
-      displayName: fbUser.displayName ??
-          serverUser?.displayName ??
-          existingLocal?.displayName,
-      email: fbUser.email ?? serverUser?.email ?? existingLocal?.email ?? '',
-      photoUrl:
-          fbUser.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
-      subParrots:
-          serverUser?.subParrots ?? existingLocal?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? existingLocal?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
+    final user = mergeAppUser(
+      uid: fbUser.uid,
+      authDisplayName: fbUser.displayName,
+      authEmail: fbUser.email,
+      authPhotoUrl: fbUser.photoURL,
+      server: serverUser,
+      local: existingLocal,
+      createdAtDefaultsToNow: true,
+      emailDefaultsToEmpty: true,
     );
 
     await _userPrefs.saveUser(user);
@@ -368,27 +318,15 @@ class UserRepository {
 
     // 3) 로컬 캐시 조회
     final existingLocal = _userPrefs.loadUser();
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        existingLocal?.unreadNotificationCount ??
-        0;
-
-    final user = AppUser(
-      id: fbUser.uid,
-      displayName: fbUser.displayName ??
-          serverUser?.displayName ??
-          existingLocal?.displayName,
-      email: fbUser.email ?? serverUser?.email ?? existingLocal?.email ?? '',
-      photoUrl:
-          fbUser.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
-      subParrots:
-          serverUser?.subParrots ?? existingLocal?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? existingLocal?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
+    final user = mergeAppUser(
+      uid: fbUser.uid,
+      authDisplayName: fbUser.displayName,
+      authEmail: fbUser.email,
+      authPhotoUrl: fbUser.photoURL,
+      server: serverUser,
+      local: existingLocal,
+      createdAtDefaultsToNow: true,
+      emailDefaultsToEmpty: true,
     );
 
     await _userPrefs.saveUser(user);
@@ -436,26 +374,13 @@ class UserRepository {
         await _firebaseUserService.loadUserDocument(uid: refreshed.uid);
 
     final existingLocal = _userPrefs.loadUser();
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        existingLocal?.unreadNotificationCount ??
-        0;
-    final user = AppUser(
-      id: refreshed.uid,
-      displayName: refreshed.displayName ??
-          serverUser?.displayName ??
-          existingLocal?.displayName,
-      email: refreshed.email ?? serverUser?.email ?? existingLocal?.email,
-      photoUrl:
-          refreshed.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
-      subParrots:
-          serverUser?.subParrots ?? existingLocal?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? existingLocal?.createdAt,
-      updatedAt: DateTime.now(),
+    final user = mergeAppUser(
+      uid: refreshed.uid,
+      authDisplayName: refreshed.displayName,
+      authEmail: refreshed.email,
+      authPhotoUrl: refreshed.photoURL,
+      server: serverUser,
+      local: existingLocal,
     );
 
     await _userPrefs.saveUser(user);
@@ -670,29 +595,17 @@ class UserRepository {
     }
 
     final existingLocal = _userPrefs.loadUser();
-    final unreadCount = serverUser?.unreadNotificationCount ??
-        existingLocal?.unreadNotificationCount ??
-        0;
-
-    final user = AppUser(
-      id: fbUser.uid,
-      displayName: fbUser.displayName ??
-          serverUser?.displayName ??
-          existingLocal?.displayName,
-      email: fbUser.email ?? serverUser?.email ?? existingLocal?.email ?? '',
-      photoUrl:
-          fbUser.photoURL ?? serverUser?.photoUrl ?? existingLocal?.photoUrl,
-      // 다른 로그인 경로와 같이 0에서 시작한다. 전에는 Apple만 20·1000이라,
-      // 서버 문서는 0인데 첫 화면에 없는 패롯·크래커가 보였다.
-      parrots: serverUser?.parrots ?? existingLocal?.parrots ?? 0,
-      subParrots:
-          serverUser?.subParrots ?? existingLocal?.subParrots ?? 0,
-      crackers: serverUser?.crackers ?? existingLocal?.crackers ?? 0,
-      unreadNotificationCount: unreadCount,
-      blockedUserIds:
-          serverUser?.blockedUserIds ?? existingLocal?.blockedUserIds ?? const [],
-      createdAt: serverUser?.createdAt ?? existingLocal?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
+    // 다른 로그인 경로와 같이 0에서 시작한다. 전에는 Apple만 20·1000이라,
+    // 서버 문서는 0인데 첫 화면에 없는 패롯·크래커가 보였다.
+final user = mergeAppUser(
+      uid: fbUser.uid,
+      authDisplayName: fbUser.displayName,
+      authEmail: fbUser.email,
+      authPhotoUrl: fbUser.photoURL,
+      server: serverUser,
+      local: existingLocal,
+      createdAtDefaultsToNow: true,
+      emailDefaultsToEmpty: true,
     );
 
     await _userPrefs.saveUser(user);
