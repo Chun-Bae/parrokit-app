@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:parrokit/core/content/word_search_url.dart';
+
 class AppConfig {
   static const int _defaultLocalKeepSpaceBytes = 1024 * 1024 * 1024;
 
@@ -10,6 +12,9 @@ class AppConfig {
   static bool showSubtitles = true; // 자막 표시(플레이어)
   static double defaultPlaybackRate = 1.0; // 기본 재생 속도
   static bool pauseEachLine = false; // 전체 재생에서 자막 한 줄마다 멈춤
+
+  /// 단어를 웹에서 찾을 때 어디서 찾을지(5차, 사용자 요청).
+  static WordSearchSite wordSearchSite = WordSearchSite.naver;
 
   /// 쇼츠
   static bool autoNext = true; // 자동 넘기기
@@ -44,6 +49,8 @@ class AppConfig {
     defaultPlaybackRate = p.getDouble('defaultPlaybackRate') ?? 1.0;
     pauseEachLine = p.getBool('pauseEachLine') ?? false;
 
+    wordSearchSite = WordSearchSite.fromStorage(p.getString('wordSearchSite'));
+
     autoNext = p.getBool('autoNext') ?? true;
     shortsShowSubtitles = p.getBool('shortsShowSubtitles') ?? true;
     sentenceExplore = p.getBool('sentenceExplore') ?? true;
@@ -62,6 +69,8 @@ class AppConfig {
     await p.setBool('showSubtitles', showSubtitles);
     await p.setDouble('defaultPlaybackRate', defaultPlaybackRate);
     await p.setBool('pauseEachLine', pauseEachLine);
+
+    await p.setString('wordSearchSite', wordSearchSite.storageKey);
 
     await p.setBool('autoNext', autoNext);
     await p.setBool('shortsShowSubtitles', shortsShowSubtitles);

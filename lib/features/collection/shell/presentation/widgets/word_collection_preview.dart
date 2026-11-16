@@ -17,6 +17,7 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/core/app/config/app_config.dart';
 
 /// 보관함 > 단어 탭. 문장 탭과 같은 구조로 "내 단어"를 보여준다(5차 6번).
 ///
@@ -93,8 +94,8 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   Future<void> startReview(List<MyWord> due) async {
     await showAppSheet<void>(
       context: context,
-      builder: (_) => WordReviewSheet(
-          accountId: accountId, words: due, reviews: reviews),
+      builder: (_) =>
+          WordReviewSheet(accountId: accountId, words: due, reviews: reviews),
     );
   }
 
@@ -344,8 +345,7 @@ class _WordTile extends StatelessWidget {
                       .copyWith(color: colors.onSurfaceVariant),
                 ),
                 Text(
-                  WordReviewStore.nextSeenLabel(
-                      review?.dueAt, DateTime.now()),
+                  WordReviewStore.nextSeenLabel(review?.dueAt, DateTime.now()),
                   key: ValueKey('word-due-${word.id}'),
                   style: context.texts.labelSmall.copyWith(
                       color: colors.onSurfaceVariant.withValues(alpha: 0.8)),
@@ -494,6 +494,134 @@ class _MeaningDialogState extends State<_MeaningDialog> {
       );
 }
 
+/// 유의어를 하나씩 넣는 칸(5차, 사용자 요청).
+///
+/// 전에는 한 줄에 쉼표로 적게 했는데, 쉼표를 찍어야 하는 줄 모르면 한 덩어리로
+/// 저장됐다. '추가'를 누르면 칩으로 쌓이고, 칩의 ×로 하나씩 뺀다.
+class SynonymEditor extends StatefulWidget {
+  const SynonymEditor({
+    super.key,
+    required this.synonyms,
+    required this.onChanged,
+  });
+
+  final List<String> synonyms;
+  final ValueChanged<List<String>> onChanged;
+
+  @override
+  State<SynonymEditor> createState() => _SynonymEditorState();
+}
+
+class _SynonymEditorState extends State<SynonymEditor> {
+  final _input = TextEditingController();
+  String? _hint;
+
+  @override
+  void dispose() {
+    _input.dispose();
+    super.dispose();
+  }
+
+  void _add() {
+    // 붙여넣기로 'big, large'가 들어올 수 있어 쉼표도 그대로 받아 준다.
+    final typed = parseSynonymInput(_input.text);
+    if (typed.isEmpty) {
+      setState(() => _hint = '넣을 유의어를 적어 주세요.');
+      return;
+    }
+    final next = [...widget.synonyms];
+    var skippedSame = false;
+    for (final one in typed) {
+      if (next.length >= synonymsMaxCount) {
+        setState(() => _hint = '유의어는 $synonymsMaxCount개까지 넣을 수 있어요.');
+        break;
+      }
+      if (next.contains(one)) {
+        skippedSame = true;
+        continue;
+      }
+      next.add(one);
+    }
+    if (next.length == widget.synonyms.length) {
+      setState(() => _hint = skippedSame ? '이미 넣은 유의어예요.' : _hint);
+      return;
+    }
+    _input.clear();
+    setState(() => _hint = skippedSame ? '이미 넣은 것은 빼고 넣었어요.' : null);
+    widget.onChanged(next);
+  }
+
+  void _remove(String one) {
+    widget.onChanged([...widget.synonyms]..remove(one));
+    setState(() => _hint = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final full = widget.synonyms.length >= synonymsMaxCount;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                key: const ValueKey('word-synonyms'),
+                controller: _input,
+                maxLength: synonymMaxLength,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _add(),
+                decoration: InputDecoration(
+                  labelText: '유의어 (선택)',
+                  hintText: '하나씩 적고 추가 — big',
+                  counterText: '${widget.synonyms.length}/$synonymsMaxCount',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: FilledButton.tonal(
+                key: const ValueKey('add-synonym'),
+                // 꽉 찼어도 눌리게 두고 까닭을 적는다(5차).
+                onPressed: _add,
+                child: Text(full ? '추가' : '추가'),
+              ),
+            ),
+          ],
+        ),
+        if (widget.synonyms.isNotEmpty)
+          Wrap(
+            spacing: 6,
+            runSpacing: -4,
+            children: [
+              for (final one in widget.synonyms)
+                InputChip(
+                  key: ValueKey('synonym-chip-$one'),
+                  label: Text(one),
+                  onDeleted: () => _remove(one),
+                  deleteButtonTooltipMessage: '$one 빼기',
+                ),
+            ],
+          ),
+        if (_hint case final hint?)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              hint,
+              key: const ValueKey('synonym-hint'),
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 /// 유의어를 적는 창. 뜻 고치기 창과 같은 모양으로 둔다(5차).
 class _SynonymsDialog extends StatefulWidget {
   const _SynonymsDialog({required this.word, required this.synonyms});
@@ -506,24 +634,15 @@ class _SynonymsDialog extends StatefulWidget {
 }
 
 class _SynonymsDialogState extends State<_SynonymsDialog> {
-  late final _controller =
-      TextEditingController(text: synonymInputText(widget.synonyms));
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  late List<String> _synonyms = [...widget.synonyms];
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text(widget.synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
-        content: TextField(
+        content: SynonymEditor(
           key: const ValueKey('word-synonyms-input'),
-          controller: _controller,
-          autofocus: true,
-          maxLength: synonymMaxLength * synonymsMaxCount,
-          decoration: const InputDecoration(hintText: '쉼표로 여러 개 — big, large'),
+          synonyms: _synonyms,
+          onChanged: (next) => setState(() => _synonyms = next),
         ),
         actions: [
           TextButton(
@@ -532,7 +651,7 @@ class _SynonymsDialogState extends State<_SynonymsDialog> {
           ),
           FilledButton(
             key: const ValueKey('word-synonyms-save'),
-            onPressed: () => Navigator.pop(context, _controller.text),
+            onPressed: () => Navigator.pop(context, _synonyms),
             child: const Text('저장'),
           ),
         ],
@@ -565,7 +684,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
   /// 유의어를 적거나 고친다. 추가할 때만 적을 수 있으면 나중에 알게 된
   /// 유의어를 넣을 길이 없다(5차).
   Future<void> _editSynonyms() async {
-    final next = await showDialog<String>(
+    final next = await showDialog<List<String>>(
       context: context,
       builder: (_) => _SynonymsDialog(
         word: widget.word.word,
@@ -574,9 +693,9 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     );
     if (!mounted || next == null) return;
 
-    final parsed = parseSynonymInput(next);
-    final saved = await MyWordStore.setSynonyms(
-        widget.accountId, widget.word.id, parsed);
+    final parsed = clipWordSynonyms(next);
+    final saved =
+        await MyWordStore.setSynonyms(widget.accountId, widget.word.id, parsed);
     if (!mounted) return;
     if (!saved) {
       widget.messenger?.showSnackBar(
@@ -595,8 +714,8 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     );
     if (!mounted || next == null) return;
 
-    final saved = await MyWordStore.setMeaning(
-        widget.accountId, widget.word.id, next);
+    final saved =
+        await MyWordStore.setMeaning(widget.accountId, widget.word.id, next);
     if (!mounted) return;
     if (!saved) {
       widget.messenger?.showSnackBar(
@@ -626,8 +745,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                      meaning.isEmpty ? '뜻을 아직 적지 않았어요' : meaning,
+                  child: Text(meaning.isEmpty ? '뜻을 아직 적지 않았어요' : meaning,
                       key: const ValueKey('word-detail-meaning'),
                       style: context.texts.bodyLarge.copyWith(
                           color: meaning.isEmpty
@@ -774,8 +892,10 @@ class AddWordSheet extends StatefulWidget {
 class _AddWordSheetState extends State<AddWordSheet> {
   late final _word = TextEditingController(text: widget.initialWord);
   final _meaning = TextEditingController();
-  /// 유의어·동의어. 한 줄에 쉼표로 여러 개 적는다(5차, 사용자 요청).
-  final _synonyms = TextEditingController();
+
+  /// 유의어·동의어. '추가'를 눌러 하나씩 넣는다(5차, 사용자 요청).
+  List<String> _synonymList = const [];
+
   /// 예문 입력칸. 같은 단어를 여러 문장에서 만나므로 여러 개를 적을 수 있다(5차).
   late final List<TextEditingController> _examples = [
     TextEditingController(text: widget.example)
@@ -825,7 +945,11 @@ class _AddWordSheetState extends State<AddWordSheet> {
       MaterialPageRoute<void>(
         builder: (_) => WebDocumentScreen(
           title: wordSearchTitle(word),
-          url: wordSearchUrl(language: widget.language, word: word),
+          url: wordSearchUrl(
+            language: widget.language,
+            word: word,
+            site: AppConfig.wordSearchSite,
+          ),
         ),
       ),
     );
@@ -860,7 +984,6 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void dispose() {
     _word.dispose();
     _meaning.dispose();
-    _synonyms.dispose();
     for (final c in _examples) {
       c.dispose();
     }
@@ -885,7 +1008,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
       language: widget.language,
       word: _word.text,
       meaning: _meaning.text,
-      synonyms: parseSynonymInput(_synonyms.text),
+      synonyms: clipWordSynonyms(_synonymList),
       examples: [
         for (final c in _examples)
           WordExample(
@@ -909,147 +1032,183 @@ class _AddWordSheetState extends State<AddWordSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('단어 추가', style: context.texts.titleLarge),
-              const SizedBox(height: 4),
-              Text('${widget.language} · 단어만 넣어도 저장돼요',
-                  style: context.texts.bodySmall.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 14),
-              TextField(
-                key: const ValueKey('word-input'),
-                controller: _word,
-                autofocus: widget.initialWord.isEmpty,
-                maxLength: 80,
-                decoration: const InputDecoration(
-                    labelText: '단어나 표현', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const ValueKey('word-meaning'),
-                controller: _meaning,
-                maxLength: 200,
-                decoration: const InputDecoration(
-                  labelText: '뜻 (선택)',
-                  border: OutlineInputBorder(),
+        // 칸이 늘어 화면이 작으면 넘쳤다(유의어 칩·찾을 곳 고르기, 5차).
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('단어 추가', style: context.texts.titleLarge),
+                const SizedBox(height: 4),
+                Text('${widget.language} · 단어만 넣어도 저장돼요',
+                    style: context.texts.bodySmall.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 14),
+                TextField(
+                  key: const ValueKey('word-input'),
+                  controller: _word,
+                  autofocus: widget.initialWord.isEmpty,
+                  maxLength: 80,
+                  decoration: const InputDecoration(
+                      labelText: '단어나 표현', border: OutlineInputBorder()),
                 ),
-              ),
-              // 뜻 채우기는 하루 몇 번만 쓸 수 있다. 전에는 입력칸 안에
-              // 반짝이 아이콘만 있어서 무엇을 하는 단추인지, 몇 번 남았는지
-              // 알 수 없었다. 문장 추가 화면처럼 이름과 남은 횟수를 적는다(5차).
-              Row(
-                children: [
-                  FilledButton.tonalIcon(
-                    key: const ValueKey('fill-word-meaning'),
-                    onPressed: _word.text.trim().isEmpty || filling
-                        ? null
-                        : fillMeaning,
-                    icon: filling
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.auto_awesome_rounded, size: 18),
-                    label: const Text('뜻 채우기'),
+                const SizedBox(height: 8),
+                TextField(
+                  key: const ValueKey('word-meaning'),
+                  controller: _meaning,
+                  maxLength: 200,
+                  decoration: const InputDecoration(
+                    labelText: '뜻 (선택)',
+                    border: OutlineInputBorder(),
                   ),
-                  const SizedBox(width: 8),
-                  // 뜻을 서버에 물어보는 것 말고, 웹 사전을 직접 열어 보고
-                  // 싶을 때가 있다(5차, 사용자 요청). 패롯이 들지 않는다.
-                  FilledButton.tonalIcon(
-                    key: const ValueKey('search-word-web'),
-                    onPressed: _openWebSearch,
-                    icon: const Icon(Icons.travel_explore_rounded, size: 18),
-                    label: const Text('웹에서 찾기'),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      wordAssistUsageLabel(
-                        used: _assistUsed,
-                        limit: _assist.dailyLimit,
-                        failed: _usageFailed || (_usageChecked && _assistUsed == null),
+                ),
+                // 뜻 채우기는 하루 몇 번만 쓸 수 있다. 전에는 입력칸 안에
+                // 반짝이 아이콘만 있어서 무엇을 하는 단추인지, 몇 번 남았는지
+                // 알 수 없었다. 문장 추가 화면처럼 이름과 남은 횟수를 적는다(5차).
+                Row(
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const ValueKey('fill-word-meaning'),
+                      onPressed: _word.text.trim().isEmpty || filling
+                          ? null
+                          : fillMeaning,
+                      icon: filling
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.auto_awesome_rounded, size: 18),
+                      label: const Text('뜻 채우기'),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        wordAssistUsageLabel(
+                          used: _assistUsed,
+                          limit: _assist.dailyLimit,
+                          failed: _usageFailed ||
+                              (_usageChecked && _assistUsed == null),
+                        ),
+                        key: const ValueKey('word-assist-usage'),
+                        style: context.texts.bodySmall.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
-                      key: const ValueKey('word-assist-usage'),
-                      style: context.texts.bodySmall.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+                // 뜻을 서버에 물어보는 것 말고, 웹 사전을 직접 열어 보고
+                // 싶을 때가 있다(5차, 사용자 요청). 패롯이 들지 않는다.
+                // 어디서 찾을지도 고를 수 있다(5차, 사용자 요청).
+                Row(
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const ValueKey('search-word-web'),
+                      onPressed: _openWebSearch,
+                      icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                      label: const Text('웹에서 찾기'),
+                    ),
+                    const SizedBox(width: 4),
+                    PopupMenuButton<WordSearchSite>(
+                      key: const ValueKey('word-search-site'),
+                      tooltip: '어디서 찾을지 고르기',
+                      initialValue: AppConfig.wordSearchSite,
+                      onSelected: (site) {
+                        setState(() => AppConfig.wordSearchSite = site);
+                        AppConfig.saveToPrefs();
+                      },
+                      itemBuilder: (context) => [
+                        for (final site in WordSearchSite.values)
+                          PopupMenuItem<WordSearchSite>(
+                            key: ValueKey('word-search-site-${site.name}'),
+                            value: site,
+                            child: Text(
+                                wordSearchSiteLabel(site, widget.language)),
+                          ),
+                      ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppConfig.wordSearchSite.label,
+                            key: const ValueKey('word-search-site-label'),
+                            style: context.texts.bodySmall.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant),
+                          ),
+                          const Icon(Icons.arrow_drop_down_rounded, size: 18),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SynonymEditor(
+                  synonyms: _synonymList,
+                  onChanged: (next) => setState(() => _synonymList = next),
+                ),
+                const SizedBox(height: 8),
+                for (final (index, controller) in _examples.indexed) ...[
+                  if (index > 0) const SizedBox(height: 8),
+                  TextField(
+                    key: ValueKey('word-example-$index'),
+                    controller: controller,
+                    maxLength: 300,
+                    maxLines: 2,
+                    minLines: 1,
+                    decoration: InputDecoration(
+                      labelText:
+                          _examples.length == 1 ? '예문 (선택)' : '예문 ${index + 1}',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: _examples.length == 1
+                          ? null
+                          : IconButton(
+                              key: ValueKey('remove-word-example-$index'),
+                              tooltip: '이 예문 지우기',
+                              onPressed: () => removeExampleField(index),
+                              icon: const Icon(Icons.close_rounded, size: 20),
+                            ),
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const ValueKey('word-synonyms'),
-                controller: _synonyms,
-                maxLength: synonymMaxLength * synonymsMaxCount,
-                decoration: const InputDecoration(
-                  labelText: '유의어 (선택)',
-                  hintText: '쉼표로 여러 개 — big, large',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final (index, controller) in _examples.indexed) ...[
-                if (index > 0) const SizedBox(height: 8),
-                TextField(
-                  key: ValueKey('word-example-$index'),
-                  controller: controller,
-                  maxLength: 300,
-                  maxLines: 2,
-                  minLines: 1,
-                  decoration: InputDecoration(
-                    labelText: _examples.length == 1
-                        ? '예문 (선택)'
-                        : '예문 ${index + 1}',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _examples.length == 1
-                        ? null
-                        : IconButton(
-                            key: ValueKey('remove-word-example-$index'),
-                            tooltip: '이 예문 지우기',
-                            onPressed: () => removeExampleField(index),
-                            icon: const Icon(Icons.close_rounded, size: 20),
-                          ),
+                if (_examples.length < examplesMaxCount)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const ValueKey('add-word-example'),
+                      onPressed: addExampleField,
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('예문 더 넣기'),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const ValueKey('save-word'),
+                    onPressed:
+                        _word.text.trim().isEmpty || saving ? null : save,
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48)),
+                    child: const Text('저장'),
                   ),
                 ),
-              ],
-              if (_examples.length < examplesMaxCount)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    key: const ValueKey('add-word-example'),
-                    onPressed: addExampleField,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('예문 더 넣기'),
+                // 버튼이 왜 꺼져 있는지 적는다(5차, 새 클립 화면과 같게).
+                // 예전에는 흐린 채 눌러도 아무 일이 없었다.
+                if (_word.text.trim().isEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    addWordNeedsWordHint,
+                    key: const ValueKey('save-word-hint'),
+                    textAlign: TextAlign.center,
+                    style: context.texts.bodySmall.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
-                ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  key: const ValueKey('save-word'),
-                  onPressed: _word.text.trim().isEmpty || saving ? null : save,
-                  style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48)),
-                  child: const Text('저장'),
-                ),
-              ),
-              // 버튼이 왜 꺼져 있는지 적는다(5차, 새 클립 화면과 같게).
-              // 예전에는 흐린 채 눌러도 아무 일이 없었다.
-              if (_word.text.trim().isEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  addWordNeedsWordHint,
-                  key: const ValueKey('save-word-hint'),
-                  textAlign: TextAlign.center,
-                  style: context.texts.bodySmall.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

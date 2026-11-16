@@ -64,9 +64,15 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'huge');
-    await tester.enterText(
-        find.byKey(const ValueKey('word-synonyms')), 'big, large');
+    // 쉼표 대신 '추가'로 하나씩 넣는다(5차, 사용자 요청).
+    await tester.enterText(find.byKey(const ValueKey('word-synonyms')), 'big');
+    await tester.tap(find.byKey(const ValueKey('add-synonym')));
     await tester.pump();
+    await tester.enterText(
+        find.byKey(const ValueKey('word-synonyms')), 'large');
+    await tester.tap(find.byKey(const ValueKey('add-synonym')));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const ValueKey('save-word')));
     await tester.tap(find.byKey(const ValueKey('save-word')));
     await tester.pumpAndSettle();
 
@@ -92,8 +98,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('edit-word-synonyms')));
     await tester.pumpAndSettle();
 
+    // 창에서도 '추가'로 하나씩 넣는다. 붙여넣은 'big, large'는 한 번에 둘.
     await tester.enterText(
-        find.byKey(const ValueKey('word-synonyms-input')), 'big, large');
+        find.byKey(const ValueKey('word-synonyms')), 'big, large');
+    await tester.tap(find.byKey(const ValueKey('add-synonym')));
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('word-synonyms-save')));
     await tester.pumpAndSettle();
 
