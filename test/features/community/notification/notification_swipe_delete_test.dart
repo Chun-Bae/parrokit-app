@@ -37,6 +37,29 @@ class _Repo extends Fake implements CommunityNotificationRepository {
   Stream<List<CommunityNotificationItem>> watchNotifications(String userId) =>
       _stream.stream;
 
+  bool markFails = true;
+  bool deleteAllFails = true;
+
+  @override
+  Future<void> markAsRead({
+    required String userId,
+    required String notificationId,
+  }) async {
+    if (markFails) throw Exception('network');
+  }
+
+  @override
+  Future<void> markAllAsRead(String userId) async {
+    if (markFails) throw Exception('network');
+  }
+
+  @override
+  Future<void> deleteAllNotifications(String userId) async {
+    if (deleteAllFails) throw Exception('network');
+    items = [];
+    _stream.add(items);
+  }
+
   @override
   Future<void> deleteNotification({
     required String userId,
@@ -142,5 +165,40 @@ void main() {
     expect(await vm.deleteNotification('n1'), isFalse);
     repo.deleteFails = false;
     expect(await vm.deleteNotification('n1'), isTrue);
+  });
+
+  test('잘 끝나면 앞서 뜬 빨간 안내를 치운다(5차 397)', () async {
+    final repo = _Repo([_item('n1')]);
+    final vm = _provider(repo);
+    addTearDown(vm.dispose);
+    vm.syncUser('u1');
+    await vm.activate();
+
+    // 먼저 한 번 실패시켜 안내를 띄운다.
+    expect(await vm.deleteNotification('n1'), isFalse);
+    expect(vm.errorMessage, isNotNull);
+
+    // 다음에 잘되면 그 안내가 사라져야 한다. 전에는 계속 남아 있었다.
+    repo.deleteFails = false;
+    expect(await vm.deleteNotification('n1'), isTrue);
+    expect(vm.errorMessage, isNull);
+  });
+
+  test('모두 지우기·모두 읽음도 성공 여부를 돌려준다', () async {
+    final repo = _Repo([_item('n1'), _item('n2')]);
+    final vm = _provider(repo);
+    addTearDown(vm.dispose);
+    vm.syncUser('u1');
+    await vm.activate();
+
+    expect(await vm.deleteAllNotifications(), isFalse);
+    expect(await vm.markAllAsRead(), isFalse);
+
+    repo.deleteAllFails = false;
+    repo.markFails = false;
+    expect(await vm.deleteAllNotifications(), isTrue);
+    expect(await vm.markAllAsRead(), isTrue);
+    expect(await vm.markAsRead('n1'), isTrue);
+    expect(vm.errorMessage, isNull);
   });
 }

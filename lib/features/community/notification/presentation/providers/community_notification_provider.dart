@@ -129,15 +129,20 @@ class CommunityNotificationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> markAsRead(String notificationId) async {
+  /// 읽음으로 바꿨으면 true(5차 397).
+  Future<bool> markAsRead(String notificationId) async {
     final userId = _currentUserId;
-    if (userId == null || userId.isEmpty || notificationId.isEmpty) return;
+    if (userId == null || userId.isEmpty || notificationId.isEmpty) {
+      return false;
+    }
 
     try {
       await _markNotificationReadUseCase.execute(
         userId: userId,
         notificationId: notificationId,
       );
+      _clearErrorAfterSuccess();
+      return true;
     } catch (e) {
       _errorMessage = notificationErrorText(NotificationJob.read, e);
       AppLogger.e(
@@ -145,15 +150,19 @@ class CommunityNotificationProvider extends ChangeNotifier {
         error: e,
       );
       _notifyListenersSafe();
+      return false;
     }
   }
 
-  Future<void> markAllAsRead() async {
+  /// 다 읽음으로 바꿨으면 true(5차 397).
+  Future<bool> markAllAsRead() async {
     final userId = _currentUserId;
-    if (userId == null || userId.isEmpty) return;
+    if (userId == null || userId.isEmpty) return false;
 
     try {
       await _markAllNotificationsReadUseCase.execute(userId);
+      _clearErrorAfterSuccess();
+      return true;
     } catch (e) {
       _errorMessage = notificationErrorText(NotificationJob.read, e);
       AppLogger.e(
@@ -161,6 +170,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
         error: e,
       );
       _notifyListenersSafe();
+      return false;
     }
   }
 
@@ -179,6 +189,7 @@ class CommunityNotificationProvider extends ChangeNotifier {
         userId: userId,
         notificationId: notificationId,
       );
+      _clearErrorAfterSuccess();
       return true;
     } catch (e) {
       _errorMessage = notificationErrorText(NotificationJob.delete, e);
@@ -191,12 +202,15 @@ class CommunityNotificationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteAllNotifications() async {
+  /// 다 지웠으면 true(5차 397). 화면은 이 값으로 알릴지 정한다.
+  Future<bool> deleteAllNotifications() async {
     final userId = _currentUserId;
-    if (userId == null || userId.isEmpty) return;
+    if (userId == null || userId.isEmpty) return false;
 
     try {
       await _deleteAllNotificationsUseCase.execute(userId);
+      _clearErrorAfterSuccess();
+      return true;
     } catch (e) {
       _errorMessage = notificationErrorText(NotificationJob.delete, e);
       AppLogger.e(
@@ -204,7 +218,18 @@ class CommunityNotificationProvider extends ChangeNotifier {
         error: e,
       );
       _notifyListenersSafe();
+      return false;
     }
+  }
+
+  /// 잘 끝났으면 앞서 뜬 빨간 안내를 치운다(5차 397).
+  ///
+  /// 전에는 한 번 실패하면 그 글이 화면 맨 위에 남아, 다음에 잘돼도 계속
+  /// 떠 있었다. 목록이 새로 올 때(스트림)만 사라졌다.
+  void _clearErrorAfterSuccess() {
+    if (_errorMessage == null) return;
+    _errorMessage = null;
+    _notifyListenersSafe();
   }
 
   Future<void> _initForUser(String userId) async {

@@ -155,11 +155,11 @@ class _CommunityNotificationScreenState
       ),
     );
     if (confirmed != true) return;
-    await provider.deleteAllNotifications();
-    if (!context.mounted) return;
-    if (provider.errorMessage == null) {
-      showToast('알림을 모두 지웠어요.');
-    }
+    // 지운 결과를 돌려받아 쓴다. 전에는 errorMessage가 비었는지로 짐작해서,
+    // 앞서 다른 일로 난 오류가 남아 있으면 지웠는데도 말하지 않았다(5차 397).
+    final deleted = await provider.deleteAllNotifications();
+    if (!context.mounted || !deleted) return;
+    showToast('알림을 모두 지웠어요.');
   }
 
   Future<void> _showNotificationActionsSheet(
