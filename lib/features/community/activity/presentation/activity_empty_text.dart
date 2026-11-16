@@ -43,3 +43,25 @@ String activityEmptyDescription(String boardType, String activityType) {
       return '커뮤니티에서 한 일이 여기에 모여요.';
   }
 }
+
+/// 목록 맨 위에 적는 '총 ○○ N개'(5차 407).
+///
+/// 전에는 '좋아요한 댓글'에도 '총 공감 N개'라고 적었다. 글·질문은 엄지
+/// '공감', 댓글·답변은 하트 '좋아요'로 나눠 부르기로 했는데(89d57b67)
+/// 이 줄만 옛 이름이었다.
+String activityCountLabel(String boardType, String activityType, int count) {
+  final typeLabel = switch (activityType) {
+    'written' || 'written_posted' => switch (boardType) {
+        'vote' => '투표',
+        'question' => '질문',
+        _ => '글',
+      },
+    'commented' => boardType == 'question' ? '답변' : '댓글',
+    'commented_reply' => '답글',
+    'liked' => '공감',
+    'liked_comment' => '좋아요',
+    'scraped' => '스크랩',
+    _ => '활동',
+  };
+  return '총 $typeLabel $count개';
+}

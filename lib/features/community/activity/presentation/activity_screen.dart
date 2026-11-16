@@ -140,35 +140,6 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
     return '$boardName - $activityName';
   }
 
-  String _getTotalCountLabel(int count) {
-    String typeLabel = '';
-    switch (widget.activityType) {
-      case 'written':
-      case 'written_posted':
-        typeLabel = '글';
-        if (widget.boardType == 'vote') typeLabel = '투표';
-        // 질문의 '작성한 질문'은 질문만 모은다(예전 '질문/답변').
-        if (widget.boardType == 'question') typeLabel = '질문';
-        break;
-      case 'commented':
-        typeLabel = widget.boardType == 'question' ? '답변' : '댓글';
-        break;
-      case 'commented_reply':
-        typeLabel = '답글';
-        break;
-      case 'liked':
-      case 'liked_comment':
-        typeLabel = '공감';
-        break;
-      case 'scraped':
-        typeLabel = '스크랩';
-        break;
-      default:
-        typeLabel = '활동';
-    }
-    return '총 $typeLabel $count개';
-  }
-
   String? _resolveDetailPath(String boardType, String postId) {
     if (postId.isEmpty) return null;
     switch (boardType) {
@@ -212,10 +183,26 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
 
             if (provider.error != null) {
               // 내부 오류 글을 그대로 보여 주지 않는다(5차, 다른 화면과 같게).
-              return Center(
-                child: Text('불러오지 못했어요. 잠시 뒤 다시 열어 주세요.',
-                    style: context.texts.bodyMedium
-                        .copyWith(color: colorScheme.error)),
+              // 전에는 '잠시 뒤 다시 열어 주세요.'라고만 했다. 화면을 닫았다
+              // 다시 여는 수밖에 없었다. 그 자리에서 다시 읽는다(5차 407).
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(24),
+                children: [
+                  const SizedBox(height: 48),
+                  Text('불러오지 못했어요.',
+                      textAlign: TextAlign.center,
+                      style: context.texts.bodyMedium
+                          .copyWith(color: colorScheme.error)),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: OutlinedButton(
+                      key: const ValueKey('activity-retry'),
+                      onPressed: provider.refresh,
+                      child: const Text('다시 시도'),
+                    ),
+                  ),
+                ],
               );
             }
 
@@ -248,7 +235,8 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                     ),
                   ),
                   child: Text(
-                    _getTotalCountLabel(provider.activities.length),
+                    activityCountLabel(widget.boardType, widget.activityType,
+                        provider.activities.length),
                     style: context.texts.bodyMedium
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
