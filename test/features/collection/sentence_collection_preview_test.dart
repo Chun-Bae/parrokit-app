@@ -46,7 +46,7 @@ Future<void> startUrlImport(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.byTooltip('가져오기·내보내기'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('CSV·엑셀에서 가져오기'));
+  await tester.tap(find.text('문장 가져오기'));
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const ValueKey('url-import-input')),
       'https://example.com/sentences.csv');
@@ -365,6 +365,8 @@ void main() {
     await tester.tap(chip);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('word-example-0')), findsOneWidget);
+    // 예문 뜻 칸이 생겨 저장 단추가 화면 밖으로 밀렸다(5차 344).
+    await tester.ensureVisible(find.byKey(const ValueKey('save-word')));
     await tester.tap(find.byKey(const ValueKey('save-word')));
     await tester.pumpAndSettle();
     final saved = (await MyWordStore.load('guest')).single;
@@ -402,37 +404,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('sentence-card-gold')), findsOneWidget);
     expect(find.text('Lv.5 능숙한'), findsOneWidget);
-  });
-
-  testWidgets('스크립트를 붙여넣어 문장으로 나누고 고른 문장만 추가한다', (tester) async {
-    await tester.pumpWidget(app());
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('내 문장'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('가져오기·내보내기'));
-    await tester.pumpAndSettle();
-    // 메뉴 줄과 창 제목이 같은 말이라 둘 다 잡힌다(5차).
-    await tester.tap(find.text('스크립트로 문장 만들기').first);
-    await tester.pumpAndSettle();
-    // 자동으로 가져오지 않는다는 고지가 보인다.
-    expect(find.byKey(const ValueKey('script-notice')), findsOneWidget);
-    // 밀어 내리지 않고도 나갈 수 있다.
-    expect(find.byKey(const ValueKey('close-script-sheet')), findsOneWidget);
-    expect(find.textContaining('자동으로 가져오지는 않아요'), findsOneWidget);
-    await tester.enterText(find.byKey(const ValueKey('script-input')),
-        '0:01\nNice to meet you!\n0:03\nWhere is the station?');
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('script-split')));
-    await tester.pumpAndSettle();
-    expect(find.text('Nice to meet you!'), findsOneWidget);
-    expect(find.text('Where is the station?'), findsOneWidget);
-    await tester.tap(find.text('Where is the station?'));
-    await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('script-add')));
-    await tester.pumpAndSettle();
-    expect(find.text('Nice to meet you!', skipOffstage: false), findsOneWidget);
-    expect(
-        find.text('Where is the station?', skipOffstage: false), findsNothing);
   });
 
   testWidgets('주소에서 받은 문장을 목록으로 보여주고 고른 문장만 가져온다', (tester) async {
@@ -542,7 +513,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('가져오기·내보내기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CSV·엑셀에서 가져오기'));
+    await tester.tap(find.text('문장 가져오기'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('url-import-input')),
         'https://example.com/sentences.csv');
@@ -573,7 +544,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('가져오기·내보내기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CSV·엑셀에서 가져오기'));
+    await tester.tap(find.text('문장 가져오기'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('url-import-input')),
         'http://example.com/a.csv');

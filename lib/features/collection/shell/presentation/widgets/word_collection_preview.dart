@@ -1128,6 +1128,12 @@ class _AddWordSheetState extends State<AddWordSheet> {
   late final List<TextEditingController> _examples = [
     TextEditingController(text: widget.example)
   ];
+
+  /// 예문마다 뜻 입력칸. 나중에 고칠 때는 뜻을 적을 수 있는데 처음 만들 때는
+  /// 없어서 짝이 맞지 않았다(5차 344, 사용자 지적).
+  late final List<TextEditingController> _exampleMeanings = [
+    TextEditingController(text: widget.exampleTranslation)
+  ];
   late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
   bool saving = false;
   bool filling = false;
@@ -1212,7 +1218,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void dispose() {
     _word.dispose();
     _meaning.dispose();
-    for (final c in _examples) {
+    for (final c in [..._examples, ..._exampleMeanings]) {
       c.dispose();
     }
     super.dispose();
@@ -1220,12 +1226,18 @@ class _AddWordSheetState extends State<AddWordSheet> {
 
   void addExampleField() {
     if (_examples.length >= examplesMaxCount) return;
-    setState(() => _examples.add(TextEditingController()));
+    setState(() {
+      _examples.add(TextEditingController());
+      _exampleMeanings.add(TextEditingController());
+    });
   }
 
   void removeExampleField(int index) {
     if (_examples.length <= 1) return;
-    setState(() => _examples.removeAt(index).dispose());
+    setState(() {
+      _examples.removeAt(index).dispose();
+      _exampleMeanings.removeAt(index).dispose();
+    });
   }
 
   Future<void> save() async {
@@ -1238,13 +1250,16 @@ class _AddWordSheetState extends State<AddWordSheet> {
       meaning: _meaning.text,
       synonyms: clipWordSynonyms(_synonymList),
       examples: [
-        for (final c in _examples)
+        for (final (index, c) in _examples.indexed)
           WordExample(
             text: c.text,
-            // 미리 채워 준 문장은 그 문장의 뜻과 id를 그대로 붙인다.
-            translation: c.text.trim() == widget.example.trim()
-                ? widget.exampleTranslation
-                : '',
+            // 적은 뜻을 쓰고, 비어 있으면 미리 채워 준 문장의 뜻을 쓴다.
+            translation: _exampleMeanings[index].text.trim().isNotEmpty
+                ? _exampleMeanings[index].text
+                : (c.text.trim() == widget.example.trim()
+                    ? widget.exampleTranslation
+                    : ''),
+            // 미리 채워 준 문장은 그 문장과의 연결을 그대로 붙인다.
             sourceSentenceId: c.text.trim() == widget.example.trim()
                 ? widget.sourceSentenceId
                 : '',
@@ -1398,6 +1413,19 @@ class _AddWordSheetState extends State<AddWordSheet> {
                               onPressed: () => removeExampleField(index),
                               icon: const Icon(Icons.close_rounded, size: 20),
                             ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // 예문 뜻. 고치는 창과 같은 칸을 처음 만들 때도 둔다(5차 344).
+                  TextField(
+                    key: ValueKey('word-example-meaning-$index'),
+                    controller: _exampleMeanings[index],
+                    maxLength: 300,
+                    maxLines: 2,
+                    minLines: 1,
+                    decoration: const InputDecoration(
+                      labelText: '예문 뜻 (선택)',
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ],

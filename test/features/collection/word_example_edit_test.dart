@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_collection_preview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -91,4 +92,49 @@ void main() {
     expect(code, contains("ValueKey('edit-word-example-\$index')"));
     expect(code, contains('MyWordStore.updateExample('));
   });
+
+  testWidgets('단어를 처음 만들 때도 예문 뜻을 적을 수 있다', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: AddWordSheet(
+          accountId: 'guest',
+          language: '영어',
+          assist: _SilentAssist(),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'huge');
+    await tester.enterText(
+        find.byKey(const ValueKey('word-example-0')), 'It is huge.');
+    await tester.enterText(
+        find.byKey(const ValueKey('word-example-meaning-0')), '엄청 커요.');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('save-word')));
+    await tester.tap(find.byKey(const ValueKey('save-word')));
+    await tester.pumpAndSettle();
+
+    final saved = (await MyWordStore.loadFor('guest', '영어')).single;
+    expect(saved.examples.single.text, 'It is huge.');
+    expect(saved.examples.single.translation, '엄청 커요.');
+  });
+}
+
+/// 뜻 채우기를 부르지 않는 가짜(이 테스트는 서버를 쓰지 않는다).
+class _SilentAssist implements SentenceAssist {
+  @override
+  int? get remainingToday => 0;
+  @override
+  int? get dailyLimit => 0;
+  @override
+  Future<void> refreshUsage() async {}
+  @override
+  Future<SentenceSuggestion> suggest(
+          {required String language, required String text}) async =>
+      const SentenceSuggestion(translation: '', pronunciation: '');
+  @override
+  Future<String?> transliterate(
+          {required String language, required String hangul}) async =>
+      null;
 }
