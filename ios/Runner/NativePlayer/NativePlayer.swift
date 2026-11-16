@@ -141,6 +141,9 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
 
   /// 앱을 내릴 때 틀고 있었는지.
   private var wasPlayingOnBackground = false
+
+  /// 앱을 내릴 때 비디오 트랙을 실제로 껐는지(iOS 16 이하에서만 끈다).
+  private var didDisableVideoTracks = false
   private var appObservers: [NSObjectProtocol] = []
 
   private(set) var textureId: Int64 = 0
@@ -316,7 +319,16 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
   private func enterBackground() {
     wasPlayingOnBackground = player.rate != 0
     playerLayer.player = nil
-    let videoTracks = setVideoTracks(enabled: false)
+    // iOS 17부터는 audiovisualBackgroundPlaybackPolicy만으로 소리가 이어진다.
+    // 비디오 트랙을 껐다 켜면 돌아올 때 디코더가 다시 서면서 소리가 한 번
+    // 끊긴다(사용자 신고 2026-11-16). 그래서 17 이상에서는 건드리지 않는다.
+    var videoTracks = 0
+    if #available(iOS 17.0, *) {
+      didDisableVideoTracks = false
+    } else {
+      videoTracks = setVideoTracks(enabled: false)
+      didDisableVideoTracks = true
+    }
     displayLink?.isPaused = true
     NSLog("[NativePlayer] 내림: 틀고 있었나=%@ 비디오 트랙=%d",
           wasPlayingOnBackground ? "예" : "아니오", videoTracks)
@@ -335,7 +347,11 @@ final class NativePlayer: NSObject, FlutterTexture, FlutterStreamHandler {
 
   /// 돌아올 때. 그림을 다시 켠다.
   private func enterForeground() {
-    setVideoTracks(enabled: true)
+    // 끈 적이 있을 때만 다시 켠다. 안 끈 트랙을 켜도 디코더가 다시 선다.
+    if didDisableVideoTracks {
+      setVideoTracks(enabled: true)
+      didDisableVideoTracks = false
+    }
     playerLayer.player = player
     displayLink?.isPaused = false
     if wasPlayingOnBackground, player.rate == 0 {

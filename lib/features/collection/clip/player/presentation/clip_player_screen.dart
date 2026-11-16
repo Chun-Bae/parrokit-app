@@ -27,7 +27,6 @@ import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/player/native_player.dart';
 import 'package:parrokit/core/state/provider/clip_playback_holder.dart';
-import 'package:parrokit/core/app/config/app_config.dart';
 
 import 'package:parrokit/core/state/provider/clip_activity_provider.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
@@ -58,7 +57,8 @@ class ClipPlayerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final useNative = AppConfig.nativePlayer && nativePlayerSupported;
+    // 새 플레이어는 이제 늘 쓴다(사용자 결정 2026-11-16). 스위치는 없앴다.
+    final useNative = nativePlayerSupported;
     final borrowed = useNative
         ? context.read<ClipPlaybackHolder>().engineFor(
               clipId: clipId,

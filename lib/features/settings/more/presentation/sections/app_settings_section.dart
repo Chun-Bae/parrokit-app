@@ -33,10 +33,6 @@ class AppSettingsSection extends StatelessWidget {
             },
           ),
           const PracticeReminderTile(),
-          // 새 플레이어(네이티브). 테스트 배포는 release 빌드라 '개발' 칸이
-          // 통째로 숨겨져서 켜 볼 길이 없었다. 만드는 중이라는 것을 글로 적고
-          // 여기에 둔다(5차).
-          const _NativePlayerSwitch(),
           ValueListenableBuilder<bool>(
             valueListenable: AppConfig.newClipLibraryListenable,
             builder: (context, value, _) => SwitchTile(
@@ -52,31 +48,6 @@ class AppSettingsSection extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// 클립 플레이어를 새 플레이어(네이티브)로 돌릴지.
-class _NativePlayerSwitch extends StatefulWidget {
-  const _NativePlayerSwitch();
-
-  @override
-  State<_NativePlayerSwitch> createState() => _NativePlayerSwitchState();
-}
-
-class _NativePlayerSwitchState extends State<_NativePlayerSwitch> {
-  @override
-  Widget build(BuildContext context) {
-    return SwitchTile(
-      key: const ValueKey('dev-native-player-switch'),
-      icon: Icons.play_circle_outline_rounded,
-      title: '새 플레이어로 재생',
-      subtitle: '나가거나 앱을 내려도 끊기지 않아요. 만드는 중이에요',
-      value: AppConfig.nativePlayer,
-      onChanged: (value) {
-        setState(() => AppConfig.nativePlayer = value);
-        AppConfig.saveToPrefs();
-      },
     );
   }
 }

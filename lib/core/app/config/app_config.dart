@@ -11,10 +11,6 @@ class AppConfig {
   static double defaultPlaybackRate = 1.0; // 기본 재생 속도
   static bool pauseEachLine = false; // 전체 재생에서 자막 한 줄마다 멈춤
 
-  /// 클립 플레이어를 우리가 만든 네이티브 플레이어로 돌릴지(5차 4단계).
-  /// 아직 만드는 중이라 기본은 꺼짐. 더보기 > 개발에서 켠다.
-  static bool nativePlayer = false;
-
   /// 쇼츠
   static bool autoNext = true; // 자동 넘기기
   static bool shortsShowSubtitles = true; // 자막 표시(쇼츠)
@@ -47,7 +43,6 @@ class AppConfig {
     showSubtitles = p.getBool('showSubtitles') ?? true;
     defaultPlaybackRate = p.getDouble('defaultPlaybackRate') ?? 1.0;
     pauseEachLine = p.getBool('pauseEachLine') ?? false;
-    nativePlayer = p.getBool('nativePlayer') ?? false;
 
     autoNext = p.getBool('autoNext') ?? true;
     shortsShowSubtitles = p.getBool('shortsShowSubtitles') ?? true;
@@ -67,7 +62,6 @@ class AppConfig {
     await p.setBool('showSubtitles', showSubtitles);
     await p.setDouble('defaultPlaybackRate', defaultPlaybackRate);
     await p.setBool('pauseEachLine', pauseEachLine);
-    await p.setBool('nativePlayer', nativePlayer);
 
     await p.setBool('autoNext', autoNext);
     await p.setBool('shortsShowSubtitles', shortsShowSubtitles);

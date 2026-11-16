@@ -40,20 +40,19 @@ void main() {
 }
 
 void _nativePlayerSwitchTests() {
-  test("새 플레이어 스위치는 출시 빌드에서도 보인다", () {
-    // 테스트 배포는 release 빌드라 '개발' 칸(!kReleaseMode)이 통째로 숨겨져,
-    // 실기기에서 켜 볼 길이 없었다(사용자 신고).
+  test('새 플레이어는 늘 켜져 있고 스위치가 없다', () {
+    // 사용자가 확인하고 기본으로 쓰기로 정했다(2026-11-16). 설정값을 없앴다.
     final app = _code(
         'lib/features/settings/more/presentation/sections/app_settings_section.dart');
-    expect(app, contains("ValueKey('dev-native-player-switch')"));
-    expect(app, contains("title: '새 플레이어로 재생'"));
+    expect(app.contains('dev-native-player-switch'), isFalse);
+    expect(app.contains('새 플레이어로 재생'), isFalse);
 
-    final more =
-        _code('lib/features/settings/more/presentation/more_screen.dart');
-    // 시험 화면 링크는 개발 빌드에만 둔다.
-    expect(more, contains('if (!kReleaseMode)'));
-    expect(more, contains("ValueKey('dev-native-player')"));
-    expect(more.contains('_NativePlayerSwitch'), isFalse,
-        reason: "스위치는 '앱' 칸으로 옮겼다");
+    final config = _code('lib/core/app/config/app_config.dart');
+    expect(config.contains('nativePlayer'), isFalse,
+        reason: '껐다 켜는 값이 아니다');
+
+    final screen = _code(
+        'lib/features/collection/clip/player/presentation/clip_player_screen.dart');
+    expect(screen, contains('final useNative = nativePlayerSupported;'));
   });
 }
