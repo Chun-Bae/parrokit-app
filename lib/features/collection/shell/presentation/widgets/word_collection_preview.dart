@@ -18,6 +18,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/swipe_
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
+import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 
 /// 보관함 > 단어 탭. 문장 탭과 같은 구조로 "내 단어"를 보여준다(5차 6번).
 ///
@@ -739,7 +740,22 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(word.word, style: context.texts.headlineSmall),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(word.word, style: context.texts.headlineSmall),
+                ),
+                // 단어에는 소리가 아예 없었다. 문장 상세와 같은 단추를 둔다
+                // (5차 320).
+                SpeakControls(
+                  text: word.word,
+                  language: word.language,
+                  speakKey: const ValueKey('speak-word'),
+                  repeatKey: const ValueKey('repeat-word'),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

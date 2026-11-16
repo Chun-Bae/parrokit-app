@@ -27,8 +27,13 @@ class AudioFocus {
   void unregisterBackground(StopSound stop) => _stoppers.remove(stop);
 
   /// 다른 소리를 내기 직전에 부른다. 듣던 것이 있으면 모두 멈춘다.
-  Future<void> claim() async {
+  ///
+  /// [except]는 멈추지 않는다. 소리를 내려는 쪽이 자기 정지 콜백을 등록해 둔
+  /// 경우(읽어 주기 위젯) 자기 자신을 멈춰 켜자마자 꺼지는 일을 막는다(5차 320).
+  Future<void> claim({StopSound? except}) async {
     for (final stop in List<StopSound>.of(_stoppers)) {
+      // tear-off는 부를 때마다 새 객체라 identical로는 못 가린다. ==로 본다.
+      if (except != null && stop == except) continue;
       try {
         await stop();
       } catch (error) {

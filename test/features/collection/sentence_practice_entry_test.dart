@@ -29,7 +29,10 @@ void main() {
     expect(sheet, contains('addSpeakingXp('));
   });
 
-  test('말하기 전에는 듣기를 멈춘다', () {
-    expect(_code(_sheet), contains('onBeforeStart: () => unawaited(tts.stop())'));
+  test('말하기 전에는 듣던 소리를 멈춘다', () {
+    // 읽어 주기는 이제 공유 위젯(SpeakControls)이 들고 있다. 화면은 소리
+    // 차례를 가져오는 것으로 멈춘다(AudioFocus가 읽기·반복을 멈춘다, 5차 320).
+    expect(_code(_sheet),
+        contains('onBeforeStart: () => unawaited(AudioFocus.instance.claim())'));
   });
 }

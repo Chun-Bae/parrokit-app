@@ -14,6 +14,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/swipe_
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/sentence_seed.dart';
+import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 
 late FakeFirebaseFirestore firestore;
 late FirestoreSharedSentenceRepository repo;
@@ -179,9 +180,9 @@ void main() {
     await tester.tap(find.text('Hello there!'));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('문장 듣기'), findsOneWidget);
+    expect(find.byTooltip('듣기'), findsOneWidget);
     // 플러그인이 없는 테스트 환경에서도 예외 없이 동작한다.
-    await tester.tap(find.byTooltip('문장 듣기'));
+    await tester.tap(find.byTooltip('듣기'));
     await tester.pump();
     expect(tester.takeException(), isNull);
   });

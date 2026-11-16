@@ -6,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:parrokit/core/content/script_splitter.dart';
@@ -38,10 +37,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
-
-/// 기기에서 소리를 낼 수 없을 때(음성 기능 준비 실패).
-const String ttsNotReadyHint = '이 기기에서는 문장을 읽어 줄 수 없어요.';
+import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 
 class SentenceCollectionPreview extends StatefulWidget {
   const SentenceCollectionPreview(
@@ -1472,16 +1468,14 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   /// 마지막 연습 점수(100점 만점). 아직 안 했으면 null.
   int? lastPracticeScore;
-  final FlutterTts tts = FlutterTts();
-  bool ttsReady = false;
-  bool speaking = false;
+  /// 따라 말하기를 시작할 때 읽어 주던 소리를 멈추려고 들고 있는다.
+  final GlobalKey speakControlsKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     memoFocus.addListener(saveMemo);
     loadActivity();
-    unawaited(setupTts());
     unawaited(loadPublished());
   }
 
@@ -1589,68 +1583,6 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     }
   }
 
-  /// 반복 듣기 중인지(5차, 사용자 요청). 한 번 읽고 끝나면 다시 읽는다.
-  bool repeating = false;
-
-  /// 다음 반복을 기다리는 타이머. 시트를 닫으면 멈춘다.
-  Timer? repeatTimer;
-
-  /// 한 번 읽고 다음에 다시 읽기까지 쉬는 시간.
-  static const repeatGap = Duration(milliseconds: 700);
-
-  Future<void> setupTts() async {
-    try {
-      tts.setStartHandler(() => _setSpeaking(true));
-      tts.setCompletionHandler(() {
-        _setSpeaking(false);
-        _scheduleRepeat();
-      });
-      tts.setCancelHandler(() => _setSpeaking(false));
-      tts.setErrorHandler((_) => _setSpeaking(false));
-      await tts.setSpeechRate(0.45);
-      ttsReady = true;
-    } catch (_) {/* 음성을 쓸 수 없으면 소리만 나지 않는다. */}
-  }
-
-  void _setSpeaking(bool value) {
-    if (mounted) setState(() => speaking = value);
-  }
-
-  /// 반복 중이면 조금 쉬었다가 다시 읽는다.
-  void _scheduleRepeat() {
-    if (!repeating || !mounted) return;
-    repeatTimer?.cancel();
-    repeatTimer = Timer(repeatGap, () {
-      if (!repeating || !mounted) return;
-      unawaited(_speakOnce(claimFocus: false));
-    });
-  }
-
-  /// 반복 듣기를 켜고 끈다. 끄면 읽던 것도 멈춘다.
-  Future<void> toggleRepeat() async {
-    if (!ttsReady) {
-      showToast(ttsNotReadyHint);
-      return;
-    }
-    if (repeating) {
-      await _stopRepeat();
-      return;
-    }
-    setState(() => repeating = true);
-    // 먼저 틀고 나서 등록한다. 순서를 바꾸면 _speakOnce의 claim()이 방금
-    // 등록한 내 정지 콜백을 불러서, 켜자마자 꺼진다(5차에 실제로 그랬다).
-    await _speakOnce();
-    AudioFocus.instance.registerBackground(_stopRepeat);
-  }
-
-  Future<void> _stopRepeat() async {
-    repeatTimer?.cancel();
-    repeatTimer = null;
-    AudioFocus.instance.unregisterBackground(_stopRepeat);
-    if (mounted) setState(() => repeating = false);
-    await tts.stop();
-  }
-
   /// 마이크 버튼: 이 문장을 TTS로 읽어준다. 읽는 중에 다시 누르면 멈춘다.
   /// 따라 말하기 시도 하나를 기록에 남긴다(홈 무대와 같은 저장소).
   void recordPracticeAttempt(PracticeAttemptResult result) {
@@ -1695,46 +1627,6 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     await loadActivity();
   }
 
-  Future<void> speakSentence() async {
-    if (!ttsReady) {
-      // 전에는 눌러도 아무 일이 없었다. 까닭을 알린다(5차).
-      showToast(ttsNotReadyHint);
-      return;
-    }
-    if (speaking || repeating) {
-      // 듣는 중에 다시 누르면 멈춘다. 반복 중이었다면 반복도 끈다.
-      await _stopRepeat();
-      await tts.stop();
-      return;
-    }
-    await _speakOnce();
-  }
-
-  /// 한 번 읽는다. 반복은 완료 handler가 이어서 부른다.
-  ///
-  /// [claimFocus]가 참이면 다른 소리를 멈춘다. 반복으로 이어 읽을 때는
-  /// 이미 우리 차례라서 다시 뺏지 않는다(뺏으면 내 반복까지 멈춘다).
-  Future<void> _speakOnce({bool claimFocus = true}) async {
-    if (!ttsReady) return;
-    try {
-      final locale = _ttsLocales[widget.sentence.language] ?? 'en-US';
-      if (await tts.isLanguageAvailable(locale) != true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('이 언어의 음성이 기기에 없어요.')),
-          );
-        }
-        return;
-      }
-      await tts.setLanguage(locale);
-      // 이어 듣던 클립이 있으면 멈춘다. 둘이 겹쳐 울리지 않게(5차, 사용자 요청).
-      if (claimFocus) await AudioFocus.instance.claim();
-      await tts.speak(widget.sentence.text);
-    } catch (_) {
-      _setSpeaking(false);
-    }
-  }
-
   @override
   void dispose() {
     memoTimer?.cancel();
@@ -1743,9 +1635,6 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     saveMemo();
     memoController.dispose();
     memoFocus.dispose();
-    repeatTimer?.cancel();
-    AudioFocus.instance.unregisterBackground(_stopRepeat);
-    unawaited(tts.stop());
     super.dispose();
   }
 
@@ -1983,23 +1872,13 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 ),
               ),
               const SizedBox(width: 8),
-              IconButton.filledTonal(
-                key: const ValueKey('speak-sentence'),
-                tooltip: speaking && !repeating ? '듣기 멈추기' : '문장 듣기',
-                onPressed: speakSentence,
-                isSelected: speaking && !repeating,
-                icon: const Icon(Icons.mic_rounded),
-                selectedIcon: const Icon(Icons.graphic_eq_rounded),
-              ),
-              const SizedBox(width: 4),
-              // 한 번 듣고 끝나면 다시 읽어 준다(5차, 사용자 요청).
-              IconButton.filledTonal(
-                key: const ValueKey('repeat-sentence'),
-                tooltip: repeating ? '반복 멈추기' : '반복 듣기',
-                onPressed: toggleRepeat,
-                isSelected: repeating,
-                icon: const Icon(Icons.repeat_rounded),
-                selectedIcon: const Icon(Icons.repeat_on_rounded),
+              // 듣기·반복 듣기는 단어 상세와 같은 위젯을 쓴다(5차 320).
+              SpeakControls(
+                key: speakControlsKey,
+                text: widget.sentence.text,
+                language: widget.sentence.language,
+                speakKey: const ValueKey('speak-sentence'),
+                repeatKey: const ValueKey('repeat-sentence'),
               ),
             ],
           ),
@@ -2057,7 +1936,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               recognizer: recognizer,
               enabled: true,
               reduceMotion: MediaQuery.disableAnimationsOf(context),
-              onBeforeStart: () => unawaited(tts.stop()),
+              onBeforeStart: () => unawaited(AudioFocus.instance.claim()),
               onAttempt: recordPracticeAttempt,
               onComplete: (score) => unawaited(completePractice(score)),
             ),
