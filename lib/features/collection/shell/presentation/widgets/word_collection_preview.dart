@@ -234,14 +234,17 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
   }
 }
 
-/// 저장 결과를 한 줄로 알린다. 문장 상세에서 단어를 저장할 때도 쓴다.
+/// 저장 결과를 알릴 한 줄. 시트 안에 적을 때도 같은 말을 쓴다(5차 390).
+String wordAddResultText(WordAddResult result) => switch (result) {
+      WordAddResult.added => '단어를 저장했어요.',
+      WordAddResult.duplicate => '이미 저장한 단어예요.',
+      WordAddResult.savedOnDevice => '서버에 저장하지 못해 이 기기에 저장했어요.',
+    };
+
+/// 저장 결과를 한 줄로 알린다. 시트가 떠 있지 않을 때만 쓴다.
 void showWordAddResult(BuildContext context, WordAddResult result) {
-  final text = switch (result) {
-    WordAddResult.added => '단어를 저장했어요.',
-    WordAddResult.duplicate => '이미 저장한 단어예요.',
-    WordAddResult.savedOnDevice => '서버에 저장하지 못해 이 기기에 저장했어요.',
-  };
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  ScaffoldMessenger.of(context)
+      .showSnackBar(SnackBar(content: Text(wordAddResultText(result))));
 }
 
 class _ReviewSummary extends StatelessWidget {
@@ -1372,8 +1375,8 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     child: Text(
                       fillNote!,
                       key: const ValueKey('word-fill-note'),
-                      style: context.texts.bodySmall.copyWith(
-                          color: Theme.of(context).colorScheme.error),
+                      style: context.texts.bodySmall
+                          .copyWith(color: Theme.of(context).colorScheme.error),
                     ),
                   ),
                 // 뜻을 서버에 물어보는 것 말고, 웹 사전을 직접 열어 보고

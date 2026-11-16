@@ -27,7 +27,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/swipe_
 import '../open_shared_sentences.dart';
 import 'sentence_import_method_dialog.dart';
 import 'sentence_import_sheet.dart';
-import 'word_collection_preview.dart' show AddWordSheet, showWordAddResult;
+import 'word_collection_preview.dart' show AddWordSheet, wordAddResultText;
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -1755,6 +1755,10 @@ class _SentenceDetailSheet extends StatefulWidget {
 
 class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   SentenceActivity activity = const SentenceActivity();
+
+  /// 시트 안에 적는 알림. 토스트·스낵바는 시트 뒤에 깔려 보이지 않는다(5차 390).
+  String? notice;
+  Timer? noticeTimer;
   bool loading = true;
   bool changingRoutine = false;
 
@@ -1808,6 +1812,16 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     return null;
   }
 
+  /// 시트 안에 한 줄 알린다. 잠시 뒤 스스로 사라지고, 누르면 바로 사라진다.
+  void showNotice(String message) {
+    if (!mounted) return;
+    setState(() => notice = message);
+    noticeTimer?.cancel();
+    noticeTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => notice = null);
+    });
+  }
+
   Future<void> loadPublished() async {
     final repo = widget.repository;
     if (!canPublish || repo == null || widget.accountId == 'guest') return;
@@ -1821,9 +1835,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   Future<void> togglePublish() async {
     final repo = widget.repository;
     if (repo == null || publishing) return;
-    final messenger = ScaffoldMessenger.of(context);
     if (widget.accountId == 'guest') {
-      messenger.showSnackBar(const SnackBar(content: Text('로그인 후 공유할 수 있어요.')));
+      showNotice('로그인 후 공유할 수 있어요.');
       return;
     }
     if (published == true) {
@@ -1847,8 +1860,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     }
     if (published != true) {
       if (widget.authorName.trim().isEmpty) {
-        messenger.showSnackBar(
-            const SnackBar(content: Text(sentenceShareNeedsNickname)));
+        showNotice(sentenceShareNeedsNickname);
         return;
       }
       final ok = await showDialog<bool>(
@@ -1881,13 +1893,11 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       }
       final next = published != true;
       if (mounted) setState(() => published = next);
-      messenger.showSnackBar(
-          SnackBar(content: Text(next ? '둘러보기에 공유했어요.' : '공유를 취소했어요.')));
+      showNotice(next ? '둘러보기에 공유했어요.' : '공유를 취소했어요.');
     } on ShareLimitReachedException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$e 내일 다시 공유해 주세요.')));
+      showNotice('$e 내일 다시 공유해 주세요.');
     } catch (_) {
-      messenger
-          .showSnackBar(const SnackBar(content: Text('처리하지 못했어요. 다시 시도해 주세요.')));
+      showNotice('처리하지 못했어요. 다시 시도해 주세요.');
     } finally {
       if (mounted) setState(() => publishing = false);
     }
@@ -1916,7 +1926,6 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   /// 한 번 따라 말하기를 마쳤다. 연습 수를 올리고 XP를 더한다.
   Future<void> completePractice(double? score) async {
-    final messenger = ScaffoldMessenger.of(context);
     await SentenceActivityStore.incrementPractice(
       widget.accountId,
       widget.sentence.id,
@@ -1928,18 +1937,16 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     await PracticeCalendar.recordOne(widget.accountId);
     if (!mounted) return;
     final scoreText = score == null ? '' : '${(score * 100).round()}점 · ';
-    messenger.showSnackBar(SnackBar(
-      content: Text(total == null
-          ? '따라 말하기 완료 · $scoreText기록했어요'
-          : '따라 말하기 완료 · $scoreText+${xpText(xpGain(score))} XP'),
-      duration: const Duration(seconds: 2),
-    ));
+    showNotice(total == null
+        ? '따라 말하기 완료 · $scoreText기록했어요'
+        : '따라 말하기 완료 · $scoreText+${xpText(xpGain(score))} XP');
     await loadActivity();
   }
 
   @override
   void dispose() {
     memoTimer?.cancel();
+    noticeTimer?.cancel();
     memoFocus.removeListener(saveMemo);
     // 시트를 바로 닫아도 쓰던 메모가 사라지지 않게 마지막으로 저장한다.
     saveMemo();
@@ -1950,6 +1957,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   /// 문장을 고친다. 내 문장일 때만 보인다.
   Future<void> editSentence() async {
+    // 시트를 닫고 알리므로 스낵바가 보인다
     final messenger = ScaffoldMessenger.of(context);
     final next = await showDialog<
         ({String text, String pronunciation, String translation})>(
@@ -1967,10 +1975,10 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     );
     if (!mounted) return;
     if (!saved) {
-      messenger.showSnackBar(
-          const SnackBar(content: Text('고치지 못했어요. 같은 문장이 이미 있는지 확인해 주세요.')));
+      showNotice('고치지 못했어요. 같은 문장이 이미 있는지 확인해 주세요.');
       return;
     }
+    // 시트를 닫고 알리므로 스낵바가 보인다
     messenger.showSnackBar(const SnackBar(content: Text('문장을 고쳤어요.')));
     // 고친 내용으로 목록과 앵무새가 다시 읽도록, 창을 닫는다.
     if (mounted) Navigator.pop(context);
@@ -2033,9 +2041,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     } catch (_) {
       if (mounted) {
         setState(() => activity = before);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('루틴 설정을 저장하지 못했어요.')),
-        );
+        showNotice('루틴 설정을 저장하지 못했어요.');
       }
     } finally {
       if (mounted) setState(() => changingRoutine = false);
@@ -2044,7 +2050,6 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
 
   Future<void> removeSentence() async {
     final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -2069,9 +2074,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       await MySentenceStore.remove(widget.accountId, widget.sentence.id);
       navigator.pop();
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('삭제하지 못했어요. 다시 시도해 주세요.')),
-      );
+      showNotice('삭제하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -2092,6 +2095,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
             sharedLiked = !next;
             sharedLikes += next ? -1 : 1;
           });
+          showNotice('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
         }
       }
       return;
@@ -2108,9 +2112,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => activity = before);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('좋아요를 저장하지 못했어요. 다시 시도해 주세요.')),
-      );
+      showNotice('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -2142,10 +2144,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
           ),
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text(added ? "'${choice.word}'에 예문을 더했어요." : '이미 같은 예문이 있어요.'),
-        ));
+        showNotice(added ? "'${choice.word}'에 예문을 더했어요." : '이미 같은 예문이 있어요.');
         return;
       }
     }
@@ -2162,7 +2161,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       ),
     );
     if (!mounted || result == null) return;
-    showWordAddResult(context, result);
+    showNotice(wordAddResultText(result));
   }
 
   Future<void> shareSentence() async {
@@ -2193,298 +2192,336 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       mine:
           widget.shared == null || widget.shared!.authorId == widget.accountId,
     );
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        4,
-        20,
-        MediaQuery.paddingOf(context).bottom,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                ),
-                child: Text(
-                  '${widget.sentence.language} · $headerTopic',
-                  style: context.texts.labelSmall,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _MasteryBadge(
-                  mastery: masteryOf(activity), affinity: affinityOf(activity)),
-              const Spacer(),
-              IconButton(
-                key: const ValueKey('like-sentence'),
-                tooltip: liked ? '좋아요 취소' : '좋아요',
-                onPressed: loading && widget.shared == null ? null : toggleLike,
-                icon: Icon(
-                  liked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: liked ? context.collectionTokens.liked : null,
-                ),
-              ),
-              if (widget.shared != null) ...[
-                Text('$sharedLikes', style: context.texts.bodySmall),
-                const SizedBox(width: 12),
-                Icon(Icons.download_rounded,
-                    size: 18, color: colors.onSurfaceVariant),
-                const SizedBox(width: 3),
-                Text('$sharedImports',
-                    key: const ValueKey('detail-import-count'),
-                    style: context.texts.bodySmall),
-              ],
-              // 내가 저장한 문장만 고칠 수 있다(5차, 사용자 요청).
-              if (widget.saved && widget.shared == null)
-                IconButton(
-                  key: const ValueKey('edit-sentence'),
-                  tooltip: '문장 고치기',
-                  onPressed: editSentence,
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-              IconButton(
-                tooltip: '문장 공유',
-                onPressed: shareSentence,
-                icon: const Icon(Icons.ios_share_rounded),
-              ),
-            ],
+    final sheetNotice = notice;
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            4,
+            20,
+            MediaQuery.paddingOf(context).bottom,
           ),
-          const SizedBox(height: 14),
-          Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  widget.sentence.text,
-                  style: context.texts.headlineMedium.copyWith(height: 1.25),
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                    ),
+                    child: Text(
+                      '${widget.sentence.language} · $headerTopic',
+                      style: context.texts.labelSmall,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _MasteryBadge(
+                      mastery: masteryOf(activity),
+                      affinity: affinityOf(activity)),
+                  const Spacer(),
+                  IconButton(
+                    key: const ValueKey('like-sentence'),
+                    tooltip: liked ? '좋아요 취소' : '좋아요',
+                    onPressed:
+                        loading && widget.shared == null ? null : toggleLike,
+                    icon: Icon(
+                      liked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: liked ? context.collectionTokens.liked : null,
+                    ),
+                  ),
+                  if (widget.shared != null) ...[
+                    Text('$sharedLikes', style: context.texts.bodySmall),
+                    const SizedBox(width: 12),
+                    Icon(Icons.download_rounded,
+                        size: 18, color: colors.onSurfaceVariant),
+                    const SizedBox(width: 3),
+                    Text('$sharedImports',
+                        key: const ValueKey('detail-import-count'),
+                        style: context.texts.bodySmall),
+                  ],
+                  // 내가 저장한 문장만 고칠 수 있다(5차, 사용자 요청).
+                  if (widget.saved && widget.shared == null)
+                    IconButton(
+                      key: const ValueKey('edit-sentence'),
+                      tooltip: '문장 고치기',
+                      onPressed: editSentence,
+                      icon: const Icon(Icons.edit_outlined),
+                    ),
+                  IconButton(
+                    tooltip: '문장 공유',
+                    onPressed: shareSentence,
+                    icon: const Icon(Icons.ios_share_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.sentence.text,
+                      style:
+                          context.texts.headlineMedium.copyWith(height: 1.25),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // 듣기·반복 듣기는 단어 상세와 같은 위젯을 쓴다(5차 320).
+                  SpeakControls(
+                    key: speakControlsKey,
+                    text: widget.sentence.text,
+                    language: widget.sentence.language,
+                    speakKey: const ValueKey('speak-sentence'),
+                    repeatKey: const ValueKey('repeat-sentence'),
+                    // 끝까지 들으면 '듣기 N회'에 적는다. 홈 무대만 세고 있어서
+                    // 여기서 들으면 0회 그대로였다(5차 338, 사용자 신고).
+                    onListened: countListen,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.sentence.pronunciation,
+                style: context.texts.bodyMedium.copyWith(color: colors.primary),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                widget.sentence.translation,
+                style: context.texts.bodyLarge
+                    .copyWith(color: colors.onSurfaceVariant),
+              ),
+              if (widget.sentence.author.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Row(
+                  key: const ValueKey('sentence-author'),
+                  children: [
+                    // 올린 사람 프로필 사진. 없으면 사람 아이콘(5차 338, 사용자 요청).
+                    AuthorAvatar(
+                        authorId:
+                            widget.shared?.authorId ?? widget.sentence.authorId,
+                        radius: 11,
+                        iconSize: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.sentence.author,
+                      style: context.texts.labelMedium
+                          .copyWith(color: colors.onSurfaceVariant),
+                    ),
+                  ],
                 ),
+              ],
+              const SizedBox(height: 18),
+              _WordPickRow(
+                sentence: widget.sentence,
+                onPick: saveWord,
               ),
-              const SizedBox(width: 8),
-              // 듣기·반복 듣기는 단어 상세와 같은 위젯을 쓴다(5차 320).
-              SpeakControls(
-                key: speakControlsKey,
-                text: widget.sentence.text,
-                language: widget.sentence.language,
-                speakKey: const ValueKey('speak-sentence'),
-                repeatKey: const ValueKey('repeat-sentence'),
-                // 끝까지 들으면 '듣기 N회'에 적는다. 홈 무대만 세고 있어서
-                // 여기서 들으면 0회 그대로였다(5차 338, 사용자 신고).
-                onListened: countListen,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.sentence.pronunciation,
-            style: context.texts.bodyMedium.copyWith(color: colors.primary),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            widget.sentence.translation,
-            style: context.texts.bodyLarge
-                .copyWith(color: colors.onSurfaceVariant),
-          ),
-          if (widget.sentence.author.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Row(
-              key: const ValueKey('sentence-author'),
-              children: [
-                // 올린 사람 프로필 사진. 없으면 사람 아이콘(5차 338, 사용자 요청).
-                AuthorAvatar(
-                    authorId:
-                        widget.shared?.authorId ?? widget.sentence.authorId,
-                    radius: 11,
-                    iconSize: 14),
-                const SizedBox(width: 6),
+              // 내 기록은 내 문장일 때만 보인다. 저장하지 않은 남의 문장에는 보이지 않는다.
+              if (widget.saved) ...[
+                const SizedBox(height: 18),
+                // 위에도 문장이 있어서, 아래 줄이 '연습하는 자리'라는 것을
+                // 이름으로 알린다(5차).
+                Row(
+                  children: [
+                    Icon(Icons.mic_rounded, size: 16, color: colors.primary),
+                    const SizedBox(width: 6),
+                    Text('따라 말하기',
+                        style: context.texts.labelLarge
+                            .copyWith(color: colors.onSurface)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SpeechPracticeView(
+                  key: const ValueKey('sentence-speech-practice'),
+                  phrase: widget.sentence.text,
+                  localeId: _ttsLocales[widget.sentence.language] ?? 'en-US',
+                  recognizer: recognizer,
+                  enabled: true,
+                  reduceMotion: MediaQuery.disableAnimationsOf(context),
+                  onBeforeStart: () => unawaited(AudioFocus.instance.claim()),
+                  onAttempt: recordPracticeAttempt,
+                  onComplete: (score) => unawaited(completePractice(score)),
+                ),
+                const SizedBox(height: 22),
+                const _PrivateSectionLabel(),
+                const SizedBox(height: 12),
+                SentenceAffinityBar(
+                  key: const ValueKey('sentence-affinity'),
+                  affinity: affinityOf(activity),
+                  loading: loading,
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActivityCountCard(
+                        icon: Icons.headphones_rounded,
+                        // 홈 '내 문장 기록'과 같은 말·단위로(5차). 예전 '0번 내가 들음'.
+                        label: '듣기',
+                        count: activity.listenCount,
+                        loading: loading,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActivityCountCard(
+                        icon: Icons.mic_rounded,
+                        label: '따라 말하기',
+                        count: activity.practiceCount,
+                        loading: loading,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _HistoryLine(
+                  icon: Icons.history_rounded,
+                  text: activity.lastPracticedAt == null
+                      ? '아직 따라 말해 보지 않았어요'
+                      : '마지막 연습 ${relativeDayLabel(DateTime.now(), activity.lastPracticedAt!)}',
+                ),
+                if (widget.sentence.addedAt != null)
+                  _HistoryLine(
+                    icon: Icons.bookmark_added_outlined,
+                    text:
+                        '${relativeDayLabel(DateTime.now(), widget.sentence.addedAt!)} 추가',
+                  ),
+              ],
+              if (widget.saved) ...[
+                const SizedBox(height: 14),
+                TextField(
+                  key: const ValueKey('sentence-memo'),
+                  controller: memoController,
+                  focusNode: memoFocus,
+                  enabled: !loading,
+                  minLines: 2,
+                  maxLines: 5,
+                  maxLength: 500,
+                  textInputAction: TextInputAction.newline,
+                  onChanged: changeMemo,
+                  onTapOutside: (_) => memoFocus.unfocus(),
+                  decoration: const InputDecoration(
+                    labelText: '메모',
+                    hintText: '이 문장에 대한 메모를 남겨 보세요',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              ClipSentenceMatchesSection(sentence: widget.sentence.text),
+              const SizedBox(height: 10),
+              if (!widget.saved &&
+                  widget.shared != null &&
+                  widget.onSaveShared != null) ...[
+                FilledButton.icon(
+                  key: const ValueKey('save-shared-sentence'),
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    await widget.onSaveShared!();
+                    if (navigator.mounted) navigator.pop();
+                  },
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  label: const Text('내 문장으로 가져오기'),
+                ),
+                const SizedBox(height: 6),
+              ],
+              if (widget.saved)
+                SwitchListTile(
+                  value: activity.routineEnabled,
+                  onChanged: loading || changingRoutine ? null : changeRoutine,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  secondary: const Icon(Icons.repeat_rounded),
+                  title: const Text(
+                    '홈 말하기 루틴',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(
+                    activity.routineEnabled
+                        ? '앵무새가 홈에서 이 문장을 말해요.'
+                        : '홈의 자동·따라 말하기 순환에서 제외돼요.',
+                  ),
+                ),
+              if (widget.saved && widget.sentence.id.startsWith('my-')) ...[
+                TextButton.icon(
+                  onPressed: removeSentence,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('내 문장에서 삭제'),
+                ),
+              ],
+              const SizedBox(height: 10),
+              if (widget.saved && widget.shared == null && !canPublish) ...[
+                FilledButton.icon(
+                  key: const ValueKey('publish-sentence-disabled'),
+                  onPressed: null,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  icon: const Icon(Icons.public_off_rounded),
+                  label: const Text('둘러보기에 공유하기'),
+                ),
+                const SizedBox(height: 6),
                 Text(
-                  widget.sentence.author,
-                  style: context.texts.labelMedium
+                  publishBlockedReason ?? '',
+                  textAlign: TextAlign.center,
+                  style: context.texts.bodySmall
                       .copyWith(color: colors.onSurfaceVariant),
                 ),
               ],
-            ),
-          ],
-          const SizedBox(height: 18),
-          _WordPickRow(
-            sentence: widget.sentence,
-            onPick: saveWord,
+              if (canPublish)
+                FilledButton.icon(
+                  key: const ValueKey('publish-sentence'),
+                  onPressed: publishing ? null : togglePublish,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  icon: Icon(published == true
+                      ? Icons.public_off_rounded
+                      : Icons.public_rounded),
+                  label: Text(published == true ? '둘러보기 공유 취소' : '둘러보기에 공유하기'),
+                ),
+            ],
           ),
-          // 내 기록은 내 문장일 때만 보인다. 저장하지 않은 남의 문장에는 보이지 않는다.
-          if (widget.saved) ...[
-            const SizedBox(height: 18),
-            // 위에도 문장이 있어서, 아래 줄이 '연습하는 자리'라는 것을
-            // 이름으로 알린다(5차).
-            Row(
-              children: [
-                Icon(Icons.mic_rounded, size: 16, color: colors.primary),
-                const SizedBox(width: 6),
-                Text('따라 말하기',
-                    style: context.texts.labelLarge
-                        .copyWith(color: colors.onSurface)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            SpeechPracticeView(
-              key: const ValueKey('sentence-speech-practice'),
-              phrase: widget.sentence.text,
-              localeId: _ttsLocales[widget.sentence.language] ?? 'en-US',
-              recognizer: recognizer,
-              enabled: true,
-              reduceMotion: MediaQuery.disableAnimationsOf(context),
-              onBeforeStart: () => unawaited(AudioFocus.instance.claim()),
-              onAttempt: recordPracticeAttempt,
-              onComplete: (score) => unawaited(completePractice(score)),
-            ),
-            const SizedBox(height: 22),
-            const _PrivateSectionLabel(),
-            const SizedBox(height: 12),
-            SentenceAffinityBar(
-              key: const ValueKey('sentence-affinity'),
-              affinity: affinityOf(activity),
-              loading: loading,
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActivityCountCard(
-                    icon: Icons.headphones_rounded,
-                    // 홈 '내 문장 기록'과 같은 말·단위로(5차). 예전 '0번 내가 들음'.
-                    label: '듣기',
-                    count: activity.listenCount,
-                    loading: loading,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActivityCountCard(
-                    icon: Icons.mic_rounded,
-                    label: '따라 말하기',
-                    count: activity.practiceCount,
-                    loading: loading,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _HistoryLine(
-              icon: Icons.history_rounded,
-              text: activity.lastPracticedAt == null
-                  ? '아직 따라 말해 보지 않았어요'
-                  : '마지막 연습 ${relativeDayLabel(DateTime.now(), activity.lastPracticedAt!)}',
-            ),
-            if (widget.sentence.addedAt != null)
-              _HistoryLine(
-                icon: Icons.bookmark_added_outlined,
-                text:
-                    '${relativeDayLabel(DateTime.now(), widget.sentence.addedAt!)} 추가',
-              ),
-          ],
-          if (widget.saved) ...[
-            const SizedBox(height: 14),
-            TextField(
-              key: const ValueKey('sentence-memo'),
-              controller: memoController,
-              focusNode: memoFocus,
-              enabled: !loading,
-              minLines: 2,
-              maxLines: 5,
-              maxLength: 500,
-              textInputAction: TextInputAction.newline,
-              onChanged: changeMemo,
-              onTapOutside: (_) => memoFocus.unfocus(),
-              decoration: const InputDecoration(
-                labelText: '메모',
-                hintText: '이 문장에 대한 메모를 남겨 보세요',
-                alignLabelWithHint: true,
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-          const SizedBox(height: 14),
-          ClipSentenceMatchesSection(sentence: widget.sentence.text),
-          const SizedBox(height: 10),
-          if (!widget.saved &&
-              widget.shared != null &&
-              widget.onSaveShared != null) ...[
-            FilledButton.icon(
-              key: const ValueKey('save-shared-sentence'),
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                await widget.onSaveShared!();
-                if (navigator.mounted) navigator.pop();
+        ),
+        // 시트 안에 띄운다. 스낵바·토스트는 시트 뒤에 깔려 보이지 않는다(5차 390).
+        if (sheetNotice != null)
+          Positioned(
+            left: 16,
+            right: 16,
+            // 아래가 아니라 위에 띄운다. 아래에 두면 '둘러보기에 공유하기'
+            // 같은 시트 맨 밑 버튼을 가린다(5차 390).
+            top: 4,
+            child: GestureDetector(
+              onTap: () {
+                noticeTimer?.cancel();
+                setState(() => notice = null);
               },
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
-              icon: const Icon(Icons.bookmark_add_outlined),
-              label: const Text('내 문장으로 가져오기'),
-            ),
-            const SizedBox(height: 6),
-          ],
-          if (widget.saved)
-            SwitchListTile(
-              value: activity.routineEnabled,
-              onChanged: loading || changingRoutine ? null : changeRoutine,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-              secondary: const Icon(Icons.repeat_rounded),
-              title: const Text(
-                '홈 말하기 루틴',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              subtitle: Text(
-                activity.routineEnabled
-                    ? '앵무새가 홈에서 이 문장을 말해요.'
-                    : '홈의 자동·따라 말하기 순환에서 제외돼요.',
+              child: Material(
+                color: colors.inverseSurface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  child: Text(
+                    sheetNotice,
+                    key: const ValueKey('sentence-detail-notice'),
+                    style: context.texts.bodyMedium
+                        .copyWith(color: colors.onInverseSurface),
+                  ),
+                ),
               ),
             ),
-          if (widget.saved && widget.sentence.id.startsWith('my-')) ...[
-            TextButton.icon(
-              onPressed: removeSentence,
-              icon: const Icon(Icons.delete_outline_rounded),
-              label: const Text('내 문장에서 삭제'),
-            ),
-          ],
-          const SizedBox(height: 10),
-          if (widget.saved && widget.shared == null && !canPublish) ...[
-            FilledButton.icon(
-              key: const ValueKey('publish-sentence-disabled'),
-              onPressed: null,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
-              icon: const Icon(Icons.public_off_rounded),
-              label: const Text('둘러보기에 공유하기'),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              publishBlockedReason ?? '',
-              textAlign: TextAlign.center,
-              style: context.texts.bodySmall
-                  .copyWith(color: colors.onSurfaceVariant),
-            ),
-          ],
-          if (canPublish)
-            FilledButton.icon(
-              key: const ValueKey('publish-sentence'),
-              onPressed: publishing ? null : togglePublish,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-              ),
-              icon: Icon(published == true
-                  ? Icons.public_off_rounded
-                  : Icons.public_rounded),
-              label: Text(published == true ? '둘러보기 공유 취소' : '둘러보기에 공유하기'),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
