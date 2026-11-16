@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
+import 'package:parrokit/features/settings/more/presentation/exchange_quick_amount.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -256,15 +257,20 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               Wrap(
                 spacing: 8,
                 children: [
-                  for (final (label, value) in _quickAmounts(
+                  for (final (label, value, blocked) in _quickAmounts(
                       _isParrotsToCrackers ? user.parrots : user.crackers))
-                    ActionChip(
-                      label: Text(label),
-                      onPressed: value <= 0
-                          ? null
-                          : () => setState(() {
-                                _amountController.text = '$value';
-                              }),
+                    // 막힌 칩도 눌리게 두고 까닭을 말해 준다(5차). 예전에는
+                    // 흐린 채 눌러도 아무 일이 없어 왜 안 되는지 몰랐다.
+                    Opacity(
+                      opacity: blocked == null ? 1 : 0.4,
+                      child: ActionChip(
+                        label: Text(label),
+                        onPressed: blocked != null
+                            ? () => showToast(blocked)
+                            : () => setState(() {
+                                  _amountController.text = '$value';
+                                }),
+                      ),
                     ),
                 ],
               ),
@@ -355,15 +361,26 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
   /// 빠른 수량 칩. 패롯은 1·5·10·전부, 크래커는 1,000 단위로 1,000·5,000·
   /// 10,000·전부(1,000 단위로 내림). 가진 것보다 많으면 누를 수 없다.
-  List<(String, int)> _quickAmounts(int balance) {
+  List<(String, int, String?)> _quickAmounts(int balance) {
     final format = NumberFormat.decimalPattern('ko');
     final steps =
         _isParrotsToCrackers ? const [1, 5, 10] : const [1000, 5000, 10000];
-    final all = _isParrotsToCrackers ? balance : (balance ~/ 1000) * 1000;
+    final unit = _isParrotsToCrackers ? '패롯' : '크래커';
+    final unitSize = _isParrotsToCrackers ? 1 : 1000;
+    final all = (balance ~/ unitSize) * unitSize;
     return [
       for (final step in steps)
-        (format.format(step), step <= balance ? step : 0),
-      ('전부', all),
+        (
+          format.format(step),
+          step,
+          quickStepBlockedReason(unit: unit, balance: balance, step: step),
+        ),
+      (
+        '전부',
+        all,
+        quickAllBlockedReason(
+            unit: unit, balance: balance, unitSize: unitSize),
+      ),
     ];
   }
 
