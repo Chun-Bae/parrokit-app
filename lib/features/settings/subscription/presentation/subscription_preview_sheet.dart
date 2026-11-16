@@ -5,7 +5,6 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
@@ -16,8 +15,22 @@ Future<void> showSubscriptionPreviewSheet(BuildContext context) {
   );
 }
 
-class SubscriptionPreviewSheet extends StatelessWidget {
+class SubscriptionPreviewSheet extends StatefulWidget {
   const SubscriptionPreviewSheet({super.key});
+
+  @override
+  State<SubscriptionPreviewSheet> createState() =>
+      _SubscriptionPreviewSheetState();
+}
+
+class _SubscriptionPreviewSheetState extends State<SubscriptionPreviewSheet> {
+  /// 누른 결과를 시트 안에 적는다(5차 370).
+  ///
+  /// 전에는 토스트로 알렸는데 이 화면은 바텀시트라 시트가 아래를 덮어
+  /// 보이지 않았다(368·369에서 다른 시트로 확인).
+  String? note;
+
+  void _say(String message) => setState(() => note = message);
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +54,8 @@ class SubscriptionPreviewSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             for (final copy in subscriptionTiers) ...[
-              _TierCard(copy: copy),
+              _TierCard(
+                  copy: copy, onStart: () => _say(subscriptionNotReadyToast)),
               const SizedBox(height: 12),
             ],
             Text(
@@ -58,9 +72,19 @@ class SubscriptionPreviewSheet extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(
               key: const ValueKey('subscription-restore'),
-              onPressed: () => showToast(subscriptionNotReadyToast),
+              onPressed: () => _say(subscriptionNotReadyToast),
               child: const Text(subscriptionRestoreLabel),
             ),
+            if (note != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 4),
+                child: Text(
+                  note!,
+                  key: const ValueKey('subscription-preview-note'),
+                  textAlign: TextAlign.center,
+                  style: context.texts.bodySmall.copyWith(color: cs.error),
+                ),
+              ),
             const SizedBox(height: 4),
             // 미리보기라는 것을 숨기지 않는다.
             Text(
@@ -77,9 +101,10 @@ class SubscriptionPreviewSheet extends StatelessWidget {
 }
 
 class _TierCard extends StatelessWidget {
-  const _TierCard({required this.copy});
+  const _TierCard({required this.copy, required this.onStart});
 
   final SubscriptionTierCopy copy;
+  final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +139,7 @@ class _TierCard extends StatelessWidget {
           const SizedBox(height: 10),
           FilledButton(
             key: ValueKey('start-${copy.tier.name}'),
-            onPressed: () => showToast(subscriptionNotReadyToast),
+            onPressed: onStart,
             child: Text(copy.startLabel),
           ),
         ],

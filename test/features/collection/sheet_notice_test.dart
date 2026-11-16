@@ -46,6 +46,8 @@ void main() {
     for (final path in [
       'lib/features/collection/shell/presentation/widgets/share_my_sentence_sheet.dart',
       'lib/features/collection/shell/presentation/widgets/sentence_import_sheet.dart',
+      'lib/features/settings/subscription/presentation/subscription_preview_sheet.dart',
+      'lib/features/content-studio/chat-bot/presentation/widgets/model_selector_sheet.dart',
     ]) {
       final code = File(path).readAsStringSync();
       expect(code.contains('showToast('), isFalse, reason: path);

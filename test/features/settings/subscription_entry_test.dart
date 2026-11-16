@@ -81,6 +81,23 @@ void main() {
           findsOneWidget);
     });
 
+    testWidgets('시작·복원을 누르면 까닭을 시트 안에 적는다(5차 370)', (tester) async {
+      await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
+      expect(find.byKey(const ValueKey('subscription-preview-note')),
+          findsNothing);
+
+      await tester.tap(find.text('라이트 시작하기'));
+      await tester.pump();
+      // 바텀시트라 토스트는 가려진다. 시트 안에 적는다.
+      expect(
+          tester
+              .widget<Text>(
+                  find.byKey(const ValueKey('subscription-preview-note')))
+              .data,
+          subscriptionNotReadyToast);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
     test('안내 글이 앱 말투다', () {
       for (final text in [
         subscriptionFreeBody,

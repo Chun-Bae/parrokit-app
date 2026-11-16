@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 import '../chat_bot_provider.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+
+/// 아직 고를 수 없는 모델의 까닭. 카드 안에 적는다(5차 370).
+const String chatbotProLockedReason = '출시 후 이용할 수 있어요.';
 
 void showModelSelectorBottomSheet(
     BuildContext context, ChatBotProvider provider) {
@@ -70,9 +72,10 @@ void showModelSelectorBottomSheet(
               isSelected: provider.selectedModel == 'gemini-2.5-pro',
               accentColor: context.tokens.secondary,
               locked: true,
-              onTap: () {
-                showToast('Gemini Pro는 유료 플랜 전용이에요. 출시 후 이용할 수 있어요.');
-              },
+              // 눌렀을 때 토스트로 알렸는데, 이 화면은 바텀시트라 시트가
+              // 아래를 덮어 보이지 않았다(5차 369). 카드에 적어 둔다.
+              lockedReason: chatbotProLockedReason,
+              onTap: null,
             ),
             const SizedBox(height: 16),
           ],
@@ -93,6 +96,7 @@ class ModelOptionCard extends StatelessWidget {
     required this.accentColor,
     required this.onTap,
     this.locked = false,
+    this.lockedReason,
   });
 
   final String title;
@@ -101,10 +105,15 @@ class ModelOptionCard extends StatelessWidget {
   final String costText;
   final bool isSelected;
   final Color accentColor;
-  final VoidCallback onTap;
+
+  /// 고를 수 없는 모델이면 null.
+  final VoidCallback? onTap;
 
   /// 유료 플랜 전용 등 아직 이용할 수 없는 모델인지 여부.
   final bool locked;
+
+  /// 고를 수 없는 까닭. 카드 안에 적는다(5차 370).
+  final String? lockedReason;
 
   @override
   Widget build(BuildContext context) {
@@ -177,6 +186,15 @@ class ModelOptionCard extends StatelessWidget {
                         height: 1.35,
                       ),
                     ),
+                    if (locked && lockedReason != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        lockedReason!,
+                        key: const ValueKey('model-locked-reason'),
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.error),
+                      ),
+                    ],
                   ],
                 ),
               ),
