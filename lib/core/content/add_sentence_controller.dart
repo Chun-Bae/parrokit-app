@@ -27,6 +27,11 @@ enum UsageStatus {
 }
 
 /// 저장할 문장 한 개의 입력값.
+/// 문장 입력 한도(5차, 사용자 요청: 80 → 200).
+///
+/// 80자는 대사 한 줄에는 맞지만, 조금만 긴 문장을 넣으려면 끊어야 했다.
+const int sentenceMaxLength = 200;
+
 class AddedSentence {
   const AddedSentence({
     required this.language,

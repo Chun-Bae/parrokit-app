@@ -456,24 +456,52 @@ class MyWordStore {
     return false;
   }
 
-  /// 단어장에서 이 낱말(또는 짐작한 원형)과 같은 단어를 찾는다. 없으면 null.
-  static Future<MyWord?> findSameOrBaseForm(
+  /// 단어장에서 이 낱말과 같거나 어형만 다른 단어들(5차, 사용자 요청).
+  ///
+  /// 같은 낱말이 먼저, 그다음이 어형만 다른 것들이다. 양쪽으로 본다:
+  /// 고른 'projections'의 원형이 단어장에 있는 경우와, 단어장의
+  /// 'projections'가 고른 'projection'에서 온 경우 둘 다 찾는다.
+  static Future<List<MyWord>> findRelatedWords(
     String accountId, {
     required String language,
     required String word,
   }) async {
     final words = await loadFor(accountId, language);
     final typed = _normalize(word);
+    final same = <MyWord>[];
+    final related = <MyWord>[];
+
+    final typedBases = canGuessBaseForm(language)
+        ? guessBaseForms(word).map(_normalize).toSet()
+        : <String>{};
+
     for (final w in words) {
-      if (_normalize(w.word) == typed) return w;
-    }
-    if (!canGuessBaseForm(language)) return null;
-    for (final base in guessBaseForms(word)) {
-      for (final w in words) {
-        if (_normalize(w.word) == _normalize(base)) return w;
+      final saved = _normalize(w.word);
+      if (saved == typed) {
+        same.add(w);
+        continue;
+      }
+      if (typedBases.contains(saved)) {
+        related.add(w);
+        continue;
+      }
+      if (canGuessBaseForm(language) &&
+          guessBaseForms(w.word).map(_normalize).contains(typed)) {
+        related.add(w);
       }
     }
-    return null;
+    return [...same, ...related];
+  }
+
+  /// 같은 단어 하나만 필요할 때. 없으면 null.
+  static Future<MyWord?> findSameOrBaseForm(
+    String accountId, {
+    required String language,
+    required String word,
+  }) async {
+    final found = await findRelatedWords(accountId,
+        language: language, word: word);
+    return found.isEmpty ? null : found.first;
   }
 
   /// 단어만 지운다. 예문으로 붙은 원래 문장은 건드리지 않는다.

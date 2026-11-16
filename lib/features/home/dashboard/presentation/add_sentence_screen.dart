@@ -159,7 +159,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                 key: const ValueKey('sentence-text'),
                 controller: controller.text,
                 style: context.texts.titleLarge,
-                maxLength: 80,
+                maxLength: sentenceMaxLength,
                 maxLines: null,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(

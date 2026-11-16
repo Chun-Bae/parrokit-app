@@ -85,5 +85,31 @@ void main() {
               'guest', word.id, const WordExample(text: '두 번째 예문')),
           isFalse);
     });
+
+    test('어형이 다른 단어들을 모두 찾아 준다', () async {
+      // 같은 낱말이 먼저, 그다음 어형만 다른 것들.
+      await MyWordStore.add('guest', language: '영어', word: 'projection');
+      await MyWordStore.add('guest', language: '영어', word: 'project');
+      final found = await MyWordStore.findRelatedWords('guest',
+          language: '영어', word: 'projections');
+      expect(found.map((w) => w.word), ['projection']);
+    });
+
+    test('단어장에 든 쪽이 어형이어도 찾는다', () async {
+      // 'projections'를 저장해 뒀고 이번에 'projection'을 골랐을 때.
+      await MyWordStore.add('guest', language: '영어', word: 'projections');
+      final found = await MyWordStore.findRelatedWords('guest',
+          language: '영어', word: 'projection');
+      expect(found.map((w) => w.word), ['projections']);
+    });
+
+    test('같은 낱말이 먼저 온다', () async {
+      await MyWordStore.add('guest', language: '영어', word: 'runs');
+      await MyWordStore.add('guest', language: '영어', word: 'run');
+      final found = await MyWordStore.findRelatedWords('guest',
+          language: '영어', word: 'run');
+      expect(found.first.word, 'run');
+      expect(found.map((w) => w.word), containsAll(['run', 'runs']));
+    });
   });
 }

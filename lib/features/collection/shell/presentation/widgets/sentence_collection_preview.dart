@@ -1577,44 +1577,88 @@ String? sentenceEditBlockedReason({
   return null;
 }
 
-enum _SameWordChoice { addExample, addNew }
-
-/// 고른 낱말의 원형이 이미 단어장에 있을 때 묻는 창(5차, 사용자 질문).
+/// 고른 낱말과 같거나 어형만 다른 단어가 단어장에 있을 때 묻는 창
+/// (5차, 사용자 요청). 어느 단어에 붙일지 고르거나, 새로 만든다.
 class _SameWordDialog extends StatelessWidget {
-  const _SameWordDialog({required this.picked, required this.existing});
+  const _SameWordDialog({required this.picked, required this.candidates});
 
   final String picked;
-  final MyWord existing;
+
+  /// 같은 낱말이 먼저, 그다음 어형만 다른 것들.
+  final List<MyWord> candidates;
+
+  bool get _exactOnly =>
+      candidates.length == 1 &&
+      candidates.first.word.trim().toLowerCase() ==
+          picked.trim().toLowerCase();
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        key: const ValueKey('same-word-dialog'),
-        title: Text("'${existing.word}'이(가) 이미 있어요"),
-        content: Text(existing.word.trim().toLowerCase() ==
-                picked.trim().toLowerCase()
-            ? '이 문장을 예문으로 더할까요?'
-            : "고른 낱말은 '$picked'예요. 같은 단어의 다른 꼴로 보여요.\n"
-                '이 문장을 예문으로 더하거나, 따로 저장할 수 있어요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return AlertDialog(
+      key: const ValueKey('same-word-dialog'),
+      title: Text(_exactOnly
+          ? "'$picked'이(가) 이미 있어요"
+          : "'$picked'과(와) 비슷한 단어가 있어요"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _exactOnly
+                ? '이 문장을 예문으로 더할까요?'
+                : '어느 단어에 이 문장을 예문으로 더할까요?',
+            style: context.texts.bodyMedium
+                .copyWith(color: colors.onSurfaceVariant),
           ),
-          TextButton(
-            key: const ValueKey('same-word-add-new'),
-            onPressed: () =>
-                Navigator.pop(context, _SameWordChoice.addNew),
-            child: const Text('새 단어로 저장'),
-          ),
-          FilledButton(
-            key: const ValueKey('same-word-add-example'),
-            onPressed: () =>
-                Navigator.pop(context, _SameWordChoice.addExample),
-            child: const Text('예문만 더하기'),
-          ),
+          const SizedBox(height: 12),
+          for (final word in candidates)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: OutlinedButton(
+                key: ValueKey('same-word-pick-${word.id}'),
+                onPressed: () => Navigator.pop(context, word),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                  alignment: Alignment.centerLeft,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        word.meaning.trim().isEmpty
+                            ? word.word
+                            : '${word.word} · ${word.meaning}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text('예문 ${word.examples.length}',
+                        style: context.texts.labelSmall
+                            .copyWith(color: colors.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            ),
         ],
-      );
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const ValueKey('same-word-add-new'),
+          onPressed: () => Navigator.pop(context, _addNewWord),
+          child: Text("'$picked' 새로 만들기"),
+        ),
+      ],
+    );
+  }
 }
+
+/// '새로 만들기'를 골랐다는 표시.
+const Object _addNewWord = Object();
 
 class _SentenceDetailSheet extends StatefulWidget {
   const _SentenceDetailSheet({
@@ -2004,24 +2048,24 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
   /// 이 문장의 단어를 내 단어로 저장한다. 문장이 예문으로 붙는다(5차 6번).
   /// [word]가 비어 있으면 직접 입력.
   Future<void> saveWord(String word) async {
-    // 'projections'를 골랐는데 단어장에 'projection'이 있으면, 새로 만들지
-    // 물어본다. 자동으로 바꾸지 않는다(5차, 사용자 질문).
-    final same = await MyWordStore.findSameOrBaseForm(
+    // 'projections'를 골랐는데 단어장에 'projection'이 있으면, 어느 단어에
+    // 붙일지 묻는다. 자동으로 바꾸지 않는다(5차, 사용자 요청).
+    final related = await MyWordStore.findRelatedWords(
       widget.accountId,
       language: widget.sentence.language,
       word: word,
     );
     if (!mounted) return;
-    if (same != null) {
-      final choice = await showDialog<_SameWordChoice>(
+    if (related.isNotEmpty) {
+      final choice = await showDialog<Object>(
         context: context,
-        builder: (_) => _SameWordDialog(picked: word, existing: same),
+        builder: (_) => _SameWordDialog(picked: word, candidates: related),
       );
       if (!mounted || choice == null) return;
-      if (choice == _SameWordChoice.addExample) {
+      if (choice is MyWord) {
         final added = await MyWordStore.addExample(
           widget.accountId,
-          same.id,
+          choice.id,
           WordExample(
             text: widget.sentence.text,
             translation: widget.sentence.translation,
@@ -2031,7 +2075,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(added
-              ? "'${same.word}'에 예문을 더했어요."
+              ? "'${choice.word}'에 예문을 더했어요."
               : '이미 같은 예문이 있어요.'),
         ));
         return;
