@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'sentence_activity_store.dart';
 
 /// 문장별 숙련도 단계. 청취와 따라 말하기 횟수로 계산하며 따로 저장하지 않는다.
@@ -76,7 +77,5 @@ String relativeDayLabel(DateTime now, DateTime then) {
   if (days <= 0) return '오늘';
   if (days == 1) return '어제';
   if (days < 7) return '$days일 전';
-  return then.year == now.year
-      ? '${then.month}월 ${then.day}일'
-      : '${then.year}년 ${then.month}월 ${then.day}일';
+  return calendarDateLabel(then, now);
 }

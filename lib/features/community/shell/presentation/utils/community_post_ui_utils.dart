@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -8,12 +9,7 @@ String formatCommunityTimeAgo(DateTime? time, {DateTime? now}) {
   if (time == null) return '';
   final current = now ?? DateTime.now();
   final diff = current.difference(time);
-  if (diff.inDays >= 7) {
-    final local = time.toLocal();
-    return local.year == current.year
-        ? '${local.month}월 ${local.day}일'
-        : '${local.year}년 ${local.month}월 ${local.day}일';
-  }
+  if (diff.inDays >= 7) return calendarDateLabel(time, current);
   if (diff.inDays > 0) return '${diff.inDays}일 전';
   if (diff.inHours > 0) return '${diff.inHours}시간 전';
   if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
