@@ -178,14 +178,14 @@ class ClipPlayerViewModel extends ChangeNotifier
   @override
   set mutableScope(PlayScope value) {
     _scope = value;
-    AppConfig.segmentLoop = value == PlayScope.full;
+    AppConfig.playWholeClip = value == PlayScope.full;
     AppConfig.saveToPrefs();
   }
 
   @override
   set mutableLoopSegment(bool value) {
     _loopSegment = value;
-    AppConfig.repeatAll = value;
+    AppConfig.loopSegment = value;
     AppConfig.saveToPrefs();
   }
 
@@ -216,8 +216,8 @@ class ClipPlayerViewModel extends ChangeNotifier
   void _init() {
     _canReuseLoaded = engineAlreadyLoaded;
     _segIndex = initialIndex;
-    _scope = AppConfig.segmentLoop ? PlayScope.full : PlayScope.segment;
-    _loopSegment = AppConfig.repeatAll;
+    _scope = AppConfig.playWholeClip ? PlayScope.full : PlayScope.segment;
+    _loopSegment = AppConfig.loopSegment;
     _showSubtitles = AppConfig.showSubtitles;
     _playbackRate = AppConfig.defaultPlaybackRate;
     _pauseEachLine = AppConfig.pauseEachLine;
@@ -356,7 +356,9 @@ class ClipPlayerViewModel extends ChangeNotifier
           segmentScope ? Duration(milliseconds: currentSegment.startMs) : null,
       clipEnd:
           segmentScope ? Duration(milliseconds: currentSegment.endMs) : null,
-      loop: segmentScope ? _loopSegment : (_loopSegment && _scope == PlayScope.full),
+      loop: segmentScope
+          ? _loopSegment
+          : (_loopSegment && _scope == PlayScope.full),
     );
   }
 
@@ -421,8 +423,7 @@ class ClipPlayerViewModel extends ChangeNotifier
 
     if (state == AppLifecycleState.paused) {
       if (_isBackground) return;
-      final playing = engine.isReady &&
-          engine.isPlaying;
+      final playing = engine.isReady && engine.isPlaying;
       _wasPlayingBeforeBackground = playing;
       if (!playing) return;
       // 영상은 멈추고 소리만 이어 간다. enterAudioOnlyMode가 지금 위치부터 튼다.
@@ -451,8 +452,7 @@ class ClipPlayerViewModel extends ChangeNotifier
     final clip = _clip;
     if (handOff == null || clip == null || _resolvedPath.isEmpty) return false;
 
-    final playingVideo = engine.isReady &&
-        engine.isPlaying;
+    final playingVideo = engine.isReady && engine.isPlaying;
     // 앱을 내렸다가 바로 화면을 닫은 경우에도 소리는 이어 간다.
     if (!playingVideo && !_isBackground) return false;
 

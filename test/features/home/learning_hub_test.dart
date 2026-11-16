@@ -11,18 +11,18 @@ void main() {
 
   test('따라 말하기는 전체 재생에서 자막 한 줄마다 멈추게 연다', () async {
     await applyStudyMode(0);
-    expect(AppConfig.segmentLoop, isTrue, reason: '전체 재생');
+    expect(AppConfig.playWholeClip, isTrue, reason: '전체 재생');
     expect(AppConfig.pauseEachLine, isTrue);
-    expect(AppConfig.repeatAll, isFalse);
+    expect(AppConfig.loopSegment, isFalse);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('pauseEachLine'), isTrue);
   });
 
   test('반복 듣기는 구간 재생에서 구간을 반복하게 연다', () async {
     await applyStudyMode(1);
-    expect(AppConfig.segmentLoop, isFalse, reason: '구간 재생');
+    expect(AppConfig.playWholeClip, isFalse, reason: '구간 재생');
     expect(AppConfig.pauseEachLine, isFalse);
-    expect(AppConfig.repeatAll, isTrue);
+    expect(AppConfig.loopSegment, isTrue);
   });
 
   test('보관함 탭 요청은 마지막에 본 탭과 상관없이 그 탭을 알린다', () {
@@ -56,5 +56,25 @@ void main() {
     expect(find.textContaining('동영상'), findsNothing);
     expect(find.text('클립으로 보기'), findsOneWidget);
     expect(find.text('쇼츠로 발견하기'), findsOneWidget);
+  });
+
+  test('저장 키는 예전 이름 그대로라 예전 값도 읽는다(5차 353)', () async {
+    // 예전 버전이 적어 둔 값.
+    SharedPreferences.setMockInitialValues({
+      'segmentLoop': true,
+      'repeatAll': true,
+    });
+
+    await AppConfig.loadFromPrefs();
+
+    expect(AppConfig.playWholeClip, isTrue);
+    expect(AppConfig.loopSegment, isTrue);
+
+    // 다시 적을 때도 같은 키를 쓴다.
+    AppConfig.playWholeClip = false;
+    await AppConfig.saveToPrefs();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('segmentLoop'), isFalse);
+    expect(prefs.getBool('repeatAll'), isTrue);
   });
 }

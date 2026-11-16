@@ -7,8 +7,14 @@ class AppConfig {
   static const int _defaultLocalKeepSpaceBytes = 1024 * 1024 * 1024;
 
   /// 플레이어
-  static bool segmentLoop = false; // 구간 재생
-  static bool repeatAll = false; // 반복 재생(전체)
+  /// 플레이어를 '전체' 범위로 열지(참) '구간'으로 열지(거짓).
+  /// 저장 키는 예전 이름('segmentLoop') 그대로다. 예전에 저장한 값을 그대로
+  /// 읽으려고 키는 두고 이름만 뜻에 맞췄다(5차 353). 이름과 뜻이 뒤집혀 있어
+  /// 쓰는 쪽이 헷갈렸다.
+  static bool playWholeClip = false;
+
+  /// 구간을 끝에서 다시 돌릴지. 저장 키는 예전 이름('repeatAll') 그대로다.
+  static bool loopSegment = false;
   static bool showSubtitles = true; // 자막 표시(플레이어)
   static double defaultPlaybackRate = 1.0; // 기본 재생 속도
   static bool pauseEachLine = false; // 전체 재생에서 자막 한 줄마다 멈춤
@@ -43,8 +49,8 @@ class AppConfig {
   static Future<void> loadFromPrefs() async {
     final p = await SharedPreferences.getInstance();
 
-    segmentLoop = p.getBool('segmentLoop') ?? false;
-    repeatAll = p.getBool('repeatAll') ?? false;
+    playWholeClip = p.getBool('segmentLoop') ?? false;
+    loopSegment = p.getBool('repeatAll') ?? false;
     showSubtitles = p.getBool('showSubtitles') ?? true;
     defaultPlaybackRate = p.getDouble('defaultPlaybackRate') ?? 1.0;
     pauseEachLine = p.getBool('pauseEachLine') ?? false;
@@ -64,8 +70,8 @@ class AppConfig {
   static Future<void> saveToPrefs() async {
     final p = await SharedPreferences.getInstance();
 
-    await p.setBool('segmentLoop', segmentLoop);
-    await p.setBool('repeatAll', repeatAll);
+    await p.setBool('segmentLoop', playWholeClip);
+    await p.setBool('repeatAll', loopSegment);
     await p.setBool('showSubtitles', showSubtitles);
     await p.setDouble('defaultPlaybackRate', defaultPlaybackRate);
     await p.setBool('pauseEachLine', pauseEachLine);

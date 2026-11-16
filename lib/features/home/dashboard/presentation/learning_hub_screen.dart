@@ -15,9 +15,9 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 /// 1 반복 듣기: 구간 재생 + 구간 반복.
 /// 플레이어에서 바꾸면 그 값이 다시 기억된다.
 Future<void> applyStudyMode(int mode) async {
-  AppConfig.segmentLoop = mode == 0; // true면 전체 재생으로 연다
+  AppConfig.playWholeClip = mode == 0; // 따라 말하기는 전체 재생으로 연다
   AppConfig.pauseEachLine = mode == 0;
-  AppConfig.repeatAll = mode == 1; // 구간 반복
+  AppConfig.loopSegment = mode == 1; // 반복 듣기는 구간을 돌린다
   await AppConfig.saveToPrefs();
 }
 
@@ -129,7 +129,8 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
                                     // inkSoft는 브랜드가 파랑으로 바뀐 뒤 선택된
                                     // 파란 카드 위에서 거의 안 보였다
                                     color: selected
-                                        ? palette.onAccent.withValues(alpha: 0.85)
+                                        ? palette.onAccent
+                                            .withValues(alpha: 0.85)
                                         : muted,
                                     height: 1.6)),
                           ]),
