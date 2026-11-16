@@ -12,6 +12,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
@@ -52,17 +53,17 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
       _contentController.text.trim().isNotEmpty ||
       _optionControllers.any((c) => c.text.trim().isNotEmpty);
 
-  bool get _isValid {
-    if (_titleController.text.trim().isEmpty) return false;
-    if (_contentController.text.trim().isEmpty) return false;
+  bool get _isValid => _blockedReason == null;
 
-    // 모든 옵션이 입력되었는지 검사 (최소 2개 이상)
-    if (_optionControllers.length < 2) return false;
-    for (final controller in _optionControllers) {
-      if (controller.text.trim().isEmpty) return false;
-    }
-    return true;
-  }
+  /// 올릴 수 없는 까닭. 게시판·질문과 같은 말을 쓴다(5차).
+  String? get _blockedReason => writeBlockedReason(
+        hasTitle: _titleController.text.trim().isNotEmpty,
+        hasContent: _contentController.text.trim().isNotEmpty,
+        optionCount: _optionControllers.length,
+        filledOptionCount: _optionControllers
+            .where((c) => c.text.trim().isNotEmpty)
+            .length,
+      );
 
   @override
   void initState() {
@@ -279,9 +280,17 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
             padding:
                 const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
             child: ElevatedButton(
-              onPressed: (_isValid && !isLoading) ? _submitVote : null,
+              onPressed: isLoading
+                  ? null
+                  : _isValid
+                      ? _submitVote
+                      : () => showToast(_blockedReason ?? ''),
               style: ElevatedButton.styleFrom(
-                backgroundColor: blue600,
+                // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
+                // 것은 색으로 그대로 보여 준다(5차).
+                backgroundColor: _isValid
+                    ? blue600
+                    : blue600.withValues(alpha: 0.4),
                 disabledBackgroundColor: blue600.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl)),

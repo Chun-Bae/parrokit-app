@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -63,8 +64,14 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
         _tags.join('\n') != edit.tags.join('\n');
   }
 
-  bool get _canComplete =>
-      _hasTitle && _hasContent && _selectedBoardTopic != null;
+  bool get _canComplete => _blockedReason == null;
+
+  /// 올릴 수 없는 까닭. 질문·투표와 같은 말을 쓴다(5차).
+  String? get _blockedReason => writeBlockedReason(
+        hasTitle: _hasTitle,
+        hasContent: _hasContent,
+        hasTopic: _selectedBoardTopic != null,
+      );
 
   @override
   void initState() {
@@ -296,7 +303,9 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _canComplete ? _submitPost : null,
+                          onPressed: _canComplete
+                              ? _submitPost
+                              : () => showToast(_blockedReason ?? ''),
                           child: context.watch<CommunityProvider>().isLoading
                               ? const SizedBox(
                                   width: 20,

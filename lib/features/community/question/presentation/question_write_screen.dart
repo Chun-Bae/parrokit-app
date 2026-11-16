@@ -11,6 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:provider/provider.dart';
@@ -43,9 +44,12 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
       _titleController.text.trim().isNotEmpty ||
       _contentController.text.trim().isNotEmpty;
 
-  bool get _isValid =>
-      _titleController.text.trim().isNotEmpty &&
-      _contentController.text.trim().isNotEmpty;
+  bool get _isValid => _blockedReason == null;
+
+  String? get _blockedReason => writeBlockedReason(
+        hasTitle: _titleController.text.trim().isNotEmpty,
+        hasContent: _contentController.text.trim().isNotEmpty,
+      );
 
   @override
   void initState() {
@@ -146,9 +150,19 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
             padding:
                 const EdgeInsets.only(right: 16.0, top: 10.0, bottom: 10.0),
             child: ElevatedButton(
-              onPressed: (_isValid && !_isSubmitting) ? _submitQuestion : null,
+              // 꺼진 단추를 눌러도 아무 일이 없으면 무엇이 빠졌는지
+              // 알 수 없다(5차). 눌리면 까닭을 말해 준다.
+              onPressed: _isSubmitting
+                  ? null
+                  : _isValid
+                      ? _submitQuestion
+                      : () => showToast(_blockedReason ?? ''),
               style: ElevatedButton.styleFrom(
-                backgroundColor: accentBlue,
+                // 눌러서 까닭을 들을 수 있게 열어 뒀지만, 아직 올릴 수 없다는
+                // 것은 색으로 그대로 보여 준다(5차).
+                backgroundColor: _isValid
+                    ? accentBlue
+                    : accentBlue.withValues(alpha: 0.4),
                 disabledBackgroundColor: accentBlue.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl)),
@@ -317,7 +331,19 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                 children: [
                   // 이미지·음성·링크·태그 버튼은 뺐다(5차). 넷 다 동작이 없어
                   // 흐린 아이콘만 있었다(원칙 5). 글자 수만 남긴다.
-                  const Spacer(),
+                  // 아직 못 올리면 무엇이 빠졌는지 여기 적는다. 꺼진 단추만
+                  // 보고는 알 수 없었다(5차).
+                  if (_blockedReason case final reason?)
+                    Expanded(
+                      child: Text(
+                        reason,
+                        key: const ValueKey('question-blocked-reason'),
+                        style: context.texts.labelMedium
+                            .copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                    )
+                  else
+                    const Spacer(),
                   // 아이콘이 빠져 빈 줄이 되지 않게 글자 수는 0자부터 늘 보인다.
                   Text(
                     '${_contentController.text.length}자',
