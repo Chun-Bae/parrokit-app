@@ -24,7 +24,7 @@ import 'package:parrokit/core/speech/phrase_recognizer.dart';
 import 'package:parrokit/core/shared/widgets/sentence_affinity_bar.dart';
 import 'clip_sentence_matches_section.dart';
 import 'package:parrokit/features/collection/library/presentation/widgets/swipe_action_tile.dart';
-import '../sentence_explore_screen.dart';
+import '../open_shared_sentences.dart';
 import 'sentence_import_method_dialog.dart';
 import 'sentence_import_sheet.dart';
 import 'word_collection_preview.dart' show AddWordSheet, showWordAddResult;
@@ -38,6 +38,7 @@ import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/sentence_share_text.dart';
 import 'package:parrokit/core/content/sentence_topic_label.dart';
 import 'package:parrokit/core/shared/widgets/author_avatar.dart';
 import 'package:parrokit/core/shared/utils/sentence_age_label.dart';
@@ -58,7 +59,7 @@ class SentenceCollectionPreview extends StatefulWidget {
   /// 비우면 예전처럼 이 화면 목록 안에 둔다(둘러보기 전용 화면).
   final CollectionHeaderSlot? headerSlot;
 
-  /// true면 둘러보기 전용 화면(SentenceExploreScreen)으로 그린다.
+  /// true면 둘러보기 목록으로 그린다(커뮤니티 문장 탭, 5차 340).
   /// false면 보관함 문장 탭: 위에 둘러보기 한 줄, 아래 내 문장 목록.
   /// 전에는 한 화면 안에서 "내 문장 / 둘러보기" 탭으로 바꿔 봤다.
   final bool exploreOnly;
@@ -653,7 +654,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         loading: sharedLoading,
         failed: sharedFailed,
         onOpen: openCommunityDetails,
-        onViewAll: () => openSentenceExplore(context),
+        onViewAll: () => openSharedSentences(context),
       ),
     );
     // 머리줄에 올리는 건 그리는 중이 아니라 그린 뒤에 한다.
@@ -1176,7 +1177,7 @@ class _MySentenceTile extends StatelessWidget {
   Future<void> _togglePublish(BuildContext context) async {
     final repo = repository!;
     if (authorName.trim().isEmpty) {
-      _toast(context, '닉네임을 먼저 설정해주세요.');
+      _toast(context, sentenceShareNeedsNickname);
       return;
     }
     bool published;
@@ -1190,21 +1191,16 @@ class _MySentenceTile extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(published ? '공유를 취소할까요?' : '둘러보기에 공유할까요?'),
-        content: Text(published
-            ? '둘러보기에서 사라지고 좋아요 수와 가져간 수도 함께 사라져요.\n'
-                '이미 가져간 사람의 문장은 그대로 남아요. 내 문장함에는 계속 있어요.'
-            : '공개되는 것: 문장, 뜻, 발음, 작성자 "$authorName"\n'
-                '공개되지 않는 것: 들은 횟수, 연습 기록, 친밀도, 메모\n\n'
-                '언제든 공유를 취소할 수 있어요. 하루에 '
-                '${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.'),
+        title: Text(sentenceShareTitle(published: published)),
+        content: Text(
+            sentenceShareBody(published: published, authorName: authorName)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text(published ? '그대로 두기' : '취소')),
+              child: Text(sentenceShareCancelLabel(published: published))),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(published ? '공유 취소' : '공유')),
+              child: Text(sentenceShareConfirmLabel(published: published))),
         ],
       ),
     );
@@ -1440,6 +1436,7 @@ class _ExploreStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final muted =
         context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant);
     return Column(
@@ -1485,24 +1482,34 @@ class _ExploreStrip extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final item = sentences[index];
+                final mine = item.authorId == accountId;
+                // 아래 목록 카드와 같은 결로(5차 339). 이 작은 카드는 닉네임
+                // 줄이 아래에 있고, 주제는 목록 카드에서 본다.
+                final who = mine
+                    ? myOwnSentenceTopic
+                    : (item.authorName.trim().isEmpty
+                        ? sharedSentenceTopic
+                        : item.authorName);
                 return Material(
-                  color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: dark
+                      ? colors.surfaceContainerHigh
+                      : colors.surfaceContainerHighest.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     onTap: () => onOpen(item),
                     child: Container(
-                      width: 220,
-                      padding: const EdgeInsets.all(12),
+                      width: 228,
+                      padding: const EdgeInsets.fromLTRB(13, 11, 13, 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(item.text,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: context.texts.bodyMedium.copyWith(
+                              style: context.texts.bodyLarge.copyWith(
                                   color: colors.onSurface,
-                                  fontWeight: FontWeight.w700)),
+                                  fontWeight: FontWeight.w800)),
                           const SizedBox(height: 2),
                           Text(item.translation,
                               maxLines: 1,
@@ -1510,18 +1517,29 @@ class _ExploreStrip extends StatelessWidget {
                               style: muted),
                           const Spacer(),
                           Row(children: [
+                            AuthorAvatar(
+                                authorId: item.authorId,
+                                radius: 10,
+                                iconSize: 12),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(who,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.texts.labelSmall.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                      fontWeight: FontWeight.w700)),
+                            ),
                             Icon(
                                 item.liked
                                     ? Icons.favorite_rounded
                                     : Icons.favorite_border_rounded,
                                 size: 14,
-                                color: colors.onSurfaceVariant),
+                                color: item.liked
+                                    ? context.collectionTokens.liked
+                                    : colors.onSurfaceVariant),
                             const SizedBox(width: 3),
-                            Text(
-                                // 이 카드에는 닉네임 줄이 따로 없어서, 주제가
-                                // 없는 남의 문장은 올린 사람을 보여 준다(338).
-                                '${item.likeCount} · '
-                                '${item.topic.trim().isEmpty || item.topic.trim() == myOwnSentenceTopic ? (item.authorId == accountId ? myOwnSentenceTopic : (item.authorName.trim().isEmpty ? sharedSentenceTopic : '@${item.authorName}')) : item.topic.trim()}',
+                            Text('${item.likeCount}',
                                 style: context.texts.labelSmall
                                     .copyWith(color: colors.onSurfaceVariant)),
                           ]),
@@ -1850,16 +1868,15 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
         context: context,
         builder: (context) => AlertDialog(
           key: const ValueKey('unpublish-dialog'),
-          title: const Text('공유를 취소할까요?'),
-          content: const Text('둘러보기에서 사라지고 좋아요 수와 가져간 수도 함께 사라져요.\n'
-              '이미 가져간 사람의 문장은 그대로 남아요. 내 문장함에는 계속 있어요.'),
+          title: Text(sentenceShareTitle(published: true)),
+          content: Text(sentenceShareBody(published: true, authorName: '')),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('그대로 두기')),
+                child: Text(sentenceShareCancelLabel(published: true))),
             FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('공유 취소')),
+                child: Text(sentenceShareConfirmLabel(published: true))),
           ],
         ),
       );
@@ -1867,24 +1884,23 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     }
     if (published != true) {
       if (widget.authorName.trim().isEmpty) {
-        messenger
-            .showSnackBar(const SnackBar(content: Text('닉네임을 먼저 설정해주세요.')));
+        messenger.showSnackBar(
+            const SnackBar(content: Text(sentenceShareNeedsNickname)));
         return;
       }
       final ok = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('둘러보기에 공유할까요?'),
-          content: Text('공개되는 것: 문장, 뜻, 발음, 작성자 "${widget.authorName}"\n'
-              '공개되지 않는 것: 들은 횟수, 연습 기록, 친밀도, 메모\n\n'
-              '언제든 공유를 취소할 수 있어요. 하루에 ${SharedSentenceRepository.dailyShareLimit}개까지 공유할 수 있어요.'),
+          title: Text(sentenceShareTitle(published: false)),
+          content: Text(sentenceShareBody(
+              published: false, authorName: widget.authorName)),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('취소')),
+                child: Text(sentenceShareCancelLabel(published: false))),
             FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('공유')),
+                child: Text(sentenceShareConfirmLabel(published: false))),
           ],
         ),
       );

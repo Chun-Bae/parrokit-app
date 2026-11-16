@@ -4,7 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
-import 'package:parrokit/features/collection/shell/presentation/sentence_explore_screen.dart';
+import 'package:parrokit/features/collection/shell/presentation/open_shared_sentences.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:flutter/services.dart';
@@ -148,7 +148,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     });
   }
 
-
   Future<void> editDailyGoal() async {
     final next = await showDialog<int>(
       context: context,
@@ -262,7 +261,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                   const SizedBox(height: 30),
                   TrendingSentencesPreview(
                     language: language,
-                    onViewAll: () => openSentenceExplore(context),
+                    onViewAll: () => openSharedSentences(context),
                     onOpenLibrary: () {
                       CollectionShellScreen.openTab(0);
                       context.go(AppRoutes.collectionPath);

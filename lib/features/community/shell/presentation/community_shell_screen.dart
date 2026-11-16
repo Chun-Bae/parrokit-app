@@ -8,6 +8,8 @@ import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/community/board/presentation/board_screen.dart';
 import 'package:parrokit/features/community/question/presentation/question_screen.dart';
 import 'package:parrokit/features/community/vote/presentation/vote_screen.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/share_my_sentence_sheet.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 import 'package:parrokit/features/community/shell/presentation/sections/community_shell_filters_section.dart';
 import 'package:parrokit/features/community/shell/presentation/sections/community_shell_write_sheet.dart';
@@ -18,6 +20,21 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 
 class CommunityShellScreen extends StatefulWidget {
   const CommunityShellScreen({super.key});
+
+  /// 커뮤니티 탭 차례. 0 게시판, 1 문장, 2 질문, 3 투표.
+  static const int boardTab = 0;
+  static const int sentenceTab = 1;
+  static const int questionTab = 2;
+  static const int voteTab = 3;
+
+  /// 다른 화면에서 커뮤니티의 특정 탭을 열어 달라고 할 때 쓴다(5차 340).
+  /// 보관함·홈의 '전체 보기'가 문장 탭으로 바로 온다.
+  static final ValueNotifier<int?> requestedTab = ValueNotifier<int?>(null);
+
+  static void openTab(int tab) {
+    requestedTab.value = null;
+    requestedTab.value = tab;
+  }
 
   @override
   State<CommunityShellScreen> createState() => _CommunityShellScreenState();
@@ -47,8 +64,11 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this)
+    _tabController = TabController(length: 4, vsync: this)
       ..addListener(_onTabChanged);
+    CommunityShellScreen.requestedTab.addListener(_handleTabRequest);
+    final requested = CommunityShellScreen.requestedTab.value;
+    if (requested != null) _tabController.index = requested;
     _outerScrollController.addListener(_checkHeaderVisibility);
     TabReselect.instance.addListener(_onTabReselected);
   }
@@ -62,6 +82,12 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
     );
+  }
+
+  void _handleTabRequest() {
+    final tab = CommunityShellScreen.requestedTab.value;
+    if (tab == null || !mounted || tab == _tabController.index) return;
+    _tabController.animateTo(tab);
   }
 
   void _onTabChanged() {
@@ -80,6 +106,7 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
 
   @override
   void dispose() {
+    CommunityShellScreen.requestedTab.removeListener(_handleTabRequest);
     TabReselect.instance.removeListener(_onTabReselected);
     _tabController.removeListener(_onTabChanged);
     _outerScrollController.removeListener(_checkHeaderVisibility);
@@ -108,13 +135,19 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
           isExtended: _isFabExtended,
           icon: Icons.add,
           label: switch (_currentIndex) {
-            1 => '질문하기',
-            2 => '투표 만들기',
+            CommunityShellScreen.sentenceTab => '문장 공유하기',
+            CommunityShellScreen.questionTab => '질문하기',
+            CommunityShellScreen.voteTab => '투표 만들기',
             _ => '글쓰기',
           },
           onTap: () => switch (_currentIndex) {
-            1 => context.push(AppRoutes.communityQuestionWritePath),
-            2 => context.push(AppRoutes.communityVoteWritePath),
+            // 문장 탭에서는 내 문장을 골라 둘러보기에 올린다(5차 340).
+            CommunityShellScreen.sentenceTab =>
+              showShareMySentenceSheet(context),
+            CommunityShellScreen.questionTab =>
+              context.push(AppRoutes.communityQuestionWritePath),
+            CommunityShellScreen.voteTab =>
+              context.push(AppRoutes.communityVoteWritePath),
             _ => showCommunityWriteBottomSheet(context),
           },
           backgroundColor: AppColors.communityBoardAccent,
@@ -151,7 +184,13 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                     // 필요한 높이가 다르다. 게시판은 위 여백 12 + 칩 44 +
                     // 아래 여백 11 + 구분선 1 = 68이다.
                     HeaderTier(
-                      height: _tabController.index == 0 ? 68 : 72,
+                      height: switch (_tabController.index) {
+                        CommunityShellScreen.boardTab => 68,
+                        // 문장 탭은 제 화면 안에 언어·주제 줄이 있어서
+                        // 머리줄에는 구분선만 둔다(5차 340).
+                        CommunityShellScreen.sentenceTab => 13,
+                        _ => 72,
+                      },
                       child: _buildFilterSection(),
                     ),
                   ],
@@ -166,6 +205,9 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                 : const NeverScrollableScrollPhysics(),
             children: [
               BoardScreen(selectedFilter: _selectedBoardFilter),
+              // 공유된 문장 둘러보기(5차 340, 사용자 요청). 언어·주제 줄은
+              // 이 화면이 제 안에 들고 있어서 머리줄 필터 자리는 비워 둔다.
+              const SentenceCollectionPreview(exploreOnly: true),
               QuestionScreen(
                 selectedStatus: _selectedQuestionStatus,
                 selectedSort: _selectedQuestionSort,
@@ -269,6 +311,8 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
       labelPadding: const EdgeInsets.symmetric(horizontal: 16.0),
       tabs: const [
         Tab(text: '게시판'),
+        // 공유된 문장 둘러보기가 여기로 들어왔다(5차 340, 사용자 요청).
+        Tab(text: '문장'),
         Tab(text: '질문'),
         Tab(text: '투표'),
       ],
@@ -276,11 +320,22 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
   }
 
   Widget _buildFilterSection() {
+    // 문장 탭은 거르는 줄이 그 화면 안에 있다(언어·주제).
+    if (_tabController.index == CommunityShellScreen.sentenceTab) {
+      return Column(children: [
+        const SizedBox(height: 12),
+        Divider(color: context.tokens.disabled, height: 1),
+      ]);
+    }
     return Column(
       children: [
         const SizedBox(height: 12),
         CommunityShellFiltersSection(
-          tabIndex: _tabController.index,
+          // 거르는 줄은 게시판·질문·투표 셋만 안다. 문장 탭이 가운데
+          // 끼어들었으니 차례를 맞춰 넘긴다(5차 340).
+          tabIndex: _tabController.index == CommunityShellScreen.boardTab
+              ? 0
+              : _tabController.index - 1,
           selectedBoardFilter: _selectedBoardFilter,
           selectedQuestionStatus: _selectedQuestionStatus,
           selectedQuestionSort: _selectedQuestionSort,
