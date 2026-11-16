@@ -8,6 +8,9 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
+/// 누르기 전에 무엇을 하는 단추인지 적어 둔다.
+const String clipSearchIdleHint = '눌러 보면 내 클립 자막에서 이 문장을 찾아 줘요.';
+
 /// 문장 상세에서 이 문장이 나오는 클립 자막을 찾아 보여주는 구역.
 class ClipSentenceMatchesSection extends StatefulWidget {
   const ClipSentenceMatchesSection({
@@ -107,6 +110,12 @@ class _ClipSentenceMatchesSectionState
           _SearchState.done => Column(children: [
               for (final match in matches) _ClipMatchTile(match: match),
             ]),
+          // 누르기 전에는 제목과 단추만 있어서, 무엇이 나올지 알 수 없었다(5차).
+          _SearchState.idle => Text(
+              clipSearchIdleHint,
+              key: const ValueKey('clip-search-idle-hint'),
+              style: muted,
+            ),
           _ => const SizedBox.shrink(),
         },
       ],

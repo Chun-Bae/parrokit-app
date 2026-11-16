@@ -15,6 +15,24 @@ Widget app(ClipSentenceMatchesSection section) =>
     MaterialApp(home: Scaffold(body: section));
 
 void main() {
+  testWidgets('누르기 전에는 무엇을 하는 단추인지 적어 둔다', (tester) async {
+    final finder = ClipSentenceFinder(_Source(const []));
+    await tester.pumpWidget(
+        app(ClipSentenceMatchesSection(sentence: 'Hello', finder: finder)));
+
+    // 예전에는 제목과 단추만 있고 아래가 비어 있었다(5차).
+    expect(find.byKey(const ValueKey('clip-search-idle-hint')), findsOneWidget);
+    expect(find.text(clipSearchIdleHint), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('search-clips')));
+    await tester.pump();
+    await tester.pump();
+
+    // 한 번 찾고 나면 안내 대신 결과가 자리를 잡는다.
+    expect(find.byKey(const ValueKey('clip-search-idle-hint')), findsNothing);
+    expect(find.textContaining('들어간 클립이 없어요'), findsOneWidget);
+  });
+
   testWidgets('연결 전에는 준비 중 안내를 보여준다', (tester) async {
     await tester
         .pumpWidget(app(const ClipSentenceMatchesSection(sentence: 'Hello')));
