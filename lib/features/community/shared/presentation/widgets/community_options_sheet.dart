@@ -10,6 +10,7 @@ class CommunityOptionAction {
     required this.onTap,
     this.isDestructive = false,
     this.enabled = true,
+    this.disabledReason,
   });
 
   final String label;
@@ -18,6 +19,10 @@ class CommunityOptionAction {
   /// 지금 할 수 없는 일이면 false. 흐리게 보이고 눌러도 아무 일이 없다.
   /// 전에는 할 수 없을 때도 멀쩡해 보여, 눌러도 조용히 닫히기만 했다(5차).
   final bool enabled;
+
+  /// 왜 지금 할 수 없는지. 흐려진 줄 아래에 적는다(5차 347). 전에는 흐리기만
+  /// 해서 왜 못 누르는지 알 수 없었다.
+  final String? disabledReason;
 
   final Future<void> Function() onTap;
 }
@@ -89,14 +94,24 @@ class _CommunityOptionActionTile extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               action.label,
               style: context.texts.titleMedium.copyWith(color: foregroundColor),
             ),
+            // 흐려진 줄에는 왜 못 누르는지 적는다(5차 347).
+            if (!action.enabled && (action.disabledReason ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  action.disabledReason!,
+                  textAlign: TextAlign.center,
+                  style: context.texts.bodySmall
+                      .copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              ),
           ],
         ),
       ),

@@ -174,6 +174,7 @@ class _CommunityNotificationScreenState
           label: '모두 읽음',
           // 다 읽었으면 할 일이 없다. 전에는 눌러도 조용히 닫히기만 했다(5차).
           enabled: provider.unreadCount > 0,
+          disabledReason: '읽지 않은 알림이 없어요.',
           onTap:
               provider.unreadCount == 0 ? () async {} : provider.markAllAsRead,
         ),
@@ -181,6 +182,7 @@ class _CommunityNotificationScreenState
           label: '모두 지우기',
           isDestructive: true,
           enabled: provider.hasNotifications,
+          disabledReason: '지울 알림이 없어요.',
           onTap: provider.hasNotifications
               ? () => _confirmDeleteAll(context, provider)
               : () async {},
