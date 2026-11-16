@@ -17,6 +17,12 @@ import 'package:parrokit/core/speech/phrase_recognizer.dart';
 import 'package:parrokit/core/speech/speech_match.dart';
 
 /// 위젯이 시도 하나가 끝났을 때 넘겨주는 결과.
+/// 따라 말할 문장을 작은 글씨로 보여 줄지(5차 325).
+///
+/// 한 화면에 담기는 길이를 넘으면 글자를 줄인다. 자르지는 않는다. 따라
+/// 말하려면 문장을 다 봐야 한다.
+bool compactPracticePhrase(String phrase) => phrase.trim().length > 80;
+
 class PracticeAttemptResult {
   const PracticeAttemptResult({
     required this.score,
@@ -353,7 +359,11 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
                 style: TextStyle(color: idle)),
           ]),
           textAlign: TextAlign.center,
-          style: context.texts.headlineSmall.copyWith(height: 1.5)),
+          // 긴 문장(200자까지 쓸 수 있다)은 글자를 줄여 담는다. 큰 글씨
+          // 그대로면 열 줄이 넘어 마이크 줄이 화면 밖으로 밀렸다(5차 325).
+          style: compactPracticePhrase(widget.phrase)
+              ? context.texts.titleMedium.copyWith(height: 1.45)
+              : context.texts.headlineSmall.copyWith(height: 1.5)),
       if (score > 0) ...[
         const SizedBox(height: 8),
         Text('${(score * 100).round()}점',
