@@ -15,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/features/collection/clip/export/domain/subtitle_burn.dart';
+import 'package:parrokit/features/collection/clip/missing_video_text.dart';
 
 /// 구운 결과. 실패하면 [path]가 null이고 [message]에 까닭이 있다.
 class SubtitleBurnResult {
@@ -52,7 +53,7 @@ class SubtitleBurnService {
       return const SubtitleBurnResult(message: '넣을 자막이 없어요.');
     }
     if (!await File(videoPath).exists()) {
-      return const SubtitleBurnResult(message: '영상 파일을 찾을 수 없어요.');
+      return const SubtitleBurnResult(message: videoMissingHint);
     }
 
     final workDir = Directory(

@@ -40,6 +40,7 @@ import 'widgets/toggle_pill.dart';
 import 'widgets/segment_list.dart';
 import 'widgets/speed_menu.dart';
 import 'widgets/subtitle_overlay.dart';
+import 'package:parrokit/features/collection/clip/missing_video_text.dart';
 
 /// 클립 플레이어 화면.
 ///
@@ -212,7 +213,9 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                       if (!context.mounted) return;
                       if (!await videoExists(path)) {
                         if (!context.mounted) return;
-                        showToast('영상 파일을 찾을 수 없어요.');
+                        // 서버에만 있고 아직 안 받은 클립이면 그렇게 알린다.
+                        showToast(missingVideoHint(
+                            vm.clip?.storageMode ?? 'local'));
                         return;
                       }
                       if (!context.mounted) return;
