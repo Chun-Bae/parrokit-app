@@ -22,6 +22,7 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/features/community/shared/presentation/community_error_text.dart';
+import 'package:parrokit/features/community/shared/presentation/comment_delete_confirm.dart';
 import 'package:parrokit/features/community/shared/presentation/comment_input_text.dart';
 
 class BoardViewScreen extends StatefulWidget {
@@ -126,6 +127,10 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
   }
 
   void _showCommentOptionsSheet(Comment comment) {
+    // 이미 지운 댓글에는 지우기·신고가 뜨지 않게 한다. 투표 화면만
+    // 막고 있었다(5차 399).
+    if (comment.status == 'deleted') return;
+
     final currentUser = context.read<UserProvider>().currentUser;
     final isMyComment =
         currentUser != null && comment.authorId == currentUser.id;
@@ -138,33 +143,7 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       commentId: comment.id,
       onDelete: () async {
         final provider = context.read<CommunityProvider>();
-        final colorScheme = Theme.of(context).colorScheme;
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg)),
-            title: const Text('댓글 지우기',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            // 보관함 지우기 확인과 같은 말로(5차).
-            content: const Text('이 댓글을 지울까요?\n지우면 되돌릴 수 없어요.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text('취소',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text('지우기',
-                    style: TextStyle(
-                        color: context.tokens.danger,
-                        fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-        if (confirm != true || !mounted) return false;
+        if (!await confirmDeleteComment(context) || !mounted) return false;
         return provider.deleteComment(widget.postId, comment.id);
       },
     );
