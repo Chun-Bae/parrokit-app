@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/theme/video_subtitle_style.dart';
 
 /// [역할]
 /// 영상의 현재 재생 구간(Segment)에 맞춰 자막을 표시하는 위젯.
@@ -73,19 +74,9 @@ class ShortsPageSubtitleSection extends StatelessWidget {
   // Styles
   // ─────────────────────────────────────────────────────────────────
 
-  // 밝은 영상 위에서도 읽히게 가까운 진한 그림자와 넓은 옅은 그림자를 겹친다.
-  // 예전 한 겹(black54, 3)으로는 흰 바탕 위 발음 줄이 거의 안 보였다(5차).
-  static const _shadows = [
-    Shadow(
-      blurRadius: 2,
-      color: Colors.black87,
-      offset: Offset(0, 1),
-    ),
-    Shadow(
-      blurRadius: 10,
-      color: Colors.black54,
-    ),
-  ];
+  // 그림자와 발음 색은 플레이어 자막과 같은 곳에서 가져온다(5차).
+  // 따로 적어 두니 한쪽만 고쳐져 플레이어 발음 줄이 안 보이는 채로 남았다.
+  static const _shadows = videoSubtitleShadows;
 
   // 정적 상수라 BuildContext가 없다. 크기는 같은 스케일에서 가져온다.
   static final _originalStyle = AppTextScale.titleLarge
@@ -93,7 +84,7 @@ class ShortsPageSubtitleSection extends StatelessWidget {
 
   static final _pronStyle = AppTextScale.bodyMedium
       .copyWith(
-          color: const Color(0xE6FFFFFF), height: 1.25, shadows: _shadows);
+          color: videoSubtitlePronColor, height: 1.25, shadows: _shadows);
 
   static final _transStyle = AppTextScale.bodyLarge
       .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);
