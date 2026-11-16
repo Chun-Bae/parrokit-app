@@ -11,7 +11,7 @@ import 'package:parrokit/features/community/vote/presentation/vote_screen.dart';
 import 'package:parrokit/features/community/shell/domain/data/community_filters.dart';
 import 'package:parrokit/features/community/shell/presentation/sections/community_shell_filters_section.dart';
 import 'package:parrokit/features/community/shell/presentation/sections/community_shell_write_sheet.dart';
-import 'package:parrokit/features/community/shell/presentation/widgets/community_header_delegate.dart';
+import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/widgets/expandable_action_fab.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -137,14 +137,24 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
             return [
               SliverPersistentHeader(
                 floating: true,
-                delegate: CommunityHeaderDelegate(
-                  titleWidget: _buildTitleBar(context),
-                  zone1Widget: _buildTabBar(context),
-                  zone2Widget: _buildFilterSection(),
-                  // 게시판은 가로 스크롤 칩 줄, 질문·투표는 세그먼트 컨트롤이라
-                  // 필요한 높이가 다르다. 게시판은 위 여백 12 + 칩 44 +
-                  // 아래 여백 11 + 구분선 1 = 68이다.
-                  zone2Height: _tabController.index == 0 ? 68 : 72,
+                // 보관함과 같은 n단 머리줄 모듈을 쓴다(5차 335).
+                delegate: TieredHeaderDelegate(
+                  tiers: [
+                    HeaderTier(height: 56, child: _buildTitleBar(context)),
+                    // 탭 줄은 맨 위에 붙어 버틴다. 어느 탭인지 계속 보여야 한다.
+                    HeaderTier(
+                      height: 48,
+                      sticky: true,
+                      child: _buildTabBar(context),
+                    ),
+                    // 게시판은 가로 스크롤 칩 줄, 질문·투표는 세그먼트 컨트롤이라
+                    // 필요한 높이가 다르다. 게시판은 위 여백 12 + 칩 44 +
+                    // 아래 여백 11 + 구분선 1 = 68이다.
+                    HeaderTier(
+                      height: _tabController.index == 0 ? 68 : 72,
+                      child: _buildFilterSection(),
+                    ),
+                  ],
                 ),
               ),
             ];
