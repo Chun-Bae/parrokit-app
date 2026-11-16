@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/tts/presentation/tts_file_name.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -233,30 +234,31 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             onTap: () =>
                                 _showVoiceSelectionSheet(context, provider),
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          TtsSliderPreview(
-                            // 범위는 슬라이더가 보여 준다. 제목은 다른
-                            // 화면과 같은 '속도'(5차).
-                            label: '속도',
-                            valueText: speedLabel(provider.speakingRate),
-                            value: provider.speakingRate,
-                            min: 0.25,
-                            max: 4.0,
-                            activeColor: theme.colorScheme.primary,
-                            onChanged: provider.updateSpeakingRate,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          TtsSliderPreview(
-                            label: '목소리 높낮이',
-                            valueText: provider.pitch > 0
-                                ? '+${provider.pitch.toStringAsFixed(1)}'
-                                : provider.pitch.toStringAsFixed(1),
-                            value: provider.pitch,
-                            min: -20.0,
-                            max: 20.0,
-                            activeColor: theme.colorScheme.primary,
-                            onChanged: provider.updatePitch,
-                          ),
+                          _MoreOptions(children: [
+                            TtsSliderPreview(
+                              // 범위는 슬라이더가 보여 준다. 제목은 다른
+                              // 화면과 같은 '속도'(5차).
+                              label: '속도',
+                              valueText: speedLabel(provider.speakingRate),
+                              value: provider.speakingRate,
+                              min: 0.25,
+                              max: 4.0,
+                              activeColor: theme.colorScheme.primary,
+                              onChanged: provider.updateSpeakingRate,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            TtsSliderPreview(
+                              label: '목소리 높낮이',
+                              valueText: provider.pitch > 0
+                                  ? '+${provider.pitch.toStringAsFixed(1)}'
+                                  : provider.pitch.toStringAsFixed(1),
+                              value: provider.pitch,
+                              min: -20.0,
+                              max: 20.0,
+                              activeColor: theme.colorScheme.primary,
+                              onChanged: provider.updatePitch,
+                            ),
+                          ]),
                         ],
                       );
                     case TtsProviderType.elevenlabs:
@@ -305,53 +307,57 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             onTap: () => _showElevenLabsVoiceSelectionSheet(
                                 context, provider),
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          TtsSliderPreview(
-                            label: '안정성 (Stability)',
-                            valueText:
-                                '${(provider.elevenLabsStability * 100).toInt()}%',
-                            value: provider.elevenLabsStability,
-                            activeColor: context.tokens.secondary,
-                            onChanged: provider.updateElevenLabsStability,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          TtsSliderPreview(
-                            label: '유사도 (Clarity)',
-                            valueText:
-                                '${(provider.elevenLabsSimilarityBoost * 100).toInt()}%',
-                            value: provider.elevenLabsSimilarityBoost,
-                            activeColor: context.tokens.secondary,
-                            onChanged: provider.updateElevenLabsSimilarityBoost,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          TtsSliderPreview(
-                            label: '스타일 과장 (Style)',
-                            valueText:
-                                '${(provider.elevenLabsStyle * 100).toInt()}%',
-                            value: provider.elevenLabsStyle,
-                            activeColor: context.tokens.secondary,
-                            onChanged: provider.updateElevenLabsStyle,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '스피커 부스트 (Speaker Boost)',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
+                          _MoreOptions(children: [
+                            TtsSliderPreview(
+                              // 영어 이름을 괄호로 덧붙이던 것을 뺐다.
+                              // 무엇을 바꾸는지로 부른다(5차 411).
+                              label: '또박또박 말하기',
+                              valueText:
+                                  '${(provider.elevenLabsStability * 100).toInt()}%',
+                              value: provider.elevenLabsStability,
+                              activeColor: context.tokens.secondary,
+                              onChanged: provider.updateElevenLabsStability,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            TtsSliderPreview(
+                              label: '목소리 닮기',
+                              valueText:
+                                  '${(provider.elevenLabsSimilarityBoost * 100).toInt()}%',
+                              value: provider.elevenLabsSimilarityBoost,
+                              activeColor: context.tokens.secondary,
+                              onChanged:
+                                  provider.updateElevenLabsSimilarityBoost,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            TtsSliderPreview(
+                              label: '감정 살리기',
+                              valueText:
+                                  '${(provider.elevenLabsStyle * 100).toInt()}%',
+                              value: provider.elevenLabsStyle,
+                              activeColor: context.tokens.secondary,
+                              onChanged: provider.updateElevenLabsStyle,
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '또렷하게 키우기',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                              Switch(
-                                value: provider.elevenLabsUseSpeakerBoost,
-                                activeTrackColor: context.tokens.secondary
-                                    .withValues(alpha: 0.5),
-                                activeThumbColor: context.tokens.secondary,
-                                onChanged:
-                                    provider.updateElevenLabsUseSpeakerBoost,
-                              ),
-                            ],
-                          ),
+                                Switch(
+                                  value: provider.elevenLabsUseSpeakerBoost,
+                                  activeTrackColor: context.tokens.secondary
+                                      .withValues(alpha: 0.5),
+                                  activeThumbColor: context.tokens.secondary,
+                                  onChanged:
+                                      provider.updateElevenLabsUseSpeakerBoost,
+                                ),
+                              ],
+                            ),
+                          ]),
                         ],
                       );
                     case TtsProviderType.gemini:
@@ -453,9 +459,9 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                   // 모자라면 누른 뒤에야 시트가 떴다. 누르기 전에 알려 준다
                   // (5차, 자동 자막과 같은 말).
                   if (parrotShortfallLine(
-                        cost: provider.estimatedCost,
-                        coins: context.watch<UserProvider>().coins,
-                      )
+                    cost: provider.estimatedCost,
+                    coins: context.watch<UserProvider>().coins,
+                  )
                       case final short?) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Text(
@@ -532,33 +538,40 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             if (provider.generatedFilePath != null) ...[
               const SizedBox(height: AppSpacing.lg),
               TtsPanel(
-                title: '생성 결과 관리',
+                // '생성 결과 관리'는 무엇을 할 수 있는지 말하지 않았다.
+                // 다음에 할 일을 이름으로 적는다(5차 411, 사용자 요청).
+                title: '만든 음성으로 할 일',
                 child: Column(
                   children: [
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
+                      child: FilledButton.icon(
+                        key: const ValueKey('tts-make-clip'),
                         onPressed: () {
                           final hubProvider = context.read<StudioHubProvider>();
                           hubProvider.sendAudioToCaptioning(
                               provider.generatedFilePath!);
                         },
-                        icon: const Icon(Icons.subtitles),
-                        label: const Text('자막 생성'),
+                        icon: const Icon(Icons.subtitles_rounded),
+                        // 전에는 '자막 생성'이라 눌러도 어디로 가는지 몰랐다.
+                        label: const Text('자막 넣어 클립 만들기'),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
+                        key: const ValueKey('tts-save-mp3'),
                         onPressed: () async {
                           try {
                             final bytes =
                                 await File(provider.generatedFilePath!)
                                     .readAsBytes();
                             await FileSaver.instance.saveFile(
-                              name:
-                                  'Parrokit_TTS_\${DateTime.now().millisecondsSinceEpoch}',
+                              // 전에는 작은따옴표 안에서 \$를 써서 파일
+                              // 이름이 'Parrokit_TTS_${DateTime.now()...}'
+                              // 그대로 저장됐다(5차 411).
+                              name: ttsFileName(DateTime.now()),
                               bytes: bytes,
                               ext: 'mp3',
                               mimeType: MimeType.mp3,
@@ -568,21 +581,25 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              showToast('저장하지 못했어요.');
+                              showToast('저장하지 못했어요. 다시 시도해 주세요.');
                             }
                           }
                         },
                         icon: const Icon(Icons.save_alt_rounded),
-                        label: const Text('저장'),
+                        // '저장'만으로는 어디에 저장되는지 몰랐다.
+                        label: const Text('mp3 파일로 내려받기'),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
+                      child: TextButton.icon(
+                        key: const ValueKey('tts-clear'),
                         onPressed: () => provider.clearGeneratedAudio(),
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('지우기'),
+                        icon: const Icon(Icons.refresh_rounded),
+                        // '지우기'는 무엇이 지워지는지 몰랐다. 다시 만들려고
+                        // 누르는 자리다.
+                        label: const Text('지우고 다시 만들기'),
                       ),
                     ),
                   ],
@@ -591,6 +608,39 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 자주 바꾸지 않는 설정을 접어 둔다(5차 411, 사용자 요청).
+///
+/// 전에는 속도·높낮이·안정성·유사도·스타일·부스트가 모두 펼쳐져 있어서,
+/// 글을 쓰고 목소리만 고르면 되는 사람도 슬라이더 여섯 개를 지나야 했다.
+class _MoreOptions extends StatelessWidget {
+  const _MoreOptions({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Theme(
+      // 접기 줄에 테두리를 두지 않는다.
+      data: theme.copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: const ValueKey('tts-more-options'),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: AppSpacing.sm),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        title: Text(
+          '자세한 설정',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: context.tokens.textSecondary,
+          ),
+        ),
+        children: children,
       ),
     );
   }
