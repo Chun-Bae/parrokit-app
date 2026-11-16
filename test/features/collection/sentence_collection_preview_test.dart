@@ -101,6 +101,28 @@ void main() {
         find.text('Brand new sentence', skipOffstage: false), findsOneWidget);
   });
 
+  testWidgets('남이 올린 문장은 주제가 내 문장이어도 그렇게 적지 않는다', (tester) async {
+    // 사용자 신고(5차 337): 'Where were we?'가 남의 문장인데 '내 문장'으로 떴다.
+    // 직접 적은 문장은 주제가 '내 문장'으로 저장되는데 그 값이 그대로 보였다.
+    await seedSentence(
+      firestore,
+      'mina-own',
+      ownerId: 'mina',
+      authorName: 'Mina',
+      text: 'Where were we?',
+      translation: '우리 어디까지 얘기했더라?',
+      topic: '내 문장',
+      visibility: 'public',
+    );
+    await tester.pumpWidget(exploreApp());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Where were we?'), 300,
+        scrollable: find.byType(Scrollable).first);
+
+    expect(find.text('직접 쓴 문장'), findsWidgets);
+    expect(find.text('내 문장'), findsNothing);
+  });
+
   testWidgets('저장한 공유 문장은 카드에 내 문장 표시가 붙는다', (tester) async {
     await seedShared();
     await tester.pumpWidget(exploreApp());
@@ -583,9 +605,8 @@ void main() {
   testWidgets('메모는 다른 활동 기록을 지우지 않는다', (tester) async {
     await seedSentences();
     await SentenceActivityStore.incrementPractice(
-          'guest', seedId('Hello there!'));
-    await SentenceActivityStore.setMemo(
-        'guest', seedId('Hello there!'), '메모');
+        'guest', seedId('Hello there!'));
+    await SentenceActivityStore.setMemo('guest', seedId('Hello there!'), '메모');
     final activity =
         await SentenceActivityStore.load('guest', seedId('Hello there!'));
     expect(activity.memo, '메모');
@@ -679,8 +700,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, '지우기'));
     await tester.pumpAndSettle();
-    expect((await MySentenceStore.load('guest')).any((s) => s.id == id),
-        isFalse);
+    expect(
+        (await MySentenceStore.load('guest')).any((s) => s.id == id), isFalse);
   });
-
 }

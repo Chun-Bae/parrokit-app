@@ -38,6 +38,7 @@ import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/sentence_topic_label.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
 import 'collection_header_slot.dart';
@@ -642,6 +643,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     final exploreRow = Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: _ExploreStrip(
+        accountId: accountId,
         sentences: ([...visibleShared]
               ..sort((a, b) => b.likeCount.compareTo(a.likeCount)))
             .take(8)
@@ -740,6 +742,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _SentenceCard(
                             sentence: sentence,
+                            mine: sentence.authorId == accountId,
                             saved: isSaved(sentence),
                             active: isParrotActive(sentence),
                             onLike: () => unawaited(
@@ -898,6 +901,7 @@ class _SectionTitle extends StatelessWidget {
 class _SentenceCard extends StatelessWidget {
   const _SentenceCard({
     required this.sentence,
+    required this.mine,
     required this.saved,
     required this.active,
     required this.onLike,
@@ -907,6 +911,9 @@ class _SentenceCard extends StatelessWidget {
   });
 
   final SharedSentence sentence;
+
+  /// 보는 사람이 이 문장을 올린 사람인지. 주제 이름을 고를 때 쓴다(5차 337).
+  final bool mine;
   final bool saved;
   final bool active;
   final VoidCallback onLike;
@@ -950,8 +957,8 @@ class _SentenceCard extends StatelessWidget {
                             .secondaryContainer
                             .withValues(alpha: 0.55),
                         borderRadius: BorderRadius.circular(AppRadius.xl)),
-                    child:
-                        Text(sentence.topic, style: context.texts.labelSmall)),
+                    child: Text(sentenceTopicLabel(sentence.topic, mine: mine),
+                        style: context.texts.labelSmall)),
                 if (saved) ...[
                   const SizedBox(width: 6),
                   Container(
@@ -1370,6 +1377,7 @@ class _MySentenceTile extends StatelessWidget {
 class _ExploreStrip extends StatelessWidget {
   const _ExploreStrip({
     required this.sentences,
+    required this.accountId,
     required this.loading,
     required this.failed,
     required this.onOpen,
@@ -1377,6 +1385,9 @@ class _ExploreStrip extends StatelessWidget {
   });
 
   final List<SharedSentence> sentences;
+
+  /// 보는 사람. 올린 사람과 같으면 '내 문장'이라 적는다(5차 337).
+  final String accountId;
   final bool loading;
   final bool failed;
   final ValueChanged<SharedSentence> onOpen;
@@ -1462,7 +1473,9 @@ class _ExploreStrip extends StatelessWidget {
                                 size: 14,
                                 color: colors.onSurfaceVariant),
                             const SizedBox(width: 3),
-                            Text('${item.likeCount} · ${item.topic}',
+                            Text(
+                                '${item.likeCount} · '
+                                '${sentenceTopicLabel(item.topic, mine: item.authorId == accountId)}',
                                 style: context.texts.labelSmall
                                     .copyWith(color: colors.onSurfaceVariant)),
                           ]),
@@ -2158,7 +2171,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
-                  '${widget.sentence.language} · ${widget.sentence.topic}',
+                  '${widget.sentence.language} · '
+                  '${sentenceTopicLabel(widget.sentence.topic, mine: widget.shared == null || widget.shared!.authorId == widget.accountId)}',
                   style: context.texts.labelSmall,
                 ),
               ),

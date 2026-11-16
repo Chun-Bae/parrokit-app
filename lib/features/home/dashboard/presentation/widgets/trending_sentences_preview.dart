@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
+import 'package:parrokit/core/content/sentence_topic_label.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -342,6 +343,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
               itemBuilder: (context, index) {
                 final item = items[index];
                 return _SentenceCard(
+                  mine: isMine(item),
                   item: item,
                   saved: savedCopyOf(item) != null,
                   onLike: () => toggleLike(item),
@@ -390,8 +392,8 @@ class _NoticeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: context.texts.titleMedium
-                        .copyWith(color: palette.ink)),
+                    style:
+                        context.texts.titleMedium.copyWith(color: palette.ink)),
                 if (body != null) ...[
                   const SizedBox(height: 2),
                   Text(body!,
@@ -403,8 +405,7 @@ class _NoticeCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: onAction,
-            child: Text(actionLabel,
-                style: TextStyle(color: palette.primary)),
+            child: Text(actionLabel, style: TextStyle(color: palette.primary)),
           ),
         ],
       ),
@@ -415,12 +416,16 @@ class _NoticeCard extends StatelessWidget {
 class _SentenceCard extends StatelessWidget {
   const _SentenceCard({
     required this.item,
+    required this.mine,
     required this.saved,
     required this.onLike,
     required this.onSave,
   });
 
   final SharedSentence item;
+
+  /// 보는 사람이 이 문장을 올린 사람인지. 주제 이름을 고를 때 쓴다(5차 337).
+  final bool mine;
   final bool saved;
   final VoidCallback onLike;
   final VoidCallback onSave;
@@ -473,7 +478,7 @@ class _SentenceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   child: Text(
-                    item.topic,
+                    sentenceTopicLabel(item.topic, mine: mine),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.texts.labelSmall
@@ -506,8 +511,8 @@ class _SentenceCard extends StatelessWidget {
               CircleAvatar(
                 radius: 11,
                 backgroundColor: palette.primary.withValues(alpha: 0.12),
-                child:
-                    Icon(Icons.person_rounded, size: 14, color: palette.primary),
+                child: Icon(Icons.person_rounded,
+                    size: 14, color: palette.primary),
               ),
               const SizedBox(width: 6),
               Expanded(
