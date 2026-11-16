@@ -196,8 +196,12 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
                                   overflow: TextOverflow.ellipsis,
                                   style: context.texts.bodyLarge
                                       .copyWith(fontWeight: FontWeight.w700)),
-                              subtitle: Text(sentence.translation,
-                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                              // 둘러보기는 언어별로 보여 주므로 어떤 언어로
+                              // 올라가는지 함께 적는다(5차 341).
+                              subtitle: Text(
+                                  '${sentence.language} · ${sentence.translation}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
                               trailing: busy
                                   ? const SizedBox.square(
                                       dimension: 18,

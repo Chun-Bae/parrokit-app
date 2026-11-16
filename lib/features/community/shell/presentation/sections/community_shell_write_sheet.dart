@@ -5,6 +5,7 @@ import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/share_my_sentence_sheet.dart';
 
 void showCommunityWriteBottomSheet(BuildContext context) {
   showAppSheet<void>(
@@ -34,6 +35,20 @@ void showCommunityWriteBottomSheet(BuildContext context) {
                 onTap: () {
                   Navigator.pop(context);
                   context.push(AppRoutes.communityBoardWritePath);
+                },
+              ),
+              const SizedBox(height: 12),
+              // 커뮤니티에 문장 탭이 생겼으니 여기서도 고를 수 있어야 한다
+              // (5차 341). 탭마다 단추가 다른데 이 시트만 셋이었다.
+              _CommunityWriteOption(
+                icon: Icons.format_quote_rounded,
+                iconColor: AppColors.communityBoardAccent,
+                bgColor: AppColors.communityBoardAccentSoft,
+                title: '문장 공유하기',
+                subtitle: '내 문장을 다른 사람과 나눠요',
+                onTap: () {
+                  Navigator.pop(context);
+                  showShareMySentenceSheet(context);
                 },
               ),
               const SizedBox(height: 12),
