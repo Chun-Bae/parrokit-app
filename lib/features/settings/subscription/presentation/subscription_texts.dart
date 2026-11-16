@@ -2,6 +2,7 @@
 
 import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 
 /// 단계 이름. 더보기 줄과 구독 화면이 같은 말을 쓴다.
@@ -40,37 +41,40 @@ class SubscriptionTierCopy {
   const SubscriptionTierCopy({
     required this.tier,
     required this.previewPrice,
-    required this.benefits,
+    required this.firstLine,
   });
 
   final SubscriptionTier tier;
   final String previewPrice;
-  final List<String> benefits;
+
+  /// 그 단계만의 첫 줄. 나머지 혜택은 값에서 만든다.
+  final String firstLine;
 
   String get name => subscriptionTierName(tier);
   String get startLabel => '$name 시작하기';
+
+  /// 혜택 줄. 패롯 수와 저장 용량은 적어 두지 않고 한 곳에서 가져온다.
+  /// 예전에는 여기 '매달 패롯 100개'처럼 박아 둬서, 서버 값을 바꾸면
+  /// 화면이 거짓말을 하게 돼 있었다(5차).
+  List<String> get benefits => [
+        firstLine,
+        '매달 패롯 ${monthlyParrotsFor(tier)}개',
+        '서버 백업 ${serverStorageQuotaLabel(tier)}',
+        // 뜻 채우기 하루 한도는 서버 설정에서 바뀐다. 숫자를 적지 않는다.
+        '뜻 채우기 하루 한도가 늘어요',
+      ];
 }
 
 const List<SubscriptionTierCopy> subscriptionTiers = [
   SubscriptionTierCopy(
     tier: SubscriptionTier.light,
     previewPrice: '월 ₩2,900',
-    benefits: [
-      '광고 없이',
-      '매달 패롯 100개',
-      '서버 백업 5GB',
-      '뜻 채우기 하루 15번',
-    ],
+    firstLine: '광고 없이',
   ),
   SubscriptionTierCopy(
     tier: SubscriptionTier.pro,
     previewPrice: '월 ₩7,900',
-    benefits: [
-      '라이트에 더해',
-      '매달 패롯 400개',
-      '서버 백업 30GB',
-      '뜻 채우기 하루 60번',
-    ],
+    firstLine: '라이트에 더해',
   ),
 ];
 

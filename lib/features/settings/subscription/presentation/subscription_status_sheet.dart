@@ -30,18 +30,6 @@ Future<void> showSubscriptionStatusSheet(
   );
 }
 
-/// 단계별로 매달 받는 패롯. 구독 고르기 화면에 적은 것과 같은 수다.
-int monthlyParrotsFor(SubscriptionTier tier) {
-  switch (tier) {
-    case SubscriptionTier.free:
-      return 0;
-    case SubscriptionTier.light:
-      return 100;
-    case SubscriptionTier.pro:
-      return 400;
-  }
-}
-
 String formatStorageBytes(int bytes) {
   if (bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];

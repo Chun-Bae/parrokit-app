@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/user.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
