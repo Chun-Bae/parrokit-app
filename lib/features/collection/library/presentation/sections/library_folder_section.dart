@@ -672,7 +672,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
               final exists = await clipProvider.isNameExists(name);
               if (!ctx.mounted) return;
               if (exists) {
-                showToast('이미 같은 이름의 그룹이나 폴더이 존재합니다.');
+                showToast('같은 이름의 그룹이나 폴더가 이미 있어요.');
                 return;
               }
               setState(() => submitting = true);
@@ -683,7 +683,7 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
                 if (ctx.mounted) {
                   setState(() => submitting = false);
                 }
-                showToast('처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                showToast('처리하지 못했어요. 다시 해 주세요.');
               }
             }
 

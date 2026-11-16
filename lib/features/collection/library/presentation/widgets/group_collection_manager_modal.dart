@@ -91,7 +91,7 @@ class _GroupCollectionManagerModalState
     await clipProvider.updateCollectionsForGroup(
         _selectedGroupIdForTabA!, _checkedCollectionIdsForTabA.toList());
     if (mounted) {
-      showToast('그룹 매핑이 저장되었습니다.');
+      showToast('그룹에 담을 폴더를 저장했어요.');
       Navigator.of(context).pop();
     }
   }
@@ -102,7 +102,7 @@ class _GroupCollectionManagerModalState
     await clipProvider.updateGroupsForCollection(
         _selectedCollectionIdForTabB!, _checkedGroupIdsForTabB.toList());
     if (mounted) {
-      showToast('폴더 매핑이 저장되었습니다.');
+      showToast('이 폴더가 들어갈 그룹을 저장했어요.');
     }
   }
 

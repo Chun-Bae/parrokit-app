@@ -91,7 +91,7 @@ Future<void> showSttConfirmDialog(
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '영상의 음성을 분석해 자막 초안을 자동 생성합니다.',
+                              '영상 소리를 듣고 자막 초안을 만들어요.',
                               style:
                                   Theme.of(ctx).textTheme.bodySmall?.copyWith(
                                         color: isDark

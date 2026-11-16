@@ -32,7 +32,7 @@ class AccountSection extends StatelessWidget {
       await userProvider.reloadFirebaseUser();
       final verified = await userProvider.isEmailVerified();
       if (!context.mounted) return;
-      showToast(verified ? '이메일 인증이 완료되었습니다.' : '아직 이메일 인증이 완료되지 않았습니다.');
+      showToast(verified ? '이메일 인증을 마쳤어요.' : '아직 이메일 인증 전이에요.');
     } catch (e, st) {
       AppLogger.e('이메일 인증 상태 확인 실패', error: e, stackTrace: st);
       if (!context.mounted) return;
@@ -45,7 +45,7 @@ class AccountSection extends StatelessWidget {
     try {
       await userProvider.sendEmailVerification();
       if (!context.mounted) return;
-      showToast('인증 메일을 전송했습니다. 메일이 보이지 않는다면 스팸 메일함도 확인해 주세요.');
+      showToast('인증 메일을 보냈어요. 안 보이면 스팸함도 봐 주세요.');
     } catch (e, st) {
       AppLogger.e('인증 메일 재전송 실패', error: e, stackTrace: st);
       if (!context.mounted) return;
