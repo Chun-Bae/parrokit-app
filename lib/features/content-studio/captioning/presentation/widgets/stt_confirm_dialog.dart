@@ -109,11 +109,27 @@ Future<void> showSttConfirmDialog(
                                     BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Text(
-                                '10초당 1패롯 소모',
+                                sttCostLine(vm.videoDurationMs),
+                                key: const ValueKey('stt-cost-line'),
                                 style: context.texts.labelMedium
                                     .copyWith(color: cs.onPrimaryContainer),
                               ),
                             ),
+                            // 모자라면 시작할 때 시트가 뜨지만, 누르기 전에
+                            // 알려 주는 편이 낫다(5차).
+                            if (sttShortOfParrotsLine(
+                                  durationMs: vm.videoDurationMs,
+                                  coins: vm.userProvider.coins,
+                                )
+                                case final short?) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                short,
+                                key: const ValueKey('stt-short-line'),
+                                style: context.texts.bodySmall
+                                    .copyWith(color: cs.error),
+                              ),
+                            ],
                             const SizedBox(height: 24),
                             ...visibleEngines.map((e) {
                               return Padding(

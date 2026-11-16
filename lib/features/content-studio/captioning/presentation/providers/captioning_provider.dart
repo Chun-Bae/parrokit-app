@@ -521,6 +521,12 @@ class CaptioningProvider extends ChangeNotifier
     super.notifyListeners();
   }
 
+  /// 지금 고른 영상의 길이(ms). 아직 모르면 null.
+  int? get videoDurationMs {
+    final parsed = int.tryParse(durationCtl.text.trim());
+    return parsed != null && parsed > 0 ? parsed : null;
+  }
+
   @override
   void dispose() {
     _disposed = true;
@@ -533,6 +539,22 @@ class CaptioningProvider extends ChangeNotifier
     }
     super.dispose();
   }
+}
+
+/// 자동 자막 시작 전에 보여 줄 값 안내.
+///
+/// 예전에는 '10초당 1패롯 소모'라는 **비율**만 적어서, 이 영상에 몇 개가
+/// 드는지 세어 봐야 알 수 있었다(5차).
+String sttCostLine(int? durationMs) => durationMs == null || durationMs <= 0
+    ? '10초에 1패롯 들어요'
+    : '이 영상은 ${captionParrotCost(durationMs)}패롯 들어요 · 10초에 1패롯';
+
+/// 가진 패롯으로 모자랄 때 덧붙일 한 줄. 넉넉하면 null.
+String? sttShortOfParrotsLine({required int? durationMs, required int coins}) {
+  if (durationMs == null || durationMs <= 0) return null;
+  final cost = captionParrotCost(durationMs);
+  if (coins >= cost) return null;
+  return '지금 패롯이 $coins개예요. ${cost - coins}개가 더 있어야 해요.';
 }
 
 /// 자동 자막 가격. 10초에 1패롯, 올림. functions/src/pricing.ts의 captionCost와 같다.
