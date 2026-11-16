@@ -8,6 +8,7 @@ import 'package:parrokit/data/local/prefs/user_prefs.dart';
 import 'package:parrokit/features/collection/clip/shorts/data/shorts_ad_repository.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/providers/ad_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 // 테마 provider를 생성하고 저장된 테마를 로드한다.
 Future<ThemeProvider> createThemeProvider() async {
@@ -29,10 +30,13 @@ Future<UserProvider> createUserProvider() async {
     );
     await userProvider.init();
     return userProvider;
-  } catch (_) {
+  } catch (error) {
+    // 저장소를 열지 못해도 앱은 켜진다. 로그인 정보만 기억하지 못한다(5차 374).
+    // 전에는 `UserPrefs(null as dynamic)`을 넘겨, 읽거나 쓰는 순간 멈췄다.
+    AppLogger.w('[Bootstrap] 사용자 저장소를 열지 못했어요: $error');
     return UserProvider(
       UserRepository(
-        UserPrefs(null as dynamic),
+        UserPrefs(null),
         FirebaseAuthService(),
         FirebaseUserService(),
       ),
