@@ -1,6 +1,7 @@
 // 올린 사람 프로필 사진 위젯(5차 338).
 
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/author_profile.dart';
@@ -22,9 +23,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.person_rounded), findsOneWidget);
-    expect(
-        tester.widget<CircleAvatar>(find.byType(CircleAvatar)).foregroundImage,
-        isNull);
+    expect(find.byType(CachedNetworkImage), findsNothing);
   });
 
   testWidgets('사진이 있으면 읽어 오고, 못 내려받으면 아이콘으로 돌아간다', (tester) async {
@@ -36,13 +35,15 @@ void main() {
     await tester.pumpWidget(app('mina'));
     await tester.pumpAndSettle();
 
-    // 위젯이 사진 주소를 읽어 왔다.
+    // 위젯이 사진 주소를 읽어 와 그 주소로 내려받는다.
     expect(AuthorProfiles.cached('mina'), 'https://example.com/mina.jpg');
-    // 테스트에서는 내려받기가 실패한다(400). 그때는 사람 아이콘만 남는다.
-    expect(find.byIcon(Icons.person_rounded), findsOneWidget);
     expect(
-        tester.widget<CircleAvatar>(find.byType(CircleAvatar)).foregroundImage,
-        isNull);
+        tester
+            .widget<CachedNetworkImage>(find.byType(CachedNetworkImage))
+            .imageUrl,
+        'https://example.com/mina.jpg');
+    // 못 받는 동안에는 사람 아이콘이 자리를 지킨다.
+    expect(find.byIcon(Icons.person_rounded), findsOneWidget);
   });
 
   testWidgets('프로필 사진을 바꾸면 그 자리도 바로 바뀐다', (tester) async {
@@ -55,9 +56,9 @@ void main() {
     await tester.pump();
 
     expect(
-        (tester.widget<CircleAvatar>(find.byType(CircleAvatar)).foregroundImage
-                as NetworkImage?)
-            ?.url,
+        tester
+            .widget<CachedNetworkImage>(find.byType(CachedNetworkImage))
+            .imageUrl,
         'https://example.com/new.jpg');
   });
 
