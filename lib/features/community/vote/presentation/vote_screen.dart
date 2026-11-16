@@ -712,11 +712,23 @@ class VoteCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(width: 16),
-                Icon(Icons.chat_bubble_outline, size: 22, color: cs.onSurface),
-                const SizedBox(width: 6),
-                Text('${item.commentCount}',
-                    style:
-                        context.texts.bodyMedium.copyWith(color: cs.onSurface)),
+                // 공감은 옆에 '공감 N'으로 보이는데 댓글은 숫자뿐이라,
+                // 화면 읽기에만 이름을 붙인다(5차).
+                Semantics(
+                  label: '댓글 ${item.commentCount}',
+                  excludeSemantics: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.chat_bubble_outline,
+                          size: 22, color: cs.onSurface),
+                      const SizedBox(width: 6),
+                      Text('${item.commentCount}',
+                          style: context.texts.bodyMedium
+                              .copyWith(color: cs.onSurface)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],

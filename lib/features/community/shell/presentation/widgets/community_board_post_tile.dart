@@ -85,11 +85,20 @@ class CommunityBoardPostTile extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    _Metric(icon: Icons.remove_red_eye, value: post.viewCount),
+                    _Metric(
+                        name: '조회',
+                        icon: Icons.remove_red_eye,
+                        value: post.viewCount),
                     const SizedBox(width: 12),
-                    _Metric(icon: Icons.thumb_up, value: post.likeCount),
+                    _Metric(
+                        name: '공감',
+                        icon: Icons.thumb_up,
+                        value: post.likeCount),
                     const SizedBox(width: 12),
-                    _Metric(icon: Icons.chat_bubble, value: post.commentCount),
+                    _Metric(
+                        name: '댓글',
+                        icon: Icons.chat_bubble,
+                        value: post.commentCount),
                   ],
                 ),
               ],
@@ -105,9 +114,13 @@ class _Metric extends StatelessWidget {
   final IconData icon;
   final int value;
 
+  /// 화면 읽기에 쓸 이름. 아이콘만 있으면 '14 2 6'으로만 읽혔다(5차).
+  final String name;
+
   const _Metric({
     required this.icon,
     required this.value,
+    required this.name,
   });
 
   @override
@@ -115,18 +128,22 @@ class _Metric extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: colorScheme.outline),
-        const SizedBox(width: 4),
-        Text(
-          '$value',
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
+    return Semantics(
+      label: '$name $value',
+      excludeSemantics: true,
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: colorScheme.outline),
+          const SizedBox(width: 4),
+          Text(
+            '$value',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

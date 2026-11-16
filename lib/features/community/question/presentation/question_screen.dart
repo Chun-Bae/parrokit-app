@@ -267,20 +267,40 @@ class _QuestionScreenState extends State<QuestionScreen> {
                 child: Row(
                   children: [
                     // 글 공감은 엄지(커뮤니티 메뉴 규칙, 게시판과 같게).
-                    Icon(Icons.thumb_up_outlined,
-                        size: 24, color: colorScheme.onSurface),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${question.likeCount}',
-                      style: context.texts.bodyMedium,
+                    // 아이콘만 있으면 화면 읽기로 숫자만 읽혀서 이름을
+                    // 붙인다(5차, 게시판 목록과 같게).
+                    Semantics(
+                      label: '공감 ${question.likeCount}',
+                      excludeSemantics: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.thumb_up_outlined,
+                              size: 24, color: colorScheme.onSurface),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${question.likeCount}',
+                            style: context.texts.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 16),
-                    Icon(Icons.chat_bubble_outline,
-                        size: 22, color: colorScheme.onSurface),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${question.commentCount}',
-                      style: context.texts.bodyMedium,
+                    Semantics(
+                      label: '댓글 ${question.commentCount}',
+                      excludeSemantics: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.chat_bubble_outline,
+                              size: 22, color: colorScheme.onSurface),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${question.commentCount}',
+                            style: context.texts.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
                     const Spacer(),
                     // 채택 보상은 답할 사람에게 가장 큰 이유다(design-research 5).
