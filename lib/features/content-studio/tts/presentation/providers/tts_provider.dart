@@ -15,6 +15,7 @@ import '../../domain/models/tts_language.dart';
 import '../../domain/repositories/tts_generation_repository.dart';
 import '../../domain/usecases/generate_tts_usecase.dart';
 import 'tts_provider_settings.dart';
+import 'package:parrokit/features/content-studio/tts/presentation/tts_error_text.dart';
 
 class TtsProvider extends ChangeNotifier {
   late final GenerateTtsUseCase _useCase;
@@ -218,8 +219,7 @@ class TtsProvider extends ChangeNotifier {
     final cost = _calculateCoinCost(_text.length);
     if (userProvider.coins < cost) {
       // 할 수 있는 일(광고 보기·구독)을 시트로 알린다(5차 4단계).
-      unawaited(showNotEnoughParrots(
-          needed: cost, have: userProvider.coins));
+      unawaited(showNotEnoughParrots(needed: cost, have: userProvider.coins));
       return;
     }
 
@@ -263,7 +263,7 @@ class TtsProvider extends ChangeNotifier {
       AppLogger.e(
           '[TTS][Provider] generateTts failed provider=${_providerType.name}',
           error: e);
-      _errorMessage = e.toString();
+      _errorMessage = ttsErrorText(e);
     } finally {
       _isGenerating = false;
       notifyListeners();
