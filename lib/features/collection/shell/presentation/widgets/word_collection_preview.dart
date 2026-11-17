@@ -938,6 +938,7 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         examples: examples,
       ),
       accountId: widget.accountId,
+      assist: widget.assist,
     );
     if (!mounted || next == null) return;
     setState(() {

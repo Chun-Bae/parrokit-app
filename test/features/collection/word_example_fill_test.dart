@@ -149,6 +149,37 @@ void main() {
     expect(after.examples.length, examplesMaxCount);
   });
 
+  testWidgets('고치기 창에서도 자동으로 채운다(5차 470)', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(
+      translation: '거대한',
+      pronunciation: '휴지',
+      examples: const [SuggestedExample(text: 'A huge wave.', translation: '큰 파도.')],
+    );
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+    // 상세로 나가지 않고 이 창 안에서 받는다.
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill-count-1')));
+    await tester.pumpAndSettle();
+
+    // 아직 저장 전이라 입력칸에만 들어간다.
+    expect(find.text('거대한'), findsOneWidget);
+    expect(find.text('휴지'), findsOneWidget);
+    expect(find.text('A huge wave.'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('edit-word-save')));
+    await tester.pumpAndSettle();
+
+    final after = (await MyWordStore.loadFor('guest', '영어')).single;
+    expect(after.meaning, '거대한');
+    expect(after.pronunciation, '휴지');
+    expect(after.examples.single.text, 'A huge wave.');
+  });
+
   test('상한은 서버와 같은 10개다', () {
     expect(examplesMaxCount, 10);
   });

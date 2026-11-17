@@ -5,9 +5,15 @@
 // 창을 네 번 열었다 닫아야 했다.
 //
 // 저장은 한 번에 한다(MyWordStore.saveEdits).
+//
+// 자동 채우기도 여기 둔다(5차 470, 사용자 지적). 상세에만 있었더니, 예문을
+// 손보러 이 창에 들어온 사람이 자동으로 받으려면 창을 닫고 나가야 했다.
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
+import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -19,10 +25,15 @@ Future<MyWord?> showWordEditSheet(
   BuildContext context, {
   required MyWord word,
   required String accountId,
+  SentenceAssist? assist,
 }) =>
     showAppSheet<MyWord>(
       context: context,
-      builder: (_) => WordEditSheet(word: word, accountId: accountId),
+      builder: (_) => WordEditSheet(
+        word: word,
+        accountId: accountId,
+        assist: assist,
+      ),
     );
 
 class WordEditSheet extends StatefulWidget {
@@ -30,10 +41,14 @@ class WordEditSheet extends StatefulWidget {
     super.key,
     required this.word,
     required this.accountId,
+    this.assist,
   });
 
   final MyWord word;
   final String accountId;
+
+  /// 테스트에서 가짜를 넣는 자리. 비우면 서버를 부른다.
+  final SentenceAssist? assist;
 
   @override
   State<WordEditSheet> createState() => _WordEditSheetState();
@@ -59,7 +74,10 @@ class _WordEditSheetState extends State<WordEditSheet> {
     for (final e in widget.word.examples) e.sourceSentenceId,
   ];
 
+  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
+
   bool _saving = false;
+  bool _filling = false;
   String? _notice;
 
   @override
@@ -113,6 +131,109 @@ class _WordEditSheetState extends State<WordEditSheet> {
     });
   }
 
+  /// 뜻·발음·예문을 서버에서 받아 빈 칸을 채운다(5차 470).
+  ///
+  /// 아직 저장하지 않은 입력칸을 그대로 쓴다. 이미 적어 둔 것은 덮지 않고,
+  /// 지금 칸에 있는 예문은 겹치지 않게 서버로 함께 보낸다.
+  Future<void> _fill() async {
+    if (_filling || _saving) return;
+    final room = examplesMaxCount - _exampleTexts.length;
+    final emptySlots = [
+      for (final (index, c) in _exampleTexts.indexed)
+        if (c.text.trim().isEmpty) index,
+    ];
+    if (room <= 0 && emptySlots.isEmpty) {
+      setState(() => _notice = '예문은 $examplesMaxCount개까지 넣을 수 있어요.');
+      return;
+    }
+    final count = await _askCount(
+      emptySlots.length + room < 1 ? 1 : emptySlots.length + room,
+    );
+    if (!mounted || count == null) return;
+
+    setState(() {
+      _filling = true;
+      _notice = null;
+    });
+    String? note;
+    try {
+      final suggestion = await _assist.suggestWord(
+        language: widget.word.language,
+        word: widget.word.word,
+        existingExamples: [
+          for (final c in _exampleTexts)
+            if (c.text.trim().isNotEmpty) c.text.trim(),
+        ],
+        count: count,
+      );
+      if (!mounted) return;
+      final meaning = suggestion.translation?.trim() ?? '';
+      if (_meaning.text.trim().isEmpty && meaning.isNotEmpty) {
+        _meaning.text = meaning;
+      }
+      final sound = suggestion.pronunciation?.trim() ?? '';
+      if (_pronunciation.text.trim().isEmpty && sound.isNotEmpty) {
+        _pronunciation.text = sound;
+      }
+      var slot = 0;
+      for (final example in suggestion.examples) {
+        if (slot < emptySlots.length) {
+          final at = emptySlots[slot];
+          _exampleTexts[at].text = example.text;
+          _exampleMeanings[at].text = example.translation;
+        } else {
+          if (_exampleTexts.length >= examplesMaxCount) break;
+          _exampleTexts.add(TextEditingController(text: example.text));
+          _exampleMeanings
+              .add(TextEditingController(text: example.translation));
+          _exampleSources.add('');
+        }
+        slot++;
+      }
+      if (suggestion.examples.isEmpty && meaning.isEmpty) {
+        note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
+      }
+    } on SentenceAssistQuotaExceeded {
+      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+    } on SentenceAssistUnavailable catch (e) {
+      note = e.reason;
+    } catch (_) {
+      note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _filling = false;
+          _notice = note;
+        });
+      }
+    }
+  }
+
+  /// 몇 개를 받을지 고른다. 남은 자리보다 많이 고를 수 없다.
+  Future<int?> _askCount(int room) {
+    final choices = [for (var n = 1; n <= room && n <= 5; n++) n];
+    return showCupertinoModalPopup<int>(
+      context: context,
+      builder: (sheetContext) => CupertinoActionSheet(
+        title: const Text('예문 몇 개를 만들까요?'),
+        message: Text('$examplesMaxCount개까지 둘 수 있어요.'),
+        actions: [
+          for (final n in choices)
+            CupertinoActionSheetAction(
+              key: ValueKey('edit-word-fill-count-$n'),
+              onPressed: () => Navigator.of(sheetContext).pop(n),
+              child: Text('$n개'),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(sheetContext).pop(),
+          child: const Text('취소'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -163,8 +284,28 @@ class _WordEditSheetState extends State<WordEditSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(widget.word.word, style: context.texts.headlineSmall),
-            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(widget.word.word,
+                      style: context.texts.headlineSmall),
+                ),
+                // 예문을 손보러 들어온 자리에서 바로 받을 수 있게 한다(5차 470).
+                TextButton.icon(
+                  key: const ValueKey('edit-word-fill'),
+                  onPressed: _filling || _saving ? null : _fill,
+                  icon: _filling
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: const Text('자동으로 채우기'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             TextField(
               key: const ValueKey('edit-word-meaning-input'),
               controller: _meaning,
