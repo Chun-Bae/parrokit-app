@@ -309,7 +309,7 @@ void main() {
     // 창이 열렸는지는 아래 칸들로 확인한다.
     expect(find.text('문장 추가'), findsWidgets);
     expect(find.byKey(const ValueKey('sentence-language')), findsOneWidget);
-    expect(find.text('발음 (선택)'), findsOneWidget);
+    expect(find.text('발음 (비워도 돼요)'), findsOneWidget);
     // 뜻이 없으면 저장할 수 없다.
     await tester.enterText(
         find.byKey(const ValueKey('sentence-text')), 'Nice to meet you!');

@@ -604,7 +604,7 @@ class _WordExampleDialogState extends State<WordExampleDialog> {
               maxLines: 2,
               minLines: 1,
               maxLength: exampleMaxLength,
-              decoration: const InputDecoration(labelText: '뜻 (선택)'),
+              decoration: const InputDecoration(labelText: '뜻 (비워도 돼요)'),
             ),
             if (_hint != null)
               Padding(
@@ -711,7 +711,7 @@ class _SynonymEditorState extends State<SynonymEditor> {
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _add(),
                 decoration: InputDecoration(
-                  labelText: '유의어 (선택)',
+                  labelText: '유의어 (비워도 돼요)',
                   hintText: '하나씩 적고 추가 — big',
                   counterText: '${widget.synonyms.length}/$synonymsMaxCount',
                   border: const OutlineInputBorder(),
@@ -1409,7 +1409,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   controller: _meaning,
                   maxLength: 200,
                   decoration: const InputDecoration(
-                    labelText: '뜻 (선택)',
+                    labelText: '뜻 (비워도 돼요)',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -1519,7 +1519,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     minLines: 1,
                     decoration: InputDecoration(
                       labelText:
-                          _examples.length == 1 ? '예문 (선택)' : '예문 ${index + 1}',
+                          _examples.length == 1 ? '예문 (비워도 돼요)' : '예문 ${index + 1}',
                       border: const OutlineInputBorder(),
                       suffixIcon: _examples.length == 1
                           ? null
@@ -1540,7 +1540,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     maxLines: 2,
                     minLines: 1,
                     decoration: const InputDecoration(
-                      labelText: '예문 뜻 (선택)',
+                      labelText: '예문 뜻 (비워도 돼요)',
                       border: OutlineInputBorder(),
                     ),
                   ),

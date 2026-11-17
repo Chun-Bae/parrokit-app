@@ -198,7 +198,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                   style: context.texts.bodyMedium,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    labelText: '발음 (선택)',
+                    labelText: '발음 (비워도 돼요)',
                     border: const OutlineInputBorder(),
                     suffixIcon: controller.fillStatus == AssistStatus.loading
                         ? const _LoadingDot()
@@ -207,7 +207,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                 ),
                 const SizedBox(height: 16),
                 Center(
-                    child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워둬도 돼요.',
+                    child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워도 돼요.',
                         style: context.texts.bodySmall.copyWith(color: muted))),
               ],
             ),

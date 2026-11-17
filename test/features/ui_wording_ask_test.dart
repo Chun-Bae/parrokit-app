@@ -69,6 +69,21 @@ void main() {
     expect(block, isNot(contains("'닉네임을 입력")));
   });
 
+  test('안 써도 되는 칸은 비워도 된다고 적는다', () {
+    // 칸 이름이 '발음 (선택)'이었다. 바로 아래 안내는 '발음은 비워도 돼요'라
+    // 적혀 있어, 같은 것을 두 말로 불렀다(5차 420).
+    final offenders = <String>[];
+    for (final file in _dartFiles('lib')) {
+      for (final line in _uiLines(file)) {
+        if (line.contains("'") && line.contains('(선택)')) {
+          offenders.add(file.path);
+        }
+      }
+    }
+    expect(offenders, isEmpty,
+        reason: "'(비워도 돼요)'로 적는다\n${offenders.join('\n')}");
+  });
+
   test("무엇을 고르는 시트·단추 이름이 '… 선택'이 아니라 '… 고르기'다", () {
     // 시트 제목만 '목소리 선택'·'언어 선택'처럼 명사형이라, 앱의 다른 곳
     // ('폴더를 골라 주세요', '백업할 것을 하나는 골라 주세요')과 말이 갈렸다(5차 419).
