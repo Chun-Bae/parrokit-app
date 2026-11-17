@@ -3,6 +3,8 @@
 시작: 2026-11-13 아침. 10분마다 예약된 세션 루프(사실상 연속). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- **클립 탭을 새 화면으로 고정**하고 '새 클립 화면' 스위치를 없앴다(사용자 요청) (이번 커밋)
+- **백업 파일 이름에 Parrokit**, **문장·단어를 더보기에서도 주고받기**(사용자 요청). 테스트 8개 (이번 커밋)
 - **화면에 적힌 한도 숫자를 코드와 따로 적던 것**(240자·5분·5개)과 '항목/보기' 이름 갈림. 테스트 4개 (이번 커밋)
 - **글쓰기에서 같은 상황을 '게시판'과 '주제'로 다르게 부르던 것**과 **투표 보기 수를 실제 조건과 다르게 적던 것**. 테스트 2개 (이번 커밋)
 - **챗봇 시트만 화면 높이로 자기 키를 정해 부모 밖으로 나가던 것**(먹통의 진짜 까닭). 테스트 2개 (이번 커밋)
@@ -503,6 +505,7 @@
   3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
   4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
+- ~~**함수 checkStorageQuota**~~ **2026-11-17 12:35 배포함**(사용자 요청). 원래 내용:
 - **함수 checkStorageQuota (93f105d1)** — 저장 트리거 둘(onUserFileUploaded·onUserFileDeleted)은
   2026-11-15 19:30에 배포했다. 올리기 전에 자리를 묻는 이 함수만 남았다. 배포 전에는 앱이
   묻지 않고 그냥 올린다.
@@ -510,6 +513,7 @@
   npx -y firebase-tools@latest deploy --only functions:checkStorageQuota --project parrokit-45126
   ```
 
+- ~~**함수 onCommunityCommentCreated**~~ **2026-11-17 12:35 배포함**(사용자 요청). 원래 내용:
 - **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
   ```
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
@@ -4784,3 +4788,30 @@
 - 아직 못 맞춘 숫자: 닉네임 '30일에 한 번'은 코드에 그 수가 없다(서버 쪽으로
   보인다). 영상 '24시간 보관', '1080p는 8초 고정'도 손으로 적혀 있다.
   규칙이 어디 있는지 확인되면 같은 식으로 묶는다
+
+## 2026-11-17 12:35 함수 배포 (사용자 요청 "파이어베이스 함수는 배포하셈")
+- `checkStorageQuota`(us-central1, 새로 만듦)와 `onCommunityCommentCreated`
+  (asia-northeast3, 갱신) 둘 다 **Successful**
+- 배포 전에 `npm run build`·`npm run lint` 통과(경고 7, 오류 0), 컴파일 결과에
+  두 함수가 들어 있는지 확인. `checkStorageQuota`는 메모리 256MiB 그대로 뒀다
+  — 같은 파일의 형제 함수 둘이 이미 256으로 돌고 있다
+- CLI가 마지막에 낸 오류는 배포 실패가 아니라 **Artifact Registry 정리 정책이
+  없다**는 안내다(us-east1). 걸지 않으면 배포할 때마다 컨테이너 이미지가 쌓여
+  소액이 붙는다. 기본 보관은 1일(`functions:artifacts:setpolicy`).
+  요금이 걸린 설정이라 **묻지 않고 걸지 않았다**
+
+## 반복 435 (2026-11-17 12:30~, 사용자 요청 세 가지)
+1. **클립 탭을 새 화면으로 고정.** 더보기 '앱' 칸의 '새 클립 화면' 스위치와
+   `AppConfig.newClipLibrary`를 지웠다. 끊긴 길이 된 예전 클립 화면 코드
+   (`_buildClipPage`·`_buildClipContent`와 저장 위치 탭·북마크 탭·태그 화면을
+   부르던 핸들러 여섯)도 함께 지웠다. **위젯 파일 자체**(StorageScopeTabs,
+   BookmarkTabs, LibraryTagSection)는 남겨 뒀다 — 지울지는 따로 여쭌다
+2. **백업 파일 이름에 Parrokit.** `Parrokit_백업_20261117_124405.zip`.
+   앱 폴더에 남은 **예전 이름(`backup_…`)도 찌꺼기로 알아보게** 했다.
+   못 알아보면 새 백업 안에 예전 백업이 통째로 들어간다
+3. **문장·단어를 더보기에서도 주고받기.** 전에는 보관함 문장 탭 ⋮ 메뉴에만
+   있었고 단어는 길이 없었다. 더보기 > 데이터에 '문장·단어 주고받기'를 넣고
+   백업과 같은 `exportStudyData`/`importStudyData`를 쓴다
+- 테스트 8개. analyze 깨끗, 전체 통과(1465개)
+- 기기에서 셋 다 라이트·다크로 봤다. **실제 내보내기·불러오기는 파일 창과
+  사용자 데이터가 걸려 있어 끝까지 해 보지 않았다**(미확인)
