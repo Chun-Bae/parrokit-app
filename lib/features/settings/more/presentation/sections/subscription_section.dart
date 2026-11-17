@@ -32,6 +32,7 @@ class SubscriptionSection extends StatelessWidget {
       child: NavTile(
         key: const ValueKey('subscription-row'),
         icon: Icons.workspace_premium_outlined,
+        iconAsset: subscriptionTierIconAsset(tier),
         title: subscriptionScreenTitle,
         subtitle: subscriptionRowSubtitle(tier),
         trailing: Text(

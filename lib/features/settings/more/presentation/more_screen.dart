@@ -82,7 +82,9 @@ class _MoreScreenState extends State<MoreScreen> {
             const AccountSection(),
             const SizedBox(height: AppSpacing.md),
             const WalletSection(),
-            const _GroupLabel('구독'),
+            // 칸 이름이 '구독'인데 그 안에 '구독'과 '광고 제거'가 함께
+            // 있어 겹쳐 보였다. 파는 것을 묶는 칸이므로 '상품'으로 둔다(5차 465).
+            const _GroupLabel('상품'),
             const SubscriptionSection(),
             // 광고 제거는 한 번 사는 것이라 구독과 다른 줄로 둔다(5차 463).
             const AdsRemovalSection(),

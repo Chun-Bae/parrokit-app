@@ -17,6 +17,18 @@ String subscriptionTierName(SubscriptionTier tier) {
   }
 }
 
+/// 더보기 '구독' 줄에 쓰는 그림. 단계마다 다르다(5차 465).
+String subscriptionTierIconAsset(SubscriptionTier tier) {
+  switch (tier) {
+    case SubscriptionTier.free:
+      return 'assets/icons/tier_free.svg';
+    case SubscriptionTier.light:
+      return 'assets/icons/tier_light.svg';
+    case SubscriptionTier.pro:
+      return 'assets/icons/tier_pro.svg';
+  }
+}
+
 /// 더보기 '구독' 줄의 부제.
 String subscriptionRowSubtitle(SubscriptionTier tier) =>
     tier == SubscriptionTier.free ? '광고 없이, 매달 패롯을 받아요.' : '구독 중이에요. 눌러서 관리해요.';
