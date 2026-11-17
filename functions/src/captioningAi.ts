@@ -68,7 +68,7 @@ export const generateCaptions = onCall(
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) {
-      throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+      throw new HttpsError("unauthenticated", "로그인이 필요해요.");
     }
 
     const input = parseCaptionRequest(request.data);
@@ -100,12 +100,15 @@ export const generateCaptions = onCall(
       const [metadata] = await file.getMetadata();
       const fileSize = Number(metadata.size ?? 0);
       if (!Number.isFinite(fileSize) || fileSize <= 0) {
-        throw new HttpsError("invalid-argument", "파일 크기를 확인할 수 없습니다.");
+        throw new HttpsError(
+          "invalid-argument",
+          "영상 크기를 읽지 못했어요. 다른 영상으로 해 보세요."
+        );
       }
       if (fileSize > MAX_CAPTION_FILE_BYTES) {
         throw new HttpsError(
           "invalid-argument",
-          "자동 자막 파일은 30MB 이하만 처리할 수 있습니다."
+          "30MB 이하 영상만 자동 자막을 만들 수 있어요."
         );
       }
 
@@ -147,7 +150,7 @@ export const generateCaptions = onCall(
       console.error("[Captioning] generateCaptions failed", error);
       throw new HttpsError(
         "internal",
-        "자동 자막 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        "자동 자막을 만들지 못했어요. 잠시 뒤 다시 해 주세요."
       );
     } finally {
       await fs.unlink(tempPath).catch(() => undefined);
@@ -158,7 +161,10 @@ export const generateCaptions = onCall(
 
 function parseCaptionRequest(data: unknown): CaptionRequest {
   if (!data || typeof data !== "object") {
-    throw new HttpsError("invalid-argument", "요청 데이터가 올바르지 않습니다.");
+    throw new HttpsError(
+      "invalid-argument",
+      "이 영상으로는 자동 자막을 만들 수 없어요. 다른 영상으로 해 보세요."
+    );
   }
 
   const source = data as Record<string, unknown>;
@@ -181,7 +187,7 @@ function validateCaptionRequest(uid: string, input: CaptionRequest): void {
   ) {
     throw new HttpsError(
       "invalid-argument",
-      "자동 자막은 5분 이하 파일만 처리할 수 있습니다."
+      "5분 이하 영상만 넣을 수 있어요."
     );
   }
 
@@ -385,21 +391,21 @@ async function throwOpenAiHttpsError(
   if (code === "insufficient_quota" || type === "insufficient_quota") {
     throw new HttpsError(
       "resource-exhausted",
-      "OpenAI API 할당량이 부족합니다. 결제 상태를 확인해 주세요."
+      "지금은 자동 자막을 만들 수 없어요. 잠시 뒤 다시 해 주세요. 계속 안 되면 문의해 주세요."
     );
   }
 
   if (response.status === 429 || code === "rate_limit_exceeded") {
     throw new HttpsError(
       "resource-exhausted",
-      "OpenAI 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요."
+      "지금은 자동 자막을 만들 수 없어요. 잠시 뒤 다시 해 주세요. 계속 안 되면 문의해 주세요."
     );
   }
 
   if (response.status === 401 || code === "invalid_api_key") {
     throw new HttpsError(
       "failed-precondition",
-      "OpenAI API 키 설정을 확인해 주세요."
+      "지금은 자동 자막을 만들 수 없어요. 잠시 뒤 다시 해 주세요. 계속 안 되면 문의해 주세요."
     );
   }
 

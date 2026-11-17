@@ -1033,7 +1033,7 @@ export const generateChatbotResponse = onCall(
     try {
       const uid = request.auth?.uid;
       if (!uid) {
-        throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        throw new HttpsError("unauthenticated", "로그인이 필요해요.");
       }
 
       // 실패한 요청까지 하루 횟수에서 차감되지 않도록, 한도 초과 여부만
@@ -1074,7 +1074,7 @@ export const generateChatbotResponse = onCall(
 export const getChatbotUsage = onCall(appCheckOptions, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
-    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    throw new HttpsError("unauthenticated", "로그인이 필요해요.");
   }
 
   const usage = await getChatbotUsageStatus(uid);
@@ -1095,7 +1095,7 @@ export const generateTts = onCall(
     // 않는다. 같은 파일의 generateVideo와 같은 검사를 둔다.
     const uid = request.auth?.uid;
     if (!uid) {
-      throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+      throw new HttpsError("unauthenticated", "로그인이 필요해요.");
     }
 
     // 새 앱은 serverCharge: true를 보내고 스스로 깎지 않는다. 옛 앱은
@@ -1149,7 +1149,7 @@ export const generateTts = onCall(
 export const listTtsVoices = onCall(appCheckOptions, async (request) => {
   // Google Cloud TTS의 listVoices도 과금 대상 호출이다. 인증을 요구한다.
   if (!request.auth?.uid) {
-    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    throw new HttpsError("unauthenticated", "로그인이 필요해요.");
   }
 
   try {
@@ -1176,7 +1176,7 @@ export const listElevenLabsVoices = onCall(
   async (request) => {
     // ElevenLabs API 키를 쓰는 호출이다. 인증을 요구한다.
     if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+      throw new HttpsError("unauthenticated", "로그인이 필요해요.");
     }
 
     try {
@@ -1207,7 +1207,7 @@ export const generateVideo = onCall(
     try {
       const uid = request.auth?.uid;
       if (!uid) {
-        throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        throw new HttpsError("unauthenticated", "로그인이 필요해요.");
       }
 
       const {prompt, aspectRatio, duration, modelId, resolution, debug} =
@@ -1336,7 +1336,7 @@ export const getVideoOperationStatus = onCall(
     try {
       const uid = request.auth?.uid;
       if (!uid) {
-        throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        throw new HttpsError("unauthenticated", "로그인이 필요해요.");
       }
 
       const {operationName} = request.data;
@@ -1369,7 +1369,7 @@ export const getVideoOperationStatus = onCall(
       if (!docSnapshot) {
         throw new HttpsError(
           "permission-denied",
-          "해당 영상 생성 요청을 찾을 수 없습니다."
+          "그 영상 만들기를 찾지 못했어요."
         );
       }
 
@@ -1401,7 +1401,7 @@ export const getVideoOperationStatus = onCall(
             return {
               done: true,
               videoUri: null,
-              error: "영상 보관 기간이 만료되었습니다.",
+              error: "보관 기간이 지나 영상이 사라졌어요.",
               ttlHours: null,
             };
           }
@@ -1512,7 +1512,7 @@ export const listVideoGenerations = onCall(
     try {
       const uid = request.auth?.uid;
       if (!uid) {
-        throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        throw new HttpsError("unauthenticated", "로그인이 필요해요.");
       }
 
       const snapshot = await admin

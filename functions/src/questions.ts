@@ -23,7 +23,7 @@ import {buildQuestionDocument} from "./questionInput";
 export const createQuestion = onCall(appCheckOptions, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
-    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    throw new HttpsError("unauthenticated", "로그인이 필요해요.");
   }
   const post = request.data?.post;
   if (!post || typeof post !== "object") {
@@ -50,7 +50,7 @@ export const createQuestion = onCall(appCheckOptions, async (request) => {
     if (!wallet.exists) {
       throw new HttpsError(
         "failed-precondition",
-        "유저 정보를 찾을 수 없습니다."
+        "사용자 정보를 찾지 못했어요."
       );
     }
     if (wallet.crackers < reward) {
@@ -77,7 +77,7 @@ export const createQuestion = onCall(appCheckOptions, async (request) => {
 export const acceptAnswer = onCall(appCheckOptions, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
-    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    throw new HttpsError("unauthenticated", "로그인이 필요해요.");
   }
   const {postId, commentId} = request.data ?? {};
   if (
@@ -107,12 +107,12 @@ export const acceptAnswer = onCall(appCheckOptions, async (request) => {
     const post = postSnap.data();
     const comment = commentSnap.data();
     if (!post) {
-      throw new HttpsError("not-found", "게시글을 찾을 수 없습니다.");
+      throw new HttpsError("not-found", "글을 찾지 못했어요.");
     }
     if (post.postType !== "question" || post.authorId !== uid) {
       throw new HttpsError(
         "permission-denied",
-        "질문을 쓴 사람만 채택할 수 있습니다."
+        "질문을 쓴 사람만 채택할 수 있어요."
       );
     }
     if (post.questionStatus === "resolved") {
@@ -128,19 +128,19 @@ export const acceptAnswer = onCall(appCheckOptions, async (request) => {
       );
     }
     if (!comment || comment.status === "deleted") {
-      throw new HttpsError("not-found", "답변을 찾을 수 없습니다.");
+      throw new HttpsError("not-found", "답변을 찾지 못했어요.");
     }
     const answererId = comment.authorId;
     if (typeof answererId !== "string" || answererId.length === 0) {
       throw new HttpsError(
         "failed-precondition",
-        "답변 작성자를 알 수 없습니다."
+        "답변을 쓴 사람을 알 수 없어요."
       );
     }
     if (answererId === uid) {
       throw new HttpsError(
         "failed-precondition",
-        "내 답변은 채택할 수 없습니다."
+        "내 답변은 채택할 수 없어요."
       );
     }
     const reward = typeof post.rewardCrackers === "number" ?

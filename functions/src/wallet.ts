@@ -220,7 +220,7 @@ export function requestIdOf(value: unknown): string {
 export const exchangeCurrency = onCall(appCheckOptions, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
-    throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    throw new HttpsError("unauthenticated", "로그인이 필요해요.");
   }
   const {direction, amount, requestId} = request.data ?? {};
   if (
