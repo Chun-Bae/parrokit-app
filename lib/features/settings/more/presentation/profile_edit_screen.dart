@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -427,7 +428,7 @@ String profileSaveBlockedReason({
   required bool nicknameChecked,
   required bool canChangeNickname,
 }) {
-  if (!hasChanges) return '바뀐 것이 없어요.';
+  if (!hasChanges) return noChangesMessage;
   if (hasNicknameChanged && !canChangeNickname) {
     return '닉네임은 30일에 한 번 바꿀 수 있어요.';
   }

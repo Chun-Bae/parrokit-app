@@ -76,4 +76,16 @@ void main() {
     expect(deleteFailedMessageFor('폴더'), startsWith('폴더를 지우지 못했어요.'));
     expect(deleteFailedMessageFor('그룹'), startsWith('그룹을 지우지 못했어요.'));
   });
+
+  test('여러 화면이 함께 쓰는 짧은 안내도 한 곳에서 꺼낸다(5차 444)', () {
+    // 넷 다 두 자리에 손으로 적혀 있었다.
+    for (final text in [
+      settingsSaveFailedMessage,
+      noChangesMessage,
+      sentenceNeededMessage,
+      comingSoonMessage,
+    ]) {
+      expect(_handWritten(text), isEmpty, reason: text);
+    }
+  });
 }

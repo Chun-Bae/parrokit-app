@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
 import 'package:parrokit/core/shared/utils/login_prompt_text.dart';
@@ -113,7 +114,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       AppLogger.e('알림 설정 저장 실패', error: e, stackTrace: st);
       if (!mounted) return;
       setState(() => _prefs = previous);
-      showToast(userErrorMessage(e, fallback: '설정을 저장하지 못했어요. 다시 시도해 주세요.'));
+      showToast(userErrorMessage(e, fallback: settingsSaveFailedMessage));
     }
   }
 

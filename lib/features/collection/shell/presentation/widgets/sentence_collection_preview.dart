@@ -396,7 +396,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
           accountId, communityId(sentence), next);
       if (mounted) toast(next ? '앵무새가 다시 말해줘요.' : '앵무새 루틴에서 뺐어요.');
     } catch (_) {
-      if (mounted) toast('설정을 저장하지 못했어요. 다시 시도해 주세요.');
+      if (mounted) toast(settingsSaveFailedMessage);
     }
   }
 
@@ -1658,11 +1658,11 @@ String? sentenceEditBlockedReason({
   String pronunciation = '',
   String translation = '',
 }) {
-  if (text.trim().isEmpty) return '문장을 적어 주세요.';
+  if (text.trim().isEmpty) return sentenceNeededMessage;
   final same = text.trim() == before.text.trim() &&
       pronunciation.trim() == before.pronunciation.trim() &&
       translation.trim() == before.translation.trim();
-  if (same) return '바뀐 것이 없어요.';
+  if (same) return noChangesMessage;
   return null;
 }
 

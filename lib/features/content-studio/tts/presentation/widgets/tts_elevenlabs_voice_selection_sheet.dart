@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/tts/presentation/tts_error_text.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
@@ -105,7 +106,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '목소리 목록을 불러오지 못했어요.',
+                          voiceListLoadFailedMessage,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: theme.colorScheme.error),
                         ),

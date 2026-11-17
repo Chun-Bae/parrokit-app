@@ -28,3 +28,6 @@ String _serverMessage(Object error) {
   }
   return text.replaceFirst('Exception: ', '').trim();
 }
+
+/// 목소리 목록을 못 받았을 때. 엔진별 시트 둘이 같은 말을 쓴다(5차 444).
+const String voiceListLoadFailedMessage = '목소리 목록을 불러오지 못했어요.';

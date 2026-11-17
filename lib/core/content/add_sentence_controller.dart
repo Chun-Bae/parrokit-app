@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/widgets.dart';
 
 import 'sentence_assist.dart';
@@ -112,7 +113,7 @@ class AddSentenceController extends ChangeNotifier {
   /// 아직 추가할 수 없는 까닭. 추가할 수 있으면 null.
   /// 커뮤니티 글쓰기와 같은 결로 적는다(5차).
   String? get blockedReason {
-    if (text.text.trim().isEmpty) return '문장을 적어 주세요.';
+    if (text.text.trim().isEmpty) return sentenceNeededMessage;
     if (translation.text.trim().isEmpty) return '뜻을 적어 주세요.';
     return null;
   }

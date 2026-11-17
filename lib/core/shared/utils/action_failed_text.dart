@@ -46,3 +46,19 @@ const String serverSaveFailedMessage = '서버에 저장하지 못했어요. $re
 const String driveSaveFailedMessage =
     'Google Drive에 저장하지 못했어요. $retryLaterSuffix';
 const String deviceMoveFailedMessage = '내 기기로 옮기지 못했어요. $retryLaterSuffix';
+
+// ── 여러 화면이 함께 쓰는 짧은 안내(5차 444) ────────────────────────
+//
+// 아래 넷은 각각 두 자리에 손으로 적혀 있었다.
+
+/// 설정을 저장하지 못했을 때(알림 설정, 문장 설정).
+const String settingsSaveFailedMessage = '설정을 저장하지 못했어요. 다시 시도해 주세요.';
+
+/// 고친 것이 없어 저장할 까닭이 없을 때(프로필 편집, 문장 고치기).
+const String noChangesMessage = '바뀐 것이 없어요.';
+
+/// 문장 칸이 비었을 때(문장 추가, 문장 고치기).
+const String sentenceNeededMessage = '문장을 적어 주세요.';
+
+/// 아직 만들지 않은 기능을 불렀을 때(클립 검색, 문장 도우미).
+const String comingSoonMessage = '아직 준비 중이에요';

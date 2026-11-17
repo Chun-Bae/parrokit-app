@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/speech/speech_match.dart';
 
 /// 클립에 담긴 자막 한 줄. 클립 DB의 `Segments` 한 행에 해당한다.
@@ -58,7 +59,7 @@ abstract class ClipSegmentSource {
 
 /// 클립 검색이 아직 연결되지 않았을 때 던진다. 화면은 "준비 중" 안내를 보여준다.
 class ClipSearchUnavailable implements Exception {
-  const ClipSearchUnavailable([this.reason = '아직 준비 중이에요']);
+  const ClipSearchUnavailable([this.reason = comingSoonMessage]);
   final String reason;
 
   @override

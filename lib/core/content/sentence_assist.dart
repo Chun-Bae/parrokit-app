@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
+
 /// 뜻·발음 자동 채우기와 한글 전사를 맡는 도우미.
 ///
 /// 화면과 흐름은 이 인터페이스만 보고 만든다. 실제 구현은 서버 함수를 부르는
@@ -47,7 +49,7 @@ class SentenceAssistQuotaExceeded implements Exception {
 
 /// 구현이 연결되지 않았을 때 던진다. 화면은 자동 기능을 끄고 직접 입력하게 안내한다.
 class SentenceAssistUnavailable implements Exception {
-  const SentenceAssistUnavailable([this.reason = '아직 준비 중이에요']);
+  const SentenceAssistUnavailable([this.reason = comingSoonMessage]);
   final String reason;
 
   @override
