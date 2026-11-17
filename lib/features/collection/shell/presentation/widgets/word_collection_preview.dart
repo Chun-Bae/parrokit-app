@@ -24,6 +24,18 @@ import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
 import 'collection_header_slot.dart';
 
+/// 머리줄에 적는 개수. 거르는 중이면 '보이는 수 / 전체 수'로 적는다(5차 452).
+String wordCountLabel({
+  required int shown,
+  required int all,
+  required bool filtered,
+}) =>
+    filtered ? '$shown / $all' : '$all';
+
+/// 거른 결과가 비었을 때.
+const String wordFilterEmptyText = '이 조건에 맞는 단어가 없어요.';
+const String wordFilterClearLabel = '전체 보기';
+
 /// 보관함 > 단어 탭. 문장 탭과 같은 구조로 "내 단어"를 보여준다(5차 6번).
 ///
 /// 예전에는 예시 데이터로 그린 미리보기였다. 이제 [MyWordStore]에 저장한 단어를
@@ -185,9 +197,19 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
               Row(children: [
                 Text('내 단어', style: context.texts.titleLarge),
                 const SizedBox(width: 6),
-                Text('${languageWords.length}',
-                    style: context.texts.titleMedium
-                        .copyWith(color: colors.onSurfaceVariant)),
+                // 갈래를 거르면 목록은 줄어드는데 숫자는 전체를 세고
+                // 있었다(5차 452). '직접 추가'로 걸러 두 개만 보이는데
+                // 머리줄은 '내 단어 6'이라 어느 쪽이 맞는지 알 수 없었다.
+                Text(
+                  wordCountLabel(
+                    shown: visible.length,
+                    all: languageWords.length,
+                    filtered: category != categories.first,
+                  ),
+                  key: const ValueKey('word-count'),
+                  style: context.texts.titleMedium
+                      .copyWith(color: colors.onSurfaceVariant),
+                ),
                 const Spacer(),
                 IconButton(
                   key: const ValueKey('add-word'),
@@ -210,12 +232,24 @@ class _WordCollectionPreviewState extends State<WordCollectionPreview> {
                   ),
                 )
               else if (visible.isEmpty)
+                // 거르다 비면 거르기를 풀 길을 같이 준다(5차 452).
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Text('이 조건에 맞는 단어가 없어요.',
-                      textAlign: TextAlign.center,
-                      style: context.texts.bodySmall
-                          .copyWith(color: colors.onSurfaceVariant)),
+                  child: Column(
+                    children: [
+                      Text(wordFilterEmptyText,
+                          textAlign: TextAlign.center,
+                          style: context.texts.bodySmall
+                              .copyWith(color: colors.onSurfaceVariant)),
+                      const SizedBox(height: 4),
+                      TextButton(
+                        key: const ValueKey('word-filter-clear'),
+                        onPressed: () =>
+                            setState(() => category = categories.first),
+                        child: const Text(wordFilterClearLabel),
+                      ),
+                    ],
+                  ),
                 )
               else
                 for (final word in visible)
