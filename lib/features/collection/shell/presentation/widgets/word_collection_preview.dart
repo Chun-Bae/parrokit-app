@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/filtered_count_label.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
@@ -27,12 +28,13 @@ import 'package:parrokit/features/collection/shell/presentation/widgets/sentence
 import 'collection_header_slot.dart';
 
 /// 머리줄에 적는 개수. 거르는 중이면 '보이는 수 / 전체 수'로 적는다(5차 452).
+/// 셈은 클립 탭과 함께 쓴다(5차 483).
 String wordCountLabel({
   required int shown,
   required int all,
   required bool filtered,
 }) =>
-    filtered ? '$shown / $all' : '$all';
+    filteredCountLabel(shown: shown, all: all, filtered: filtered);
 
 /// 거른 결과가 비었을 때.
 const String wordFilterEmptyText = '이 조건에 맞는 단어가 없어요.';

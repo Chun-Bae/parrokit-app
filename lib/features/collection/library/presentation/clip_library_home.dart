@@ -10,6 +10,7 @@
 // 데이터는 바꾸지 않는다. 예전 화면은 그대로 있고, 더보기 > 앱 >
 // "새 클립 화면"을 끄면 돌아간다(AppConfig.newClipLibrary).
 
+import 'package:parrokit/core/content/filtered_count_label.dart';
 import 'package:parrokit/core/content/recent_clips_label.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -439,7 +440,11 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         ..._folderGrid(context, _openFolder!.children),
         SliverToBoxAdapter(
           child: _sectionTitle(context, '이 폴더의 클립',
-              trailing: '${_openFolder!.directCount}개'),
+              trailing: filteredCountLabel(
+                  shown: items.length,
+                  all: _openFolder!.directCount,
+                  filtered: _tag != null,
+                  suffix: '개')),
         ),
       ] else ...[
         if (recents.isNotEmpty) ...[
@@ -448,7 +453,14 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
         ],
         ..._folderGrid(context, _folders),
         SliverToBoxAdapter(
-          child: _sectionTitle(context, '모든 클립', trailing: '${_clips.length}개'),
+          // 태그로 거르면 아래 목록은 줄어드는데 이 숫자는 전체를 세고
+          // 있었다(5차 483). 단어 탭에서 고친 것과 같은 결함이다.
+          child: _sectionTitle(context, '모든 클립',
+              trailing: filteredCountLabel(
+                  shown: items.length,
+                  all: _clips.length,
+                  filtered: _tag != null,
+                  suffix: '개')),
         ),
       ],
       // 무료면 클립이 이 기기에만 있다. 폰을 바꾸면 사라진다는 것을 알린다(5차).
