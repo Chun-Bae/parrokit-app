@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
@@ -110,7 +111,7 @@ class BlockProvider extends ChangeNotifier {
     } catch (e, st) {
       // 예외 원문(e.toString())을 토스트에 그대로 띄웠다(5차).
       AppLogger.e('차단·차단 해제 실패', error: e, stackTrace: st);
-      _errorMessage = userErrorMessage(e, fallback: '처리하지 못했어요. 다시 시도해 주세요.');
+      _errorMessage = userErrorMessage(e, fallback: actionFailedMessage);
       return false;
     } finally {
       _isLoading = false;
@@ -153,7 +154,7 @@ class BlockProvider extends ChangeNotifier {
     } catch (e, st) {
       // 예외 원문(e.toString())을 토스트에 그대로 띄웠다(5차).
       AppLogger.e('차단·차단 해제 실패', error: e, stackTrace: st);
-      _errorMessage = userErrorMessage(e, fallback: '처리하지 못했어요. 다시 시도해 주세요.');
+      _errorMessage = userErrorMessage(e, fallback: actionFailedMessage);
       return false;
     } finally {
       _isLoading = false;
@@ -190,7 +191,7 @@ class BlockProvider extends ChangeNotifier {
     } catch (e, st) {
       // 예외 원문(e.toString())을 토스트에 그대로 띄웠다(5차).
       AppLogger.e('차단·차단 해제 실패', error: e, stackTrace: st);
-      _errorMessage = userErrorMessage(e, fallback: '처리하지 못했어요. 다시 시도해 주세요.');
+      _errorMessage = userErrorMessage(e, fallback: actionFailedMessage);
       return false;
     } finally {
       _isLoading = false;

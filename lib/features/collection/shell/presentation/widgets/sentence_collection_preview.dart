@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/shared_sentence_match.dart';
 import 'dart:async';
 import 'dart:io';
@@ -336,7 +337,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
       }
     } catch (_) {
-      if (mounted) toast('저장하지 못했어요. 다시 시도해 주세요.');
+      if (mounted) toast(saveFailedMessage);
     }
   }
 
@@ -408,7 +409,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
       if (!mounted || result == null) return;
       toast(result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.');
     } catch (_) {
-      if (mounted) toast('문장을 저장하지 못했어요. 다시 시도해 주세요.');
+      if (mounted) toast(sentenceSaveFailedMessage);
     }
   }
 
@@ -1148,7 +1149,7 @@ class _MySentenceTile extends StatelessWidget {
     try {
       published = await repo.isPublished(sentenceId: sentence.id);
     } catch (_) {
-      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해 주세요.');
+      if (context.mounted) _toast(context, actionFailedMessage);
       return;
     }
     if (!context.mounted) return;
@@ -1181,7 +1182,7 @@ class _MySentenceTile extends StatelessWidget {
     } on ShareLimitReachedException catch (e) {
       if (context.mounted) _toast(context, '$e 내일 다시 공유해 주세요.');
     } catch (_) {
-      if (context.mounted) _toast(context, '처리하지 못했어요. 다시 시도해 주세요.');
+      if (context.mounted) _toast(context, actionFailedMessage);
     }
   }
 
@@ -1910,7 +1911,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     } on ShareLimitReachedException catch (e) {
       showNotice('$e 내일 다시 공유해 주세요.');
     } catch (_) {
-      showNotice('처리하지 못했어요. 다시 시도해 주세요.');
+      showNotice(actionFailedMessage);
     } finally {
       if (mounted) setState(() => publishing = false);
     }

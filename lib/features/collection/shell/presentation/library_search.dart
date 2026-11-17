@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:provider/provider.dart';
@@ -291,7 +292,7 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('불러오지 못했어요.', style: muted),
+          Text(loadFailedMessage, style: muted),
           const SizedBox(height: 10),
           OutlinedButton(
             key: const ValueKey('library-search-retry'),

@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/library/presentation/clip_library_home.dart';
@@ -428,7 +429,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               Text(result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.')));
     } catch (_) {
       messenger.showSnackBar(
-          const SnackBar(content: Text('문장을 저장하지 못했어요. 다시 시도해 주세요.')));
+          const SnackBar(content: Text(sentenceSaveFailedMessage)));
     }
   }
 

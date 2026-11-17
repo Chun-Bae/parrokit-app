@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/tts_provider_text.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_google_models.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/tts_file_name.dart';
@@ -604,7 +605,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              showToast('저장하지 못했어요. 다시 시도해 주세요.');
+                              showToast(saveFailedMessage);
                             }
                           }
                         },

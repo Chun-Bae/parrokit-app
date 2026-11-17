@@ -20,6 +20,7 @@
 //   ),
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -401,8 +402,9 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
 
     final successMessage =
         widget.type == BackupDialogType.backup ? '백업했어요.' : '다 불러왔어요.';
-    final failureMessage =
-        widget.type == BackupDialogType.backup ? '백업하지 못했어요.' : '불러오지 못했어요.';
+    final failureMessage = widget.type == BackupDialogType.backup
+        ? '백업하지 못했어요.'
+        : loadFailedMessage;
 
     return Center(
       child: Column(

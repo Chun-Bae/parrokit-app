@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/shared_sentence_match.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/utils/sentence_age_label.dart';
@@ -218,7 +219,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
       await reloadMine();
       if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
     } catch (_) {
-      if (mounted) toast('저장하지 못했어요. 다시 시도해 주세요.');
+      if (mounted) toast(saveFailedMessage);
     }
   }
 

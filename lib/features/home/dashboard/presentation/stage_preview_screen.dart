@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -7,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
-import 'package:parrokit/core/shared/widgets/speak_controls.dart' show ttsNoVoiceHint;
+import 'package:parrokit/core/shared/widgets/speak_controls.dart'
+    show ttsNoVoiceHint;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/content/add_sentence_controller.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
@@ -679,51 +681,53 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     final list = phrases;
     final current = phraseIndex % list.length;
     final picked = await whilePaused(() => showAppSheet<int>(
-      context: context,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        minChildSize: 0.35,
-        maxChildSize: 0.9,
-        builder: (context, controller) => Column(children: [
-          Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('문장 목록', style: context.texts.titleMedium))),
-          Expanded(
-              child: ListView.builder(
-                  key: const ValueKey('phrase-list'),
-                  controller: controller,
-                  itemCount: list.length,
-                  itemBuilder: (context, i) {
-                    final sentence = sentenceForPhrase(list[i]);
-                    // 문장 친밀도. 예전엔 'Lv.2'만 있어 바로 위 내 레벨(Lv.1)과
-                    // 헷갈렸다. 문장 탭과 같이 단계 이름을 붙인다(5차).
-                    final affinity = sentence == null
-                        ? null
-                        : affinityOf(activities[sentence.id] ??
-                            const SentenceActivity());
-                    return ListTile(
-                      selected: i == current,
-                      leading: i == current
-                          ? const Icon(Icons.volume_up_rounded)
-                          : Text('${i + 1}'),
-                      title: Text(list[i]),
-                      subtitle: sentence == null || sentence.translation.isEmpty
-                          ? null
-                          : Text(sentence.translation,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                      trailing: affinity == null
-                          ? null
-                          : Text('Lv.${affinity.level} ${affinity.name}',
-                              style: context.texts.labelMedium),
-                      onTap: () => Navigator.pop(context, i),
-                    );
-                  })),
-        ]),
-      ),
-    ));
+          context: context,
+          builder: (context) => DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.6,
+            minChildSize: 0.35,
+            maxChildSize: 0.9,
+            builder: (context, controller) => Column(children: [
+              Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('문장 목록', style: context.texts.titleMedium))),
+              Expanded(
+                  child: ListView.builder(
+                      key: const ValueKey('phrase-list'),
+                      controller: controller,
+                      itemCount: list.length,
+                      itemBuilder: (context, i) {
+                        final sentence = sentenceForPhrase(list[i]);
+                        // 문장 친밀도. 예전엔 'Lv.2'만 있어 바로 위 내 레벨(Lv.1)과
+                        // 헷갈렸다. 문장 탭과 같이 단계 이름을 붙인다(5차).
+                        final affinity = sentence == null
+                            ? null
+                            : affinityOf(activities[sentence.id] ??
+                                const SentenceActivity());
+                        return ListTile(
+                          selected: i == current,
+                          leading: i == current
+                              ? const Icon(Icons.volume_up_rounded)
+                              : Text('${i + 1}'),
+                          title: Text(list[i]),
+                          subtitle:
+                              sentence == null || sentence.translation.isEmpty
+                                  ? null
+                                  : Text(sentence.translation,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                          trailing: affinity == null
+                              ? null
+                              : Text('Lv.${affinity.level} ${affinity.name}',
+                                  style: context.texts.labelMedium),
+                          onTap: () => Navigator.pop(context, i),
+                        );
+                      })),
+            ]),
+          ),
+        ));
     if (picked != null) jumpToPhrase(picked);
   }
 
@@ -819,7 +823,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('문장을 저장하지 못했어요. 다시 시도해 주세요.')));
+            const SnackBar(content: Text(sentenceSaveFailedMessage)));
       }
       return;
     }
@@ -845,17 +849,17 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
           .catchError((_) => false));
     }
     final action = await whilePaused(() => showDialog<String>(
-      context: context,
-      builder: (context) => _PhraseSettingsDialog(
-        accountId: widget.accountId,
-        initialLanguage: widget.language,
-        mySentences: mySentences,
-        initialEnabled: {
-          for (final sentence in mySentences)
-            sentence.id: activities[sentence.id]?.routineEnabled ?? true,
-        },
-      ),
-    ));
+          context: context,
+          builder: (context) => _PhraseSettingsDialog(
+            accountId: widget.accountId,
+            initialLanguage: widget.language,
+            mySentences: mySentences,
+            initialEnabled: {
+              for (final sentence in mySentences)
+                sentence.id: activities[sentence.id]?.routineEnabled ?? true,
+            },
+          ),
+        ));
     // 창의 + 버튼은 창을 닫고 왼쪽 '문장 추가'와 같은 흐름을 연다.
     if (action == _PhraseSettingsDialog.addAction && mounted) {
       await addPhrase();
@@ -1412,8 +1416,8 @@ class _HomeHelpDialog extends StatelessWidget {
         (Icons.skip_next_rounded, '이전 · 다음', '앞뒤 문장으로 넘어가요.'),
         (Icons.pause_rounded, '멈춤 · 재생', '앵무새 말하기를 잠시 멈추거나 다시 시작해요.'),
         // 버튼에 적히는 말 그대로 적는다(5차). 190에서 '아무 순서'로 바꿨다가
-          // 화면 라벨('랜덤')과 어긋나 되돌렸다.
-          (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 랜덤으로 바꿔요.'),
+        // 화면 라벨('랜덤')과 어긋나 되돌렸다.
+        (Icons.repeat_rounded, '재생 순서', '순서대로, 하나 반복, 랜덤으로 바꿔요.'),
         (Icons.queue_music_rounded, '목록', '문장 목록에서 바로 골라요.'),
       ]
     ),
@@ -1574,8 +1578,8 @@ Rect stageBubbleRect(Size size, String phrase) {
   final bubbleWidth = speech.width + 24;
   final left = ((size.width - bubbleWidth) / 2)
       .clamp(4.0, math.max(4.0, size.width - bubbleWidth - 4));
-  final rect = Rect.fromLTWH(
-      left.toDouble(), 16, bubbleWidth, speech.height + 16);
+  final rect =
+      Rect.fromLTWH(left.toDouble(), 16, bubbleWidth, speech.height + 16);
   speech.dispose();
   return rect;
 }

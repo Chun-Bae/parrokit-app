@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/utils/network_error.dart';
 
 /// 커뮤니티에서 실패했을 때 사람에게 보여줄 말(5차 310).
@@ -39,7 +40,7 @@ String communityErrorText(CommunityJob job, Object error) {
     CommunityJob.load => '불러오지 못했어요. 잠시 뒤 다시 해 주세요.',
     CommunityJob.write => '올리지 못했어요. 잠시 뒤 다시 해 주세요.',
     CommunityJob.edit => '고치지 못했어요. 잠시 뒤 다시 해 주세요.',
-    CommunityJob.delete => '지우지 못했어요. 잠시 뒤 다시 해 주세요.',
+    CommunityJob.delete => deleteFailedShortMessage,
     CommunityJob.like => '공감을 남기지 못했어요. 잠시 뒤 다시 해 주세요.',
     CommunityJob.vote => '투표하지 못했어요. 잠시 뒤 다시 해 주세요.',
     CommunityJob.accept => '답변을 채택하지 못했어요. 잠시 뒤 다시 해 주세요.',

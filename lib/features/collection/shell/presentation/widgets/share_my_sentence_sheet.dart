@@ -4,6 +4,7 @@
 // 문장 탭의 단추로 바로 고를 수 있게 한다. 묻는 말은 다른 곳과 같은 것을 쓴다
 // (`sentence_share_text.dart`).
 
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -163,7 +164,7 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => working = null);
-      _say('처리하지 못했어요. 다시 시도해 주세요.');
+      _say(actionFailedMessage);
     }
   }
 

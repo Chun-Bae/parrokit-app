@@ -9,6 +9,7 @@
 // Core > State > Provider
 // ============================================================================
 
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -408,7 +409,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       if (!success) {
         _isStorageTransferRunning = false;
         _storageTransferSucceeded = false;
-        _storageTransferError = '지우지 못했어요. 잠시 뒤 다시 해 주세요.';
+        _storageTransferError = deleteFailedShortMessage;
         notifyListeners();
         return false;
       }
@@ -422,7 +423,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '지우지 못했어요. 잠시 뒤 다시 해 주세요.';
+      _storageTransferError = deleteFailedShortMessage;
       notifyListeners();
       return false;
     }
@@ -891,7 +892,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '그룹을 지우지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+      _storageTransferError = '그룹을 지우지 못했어요. 잠시 뒤 다시 해 주세요.';
       notifyListeners();
     }
   }

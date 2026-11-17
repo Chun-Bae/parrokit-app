@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/community/menu/data/factories/community_menu_section_factory.dart';
@@ -190,7 +191,7 @@ class _CommunityActivityScreenState extends State<CommunityActivityScreen> {
                 padding: const EdgeInsets.all(24),
                 children: [
                   const SizedBox(height: 48),
-                  Text('불러오지 못했어요.',
+                  Text(loadFailedMessage,
                       textAlign: TextAlign.center,
                       style: context.texts.bodyMedium
                           .copyWith(color: colorScheme.error)),
