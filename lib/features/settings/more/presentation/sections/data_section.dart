@@ -54,7 +54,9 @@ class _DataSectionState extends State<DataSection> {
   Future<void> _refreshCache() async {
     final size = await CacheService.instance.getCacheSize();
     if (mounted) {
-      setState(() => _cacheSize = CacheService.instance.formatSize(size));
+      // 같은 크기를 두 화면이 다르게 적던 것을 한 함수로 모았다(5차 477).
+      // 더보기는 '17.9 MB', 저장 용량 시트는 '18 MB'로 보였다.
+      setState(() => _cacheSize = formatBytes(size));
     }
   }
 
