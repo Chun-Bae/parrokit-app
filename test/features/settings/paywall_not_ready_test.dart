@@ -29,10 +29,10 @@ void main() {
         .readAsStringSync()
         .replaceAll(RegExp(r'\s+'), ' ');
     expect(code, contains('if (result != PaywallResult.notPresented) return;'));
-    expect(
-        code,
-        contains(
-            'showToast(premium ? subscriptionAlreadyToast : subscriptionNotReadyToast);'));
+    // 459에서 갈래를 나눴다. 이미 구독 중이면 Paywall을 부르지 않고 바로
+    // 알리고, 그 밖에 뜨지 않은 경우만 '아직 상품이 없다'고 말한다.
+    expect(code, contains('if (premium) { showToast(subscriptionAlreadyToast); return; }'));
+    expect(code, contains('showToast(subscriptionNotReadyToast);'));
     // 실패도 조용히 넘기지 않는다.
     expect(code, contains('showToast(subscriptionOpenFailedToast);'));
   });

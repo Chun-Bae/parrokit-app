@@ -10,6 +10,8 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
+import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_preview_sheet.dart';
@@ -28,20 +30,38 @@ class RevenueCatPaywallPresenter implements PaywallPresenter {
   /// `notPresented`를 돌려준다. 그러면 사용자가 '구독'을 눌러도 아무 일도
   /// 일어나지 않아 고장처럼 보였다. 이미 구독 중일 때도 같은 값이 와서,
   /// 그 둘을 나눠 말해 준다.
+  ///
+  /// 구독 여부는 **구독 단계**로 따진다(5차 459). 전에는
+  /// `presentPaywallIfNeeded(IapProvider.entitlementId)`를 불렀는데 그 값은
+  /// 광고 제거(1회 구매) entitlement라, 구독한 사람에게도 Paywall이 뜨고
+  /// 광고 제거만 산 사람에게는 안 떴다.
   @override
   Future<void> show(BuildContext context) async {
-    final premium = context.read<IapProvider?>()?.isPremium ?? false;
+    final premium = isSubscribedNow(context);
+    if (premium) {
+      showToast(subscriptionAlreadyToast);
+      return;
+    }
     PaywallResult result;
     try {
-      result =
-          await RevenueCatUI.presentPaywallIfNeeded(IapProvider.entitlementId);
+      result = await RevenueCatUI.presentPaywall();
     } catch (_) {
       showToast(subscriptionOpenFailedToast);
       return;
     }
     if (result != PaywallResult.notPresented) return;
-    showToast(premium ? subscriptionAlreadyToast : subscriptionNotReadyToast);
+    showToast(subscriptionNotReadyToast);
   }
+}
+
+/// 지금 구독 중인지. 서버가 적어 준 단계를 먼저 보고, 아직 없으면
+/// RevenueCat이 들고 있는 entitlement로 본다(5차 459).
+bool isSubscribedNow(BuildContext context) {
+  final byServer = context.read<SubscriptionProvider?>()?.isSubscribed;
+  if (byServer == true) return true;
+  final active = context.read<IapProvider?>()?.activeEntitlements ?? const {};
+  return active.contains(lightEntitlementId) ||
+      active.contains(proEntitlementId);
 }
 
 class PreviewPaywallPresenter implements PaywallPresenter {
