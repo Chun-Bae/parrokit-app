@@ -1,10 +1,11 @@
-// 챗봇 시트에서 모델 고르기가 열리는지 지킨다(5차 430).
+// 챗봇 시트에서 모델 고르기가 열리는지 지킨다(5차 430~431).
 //
 // 기기에서 모델 칩을 눌러도 시트가 뜨지 않고, 닫기 단추와 입력칸까지
-// 먹통이 되는 것을 봤다. 위젯으로는 멀쩡히 열린다(이 테스트). 그래서
-// 코드 흐름이 아니라 기기 쪽(네이티브 탭 바 같은 플랫폼 뷰)을 의심한다.
-// 적어도 코드가 망가지는 것은 이 테스트가 막는다.
+// 먹통이었다. 까닭은 **시트를 띄운 Navigator**였다. 스튜디오는 아래 탭 바가
+// 없는 화면으로 셈해져(appShellHidesNavBar), 공통 시트가 셸 안쪽
+// Navigator에 떴다. 맨 위 Navigator에 띄우니 바로 풀렸다(431에서 확인).
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,5 +55,15 @@ void main() {
     await tester.tap(find.text('Gemini Flash'));
     await tester.pumpAndSettle();
     expect(find.text('AI 모델 고르기'), findsOneWidget);
+  });
+
+  test('챗봇 시트는 맨 위 Navigator에 띄운다(5차 431)', () {
+    // 셸 안쪽 Navigator에 띄우면 기기에서 시트가 통째로 먹통이 된다.
+    final code = File(
+            'lib/features/content-studio/chat-bot/presentation/widgets/chat_bot_sheet.dart')
+        .readAsLinesSync()
+        .where((l) => !l.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(code, contains('rootNavigator: true'));
   });
 }

@@ -27,6 +27,11 @@ Future<void> showChatBotSheet(
 
   await showAppSheet(
     context: context,
+    // 스튜디오는 아래 탭 바가 없는 화면으로 셈해져, 이 시트가 셸 안쪽
+    // Navigator에 떴다. 그 상태에서는 기기에서 시트가 통째로 터치를 받지
+    // 못했다(모델 칩·닫기 단추·입력칸 모두, 5차 429~431). 맨 위 Navigator에
+    // 띄워 둔다.
+    rootNavigator: true,
     builder: (context) {
       return ChangeNotifierProvider.value(
         value: chatBotProvider,
