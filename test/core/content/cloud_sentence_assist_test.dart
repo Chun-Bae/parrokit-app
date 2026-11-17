@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:fake_async/fake_async.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
@@ -29,6 +31,19 @@ class _FakeCallable extends Fake implements HttpsCallable {
     owner.calls.add(data);
     return _FakeResult<T>(owner.respond(data) as T);
   }
+}
+
+/// 서버가 영영 대답하지 않는 상황(5차 446).
+class _SilentFunctions extends Fake implements FirebaseFunctions {
+  @override
+  HttpsCallable httpsCallable(String name, {HttpsCallableOptions? options}) =>
+      _SilentCallable();
+}
+
+class _SilentCallable extends Fake implements HttpsCallable {
+  @override
+  Future<HttpsCallableResult<T>> call<T>([dynamic parameters]) =>
+      Completer<HttpsCallableResult<T>>().future;
 }
 
 class _FakeResult<T> extends Fake implements HttpsCallableResult<T> {
@@ -131,5 +146,45 @@ void main() {
         CloudSentenceAssist(functions: _FakeFunctions((_) => 'oops'));
     await expectLater(assist.suggest(language: 'en', text: 'Hi'),
         throwsA(isA<StateError>()));
+  });
+
+
+  test('서버가 대답하지 않으면 횟수 조회를 접는다(5차 446)', () {
+    // 전에는 기다림에 끝이 없어서 '횟수 확인 중…'이 영영 남았다.
+    fakeAsync((async) {
+      final assist = CloudSentenceAssist(functions: _SilentFunctions());
+      var done = false;
+      assist.refreshUsage().then((_) => done = true);
+
+      async.elapse(const Duration(seconds: 7));
+      expect(done, isFalse, reason: '아직 기다리는 중');
+
+      async.elapse(CloudSentenceAssist.usageTimeout);
+      expect(done, isTrue, reason: '접고 끝낸다');
+      // 못 읽었으므로 숫자는 비어 있고, 화면은 '다시 확인'을 보여 준다.
+      expect(assist.remainingToday, isNull);
+    });
+  });
+
+  test('뜻 채우기도 끝없이 기다리지 않는다(5차 446)', () {
+    fakeAsync((async) {
+      final assist = CloudSentenceAssist(functions: _SilentFunctions());
+      Object? thrown;
+      assist
+          .suggest(language: 'en', text: 'Hello')
+          .catchError((Object e) => throw e)
+          .onError((Object e, _) {
+        thrown = e;
+        return SentenceSuggestion();
+      });
+
+      async.elapse(CloudSentenceAssist.suggestTimeout + const Duration(seconds: 1));
+      expect(thrown, isA<TimeoutException>());
+    });
+  });
+
+  test('횟수 조회는 짧게, 글 만들기는 길게 기다린다', () {
+    expect(CloudSentenceAssist.usageTimeout,
+        lessThan(CloudSentenceAssist.suggestTimeout));
   });
 }

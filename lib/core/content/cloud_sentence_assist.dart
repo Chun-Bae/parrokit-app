@@ -9,6 +9,16 @@ import 'package:parrokit/core/shared/utils/app_logger.dart';
 class CloudSentenceAssist implements SentenceAssist {
   CloudSentenceAssist({FirebaseFunctions? functions}) : _functions = functions;
 
+  /// 서버가 대답하지 않을 때 기다릴 시간(5차 446).
+  ///
+  /// 전에는 기다림에 끝이 없었다. 서버가 조용하면 '횟수 확인 중…'이 영영
+  /// 남고, 뜻 채우기도 돌아가는 표시만 남은 채 멈춘다. 목소리 목록(395)과
+  /// 챗봇 사용량(429)에서 고친 것과 같은 결함이다.
+  ///
+  /// 횟수만 묻는 것은 짧게, 글을 만들어 받는 것은 길게 기다린다.
+  static const usageTimeout = Duration(seconds: 8);
+  static const suggestTimeout = Duration(seconds: 30);
+
   FirebaseFunctions? _functions;
   int? _remainingToday;
   int? _dailyLimit;
@@ -22,14 +32,17 @@ class CloudSentenceAssist implements SentenceAssist {
   @override
   Future<void> refreshUsage() async {
     try {
-      await _call({'mode': 'status'});
+      await _call({'mode': 'status'}, timeout: usageTimeout);
     } catch (e) {
       // 횟수를 못 읽어도 기능 자체는 쓸 수 있으니 조용히 넘어간다.
       AppLogger.w('[assist] 남은 횟수 조회 실패: $e');
     }
   }
 
-  Future<Map<String, dynamic>> _call(Map<String, Object> data) async {
+  Future<Map<String, dynamic>> _call(
+    Map<String, Object> data, {
+    Duration timeout = suggestTimeout,
+  }) async {
     final HttpsCallable callable;
     try {
       callable = (_functions ??= FirebaseFunctions.instance)
@@ -40,7 +53,7 @@ class CloudSentenceAssist implements SentenceAssist {
       throw const SentenceAssistUnavailable();
     }
     try {
-      final result = await callable.call<Object?>(data);
+      final result = await callable.call<Object?>(data).timeout(timeout);
       final body = result.data;
       if (body is! Map) throw StateError('unexpected response');
       final map = Map<String, dynamic>.from(body);
