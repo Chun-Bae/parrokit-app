@@ -36,9 +36,13 @@ String adsRemovalSubtitle({required bool subscribed, required bool owned}) {
 
 /// 줄 오른쪽에 적을 상태. 구독 줄이 단계 이름('무료'·'라이트'·'프로')을
 /// 적는 것과 같은 꼴로 맞춘다(5차 463).
+///
+/// '켜짐'·'꺼짐'이었다(5차 489). 광고 제거는 한 번 사면 끝인 상품이라
+/// 켜고 끌 수 있는 것이 아닌데, 스위치처럼 읽혀서 '켜면 되겠네' 하고
+/// 누르면 결제 화면이 떴다. 가졌는지 아닌지로 적는다.
 String adsRemovalStateLabel({required bool subscribed, required bool owned}) {
   if (subscribed) return '구독 포함';
-  return owned ? '켜짐' : '꺼짐';
+  return owned ? '있음' : '없음';
 }
 
 class AdsRemovalSection extends StatelessWidget {

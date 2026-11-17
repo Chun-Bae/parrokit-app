@@ -63,9 +63,15 @@ void main() {
   });
 
   test('오른쪽 상태 글이 구독 줄과 같은 꼴이다', () {
-    expect(adsRemovalStateLabel(subscribed: false, owned: false), '꺼짐');
-    expect(adsRemovalStateLabel(subscribed: false, owned: true), '켜짐');
+    // 한 번 사면 끝인 상품이라 켜고 끄는 말을 쓰지 않는다(5차 489).
+    expect(adsRemovalStateLabel(subscribed: false, owned: false), '없음');
+    expect(adsRemovalStateLabel(subscribed: false, owned: true), '있음');
     expect(adsRemovalStateLabel(subscribed: true, owned: false), '구독 포함');
+    for (final owned in [true, false]) {
+      final label = adsRemovalStateLabel(subscribed: false, owned: owned);
+      expect(label.contains('켜'), isFalse);
+      expect(label.contains('꺼'), isFalse);
+    }
   });
 
   testWidgets('안 샀으면 눌러서 살 수 있다', (tester) async {
