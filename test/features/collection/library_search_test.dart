@@ -178,6 +178,35 @@ void main() {
       expect(find.byKey(const ValueKey('library-search-empty')), findsOneWidget);
       // 하나도 못 찾으면 고를 것이 없는 거르기 칩은 숨긴다(5차).
       expect(find.byKey(const ValueKey('library-search-kinds')), findsNothing);
+      // 한 줄만 적어 두면 무엇을 더 해 볼지 알 수 없었다(5차 485).
+      final hint = find.byKey(const ValueKey('library-search-empty-hint'));
+      expect(hint, findsOneWidget);
+      expect(tester.widget<Text>(hint).data, librarySearchNoResultHint);
+      expect(librarySearchNoResultHint, contains('다른 말로'));
+      // 찾는 범위는 빈 칸일 때와 같은 말을 쓴다.
+      expect(librarySearchNoResultHint, contains(librarySearchScopeHint));
+      // 고른 종류를 탓하지 않는다. 칩이 숨은 채 '단어가 없어요'만 뜨면
+      // 그 말이 나온 까닭을 볼 수 없다(5차 485).
+      expect(tester.widget<Text>(find.byKey(const ValueKey('library-search-empty')))
+          .data, "'zzz' 검색 결과가 없어요.");
+    });
+
+    testWidgets('어디에도 없으면 고른 종류를 탓하지 않는다(5차 485)', (tester) async {
+      await open(tester);
+      await tester.enterText(
+          find.byKey(const ValueKey('library-search-field')), 'e');
+      await tester.pump();
+      // 종류를 '단어'로 좁혀 둔다.
+      await tester.tap(find.byKey(const ValueKey('library-search-kind-words')));
+      await tester.pump();
+      // 어디에도 없는 말을 찾으면 칩이 숨는다.
+      await tester.enterText(
+          find.byKey(const ValueKey('library-search-field')), 'zzqq');
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('library-search-kinds')), findsNothing);
+      expect(tester.widget<Text>(find.byKey(const ValueKey('library-search-empty')))
+          .data, "'zzqq' 검색 결과가 없어요.");
     });
 
     testWidgets('한 종류만 걸러 빈 결과일 때 조사를 맞춰 말한다', (tester) async {

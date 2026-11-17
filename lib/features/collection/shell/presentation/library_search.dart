@@ -15,6 +15,16 @@ import 'package:parrokit/data/local/app_database.dart';
 import 'widgets/sentence_collection_preview.dart';
 import 'widgets/word_collection_preview.dart';
 
+/// 검색이 어디를 뒤지는지(5차 485).
+///
+/// 빈 칸일 때만 적고 있었다. 결과가 하나도 없을 때는 '검색 결과가 없어요.'
+/// 한 줄뿐이라, 무엇을 더 해 볼지도 어디까지 찾은 것인지도 알 수 없었다.
+/// 커뮤니티 글은 여기서 찾지 않는데 그것도 알 길이 없었다.
+const String librarySearchScopeHint = '내 문장·단어와 클립 제목·자막에서 찾아요.';
+
+/// 결과가 하나도 없을 때 아래에 덧붙이는 줄.
+const String librarySearchNoResultHint = '다른 말로 찾아보세요. $librarySearchScopeHint';
+
 /// 보관함 검색이 찾는 대상. 화면을 열 때 한 번 읽어 두고, 글자를 칠 때마다
 /// 메모리에서 거른다.
 class LibrarySearchData {
@@ -309,15 +319,30 @@ class _LibrarySearchSheetState extends State<LibrarySearchSheet> {
           child: Padding(
               padding: EdgeInsets.all(24), child: CircularProgressIndicator()));
     } else if (query.trim().isEmpty) {
-      body = Text('내 문장·단어와 클립 제목·자막에서 찾아요.', style: muted);
+      body = Text(librarySearchScopeHint, style: muted);
     } else if (results.isEmpty) {
-      body = Text(
-          _kind == LibrarySearchKind.all
-              ? "'${query.trim()}' 검색 결과가 없어요."
-              // '문장이(가)'처럼 두 가지를 함께 쓰지 않는다(5차).
-              : "'${query.trim()}'에 맞는 ${iGa(_kind.label)} 없어요.",
-          key: const ValueKey('library-search-empty'),
-          style: muted);
+      // 한 줄만 적어 두면 무엇을 더 해 볼지 알 수 없었다. 다른 빈 화면처럼
+      // 할 일과 찾는 범위를 함께 적는다(5차 485).
+      body = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+              // 어디에도 없으면 거르기 칩을 숨기므로(아래 참조) 고른 종류를
+              // 탓하지 않는다. 전에는 '단어'를 골라 둔 채 아무 데도 없는 말을
+              // 찾으면 "'zzqq'에 맞는 단어가 없어요"라고만 하고, 그 말이
+              // 나온 까닭인 칩은 보이지 않았다(5차 485).
+              _kind == LibrarySearchKind.all ||
+                      kindCount(all, LibrarySearchKind.all) == 0
+                  ? "'${query.trim()}' 검색 결과가 없어요."
+                  // '문장이(가)'처럼 두 가지를 함께 쓰지 않는다(5차).
+                  : "'${query.trim()}'에 맞는 ${iGa(_kind.label)} 없어요.",
+              key: const ValueKey('library-search-empty'),
+              style: muted),
+          const SizedBox(height: 6),
+          Text(librarySearchNoResultHint,
+              key: const ValueKey('library-search-empty-hint'), style: muted),
+        ],
+      );
     } else {
       body = ListView(
         key: const ValueKey('library-search-results'),
