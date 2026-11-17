@@ -511,6 +511,23 @@
   npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
   ```
 
+### 2026-11-17 11:47 테스트 배포 (사용자 요청 "로컬 빌드 올려줘", 내가 로컬에서 돌림)
+- **1.0.6 (120)를 App Distribution `testers`에 올렸다.** `uploaded new release`로 새 항목
+- 119는 이미 올린 번호라 120으로 올렸다(같은 번호면 CLI가 덮어써 목록에 안 뜬다)
+- 콘솔: https://console.firebase.google.com/project/parrokit-45126/appdistribution/app/ios:com.bull.parrokit/releases/1mjgv480e1328
+- 담긴 것(반복 410~429): 음성 만들기 화면 정리(사용자 요청), 남의 문장을 들어도
+  친밀도가 오르지 않음, 홈 공유 문장 카드가 눌림, 단어·글·댓글을 지우기 전에 묻기,
+  시트에 가려 보이지 않던 알림, 말 맞추기(고르기·적어 주세요·비워도 돼요·자동 자막
+  만들기), 코인 지급이 넘어졌는데 '충전됐어요'가 함께 뜨던 것, 챗봇 사용량
+  동그라미가 영영 돌던 것
+- 기기에서 볼 것: **챗봇 시트(스튜디오 오른쪽 아래 단추)에서 모델 칩·닫기 단추·
+  입력칸이 눌리는지.** 시뮬레이터에서는 셋 다 먹통이었다
+- 실수 하나: 처음 archive에 `CODE_SIGNING_ALLOWED=YES`를 명령줄로 넘겨 Pods
+  타깃까지 서명을 요구하며 실패했다(스킬 표에 있는 그 실수). 플래그를 빼고 다시 돌렸다
+- 절차: pubspec +120 → `flutter build ios --release --no-codesign --config-only`
+  → xcodeproj로 Runner Release만 수동 서명(parrokit-adhoc) → archive →
+  ad-hoc export → `appdistribution:distribute`. **서명 설정은 `git checkout`으로 되돌렸다**
+
 ### 2026-11-16 12:31 테스트 배포 (사용자 요청 "파이어베이스 디스트리부션 로컬빌드 하나 올려줘", 내가 로컬에서 돌림)
 - 1.0.6 **(116)**. 빌드 번호를 115에서 올렸다(같은 번호로 올리면 목록에서 헷갈린다)
 - `uploaded new release 1.0.6 (116) successfully` + `distributed to testers/groups successfully` 확인
@@ -4670,3 +4687,18 @@
   시트 자체는 그려지는데 입력만 안 먹는다. `showAppSheet`의
   `useRootNavigator` 고르기(스튜디오는 탭 바가 없어 false가 된다)를 먼저
   의심하고 있다. 다음 반복에서 이어서 본다
+
+## 반복 430 (2026-11-17 11:40~)
+- 사용자가 "로컬 빌드 올려줘"라고 해서 **1.0.6 (120)을 올렸다**(위 배포 기록)
+- 빌드를 기다리는 동안 429에서 남긴 **챗봇 시트 터치 먹통**을 읽기만으로 팠다
+  - 위젯 테스트로는 모델 칩이 **멀쩡히 열린다**(테스트를 남겼다).
+    코드 흐름 문제가 아니다
+  - `showAppSheet`의 주석은 '뒤에 어두운 막을 두지 않는다'인데 코드에
+    `barrierColor` 지정이 없어 기본 막(black54)이 깔린다. 주석과 코드가
+    어긋나 있다(이번에 고치지는 않았다)
+  - 스튜디오는 `appShellHidesNavBar`에 걸려 탭 바가 없는 화면으로 셈해져
+    시트가 **루트가 아닌 그 화면의 Navigator**에 뜬다. 기기에서만 먹통인
+    점과 함께, 네이티브 탭 바(UiKitView) 쪽을 의심한다
+  - **여전히 원인 미상. 실기기에서 같은지 확인이 필요하다**(배포 기록의
+    '기기에서 볼 것'에 적었다)
+- 전체 통과(1448개)
