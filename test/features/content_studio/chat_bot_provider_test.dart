@@ -18,6 +18,10 @@ class _Repo implements AiChatRepository {
   /// 사용량 조회를 영영 끝내지 않게 하려면 true로 둔다(5차 429).
   bool usageNeverAnswers = false;
 
+  /// 첫 조회만 영영 끝내지 않는다(5차 455). 서버가 쉬다 깨는 상황.
+  bool usageSlowFirst = false;
+  int usageCalls = 0;
+
   @override
   Future<AiChatMessage> sendMessage(String text, List<AiChatMessage> history,
       String model, String chatbotMode) {
@@ -28,6 +32,11 @@ class _Repo implements AiChatRepository {
 
   @override
   Future<({int usedToday, int dailyLimit, int remainingToday})> fetchUsage() {
+    usageCalls++;
+    if (usageSlowFirst && usageCalls == 1) {
+      return Completer<({int usedToday, int dailyLimit, int remainingToday})>()
+          .future;
+    }
     if (usageNeverAnswers) {
       return Completer<({int usedToday, int dailyLimit, int remainingToday})>()
           .future;
@@ -128,9 +137,43 @@ void main() {
       async.elapse(const Duration(seconds: 7));
       expect(provider.isUsageLoading, isTrue, reason: '아직 기다리는 중');
 
+      // 한 번 접히면 조용히 한 번 더 묻는다(5차 455).
+      async.elapse(ChatBotProvider.usageTimeout);
+      expect(finished, isFalse, reason: '한 번 더 묻는 중');
+
       async.elapse(ChatBotProvider.usageTimeout);
       expect(finished, isTrue);
       expect(provider.isUsageLoading, isFalse, reason: '동그라미가 멈춘다');
+    });
+  });
+
+  test('첫 사용량 조회가 접히면 조용히 한 번 더 묻는다(5차 455)', () {
+    // 서버가 쉬다 깨는 첫 호출은 기다릴 시간을 넘긴다. 전에는 그대로
+    // 접혀서 시트를 열 때마다 남은 횟수가 비어 있었다.
+    fakeAsync((async) {
+      repo.usageSlowFirst = true;
+      provider.fetchDailyUsage();
+
+      async.elapse(ChatBotProvider.usageTimeout + const Duration(seconds: 1));
+      async.flushMicrotasks();
+
+      expect(repo.usageCalls, 2, reason: '한 번 더 물었다');
+      expect(provider.remainingChatsToday, 30);
+      expect(provider.isUsageLoading, isFalse);
+    });
+  });
+
+  test('두 번 다 대답이 없으면 접고 대화는 할 수 있다', () {
+    fakeAsync((async) {
+      repo.usageNeverAnswers = true;
+      provider.fetchDailyUsage();
+
+      async.elapse(ChatBotProvider.usageTimeout * 2 +
+          const Duration(seconds: 1));
+      async.flushMicrotasks();
+
+      expect(repo.usageCalls, 2);
+      expect(provider.isUsageLoading, isFalse, reason: '도는 동그라미를 남기지 않는다');
     });
   });
 }

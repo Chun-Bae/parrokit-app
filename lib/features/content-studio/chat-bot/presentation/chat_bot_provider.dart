@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -70,13 +71,25 @@ class ChatBotProvider extends ChangeNotifier {
   static const usageTimeout = shortCallTimeout;
 
   /// 시트를 열 때 채팅을 보내지 않고 오늘 사용량만 조회해 배지에 반영한다.
+  ///
+  /// 한 번 접히면 조용히 한 번 더 묻는다(5차 455). 서버가 쉬다 깨는 첫
+  /// 호출은 기다릴 시간을 넘기고, 두 번째는 1초 안에 돌아온다. 뜻 채우기
+  /// 쪽에서 먼저 같은 처리를 했다(454).
   Future<void> fetchDailyUsage() async {
     try {
-      final usage = await _sendMessageUseCase.repository
-          .fetchUsage()
-          .timeout(usageTimeout);
-      _remainingChatsToday = usage.remainingToday;
-      _dailyChatLimit = usage.dailyLimit;
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          final usage = await _sendMessageUseCase.repository
+              .fetchUsage()
+              .timeout(usageTimeout);
+          _remainingChatsToday = usage.remainingToday;
+          _dailyChatLimit = usage.dailyLimit;
+          return;
+        } on TimeoutException catch (e) {
+          AppLogger.w('[Chatbot][Provider] 남은 횟수 조회 실패: $e');
+          // 첫 번째면 서버가 깨어났을 테니 한 번 더 묻는다.
+        }
+      }
     } catch (e) {
       // 남은 횟수를 못 읽어도 대화는 할 수 있다.
       AppLogger.w('[Chatbot][Provider] 남은 횟수 조회 실패: $e');
