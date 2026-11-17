@@ -1925,14 +1925,9 @@ double wordReviewProgress({required int index, required int total}) {
 /// 횟수인지 알 수 없어서 문장 추가 화면과 같은 말로 적는다(5차).
 /// 단어를 아직 안 적어서 채울 수 없을 때(5차 474, 사용자가 헷갈렸다).
 ///
-/// 단추가 흐린데 까닭이 없어서, 쓸 수 없는 기능인 줄 알았다. 횟수를 다
-/// 썼을 때는 까닭을 적으면서 이쪽은 아무 말도 안 하고 있었다.
-const String wordFillNeedsWordHint = '단어를 적으면 채울 수 있어요';
-
-/// 오늘 횟수를 다 썼을 때(5차 473).
-///
-/// 네 곳에 손으로 적혀 있던 말이다. 한 곳에서 꺼내 쓴다.
-const String assistQuotaExhaustedMessage = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+/// 단추가 흐린데 까닭이 없어서, 쓸 수 없는 기능인 줄 알았다. 문장 화면과
+/// 같은 꼴로 말한다(5차 475).
+final String wordFillNeedsWordHint = assistNeedsTextHint('단어');
 
 /// 오늘 횟수를 다 썼는지(5차 473).
 ///

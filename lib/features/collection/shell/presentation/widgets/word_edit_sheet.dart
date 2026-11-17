@@ -10,6 +10,7 @@
 // 손보러 이 창에 들어온 사람이 자동으로 받으려면 창을 닫고 나가야 했다.
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';

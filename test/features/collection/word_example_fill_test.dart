@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_collection_preview.dart';

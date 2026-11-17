@@ -281,7 +281,8 @@ class _HangulTransliterateRow extends StatelessWidget {
                 switch (status) {
                   AssistStatus.unavailable =>
                     '지금은 한글 변환을 쓸 수 없어요. 원문을 직접 적어 주세요.',
-                  AssistStatus.quotaExceeded => '오늘 횟수를 모두 썼어요. 내일 다시 쓸 수 있어요.',
+                  // 한글 변환도 같은 하루 횟수를 나눠 쓴다. 같은 말로 적는다(5차 475).
+                  AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
                   _ => '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
                 },
                 key: const ValueKey('transliterate-message'),
@@ -296,13 +297,20 @@ class _AutoFillCard extends StatelessWidget {
   const _AutoFillCard({required this.controller});
   final AddSentenceController controller;
 
+  /// 단추 아래에 적을 말. 막혀 있으면 까닭부터 말한다(5차 475).
+  ///
+  /// 전에는 문장을 아직 안 적어 단추가 흐릴 때 아무 말도 없었다. 단어
+  /// 화면에서 같은 결함을 고쳤는데(474) 이쪽에 그대로 남아 있었다.
   String? get message => switch (controller.fillStatus) {
         AssistStatus.unavailable =>
           '지금은 자동 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 적어 주세요.',
-        AssistStatus.quotaExceeded => '오늘 횟수를 모두 썼어요. 내일 다시 쓸 수 있어요.',
+        // 소진 안내는 단어 쪽과 같은 말을 쓴다(5차 475).
+        AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
         AssistStatus.failed => '자동으로 채우지 못했어요. 횟수는 줄지 않았어요.',
         AssistStatus.loading => '채우는 중이에요…',
-        AssistStatus.idle => null,
+        AssistStatus.idle => controller.text.text.trim().isEmpty
+            ? assistNeedsTextHint('문장')
+            : null,
       };
 
   @override
@@ -364,7 +372,11 @@ class _AutoFillCard extends StatelessWidget {
           child: Text(note,
               key: const ValueKey('auto-fill-message'),
               style: context.texts.bodySmall.copyWith(
-                  color: exhausted ? colors.error : colors.onSurfaceVariant)),
+                  // 빨강은 '다 썼다'에만 쓴다. 아직 안 적어서 막힌 것은
+                  // 그냥 안내다(5차 475).
+                  color: note == assistQuotaExhaustedMessage
+                      ? colors.error
+                      : colors.onSurfaceVariant)),
         ),
       // 다 쓴 무료 사용자에게만, 더 쓸 수 있는 길을 한 줄로 알린다(5차 구독 3단계).
       if (exhausted &&
