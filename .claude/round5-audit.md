@@ -3,6 +3,8 @@
 시작: 2026-11-13 아침. 30분마다 예약된 세션 루프(2026-11-17에 10분에서 바꿨다). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- **구독을 눌렀는데 광고 제거 Paywall이 뜨던 것**(offering을 안 짚어 줬다). 테스트 1개
+- **RevenueCat SDK 9.15.1 → 10.19.1**(Paywall 발행에 필요)
 - **구독 Paywall이 광고 제거 entitlement를 보고 갈리던 것**. 테스트 5개
 - **공유 문장의 '가져간 수'가 무슨 숫자인지 없던 것**. 테스트 4개
 
@@ -84,14 +86,12 @@
     머리말 '광고 없이, 매달 패롯을 받아요', 혜택 네 줄, 버튼 '구독 시작하기').
     패키지도 템플릿 기본값(연간·월간 달러) 대신 우리 `pro`·`light`로 바꾸고,
     우리 요금제에 없는 '(19% 할인)' 문구를 지웠다. 초안으로 저장돼 있다
-  - **발행이 막힌 까닭 — SDK 버전**: 이 Paywall은 header 컴포넌트를 써서
-    RevenueCat이 **Flutter SDK 10.0.1 이상**을 권한다. 지금 앱은
-    `purchases_flutter` 9.15.1이다. 발행 창의 '지원 버전을 쓰고 있다'
-    체크는 사실이 아니라 누르지 않았다. 셋 중 하나를 골라야 한다
-    1. SDK를 10.x로 올린다(메이저 업그레이드, 깨지는 변경 확인 필요)
-    2. Paywall에서 header 컴포넌트를 빼고 9.x에서 도는 모양으로 바꾼다
-    3. 그대로 두고 나중에 (지금 앱은 출시 빌드에서만 진짜 Paywall을 띄우므로
-       당장 막히는 것은 없다)
+  - **2026-11-17 발행했다.** header 컴포넌트 때문에 Flutter SDK 10.0.1
+    이상이 필요해서, 사용자 승인으로 `purchases_flutter`·`purchases_ui_flutter`를
+    9.15.1 → **10.19.1**로 올린 뒤 발행했다(295fe833)
+  - **남음 — 심사 제출**: 구독 둘 다 `Prepare for Submission`이라 스토어에서
+    상품이 조회되지 않는다. 그래서 기기에서 진짜 구독 Paywall을 아직 못 봤다
+    ('아직 구독 상품이 없어요'가 뜬다). 첫 구독은 새 앱 버전과 함께 제출한다
   - **남음 — 심사 제출**: 구독 둘 다 `Prepare for Submission`이다. 첫
     구독은 새 앱 버전과 함께 제출해야 한다(Apple 안내)
   - 2026-11-17 이전 기록:
@@ -765,3 +765,25 @@
   `TodayStartBar`의 '학습하기' 하나뿐이라 제목을 그쪽에 맞추면 된다.
   그 화면 안에서 '학습 방법'과 '공부할 영상 찾기'로 **'학습'과 '공부'가
   섞이는 것**도 같이 볼 거리다. 다음 반복에서 처리한다
+
+## 반복 461 (2026-11-17 20:30~, 사용자 요청 이어서)
+- 사용자가 SDK 올리기를 골라서 `purchases_flutter`·`purchases_ui_flutter`를
+  **9.15.1 → 10.19.1**로 올렸다
+  - 10.0.0의 깨지는 변경은 Android 최소 API 21 → 23과 소모품 복원 우회 제거
+    둘뿐이고 Dart API는 그대로다. 이 앱 minSdk는 이미 24
+  - iOS는 `PurchasesHybridCommon` 17.53.0 → 19.17.2로 올라가 Podfile.lock도
+    바뀌었다. `pod install`이 Podfile.lock에 묶인 옛 버전과 부딪혀서
+    `pod update PurchasesHybridCommon PurchasesHybridCommonUI`로 풀었다
+  - 걸려 넘어진 것: `pod install`이 `Unicode Normalization not appropriate
+    for ASCII-8BIT`로 죽었다. `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`을 주면 된다
+- Paywall을 발행했다('패로킷 구독')
+- **발행하고 기기에서 눌러 보니 엉뚱한 화면이 떴다**: '한 번 구매로 평생
+  광고 제거'(1회 구매 $0.99). `presentPaywall()`을 인자 없이 부르면 **지금
+  기본 offering**의 화면이 뜨는데, 이 프로젝트의 기본은 광고 제거다
+  - `getOfferings`로 `parrokit_subscription`을 찾아 `presentPaywall(offering:)`
+    으로 짚어 준다. 못 찾으면 엉뚱한 화면 대신 '아직 구독 상품이 없어요'
+  - 테스트 1개. analyze 깨끗, 전체 통과
+  - 기기에서 고치기 전후를 다 봤다(광고 제거 Paywall → 안내 토스트)
+- **미확인**: 진짜 구독 Paywall은 상품이 심사 전이라 스토어에서 조회되지
+  않아 아직 못 봤다
+- 다음에 할 것: 460에서 찾아 둔 '학습하기' 화면 제목 결함
