@@ -46,6 +46,29 @@ class _SilentCallable extends Fake implements HttpsCallable {
       Completer<HttpsCallableResult<T>>().future;
 }
 
+/// 첫 호출은 영영 대답하지 않고, 두 번째부터 답한다(5차 454).
+class _SlowFirstFunctions extends Fake implements FirebaseFunctions {
+  int calls = 0;
+
+  @override
+  HttpsCallable httpsCallable(String name, {HttpsCallableOptions? options}) =>
+      _SlowFirstCallable(this);
+}
+
+class _SlowFirstCallable extends Fake implements HttpsCallable {
+  _SlowFirstCallable(this.owner);
+
+  final _SlowFirstFunctions owner;
+
+  @override
+  Future<HttpsCallableResult<T>> call<T>([dynamic parameters]) {
+    owner.calls++;
+    if (owner.calls == 1) return Completer<HttpsCallableResult<T>>().future;
+    return Future.value(
+        _FakeResult<T>({'remainingToday': 3, 'dailyLimit': 10} as T));
+  }
+}
+
 class _FakeResult<T> extends Fake implements HttpsCallableResult<T> {
   _FakeResult(this.data);
 
@@ -159,8 +182,13 @@ void main() {
       async.elapse(const Duration(seconds: 7));
       expect(done, isFalse, reason: '아직 기다리는 중');
 
+      // 한 번 접히면 조용히 한 번 더 묻는다(5차 454). 두 번째도 대답이
+      // 없으면 그때 끝낸다.
       async.elapse(CloudSentenceAssist.usageTimeout);
-      expect(done, isTrue, reason: '접고 끝낸다');
+      expect(done, isFalse, reason: '한 번 더 묻는 중');
+
+      async.elapse(CloudSentenceAssist.usageTimeout);
+      expect(done, isTrue, reason: '두 번 다 대답이 없으면 접는다');
       // 못 읽었으므로 숫자는 비어 있고, 화면은 '다시 확인'을 보여 준다.
       expect(assist.remainingToday, isNull);
     });
@@ -186,5 +214,30 @@ void main() {
   test('횟수 조회는 짧게, 글 만들기는 길게 기다린다', () {
     expect(CloudSentenceAssist.usageTimeout,
         lessThan(CloudSentenceAssist.suggestTimeout));
+  });
+
+  test('첫 조회가 접히면 조용히 한 번 더 묻는다(5차 454)', () {
+    // 서버가 쉬다 깨는 첫 호출은 15초를 넘긴다. 전에는 사용자가
+    // '탭해서 다시 확인'을 직접 눌러야 숫자가 떴다.
+    fakeAsync((async) {
+      final functions = _SlowFirstFunctions();
+      final assist = CloudSentenceAssist(functions: functions);
+      assist.refreshUsage();
+
+      async.elapse(CloudSentenceAssist.usageTimeout + const Duration(seconds: 1));
+      async.flushMicrotasks();
+
+      expect(functions.calls, 2, reason: '한 번 더 물었다');
+      expect(assist.remainingToday, 3);
+    });
+  });
+
+  test('첫 조회가 오류로 끝나면 다시 묻지 않는다', () {
+    // 시간이 모자라서가 아니라 서버가 거절한 것이면 또 물어도 같다.
+    final functions = _FakeFunctions((_) => throw _error('internal'));
+    final assist = CloudSentenceAssist(functions: functions);
+    return assist.refreshUsage().then((_) {
+      expect(functions.calls.length, 1);
+    });
   });
 }

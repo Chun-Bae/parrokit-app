@@ -58,4 +58,21 @@ void main() {
     // 너무 짧으면 멀쩡히 되던 것도 실패로 보인다.
     expect(shortCallTimeout.inSeconds, greaterThanOrEqualTo(10));
   });
+
+  test('조회에 기다릴 시간을 화면마다 따로 적지 않는다(5차 454)', () {
+    // 뜻 채우기와 챗봇이 저마다 8초를 적어 둬서, 서버가 깨어나는 첫
+    // 호출에서 거의 늘 접혔다. 둘 다 공용 값을 가져온다.
+    for (final path in [
+      'lib/core/content/cloud_sentence_assist.dart',
+      'lib/features/content-studio/chat-bot/presentation/chat_bot_provider.dart',
+    ]) {
+      final code = File(path)
+          .readAsLinesSync()
+          .where((line) => !line.trimLeft().startsWith('///'))
+          .where((line) => !line.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(code, contains('usageTimeout = shortCallTimeout'), reason: path);
+      expect(code.contains('Duration(seconds: 8)'), isFalse, reason: path);
+    }
+  });
 }

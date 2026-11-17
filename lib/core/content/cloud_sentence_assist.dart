@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,7 +18,9 @@ class CloudSentenceAssist implements SentenceAssist {
   /// 챗봇 사용량(429)에서 고친 것과 같은 결함이다.
   ///
   /// 횟수만 묻는 것은 짧게, 글을 만들어 받는 것은 길게 기다린다.
-  static const usageTimeout = Duration(seconds: 8);
+  /// 기다릴 시간은 앱이 쓰는 한 곳에서 가져온다(5차 454). 여기만 8초라
+  /// 서버가 깨어나는 첫 호출에서 거의 늘 접혔다.
+  static const usageTimeout = shortCallTimeout;
   static const suggestTimeout = Duration(seconds: 30);
 
   FirebaseFunctions? _functions;
@@ -31,11 +35,23 @@ class CloudSentenceAssist implements SentenceAssist {
 
   @override
   Future<void> refreshUsage() async {
-    try {
-      await _call({'mode': 'status'}, timeout: usageTimeout);
-    } catch (e) {
-      // 횟수를 못 읽어도 기능 자체는 쓸 수 있으니 조용히 넘어간다.
-      AppLogger.w('[assist] 남은 횟수 조회 실패: $e');
+    // 한 번 접히면 조용히 한 번 더 묻는다(5차 454).
+    //
+    // 서버가 한동안 쉬다 깨는 첫 호출은 15초를 넘긴다. 기기에서 보니
+    // 첫 조회는 늘 접히고 두 번째는 1초 안에 돌아왔다. 전에는 사용자가
+    // '탭해서 다시 확인'을 직접 눌러야 숫자가 떴다.
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        await _call({'mode': 'status'}, timeout: usageTimeout);
+        return;
+      } on TimeoutException catch (e) {
+        AppLogger.w('[assist] 남은 횟수 조회 실패: $e');
+        // 첫 번째면 서버가 깨어났을 테니 한 번 더 묻는다.
+      } catch (e) {
+        // 횟수를 못 읽어도 기능 자체는 쓸 수 있으니 조용히 넘어간다.
+        AppLogger.w('[assist] 남은 횟수 조회 실패: $e');
+        return;
+      }
     }
   }
 

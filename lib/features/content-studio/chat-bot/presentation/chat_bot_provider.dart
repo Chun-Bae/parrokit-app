@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import '../domain/entities/ai_chat_message.dart';
@@ -64,7 +65,9 @@ class ChatBotProvider extends ChangeNotifier {
   /// 전에는 기다림에 끝이 없었다. 서버가 대답하지 않으면 시트 맨 위
   /// 사용량 줄이 **영영 도는 동그라미**로 남았다(5차 429). 목소리 목록에서
   /// 고친 것과 같은 결함이다(395).
-  static const usageTimeout = Duration(seconds: 8);
+  /// 기다릴 시간은 앱이 쓰는 한 곳에서 가져온다(5차 454). 여기만 8초라
+  /// 서버가 깨어나는 첫 호출에서 거의 늘 접혔다.
+  static const usageTimeout = shortCallTimeout;
 
   /// 시트를 열 때 채팅을 보내지 않고 오늘 사용량만 조회해 배지에 반영한다.
   Future<void> fetchDailyUsage() async {
