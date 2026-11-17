@@ -7,6 +7,7 @@ import 'package:parrokit/features/collection/shared/drive_disconnect.dart';
 // 서버와 개인 Cloud의 원격 저장 상태를 보여주는 섹션.
 // ============================================================================
 
+import 'package:parrokit/core/infrastructure/services/cache_service.dart';
 import 'package:parrokit/core/shared/utils/format_bytes.dart';
 import 'dart:math' as math;
 
@@ -24,16 +25,35 @@ import 'package:parrokit/features/settings/subscription/presentation/subscriptio
 /// 로컬·서버·Google Drive 저장 용량과 Drive 연동 버튼. 더보기 데이터 카드의
 /// "저장 용량 · Google Drive" 줄을 누르면 시트로 열린다.
 class RemoteStorageDetails extends StatefulWidget {
-  const RemoteStorageDetails({super.key, this.presenter});
+  const RemoteStorageDetails({super.key, this.presenter, this.readCacheBytes});
 
   /// 테스트에서 구독 화면 대신 쓸 것. 비우면 빌드에 맞는 것을 고른다.
   final PaywallPresenter? presenter;
+
+  /// 임시 파일 크기를 읽는 방법. 테스트에서 갈아 끼운다.
+  final Future<int> Function()? readCacheBytes;
 
   @override
   State<RemoteStorageDetails> createState() => _RemoteStorageDetailsState();
 }
 
 class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
+  /// 임시 파일이 차지하는 양. 아직 못 읽었으면 null.
+  int? _cacheBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCacheBytes();
+  }
+
+  Future<void> _loadCacheBytes() async {
+    final read = widget.readCacheBytes ?? CacheService.instance.getCacheSize;
+    final bytes = await read();
+    if (!mounted) return;
+    setState(() => _cacheBytes = bytes);
+  }
+
   Widget _buildUsageCard(
     BuildContext context, {
     required IconData icon,
@@ -43,6 +63,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     required Color color,
     double? progress,
     Widget? action,
+    List<Widget> breakdown = const [],
   }) {
     final cs = Theme.of(context).colorScheme;
 
@@ -99,6 +120,10 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                   color: cs.onSurfaceVariant,
                 ),
           ),
+          if (breakdown.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, runSpacing: 8, children: breakdown),
+          ],
           if (action != null) ...[
             const SizedBox(height: 4),
             Align(alignment: Alignment.centerLeft, child: action),
@@ -254,6 +279,8 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     final clipProvider = context.watch<ClipProvider>();
     final subscription = context.watch<SubscriptionProvider>();
     final localUsed = clipProvider.localStorageUsedBytes;
+    final cachedBytes = clipProvider.cachedRemoteStorageUsedBytes;
+    final deviceTotal = localUsed + cachedBytes + (_cacheBytes ?? 0);
     // 서버가 센 값이 있으면 그것을 쓴다. 앱이 기기 목록을 더한 값은
     // 기기마다 달라서 한도를 말할 근거가 못 된다(5차).
     final serverUsed =
@@ -268,8 +295,30 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           icon: Icons.phone_android_rounded,
           title: '기기',
           subtitle: '이 기기에 있어 오프라인에서도 열 수 있는 파일',
-          usageText: formatBytes(localUsed),
+          // 전에는 보관한 영상만 세어서, 바로 옆 더보기 칸의 '임시 파일
+          // 12.1 MB'와 숫자가 맞지 않았다(5차 450). 어느 쪽이 진짜 기기
+          // 사용량인지 알 수 없었다. 이제 기기가 쓰는 것을 모두 더한다.
+          usageText: formatBytes(deviceTotal),
           color: Theme.of(context).colorScheme.tertiary,
+          breakdown: [
+            _buildLegendChip(
+              context,
+              label: '보관한 영상 ${formatBytes(localUsed)}',
+              color: Theme.of(context).colorScheme.tertiary,
+            ),
+            _buildLegendChip(
+              context,
+              label: '받아 둔 영상 ${formatBytes(cachedBytes)}',
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            _buildLegendChip(
+              context,
+              label: _cacheBytes == null
+                  ? '임시 파일 세는 중'
+                  : '임시 파일 ${formatBytes(_cacheBytes!)}',
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+            ),
+          ],
         ),
         const SizedBox(height: AppSpacing.sm),
         _buildUsageCard(

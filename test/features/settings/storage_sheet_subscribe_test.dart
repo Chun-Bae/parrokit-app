@@ -3,6 +3,8 @@
 // 무료는 서버에 담을 곳이 0인데도 빈 진행 막대를 그렸고('아직 안 찼다'로
 // 읽힌다), '구독하면 영상이 서버에 백업돼요'라고만 하고 갈 길이 없었다.
 
+import 'dart:async';
+
 import 'package:drift/native.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +41,11 @@ void main() {
     await db.close();
   });
 
-  Future<_FakePaywall> open(WidgetTester tester, {required String tier}) async {
+  Future<_FakePaywall> open(
+    WidgetTester tester, {
+    required String tier,
+    int cacheBytes = 0,
+  }) async {
     final store = FakeFirebaseFirestore();
     await store.collection('users').doc('uid-1').set({
       'subscription': {'tier': tier, 'status': 'active'},
@@ -60,9 +66,15 @@ void main() {
       child: MaterialApp(
         theme: ThemeData(
             colorScheme: cs, textTheme: appTextTheme(cs, isDark: false)),
-        home: Scaffold(body: RemoteStorageDetails(presenter: paywall)),
+        home: Scaffold(
+          body: RemoteStorageDetails(
+            presenter: paywall,
+            readCacheBytes: () async => cacheBytes,
+          ),
+        ),
       ),
     ));
+    await tester.pump();
     await tester.pump();
     return paywall;
   }
@@ -86,5 +98,40 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(find.byKey(const ValueKey('storage-open-subscription')),
         findsNothing);
+  });
+
+  testWidgets('기기 칸이 임시 파일까지 더해서 보여 준다(5차 450)', (tester) async {
+    // 전에는 보관한 영상만 세어서, 바로 옆 '임시 파일' 칸과 숫자가 달랐다.
+    await open(tester, tier: 'free', cacheBytes: 2 * 1024 * 1024);
+
+    expect(find.text('2.0 MB'), findsOneWidget, reason: '기기 합계');
+    expect(find.text('임시 파일 2.0 MB'), findsOneWidget);
+    expect(find.text('보관한 영상 0 B'), findsOneWidget);
+    expect(find.text('받아 둔 영상 0 B'), findsOneWidget);
+  });
+
+  testWidgets('임시 파일을 아직 못 읽었으면 세는 중이라고 말한다', (tester) async {
+    final store = FakeFirebaseFirestore();
+    final subscription = SubscriptionProvider(firestore: store);
+    addTearDown(subscription.dispose);
+    final cs = ColorScheme.fromSeed(seedColor: Colors.blue);
+    await tester.pumpWidget(MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ClipProvider>.value(value: clipProvider),
+        ChangeNotifierProvider<SubscriptionProvider>.value(value: subscription),
+      ],
+      child: MaterialApp(
+        theme: ThemeData(
+            colorScheme: cs, textTheme: appTextTheme(cs, isDark: false)),
+        home: Scaffold(
+          body: RemoteStorageDetails(
+            readCacheBytes: () => Completer<int>().future,
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    expect(find.text('임시 파일 세는 중'), findsOneWidget);
   });
 }
