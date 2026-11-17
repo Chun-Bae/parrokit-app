@@ -1,3 +1,4 @@
+import 'package:parrokit/features/settings/more/presentation/sections/coin_purchase_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +35,7 @@ class _CoinStoreSectionState extends State<CoinStoreSection> {
     try {
       final products = await Purchases.getProducts([pkg.productId]);
       if (products.isEmpty) {
-        showToast('상품 정보를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+        showToast(productLoadFailedMessage);
         return;
       }
 
@@ -48,19 +49,18 @@ class _CoinStoreSectionState extends State<CoinStoreSection> {
       // 한다. mounted는 토스트에만 건다.
       await userProvider.addCoins(pkg.totalCoins);
       if (mounted) {
-        showToast('${pkg.totalCoins}코인이 충전됐어요!');
+        showToast(coinsAddedMessage(pkg.totalCoins));
       }
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       if (code != PurchasesErrorCode.purchaseCancelledError) {
-        showToast('결제에 실패했어요. 다시 시도해 주세요.');
+        showToast(paymentFailedMessage);
       }
     } catch (e) {
       // 결제 자체는 끝났는데 지급에서 넘어진 경우다. 조용히 사라지면
       // 사용자는 돈을 내고 아무것도 못 받은 채 이유도 모른다.
-      AppLogger.e('[CoinStore] 코인 지급 실패 productId=${pkg.productId}',
-          error: e);
-      showToast('결제는 됐지만 코인 지급에 실패했어요. 앱을 다시 켜 보고, 그래도 안 되면 문의해 주세요.');
+      AppLogger.e('[CoinStore] 코인 지급 실패 productId=${pkg.productId}', error: e);
+      showToast(coinsNotGivenMessage);
     } finally {
       if (mounted) setState(() => _purchasing = null);
     }

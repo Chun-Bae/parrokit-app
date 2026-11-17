@@ -1,3 +1,4 @@
+import 'package:parrokit/features/settings/more/presentation/sections/coin_purchase_text.dart';
 // ============================================================================
 // lib/features/more/presentation/sections/payment_section.dart
 // ============================================================================
@@ -105,7 +106,7 @@ class PaymentSection extends StatelessWidget {
     } catch (_) {}
 
     if (offering == null) {
-      showToast('상품 정보를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+      showToast(productLoadFailedMessage);
       return;
     }
     if (!context.mounted) return;
@@ -156,29 +157,32 @@ class _CoinPaywallPageState extends State<_CoinPaywallPage> {
         // CoinPackage.packages에 안 넣으면, 사용자가 낸 돈과 받는 코인이
         // 어긋난 채로 아무 흔적이 안 남는다.
         if (matched.isEmpty) {
-          AppLogger.e(
-              '[Paywall] 앱에 없는 상품이 결제됐다 productId=$productId. '
+          AppLogger.e('[Paywall] 앱에 없는 상품이 결제됐다 productId=$productId. '
               'CoinPackage.packages 첫 항목 기준으로 지급한다.');
         }
-        final pkg = matched.isNotEmpty ? matched.first : CoinPackage.packages.first;
+        final pkg =
+            matched.isNotEmpty ? matched.first : CoinPackage.packages.first;
 
         // 콜백이 동기라 await 할 수 없다. 대신 실패를 삼키지는 않는다.
+        // 충전됐다는 말은 코인이 실제로 들어간 뒤에만 한다. 전에는 이 말을
+        // try 밖에서 했다. 지급이 넘어지면 '지급에 실패했어요'와
+        // '충전됐어요!'가 함께 떠서, 돈을 낸 사람이 받았는지 못 받았는지
+        // 알 수 없었다(5차 425).
         unawaited(() async {
           try {
             await widget.userProvider.addCoins(pkg.totalCoins);
+            showToast(coinsAddedMessage(pkg.totalCoins));
           } catch (e) {
             AppLogger.e('[Paywall] 코인 지급 실패 productId=$productId', error: e);
-            showToast('결제는 됐지만 코인 지급에 실패했어요. 앱을 다시 켜 보고, 그래도 안 되면 문의해 주세요.');
+            showToast(coinsNotGivenMessage);
           }
         }());
-
-        showToast('${pkg.totalCoins}코인이 충전됐어요!');
       },
       onDismiss: () {
         Navigator.of(context, rootNavigator: true).pop();
       },
       onPurchaseError: (_) {
-        showToast('결제에 실패했어요. 다시 시도해 주세요.');
+        showToast(paymentFailedMessage);
       },
     );
   }
