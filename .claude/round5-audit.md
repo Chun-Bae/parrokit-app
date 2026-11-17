@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 30분마다 예약된 세션 루프(2026-11-17에 10분에서 바꿨다). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- **같은 일을 '변경'과 '바꾸기'로 나눠 부르던 것**(프로필 편집은 한 화면 안에서 갈렸다). 테스트 3개
 - **한 번 사는 상품(광고 제거)을 '켜짐·꺼짐'이라 적던 것**(스위치로 읽혔다). 테스트 1개
 - **이용 안내가 '결제 기능이 빠져 있어요'라고 하던 것**(처음 켤 때 저절로 뜨는 창인데 거짓). 테스트 2개
 - **백업 되돌리기 한 흐름을 '불러오기'와 '되돌리기'로 갈라 부르던 것**(이름 셋). 테스트 3개
@@ -84,81 +85,78 @@
 
 ## 배포 필요 (사용자가 직접)
 
+**남은 것은 함수 한 번이면 다 나간다.** 규칙은 11-17 22:45에 다 나갔고,
+그 전 기록들이 '배포 필요'에 그대로 쌓여 있었다(반복 490에 추렸다).
 
-- **단어 모드(뜻 + 예문)를 `suggestSentenceInfo`에 넣었다**(반복 467): `functions/src/sentenceAssist.ts`에 `mode: "word"`를 더했다. 발음 대신 예문을 만들고, 앱이 보낸 기존 예문과 겹치지 않게 한다(온도 0.2). 앱은 이미 이 모드를 부른다
-  - **배포 전에는 '자동으로 넣기'가 횟수만 쓰고 예문을 못 받는다.** 지금 배포된 함수는 mode를 모르면 suggest로 떨어져 발음만 돌려준다
-  - 명령: `npx -y firebase-tools@latest deploy --only functions:suggestSentenceInfo --project parrokit-45126`
-  - 배포 전 확인: `cd functions && npm run build && npm run lint`는 통과했다
+### 남은 것 — 함수 한 번
 
-- **챗봇 사용량 함수가 지금 `INTERNAL`을 돌려준다(반복 455에서 봄)**: 시트를 열면
-  첫 호출은 15초에 접히고, 두 번째 호출에 서버가 `[firebase_functions/internal]
-  INTERNAL`로 거절한다. 그래서 남은 횟수가 늘 비어 있다. 아래 함수 재배포로
-  고쳐지는지 함께 확인할 거리다
+```
+npx -y firebase-tools@latest deploy --only functions --project parrokit-45126
+```
 
-- **함수 전체 — 서버 안내 말투(6d302cc7)**: 챗봇은 서버 글을 말풍선에 그대로
-  띄우고 자동 자막·질문 화면도 서버 글을 그대로 보여 준다. 그 글 16곳이
-  '~습니다'였고, 'OpenAI API 할당량이 부족합니다. 결제 상태를 확인해 주세요.'
-  처럼 사용자가 할 수 없는 일을 시키기도 했다. 앱 말투로 다시 적었다.
-  **배포 전에는 사용자에게 예전 글이 그대로 보인다.** build·lint 통과
-  ```
-  npx -y firebase-tools@latest deploy --only functions --project parrokit-45126
-  ```
-  (바뀐 파일: captioningAi, contentStudioAi, questions, wallet)
+지금까지 한 배포는 모두 `--only functions:suggestSentenceInfo`처럼 범위를
+좁힌 것이라, 아래 넷은 아직 예전 코드가 돌고 있다. 한 번에 나간다.
+배포 전 확인: `cd functions && npm run build && npm run lint`(모두 통과해 뒀다).
 
-- **firestore.rules** — 단어 유의어 한도(`synonyms` 10개)를 validWord에 더했다. 지금 배포된 규칙은 모르는 칸이라 그대로 통과하므로 급하지 않다. 다음에 규칙을 배포할 때 같이 나간다:
-  `npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126`
+- **서버 안내 말투**(6d302cc7 — captioningAi·contentStudioAi·questions·wallet):
+  서버 글 16곳이 '~습니다'였고, 'OpenAI API 할당량이 부족합니다. 결제 상태를
+  확인해 주세요.'처럼 사용자가 할 수 없는 일을 시키기도 했다. 챗봇은 서버 글을
+  말풍선에 그대로 띄우고 자동 자막·질문 화면도 그대로 보여 준다.
+  **배포 전에는 예전 글이 그대로 보인다**
 
-- **RevenueCat·App Store Connect — 2026-11-17에 대부분 끝냈다**(사용자가 로그인해 주고 맡김)
-  - App Store Connect: 구독 그룹 `Parrokit Subscription`(22588445),
-    월 구독 2개 — `com.bull.parrokit.sub_light_monthly`(₩2,900, Apple ID
-    6835832285), `com.bull.parrokit.sub_pro_monthly`(₩7,900, 6835832640).
-    가격은 한국 기준으로 정하고 175개국은 Apple이 환산한 값을 그대로 뒀다.
-    한국어 표시 이름·설명도 넣었다(라이트/프로)
-  - RevenueCat: 상품 2개를 import하고 entitlement에 붙였다
-    (`parrokit_sub_light` ← light_monthly, `parrokit_sub_pro` ← pro_monthly).
-    offering `parrokit_subscription`('Parrokit 구독')에 패키지 둘
-    (`light`, `pro`)을 만들었다
-  - **Paywall — 2026-11-17에 만들었지만 아직 발행하지 않았다**: 'Unlock full
-    access' 템플릿으로 시작해 AI 편집기로 한국어로 바꿨다(이름 '패로킷 구독',
-    머리말 '광고 없이, 매달 패롯을 받아요', 혜택 네 줄, 버튼 '구독 시작하기').
-    패키지도 템플릿 기본값(연간·월간 달러) 대신 우리 `pro`·`light`로 바꾸고,
-    우리 요금제에 없는 '(19% 할인)' 문구를 지웠다. 초안으로 저장돼 있다
-  - **2026-11-17 발행했다.** header 컴포넌트 때문에 Flutter SDK 10.0.1
-    이상이 필요해서, 사용자 승인으로 `purchases_flutter`·`purchases_ui_flutter`를
-    9.15.1 → **10.19.1**로 올린 뒤 발행했다(295fe833)
-  - **남음 — 심사 제출**: 구독 둘 다 `Prepare for Submission`이라 스토어에서
-    상품이 조회되지 않는다. 그래서 기기에서 진짜 구독 Paywall을 아직 못 봤다
-    ('아직 구독 상품이 없어요'가 뜬다). 첫 구독은 새 앱 버전과 함께 제출한다
-  - **남음 — 심사 제출**: 구독 둘 다 `Prepare for Submission`이다. 첫
-    구독은 새 앱 버전과 함께 제출해야 한다(Apple 안내)
-  - 2026-11-17 이전 기록:
-  - 끝남: entitlement `parrokit_sub_light`(라이트)·`parrokit_sub_pro`(프로) 생성
-  - 끝남: Webhook 'Parrokit Firebase' 등록(Active, Production+Sandbox, 모든 이벤트).
-    주소 `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`.
-    함수가 살아 있는 것은 GET에 405가 오는 것으로 확인했다. 테스트 이벤트 전송은
-    200을 받았지만 대시보드 이벤트 목록에는 아무것도 안 뜬다(실제 구독이 생겨야
-    알 수 있을 듯)
-  - **남음 1 — 웹훅 비밀값**: 지금 Authorization 헤더가 비어 있어 함수가 검사를
-    건너뛴다(`subscriptionEvent.ts:126`은 환경변수가 있을 때만 본다). 아무나 가짜
-    이벤트를 쏠 수 있으니 출시 전에 값을 정해 **대시보드와 함수 양쪽에 같은 값**을
-    넣는다. 값은 사용자가 정한다(여기 적지 않는다)
-  - **남음 2 — App Store Connect 월 구독 상품 2개**(₩2,900·₩7,900, 같은 구독 그룹).
-    지금 App Store 상품은 RemoveAds와 코인 4종뿐이다. 상품이 있어야 entitlement에
-    붙이고 offering·Paywall을 만들 수 있다
-  - **남음 3 — offering과 Paywall**: 상품이 생기면 만든다. Paywall이 서면
-    `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
+- **커뮤니티 알림 글귀**(465da9de)와 **알림 설정 반영**(4bd8a2ea —
+  onCommunityCommentCreated·onVoteEndNotification): 전에는 제목과 본문이 같은
+  말을 되풀이하면서 정작 어느 글에 달린 댓글인지 없었다. 알림 설정에서 꺼도
+  푸시가 계속 오는 것도 이 배포로 고쳐진다. 함수 테스트 `npm run test:notify` 3개 통과.
+  **이미 쌓인 알림은 만들 때의 글을 문서에 들고 있어 예전 말 그대로다**
+  (보여줄 때만 바꾸는 처리가 앱에 있다 — `notification_text.dart`)
 
-- **함수 checkStorageQuota (93f105d1)** — 저장 트리거 둘(onUserFileUploaded·onUserFileDeleted)은
-  2026-11-15 19:30에 배포했다. 올리기 전에 자리를 묻는 이 함수만 남았다. 배포 전에는 앱이
-  묻지 않고 그냥 올린다.
-  ```
-  npx -y firebase-tools@latest deploy --only functions:checkStorageQuota --project parrokit-45126
-  ```
+- **checkStorageQuota**(93f105d1): 올리기 전에 자리를 묻는 함수.
+  **배포 전에는 앱이 묻지 않고 그냥 올린다.** 저장 트리거
+  둘(onUserFileUploaded·onUserFileDeleted)은 11-15 19:30에 나갔다
 
-- **함수 onCommunityCommentCreated (알림 글귀, 465da9de)**: 알림이 어느 글에 달린 댓글인지 알려 주도록 제목·본문을 바꿨다. 배포 전에는 예전 글귀 그대로다(동작은 멀쩡). build·lint·단위 테스트 통과
-  ```
-  npx -y firebase-tools@latest deploy --only functions:onCommunityCommentCreated --project parrokit-45126
-  ```
+- **모델 교체 둘** — generateTts(c347a629), generateChatbotResponse(dbc34531):
+  종료된 모델을 부르고 있을 가능성이 높다. 챗봇 사용량 조회가 `INTERNAL`로
+  거절되는 것(반복 455)도 이 배포로 고쳐지는지 함께 본다
+
+### 끝난 것
+
+- **`suggestSentenceInfo`** — 11-17 22:50과 00:10에 배포. 낱말 자동 채우기
+  (뜻·발음·예문)가 기기에서 도는 것을 확인했다(반복 468·469)
+- **`firestore:rules`** — 11-17 22:45 배포(`released rules`). 그때
+  `firestore.rules`의 마지막 변경이 22:38(723e60c3)이었으므로 **그 아래가
+  모두 함께 나갔다**: 예문 10개·발음 칸(723e60c3), 유의어 10개(ba2783dd),
+  신고 reports(bd30360e), 내 단어 words(33ab134e)
+- **저장 트리거 둘**(onUserFileUploaded·onUserFileDeleted) — 11-15 19:30
+
+### RevenueCat·App Store Connect
+
+- App Store Connect: 구독 그룹 `Parrokit Subscription`(22588445),
+  월 구독 2개 — `com.bull.parrokit.sub_light_monthly`(₩2,900, Apple ID
+  6835832285), `com.bull.parrokit.sub_pro_monthly`(₩7,900, 6835832640).
+  가격은 한국 기준으로 정하고 175개국은 Apple이 환산한 값을 그대로 뒀다.
+  한국어 표시 이름·설명도 넣었다(라이트/프로)
+- RevenueCat: 상품 2개를 import하고 entitlement에 붙였다
+  (`parrokit_sub_light` ← light_monthly, `parrokit_sub_pro` ← pro_monthly).
+  offering `parrokit_subscription`('Parrokit 구독')에 패키지 둘(`light`, `pro`)
+- Paywall: 2026-11-17 **발행했다**. header 컴포넌트 때문에 Flutter SDK 10.0.1
+  이상이 필요해서, 사용자 승인으로 `purchases_flutter`·`purchases_ui_flutter`를
+  9.15.1 → 10.19.1로 올린 뒤 발행했다(295fe833)
+- Webhook 'Parrokit Firebase' 등록(Active, Production+Sandbox, 모든 이벤트).
+  주소 `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`.
+  함수가 살아 있는 것은 GET에 405가 오는 것으로 확인했다. 테스트 이벤트는 200을
+  받았지만 대시보드 목록에는 안 뜬다(실제 구독이 생겨야 알 수 있을 듯)
+
+- **남음 1 — 심사 제출**: 구독 둘 다 `Prepare for Submission`이라 스토어에서
+  조회되지 않는다. 기기에서는 '아직 구독 상품을 준비하는 중이에요'만 뜬다.
+  첫 구독은 **새 앱 버전과 함께** 제출해야 한다(Apple 안내)
+- **남음 2 — 웹훅 비밀값**: 지금 Authorization 헤더가 비어 있어 함수가 검사를
+  건너뛴다(`subscriptionEvent.ts:126`은 환경변수가 있을 때만 본다). 아무나 가짜
+  이벤트를 쏠 수 있으니 출시 전에 값을 정해 **대시보드와 함수 양쪽에 같은 값**을
+  넣는다. 값은 사용자가 정한다(여기 적지 않는다)
+
+### 올린 빌드 기록 (아래는 할 일이 아니라 지난 기록이다)
+
 
 ### 2026-11-17 11:47 테스트 배포 (사용자 요청 "로컬 빌드 올려줘", 내가 로컬에서 돌림)
 - **1.0.6 (120)를 App Distribution `testers`에 올렸다.** `uploaded new release`로 새 항목
@@ -271,6 +269,7 @@
   ```
 
 ## 미확인
+- 예전 보관함 화면의 '폴더/그룹 이름 바꾸기' 창(반복 490): 클립 탭이 새 화면으로 고정돼 있어 기기에서 열지 못했다. 글귀만 '변경' → '바꾸기'로 바꿨고 검사 테스트로 덮었다
 - 홈 '따라 말하기 5회'와 학습 캘린더 '누적 2번'이 어긋난다(반복 481): 캘린더는 453에서 고치기 전까지 아무것도 쌓지 않았다. 그 뒤로는 두 곳에 함께 쌓으므로 새 기록부터는 맞을 것이다. 옛 기록은 사용자 데이터라 건드리지 않았다. 며칠 연습한 뒤 두 숫자가 같이 오르는지 보면 확실해진다
 - 서버 `count: 0`이 실제로 예문을 안 만드는지(반복 473): 배포는 했지만 아직 불러 보지 못했다. **475에 다시 봤는데도 `오늘 3/3회 사용`이었다** - 서버는 한국 시간 기준(`Date.now() + 9h`)으로 세는데 00:30이 넘어도 리셋되지 않았다. 까닭은 모른다. 횟수가 차면 '뜻·발음 채우기'를 눌러 기기 로그의 `[assist] word ok`와 화면을 보면 된다
 - 구독 단계 그림 라이트·프로(반복 465): 단계는 서버가 정해서 기기에서는 무료만 봤다. 세 단계 색과 심볼은 위젯 테스트로 확인
@@ -1419,3 +1418,31 @@
   임시 화면이라 손대지 않았다
 - 확인한 것(미확인에 있던 것): 라이트·프로가 '뜻 채우기 하루 한도가
   늘어요'로 똑같은 것을 기기에서 눈으로 봤다. 이미 안건에 있다
+
+## 반복 490 (2026-11-18 07:50~)
+- 아침 요약에서 '배포 필요 20건 중 일부는 이미 나간 것 같다'고 적어 둔 것을
+  먼저 추렸다. **증거: `firestore.rules`의 마지막 변경이 11-17 22:38(723e60c3)
+  이고 사용자가 22:45에 `--only firestore:rules`를 돌렸다.** 규칙은 한 번에
+  다 나가므로 예문 10개·발음 칸·유의어 10개·신고·내 단어가 모두 배포됐다.
+  함수 쪽 배포는 모두 `--only functions:suggestSentenceInfo`로 범위를 좁힌
+  것이라 나머지는 그대로다
+- 배포 필요를 **남은 것(함수 한 번) / 끝난 것 / RevenueCat / 올린 빌드 기록**
+  으로 나눴다. 중복된 '남음' 셋과 이미 끝난 항목을 걷어냈다. 아침 요약도
+  같이 고쳤다(명령 셋 → 하나)
+- **찾았다: 같은 일을 '변경'과 '바꾸기'로 나눠 불렀다.** 프로필 편집은
+  한 화면 안에서 갈렸다 - 사진 아래 '사진을 눌러 변경', 바로 밑 안내는
+  '바꿀 수 있어요'·'바꾼 날은'·'바꾸면'. 이름 고치기도 새 보관함 화면은
+  '이름 바꾸기'인데 예전 화면만 '폴더 이름 변경'·단추 '변경'이었다
+- 고친 것: 보이는 글에서 '변경'을 걷어냈다(다섯 자리). 검사 테스트 3개
+- analyze 깨끗, 전체 1611개 통과. 프로필 편집을 라이트·다크 둘 다 봤고
+  테마는 라이트로 되돌렸다
+- **겪은 것: 디스크가 또 찼다(211Mi).** 482에서 비운 14GB가 한 시간 만에
+  다시 없어졌다. `build/ios`와 DerivedData는 아직 비어 있으니 내가 만든
+  것이 아니다. 지금 큰 것 둘:
+  - `~/Library/Developer/XcodeBuildMCP/workspaces/parrokit-…` **9.3GB**,
+    마지막으로 쓴 때가 10-19다(이 세션과 무관한 다른 도구의 묵은 캐시)
+  - 부팅된 기기의 `Dead` **8.3GB**(끄지 않으면 못 지운다)
+  둘 다 내 판단으로 지우기에는 커서 사용자에게 물었다. `build/test_cache`
+  43MB만 비워 1.2GB를 만들고 테스트를 돌렸다
+- 겪은 것: 검사 테스트의 정규식 `'[^']*변경[^']*'`가 **줄바꿈을 넘어가서**
+  파일 하나가 통째로 잡혔다. `[^'\n]`으로 막았다
