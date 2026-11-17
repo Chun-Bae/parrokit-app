@@ -41,9 +41,14 @@ void main() {
     expect(exchange, contains('개 단위로 바꿀 수 있어요'));
     expect(exchange, contains('환전했어요.'));
 
+    // 415에서 로그인·가입·비밀번호 찾기의 입력 안내를 한 곳으로 모았다.
+    final authTexts =
+        File('lib/features/auth/auth_input_text.dart').readAsStringSync();
+    expect(authTexts, contains('6자 이상이어야 해요.'));
+    expect(authTexts, contains('적어 주세요'));
     final signUp =
         File('lib/features/auth/sign-up/sign_up_screen.dart').readAsStringSync();
-    expect(signUp, contains('6자 이상이어야 해요.'));
+    expect(signUp, contains('passwordShortMessage'));
   });
 
   test('자주 보는 글은 앱 말투로 바뀌어 있다', () {

@@ -62,7 +62,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
     final amount = int.tryParse(amountText);
     if (amount == null || amount <= 0) {
-      showToast('올바른 수량을 입력해 주세요.');
+      showToast('수량을 바르게 적어 주세요.');
       return;
     }
 

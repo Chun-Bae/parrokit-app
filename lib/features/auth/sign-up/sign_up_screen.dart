@@ -1,3 +1,4 @@
+import 'package:parrokit/features/auth/auth_input_text.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -105,9 +106,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         case 'email-already-in-use':
           showToast('이미 사용 중인 이메일이에요.');
         case 'weak-password':
-          showToast('비밀번호는 6자 이상이어야 해요.');
+          showToast(passwordShortMessage);
         case 'invalid-email':
-          showToast('이메일 형식이 올바르지 않아요.');
+          showToast(emailInvalidMessage);
         case 'too-many-requests':
           showToast('요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.');
         default:
@@ -214,8 +215,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty) return '이메일을 입력해 주세요.';
-            if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
+            if (value == null || value.trim().isEmpty) {
+              return emailNeededMessage;
+            }
+            if (!value.contains('@')) return emailInvalidMessage;
             return null;
           },
         ),
@@ -316,8 +319,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) return '비밀번호를 입력해 주세요.';
-            if (value.length < 6) return '비밀번호는 6자 이상이어야 해요.';
+            if (value == null || value.isEmpty) return passwordNeededMessage;
+            if (value.length < 6) return passwordShortMessage;
             return null;
           },
         ),
@@ -343,7 +346,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) return '비밀번호를 다시 입력해 주세요.';
+            if (value == null || value.isEmpty) {
+              return passwordAgainNeededMessage;
+            }
             if (value != _passwordController.text) return '비밀번호가 서로 달라요.';
             return null;
           },

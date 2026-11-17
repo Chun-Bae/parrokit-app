@@ -1,3 +1,4 @@
+import 'package:parrokit/features/auth/auth_input_text.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -45,12 +46,12 @@ class _FindPwScreenState extends State<FindPwScreen> {
         case 'user-not-found':
           showToast('등록되지 않은 이메일이에요.');
         case 'invalid-email':
-          showToast('이메일 형식이 올바르지 않아요.');
+          showToast(emailInvalidMessage);
         case 'too-many-requests':
           showToast('요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.');
         default:
-          showToast(userErrorMessage(e,
-              fallback: '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
+          showToast(
+              userErrorMessage(e, fallback: '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. 그 밖의 예외는 아무 데도 안
@@ -99,7 +100,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.',
+                    findPasswordGuide,
                     style: context.texts.bodyMedium.copyWith(
                         color: context.tokens.textSecondary,
                         letterSpacing: -0.5),
@@ -151,8 +152,10 @@ class _FindPwScreenState extends State<FindPwScreen> {
             ),
           ),
           validator: (value) {
-            if (value == null || value.trim().isEmpty) return '이메일을 입력해 주세요.';
-            if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다.';
+            if (value == null || value.trim().isEmpty) {
+              return emailNeededMessage;
+            }
+            if (!value.contains('@')) return emailInvalidMessage;
             return null;
           },
         ),

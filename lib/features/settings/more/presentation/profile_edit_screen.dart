@@ -304,7 +304,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           onChanged: (_) =>
                               setState(() {}), // 상태 반영 (확인 버튼 상태용)
                           decoration: InputDecoration(
-                            hintText: '새로운 닉네임을 입력하세요',
+                            hintText: '새 닉네임을 적어 주세요',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
