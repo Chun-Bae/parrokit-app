@@ -61,7 +61,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             trailing: Icon(Icons.arrow_forward_rounded, color: muted),
             onTap: () {
               if (path == AppRoutes.collectionPath) {
-                CollectionShellScreen.openTab(1);
+                CollectionShellScreen.openTab(CollectionShellScreen.clipTab);
               }
               context.push(path);
             },
@@ -165,7 +165,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             onPressed: () async {
               await applyStudyMode(mode);
               // 영상을 고르는 곳이라 클립 탭을 연다(마지막에 본 탭이 아니라).
-              CollectionShellScreen.openTab(1);
+              CollectionShellScreen.openTab(CollectionShellScreen.clipTab);
               if (context.mounted) context.push(AppRoutes.collectionPath);
             },
             style: FilledButton.styleFrom(

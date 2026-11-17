@@ -166,7 +166,7 @@ class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
                 ),
                 onTapMore: () => context.push(AppRoutes.recentsPath),
                 onTapLibrary: () {
-                  CollectionShellScreen.openTab(1);
+                  CollectionShellScreen.openTab(CollectionShellScreen.clipTab);
                   context.goNamed(AppRoutes.collection);
                 },
               ),
@@ -204,7 +204,7 @@ class _ClipDiscoverScreenState extends State<ClipDiscoverScreen> {
         queryParameters: {'clipId': clipId.toString()},
       );
     } else {
-      CollectionShellScreen.openTab(1);
+      CollectionShellScreen.openTab(CollectionShellScreen.clipTab);
       context.go(AppRoutes.collectionPath);
     }
   }

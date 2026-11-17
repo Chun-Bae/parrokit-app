@@ -220,7 +220,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     compact: true,
                     // 문장 기록이라 보관함 문장 탭을 연다(마지막에 본 탭이 아니라, 5차).
                     onViewAll: () {
-                      CollectionShellScreen.openTab(0);
+                      CollectionShellScreen.openTab(CollectionShellScreen.sentenceTab);
                       context.go(AppRoutes.collectionPath);
                     },
                   ),
@@ -229,7 +229,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     language: language,
                     onViewAll: () => openSharedSentences(context),
                     onOpenLibrary: () {
-                      CollectionShellScreen.openTab(0);
+                      CollectionShellScreen.openTab(CollectionShellScreen.sentenceTab);
                       context.go(AppRoutes.collectionPath);
                     },
                   ),

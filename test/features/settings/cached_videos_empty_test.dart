@@ -28,7 +28,9 @@ void main() {
     expect(code, contains('cached-empty-open-library'));
     expect(code, contains('context.go(AppRoutes.collectionPath)'));
     // 영상 이야기를 했으니 클립 탭으로 연다(단어 탭이 열리면 안 된다).
-    expect(code, contains('CollectionShellScreen.openTab(1)'));
+    // 탭 번호를 숫자로 적으면 순서가 바뀔 때 조용히 어긋난다(5차 467).
+    expect(
+        code, contains('CollectionShellScreen.openTab(CollectionShellScreen.clipTab)'));
   });
 
   test('빈 화면에서는 지우기 설명을 먼저 하지 않는다', () {

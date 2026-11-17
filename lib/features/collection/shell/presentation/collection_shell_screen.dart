@@ -30,7 +30,13 @@ import 'package:parrokit/core/shared/widgets/keep_alive.dart';
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
 
-  /// 다른 화면에서 보관함의 특정 탭(0 문장, 1 클립, 2 단어)을 열어 달라고 할 때 쓴다.
+  /// 탭 자리. 숫자를 직접 적지 말고 이 이름을 쓴다(5차 467).
+  /// 순서를 바꿀 때 부르는 쪽이 조용히 어긋나지 않게 한다.
+  static const int sentenceTab = 0;
+  static const int wordTab = 1;
+  static const int clipTab = 2;
+
+  /// 다른 화면에서 보관함의 특정 탭을 열어 달라고 할 때 쓴다.
   /// 예전엔 마지막에 본 탭이 그대로 열려, 학습하기의 '영상 고르기'가 단어 탭으로
   /// 가곤 했다(5차). 보관함이 이미 떠 있어도 이 값을 보고 탭을 바꾼다.
   static final ValueNotifier<int?> requestedTab = ValueNotifier<int?>(null);
@@ -106,7 +112,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       AppConfig.libraryTab = _tabController.index;
       AppConfig.saveToPrefs();
     }
-    if (_tabController.index != 1) {
+    if (_tabController.index != CollectionShellScreen.clipTab) {
       context.read<ClipProvider>().closeCollectionMenu();
     }
   }
@@ -126,7 +132,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final clipProvider = context.watch<ClipProvider>();
-    final isClipTab = _tabController.index == 1;
+    final isClipTab = _tabController.index == CollectionShellScreen.clipTab;
     final isClipSelectionMode = isClipTab && clipProvider.isCollectionMenuOpen;
 
     return Scaffold(
@@ -167,7 +173,12 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
             children: [
               TabKeepAlive(
                 child: SentenceCollectionPreview(
-                  headerSlot: _headerSlots[0],
+                  headerSlot: _headerSlots[CollectionShellScreen.sentenceTab],
+                ),
+              ),
+              TabKeepAlive(
+                child: WordCollectionPreview(
+                  headerSlot: _headerSlots[CollectionShellScreen.wordTab],
                 ),
               ),
               // 클립 탭은 새 화면(폴더 + 모든 클립)만 쓴다. 더보기의 스위치는
@@ -175,9 +186,6 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               // 이 탭만 살려 두지 않아서, 클립으로 옮길 때마다 폴더와 클립을
               // 다시 읽느라 깜빡였다(5차 466).
               const TabKeepAlive(child: ClipLibraryHome()),
-              TabKeepAlive(
-                child: WordCollectionPreview(headerSlot: _headerSlots[2]),
-              ),
             ],
           ),
         ),
@@ -261,9 +269,11 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           position: _tabController.animation?.value,
           onChanged: _tabController.animateTo,
           segments: const [
+            // 문장 - 단어 - 클립. 문장과 단어가 붙어 있어야 글끼리 모인다
+            // (사용자 결정 2026-11-17).
             AppSegment(icon: Icons.format_quote_rounded, label: '문장'),
-            AppSegment(icon: Icons.smart_display_rounded, label: '클립'),
             AppSegment(icon: Icons.spellcheck_rounded, label: '단어'),
+            AppSegment(icon: Icons.smart_display_rounded, label: '클립'),
           ],
         ),
       ),

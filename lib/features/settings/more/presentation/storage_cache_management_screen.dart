@@ -359,7 +359,7 @@ class _StorageCacheManagementScreenState
                           onPressed: () {
                             // 영상 이야기를 하고 보내므로 클립 탭으로 연다.
                             // 그냥 보내면 마지막에 본 탭(단어 등)이 열렸다(5차 451).
-                            CollectionShellScreen.openTab(1);
+                            CollectionShellScreen.openTab(CollectionShellScreen.clipTab);
                             context.go(AppRoutes.collectionPath);
                           },
                           child: const Text(cachedEmptyActionLabel),
