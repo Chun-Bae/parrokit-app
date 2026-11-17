@@ -18,11 +18,16 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
+import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 /// 로컬·서버·Google Drive 저장 용량과 Drive 연동 버튼. 더보기 데이터 카드의
 /// "저장 용량 · Google Drive" 줄을 누르면 시트로 열린다.
 class RemoteStorageDetails extends StatefulWidget {
-  const RemoteStorageDetails({super.key});
+  const RemoteStorageDetails({super.key, this.presenter});
+
+  /// 테스트에서 구독 화면 대신 쓸 것. 비우면 빌드에 맞는 것을 고른다.
+  final PaywallPresenter? presenter;
 
   @override
   State<RemoteStorageDetails> createState() => _RemoteStorageDetailsState();
@@ -37,6 +42,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     required String usageText,
     required Color color,
     double? progress,
+    Widget? action,
   }) {
     final cs = Theme.of(context).colorScheme;
 
@@ -93,6 +99,10 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                   color: cs.onSurfaceVariant,
                 ),
           ),
+          if (action != null) ...[
+            const SizedBox(height: 4),
+            Align(alignment: Alignment.centerLeft, child: action),
+          ],
         ],
       ),
     );
@@ -273,7 +283,19 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           // secondary(primarySoft)는 라이트의 흰 카드 위에서 아이콘이 거의
           // 안 보였다. 막대와 아이콘 모두 브랜드 파랑으로 맞춘다.
           color: Theme.of(context).colorScheme.primary,
-          progress: serverProgress,
+          // 무료는 서버에 담을 곳이 0이라 채울 수 없는 막대였다(5차 449).
+          // 0 / 0을 그린 빈 막대는 '아직 안 찼다'로 읽혀서 오히려 거짓말이다.
+          progress: serverTotal == 0 ? null : serverProgress,
+          // '구독하면 백업돼요'라고만 하고 갈 길이 없었다(5차 449).
+          action: serverTotal == 0
+              ? TextButton(
+                  key: const ValueKey('storage-open-subscription'),
+                  onPressed: () =>
+                      (widget.presenter ?? resolvePaywallPresenter())
+                          .show(context),
+                  child: const Text(subscriptionOpenButtonLabel),
+                )
+              : null,
         ),
         // Google Drive 저장은 더 쓰지 않는다(5차). 이미 연동한 사람에게만
         // 남은 파일과 '연동 해제'를 보여 주고, 연동하지 않은 사람에게는
