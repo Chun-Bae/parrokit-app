@@ -81,21 +81,37 @@ void main() {
           findsOneWidget);
     });
 
-    testWidgets('시작·복원을 누르면 까닭을 시트 안에 적는다(5차 370)', (tester) async {
+    testWidgets('살 수 없으니 눌리지도 않는다(5차 448)', (tester) async {
+      // 370에서는 누른 뒤 까닭을 시트 안에 적었다. 그래도 파란 버튼이라
+      // 살 수 있어 보였다. 이제 눌리지 않고, 까닭은 누르기 전에 보인다.
       await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
-      expect(find.byKey(const ValueKey('subscription-preview-note')),
-          findsNothing);
 
-      await tester.tap(find.text('라이트 시작하기'));
-      await tester.pump();
-      // 바텀시트라 토스트는 가려진다. 시트 안에 적는다.
-      expect(
-          tester
-              .widget<Text>(
-                  find.byKey(const ValueKey('subscription-preview-note')))
-              .data,
-          subscriptionNotReadyToast);
-      expect(find.byType(SnackBar), findsNothing);
+      for (final key in ['start-light', 'start-pro']) {
+        final button = tester.widget<FilledButton>(
+            find.byKey(ValueKey(key), skipOffstage: false));
+        expect(button.onPressed, isNull, reason: key);
+      }
+      final restore = tester.widget<TextButton>(
+          find.byKey(const ValueKey('subscription-restore'),
+              skipOffstage: false));
+      expect(restore.onPressed, isNull);
+    });
+
+    testWidgets('준비 중이라는 안내가 단계 카드보다 위에 있다(5차 448)', (tester) async {
+      await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
+
+      final notice = tester.getTopLeft(
+          find.byKey(const ValueKey('subscription-preview-notice')));
+      final firstCard = tester.getTopLeft(
+          find.byKey(const ValueKey('start-light'), skipOffstage: false));
+      expect(notice.dy, lessThan(firstCard.dy));
+    });
+
+    testWidgets('눌리지 않아도 무엇이 생길지는 보인다', (tester) async {
+      await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
+      expect(find.text('라이트 시작하기'), findsOneWidget);
+      expect(find.text('프로 시작하기'), findsOneWidget);
+      expect(find.text(subscriptionRestoreLabel), findsOneWidget);
     });
 
     test('안내 글이 앱 말투다', () {
