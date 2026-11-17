@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
+import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
@@ -9,6 +13,12 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/models/clip_item.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/card_container.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+
+/// 받아 둔 영상이 하나도 없을 때. 무엇을 하면 생기는지와 갈 길을 준다.
+const String cachedEmptyTitle = '받아 둔 영상이 아직 없어요';
+const String cachedEmptyBody =
+    '서버에 둔 영상을 한 번 보면 이 기기에 받아 둬요. 그다음부터는 인터넷이 없어도 열려요.';
+const String cachedEmptyActionLabel = '보관함 열기';
 
 class StorageCacheManagementScreen extends StatefulWidget {
   const StorageCacheManagementScreen({super.key});
@@ -61,7 +71,7 @@ class _StorageCacheManagementScreenState
       AppLogger.e('기기 보관 목록 불러오기 실패', error: e, stackTrace: stack);
       if (!mounted) return;
       setState(() {
-        _error = '목록을 불러오지 못했어요. 아래로 당겨 다시 해 보세요.';
+        _error = '목록을 불러오지 못했어요. 아래로 당겨 다시 해 주세요.';
         _isLoading = false;
         _isRefreshing = false;
       });
@@ -137,7 +147,7 @@ class _StorageCacheManagementScreenState
       if (!mounted) return;
       showToast('기기에서 지웠어요.');
     } else {
-      showToast('지우지 못했어요. 다시 해 보세요.');
+      showToast(deleteFailedShortMessage);
     }
   }
 
@@ -145,7 +155,8 @@ class _StorageCacheManagementScreenState
     final cs = Theme.of(context).colorScheme;
     // 더보기 '받아 둔 영상 N개 · N MB'와 같은 값을 쓴다(5차 363). 전에는 이
     // 화면만 클립 원본 크기를 더해서 두 곳의 용량이 달라 보였다.
-    final usedBytes = context.watch<ClipProvider>().cachedRemoteStorageUsedBytes;
+    final usedBytes =
+        context.watch<ClipProvider>().cachedRemoteStorageUsedBytes;
 
     return CardContainer(
       child: Column(
@@ -172,15 +183,18 @@ class _StorageCacheManagementScreenState
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            '원본은 그대로 두고, 기기에 받아 둔 파일만 지워요. '
-            '이 기기에만 있는 클립은 여기 없어요.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                  height: 1.45,
-                ),
-          ),
+          // 지울 것이 없는데 지우기 설명부터 하지 않는다(5차 451).
+          if (_items.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              '원본은 그대로 두고, 기기에 받아 둔 파일만 지워요. '
+              '이 기기에만 있는 클립은 여기 없어요.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+            ),
+          ],
           const SizedBox(height: 10),
           Text(
             '보관 용량: ${formatBytes(usedBytes)}',
@@ -318,12 +332,40 @@ class _StorageCacheManagementScreenState
                   ),
                 )
               else if (_items.isEmpty)
+                // 전에는 '아직 없어요.' 한 줄뿐이라, 어떻게 하면 생기는지도
+                // 어디로 가야 하는지도 알 수 없었다(5차 451).
                 CardContainer(
-                  child: Text(
-                    '기기에 받아 둔 영상이 아직 없어요.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cachedEmptyTitle,
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        cachedEmptyBody,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton(
+                          key: const ValueKey('cached-empty-open-library'),
+                          onPressed: () {
+                            // 영상 이야기를 하고 보내므로 클립 탭으로 연다.
+                            // 그냥 보내면 마지막에 본 탭(단어 등)이 열렸다(5차 451).
+                            CollectionShellScreen.openTab(1);
+                            context.go(AppRoutes.collectionPath);
+                          },
+                          child: const Text(cachedEmptyActionLabel),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else
