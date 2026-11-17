@@ -54,10 +54,9 @@ void main() {
         ),
       ));
 
-      final box = tester.widget<Container>(find.byType(Container));
-      final decoration = box.decoration as BoxDecoration;
-      final gradient = decoration.gradient as LinearGradient;
-      expect(gradient.colors, badge.colors);
+      // 바탕 네모 없이 아이콘에 색을 입힌다.
+      expect(find.byType(Container), findsNothing);
+      expect(find.byType(ShaderMask), findsOneWidget);
 
       final icon = tester.widget<Icon>(find.byType(Icon));
       expect(icon.icon, badge.icon);

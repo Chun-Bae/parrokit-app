@@ -33,18 +33,20 @@ class LeadingIcon extends StatelessWidget {
 
     final gradientColors = gradient;
     if (gradientColors != null) {
-      return Container(
+      // 네모 바탕을 깔지 않고, 그 색을 아이콘에 그대로 입힌다(5차 465).
+      return SizedBox(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors,
+        child: Center(
+          child: ShaderMask(
+            shaderCallback: (rect) => LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
+            ).createShader(rect),
+            child: Icon(icon, size: 30, color: Colors.white),
           ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        child: Icon(icon, size: 20, color: Colors.white),
       );
     }
 

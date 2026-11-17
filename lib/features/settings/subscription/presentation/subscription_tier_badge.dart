@@ -24,7 +24,7 @@ SubscriptionTierBadge subscriptionTierBadgeOf(SubscriptionTier tier) {
     case SubscriptionTier.free:
       return const SubscriptionTierBadge(
         icon: Icons.eco_rounded,
-        colors: [Color(0xFFCBD5E1), Color(0xFF94A3B8)],
+        colors: [Color(0xFF94A3B8), Color(0xFF64748B)],
       );
     case SubscriptionTier.light:
       return const SubscriptionTierBadge(
