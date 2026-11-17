@@ -1,3 +1,6 @@
+import 'package:go_router/go_router.dart';
+import 'package:parrokit/core/app/router/app_routes.dart';
+import 'package:parrokit/core/shared/utils/login_prompt_text.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -134,7 +137,13 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
     Widget body;
     if (!loggedIn) {
-      body = _Message('로그인하면 알림을 설정할 수 있어요.');
+      // 안내만 하고 끝내면 여기서 할 수 있는 일이 없다. 로그인으로 보낸다
+      // (5차 439).
+      body = _Message(
+        loginToUse('알림을 설정할'),
+        actionLabel: goToSignInLabel,
+        onAction: () => context.goNamed(AppRoutes.signIn),
+      );
     } else if (_loadFailed) {
       body = _Message('설정을 불러오지 못했어요.', actionLabel: '다시 시도', onAction: _load);
     } else if (prefs == null) {

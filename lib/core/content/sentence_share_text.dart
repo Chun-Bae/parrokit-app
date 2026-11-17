@@ -74,7 +74,7 @@ String saveToMineTooltip({required bool saved}) =>
     saved ? '내 문장에서 빼기' : '내 문장에 저장';
 
 /// 로그인하지 않고 좋아요를 눌렀을 때.
-const String likeNeedsLoginMessage = '로그인 후 좋아요를 누를 수 있어요.';
+const String likeNeedsLoginMessage = '로그인하면 좋아요를 누를 수 있어요.';
 
 /// 좋아요를 서버에 남기지 못했을 때.
 const String likeFailedMessage = '좋아요를 저장하지 못했어요. 다시 시도해 주세요.';

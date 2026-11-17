@@ -116,7 +116,7 @@ void main() {
     await expectLater(
         assist.transliterate(language: 'en', hangul: '헬로'),
         throwsA(isA<SentenceAssistUnavailable>()
-            .having((e) => e.reason, 'reason', '로그인 후 쓸 수 있어요')));
+            .having((e) => e.reason, 'reason', '로그인하면 쓸 수 있어요.')));
   });
 
   test('다른 서버 오류는 그대로 올린다', () async {

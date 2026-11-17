@@ -53,14 +53,13 @@ class CloudSentenceAssist implements SentenceAssist {
     } on FirebaseFunctionsException catch (e) {
       // 아래에서 코드별로 typed exception으로 바꿔 화면까지 전달한다.
       // 한도 초과처럼 예상되는 것도 섞여 있어 w로 남긴다.
-      AppLogger.w(
-          '[assist] ${data['mode']} 실패: ${e.code} ${e.message}');
+      AppLogger.w('[assist] ${data['mode']} 실패: ${e.code} ${e.message}');
       switch (e.code) {
         case 'resource-exhausted':
           _remainingToday = 0;
           throw const SentenceAssistQuotaExceeded();
         case 'unauthenticated':
-          throw const SentenceAssistUnavailable('로그인 후 쓸 수 있어요');
+          throw const SentenceAssistUnavailable('로그인하면 쓸 수 있어요.');
         default:
           rethrow;
       }

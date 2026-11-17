@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/content/sentence_share_text.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart';
@@ -163,7 +164,7 @@ void main() {
     await tester.ensureVisible(find.byKey(const ValueKey('publish-sentence')));
     await tester.tap(find.byKey(const ValueKey('publish-sentence')));
     await tester.pumpAndSettle();
-    expect(find.text('로그인 후 공유할 수 있어요.'), findsOneWidget);
+    expect(find.text(sentenceShareNeedsLogin), findsOneWidget);
     expect(find.text('둘러보기에 공유할까요?'), findsNothing);
   });
 

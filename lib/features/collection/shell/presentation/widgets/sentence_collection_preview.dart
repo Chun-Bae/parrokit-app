@@ -1861,7 +1861,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     final repo = widget.repository;
     if (repo == null || publishing) return;
     if (widget.accountId == 'guest') {
-      showNotice('로그인 후 공유할 수 있어요.');
+      showNotice(sentenceShareNeedsLogin);
       return;
     }
     if (published == true) {
