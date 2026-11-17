@@ -4,7 +4,6 @@ import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_edit_sheet.dart';
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:parrokit/core/content/word_search_url.dart';
@@ -785,11 +784,6 @@ class _WordDetailSheet extends StatefulWidget {
 class _WordDetailSheetState extends State<_WordDetailSheet> {
   late String meaning = widget.word.meaning;
   late String pronunciation = widget.word.pronunciation;
-  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
-
-  /// 예문을 만들어 받는 중.
-  bool fillingExamples = false;
-
   /// 시트 안에 적는 알림. 스낵바는 시트 뒤에 깔려 보이지 않는다(5차 392).
   String? notice;
   Timer? noticeTimer;
@@ -822,100 +816,12 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
   ///
   /// 직접 더한 낱말에는 예문이 없어서 쓰임을 볼 길이 없었다. 서버에
   /// 지금 들고 있는 예문을 함께 보내, 그것과 겹치지 않는 것만 받는다.
-  Future<void> _fillExamples() async {
-    final room = examplesMaxCount - examples.length;
-    if (room <= 0) {
-      showNotice('예문은 $examplesMaxCount개까지 넣을 수 있어요.');
-      return;
-    }
-    final count = await _askExampleCount(room);
-    if (!mounted || count == null) return;
-
-    setState(() => fillingExamples = true);
-    String? note;
-    try {
-      final suggestion = await _assist.suggestWord(
-        language: widget.word.language,
-        word: widget.word.word,
-        existingExamples: [for (final e in examples) e.text],
-        count: count,
-      );
-      if (!mounted) return;
-      // 뜻과 발음은 비어 있을 때만 채운다. 직접 적어 둔 것을 덮지 않는다.
-      final suggested = suggestion.translation?.trim() ?? '';
-      if (meaning.trim().isEmpty && suggested.isNotEmpty) {
-        final saved = await MyWordStore.setMeaning(
-            widget.accountId, widget.word.id, suggested);
-        if (!mounted) return;
-        if (saved) setState(() => meaning = suggested);
-      }
-      final sound = suggestion.pronunciation?.trim() ?? '';
-      if (pronunciation.trim().isEmpty && sound.isNotEmpty) {
-        final saved = await MyWordStore.setPronunciation(
-            widget.accountId, widget.word.id, sound);
-        if (!mounted) return;
-        if (saved) setState(() => pronunciation = sound);
-      }
-      var added = 0;
-      for (final example in suggestion.examples) {
-        if (examples.length >= examplesMaxCount) break;
-        final next = WordExample(
-          text: example.text,
-          translation: example.translation,
-        );
-        final ok = await MyWordStore.addExample(
-            widget.accountId, widget.word.id, next);
-        if (!mounted) return;
-        if (!ok) continue; // 같은 예문이 이미 있으면 건너뛴다.
-        added++;
-        setState(() => examples = [...examples, next]);
-      }
-      if (added == 0) {
-        note = '새 예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
-      }
-    } on SentenceAssistQuotaExceeded {
-      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
-    } on SentenceAssistUnavailable catch (e) {
-      note = e.reason;
-    } catch (_) {
-      note = '예문을 만들지 못했어요. 잠시 뒤 다시 해 주세요.';
-    } finally {
-      if (mounted) {
-        setState(() => fillingExamples = false);
-        if (note != null) showNotice(note);
-      }
-    }
-  }
 
   /// 몇 개를 받을지 고른다. 남은 자리보다 많이 고를 수 없다.
   ///
   /// 전에는 AlertDialog에 단추를 세로로 쌓았는데, 여섯 개가 한 줄씩
   /// 서서 창이 길쭉하고 어디를 눌러야 할지 잘 안 보였다(5차 468).
   /// 아래에서 올라오는 고르기 시트로 둔다.
-  Future<int?> _askExampleCount(int room) {
-    final choices = [for (var n = 1; n <= room && n <= 5; n++) n];
-    return showCupertinoModalPopup<int>(
-      context: context,
-      builder: (sheetContext) => CupertinoActionSheet(
-        title: const Text('예문 몇 개를 만들까요?'),
-        message: Text('지금 ${examples.length}개 있어요. '
-            '$examplesMaxCount개까지 둘 수 있어요.'),
-        actions: [
-          for (final n in choices)
-            CupertinoActionSheetAction(
-              key: ValueKey('example-count-$n'),
-              onPressed: () => Navigator.of(sheetContext).pop(n),
-              child: Text('$n개'),
-            ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.of(sheetContext).pop(),
-          child: const Text('취소'),
-        ),
-      ),
-    );
-  }
 
   /// 예문 하나를 고친다(5차 338, 사용자 요청).
 
@@ -1094,26 +1000,9 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                     ),
                   ),
                 ],
-                // 이미 만든 단어에도 예문을 더할 수 있어야 한다(5차 338, 사용자 요청).
+                // 이 화면은 보기만 한다(5차 472, 사용자 결정). 고치거나
+                // 자동으로 채우는 것은 '고치기' 창에서 한다.
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    // 직접 적지 않아도 되게 한다(5차 467, 사용자 요청).
-                    TextButton.icon(
-                      key: const ValueKey('fill-word-examples'),
-                      onPressed: fillingExamples ? null : _fillExamples,
-                      icon: fillingExamples
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: const Text('자동으로 넣기'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
                 Text(
                     [
                       if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',
@@ -1240,6 +1129,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
   bool saving = false;
   bool filling = false;
+  bool fillingExamples = false;
 
   /// 뜻 채우기 결과를 칸 아래에 적는다(5차 368).
   ///
@@ -1247,22 +1137,16 @@ class _AddWordSheetState extends State<AddWordSheet> {
   /// 사용자에게 보이지 않았다. 시트 안에 적어야 보인다.
   String? fillNote;
 
-  /// 뜻·발음·예문을 서버에 물어 한 번에 채운다(5차 468, 사용자 요청).
+  /// 뜻과 발음을 서버에 물어 채운다(5차 472, 사용자 요청).
   ///
-  /// 전에는 뜻만 채웠고, 그것도 문장용 프롬프트라 쓰지도 않을 발음까지
-  /// 만들고 있었다. 이미 적어 둔 칸은 덮지 않는다.
+  /// 예문은 따로 받는다. 뜻·발음은 한 번 채우면 끝이고 예문은 여러 개를
+  /// 더 받는 것이라, 한 단추로 묶으면 무엇에 횟수를 쓰는지 흐려진다.
+  /// 이미 적어 둔 칸은 덮지 않는다.
   Future<void> fillMeaning() async {
     final word = _word.text.trim();
     if (word.isEmpty || filling) return;
-    // 뜻과 발음이 둘 다 차 있으면 물을 까닭이 없다. 예문 칸이 비어 있으면
-    // 예문만 받으러 간다.
-    final wantsMeaning = _meaning.text.trim().isEmpty;
-    final wantsSound = _pronunciation.text.trim().isEmpty;
-    final emptyExamples = [
-      for (final (index, c) in _examples.indexed)
-        if (c.text.trim().isEmpty) index,
-    ];
-    if (!wantsMeaning && !wantsSound && emptyExamples.isEmpty) {
+    if (_meaning.text.trim().isNotEmpty &&
+        _pronunciation.text.trim().isNotEmpty) {
       setState(() => fillNote = wordMeaningAlreadyHint);
       return;
     }
@@ -1272,42 +1156,22 @@ class _AddWordSheetState extends State<AddWordSheet> {
     });
     String? note;
     try {
+      // count 0이면 서버가 예문을 만들지 않는다(5차 472).
       final suggestion = await _assist.suggestWord(
         language: widget.language,
         word: word,
-        // 이미 적어 둔 예문과 겹치지 않게 한다.
-        existingExamples: [
-          for (final c in _examples)
-            if (c.text.trim().isNotEmpty) c.text.trim(),
-        ],
-        count: emptyExamples.isEmpty ? 1 : emptyExamples.length,
+        count: 0,
       );
       if (!mounted) return;
       final meaning = suggestion.translation?.trim() ?? '';
       final sound = suggestion.pronunciation?.trim() ?? '';
-      if (wantsMeaning && _meaning.text.trim().isEmpty && meaning.isNotEmpty) {
+      if (_meaning.text.trim().isEmpty && meaning.isNotEmpty) {
         _meaning.text = meaning;
       }
-      if (wantsSound &&
-          _pronunciation.text.trim().isEmpty &&
-          sound.isNotEmpty) {
+      if (_pronunciation.text.trim().isEmpty && sound.isNotEmpty) {
         _pronunciation.text = sound;
       }
-      // 비어 있는 예문 칸부터 채우고, 모자라면 칸을 늘린다.
-      var slot = 0;
-      for (final example in suggestion.examples) {
-        if (slot < emptyExamples.length) {
-          final at = emptyExamples[slot];
-          _examples[at].text = example.text;
-          _exampleMeanings[at].text = example.translation;
-        } else {
-          _examples.add(TextEditingController(text: example.text));
-          _exampleMeanings
-              .add(TextEditingController(text: example.translation));
-        }
-        slot++;
-      }
-      if (meaning.isEmpty && suggestion.examples.isEmpty) {
+      if (meaning.isEmpty && sound.isEmpty) {
         note = '뜻을 찾지 못했어요. 직접 적어 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
@@ -1320,6 +1184,70 @@ class _AddWordSheetState extends State<AddWordSheet> {
       if (mounted) {
         setState(() {
           filling = false;
+          fillNote = note;
+        });
+      }
+    }
+  }
+
+  /// 예문만 서버에 물어 받는다(5차 472, 사용자 요청).
+  ///
+  /// 지금 칸에 적힌 예문을 겹치지 않게 함께 보낸다.
+  Future<void> fillExamples() async {
+    final word = _word.text.trim();
+    if (word.isEmpty || fillingExamples) return;
+    final emptySlots = [
+      for (final (index, c) in _examples.indexed)
+        if (c.text.trim().isEmpty) index,
+    ];
+    final room = examplesMaxCount - _examples.length;
+    if (emptySlots.isEmpty && room <= 0) {
+      setState(() => fillNote = '예문은 $examplesMaxCount개까지 넣을 수 있어요.');
+      return;
+    }
+    setState(() {
+      fillingExamples = true;
+      fillNote = null;
+    });
+    String? note;
+    try {
+      final suggestion = await _assist.suggestWord(
+        language: widget.language,
+        word: word,
+        existingExamples: [
+          for (final c in _examples)
+            if (c.text.trim().isNotEmpty) c.text.trim(),
+        ],
+        count: emptySlots.isEmpty ? 1 : emptySlots.length,
+      );
+      if (!mounted) return;
+      var slot = 0;
+      for (final example in suggestion.examples) {
+        if (slot < emptySlots.length) {
+          final at = emptySlots[slot];
+          _examples[at].text = example.text;
+          _exampleMeanings[at].text = example.translation;
+        } else {
+          if (_examples.length >= examplesMaxCount) break;
+          _examples.add(TextEditingController(text: example.text));
+          _exampleMeanings
+              .add(TextEditingController(text: example.translation));
+        }
+        slot++;
+      }
+      if (suggestion.examples.isEmpty) {
+        note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
+      }
+    } on SentenceAssistQuotaExceeded {
+      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+    } on SentenceAssistUnavailable catch (e) {
+      note = e.reason;
+    } catch (_) {
+      note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          fillingExamples = false;
           fillNote = note;
         });
       }
@@ -1474,7 +1402,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                               dimension: 16,
                               child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: const Text('자동으로 채우기'),
+                      label: const Text('뜻·발음 채우기'),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1494,7 +1422,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   ],
                 ),
                 Text(
-                  wordAutoFillHint,
+                  wordFillBasicsHint,
                   key: const ValueKey('word-autofill-hint'),
                   style: context.texts.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1619,16 +1547,37 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     ),
                   ),
                 ],
-                if (_examples.length < examplesMaxCount)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      key: const ValueKey('add-word-example'),
-                      onPressed: addExampleField,
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('예문 더 넣기'),
+                // 예문 단추는 예문 칸 옆에 둔다(5차 472, 사용자 요청).
+                // 뜻·발음 단추는 맨 위에 있다. 쓰임이 다르니 자리도 나눈다.
+                Row(
+                  children: [
+                    if (_examples.length < examplesMaxCount)
+                      TextButton.icon(
+                        key: const ValueKey('add-word-example'),
+                        onPressed: addExampleField,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('예문 더 넣기'),
+                      ),
+                    TextButton.icon(
+                      key: const ValueKey('fill-word-examples'),
+                      onPressed: _word.text.trim().isEmpty || fillingExamples
+                          ? null
+                          : fillExamples,
+                      icon: fillingExamples
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.auto_awesome_rounded, size: 18),
+                      label: const Text('예문 채우기'),
                     ),
-                  ),
+                  ],
+                ),
+                Text(
+                  wordFillExamplesHint,
+                  key: const ValueKey('word-examples-hint'),
+                  style: context.texts.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -1945,11 +1894,14 @@ double wordReviewProgress({required int index, required int total}) {
 
 /// 단어 뜻 채우기의 남은 횟수 안내. 숫자만 있으면 쓴 횟수인지 남은
 /// 횟수인지 알 수 없어서 문장 추가 화면과 같은 말로 적는다(5차).
-/// 자동 채우기가 무엇을 채우는지(5차 471, 사용자 요청).
+/// 뜻·발음 채우기 단추 아래 설명(5차 472).
 ///
-/// 단추만 보고는 뜻만 채우는 줄 알았다. 추가 시트에서는 단추가 뜻·발음 칸
-/// 아래에 있고 예문 칸은 한참 밑이라 더 그랬다.
-const String wordAutoFillHint = '뜻·발음·예문을 한 번에 받아요';
+/// 뜻·발음과 예문은 쓰임이 다르다. 뜻·발음은 한 번 채우면 끝이고, 예문은
+/// 여러 개를 더 받는다. 그래서 단추를 나누고 각자 제 자리에 둔다.
+const String wordFillBasicsHint = '한 번만 채우면 돼요';
+
+/// 예문 채우기 단추 아래 설명(5차 472).
+const String wordFillExamplesHint = '겹치지 않는 예문을 받아요';
 
 String wordAssistUsageLabel({
   required int? used,

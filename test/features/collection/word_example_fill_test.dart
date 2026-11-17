@@ -96,50 +96,7 @@ Future<void> _openDetail(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('받은 예문과 뜻을 넣고, 들고 있던 예문을 서버에 함께 보낸다', (tester) async {
-    final word = await _addWord(example: '이미 있는 예문');
-    final assist = _FakeAssist(
-      translation: '거대한',
-      examples: const [
-        SuggestedExample(text: 'A huge wave.', translation: '큰 파도.'),
-        SuggestedExample(text: 'A huge crowd.', translation: '큰 무리.'),
-      ],
-    );
 
-    await _openDetail(tester, word, assist);
-    await tester.tap(find.byKey(const ValueKey('fill-word-examples')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('example-count-2')));
-    await tester.pumpAndSettle();
-
-    expect(assist.sentWord, 'huge');
-    expect(assist.sentExisting, ['이미 있는 예문'], reason: '겹치지 않게 보낸다');
-    expect(assist.sentCount, 2);
-
-    final after = (await MyWordStore.loadFor('guest', '영어')).single;
-    expect(after.examples.map((e) => e.text),
-        ['이미 있는 예문', 'A huge wave.', 'A huge crowd.']);
-    expect(after.meaning, '거대한', reason: '뜻이 비어 있으면 함께 채운다');
-  });
-
-  testWidgets('직접 적어 둔 뜻은 덮지 않는다', (tester) async {
-    await MyWordStore.add('guest',
-        language: '영어', word: 'huge', meaning: '내가 적은 뜻');
-    final word = (await MyWordStore.loadFor('guest', '영어')).single;
-    final assist = _FakeAssist(
-      translation: '서버가 준 뜻',
-      examples: const [SuggestedExample(text: 'A huge wave.')],
-    );
-
-    await _openDetail(tester, word, assist);
-    await tester.tap(find.byKey(const ValueKey('fill-word-examples')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('example-count-1')));
-    await tester.pumpAndSettle();
-
-    final after = (await MyWordStore.loadFor('guest', '영어')).single;
-    expect(after.meaning, '내가 적은 뜻');
-  });
 
   test('예문은 상한까지만 들어간다', () async {
     final word = await _addWord();
@@ -163,14 +120,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('edit-word')));
     await tester.pumpAndSettle();
     // 상세로 나가지 않고 이 창 안에서 받는다.
-    await tester.tap(find.byKey(const ValueKey('edit-word-fill')));
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill-examples')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('edit-word-fill-count-1')));
     await tester.pumpAndSettle();
 
-    // 아직 저장 전이라 입력칸에만 들어간다.
-    expect(find.text('거대한'), findsOneWidget);
-    expect(find.text('휴지'), findsOneWidget);
+    // 예문 단추이므로 예문만 들어간다. 뜻·발음은 위 단추가 맡는다.
     expect(find.text('A huge wave.'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const ValueKey('edit-word-save')));
@@ -179,33 +134,76 @@ void main() {
     await tester.pumpAndSettle();
 
     final after = (await MyWordStore.loadFor('guest', '영어')).single;
-    expect(after.meaning, '거대한');
-    expect(after.pronunciation, '휴지');
     expect(after.examples.single.text, 'A huge wave.');
   });
 
-  test('두 화면이 자동 채우기 설명을 한 곳에서 꺼내 쓴다(5차 471)', () {
-    expect(wordAutoFillHint, contains('예문'));
+  testWidgets('고치기 창의 뜻·발음 단추는 예문을 만들지 않는다(5차 472)', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(translation: '거대한', pronunciation: '휴지');
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill')));
+    await tester.pumpAndSettle();
+
+    // 예문을 만들지 말라고 0을 보낸다.
+    expect(assist.sentCount, 0);
+    expect(find.text('거대한'), findsOneWidget);
+    expect(find.text('휴지'), findsOneWidget);
+  });
+
+  testWidgets('직접 적어 둔 뜻은 덮지 않는다', (tester) async {
+    await MyWordStore.add('guest',
+        language: '영어', word: 'huge', meaning: '내가 적은 뜻');
+    final word = (await MyWordStore.loadFor('guest', '영어')).single;
+    final assist = _FakeAssist(translation: '서버가 준 뜻', pronunciation: '휴지');
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill')));
+    await tester.pumpAndSettle();
+
+    // 상세 시트가 뒤에 남아 있어 같은 글이 둘 보인다.
+    expect(find.text('내가 적은 뜻'), findsWidgets);
+    expect(find.text('서버가 준 뜻'), findsNothing);
+    // 비어 있던 발음만 찬다.
+    expect(find.text('휴지'), findsOneWidget);
+  });
+
+  test('뜻·발음과 예문 채우기를 나눠 두고 설명도 따로 쓴다(5차 472)', () {
     for (final path in [
       'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart',
       'lib/features/collection/shell/presentation/widgets/word_edit_sheet.dart',
     ]) {
       final src = File(path).readAsStringSync();
-      expect(src.contains('wordAutoFillHint'), isTrue, reason: path);
+      expect(src.contains('wordFillBasicsHint'), isTrue, reason: path);
+      expect(src.contains('wordFillExamplesHint'), isTrue, reason: path);
     }
   });
 
-  test('추가 시트는 단추를 입력칸보다 먼저 둔다(5차 471)', () {
-    // 뜻·발음 칸 아래에 있으면 그 둘만 채우는 줄 안다. 예문 칸은 한참 밑이다.
+  test('단추가 저마다 제 자리에 있다(5차 472)', () {
+    // 뜻·발음 단추는 뜻 칸보다 앞, 예문 단추는 예문 칸 옆이다.
     final src = File(
             'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart')
         .readAsStringSync();
-    final button = src.indexOf("ValueKey('fill-word-meaning')");
+    final basics = src.indexOf("ValueKey('fill-word-meaning')");
     final meaning = src.indexOf("ValueKey('word-meaning')");
     final example = src.indexOf("ValueKey('word-example-" r"$index')");
-    expect(button, greaterThan(-1));
-    expect(button, lessThan(meaning), reason: '단추가 뜻 칸보다 앞에 와야 한다');
-    expect(button, lessThan(example));
+    final fillExamples = src.indexOf("ValueKey('fill-word-examples')");
+    expect(basics, greaterThan(-1));
+    expect(basics, lessThan(meaning), reason: '뜻·발음 단추가 뜻 칸보다 앞');
+    expect(fillExamples, greaterThan(example),
+        reason: '예문 단추는 예문 칸 뒤에 와야 한다');
+  });
+
+  test('보기만 하는 상세에는 채우기 단추가 없다(5차 472)', () {
+    final src = File(
+            'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart')
+        .readAsStringSync();
+    // 상세 시트의 단추는 뺐다. 추가 시트의 것만 남는다.
+    expect('ValueKey(\'fill-word-examples\')'.allMatches(src).length, 1);
   });
 
   test('상한은 서버와 같은 10개다', () {
@@ -248,22 +246,5 @@ void main() {
     expect(after.examples.single.text, '예문');
   });
 
-  testWidgets('자동으로 넣기가 발음도 채운다', (tester) async {
-    final word = await _addWord();
-    final assist = _FakeAssist(
-      translation: '거대한',
-      pronunciation: '휴지',
-      examples: const [SuggestedExample(text: 'A huge wave.')],
-    );
-
-    await _openDetail(tester, word, assist);
-    await tester.tap(find.byKey(const ValueKey('fill-word-examples')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('example-count-1')));
-    await tester.pumpAndSettle();
-
-    final after = (await MyWordStore.loadFor('guest', '영어')).single;
-    expect(after.pronunciation, '휴지');
-  });
 }
 

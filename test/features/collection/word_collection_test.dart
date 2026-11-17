@@ -410,8 +410,9 @@ void main() {
     await openAddSheet(tester, assist);
     final fill = find.byKey(const ValueKey('fill-word-meaning'));
     // 222에서 입력칸 안의 아이콘을 이름 있는 버튼으로 바꿨다.
-    // 468에서 뜻만이 아니라 발음·예문도 함께 채우게 되어 이름을 바꿨다.
-    expect(find.text('자동으로 채우기'), findsOneWidget);
+    // 472에서 예문 채우기를 떼어 내 단추가 둘이 됐다. 이것은 뜻·발음 쪽.
+    expect(find.text('뜻·발음 채우기'), findsOneWidget);
+    expect(find.text('예문 채우기'), findsOneWidget);
     expect(tester.widget<ButtonStyleButton>(fill).onPressed, isNull);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
     await tester.pump();

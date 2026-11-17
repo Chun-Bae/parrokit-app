@@ -79,6 +79,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
 
   bool _saving = false;
   bool _filling = false;
+  bool _fillingExamples = false;
   String? _notice;
 
   @override
@@ -132,12 +133,63 @@ class _WordEditSheetState extends State<WordEditSheet> {
     });
   }
 
-  /// 뜻·발음·예문을 서버에서 받아 빈 칸을 채운다(5차 470).
+  /// 뜻과 발음만 받아 빈 칸을 채운다(5차 472, 사용자 요청).
   ///
-  /// 아직 저장하지 않은 입력칸을 그대로 쓴다. 이미 적어 둔 것은 덮지 않고,
-  /// 지금 칸에 있는 예문은 겹치지 않게 서버로 함께 보낸다.
-  Future<void> _fill() async {
+  /// 예문은 아래 '예문 채우기'가 맡는다. 둘은 쓰임이 다르다 - 뜻·발음은
+  /// 한 번 채우면 끝이고 예문은 여러 개를 더 받는다.
+  Future<void> _fillBasics() async {
     if (_filling || _saving) return;
+    if (_meaning.text.trim().isNotEmpty &&
+        _pronunciation.text.trim().isNotEmpty) {
+      setState(() => _notice = '뜻과 발음을 이미 적어 두었어요.');
+      return;
+    }
+    setState(() {
+      _filling = true;
+      _notice = null;
+    });
+    String? note;
+    try {
+      // count 0이면 서버가 예문을 만들지 않는다.
+      final suggestion = await _assist.suggestWord(
+        language: widget.word.language,
+        word: widget.word.word,
+        count: 0,
+      );
+      if (!mounted) return;
+      final meaning = suggestion.translation?.trim() ?? '';
+      final sound = suggestion.pronunciation?.trim() ?? '';
+      if (_meaning.text.trim().isEmpty && meaning.isNotEmpty) {
+        _meaning.text = meaning;
+      }
+      if (_pronunciation.text.trim().isEmpty && sound.isNotEmpty) {
+        _pronunciation.text = sound;
+      }
+      if (meaning.isEmpty && sound.isEmpty) {
+        note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
+      }
+    } on SentenceAssistQuotaExceeded {
+      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+    } on SentenceAssistUnavailable catch (e) {
+      note = e.reason;
+    } catch (_) {
+      note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _filling = false;
+          _notice = note;
+        });
+      }
+    }
+  }
+
+  /// 예문만 받는다(5차 472, 사용자 요청).
+  ///
+  /// 아직 저장하지 않은 입력칸을 그대로 쓰고, 지금 칸의 예문을 겹치지
+  /// 않게 서버로 함께 보낸다.
+  Future<void> _fillExamples() async {
+    if (_fillingExamples || _saving) return;
     final room = examplesMaxCount - _exampleTexts.length;
     final emptySlots = [
       for (final (index, c) in _exampleTexts.indexed)
@@ -153,7 +205,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
     if (!mounted || count == null) return;
 
     setState(() {
-      _filling = true;
+      _fillingExamples = true;
       _notice = null;
     });
     String? note;
@@ -168,14 +220,6 @@ class _WordEditSheetState extends State<WordEditSheet> {
         count: count,
       );
       if (!mounted) return;
-      final meaning = suggestion.translation?.trim() ?? '';
-      if (_meaning.text.trim().isEmpty && meaning.isNotEmpty) {
-        _meaning.text = meaning;
-      }
-      final sound = suggestion.pronunciation?.trim() ?? '';
-      if (_pronunciation.text.trim().isEmpty && sound.isNotEmpty) {
-        _pronunciation.text = sound;
-      }
       var slot = 0;
       for (final example in suggestion.examples) {
         if (slot < emptySlots.length) {
@@ -191,19 +235,19 @@ class _WordEditSheetState extends State<WordEditSheet> {
         }
         slot++;
       }
-      if (suggestion.examples.isEmpty && meaning.isEmpty) {
-        note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
+      if (suggestion.examples.isEmpty) {
+        note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
       note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
-      note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
+      note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
     } finally {
       if (mounted) {
         setState(() {
-          _filling = false;
+          _fillingExamples = false;
           _notice = note;
         });
       }
@@ -294,7 +338,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 // 예문을 손보러 들어온 자리에서 바로 받을 수 있게 한다(5차 470).
                 TextButton.icon(
                   key: const ValueKey('edit-word-fill'),
-                  onPressed: _filling || _saving ? null : _fill,
+                  onPressed: _filling || _saving ? null : _fillBasics,
                   icon: _filling
                       ? const SizedBox(
                           width: 16,
@@ -302,13 +346,13 @@ class _WordEditSheetState extends State<WordEditSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.auto_awesome_rounded, size: 18),
-                  label: const Text('자동으로 채우기'),
+                  label: const Text('뜻·발음 채우기'),
                 ),
               ],
             ),
-            // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 471).
+            // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
             Text(
-              wordAutoFillHint,
+              wordFillBasicsHint,
               key: const ValueKey('edit-word-autofill-hint'),
               style: context.texts.bodySmall
                   .copyWith(color: colors.onSurfaceVariant),
@@ -371,7 +415,32 @@ class _WordEditSheetState extends State<WordEditSheet> {
               ),
             ],
             const SizedBox(height: 16),
-            Text('예문', style: context.texts.titleMedium),
+            // 예문 단추는 예문 칸 옆에 둔다(5차 472, 사용자 요청).
+            Row(
+              children: [
+                Expanded(
+                  child: Text('예문', style: context.texts.titleMedium),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('edit-word-fill-examples'),
+                  onPressed: _fillingExamples || _saving ? null : _fillExamples,
+                  icon: _fillingExamples
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: const Text('예문 채우기'),
+                ),
+              ],
+            ),
+            Text(
+              wordFillExamplesHint,
+              key: const ValueKey('edit-word-examples-hint'),
+              style:
+                  context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant),
+            ),
             for (final (index, controller) in _exampleTexts.indexed) ...[
               const SizedBox(height: 8),
               Container(
