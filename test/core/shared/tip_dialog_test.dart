@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
@@ -25,6 +26,26 @@ void main() {
     expect(find.textContaining('서버에'), findsOneWidget);
     // 실제 버튼 이름('옮기기')으로 방법을 알려 준다.
     expect(find.textContaining("'옮기기'"), findsOneWidget);
+  });
+
+  // 처음 켤 때 저절로 뜨는 창이 '결제 기능이 빠져 있어요'라고 했는데,
+  // 지금은 패롯 충전과 광고 제거를 실제로 살 수 있다(5차 488).
+  testWidgets('결제가 없다고 말하지 않는다', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+    expect(find.text('베타 테스트 중'), findsNothing);
+    expect(find.textContaining('결제 기능이 빠져'), findsNothing);
+    expect(find.textContaining('베타'), findsNothing);
+  });
+
+  test('안내 글에 결제가 없다는 말이 남아 있지 않다', () {
+    final code = File('lib/core/shared/widgets/tip_dialog.dart')
+        .readAsLinesSync()
+        .where((l) => !l.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(code.contains('결제 기능이 빠져'), isFalse);
+    expect(code.contains("title: '베타 테스트 중'"), isFalse);
   });
 
   testWidgets('없는 기능(노래 번역) 대신 실제로 있는 자동 자막을 안내한다',
