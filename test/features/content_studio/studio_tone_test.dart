@@ -6,7 +6,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-final _formal = RegExp(r"'[^']*(습니다|습니까)[^']*'");
+// 428에서 '~합니다/~입니다'까지 막는다. 전에는 '~습니다'만 봐서
+// '…이상적입니다', '…튜닝합니다' 같은 글이 남아 있었다.
+final _formal = RegExp(r"'[^']*(습니다|습니까|합니다|입니다|됩니다|립니다)[^']*'");
 
 /// 주석과 개발자용 예외는 빼고, 화면에 보이는 글만 남긴다.
 List<String> _uiLines(File file) => file
@@ -61,5 +63,29 @@ void main() {
             'lib/features/content-studio/video/presentation/video_screen.dart')
         .readAsStringSync();
     expect(video, contains('아직 저장한 영상이 없어요.'));
+  });
+
+  test('사용자가 할 수 없는 일을 시키지 않는다(5차 428)', () {
+    // 자동 자막이 막히면 'OpenAI API 할당량이 부족합니다. 결제 상태를
+    // 확인해 주세요.'라고 했다. 사용자는 OpenAI 계정도 서버 설정도
+    // 건드릴 수 없다.
+    final offenders = <String>[];
+    const cannotDo = ['OpenAI', '할당량', '결제 상태', '서버 설정', '사용량 한도'];
+    for (final entity
+        in Directory('lib/features/content-studio').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      for (final line in _uiLines(entity)) {
+        // 따옴표 안의 '사람에게 보이는 글'만 본다. 클래스 이름이나 상수
+        // 이름에 OpenAI가 들어가는 것은 화면과 무관하다.
+        for (final match in RegExp(r"'[^'\n]*'").allMatches(line)) {
+          final text = match.group(0)!;
+          if (!RegExp(r'[가-힣]').hasMatch(text)) continue;
+          for (final word in cannotDo) {
+            if (text.contains(word)) offenders.add('${entity.path}: $text');
+          }
+        }
+      }
+    }
+    expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 }

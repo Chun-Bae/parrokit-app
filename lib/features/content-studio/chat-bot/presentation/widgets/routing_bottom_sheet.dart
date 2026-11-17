@@ -121,7 +121,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '자연스러운 AI 목소리로 음성을 생성하고 튜닝합니다.',
+                              '자연스러운 AI 목소리로 음성을 만들고 다듬어요.',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: context.tokens.textSecondary,
                                 height: 1.3,

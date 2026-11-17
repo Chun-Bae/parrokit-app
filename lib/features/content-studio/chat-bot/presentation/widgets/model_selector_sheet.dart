@@ -50,7 +50,7 @@ void showModelSelectorBottomSheet(
             // 2026-10 종료, 5차). 내부 값 'gemini-2.5-flash'는 선택 표시용으로만 남는다.
             ModelOptionCard(
               title: 'Gemini 3.1 Flash-Lite',
-              description: '빠르고 경량화된 모델로 간단한 아이디어 구상과 신속한 생성 요청에 이상적입니다.',
+              description: '가볍고 빨라요. 간단한 아이디어를 떠올리거나 빨리 만들어 볼 때 좋아요.',
               speedText: '매우 빠름',
               costText: '가장 저렴함',
               isSelected: provider.selectedModel == 'gemini-2.5-flash',
@@ -65,8 +65,7 @@ void showModelSelectorBottomSheet(
             // 모델 2: Pro (유료 플랜 전용, 현재는 잠금)
             ModelOptionCard(
               title: 'Gemini Pro',
-              description:
-                  '정교한 논리 추론과 긴 문맥 파악에 특화되어 복잡한 씬 연출 및 고품질 대사 다듬기에 적합합니다.',
+              description: '긴 글을 잘 따라가요. 장면을 짜거나 대사를 꼼꼼히 다듬을 때 좋아요.',
               speedText: '보통',
               costText: '보통',
               isSelected: provider.selectedModel == 'gemini-2.5-pro',

@@ -51,6 +51,15 @@ class EditStrings {
 
   /// 만들지 못했을 때.
   static const sttFailedMessage = '자동 자막을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+
+  /// 서버 쪽 문제일 때(5차 428). 전에는 'OpenAI API 할당량이 부족합니다.
+  /// 결제 상태를 확인해 주세요.'처럼, 사용자가 할 수 없는 일을 시켰다.
+  /// 사용자는 OpenAI 계정도 서버 설정도 건드릴 수 없다.
+  static const sttServerProblemMessage =
+      '지금은 자동 자막을 만들 수 없어요. 잠시 뒤 다시 해 주세요. 계속 안 되면 문의해 주세요.';
+
+  /// 이 영상으로는 만들 수 없을 때.
+  static const sttBadInputMessage = '이 영상으로는 자동 자막을 만들 수 없어요. 다른 영상으로 해 보세요.';
   static const addSegmentButtonLabel = '구간 추가';
   static const removeSegmentButtonLabel = '구간 지우기';
 

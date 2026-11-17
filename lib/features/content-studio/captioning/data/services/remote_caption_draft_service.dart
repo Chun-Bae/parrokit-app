@@ -153,11 +153,13 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
     }
 
     return switch (error.code) {
-      'resource-exhausted' => 'OpenAI API 할당량이 부족합니다. 결제 상태를 확인해 주세요.',
+      // 아래 네 가지는 모두 서버 쪽 사정이다. 사용자가 고칠 수 없으니
+      // 무엇을 확인하라고 시키지 않는다(5차 428).
+      'resource-exhausted' => EditStrings.sttServerProblemMessage,
       'unauthenticated' => '로그인이 필요해요.',
-      'permission-denied' => '자동 자막 파일 권한을 확인해 주세요.',
-      'invalid-argument' => '자동 자막 요청 정보를 다시 확인해 주세요.',
-      'failed-precondition' => '자동 자막 서버 설정을 확인해 주세요.',
+      'permission-denied' => EditStrings.sttServerProblemMessage,
+      'invalid-argument' => EditStrings.sttBadInputMessage,
+      'failed-precondition' => EditStrings.sttServerProblemMessage,
       _ => EditStrings.sttFailedMessage,
     };
   }

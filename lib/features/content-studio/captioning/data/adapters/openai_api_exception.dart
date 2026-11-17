@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 // ============================================================================
 // lib/features/content-studio/captioning/data/adapters/openai_api_exception.dart
 // ============================================================================
@@ -66,7 +67,7 @@ class OpenAIApiException implements Exception {
     String? type,
   }) {
     if (code == 'insufficient_quota' || type == 'insufficient_quota') {
-      return 'OpenAI API 할당량이 부족합니다. 결제 상태나 사용량 한도를 확인한 뒤 다시 시도해 주세요.';
+      return EditStrings.sttServerProblemMessage;
     }
 
     if (statusCode == 429 || code == 'rate_limit_exceeded') {
@@ -74,7 +75,7 @@ class OpenAIApiException implements Exception {
     }
 
     if (statusCode == 401 || code == 'invalid_api_key') {
-      return '서버 열쇠가 맞지 않아요. 잠시 뒤 다시 시도해 주세요.';
+      return EditStrings.sttServerProblemMessage;
     }
 
     if (statusCode == 400) {
