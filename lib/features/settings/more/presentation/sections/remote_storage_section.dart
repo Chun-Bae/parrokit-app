@@ -1,3 +1,4 @@
+import 'package:parrokit/features/collection/shared/drive_disconnect.dart';
 // ============================================================================
 // lib/features/settings/more/presentation/sections/remote_storage_section.dart
 // ============================================================================
@@ -12,7 +13,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/features/collection/shared/storage_segment_bar.dart';
@@ -169,43 +169,8 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
                 key: const ValueKey('disconnect-google-drive'),
                 onPressed: isBusy
                     ? null
-                    : () async {
-                        final provider = context.read<ClipProvider>();
-                        {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (dialogContext) => AlertDialog(
-                              title: const Text('Google Drive 연동 해제'),
-                              content: const Text(
-                                '연동을 해제하면 Google Drive에 있던 파일을 모두 이 기기로 옮긴 뒤 계정을 떼어 내요.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(dialogContext, false),
-                                  child: const Text('취소'),
-                                ),
-                                FilledButton(
-                                  onPressed: () =>
-                                      Navigator.pop(dialogContext, true),
-                                  child: const Text('연동 해제'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirmed != true) return;
-
-                          final success =
-                              await provider.disconnectGoogleDrive();
-                          if (!context.mounted) return;
-                          showToast(
-                            success
-                                ? 'Google Drive 연동을 해제했어요.'
-                                : 'Google Drive 연동 해제에 실패했어요.',
-                          );
-                        }
-                      },
-                child: const Text('연동 해제'),
+                    : () => confirmAndDisconnectGoogleDrive(context),
+                child: const Text(driveDisconnectConfirmLabel),
               ),
             ],
           ),
@@ -321,5 +286,3 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     );
   }
 }
-
-

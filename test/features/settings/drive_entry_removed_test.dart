@@ -27,8 +27,9 @@ void main() {
   test('이미 연동한 사람에게만 Drive 칸과 해제를 보여 준다', () {
     final code = _code(_storageSheet);
     expect(code, contains("if (context.watch<ClipProvider>().hasGoogleDriveLinked)"));
-    expect(code, contains("const Text('연동 해제')"));
-    expect(code, contains('provider.disconnectGoogleDrive()'));
+    // 422에서 묻는 창과 알림을 drive_disconnect.dart 한 곳으로 모았다.
+    expect(code, contains('confirmAndDisconnectGoogleDrive(context)'));
+    expect(code, contains('driveDisconnectConfirmLabel'));
   });
 
   test('보관함 저장 공간 카드에도 새로 연동하는 길이 없다', () {
@@ -38,7 +39,7 @@ void main() {
     expect(code, isNot(contains('구글 드라이브 연동하기')));
     expect(code, isNot(contains('provider.connectGoogleDrive()')));
     expect(code, contains('if (isLinked)'));
-    expect(code, contains('provider.disconnectGoogleDrive()'));
+    expect(code, contains('confirmAndDisconnectGoogleDrive(context)'));
   });
 
   test("기기에 둔 파일을 '로컬'이라 부르지 않는다", () {
