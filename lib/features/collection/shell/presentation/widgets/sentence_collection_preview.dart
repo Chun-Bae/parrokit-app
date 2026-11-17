@@ -1,3 +1,4 @@
+import 'package:parrokit/features/collection/shared/shared_sentence_stats.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/shared_sentence_match.dart';
@@ -1015,7 +1016,7 @@ class _SentenceCard extends StatelessWidget {
                 Text('${sentence.likeCount}', style: muted),
                 const SizedBox(width: 12),
                 Tooltip(
-                  message: '가져간 사람 수',
+                  message: importCountTooltip,
                   child: Row(children: [
                     Icon(Icons.download_rounded,
                         size: 17, color: colors.onSurfaceVariant),
@@ -2276,12 +2277,18 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   if (widget.shared != null) ...[
                     Text('$sharedLikes', style: context.texts.bodySmall),
                     const SizedBox(width: 12),
-                    Icon(Icons.download_rounded,
-                        size: 18, color: colors.onSurfaceVariant),
-                    const SizedBox(width: 3),
-                    Text('$sharedImports',
-                        key: const ValueKey('detail-import-count'),
-                        style: context.texts.bodySmall),
+                    // 숫자만 있으면 무슨 수인지 알 수 없다(5차 458).
+                    Tooltip(
+                      message: importCountTooltip,
+                      child: Row(children: [
+                        Icon(Icons.download_rounded,
+                            size: 18, color: colors.onSurfaceVariant),
+                        const SizedBox(width: 3),
+                        Text('$sharedImports',
+                            key: const ValueKey('detail-import-count'),
+                            style: context.texts.bodySmall),
+                      ]),
+                    ),
                   ],
                   // 내가 저장한 문장만 고칠 수 있다(5차, 사용자 요청).
                   if (widget.saved && widget.shared == null)
@@ -2457,6 +2464,16 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
               if (!widget.saved &&
                   widget.shared != null &&
                   widget.onSaveShared != null) ...[
+                // 위 숫자가 무엇을 센 것인지 여기서 말로 적는다(5차 458).
+                if (importedByLabel(sharedImports) != null) ...[
+                  Text(
+                    importedByLabel(sharedImports)!,
+                    key: const ValueKey('detail-import-line'),
+                    style: context.texts.bodySmall
+                        .copyWith(color: colors.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 6),
+                ],
                 FilledButton.icon(
                   key: const ValueKey('save-shared-sentence'),
                   onPressed: () async {
