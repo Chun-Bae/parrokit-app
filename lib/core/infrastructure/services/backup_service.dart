@@ -1,3 +1,4 @@
+import 'package:parrokit/core/infrastructure/services/backup_file_name.dart';
 // ============================================================================
 // lib/core/services/backup_service.dart
 // ============================================================================
@@ -157,9 +158,9 @@ class BackupService {
     final media = await _mediaDir();
     final ts = DateTime.now();
 
-    // 기존 backup_*.zip 정리
+    // 앱 폴더에 남은 예전 백업 찌꺼기 정리(예전 이름도 함께 본다)
     await for (final ent in appDir.list(recursive: false, followLinks: false)) {
-      if (ent is File && p.basename(ent.path).startsWith('backup_')) {
+      if (ent is File && isBackupFileName(p.basename(ent.path))) {
         try {
           await ent.delete();
         } catch (_) {}
@@ -178,7 +179,7 @@ class BackupService {
       await for (final ent in media.list(recursive: true, followLinks: false)) {
         if (ent is! File) continue;
         final base = p.basename(ent.path);
-        if (base.startsWith('backup_') || base == 'manifest.json') continue;
+        if (isBackupFileName(base) || base == 'manifest.json') continue;
         filePaths.add(ent.path);
         totalBytes += await ent.length();
       }
@@ -196,8 +197,7 @@ class BackupService {
       totalBytes: totalBytes,
     ));
 
-    final name =
-        'backup_${ts.year}${pad2(ts.month)}${pad2(ts.day)}_${pad2(ts.hour)}${pad2(ts.minute)}${pad2(ts.second)}.zip';
+    final name = backupFileName(ts);
     final backupZipPath = p.join(appDir.path, name);
 
     // 문장·단어는 기기(또는 서버)에 따로 있어서 글로 만들어 함께 담는다(5차 345).

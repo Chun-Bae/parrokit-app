@@ -1,3 +1,9 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:parrokit/core/content/study_file_name.dart';
 // 더보기의 "데이터" 카드. 백업·복원·기기 보관 영상·임시 파일을 아이콘 네 칸으로,
 // 저장 용량과 Google Drive 연동은 그 아래 한 줄로 둔다.
 //
@@ -76,6 +82,92 @@ class _DataSectionState extends State<DataSection> {
     final count = BackupService.instance.lastStudyRestore;
     if (count.sentences > 0 || count.words > 0) {
       showToast(studyRestoreSummary(count));
+    }
+  }
+
+  /// 문장·단어를 파일로 주고받는다(사용자 요청 2026-11-17).
+  ///
+  /// 전에는 보관함 문장 탭의 ⋮ 메뉴에만 있었고 단어는 아예 없었다.
+  /// 백업은 클립까지 담는 큰 일이라, 글만 주고받고 싶을 때 쓴다.
+  Future<void> _openStudyTransferSheet() async {
+    final choice = await showAppSheet<String>(
+      context: context,
+      fullHeight: false,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Text('문장·단어 주고받기', style: context.texts.titleLarge),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Text(
+                '내 문장과 단어를 파일 하나로 내보내고, 그 파일에서 다시 불러와요. '
+                '클립과 영상은 백업으로 담아요.',
+                style: context.texts.bodyMedium,
+              ),
+            ),
+            ListTile(
+              key: const ValueKey('study-export'),
+              leading: const Icon(Icons.ios_share_rounded),
+              title: const Text('파일로 내보내기'),
+              onTap: () => Navigator.pop(sheetContext, 'export'),
+            ),
+            ListTile(
+              key: const ValueKey('study-import'),
+              leading: const Icon(Icons.file_open_outlined),
+              title: const Text('파일에서 불러오기'),
+              subtitle: const Text('이미 있는 문장·단어는 건너뛰어요'),
+              onTap: () => Navigator.pop(sheetContext, 'import'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    if (choice == 'export') {
+      await _exportStudyFile();
+    } else {
+      await _importStudyFile();
+    }
+  }
+
+  String get _accountId =>
+      context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+
+  Future<void> _exportStudyFile() async {
+    try {
+      final json = await exportStudyData(_accountId);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/${studyFileName(DateTime.now())}');
+      await file.writeAsString(json);
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
+        title: 'Parrokit 문장·단어',
+      ));
+    } catch (_) {
+      if (mounted) showToast('문장·단어를 내보내지 못했어요. 다시 시도해 주세요.');
+    }
+  }
+
+  Future<void> _importStudyFile() async {
+    try {
+      final picked = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+      );
+      final path = picked?.files.single.path;
+      if (path == null) return; // 고르지 않고 닫았다
+      final source = await File(path).readAsString();
+      final count = await importStudyData(_accountId, source);
+      if (!mounted) return;
+      showToast(studyRestoreSummary(count));
+    } catch (_) {
+      if (mounted) showToast('문장·단어를 불러오지 못했어요. 다시 시도해 주세요.');
     }
   }
 
@@ -178,6 +270,13 @@ class _DataSectionState extends State<DataSection> {
                 onTap: _clearingCache ? null : _clearCache,
               ),
             ],
+          ),
+          const SizedBox(height: 4),
+          NavTile(
+            icon: Icons.swap_horiz_rounded,
+            title: '문장·단어 주고받기',
+            subtitle: '파일로 내보내고 파일에서 불러와요',
+            onTap: _openStudyTransferSheet,
           ),
           const SizedBox(height: 4),
           NavTile(
