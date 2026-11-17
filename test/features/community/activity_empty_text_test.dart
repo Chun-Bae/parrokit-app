@@ -81,6 +81,16 @@ void main() {
       expect(activityCountLabel('board', 'unknown', 0), '총 활동 0개');
     });
 
+    // 제목은 '질문 - 스크랩'인데 아래는 '다시 볼 글을 스크랩해 두세요'였다(5차 480).
+    test('스크랩 안내도 묶음 이름을 따른다', () {
+      expect(activityEmptyDescription('board', 'scraped'),
+          '나중에 다시 볼 글을 스크랩해 두세요.');
+      expect(activityEmptyDescription('question', 'scraped'),
+          '나중에 다시 볼 질문을 스크랩해 두세요.');
+      expect(activityEmptyDescription('vote', 'scraped'),
+          '나중에 다시 볼 투표를 스크랩해 두세요.');
+    });
+
     test('못 불러오면 그 자리에서 다시 시도할 수 있다', () {
       final code = File('lib/features/community/activity/presentation/'
               'activity_screen.dart')

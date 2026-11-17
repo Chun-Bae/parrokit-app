@@ -38,7 +38,14 @@ String activityEmptyDescription(String boardType, String activityType) {
           ? '좋아요한 답변과 답글이 여기에 모여요.'
           : '좋아요한 댓글이 여기에 모여요.';
     case 'scraped':
-      return '나중에 다시 볼 글을 스크랩해 두세요.';
+      // 다른 갈래는 모두 묶음에 따라 '글·질문·투표'로 갈리는데 여기만
+      // 늘 '글'이었다. 제목은 '질문 - 스크랩'인데 아래는 '다시 볼 글을
+      // 스크랩해 두세요'라 무엇을 담는 곳인지 어긋났다(5차 480).
+      return switch (boardType) {
+        'question' => '나중에 다시 볼 질문을 스크랩해 두세요.',
+        'vote' => '나중에 다시 볼 투표를 스크랩해 두세요.',
+        _ => '나중에 다시 볼 글을 스크랩해 두세요.',
+      };
     default:
       return '커뮤니티에서 한 일이 여기에 모여요.';
   }
