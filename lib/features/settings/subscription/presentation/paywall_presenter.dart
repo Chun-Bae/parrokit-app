@@ -9,6 +9,8 @@
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
@@ -44,7 +46,19 @@ class RevenueCatPaywallPresenter implements PaywallPresenter {
     }
     PaywallResult result;
     try {
-      result = await RevenueCatUI.presentPaywall();
+      // 어느 화면을 띄울지 꼭 짚어 준다(5차 461).
+      //
+      // 그냥 presentPaywall()을 부르면 RevenueCat이 **지금 기본 offering**의
+      // 화면을 띄운다. 이 프로젝트의 기본은 광고 제거(1회 구매)라, 구독을
+      // 누르면 '한 번 구매로 평생 광고 제거'가 떴다(기기에서 봤다).
+      final offerings =
+          await Purchases.getOfferings().timeout(shortCallTimeout);
+      final offering = offerings.all[subscriptionOfferingId];
+      if (offering == null) {
+        showToast(subscriptionNotReadyToast);
+        return;
+      }
+      result = await RevenueCatUI.presentPaywall(offering: offering);
     } catch (_) {
       showToast(subscriptionOpenFailedToast);
       return;
@@ -53,6 +67,9 @@ class RevenueCatPaywallPresenter implements PaywallPresenter {
     showToast(subscriptionNotReadyToast);
   }
 }
+
+/// 구독 화면이 붙어 있는 offering. RevenueCat 대시보드와 같아야 한다.
+const String subscriptionOfferingId = 'parrokit_subscription';
 
 /// 지금 구독 중인지. 서버가 적어 준 단계를 먼저 보고, 아직 없으면
 /// RevenueCat이 들고 있는 entitlement로 본다(5차 459).

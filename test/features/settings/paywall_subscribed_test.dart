@@ -90,4 +90,15 @@ void main() {
         isFalse);
     expect(code, contains('isSubscribedNow(context)'));
   });
+
+  test('구독 화면을 띄울 offering을 짚어 준다(5차 461)', () {
+    // 그냥 presentPaywall()을 부르면 기본 offering이 뜬다. 이 프로젝트의
+    // 기본은 광고 제거라, 구독을 눌렀는데 '평생 광고 제거'가 떴다.
+    expect(subscriptionOfferingId, 'parrokit_subscription');
+    final code = _code();
+    expect(code, contains('offerings.all[subscriptionOfferingId]'));
+    expect(code, contains('RevenueCatUI.presentPaywall(offering: offering)'));
+    // 그 offering이 없으면 엉뚱한 화면을 띄우지 않고 까닭을 말한다.
+    expect(code, contains('if (offering == null)'));
+  });
 }
