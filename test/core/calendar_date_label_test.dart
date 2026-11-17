@@ -32,9 +32,14 @@ void main() {
   test('홈과 둘러보기 카드도 같은 곳에서 가져다 쓴다', () {
     // 경과 시간 말은 sentence_age_label.dart 한 곳에 있다(5차 339).
     // 그 안에서 일주일이 넘으면 calendarDateLabel을 부른다.
+    // 443에서 세는 규칙을 time_ago_label 한 곳으로 모았다. 날짜로 바꾸는
+    // 일은 그 안에서 calendarDateLabel이 한다.
     final age = File('lib/core/shared/utils/sentence_age_label.dart')
         .readAsStringSync();
-    expect(age, contains('calendarDateLabel(at, now)'));
+    expect(age, contains('timeAgoLabel(at, now)'));
+    final timeAgo = File('lib/core/shared/utils/time_ago_label.dart')
+        .readAsStringSync();
+    expect(timeAgo, contains('calendarDateLabel(at, now)'));
 
     for (final path in [
       'lib/features/home/dashboard/presentation/widgets/trending_sentences_preview.dart',

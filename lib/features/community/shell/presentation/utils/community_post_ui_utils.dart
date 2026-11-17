@@ -1,4 +1,4 @@
-import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
+import 'package:parrokit/core/shared/utils/time_ago_label.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/data/models/post.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
@@ -7,13 +7,7 @@ import 'package:parrokit/features/community/shell/presentation/providers/communi
 /// 보인다(5차). 올해가 아니면 연도도 붙인다.
 String formatCommunityTimeAgo(DateTime? time, {DateTime? now}) {
   if (time == null) return '';
-  final current = now ?? DateTime.now();
-  final diff = current.difference(time);
-  if (diff.inDays >= 7) return calendarDateLabel(time, current);
-  if (diff.inDays > 0) return '${diff.inDays}일 전';
-  if (diff.inHours > 0) return '${diff.inHours}시간 전';
-  if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
-  return '방금 전';
+  return timeAgoLabel(time, now ?? DateTime.now());
 }
 
 String resolveCommunityAuthorName({
