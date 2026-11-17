@@ -38,7 +38,19 @@ class EditStrings {
   // 세그먼트 섹션
   static const segmentsSectionTitle = '자막 정보';
   static const segmentsNotice = '소음이나 음악이 많은 영상에선 자동 자막 정확도가 낮을 수 있어요.';
-  static const sttButtonLabel = '자동 자막 생성';
+  // 같은 기능을 네 가지 이름으로 부르고 있었다(5차 427):
+  // '자동 자막 생성', '자막 자동 생성', '자동 자막 생성 중', 'AI 자막 생성 중...'.
+  // 앱은 '만들기'를 쓴다(음성 만들기·영상 만들기·클립 만들기).
+  static const sttButtonLabel = '자동 자막 만들기';
+
+  /// 확인 창 제목. 단추와 같은 이름을 쓴다.
+  static const sttConfirmTitle = sttButtonLabel;
+
+  /// 만드는 동안 보여 주는 글.
+  static const sttRunningLabel = '자동 자막 만드는 중';
+
+  /// 만들지 못했을 때.
+  static const sttFailedMessage = '자동 자막을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.';
   static const addSegmentButtonLabel = '구간 추가';
   static const removeSegmentButtonLabel = '구간 지우기';
 

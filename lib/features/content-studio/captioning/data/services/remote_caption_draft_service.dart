@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 // ============================================================================
 // lib/features/content-studio/captioning/data/services/remote_caption_draft_service.dart
 // ============================================================================
@@ -89,7 +90,7 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
     try {
       onProgress?.call(0, 1, '파일 업로드 중');
       await ref.putFile(file, SettableMetadata(contentType: contentType));
-      onProgress?.call(1, 1, '자동 자막 생성 중');
+      onProgress?.call(1, 1, EditStrings.sttRunningLabel);
       final callable = _functions.httpsCallable(
         'generateCaptions',
         options: HttpsCallableOptions(timeout: const Duration(minutes: 9)),
@@ -157,7 +158,7 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
       'permission-denied' => '자동 자막 파일 권한을 확인해 주세요.',
       'invalid-argument' => '자동 자막 요청 정보를 다시 확인해 주세요.',
       'failed-precondition' => '자동 자막 서버 설정을 확인해 주세요.',
-      _ => '자동 자막을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.',
+      _ => EditStrings.sttFailedMessage,
     };
   }
 

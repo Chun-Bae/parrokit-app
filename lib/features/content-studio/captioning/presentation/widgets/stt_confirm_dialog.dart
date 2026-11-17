@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 // ============================================================================
 // lib/features/content-studio/captioning/presentation/widgets/stt_confirm_dialog.dart
 // ============================================================================
@@ -62,7 +63,7 @@ Future<void> showSttConfirmDialog(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          '자동 자막 생성 중',
+                          EditStrings.sttRunningLabel,
                           style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
                               ),
@@ -83,7 +84,7 @@ Future<void> showSttConfirmDialog(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '자막 자동 생성',
+                              EditStrings.sttConfirmTitle,
                               style:
                                   Theme.of(ctx).textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w900,
@@ -118,9 +119,9 @@ Future<void> showSttConfirmDialog(
                             // 모자라면 시작할 때 시트가 뜨지만, 누르기 전에
                             // 알려 주는 편이 낫다(5차).
                             if (sttShortOfParrotsLine(
-                                  durationMs: vm.videoDurationMs,
-                                  coins: vm.userProvider.coins,
-                                )
+                              durationMs: vm.videoDurationMs,
+                              coins: vm.userProvider.coins,
+                            )
                                 case final short?) ...[
                               const SizedBox(height: 8),
                               Text(

@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:parrokit/features/content-studio/hub/presentation/studio_layout.dart';
@@ -163,7 +164,7 @@ class _VideoScreenState extends State<VideoScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '자동 자막 생성으로 넘기면 이 영상을 캡션 편집기 플레이어에 바로 불러옵니다.',
+                      '자동 자막 만들기로 넘기면 이 영상을 자막 편집 화면에서 바로 열어요.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: mutedText,
                       ),
@@ -198,7 +199,7 @@ class _VideoScreenState extends State<VideoScreen> {
                         label: Text(
                           provider.isExportingForCaptioning
                               ? '준비 중...'
-                              : '자동 자막 생성',
+                              : EditStrings.sttButtonLabel,
                         ),
                       ),
                     ),

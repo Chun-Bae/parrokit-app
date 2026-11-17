@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 // ============================================================================
 // lib/features/_content/clip_editor/presentation/widgets/stt_progress_card.dart
 // ============================================================================
@@ -58,7 +59,7 @@ class SttProgressCard extends StatelessWidget {
               Icon(Icons.auto_awesome, color: cs.primary, size: 20),
               const SizedBox(width: 8),
               Text(
-                'AI 자막 생성 중...',
+                EditStrings.sttRunningLabel,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: cs.primary,

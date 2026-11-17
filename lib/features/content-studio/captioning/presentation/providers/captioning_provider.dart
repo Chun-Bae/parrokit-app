@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 import 'dart:async';
 // ============================================================================
 // lib/features/content-studio/captioning/presentation/providers/captioning_provider.dart
@@ -305,7 +306,7 @@ class CaptioningProvider extends ChangeNotifier
       return error.message?.toString() ?? '자동 자막 설정을 확인해 주세요.';
     }
 
-    return '자동 자막을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+    return EditStrings.sttFailedMessage;
   }
 
   void _setSttState(SttProcessState state) {

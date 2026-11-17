@@ -445,7 +445,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 children: [
                                   _TipBullet(
                                     text:
-                                        '영상 자막 자동 생성, 쉐도잉 팁, 학습 루틴을 자유롭게 공유해요.',
+                                        '자동 자막 만들기, 쉐도잉 팁, 학습 루틴을 자유롭게 공유해요.',
                                     forceWhite: isDark,
                                   ),
                                   const SizedBox(height: 14),
