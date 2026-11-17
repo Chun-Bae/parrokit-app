@@ -1,3 +1,4 @@
+import 'package:parrokit/features/home/dashboard/presentation/learning_hub_text.dart';
 import 'package:flutter/material.dart';
 
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -59,9 +60,11 @@ class TodayStartBar extends StatelessWidget {
                     onTap: onEditGoal,
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 6, top: 2, bottom: 2),
+                      padding:
+                          const EdgeInsets.only(left: 6, top: 2, bottom: 2),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.tune_rounded, size: 15, color: palette.primary),
+                        Icon(Icons.tune_rounded,
+                            size: 15, color: palette.primary),
                         const SizedBox(width: 2),
                         Text('목표 바꾸기',
                             style: context.texts.labelSmall
@@ -110,7 +113,7 @@ class TodayStartBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.lg)),
           ),
           icon: const Icon(Icons.play_arrow_rounded),
-          label: Text('학습하기',
+          label: Text(learningHubTitle,
               style:
                   context.texts.titleMedium.copyWith(color: palette.onAccent)),
         ),

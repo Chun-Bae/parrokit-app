@@ -1,3 +1,4 @@
+import 'package:parrokit/features/home/dashboard/presentation/learning_hub_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 
@@ -72,7 +73,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        title: Text('학습 시작하기', style: TextStyle(color: ink)),
+        title: Text(learningHubTitle, style: TextStyle(color: ink)),
         backgroundColor: background,
         foregroundColor: ink,
         surfaceTintColor: background,
@@ -81,11 +82,12 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
         padding: EdgeInsets.fromLTRB(
             24, 16, 24, MediaQuery.paddingOf(context).bottom + 120),
         children: [
-          Text('오늘은 어떻게\n공부해볼까요?',
+          Text(learningHubHeadline,
               style: context.texts.headlineLarge
                   .copyWith(color: ink, height: 1.3)),
           const SizedBox(height: 28),
-          Text('학습 방법', style: context.texts.titleLarge.copyWith(color: ink)),
+          Text(learningHubMethodTitle,
+              style: context.texts.titleLarge.copyWith(color: ink)),
           const SizedBox(height: 12),
           LayoutBuilder(builder: (context, constraints) {
             final cards = List.generate(2, (index) {
@@ -188,7 +190,7 @@ class _LearningHubScreenState extends State<LearningHubScreen> {
             style: context.texts.bodySmall.copyWith(color: muted),
           ),
           const SizedBox(height: 30),
-          Text('공부할 영상 찾기',
+          Text(learningHubFindVideoTitle,
               style: context.texts.titleLarge.copyWith(color: ink)),
           const SizedBox(height: 14),
           destination(Icons.swipe_up_rounded, '쇼츠로 발견하기',
