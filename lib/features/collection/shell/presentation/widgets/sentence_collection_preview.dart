@@ -314,12 +314,12 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     try {
       if (isSaved(sentence)) {
         if (isMine(sentence)) {
-          toast('내가 올린 문장이에요. 지우려면 내 문장에서 지워 주세요.');
+          toast(sentenceIsMineMessage);
           return;
         }
         await MySentenceStore.remove(accountId, communityId(sentence));
         await reload();
-        if (mounted) toast('내 문장에서 뺐어요.');
+        if (mounted) toast(sentenceRemovedFromMineMessage);
       } else {
         final added = await MySentenceStore.add(
           accountId,
@@ -334,7 +334,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         if (added) await countImport(sentence);
         // 로그인하지 않은 기기 저장은 알림이 없어서 직접 다시 읽어 카드 표시를 바꾼다.
         await reload();
-        if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
+        if (mounted) toast(sentenceSavedToMineMessage);
       }
     } catch (_) {
       if (mounted) toast(saveFailedMessage);
@@ -407,7 +407,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         language: language,
       );
       if (!mounted || result == null) return;
-      toast(result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.');
+      toast(result.added ? sentenceSavedToMineMessage : sentenceAlreadySavedMessage);
     } catch (_) {
       if (mounted) toast(sentenceSaveFailedMessage);
     }
@@ -1177,10 +1177,11 @@ class _MySentenceTile extends StatelessWidget {
         await repo.publish(sentenceId: sentence.id, authorName: authorName);
       }
       if (context.mounted) {
-        _toast(context, published ? '공유를 취소했어요.' : '둘러보기에 공유했어요.');
+        _toast(context,
+            published ? sentenceShareCanceledMessage : sentenceSharedMessage);
       }
-    } on ShareLimitReachedException catch (e) {
-      if (context.mounted) _toast(context, '$e 내일 다시 공유해 주세요.');
+    } on ShareLimitReachedException {
+      if (context.mounted) _toast(context, sentenceShareLimitMessage(SharedSentenceRepository.dailyShareLimit));
     } catch (_) {
       if (context.mounted) _toast(context, actionFailedMessage);
     }
@@ -1907,9 +1908,9 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       }
       final next = published != true;
       if (mounted) setState(() => published = next);
-      showNotice(next ? '둘러보기에 공유했어요.' : '공유를 취소했어요.');
-    } on ShareLimitReachedException catch (e) {
-      showNotice('$e 내일 다시 공유해 주세요.');
+      showNotice(next ? sentenceSharedMessage : sentenceShareCanceledMessage);
+    } on ShareLimitReachedException {
+      showNotice(sentenceShareLimitMessage(SharedSentenceRepository.dailyShareLimit));
     } catch (_) {
       showNotice(actionFailedMessage);
     } finally {

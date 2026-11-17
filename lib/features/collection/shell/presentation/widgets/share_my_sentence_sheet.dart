@@ -156,11 +156,12 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
           published.add(sentence.id);
         }
       });
-      _say(isPublished ? '공유를 취소했어요.' : '둘러보기에 공유했어요.', bad: false);
-    } on ShareLimitReachedException catch (e) {
+      _say(isPublished ? sentenceShareCanceledMessage : sentenceSharedMessage,
+          bad: false);
+    } on ShareLimitReachedException {
       if (!mounted) return;
       setState(() => working = null);
-      _say('$e 내일 다시 공유해 주세요.');
+      _say(sentenceShareLimitMessage(SharedSentenceRepository.dailyShareLimit));
     } catch (_) {
       if (!mounted) return;
       setState(() => working = null);

@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/sentence_share_text.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/shared_sentence_match.dart';
 import 'package:flutter/material.dart';
@@ -196,12 +197,12 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
     try {
       if (saved != null) {
         if (isMine(sentence)) {
-          toast('내가 올린 문장이에요. 지우려면 내 문장에서 지워 주세요.');
+          toast(sentenceIsMineMessage);
           return;
         }
         await MySentenceStore.remove(account, saved.id);
         await reloadMine();
-        if (mounted) toast('내 문장에서 뺐어요.');
+        if (mounted) toast(sentenceRemovedFromMineMessage);
         return;
       }
       final added = await MySentenceStore.add(
@@ -217,7 +218,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
       );
       if (added) await countImport(sentence);
       await reloadMine();
-      if (mounted) toast('내 문장에 저장했어요. 홈 앵무새가 말해줘요.');
+      if (mounted) toast(sentenceSavedToMineMessage);
     } catch (_) {
       if (mounted) toast(saveFailedMessage);
     }

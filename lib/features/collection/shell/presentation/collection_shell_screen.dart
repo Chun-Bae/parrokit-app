@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/sentence_share_text.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -426,7 +427,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       if (result == null) return;
       messenger.showSnackBar(SnackBar(
           content:
-              Text(result.added ? '추가했어요. 홈 앵무새가 말해줘요.' : '이미 있는 문장이에요.')));
+              Text(result.added ? sentenceSavedToMineMessage : sentenceAlreadySavedMessage)));
     } catch (_) {
       messenger.showSnackBar(
           const SnackBar(content: Text(sentenceSaveFailedMessage)));
