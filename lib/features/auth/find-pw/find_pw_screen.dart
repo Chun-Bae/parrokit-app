@@ -1,3 +1,4 @@
+import 'package:parrokit/features/auth/auth_result_text.dart';
 import 'package:parrokit/features/auth/auth_input_text.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
@@ -38,7 +39,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
     try {
       await userProvider.sendPasswordResetEmail(email);
       if (!mounted) return;
-      showToast('비밀번호 재설정 메일을 전송했습니다.');
+      showToast(resetMailSentMessage);
       context.pop(); // Go back to sign in
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -47,18 +48,15 @@ class _FindPwScreenState extends State<FindPwScreen> {
           showToast('등록되지 않은 이메일이에요.');
         case 'invalid-email':
           showToast(emailInvalidMessage);
-        case 'too-many-requests':
-          showToast('요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.');
         default:
-          showToast(
-              userErrorMessage(e, fallback: '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
+          showToast(userErrorMessage(e, fallback: resetMailFailedMessage));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. 그 밖의 예외는 아무 데도 안
       // 잡혀서 토스트조차 안 뜬다. 버튼이 먹통인 것으로 보인다.
       AppLogger.e('[Auth] 비밀번호 재설정 메일 전송 실패', error: e);
       if (!mounted) return;
-      showToast('메일 전송 중 오류가 발생했습니다. 잠시 뒤 다시 시도해 주세요.');
+      showToast(resetMailFailedMessage);
     }
   }
 

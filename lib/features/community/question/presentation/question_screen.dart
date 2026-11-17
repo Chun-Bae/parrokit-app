@@ -90,7 +90,7 @@ class _QuestionScreenState extends State<QuestionScreen> {
         description: widget.selectedStatus == '전체'
             ? '첫 질문을 올려 보세요.'
             : '다른 조건을 골라 보거나 직접 질문해 보세요.',
-        actionLabel: canLoadMore ? '이전 글 더 보기' : null,
+        actionLabel: canLoadMore ? loadOlderPostsLabel : null,
         onAction: canLoadMore ? () => loadMorePostsFrom(context) : null,
       );
     }

@@ -102,7 +102,7 @@ class _VoteScreenState extends State<VoteScreen> {
         icon: Icons.how_to_vote_outlined,
         title: emptyTitle,
         description: emptyDescription,
-        actionLabel: canLoadMore ? '이전 글 더 보기' : null,
+        actionLabel: canLoadMore ? loadOlderPostsLabel : null,
         onAction: canLoadMore
             ? () => loadMorePostsFrom(context, after: _syncAfterLoadMore)
             : null,

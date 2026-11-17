@@ -45,7 +45,7 @@ class _BoardScreenState extends State<BoardScreen> {
         icon: Icons.forum_outlined,
         title: '아직 올라온 글이 없어요.',
         description: '첫 글을 남겨 보세요.',
-        actionLabel: canLoadMore ? '이전 글 더 보기' : null,
+        actionLabel: canLoadMore ? loadOlderPostsLabel : null,
         onAction: canLoadMore ? () => loadMorePostsFrom(context) : null,
       );
     }

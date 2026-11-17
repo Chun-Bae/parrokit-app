@@ -77,9 +77,14 @@ class PostListFooter extends StatelessWidget {
             : TextButton(
                 onPressed: () =>
                     loadMorePostsFrom(context, after: onLoadedMore),
-                child: const Text('이전 글 더 보기'),
+                child: const Text(loadOlderPostsLabel),
               ),
       ),
     );
   }
 }
+
+/// 목록 맨 아래 '더 보기' 단추와 빈 화면의 같은 단추가 쓰는 이름(5차 416).
+///
+/// 게시판·질문·투표 화면과 이 위젯이 각자 '이전 글 더 보기'라고 적고 있었다.
+const String loadOlderPostsLabel = '이전 글 더 보기';
