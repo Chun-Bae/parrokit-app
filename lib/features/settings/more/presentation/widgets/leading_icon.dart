@@ -31,6 +31,16 @@ class LeadingIcon extends StatelessWidget {
     final fg =
         danger ? context.tokens.danger : cs.onSurface.withValues(alpha: 0.75);
 
+    if (asset != null) {
+      return SizedBox(
+        width: 36,
+        height: 36,
+        child: Center(
+          child: SvgPicture.asset(asset!, width: 30, height: 30),
+        ),
+      );
+    }
+
     final gradientColors = gradient;
     if (gradientColors != null) {
       // 네모 바탕을 깔지 않고, 그 색을 아이콘에 그대로 입힌다(5차 465).
@@ -46,16 +56,6 @@ class LeadingIcon extends StatelessWidget {
             ).createShader(rect),
             child: Icon(icon, size: 30, color: Colors.white),
           ),
-        ),
-      );
-    }
-
-    if (asset != null) {
-      return SizedBox(
-        width: 36,
-        height: 36,
-        child: Center(
-          child: SvgPicture.asset(asset!, width: 30, height: 30),
         ),
       );
     }

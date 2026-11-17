@@ -11,7 +11,7 @@ import 'package:parrokit/features/settings/subscription/domain/subscription_tier
 import 'package:parrokit/features/settings/subscription/presentation/subscription_actions.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_status_sheet.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
-import 'package:parrokit/features/settings/subscription/presentation/subscription_tier_badge.dart';
+import 'package:parrokit/features/settings/shared/store_badges.dart';
 import '../widgets/nav_tile.dart';
 
 class SubscriptionSection extends StatelessWidget {

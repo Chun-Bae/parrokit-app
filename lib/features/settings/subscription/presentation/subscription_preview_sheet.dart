@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/settings/shared/store_badges.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 Future<void> showSubscriptionPreviewSheet(BuildContext context) {
@@ -99,6 +100,7 @@ class _TierCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final badge = subscriptionTierBadgeOf(copy.tier);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -111,6 +113,14 @@ class _TierCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              // 어느 단계인지 이름 앞에서 바로 보이게 한다(5차 465).
+              // 더보기 '구독' 줄과 같은 그림이다.
+              StoreBadgeIcon(
+                key: ValueKey('tier-badge-${copy.tier.name}'),
+                badge: badge,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
               Text(copy.name, style: context.texts.titleMedium),
               const Spacer(),
               Text(copy.previewPrice,

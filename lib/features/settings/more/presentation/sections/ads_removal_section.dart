@@ -11,14 +11,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
+import 'package:parrokit/features/settings/shared/store_badges.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import '../widgets/nav_tile.dart';
 
 const String adsRemovalTitle = '광고 제거';
-
-/// 줄 왼쪽 그림. 한 번 사는 상품이라 선물 상자로 둔다(5차 465).
-const String adsRemovalIconAsset = 'assets/icons/store_ads_removed.svg';
 
 /// 아직 못 산 사람에게 보여 주는 한 줄.
 const String adsRemovalBuySubtitle = '한 번 사면 쇼츠 광고가 사라져요.';
@@ -59,8 +57,9 @@ class AdsRemovalSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: NavTile(
         key: const ValueKey('ads-removal-row'),
-        icon: Icons.block_rounded,
-        iconAsset: adsRemovalIconAsset,
+        icon: adsRemovalBadge.icon,
+        iconAsset: adsRemovalBadge.asset,
+        iconGradient: adsRemovalBadge.colors,
         title: adsRemovalTitle,
         subtitle: adsRemovalSubtitle(subscribed: subscribed, owned: owned),
         // 구독 줄과 같은 꼴: 오른쪽에 지금 상태를 글로 적는다.

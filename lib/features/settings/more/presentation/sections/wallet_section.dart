@@ -5,6 +5,7 @@
 // 두 재화 설명은 ? 버튼 하나로 모았다.
 
 import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
+import 'package:parrokit/features/settings/shared/store_badges.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
@@ -112,8 +113,8 @@ class WalletSection extends StatelessWidget {
                     key: const ValueKey('parrot-topup'),
                     style: buttonStyle,
                     onPressed: () => showParrotStorePaywall(context),
-                    icon:
-                        const Icon(Icons.add_circle_outline_rounded, size: 18),
+                    // 아이콘은 상품 그림 목록에서 꺼내 쓴다(5차 465).
+                    icon: Icon(parrotTopupBadge.icon, size: 18),
                     label: const Text('충전'),
                   ),
                 ),
