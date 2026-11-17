@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
@@ -427,8 +429,7 @@ Future<bool> confirmDeleteWord(BuildContext context, String word) async {
     builder: (ctx) => AlertDialog(
       key: const ValueKey('delete-word-confirm'),
       title: Text("'$word' 단어를 지울까요?"),
-      content: const Text('뜻과 유의어, 예문과 복습 기록도 함께 사라져요.\n'
-          '지우면 되돌릴 수 없어요.'),
+      content: const Text('뜻과 유의어, 예문과 복습 기록도 함께 사라져요.\n$cannotUndoMessage'),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -1879,10 +1880,11 @@ String wordAssistUsageLabel({
   required int? limit,
   bool failed = false,
 }) {
-  if (used != null && limit != null) return '오늘 $used/$limit회 사용';
+  final label = assistUsageLabel(used: used, limit: limit);
+  if (label != null) return label;
   // 서버가 횟수를 알려 주지 않으면 아무 말도 하지 않는다. 전에는 '확인
   // 중…'이 그대로 남아 고장난 것처럼 보였다.
-  return failed ? '' : '횟수 확인 중…';
+  return failed ? '' : assistUsageLoadingLabel;
 }
 
 /// 복습 답 버튼 하나와 그 아래 '며칠 뒤에 다시 나오는지'.

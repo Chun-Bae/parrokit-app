@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
@@ -75,7 +76,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     final problem = exchangeInputProblem(
       parrotsToCrackers: _isParrotsToCrackers,
       amount: amount,
-      balance: _isParrotsToCrackers ? currentUser.parrots : currentUser.crackers,
+      balance:
+          _isParrotsToCrackers ? currentUser.parrots : currentUser.crackers,
     );
     if (problem != null) {
       showToast(problem);
@@ -86,9 +88,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
     try {
       final deduct = amount;
-      final add = _isParrotsToCrackers
-          ? amount * exchangeRate
-          : amount ~/ exchangeRate;
+      final add =
+          _isParrotsToCrackers ? amount * exchangeRate : amount ~/ exchangeRate;
 
       await provider.exchangeCurrency(
         amountToDeduct: deduct,
@@ -102,7 +103,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       Navigator.pop(context);
     } catch (e, st) {
       AppLogger.e('환전 실패', error: e, stackTrace: st);
-      showToast(userErrorMessage(e, fallback: '환전하지 못했어요. 다시 시도해 주세요.'));
+      showToast(userErrorMessage(e, fallback: exchangeFailedMessage));
     } finally {
       if (mounted) setState(() => _isExchanging = false);
     }
@@ -343,9 +344,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                         '환전하기',
                         // 테마 글자색이 버튼의 흰 글자를 덮어 파란 바탕에 검은 글자가 됐다
                         style: context.texts.titleMedium.copyWith(
-                          color: canExchange
-                              ? theme.colorScheme.onPrimary
-                              : null,
+                          color:
+                              canExchange ? theme.colorScheme.onPrimary : null,
                         ),
                       ),
               ),
@@ -375,8 +375,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       (
         '전부',
         all,
-        quickAllBlockedReason(
-            unit: unit, balance: balance, unitSize: unitSize),
+        quickAllBlockedReason(unit: unit, balance: balance, unitSize: unitSize),
       ),
     ];
   }
@@ -385,8 +384,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     return Column(
       children: [
         Row(mainAxisSize: MainAxisSize.min, children: [
-          CurrencyIcon(
-              title == '패롯' ? Currency.parrot : Currency.cracker,
+          CurrencyIcon(title == '패롯' ? Currency.parrot : Currency.cracker,
               size: 16),
           const SizedBox(width: 4),
           Text(title,

@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
@@ -334,12 +335,12 @@ class _AutoFillCard extends StatelessWidget {
         const SizedBox(width: 12),
         if (used != null && limit != null)
           // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
-          Text('오늘 $used/$limit회 사용',
+          Text(assistUsageLabel(used: used, limit: limit)!,
               key: const ValueKey('usage-count'),
               style: context.texts.bodyMedium.copyWith(
                   color: exhausted ? colors.error : colors.onSurfaceVariant))
         else if (controller.usageStatus == UsageStatus.loading)
-          Text('횟수 확인 중…',
+          Text(assistUsageLoadingLabel,
               key: const ValueKey('usage-loading'),
               style: context.texts.bodySmall
                   .copyWith(color: colors.onSurfaceVariant))
@@ -351,7 +352,7 @@ class _AutoFillCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-              child: Text('횟수를 확인하지 못했어요 · 탭해서 다시 확인',
+              child: Text(assistUsageUnknownLabel,
                   style: context.texts.bodySmall
                       .copyWith(color: colors.onSurfaceVariant)),
             ),

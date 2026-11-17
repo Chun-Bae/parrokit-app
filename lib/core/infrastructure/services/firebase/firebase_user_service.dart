@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 // lib/services/firebase_user_service.dart
 
 import 'dart:async';
@@ -96,7 +97,7 @@ class FirebaseUserService {
       );
     } on FirebaseFunctionsException catch (e) {
       // 서버 문구("보유하신 패롯이 부족합니다." 등)를 화면에 그대로 보여준다.
-      throw Exception(e.message ?? '환전하지 못했어요. 다시 시도해 주세요.');
+      throw Exception(e.message ?? exchangeFailedMessage);
     }
   }
 
@@ -117,7 +118,7 @@ class FirebaseUserService {
   }) async {
     // 닉네임 관리를 위해 기존 메서드 업그레이드
     if (newNickname == null || newNickname.isEmpty) return;
-    
+
     final userRef = _firestore.collection('users').doc(uid);
     final newNickRef = _firestore.collection('nicknames').doc(newNickname);
 
@@ -153,8 +154,7 @@ class FirebaseUserService {
       if (oldNickname != null &&
           oldNickname.isNotEmpty &&
           oldNickname != newNickname) {
-        transaction
-            .delete(_firestore.collection('nicknames').doc(oldNickname));
+        transaction.delete(_firestore.collection('nicknames').doc(oldNickname));
       }
     });
   }
@@ -247,11 +247,9 @@ class FirebaseUserService {
   }
 
   Future<AppUser?> loadUserDocument({required String uid}) async {
-    final snap = await _firestore
-        .collection('users')
-        .doc(uid)
-        .get()
-        .timeout(const Duration(seconds: 5), onTimeout: () => throw TimeoutException('loadUserDocument timeout'));
+    final snap = await _firestore.collection('users').doc(uid).get().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => throw TimeoutException('loadUserDocument timeout'));
     if (!snap.exists) {
       return null;
     }
@@ -293,7 +291,8 @@ class FirebaseUserService {
   Future<AppUser?> loadUserDocumentByNickname(String nickname) async {
     if (nickname.isEmpty) return null;
 
-    final nicknameSnap = await _firestore.collection('nicknames').doc(nickname).get();
+    final nicknameSnap =
+        await _firestore.collection('nicknames').doc(nickname).get();
     if (!nicknameSnap.exists) {
       return null;
     }
@@ -334,7 +333,11 @@ class FirebaseUserService {
       return Stream<AppUser?>.value(null);
     }
 
-    return _firestore.collection('users').doc(uid).snapshots().asyncMap((snap) async {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .asyncMap((snap) async {
       if (!snap.exists) {
         return null;
       }
@@ -347,5 +350,4 @@ class FirebaseUserService {
       return _coinsToParrotsMigration.buildAppUser(uid: uid, data: data);
     });
   }
-
 }

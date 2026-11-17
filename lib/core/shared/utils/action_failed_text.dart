@@ -62,3 +62,9 @@ const String sentenceNeededMessage = '문장을 적어 주세요.';
 
 /// 아직 만들지 않은 기능을 불렀을 때(클립 검색, 문장 도우미).
 const String comingSoonMessage = '아직 준비 중이에요';
+
+/// 지우기 확인 창에 덧붙이는 한 줄(클립 여러 개 지우기, 단어 지우기).
+const String cannotUndoMessage = '지우면 되돌릴 수 없어요.';
+
+/// 환전이 막혔을 때(환전소 화면과 그 뒤 서비스).
+const String exchangeFailedMessage = '환전하지 못했어요. 다시 시도해 주세요.';

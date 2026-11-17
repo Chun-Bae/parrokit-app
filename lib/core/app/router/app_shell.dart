@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 // ============================================================================
 // lib/core/router/app_shell.dart
 // ============================================================================
@@ -134,9 +135,9 @@ class AppShell extends StatelessWidget {
       bottom: false,
       child: ListeningBar(
         playback: current,
-        onOpen: () => context.push(
-            '${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}'
-            '?clipId=${current.clipId}'),
+        onOpen: () =>
+            context.push('${AppRoutes.clipsPath}/${AppRoutes.clipsPlayPath}'
+                '?clipId=${current.clipId}'),
         onTogglePlay: onTogglePlay,
         onClose: onClose,
       ),
@@ -206,8 +207,8 @@ class AppShell extends StatelessWidget {
                               builder: (dialogContext) => AlertDialog(
                                 title: const Text('선택한 클립을 지울까요?'),
                                 content: Text(
-                                  '선택한 클립 ${selectedClipIds.length}개를 지워요.\n\n'
-                                  '지우면 되돌릴 수 없어요.',
+                                  '선택한 클립 ${selectedClipIds.length}개를 지워요.'
+                                  '\n\n$cannotUndoMessage',
                                 ),
                                 actions: [
                                   TextButton(

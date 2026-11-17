@@ -88,4 +88,10 @@ void main() {
       expect(_handWritten(text), isEmpty, reason: text);
     }
   });
+
+  test('지우기 경고와 환전 실패도 한 곳에서 꺼낸다(5차 445)', () {
+    for (final text in [cannotUndoMessage, exchangeFailedMessage]) {
+      expect(_handWritten(text), isEmpty, reason: text);
+    }
+  });
 }
