@@ -311,6 +311,20 @@ void main() {
     expect(meta.data, contains('복습 1단계'));
   });
 
+  // 한 번도 복습 안 한 단어인데 기한이 있으면, 상세에서 '복습 전'이 통째로
+  // 사라졌다. 목록 줄은 '복습 전 · 오늘 다시'라고 하는데 상세는 '오늘
+  // 복습할 단어'뿐이었다(5차 482).
+  testWidgets('복습 전 단어도 상세에 단계를 적는다', (tester) async {
+    await MyWordStore.add('guest', language: '영어', word: 'subtle', meaning: '미묘한');
+    await openWordTab(tester);
+
+    await tester.tap(find.text('subtle'));
+    await tester.pumpAndSettle();
+    final meta = tester.widget<Text>(
+        find.byKey(const ValueKey('word-detail-meta')));
+    expect(meta.data, contains('복습 전'));
+  });
+
   testWidgets('복습 중에 닫기로 그만둘 수 있고 고른 답은 남는다', (tester) async {
     await MyWordStore.add('guest', language: '영어', word: 'subtle', meaning: '미묘한');
     await MyWordStore.add('guest', language: '영어', word: 'vivid', meaning: '생생한');
@@ -492,7 +506,10 @@ void main() {
 
   test('다음 복습 안내는 달력 날짜로 센다', () {
     final lateNight = DateTime(2026, 11, 14, 23);
-    expect(wordDueLabel(null, lateNight), '아직 복습 전');
+    // 기한 글은 기한만 말한다. 기한이 없으면 목록처럼 오늘로 본다(5차 482).
+    expect(wordDueLabel(null, lateNight), '오늘 복습할 단어');
+    expect(wordReviewStepLabel(0), '복습 전');
+    expect(wordReviewStepLabel(2), '복습 2단계');
     expect(wordDueLabel(DateTime(2026, 11, 15), lateNight), '내일 복습');
     expect(wordDueLabel(DateTime(2026, 11, 14), lateNight), '오늘 복습할 단어');
     final morning = DateTime(2026, 11, 14, 10);

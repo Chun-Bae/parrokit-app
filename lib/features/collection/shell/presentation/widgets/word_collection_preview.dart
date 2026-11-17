@@ -386,7 +386,7 @@ class _WordTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  step == 0 ? '복습 전' : '복습 $step단계',
+                  wordReviewStepLabel(step),
                   style: context.texts.labelSmall
                       .copyWith(color: colors.onSurfaceVariant),
                 ),
@@ -513,12 +513,21 @@ Future<void> showWordDetails(
   );
 }
 
+/// 복습 단계를 적는 말. 목록 줄과 상세가 같이 쓴다(5차 482).
+@visibleForTesting
+String wordReviewStepLabel(int step) => step == 0 ? '복습 전' : '복습 $step단계';
+
 /// 단어 상세의 다음 복습 안내. 기한은 그날 0시로 저장되므로(dueDayAfter) 달력
 /// 날짜로 센다(5차). 예전엔 지금 시각과의 차이(inDays)로 세어 밤 11시에 '내일 0시'
 /// 기한이 '오늘 복습할 단어'로, 이틀 뒤가 '1일 뒤'로 나왔다.
+///
+/// 기한만 말한다(5차 482). 전에는 기한이 없으면 '아직 복습 전'이라 단계
+/// 이야기를 했고, 그래서 상세는 단계를 따로 적지 않았다. 그 바람에 한 번도
+/// 복습 안 한 단어인데 기한만 있으면('오늘 복습할 단어') 목록이 말하는
+/// '복습 전'이 상세에서 사라졌다. 기한이 없는 것도 목록처럼 오늘로 본다.
 @visibleForTesting
 String wordDueLabel(DateTime? due, DateTime now) {
-  if (due == null) return '아직 복습 전';
+  if (due == null) return '오늘 복습할 단어';
   final days = DateTime(due.year, due.month, due.day)
       .difference(DateTime(now.year, now.month, now.day))
       .inDays;
@@ -1007,10 +1016,10 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 Text(
                     [
                       if (word.sourceSentenceId.isNotEmpty) '문장에서 저장',
-                      // 목록에는 단계가 보이는데 상세에는 없었다(5차). 목록과
-                      // 같은 말로 적는다. 한 번도 안 했으면 아래 기한 글이
-                      // '아직 복습 전'이라 겹치지 않게 뺀다.
-                      if ((review?.step ?? 0) > 0) '복습 ${review!.step}단계',
+                      // 목록 줄과 똑같이 적는다(5차 482). 전에는 단계가
+                      // 0이면 빼고 기한 글에 '아직 복습 전'을 맡겼는데,
+                      // 기한이 있는 새 단어는 그 말이 통째로 사라졌다.
+                      wordReviewStepLabel(review?.step ?? 0),
                       wordDueLabel(review?.dueAt, DateTime.now()),
                     ].join(' · '),
                     key: const ValueKey('word-detail-meta'),
