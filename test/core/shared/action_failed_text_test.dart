@@ -47,4 +47,33 @@ void main() {
             .where((p) => !p.endsWith('community_delete_text.dart')),
         isEmpty);
   });
+
+  test('옮기기·지우기 진행 막대의 끝말이 하나다(5차 424)', () {
+    // 같은 오버레이 안에서 '잠시 뒤 다시 해 주세요'와 '잠시 뒤 다시 시도해
+    // 주세요'가 섞여 있었다.
+    for (final text in [
+      deleteInterruptedMessage,
+      moveInterruptedMessage,
+      serverSaveFailedMessage,
+      driveSaveFailedMessage,
+      deviceMoveFailedMessage,
+      deleteFailedMessageFor('폴더'),
+      deleteFailedMessageFor('그룹'),
+    ]) {
+      expect(text, endsWith(retryLaterSuffix), reason: text);
+      expect(text, isNot(contains('다시 시도해')), reason: text);
+    }
+
+    final provider = File('lib/core/state/provider/clip_provider.dart')
+        .readAsLinesSync()
+        .where((l) => !l.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(provider, isNot(contains('잠시 뒤 다시 시도해 주세요')));
+    expect(provider, isNot(contains('실패했어요')));
+  });
+
+  test('무엇을 지우지 못했는지 조사를 받침에 맞춘다', () {
+    expect(deleteFailedMessageFor('폴더'), startsWith('폴더를 지우지 못했어요.'));
+    expect(deleteFailedMessageFor('그룹'), startsWith('그룹을 지우지 못했어요.'));
+  });
 }
