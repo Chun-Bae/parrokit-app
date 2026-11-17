@@ -582,9 +582,9 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final clipProvider = context.read<ClipProvider>();
     await _showNameEntryDialog(
       context,
-      title: '그룹 이름 변경',
+      title: '그룹 이름 바꾸기',
       hint: '그룹 이름',
-      submitLabel: '변경',
+      submitLabel: '바꾸기',
       initialText: currentName,
       onSubmit: (name) => clipProvider.renameGroup(groupId, name),
     );
@@ -598,9 +598,9 @@ class _LibraryFolderSectionState extends State<LibraryFolderSection> {
     final clipProvider = context.read<ClipProvider>();
     await _showNameEntryDialog(
       context,
-      title: '폴더 이름 변경',
+      title: '폴더 이름 바꾸기',
       hint: '폴더 이름',
-      submitLabel: '변경',
+      submitLabel: '바꾸기',
       initialText: currentName,
       onSubmit: (name) => clipProvider.renameCollection(collectionId, name),
     );

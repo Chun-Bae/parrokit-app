@@ -277,7 +277,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      '사진을 눌러 변경',
+                      // 바로 아래 안내가 '바꿀 수 있어요'·'바꾼 날'·'바꾸면'
+                      // 인데 여기만 '변경'이었다(5차 490).
+                      '사진을 눌러 바꾸기',
                       style: context.texts.labelMedium
                           .copyWith(color: cs.onSurface.withValues(alpha: 0.5)),
                     ),
