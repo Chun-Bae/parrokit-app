@@ -1,3 +1,4 @@
+import 'package:parrokit/features/community/notification/presentation/utils/notification_text.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parrokit/core/app/router/app_routes.dart';
@@ -217,8 +218,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           _PrefSwitch(
             key: const ValueKey('pref-vote-end'),
             icon: Icons.how_to_vote_outlined,
-            title: '참여한 투표 종료',
-            subtitle: '내가 참여한 투표가 끝나 결과가 나오면',
+            // 앱은 어디서나 '마감'이라 부른다 - 거르개 '마감', 카드의
+            // 'N일 뒤 마감', 알림 '투표가 마감됐어요'. 이 줄만 '종료'로
+            // 남아 다른 일처럼 보였다(5차 479).
+            title: voteEndPrefTitle,
+            subtitle: voteEndPrefSubtitle,
             value: prefs.voteEnd,
             onChanged: (v) => _update(prefs.copyWith(voteEnd: v)),
           ),

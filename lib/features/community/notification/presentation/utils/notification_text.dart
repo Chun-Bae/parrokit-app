@@ -48,3 +48,11 @@ String displayNotificationBody(String body, String boardType) {
   }
   return _renameBoard(body, boardType);
 }
+
+/// 알림 설정에서 투표 마감 알림을 부르는 말(5차 479).
+///
+/// 앱은 투표가 끝난 것을 어디서나 '마감'이라 부르는데(거르개, 카드의
+/// 'N일 뒤 마감', 알림 제목) 설정 줄만 '종료'로 남아 있었다. 알림 제목과
+/// 같은 파일에 둬서 다음에 또 갈리지 않게 한다.
+const String voteEndPrefTitle = '참여한 투표 마감';
+const String voteEndPrefSubtitle = '내가 참여한 투표가 마감돼 결과가 나오면';

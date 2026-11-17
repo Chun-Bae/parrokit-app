@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/community/notification/presentation/utils/notification_text.dart';
 
 void main() {
+  _voteEndPrefTests();
   test("예전 알림의 '일반'을 게시판 글에서만 '게시판'으로 보여준다", () {
     expect(displayNotificationTitle('일반에 새 댓글이 달렸어요.', 'board'),
         '게시판에 새 댓글이 달렸어요.');
@@ -44,6 +46,33 @@ void main() {
     test('투표가 아닌 알림의 본문은 묶지 않는다', () {
       expect(displayNotificationBody('오늘 뭐 먹지 결과를 확인해 보세요.', 'board'),
           '오늘 뭐 먹지 결과를 확인해 보세요.');
+    });
+  });
+}
+
+// 알림 설정 줄도 '마감'이라 부른다(5차 479).
+//
+// 앱은 투표가 끝난 것을 거르개·카드·알림 제목에서 모두 '마감'이라 부르는데,
+// 설정의 '참여한 투표 종료'만 옛 이름으로 남아 다른 일처럼 보였다.
+void _voteEndPrefTests() {
+  group('알림 설정의 투표 마감 줄', () {
+    test("'종료'라 부르지 않는다", () {
+      expect(voteEndPrefTitle, contains('마감'));
+      expect(voteEndPrefTitle.contains('종료'), isFalse);
+      expect(voteEndPrefSubtitle, contains('마감'));
+      expect(voteEndPrefSubtitle.contains('종료'), isFalse);
+    });
+
+    test('화면이 이 글귀를 꺼내 쓴다', () {
+      final src = File(
+              'lib/features/community/notification/presentation/notification_settings_screen.dart')
+          .readAsStringSync()
+          .split('\n')
+          .where((line) => !line.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(src.contains('voteEndPrefTitle'), isTrue);
+      expect(src.contains('voteEndPrefSubtitle'), isTrue);
+      expect(src.contains("'참여한 투표 종료'"), isFalse);
     });
   });
 }
