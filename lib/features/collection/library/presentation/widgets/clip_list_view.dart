@@ -248,7 +248,8 @@ class ClipListView extends StatelessWidget {
         const SliverFillRemaining(
           child: AppEmptyState(
             icon: Icons.video_library_outlined,
-            title: '아직 등록된 클립이 없어요.',
+            title: '아직 클립이 없어요',
+            description: '오른쪽 위 + 단추로 영상에 자막을 달아 보관해요.',
             compact: true,
           ),
         )

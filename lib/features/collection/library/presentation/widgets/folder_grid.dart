@@ -65,7 +65,8 @@ class FolderGrid extends StatelessWidget {
         const SliverFillRemaining(
           child: AppEmptyState(
             icon: Icons.folder_open_rounded,
-            title: '아직 등록된 항목이 없어요.',
+            title: '아직 폴더가 없어요',
+            description: '위 새 폴더로 만들 수 있어요.',
             compact: true,
           ),
         )

@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/korean_josa.dart';
 // ============================================================================
 // lib/features/dashboard/presentation/widgets/empty_card.dart
 // ============================================================================
@@ -16,7 +17,11 @@ import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 빈 상태 카드 위젯.
 ///
-/// [noun]으로 "아직 등록된 {noun}이 없어요" 메시지 표시.
+/// [noun]으로 "아직 {noun}가 없어요"라고 적는다.
+///
+/// 전에는 '아직 등록된 $noun이 없어요'였다. 조사를 '이'로 고정해 놓아서
+/// 받침 없는 말이 오면 **'아직 등록된 폴더이 없어요'**가 됐다(홈 폴더 칸).
+/// '등록'도 앱이 쓰지 않는 말이다(5차 441).
 class EmptyCard extends StatelessWidget {
   final String noun;
   final Color subtle;
@@ -44,7 +49,7 @@ class EmptyCard extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          '아직 등록된 $noun이 없어요',
+          '아직 ${iGa(noun)} 없어요',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: textSecondary,
                 fontWeight: FontWeight.w600,
