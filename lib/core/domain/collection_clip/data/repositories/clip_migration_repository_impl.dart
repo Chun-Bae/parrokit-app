@@ -1,3 +1,4 @@
+import 'package:parrokit/features/collection/shared/drive_disconnect.dart';
 // ============================================================================
 // lib/core/collection_media/data/repositories/clip_migration_repository_impl.dart
 // ============================================================================
@@ -172,9 +173,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
             onProgress?.call(
               baseBytes + snapshot.bytesTransferred,
               combinedUploadTotal,
-              isRetry
-                  ? '서버에 업로드하고 있어요 (다시 시도하는 중)'
-                  : '서버에 업로드하고 있어요',
+              isRetry ? '서버에 업로드하고 있어요 (다시 시도하는 중)' : '서버에 업로드하고 있어요',
             );
           });
 
@@ -239,8 +238,8 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
                 ..where((c) => c.id.equals(target.collectionId!))
                 ..limit(1))
               .getSingleOrNull();
-      final groupNames =
-          await cloudMetadataDatasource.groupNamesForCollection(target.collectionId);
+      final groupNames = await cloudMetadataDatasource
+          .groupNamesForCollection(target.collectionId);
 
       final docRef =
           firestoreMetadataDatasource.libraryClipDocRef(user.uid, remoteDocId);
@@ -273,8 +272,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         // 참고용 정보일 뿐 pull sync에서 자동으로 적용하지 않는다 — 그룹은
         // 저장위치별로 독립된 개념이라 이동/당겨오기 시 그대로 따라가지
         // 않는다.
-        'groupNames':
-            groupNames.isNotEmpty ? groupNames : FieldValue.delete(),
+        'groupNames': groupNames.isNotEmpty ? groupNames : FieldValue.delete(),
         'segments': segments
             .map(
               (segment) => {
@@ -315,8 +313,8 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       );
 
       final oldCollectionId = target.collectionId;
-      final newCollectionId = await collectionGroupMirrorDatasource
-          .mirrorCollectionForClip(
+      final newCollectionId =
+          await collectionGroupMirrorDatasource.mirrorCollectionForClip(
         currentCollectionId: oldCollectionId,
         destinationStorageMode: ClipStorageConstants.storageModeServer,
       );
@@ -729,7 +727,8 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
   @override
   Future<int> getLocalStorageUsedBytes() async {
     final rows = await (db.select(db.clips)
-          ..where((c) => c.storageMode.equals(ClipStorageConstants.storageModeLocal)))
+          ..where((c) =>
+              c.storageMode.equals(ClipStorageConstants.storageModeLocal)))
         .get();
     return rows.fold<int>(
         0, (totalBytes, clip) => totalBytes + clip.storageBytes);
@@ -740,7 +739,8 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
     final rows = await sourceRefDatasource.visibleRemoteClips().then(
           (clips) => clips
               .where((clip) =>
-                  clip.storageMode == ClipStorageConstants.storageModeGoogleDrive)
+                  clip.storageMode ==
+                  ClipStorageConstants.storageModeGoogleDrive)
               .toList(),
         );
     return rows.fold<int>(
@@ -776,14 +776,14 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       onProgress?.call(
         current,
         clips.length,
-        'Google Drive 파일을 이 기기로 옮기는 중',
+        driveMovingToDeviceMessage,
       );
       await moveClipToLocal(clip.id);
       current++;
       onProgress?.call(
         current,
         clips.length,
-        'Google Drive 파일을 이 기기로 옮기는 중',
+        driveMovingToDeviceMessage,
       );
     }
 

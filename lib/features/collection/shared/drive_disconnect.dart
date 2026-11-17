@@ -46,3 +46,12 @@ Future<void> confirmAndDisconnectGoogleDrive(BuildContext context) async {
   if (!context.mounted) return;
   showToast(success ? driveDisconnectedMessage : driveDisconnectFailedMessage);
 }
+
+/// 파일을 옮기는 동안 진행 막대에 적는 글. 레포지토리가 한 걸음마다
+/// 같은 글을 보내 와서, 글을 여기 두고 양쪽이 함께 쓴다.
+const String driveMovingToDeviceMessage = 'Google Drive 파일을 이 기기로 옮기는 중';
+
+/// 연결하지 못했을 때(새로 연결하는 길은 없앴지만, 길이 남아 있는 동안은
+/// 예외 글 대신 이 말을 보여 준다).
+const String driveConnectFailedMessage =
+    'Google Drive에 연결하지 못했어요. 잠시 뒤 다시 해 주세요.';

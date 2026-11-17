@@ -60,4 +60,28 @@ void main() {
     expect(driveDisconnectConfirmLabel, '연동 해제');
     expect(driveDisconnectCancelLabel, '취소');
   });
+
+  test('옮기는 중 글을 레포지토리와 provider가 같은 곳에서 꺼낸다', () {
+    for (final path in [
+      'lib/core/state/provider/clip_provider.dart',
+      'lib/core/domain/collection_clip/data/repositories/clip_migration_repository_impl.dart',
+    ]) {
+      final code = File(path).readAsStringSync();
+      expect(code, contains('driveMovingToDeviceMessage'), reason: path);
+      expect(code, isNot(contains("'Google Drive 파일을 이 기기로 옮기는 중'")),
+          reason: path);
+    }
+  });
+
+  test('옮기기가 막혀도 예외 글을 화면에 그대로 넣지 않는다', () {
+    // 진행 막대(StorageTransferOverlay)는 error를 그대로 그린다. 전에는
+    // 거기에 e.toString()이 들어가 영어 예외와 파일 경로가 보였다(5차 423).
+    final code = File('lib/core/state/provider/clip_provider.dart')
+        .readAsLinesSync()
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(code, isNot(contains('error: e.toString()')));
+    expect(code, contains('userErrorMessage(e, fallback: driveDisconnectFailedMessage)'));
+    expect(code, contains('userErrorMessage(e, fallback: driveConnectFailedMessage)'));
+  });
 }

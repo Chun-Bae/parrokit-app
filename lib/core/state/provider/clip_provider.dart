@@ -1,3 +1,5 @@
+import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'package:parrokit/features/collection/shared/drive_disconnect.dart';
 // ============================================================================
 // lib/core/state/provider/clip_provider.dart
 // ============================================================================
@@ -518,8 +520,8 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _setGoogleDriveLinkState(
         isRunning: false,
-        message: 'Google Drive 연결 실패',
-        error: e.toString(),
+        message: driveConnectFailedMessage,
+        error: userErrorMessage(e, fallback: driveConnectFailedMessage),
       );
       return false;
     } finally {
@@ -532,7 +534,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
 
     _setGoogleDriveLinkState(
       isRunning: true,
-      message: 'Google Drive 파일을 이 기기로 옮기는 중',
+      message: driveMovingToDeviceMessage,
       error: null,
     );
 
@@ -549,7 +551,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       await refreshStorageUsage();
       _setGoogleDriveLinkState(
         isRunning: false,
-        message: 'Google Drive 연동 해제 완료',
+        message: driveDisconnectedMessage,
         error: null,
       );
       return true;
@@ -561,8 +563,8 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _setGoogleDriveLinkState(
         isRunning: false,
-        message: 'Google Drive 연동 해제 실패',
-        error: e.toString(),
+        message: driveDisconnectFailedMessage,
+        error: userErrorMessage(e, fallback: driveDisconnectFailedMessage),
       );
       return false;
     } finally {
