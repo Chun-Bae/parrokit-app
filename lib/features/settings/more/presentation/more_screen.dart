@@ -11,6 +11,7 @@
 // 구분선 없이 붙이고, 묶음은 여백과 머리말로만 나눈다.
 // ============================================================================
 
+import 'package:parrokit/features/settings/more/presentation/sections/ads_removal_section.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -83,6 +84,8 @@ class _MoreScreenState extends State<MoreScreen> {
             const WalletSection(),
             const _GroupLabel('구독'),
             const SubscriptionSection(),
+            // 광고 제거는 한 번 사는 것이라 구독과 다른 줄로 둔다(5차 463).
+            const AdsRemovalSection(),
             const _GroupLabel('데이터'),
             const DataSection(),
             const _GroupLabel('앱'),
@@ -96,8 +99,7 @@ class _MoreScreenState extends State<MoreScreen> {
               const _GroupLabel('개발'),
               TextButton(
                 key: const ValueKey('dev-native-player'),
-                onPressed: () =>
-                    context.push(AppRoutes.devNativePlayerPath),
+                onPressed: () => context.push(AppRoutes.devNativePlayerPath),
                 child: const Text('네이티브 플레이어 시험'),
               ),
             ],
@@ -145,4 +147,3 @@ class _GroupLabel extends StatelessWidget {
     );
   }
 }
-
