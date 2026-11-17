@@ -188,7 +188,8 @@ class _PracticeReminderSheetState extends State<PracticeReminderSheet> {
   String get _accountId =>
       context.read<UserProvider>().currentUser?.id ?? 'guest';
 
-  Future<List<ReminderCandidate>> _candidates() => reminderCandidates(_accountId);
+  Future<List<ReminderCandidate>> _candidates() =>
+      reminderCandidates(_accountId);
 
   Future<void> _apply(PracticeReminderSettings next) async {
     setState(() {
@@ -225,8 +226,7 @@ class _PracticeReminderSheetState extends State<PracticeReminderSheet> {
       title: current.repeats ? '알림을 받기 시작할 시각' : '알림 받을 시각',
     );
     if (!mounted || picked == null) return;
-    await _apply(
-        current.copyWith(hour: picked.hour, minute: picked.minute));
+    await _apply(current.copyWith(hour: picked.hour, minute: picked.minute));
   }
 
   Future<void> _pickInterval(int minutes) async {
@@ -281,13 +281,13 @@ class _PracticeReminderSheetState extends State<PracticeReminderSheet> {
     await _apply(current.copyWith(pick: pick));
   }
 
-
   @override
   Widget build(BuildContext context) {
     final settings = _settings;
     final cs = Theme.of(context).colorScheme;
     if (settings == null) {
-      return const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()));
+      return const SizedBox(
+          height: 160, child: Center(child: CircularProgressIndicator()));
     }
     return SafeArea(
       top: false,
@@ -418,8 +418,8 @@ class _PracticeReminderSheetState extends State<PracticeReminderSheet> {
               child: FilledButton(
                 key: const ValueKey('practice-reminder-done'),
                 onPressed: () => Navigator.of(context).pop(),
-                style:
-                    FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50)),
                 child: const Text('닫기'),
               ),
             ),

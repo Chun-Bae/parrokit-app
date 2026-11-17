@@ -76,7 +76,9 @@ SubscriptionState subscriptionFromServer(Map<String, dynamic>? map) {
     status: tier == SubscriptionTier.free ? SubscriptionStatus.expired : status,
     periodEnd: endMs is int
         ? DateTime.fromMillisecondsSinceEpoch(endMs)
-        : (endMs is num ? DateTime.fromMillisecondsSinceEpoch(endMs.toInt()) : null),
+        : (endMs is num
+            ? DateTime.fromMillisecondsSinceEpoch(endMs.toInt())
+            : null),
   );
 }
 

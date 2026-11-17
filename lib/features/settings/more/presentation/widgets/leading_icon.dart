@@ -9,6 +9,7 @@ class LeadingIcon extends StatelessWidget {
     required this.icon,
     this.danger = false,
     this.asset,
+    this.gradient,
   });
 
   final IconData icon;
@@ -18,6 +19,9 @@ class LeadingIcon extends StatelessWidget {
   /// 상품 줄(구독·광고 제거)만 색이 있어 눈에 들어오게 한다.
   final String? asset;
 
+  /// 그라데이션 배지로 보여 줄 두 색. 있으면 흰 아이콘을 그 위에 둔다(5차 465).
+  final List<Color>? gradient;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -26,6 +30,23 @@ class LeadingIcon extends StatelessWidget {
         : cs.onSurface.withValues(alpha: 0.06);
     final fg =
         danger ? context.tokens.danger : cs.onSurface.withValues(alpha: 0.75);
+
+    final gradientColors = gradient;
+    if (gradientColors != null) {
+      return Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Icon(icon, size: 20, color: Colors.white),
+      );
+    }
 
     if (asset != null) {
       return SizedBox(

@@ -5,20 +5,28 @@
 
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/features/settings/more/presentation/widgets/leading_icon.dart';
 import 'package:parrokit/features/settings/more/presentation/sections/ads_removal_section.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
-import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_tier_badge.dart';
 
 void main() {
-  test('상품 줄 그림이 모두 있는 파일이다', () {
-    final paths = <String>{
-      adsRemovalIconAsset,
-      for (final tier in SubscriptionTier.values) subscriptionTierIconAsset(tier),
-    };
-    expect(paths.length, 4, reason: '단계마다 다른 그림이어야 한다');
-    for (final path in paths) {
-      expect(File(path).existsSync(), isTrue, reason: '$path 가 없다');
+  test('광고 제거 줄 그림이 있는 파일이다', () {
+    expect(File(adsRemovalIconAsset).existsSync(), isTrue,
+        reason: '$adsRemovalIconAsset 가 없다');
+  });
+
+  test('구독 단계마다 다른 배지를 쓴다', () {
+    final badges =
+        SubscriptionTier.values.map(subscriptionTierBadgeOf).toList();
+    expect(badges.map((b) => b.icon).toSet().length, badges.length,
+        reason: '단계마다 심볼이 달라야 한다');
+    expect(badges.map((b) => b.colors.first).toSet().length, badges.length,
+        reason: '단계마다 색이 달라야 한다');
+    for (final badge in badges) {
+      expect(badge.colors.length, 2, reason: '그라데이션은 두 색이다');
     }
   });
 
@@ -35,5 +43,25 @@ void main() {
         .join('\n');
     expect(src.contains("_GroupLabel('상품')"), isTrue);
     expect(src.contains("_GroupLabel('구독')"), isFalse);
+  });
+
+  testWidgets('단계마다 배지가 그 색과 심볼로 그려진다', (tester) async {
+    for (final tier in SubscriptionTier.values) {
+      final badge = subscriptionTierBadgeOf(tier);
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: LeadingIcon(icon: badge.icon, gradient: badge.colors),
+        ),
+      ));
+
+      final box = tester.widget<Container>(find.byType(Container));
+      final decoration = box.decoration as BoxDecoration;
+      final gradient = decoration.gradient as LinearGradient;
+      expect(gradient.colors, badge.colors);
+
+      final icon = tester.widget<Icon>(find.byType(Icon));
+      expect(icon.icon, badge.icon);
+      expect(icon.color, Colors.white);
+    }
   });
 }

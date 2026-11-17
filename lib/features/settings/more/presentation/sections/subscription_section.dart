@@ -11,6 +11,7 @@ import 'package:parrokit/features/settings/subscription/domain/subscription_tier
 import 'package:parrokit/features/settings/subscription/presentation/subscription_actions.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_status_sheet.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_tier_badge.dart';
 import '../widgets/nav_tile.dart';
 
 class SubscriptionSection extends StatelessWidget {
@@ -26,13 +27,14 @@ class SubscriptionSection extends StatelessWidget {
     final subscription = context.watch<SubscriptionProvider>();
     final tier = subscription.tier;
     final paywall = presenter ?? resolvePaywallPresenter();
+    final badge = subscriptionTierBadgeOf(tier);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: NavTile(
         key: const ValueKey('subscription-row'),
-        icon: Icons.workspace_premium_outlined,
-        iconAsset: subscriptionTierIconAsset(tier),
+        icon: badge.icon,
+        iconGradient: badge.colors,
         title: subscriptionScreenTitle,
         subtitle: subscriptionRowSubtitle(tier),
         trailing: Text(

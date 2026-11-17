@@ -19,10 +19,10 @@ int serverStorageQuotaBytes(SubscriptionTier tier) {
 }
 
 /// 서버 저장 줄에 적을 말. 무료는 담을 곳이 없다는 것을 먼저 알린다.
-String serverStorageSubtitle(SubscriptionTier tier) => tier ==
-        SubscriptionTier.free
-    ? '구독하면 영상이 서버에 백업돼요. 지금은 이 기기에만 있어요.'
-    : '앱 서버에 저장된 파일과 정보';
+String serverStorageSubtitle(SubscriptionTier tier) =>
+    tier == SubscriptionTier.free
+        ? '구독하면 영상이 서버에 백업돼요. 지금은 이 기기에만 있어요.'
+        : '앱 서버에 저장된 파일과 정보';
 
 /// 단계별로 매달 받는 패롯. 서버(functions/src/subscriptionGrant.ts의
 /// DEFAULT_GRANTS)와 같은 값이다. 실제로 주는 것은 서버다.

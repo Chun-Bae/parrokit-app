@@ -16,6 +16,7 @@ class NavTile extends StatelessWidget {
     this.showArrow = true,
     this.trailing,
     this.iconAsset,
+    this.iconGradient,
   });
 
   final IconData icon;
@@ -28,6 +29,9 @@ class NavTile extends StatelessWidget {
 
   /// 아이콘 대신 쓸 SVG 그림(5차 465).
   final String? iconAsset;
+
+  /// 아이콘을 감쌀 그라데이션 배지 색(5차 465).
+  final List<Color>? iconGradient;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +46,12 @@ class NavTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: Row(
           children: [
-            LeadingIcon(icon: icon, danger: danger, asset: iconAsset),
+            LeadingIcon(
+              icon: icon,
+              danger: danger,
+              asset: iconAsset,
+              gradient: iconGradient,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
