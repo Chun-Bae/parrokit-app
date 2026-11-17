@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/domain/validators/clip_validator.dart';
 import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 // ============================================================================
 // lib/features/content-studio/captioning/data/services/remote_caption_draft_service.dart
@@ -47,7 +48,8 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
         _storage = storage ?? FirebaseStorage.instance,
         _functions = functions ?? FirebaseFunctions.instance;
 
-  static const int maxCaptionDurationMs = 5 * 60 * 1000;
+  /// 길이 한도는 ClipValidator 한 곳에서 정한다(5차 434).
+  static const int maxCaptionDurationMs = ClipValidator.maxDurationMs;
 
   final AsrEngine engine;
   final FirebaseAuth _auth;
@@ -62,7 +64,7 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
     void Function(int current, int total, String message)? onProgress,
   }) async {
     if (durationMs <= 0 || durationMs > maxCaptionDurationMs) {
-      throw ArgumentError('자동 자막은 5분 이하 파일만 처리할 수 있습니다.');
+      throw ArgumentError(ClipValidator.tooLongMessage());
     }
 
     final user = _auth.currentUser;

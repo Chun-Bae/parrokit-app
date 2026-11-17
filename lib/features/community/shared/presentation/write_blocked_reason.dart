@@ -11,10 +11,20 @@ const String writeNeedsTitleMessage = '제목을 적어 주세요.';
 const String writeNeedsContentMessage = '내용을 적어 주세요.';
 const String writeNeedsTopicMessage = '주제를 골라 주세요.';
 
-/// 투표 보기 수. 조건은 2개 미만이면 막는 것이라 '2개 이상'이 맞다.
+/// 투표에 넣을 수 있는 항목 수. 화면이 손으로 '5개'라고 적지 않게 여기 둔다
+/// (5차 434).
+const int maxVoteOptions = 5;
+
+/// 투표 항목 수. 조건은 2개 미만이면 막는 것이라 '2개 이상'이 맞다.
 /// 전에는 '2개 넘게'라 적어 3개부터인 것처럼 읽혔다(5차 433).
-const String writeNeedsTwoOptionsMessage = '보기를 2개 이상 적어 주세요.';
-const String writeNeedsFilledOptionsMessage = '빈 보기 칸을 채워 주세요.';
+///
+/// 이름은 화면을 따라 '항목'이라 부른다('투표 대상 항목', '항목 추가하기').
+/// 전에는 여기서만 '보기'라고 했다(5차 434).
+const String writeNeedsTwoOptionsMessage = '항목을 2개 이상 적어 주세요.';
+const String writeNeedsFilledOptionsMessage = '빈 항목 칸을 채워 주세요.';
+
+/// 항목을 더 넣을 수 없을 때.
+String voteTooManyOptionsMessage(int max) => '항목은 $max개까지 넣을 수 있어요.';
 
 /// 태그 수·길이 제한을 넘겼을 때.
 String writeTooManyTagsMessage(int max) => '태그는 $max개까지 넣을 수 있어요.';

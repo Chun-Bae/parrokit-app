@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/tts/domain/validators/tts_validator.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -97,7 +98,7 @@ class TtsProvider extends ChangeNotifier {
   int get estimatedCost => _calculateCoinCost(_text.length);
 
   void updateText(String newText) {
-    if (newText.length <= 240) {
+    if (newText.length <= maxTtsTextLength) {
       _text = newText;
       notifyListeners();
     }

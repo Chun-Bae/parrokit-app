@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/tts/domain/validators/tts_validator.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/features/content-studio/tts/presentation/tts_provider_text.dart';
 import 'package:parrokit/features/content-studio/tts/domain/models/tts_google_models.dart';
@@ -166,7 +167,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
               // 쓰던 말이다(5차).
               title: '읽을 글',
               trailing: Text(
-                '${provider.text.length} / 240',
+                '${provider.text.length} / $maxTtsTextLength',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: mutedText,
                 ),
@@ -175,7 +176,7 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                 controller: _textController,
                 minLines: 7,
                 maxLines: 10,
-                maxLength: 240,
+                maxLength: maxTtsTextLength,
                 onChanged: (val) => _onTextChanged(val, provider),
                 decoration: const InputDecoration(
                   hintText: '예: 오늘 배울 표현은 “Could you give me a hand?”예요.',

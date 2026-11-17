@@ -81,8 +81,8 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
   }
 
   void _addOption() {
-    if (_optionControllers.length >= 5) {
-      showToast('항목은 5개까지 넣을 수 있어요.');
+    if (_optionControllers.length >= maxVoteOptions) {
+      showToast(voteTooManyOptionsMessage(maxVoteOptions));
       return;
     }
 

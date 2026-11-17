@@ -24,6 +24,12 @@ class ValidationResult {
 
 class ClipValidator {
   static const int maxDurationMs = 5 * 60 * 1000;
+
+  /// 길이가 넘칠 때. 분 수를 손으로 적지 않고 [maxDurationMs]에서 만든다.
+  /// 전에는 서비스 쪽이 '자동 자막은 5분 이하 파일만 처리할 수 있습니다.'를
+  /// 따로 적어, 한도를 바꾸면 한쪽만 바뀔 판이었다(5차 434).
+  static String tooLongMessage([int ms = maxDurationMs]) =>
+      '${ms ~/ 60000}분 이하 영상만 넣을 수 있어요.';
   static final RegExp timecodePattern = RegExp(r'^\d{2}:\d{2}\.\d{3}$');
 
   /// 지금 저장할 수 없는 까닭. 저장 버튼을 끄고 버튼 아래에 적을 때 쓴다.
@@ -74,7 +80,7 @@ class ClipValidator {
       return const ValidationResult.invalid('영상 길이를 읽지 못했어요. 영상을 다시 골라 주세요.');
     }
     if (form.durationMs! > maxDurationMs) {
-      return const ValidationResult.invalid('5분 이하 영상만 넣을 수 있어요.');
+      return ValidationResult.invalid(tooLongMessage());
     }
 
     final segmentResult = validateSegments(form.segments, form.durationMs!);

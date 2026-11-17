@@ -30,7 +30,7 @@ void main() {
             hasContent: true,
             optionCount: 1,
             filledOptionCount: 1),
-        '보기를 2개 이상 적어 주세요.',
+        '항목을 2개 이상 적어 주세요.',
       );
     });
 
@@ -41,7 +41,7 @@ void main() {
             hasContent: true,
             optionCount: 3,
             filledOptionCount: 2),
-        '빈 보기 칸을 채워 주세요.',
+        '빈 항목 칸을 채워 주세요.',
       );
     });
 
