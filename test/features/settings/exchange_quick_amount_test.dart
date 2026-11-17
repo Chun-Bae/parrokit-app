@@ -1,8 +1,10 @@
+import 'dart:io';
 // 환전소 빠른 수량 칩. 가진 것보다 많으면 왜 못 누르는지 말해 준다(5차).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/settings/more/presentation/exchange_quick_amount.dart';
 
 void main() {
+  _josaTests();
   group('정해진 수량 칩', () {
     test('가진 만큼이면 막지 않는다', () {
       expect(quickStepBlockedReason(unit: '패롯', balance: 5, step: 5), isNull);
@@ -43,6 +45,40 @@ void main() {
         quickAllBlockedReason(unit: '크래커', balance: 900, unitSize: 1000),
         '크래커는 1,000개 단위로 바꿔요. 지금은 900개예요.',
       );
+    });
+  });
+}
+
+// 조사를 제 셈으로 붙이던 것을 공용 korean_josa로 모았다(5차 486).
+//
+// 한글이 아닌 글자로 끝나는 이름에서 갈라져 있었다. 공용 쪽은 읽는 소리를
+// 알 수 없어 '이(가)'라고 적는데, 환전소만 '이'라고 단정했다.
+void _josaTests() {
+  group('조사는 공용 셈을 쓴다', () {
+    test('받침에 맞춰 붙인다', () {
+      expect(quickStepBlockedReason(unit: '패롯', balance: 4, step: 5),
+          startsWith('패롯이 '));
+      expect(quickStepBlockedReason(unit: '크래커', balance: 900, step: 1000),
+          startsWith('크래커가 '));
+      expect(quickAllBlockedReason(unit: '크래커', balance: 900, unitSize: 1000),
+          startsWith('크래커는 '));
+    });
+
+    test('한글이 아닌 이름은 두 가지를 함께 쓴다', () {
+      expect(quickStepBlockedReason(unit: 'coin', balance: 1, step: 5),
+          startsWith('coin이(가) '));
+      expect(quickAllBlockedReason(unit: 'coin', balance: 0, unitSize: 1),
+          '바꿀 coin이(가) 없어요.');
+    });
+
+    test('이 파일은 조사 셈을 따로 들고 있지 않다', () {
+      final code = File('lib/features/settings/more/presentation/'
+              'exchange_quick_amount.dart')
+          .readAsLinesSync()
+          .where((l) => !l.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(code.contains('0xAC00'), isFalse);
+      expect(code, contains("import 'package:parrokit/core/shared/utils/korean_josa.dart'"));
     });
   });
 }

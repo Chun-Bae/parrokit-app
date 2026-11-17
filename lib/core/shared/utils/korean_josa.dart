@@ -43,6 +43,13 @@ String iGa(String word) => switch (_ending(word).batchim) {
       null => '$word이(가)',
     };
 
+/// [word] + 은/는.
+String eunNeun(String word) => switch (_ending(word).batchim) {
+      true => '$word은',
+      false => '$word는',
+      null => '$word은(는)',
+    };
+
 /// [word] + 으로/로. ㄹ 받침은 '로'.
 String euro(String word) {
   final e = _ending(word);
