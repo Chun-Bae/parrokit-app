@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/widgets.dart';
 
@@ -96,6 +97,13 @@ class AddSentenceController extends ChangeNotifier {
     if (limit == null || remaining == null) return null;
     return (limit - remaining).clamp(0, limit);
   }
+
+  /// 오늘 횟수를 다 썼나(5차 478).
+  ///
+  /// 아직 못 읽었으면 false다. 모르는데 막아 두면 쓸 수 있는 사람도
+  /// 못 쓴다.
+  bool get exhausted =>
+      assistExhausted(used: usedToday, limit: dailyLimit);
 
   /// 화면을 열 때 한 번 불러 사용 횟수를 보여 준다. 모델을 부르지 않아 횟수를 쓰지 않는다.
   Future<void> loadUsage() async {

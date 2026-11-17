@@ -213,11 +213,11 @@ void main() {
   });
 
   test('오늘 다 썼는지 센다(5차 473)', () {
-    expect(wordAssistExhausted(used: 3, limit: 3), isTrue);
-    expect(wordAssistExhausted(used: 2, limit: 3), isFalse);
+    expect(assistExhausted(used: 3, limit: 3), isTrue);
+    expect(assistExhausted(used: 2, limit: 3), isFalse);
     // 모르면 막지 않는다. 서버가 막으면 그때 알린다.
-    expect(wordAssistExhausted(used: null, limit: 3), isFalse);
-    expect(wordAssistExhausted(used: 3, limit: null), isFalse);
+    expect(assistExhausted(used: null, limit: 3), isFalse);
+    expect(assistExhausted(used: 3, limit: null), isFalse);
   });
 
   test('다 썼다는 말을 한 곳에서 꺼내 쓴다(5차 473)', () {

@@ -261,9 +261,12 @@ class _HangulTransliterateRow extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: FilledButton.tonal(
                 key: const ValueKey('transliterate'),
-                onPressed: status == AssistStatus.loading
-                    ? null
-                    : controller.transliterate,
+                // 변환도 같은 하루 횟수를 쓴다. 다 썼으면 눌러 보기 전에
+                // 막고 까닭을 적는다(5차 478).
+                onPressed:
+                    status == AssistStatus.loading || controller.exhausted
+                        ? null
+                        : controller.transliterate,
                 style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
                 child: status == AssistStatus.loading
                     ? const SizedBox(
@@ -274,7 +277,8 @@ class _HangulTransliterateRow extends StatelessWidget {
       ]),
       if (status == AssistStatus.unavailable ||
           status == AssistStatus.failed ||
-          status == AssistStatus.quotaExceeded)
+          status == AssistStatus.quotaExceeded ||
+          controller.exhausted)
         Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
@@ -283,11 +287,17 @@ class _HangulTransliterateRow extends StatelessWidget {
                     '지금은 한글 변환을 쓸 수 없어요. 원문을 직접 적어 주세요.',
                   // 한글 변환도 같은 하루 횟수를 나눠 쓴다. 같은 말로 적는다(5차 475).
                   AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
-                  _ => '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
+                  AssistStatus.failed =>
+                    '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
+                  _ => assistQuotaExhaustedMessage,
                 },
                 key: const ValueKey('transliterate-message'),
-                style: context.texts.bodySmall
-                    .copyWith(color: HomeTokens.of(context).muted))),
+                // 다 썼다는 말은 두 줄이 같은 빨강으로 적는다(5차 478).
+                style: context.texts.bodySmall.copyWith(
+                    color: status == AssistStatus.quotaExceeded ||
+                            controller.exhausted
+                        ? Theme.of(context).colorScheme.error
+                        : HomeTokens.of(context).muted))),
     ]);
   }
 }
@@ -308,9 +318,12 @@ class _AutoFillCard extends StatelessWidget {
         AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
         AssistStatus.failed => '자동으로 채우지 못했어요. 횟수는 줄지 않았어요.',
         AssistStatus.loading => '채우는 중이에요…',
-        AssistStatus.idle => controller.text.text.trim().isEmpty
-            ? assistNeedsTextHint('문장')
-            : null,
+        // 다 쓴 줄은 눌러 보기 전에도 안다. 횟수부터 보고 말한다(5차 478).
+        AssistStatus.idle => controller.exhausted
+            ? assistQuotaExhaustedMessage
+            : controller.text.text.trim().isEmpty
+                ? assistNeedsTextHint('문장')
+                : null,
       };
 
   @override
@@ -319,8 +332,8 @@ class _AutoFillCard extends StatelessWidget {
     final status = controller.fillStatus;
     final used = controller.usedToday;
     final limit = controller.dailyLimit;
-    final exhausted = status == AssistStatus.quotaExceeded ||
-        (used != null && limit != null && used >= limit);
+    final exhausted =
+        status == AssistStatus.quotaExceeded || controller.exhausted;
     final note = message;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [

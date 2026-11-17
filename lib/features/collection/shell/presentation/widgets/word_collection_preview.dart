@@ -1295,7 +1295,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   bool _usageFailed = false;
 
   /// 오늘 횟수를 다 썼나. 다 썼으면 단추를 막는다(5차 473).
-  bool get _exhausted => wordAssistExhausted(
+  bool get _exhausted => assistExhausted(
         used: _assistUsed,
         limit: _assist.dailyLimit,
       );
@@ -1933,9 +1933,6 @@ final String wordFillNeedsWordHint = assistNeedsTextHint('단어');
 ///
 /// 다 썼으면 단추를 눌리지 않게 두고 까닭을 미리 보여 준다. 전에는 눌러
 /// 보고서야 "다 썼어요"를 알았다.
-bool wordAssistExhausted({int? used, int? limit}) =>
-    used != null && limit != null && limit > 0 && used >= limit;
-
 /// 뜻·발음 채우기 단추 아래 설명(5차 472).
 ///
 /// 뜻·발음과 예문은 쓰임이 다르다. 뜻·발음은 한 번 채우면 끝이고, 예문은

@@ -87,7 +87,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
   bool _usageChecked = false;
 
   bool get _exhausted => _usageChecked &&
-      wordAssistExhausted(
+      assistExhausted(
         used: _assist.dailyLimit == null || _assist.remainingToday == null
             ? null
             : _assist.dailyLimit! - _assist.remainingToday!,

@@ -45,6 +45,7 @@ AddSentenceController make(FakeAssist assist, {String language = '영어'}) =>
     AddSentenceController(language: language, assist: assist);
 
 void main() {
+  _exhaustedTests();
   test('추가할 수 없으면 무엇이 빠졌는지 알려 준다', () {
     // 꺼진 '추가'만 보고는 알 수 없었다(5차, 커뮤니티 글쓰기와 같은 결).
     final c = make(FakeAssist());
@@ -270,5 +271,32 @@ void main() {
     await c.loadUsage();
     expect(c.usageStatus, UsageStatus.ready);
     c.dispose();
+  });
+}
+
+// 다 쓴 줄을 눌러 보기 전에 안다(5차 478).
+//
+// 전에는 서버가 거절해야 fillStatus가 quotaExceeded가 됐다. 그래서 열자마자
+// 3/3인 화면이 '문장을 적으면 채울 수 있어요'라고 적고, 적어도 단추는 죽어
+// 있었다.
+void _exhaustedTests() {
+  test('횟수를 다 썼으면 부르기 전에도 안다', () {
+    final assist = FakeAssist()
+      ..dailyLimit = 3
+      ..remainingToday = 0;
+    final controller = make(assist);
+    expect(controller.usedToday, 3);
+    expect(controller.exhausted, isTrue);
+  });
+
+  test('남아 있으면 막지 않는다', () {
+    final assist = FakeAssist()
+      ..dailyLimit = 3
+      ..remainingToday = 1;
+    expect(make(assist).exhausted, isFalse);
+  });
+
+  test('횟수를 모르면 막지 않는다', () {
+    expect(make(FakeAssist()).exhausted, isFalse);
   });
 }

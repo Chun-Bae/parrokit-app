@@ -33,3 +33,11 @@ const String assistQuotaExhaustedMessage = '오늘 자동 채우기를 모두 �
 /// 단어 화면이 같은 꼴로 말한다.
 String assistNeedsTextHint(String what) =>
     '${eulReul(what)} 적으면 채울 수 있어요';
+
+/// 오늘 횟수를 다 썼나(5차 478).
+///
+/// 단어 쪽에만 있던 것을 문장 화면도 쓰게 옮겼다. 문장 화면은 서버가
+/// 거절한 뒤에야 다 쓴 줄 알아서, 열자마자 3/3인데도 '문장을 적으면
+/// 채울 수 있어요'라고 적었다.
+bool assistExhausted({int? used, int? limit}) =>
+    used != null && limit != null && limit > 0 && used >= limit;
