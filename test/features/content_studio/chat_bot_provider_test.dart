@@ -176,4 +176,42 @@ void main() {
       expect(provider.isUsageLoading, isFalse, reason: '도는 동그라미를 남기지 않는다');
     });
   });
+
+  test('조회하기 전에는 사용량을 안다고 하지 않는다(5차 456)', () {
+    // 전에는 기본값 30을 그대로 '오늘 사용량 30/30'으로 적었다.
+    expect(provider.usageKnown, isFalse);
+    expect(provider.usedChatsToday, isNull);
+  });
+
+  test('조회에 성공하면 쓴 횟수를 셈한다', () async {
+    await provider.fetchDailyUsage();
+
+    expect(provider.usageKnown, isTrue);
+    // 한도 30, 남은 30이면 오늘 쓴 것은 0이다.
+    expect(provider.usedChatsToday, 0);
+  });
+
+  test('두 번 다 실패하면 모른다고 둔다', () {
+    fakeAsync((async) {
+      repo.usageNeverAnswers = true;
+      provider.fetchDailyUsage();
+
+      async.elapse(
+          ChatBotProvider.usageTimeout * 2 + const Duration(seconds: 1));
+      async.flushMicrotasks();
+
+      expect(provider.usageKnown, isFalse);
+      expect(provider.usedChatsToday, isNull);
+    });
+  });
+
+  test('답에 횟수가 실려 오면 그때부터는 안다', () async {
+    final sending = provider.sendMessage('안녕');
+    repo.pending.single.complete(const AiChatMessage(
+        text: '반가워요', isUser: false, remainingToday: 29, dailyLimit: 30));
+    await sending;
+
+    expect(provider.usageKnown, isTrue);
+    expect(provider.usedChatsToday, 1);
+  });
 }

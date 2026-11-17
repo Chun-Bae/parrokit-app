@@ -57,6 +57,18 @@ class ChatBotProvider extends ChangeNotifier {
   int _dailyChatLimit = 30;
   int get dailyChatLimit => _dailyChatLimit;
 
+  /// 서버에서 실제 값을 받아 본 적이 있는지(5차 456).
+  ///
+  /// 못 받으면 위 둘은 기본값 30 그대로다. 전에는 화면이 그 기본값을
+  /// 실제 숫자처럼 '오늘 사용량 30/30'이라고 적어서, 조회가 실패한 줄
+  /// 모르고 **지어낸 숫자를 읽게 했다**.
+  bool _usageKnown = false;
+  bool get usageKnown => _usageKnown;
+
+  /// 오늘 몇 번 썼는지. 아직 모르면 null.
+  int? get usedChatsToday =>
+      _usageKnown ? _dailyChatLimit - _remainingChatsToday : null;
+
   /// 서버에서 실제 사용량을 아직 못 받아온 상태인지 여부.
   bool _isUsageLoading = true;
   bool get isUsageLoading => _isUsageLoading;
@@ -84,6 +96,7 @@ class ChatBotProvider extends ChangeNotifier {
               .timeout(usageTimeout);
           _remainingChatsToday = usage.remainingToday;
           _dailyChatLimit = usage.dailyLimit;
+          _usageKnown = true;
           return;
         } on TimeoutException catch (e) {
           AppLogger.w('[Chatbot][Provider] 남은 횟수 조회 실패: $e');
@@ -209,6 +222,8 @@ class ChatBotProvider extends ChangeNotifier {
       final aiResponse = await _sendMessageUseCase.call(
           text, history, _selectedModel, _chatbotMode);
       // 남은 횟수는 서버가 이미 셌으니 대화를 바꿨어도 반영한다.
+      // 답에 횟수가 실려 오면 그것도 실제 값이다.
+      if (aiResponse.remainingToday != null) _usageKnown = true;
       _remainingChatsToday = aiResponse.remainingToday ?? _remainingChatsToday;
       _dailyChatLimit = aiResponse.dailyLimit ?? _dailyChatLimit;
       if (conversation != _conversation) {

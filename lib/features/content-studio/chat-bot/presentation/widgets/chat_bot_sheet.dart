@@ -1,3 +1,4 @@
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:provider/provider.dart';
@@ -229,22 +230,39 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                             color: context.tokens.textSecondary,
                           ),
                         )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.bolt_rounded,
-                              size: 14,
-                              color: context.tokens.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '오늘 사용량 ${provider.remainingChatsToday}/${provider.dailyChatLimit}',
-                              style: context.texts.labelSmall.copyWith(
+                      // 못 읽었으면 숫자를 지어내지 않는다(5차 456).
+                      // 전에는 기본값 30을 '오늘 사용량 30/30'으로 적어
+                      // 조회가 실패한 줄 모르게 했다. 말과 숫자도 어긋나
+                      // 있었다(남은 수를 '사용량'이라 불렀다).
+                      : GestureDetector(
+                          key: const ValueKey('chatbot-usage'),
+                          onTap: provider.usageKnown
+                              ? null
+                              : provider.fetchDailyUsage,
+                          behavior: HitTestBehavior.opaque,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.bolt_rounded,
+                                size: 14,
                                 color: context.tokens.textSecondary,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                assistUsageLabel(
+                                      used: provider.usedChatsToday,
+                                      limit: provider.usageKnown
+                                          ? provider.dailyChatLimit
+                                          : null,
+                                    ) ??
+                                    assistUsageUnknownLabel,
+                                style: context.texts.labelSmall.copyWith(
+                                  color: context.tokens.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                 ),
                 // Header
