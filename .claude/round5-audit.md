@@ -157,6 +157,17 @@ npx -y firebase-tools@latest deploy --only functions --project parrokit-45126
 
 ### 올린 빌드 기록 (아래는 할 일이 아니라 지난 기록이다)
 
+#### 2026-11-18 08:37 테스트 배포 (사용자 요청 "빌드올리고 배포해봐")
+- **1.0.6 (121)을 App Distribution `testers`에 올렸다.** `uploaded new
+  release`라 **새 항목이 생겼다.** 릴리스 id `2s8gkun0ueh9o`
+- **사용자가 "어제부터 메일 안 온다"고 해서 빌드 번호를 올렸다.**
+  120으로 세 번 올리는 동안 계속 기존 릴리스를 덮어써서(`update to existing
+  release`) 새 릴리스 알림이 가지 않았던 것이다. 이번에는 릴리스 노트도 함께 넣었다
+- `pubspec.yaml` 120 → **121**. 루프 규칙상 version은 요청 없이 바꾸지
+  않는데, 이번에는 사용자가 '빌드올리고'라고 해서 바꿨다
+- 배포한 커밋 `61f205c6`(반복 490까지) + 버전 한 줄
+- 메일이 실제로 가는지는 사용자가 확인해야 한다
+
 #### 2026-11-18 08:22 테스트 배포 (사용자 요청 "최신 빌드 배포해줘 로컬로", 내가 로컬에서 돌림)
 - **1.0.6 (120)을 App Distribution `testers`에 올렸다.** `uploaded update to
   existing release`라 **새 항목이 생기지 않고 기존 릴리스를 또 덮어썼다**
