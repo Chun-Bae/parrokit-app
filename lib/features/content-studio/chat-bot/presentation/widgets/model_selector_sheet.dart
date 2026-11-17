@@ -30,7 +30,7 @@ void showModelSelectorBottomSheet(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'AI 모델 선택',
+              'AI 모델 고르기',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
               ),

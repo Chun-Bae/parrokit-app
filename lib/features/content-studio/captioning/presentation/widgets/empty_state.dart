@@ -78,7 +78,7 @@ class EmptyState extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        '여기를 눌러 영상 선택',
+                        '여기를 눌러 영상 고르기',
                         style: context.texts.titleMedium
                             .copyWith(color: cs.onSurface),
                       ),

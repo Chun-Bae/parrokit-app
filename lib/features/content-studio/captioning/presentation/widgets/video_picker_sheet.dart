@@ -6,7 +6,7 @@ void showVideoPickerSheet({
   required BuildContext context,
   required VoidCallback onPickFile,
   required VoidCallback onPickPhotos,
-  String title = '영상 선택',
+  String title = '영상 고르기',
 }) {
   final theme = Theme.of(context);
   final cs = theme.colorScheme;
@@ -37,7 +37,7 @@ void showVideoPickerSheet({
               ListTile(
                 leading: const Icon(Icons.file_open_rounded),
                 title: Text(
-                  '파일에서 선택',
+                  '파일에서 고르기',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -50,7 +50,7 @@ void showVideoPickerSheet({
               ListTile(
                 leading: const Icon(Icons.photo_library_rounded),
                 title: Text(
-                  '사진에서 선택',
+                  '사진에서 고르기',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),

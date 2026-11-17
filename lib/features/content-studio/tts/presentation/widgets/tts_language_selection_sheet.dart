@@ -65,7 +65,7 @@ class _TtsLanguageSelectionSheetState extends State<TtsLanguageSelectionSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            '언어 선택',
+            '언어 고르기',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),

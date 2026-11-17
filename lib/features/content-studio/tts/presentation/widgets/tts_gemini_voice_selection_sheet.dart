@@ -42,7 +42,7 @@ class TtsGeminiVoiceSelectionSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              'Gemini 목소리 에이전트 선택',
+              'Gemini 목소리 고르기',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),

@@ -228,7 +228,7 @@ class _TtsVoiceSelectionSheetState extends State<TtsVoiceSelectionSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              '목소리 선택',
+              '목소리 고르기',
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),

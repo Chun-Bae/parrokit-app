@@ -41,7 +41,7 @@ class TtsElevenLabsModelSelectionSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              'ElevenLabs 음성 생성 모델 선택',
+              'ElevenLabs 음성 모델 고르기',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),

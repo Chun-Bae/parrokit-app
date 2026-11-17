@@ -75,7 +75,7 @@ class _TtsElevenLabsVoiceSelectionSheetState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              'ElevenLabs 목소리 선택',
+              'ElevenLabs 목소리 고르기',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),

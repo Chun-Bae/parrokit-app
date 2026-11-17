@@ -493,7 +493,7 @@ class _VideoRecommendationFilterSheetState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '추천 조건 선택',
+                  '추천 조건 고르기',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),

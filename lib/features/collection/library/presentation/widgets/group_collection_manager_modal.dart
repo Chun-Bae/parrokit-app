@@ -185,7 +185,7 @@ class _GroupCollectionManagerModalState
           padding: const EdgeInsets.all(16.0),
           child: DropdownButtonFormField<int>(
             decoration: const InputDecoration(
-              labelText: '대상 그룹 선택',
+              labelText: '옮길 그룹 고르기',
               border: OutlineInputBorder(),
             ),
             initialValue: _selectedGroupIdForTabA,
@@ -246,7 +246,7 @@ class _GroupCollectionManagerModalState
           padding: const EdgeInsets.all(16.0),
           child: DropdownButtonFormField<int>(
             decoration: const InputDecoration(
-              labelText: '대상 폴더 선택',
+              labelText: '옮길 폴더 고르기',
               border: OutlineInputBorder(),
             ),
             initialValue: _selectedCollectionIdForTabB,

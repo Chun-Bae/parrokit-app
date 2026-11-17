@@ -68,4 +68,32 @@ void main() {
     expect(block, contains('nicknameNeededMessage'));
     expect(block, isNot(contains("'닉네임을 입력")));
   });
+
+  test("무엇을 고르는 시트·단추 이름이 '… 선택'이 아니라 '… 고르기'다", () {
+    // 시트 제목만 '목소리 선택'·'언어 선택'처럼 명사형이라, 앱의 다른 곳
+    // ('폴더를 골라 주세요', '백업할 것을 하나는 골라 주세요')과 말이 갈렸다(5차 419).
+    //
+    // 여러 개를 고르는 모드('전체 선택', '선택 모드')와 안 써도 되는 칸을
+    // 가리키는 '(선택)'은 뜻이 달라 여기서 다루지 않는다.
+    const allowed = [
+      '전체 선택',
+      '선택 모드',
+      '선택 닫기',
+      '선택한',
+      '개 선택',
+      '(선택)',
+    ];
+    final offenders = <String>[];
+    for (final file in _dartFiles('lib')) {
+      for (final line in _uiLines(file)) {
+        final match = RegExp(r"'[^'\n]*선택'").firstMatch(line);
+        if (match == null) continue;
+        final found = match.group(0)!;
+        if (allowed.any(found.contains)) continue;
+        offenders.add('${file.path}: $found');
+      }
+    }
+    expect(offenders, isEmpty,
+        reason: "'… 고르기'로 적는다\n${offenders.join('\n')}");
+  });
 }

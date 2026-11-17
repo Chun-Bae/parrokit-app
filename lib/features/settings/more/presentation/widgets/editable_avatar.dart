@@ -54,7 +54,7 @@ class EditableAvatar extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.photo_library),
-                  title: const Text('사진에서 선택'),
+                  title: const Text('사진에서 고르기'),
                   onTap: () => Navigator.pop(context, 1),
                 ),
                 if (hasPhoto)

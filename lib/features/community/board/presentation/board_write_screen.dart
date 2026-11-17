@@ -105,7 +105,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
-                    '게시판 주제 선택',
+                    '게시판 주제 고르기',
                     textAlign: TextAlign.center,
                     style: context.texts.titleMedium
                         .copyWith(color: colorScheme.onSurface),

@@ -42,7 +42,7 @@ class VideoModelSelectionSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              '영상 생성 모델 선택',
+              '영상 만들 모델 고르기',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
