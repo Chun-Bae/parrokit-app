@@ -4,6 +4,7 @@
 // 한다. 서버에 아직 값이 없으면 RevenueCat이 들고 있는 entitlement를 쓰고,
 // 그것도 없으면 무료로 본다(5차).
 
+import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -84,6 +85,9 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   void _notify() {
+    // 보관함의 서버 잠금도 티어를 따라간다(5차 457). 전에는 티어를 보지
+    // 않아서 구독해도 서버에 둔 클립이 보이지 않았다.
+    ClipStorageConstants.isSubscriber = isSubscribed;
     if (_disposed) return;
     notifyListeners();
   }

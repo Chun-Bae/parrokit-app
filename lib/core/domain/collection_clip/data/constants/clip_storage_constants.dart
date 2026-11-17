@@ -32,12 +32,21 @@ class ClipStorageConstants {
   /// 결제가 붙으면 이 값을 false로 바꾼다.
   static const bool isServerStorageLocked = true;
 
+  /// 구독한 사람인지. SubscriptionProvider가 티어를 읽을 때마다 갱신한다.
+  ///
+  /// 구독 화면은 '서버 백업 5GB·30GB'를 혜택으로 내걸었는데, 이 잠금이
+  /// 티어를 보지 않아서 **구독해도 서버에 둔 클립을 불러오지도 못했다**
+  /// (5차 457). 실제로 한도를 막는 것은 서버(checkStorageQuota)이고,
+  /// 앱은 보여 줄지 말지만 정한다.
+  static bool isSubscriber = false;
+
   /// 현재 로그인된 계정 기준으로 서버 스토리지가 실제로 잠겨있는지 여부.
   /// 운영자 계정은 유료화 전에도 테스트/디버깅을 위해 예외로 둔다. 서버
   /// 탭/전환 시트 등 잠금이 필요한 모든 곳이 이 메서드 하나만 참조하도록
   /// 통일한다.
   static bool isServerStorageLockedForCurrentUser() {
     if (!isServerStorageLocked) return false;
+    if (isSubscriber) return false;
     final uid = fb.FirebaseAuth.instance.currentUser?.uid;
     return !isOperatorUid(uid);
   }
