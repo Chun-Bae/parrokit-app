@@ -15,7 +15,7 @@ void main() {
         writeBlockedReason(hasTitle: true, hasContent: false), '내용을 적어 주세요.');
     expect(
         writeBlockedReason(hasTitle: true, hasContent: true, hasTopic: false),
-        '게시판을 골라 주세요.');
+        '주제를 골라 주세요.');
   });
 
   test('다 채우면 막지 않는다', () {
@@ -30,7 +30,7 @@ void main() {
             hasContent: true,
             optionCount: 1,
             filledOptionCount: 1),
-        '고를 보기를 2개 넘게 적어 주세요.',
+        '보기를 2개 이상 적어 주세요.',
       );
     });
 
@@ -112,5 +112,34 @@ void main() {
         .readAsStringSync();
     expect(code, contains("ValueKey('question-blocked-reason')"));
     expect(code, contains('if (_blockedReason case final reason?)'));
+  });
+
+  test('꺼진 단추 안내와 올리기 검사가 같은 말을 쓴다(5차 433)', () {
+    // 전에는 단추 아래는 '게시판을 골라 주세요', 올리면 '주제를 골라
+    // 주세요'였다. 같은 상황을 두 말로 불렀다.
+    final validator = File(
+            'lib/features/community/shell/domain/validators/post_validator.dart')
+        .readAsStringSync();
+    for (final name in [
+      'writeNeedsTitleMessage',
+      'writeNeedsContentMessage',
+      'writeNeedsTopicMessage',
+    ]) {
+      expect(validator, contains(name), reason: name);
+    }
+    expect(validator, isNot(contains("'제목을 적어 주세요.'")));
+    expect(validator, isNot(contains("'주제를 골라 주세요.'")));
+    expect(validator, isNot(contains('등록할 수 있습니다')));
+  });
+
+  test('보기 수 안내가 실제 조건과 맞는다(5차 433)', () {
+    // 막는 조건은 2개 미만이다. '2개 넘게'라고 하면 3개부터로 읽힌다.
+    expect(writeNeedsTwoOptionsMessage, contains('2개 이상'));
+    expect(
+      writeBlockedReason(
+          hasTitle: true, hasContent: true, optionCount: 2, filledOptionCount: 2),
+      isNull,
+      reason: '보기 2개면 올릴 수 있다',
+    );
   });
 }

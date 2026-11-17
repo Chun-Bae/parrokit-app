@@ -1,3 +1,5 @@
+import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
+
 class PostValidator {
   static const int maxTags = 20;
   static const int maxTagLength = 10;
@@ -9,16 +11,16 @@ class PostValidator {
     required List<String> tags,
   }) {
     if (title.trim().isEmpty) {
-      throw ArgumentError('제목을 적어 주세요.');
+      throw ArgumentError(writeNeedsTitleMessage);
     }
     if (content.trim().isEmpty) {
-      throw ArgumentError('내용을 적어 주세요.');
+      throw ArgumentError(writeNeedsContentMessage);
     }
     if (category.trim().isEmpty) {
-      throw ArgumentError('주제를 골라 주세요.');
+      throw ArgumentError(writeNeedsTopicMessage);
     }
     if (tags.length > maxTags) {
-      throw ArgumentError('태그는 최대 $maxTags개까지만 등록할 수 있습니다.');
+      throw ArgumentError(writeTooManyTagsMessage(maxTags));
     }
     if (tags.any((tag) => tag.length > maxTagLength)) {
       throw ArgumentError('태그는 $maxTagLength글자 이하로 적어 주세요.');

@@ -65,7 +65,7 @@ void main() {
           tags: tags,
         ),
         throwsA(isA<ArgumentError>().having((e) => e.message, 'message',
-            '태그는 최대 ${PostValidator.maxTags}개까지만 등록할 수 있습니다.')),
+            '태그는 ${PostValidator.maxTags}개까지 넣을 수 있어요.')),
       );
     });
 
