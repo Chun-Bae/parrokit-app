@@ -3,6 +3,7 @@
 시작: 2026-11-13 아침. 30분마다 예약된 세션 루프(2026-11-17에 10분에서 바꿨다). 지시는 .claude/round5-loop.md. 매일 07:50 아침 요약(.claude/morning-report.md).
 
 ## 바뀐 것
+- **구독 Paywall이 광고 제거 entitlement를 보고 갈리던 것**. 테스트 5개
 - **공유 문장의 '가져간 수'가 무슨 숫자인지 없던 것**. 테스트 4개
 
 최근 40개만 둔다. 그 앞은 `.claude/round5-archive.md`에 있다(399개).
@@ -68,7 +69,21 @@
 - **firestore.rules** — 단어 유의어 한도(`synonyms` 10개)를 validWord에 더했다. 지금 배포된 규칙은 모르는 칸이라 그대로 통과하므로 급하지 않다. 다음에 규칙을 배포할 때 같이 나간다:
   `npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126`
 
-- **RevenueCat 대시보드 — 2026-11-17에 둘은 끝냈다**(사용자가 로그인해 주고 맡김)
+- **RevenueCat·App Store Connect — 2026-11-17에 대부분 끝냈다**(사용자가 로그인해 주고 맡김)
+  - App Store Connect: 구독 그룹 `Parrokit Subscription`(22588445),
+    월 구독 2개 — `com.bull.parrokit.sub_light_monthly`(₩2,900, Apple ID
+    6835832285), `com.bull.parrokit.sub_pro_monthly`(₩7,900, 6835832640).
+    가격은 한국 기준으로 정하고 175개국은 Apple이 환산한 값을 그대로 뒀다.
+    한국어 표시 이름·설명도 넣었다(라이트/프로)
+  - RevenueCat: 상품 2개를 import하고 entitlement에 붙였다
+    (`parrokit_sub_light` ← light_monthly, `parrokit_sub_pro` ← pro_monthly).
+    offering `parrokit_subscription`('Parrokit 구독')에 패키지 둘
+    (`light`, `pro`)을 만들었다
+  - **남음 — Paywall**: offering은 섰지만 RevenueCat Paywall 화면은 아직
+    없다. 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 뜬다
+  - **남음 — 심사 제출**: 구독 둘 다 `Prepare for Submission`이다. 첫
+    구독은 새 앱 버전과 함께 제출해야 한다(Apple 안내)
+  - 2026-11-17 이전 기록:
   - 끝남: entitlement `parrokit_sub_light`(라이트)·`parrokit_sub_pro`(프로) 생성
   - 끝남: Webhook 'Parrokit Firebase' 등록(Active, Production+Sandbox, 모든 이벤트).
     주소 `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`.
@@ -712,3 +727,19 @@
 - 테스트 4개. analyze 깨끗, 전체 통과. 기기에서 라이트·다크로 봤다
 - 중간에 사용자 요청으로 RevenueCat 작업을 했다(entitlement 2개·웹훅 등록,
   배포 필요 항목 참고)
+
+## 반복 459 (2026-11-17 19:30~, 사용자 요청 + 코드)
+- 사용자가 App Store Connect 로그인을 열어 주고 맡겨서, 브라우저로 구독
+  상품을 만들었다(자세한 것은 맨 위 '배포 필요'의 RevenueCat 항목)
+  - 처음에는 **유료 앱 계약이 옛 버전이라 막혔다**(`Your paid application
+    agreement is outdated`). 계약 수락은 법적 서명이라 사용자가 직접 했고,
+    그 뒤 상품 생성이 풀렸다
+  - 한국 세금 양식은 `Missing Tax Info`로 남아 있다. BRN(사업자등록번호)이나
+    NTS 등록번호 중 하나가 필요한데 사용자에게 아직 없다. **돈을 받는**
+    단계에서 걸리는 것이고 상품 생성·테스트에는 지장이 없다
+- 코드: **구독 Paywall이 광고 제거 entitlement를 보고 있었다.**
+  `presentPaywallIfNeeded(IapProvider.entitlementId)`의 그 값은
+  `parrokit_ads_removed`라, 구독한 사람에게도 Paywall이 뜨고 광고 제거만
+  산 사람에게는 안 떴다. 구독 단계로 따지도록 바꿨다(`isSubscribedNow`)
+- 테스트 5개. 355에서 만든 테스트도 새 갈래에 맞게 고쳤다. analyze 깨끗,
+  전체 통과. **실제 Paywall은 출시 빌드에서만 떠서 기기로는 못 봤다**(미확인)
