@@ -49,7 +49,8 @@ void main() {
     expect(find.text(localOnlyNoticeTitle), findsOneWidget);
     // 몇 개가 사라지는지 적는다. 서버에 올라간 클립은 세지 않는다.
     expect(find.text(localOnlyNoticeBody(3)), findsOneWidget);
-    expect(find.textContaining('클립 3개가 사라져요'), findsOneWidget);
+    // 폴더 안에서도 같은 안내가 뜨므로 무엇을 센 수인지 적는다(5차 484).
+    expect(find.textContaining('보관함의 클립 3개가 사라져요'), findsOneWidget);
     expect(find.text(localOnlyBackupLabel), findsOneWidget);
     expect(find.text(localOnlySubscribeLabel), findsOneWidget);
   });
