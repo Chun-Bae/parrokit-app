@@ -4,6 +4,7 @@
 // 새 대화에 걸렸다.
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/content-studio/chat-bot/domain/entities/ai_chat_message.dart';
 import 'package:parrokit/features/content-studio/chat-bot/domain/repositories/ai_chat_repository.dart';
@@ -14,6 +15,9 @@ import 'package:parrokit/features/content-studio/video/domain/models/video_gener
 class _Repo implements AiChatRepository {
   final pending = <Completer<AiChatMessage>>[];
 
+  /// 사용량 조회를 영영 끝내지 않게 하려면 true로 둔다(5차 429).
+  bool usageNeverAnswers = false;
+
   @override
   Future<AiChatMessage> sendMessage(String text, List<AiChatMessage> history,
       String model, String chatbotMode) {
@@ -23,8 +27,13 @@ class _Repo implements AiChatRepository {
   }
 
   @override
-  Future<({int usedToday, int dailyLimit, int remainingToday})>
-      fetchUsage() async => (usedToday: 0, dailyLimit: 30, remainingToday: 30);
+  Future<({int usedToday, int dailyLimit, int remainingToday})> fetchUsage() {
+    if (usageNeverAnswers) {
+      return Completer<({int usedToday, int dailyLimit, int remainingToday})>()
+          .future;
+    }
+    return Future.value((usedToday: 0, dailyLimit: 30, remainingToday: 30));
+  }
 }
 
 void main() {
@@ -104,6 +113,24 @@ void main() {
     test('지금 설정(kVideoStudioEnabled)에 맞는 인사를 쓴다', () {
       expect(chatBotGreeting(),
           chatBotGreeting(videoEnabled: kVideoStudioEnabled));
+    });
+  });
+
+
+  test('사용량 조회가 대답 없으면 기다리다 끝낸다(5차 429)', () {
+    // 전에는 기다림에 끝이 없어서 시트 맨 위 동그라미가 영영 돌았다.
+    fakeAsync((async) {
+      repo.usageNeverAnswers = true;
+      final done = provider.fetchDailyUsage();
+      var finished = false;
+      done.then((_) => finished = true);
+
+      async.elapse(const Duration(seconds: 7));
+      expect(provider.isUsageLoading, isTrue, reason: '아직 기다리는 중');
+
+      async.elapse(ChatBotProvider.usageTimeout);
+      expect(finished, isTrue);
+      expect(provider.isUsageLoading, isFalse, reason: '동그라미가 멈춘다');
     });
   });
 }

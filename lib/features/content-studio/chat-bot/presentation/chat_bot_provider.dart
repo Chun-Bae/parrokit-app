@@ -11,9 +11,10 @@ import 'package:parrokit/features/content-studio/video/domain/models/video_gener
 /// 전에는 늘 '비디오 생성'을 돕는다고 했는데, 입구가 숨겨져 있어 눌러도
 /// '영상 만들기는 지금 쉬고 있어요'만 떴다(5차).
 @visibleForTesting
-String chatBotGreeting({bool videoEnabled = kVideoStudioEnabled}) => videoEnabled
-    ? '안녕하세요! 음성과 영상 만들기를 도와줄 챗봇이에요.\n어떤 영상이나 음성을 만들고 싶으신가요?'
-    : '안녕하세요! 음성 만들기를 도와줄 챗봇이에요.\n어떤 음성을 만들고 싶으신가요?';
+String chatBotGreeting({bool videoEnabled = kVideoStudioEnabled}) =>
+    videoEnabled
+        ? '안녕하세요! 음성과 영상 만들기를 도와줄 챗봇이에요.\n어떤 영상이나 음성을 만들고 싶으신가요?'
+        : '안녕하세요! 음성 만들기를 도와줄 챗봇이에요.\n어떤 음성을 만들고 싶으신가요?';
 
 class ChatBotProvider extends ChangeNotifier {
   late final SendChatMessageUseCase _sendMessageUseCase;
@@ -53,10 +54,19 @@ class ChatBotProvider extends ChangeNotifier {
   bool _isUsageLoading = true;
   bool get isUsageLoading => _isUsageLoading;
 
+  /// 서버가 대답하지 않을 때 기다릴 시간. 이 시간이 지나면 조회를 접는다.
+  ///
+  /// 전에는 기다림에 끝이 없었다. 서버가 대답하지 않으면 시트 맨 위
+  /// 사용량 줄이 **영영 도는 동그라미**로 남았다(5차 429). 목소리 목록에서
+  /// 고친 것과 같은 결함이다(395).
+  static const usageTimeout = Duration(seconds: 8);
+
   /// 시트를 열 때 채팅을 보내지 않고 오늘 사용량만 조회해 배지에 반영한다.
   Future<void> fetchDailyUsage() async {
     try {
-      final usage = await _sendMessageUseCase.repository.fetchUsage();
+      final usage = await _sendMessageUseCase.repository
+          .fetchUsage()
+          .timeout(usageTimeout);
       _remainingChatsToday = usage.remainingToday;
       _dailyChatLimit = usage.dailyLimit;
     } catch (e) {
