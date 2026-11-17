@@ -163,7 +163,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
   Future<void> toggleLike(SharedSentence sentence) async {
     final repo = repository;
     if (repo == null || !signedIn) {
-      toast('로그인 후 좋아요를 누를 수 있어요.');
+      toast(likeNeedsLoginMessage);
       return;
     }
     final liked = !sentence.liked;
@@ -178,7 +178,7 @@ class _TrendingSentencesPreviewState extends State<TrendingSentencesPreview> {
     } catch (_) {
       if (!mounted) return;
       replace(next, sentence);
-      toast('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
+      toast(likeFailedMessage);
     }
   }
 
@@ -561,7 +561,7 @@ class _SentenceCard extends StatelessWidget {
                     style: context.texts.labelSmall.copyWith(color: muted)),
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  tooltip: saved ? '내 문장에서 빼기' : '내 문장에 저장',
+                  tooltip: saveToMineTooltip(saved: saved),
                   onPressed: onSave,
                   icon: Icon(
                     saved

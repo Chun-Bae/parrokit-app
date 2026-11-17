@@ -179,7 +179,7 @@ class _ShareMySentenceSheetState extends State<ShareMySentenceSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('내 문장 공유하기',
+            Text(shareMySentenceLabel,
                 style: context.texts.titleLarge
                     .copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),

@@ -62,3 +62,22 @@ const String sentenceRemovedFromMineMessage = '내 문장에서 뺐어요.';
 
 /// 내가 올린 문장이라 여기서는 뺄 수 없을 때.
 const String sentenceIsMineMessage = '내가 올린 문장이에요. 지우려면 내 문장에서 지워 주세요.';
+
+// ── 공유 문장 카드의 단추와 좋아요(5차 426) ─────────────────────────
+//
+// 보관함 둘러보기 줄과 홈 둘러보기 줄이 같은 카드를 각자 그리면서 글도
+// 각자 적었다. 그래서 **보관함 쪽 북마크 단추는 이미 저장한 뒤에도 설명이
+// '내 문장에 저장'이었다.** 누르면 빼는데 저장이라고 적혀 있었다.
+
+/// 북마크 단추 설명. 저장했으면 누를 때 빠지므로 그렇게 적는다.
+String saveToMineTooltip({required bool saved}) =>
+    saved ? '내 문장에서 빼기' : '내 문장에 저장';
+
+/// 로그인하지 않고 좋아요를 눌렀을 때.
+const String likeNeedsLoginMessage = '로그인 후 좋아요를 누를 수 있어요.';
+
+/// 좋아요를 서버에 남기지 못했을 때.
+const String likeFailedMessage = '좋아요를 저장하지 못했어요. 다시 시도해 주세요.';
+
+/// 내 문장을 둘러보기에 올리는 자리의 이름.
+const String shareMySentenceLabel = '내 문장 공유하기';

@@ -67,4 +67,42 @@ void main() {
     }
     expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
+
+  test('저장 단추 설명이 지금 상태에 맞는다(5차 426)', () {
+    // 보관함 둘러보기 카드는 이미 저장한 뒤에도 '내 문장에 저장'이라고
+    // 적혀 있었다. 누르면 빼는데 저장이라고 말했다.
+    expect(saveToMineTooltip(saved: false), '내 문장에 저장');
+    expect(saveToMineTooltip(saved: true), '내 문장에서 빼기');
+
+    for (final path in [
+      'lib/features/collection/shell/presentation/widgets/sentence_collection_preview.dart',
+      'lib/features/home/dashboard/presentation/widgets/trending_sentences_preview.dart',
+    ]) {
+      final code = File(path)
+          .readAsLinesSync()
+          .where((l) => !l.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(code, contains('saveToMineTooltip(saved:'), reason: path);
+      expect(code, isNot(contains("tooltip: '내 문장에 저장'")), reason: path);
+    }
+  });
+
+  test('좋아요·공유 단추 글을 다른 파일이 손으로 적지 않는다', () {
+    const texts = [
+      likeNeedsLoginMessage,
+      likeFailedMessage,
+      shareMySentenceLabel,
+    ];
+    final offenders = <String>[];
+    for (final file in _dartFiles('lib')) {
+      if (file.path.endsWith(_home)) continue;
+      for (final line in _uiLines(file)) {
+        for (final text in texts) {
+          if (line.contains("'$text'")) offenders.add('${file.path}: $text');
+        }
+      }
+    }
+    expect(offenders, isEmpty,
+        reason: '$_home에서 꺼내 쓴다\n${offenders.join('\n')}');
+  });
 }

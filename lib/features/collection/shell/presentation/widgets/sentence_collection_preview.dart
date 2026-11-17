@@ -234,7 +234,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   Future<void> setSharedLiked(SharedSentence sentence, bool liked) async {
     final repo = repository;
     if (repo == null || accountId == 'guest') {
-      toast('로그인 후 좋아요를 누를 수 있어요.');
+      toast(likeNeedsLoginMessage);
       throw StateError('not signed in');
     }
     void apply(bool value) => setState(() {
@@ -257,7 +257,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
     } catch (_) {
       if (mounted) {
         apply(!liked);
-        toast('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
+        toast(likeFailedMessage);
       }
       rethrow;
     }
@@ -407,7 +407,9 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         language: language,
       );
       if (!mounted || result == null) return;
-      toast(result.added ? sentenceSavedToMineMessage : sentenceAlreadySavedMessage);
+      toast(result.added
+          ? sentenceSavedToMineMessage
+          : sentenceAlreadySavedMessage);
     } catch (_) {
       if (mounted) toast(sentenceSaveFailedMessage);
     }
@@ -738,7 +740,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                     _SharedMessage(
                         key: const ValueKey('shared-message'),
                         text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.',
-                        actionLabel: '내 문장 공유하기',
+                        actionLabel: shareMySentenceLabel,
                         onAction: () => showShareMySentenceSheet(context))
                   else
                     ...visibleShared.map((sentence) => Padding(
@@ -1024,7 +1026,7 @@ class _SentenceCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
-                    tooltip: '내 문장에 저장',
+                    tooltip: saveToMineTooltip(saved: saved),
                     visualDensity: VisualDensity.compact,
                     iconSize: 20,
                     color: colors.onSurfaceVariant,
@@ -1181,7 +1183,12 @@ class _MySentenceTile extends StatelessWidget {
             published ? sentenceShareCanceledMessage : sentenceSharedMessage);
       }
     } on ShareLimitReachedException {
-      if (context.mounted) _toast(context, sentenceShareLimitMessage(SharedSentenceRepository.dailyShareLimit));
+      if (context.mounted) {
+        _toast(
+            context,
+            sentenceShareLimitMessage(
+                SharedSentenceRepository.dailyShareLimit));
+      }
     } catch (_) {
       if (context.mounted) _toast(context, actionFailedMessage);
     }
@@ -1910,7 +1917,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
       if (mounted) setState(() => published = next);
       showNotice(next ? sentenceSharedMessage : sentenceShareCanceledMessage);
     } on ShareLimitReachedException {
-      showNotice(sentenceShareLimitMessage(SharedSentenceRepository.dailyShareLimit));
+      showNotice(
+          sentenceShareLimitMessage(SharedSentenceRepository.dailyShareLimit));
     } catch (_) {
       showNotice(actionFailedMessage);
     } finally {
@@ -2118,7 +2126,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
             sharedLiked = !next;
             sharedLikes += next ? -1 : 1;
           });
-          showNotice('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
+          showNotice(likeFailedMessage);
         }
       }
       return;
@@ -2135,7 +2143,7 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => activity = before);
-      showNotice('좋아요를 저장하지 못했어요. 다시 시도해 주세요.');
+      showNotice(likeFailedMessage);
     }
   }
 
