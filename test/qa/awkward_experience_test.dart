@@ -109,4 +109,19 @@ void main() {
         reason: "무엇을 하는지 적는다('저장' → 'mp3 파일로 내려받기'):\n"
             "${offenders.join('\n')}");
   });
+
+  test('같은 뜻을 두 말로 쓰지 않는다', () {
+    // '잠시 후'와 '잠시 뒤'가 섞여 있었다(5차 414). 같은 문장인데 화면마다
+    // 달랐다('지우지 못했어요. 잠시 후/뒤 다시 해 주세요.').
+    final offenders = <String>[];
+    for (final f in _dartFiles('lib')) {
+      for (final line in _codeLines(f)) {
+        if (line.contains('잠시 후')) {
+          offenders.add('${f.path}: ${line.trim()}');
+        }
+      }
+    }
+    expect(offenders, isEmpty,
+        reason: "앱은 '잠시 뒤'로 적는다:\n${offenders.join('\n')}");
+  });
 }

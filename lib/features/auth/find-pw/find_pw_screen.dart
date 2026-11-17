@@ -47,17 +47,17 @@ class _FindPwScreenState extends State<FindPwScreen> {
         case 'invalid-email':
           showToast('이메일 형식이 올바르지 않아요.');
         case 'too-many-requests':
-          showToast('요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
+          showToast('요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.');
         default:
           showToast(userErrorMessage(e,
-              fallback: '메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.'));
+              fallback: '메일을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. 그 밖의 예외는 아무 데도 안
       // 잡혀서 토스트조차 안 뜬다. 버튼이 먹통인 것으로 보인다.
       AppLogger.e('[Auth] 비밀번호 재설정 메일 전송 실패', error: e);
       if (!mounted) return;
-      showToast('메일 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      showToast('메일 전송 중 오류가 발생했습니다. 잠시 뒤 다시 시도해 주세요.');
     }
   }
 

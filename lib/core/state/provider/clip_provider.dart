@@ -309,7 +309,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
           onProgress: onProgress,
         ),
         successMessage: '서버 저장을 마쳤어요',
-        failureMessage: '서버 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+        failureMessage: '서버 저장에 실패했어요. 잠시 뒤 다시 시도해 주세요.',
         logTag: 'move-to-server',
       );
 
@@ -322,7 +322,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
           onProgress: onProgress,
         ),
         successMessage: 'Google Drive 저장을 마쳤어요',
-        failureMessage: 'Google Drive 저장에 실패했어요. 잠시 후 다시 시도해 주세요.',
+        failureMessage: 'Google Drive 저장에 실패했어요. 잠시 뒤 다시 시도해 주세요.',
         logTag: 'move-to-gdrive',
       );
 
@@ -335,7 +335,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
           onProgress: onProgress,
         ),
         successMessage: '내 기기로 옮겼어요',
-        failureMessage: '내 기기로 옮기지 못했어요. 잠시 후 다시 시도해 주세요.',
+        failureMessage: '내 기기로 옮기지 못했어요. 잠시 뒤 다시 시도해 주세요.',
         logTag: 'move-to-local',
       );
 
@@ -408,7 +408,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       if (!success) {
         _isStorageTransferRunning = false;
         _storageTransferSucceeded = false;
-        _storageTransferError = '지우지 못했어요. 잠시 후 다시 해 주세요.';
+        _storageTransferError = '지우지 못했어요. 잠시 뒤 다시 해 주세요.';
         notifyListeners();
         return false;
       }
@@ -422,7 +422,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '지우지 못했어요. 잠시 후 다시 해 주세요.';
+      _storageTransferError = '지우지 못했어요. 잠시 뒤 다시 해 주세요.';
       notifyListeners();
       return false;
     }
@@ -448,7 +448,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '폴더를 지우지 못했어요. 잠시 후 다시 해 주세요.';
+      _storageTransferError = '폴더를 지우지 못했어요. 잠시 뒤 다시 해 주세요.';
       notifyListeners();
       return false;
     }
@@ -486,7 +486,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '지우는 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
+      _storageTransferError = '지우는 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.';
       notifyListeners();
     }
   }
@@ -722,7 +722,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '옮기는 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
+      _storageTransferError = '옮기는 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.';
       notifyListeners();
     } finally {
       closeCollectionMenu();
@@ -891,7 +891,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = '그룹을 지우지 못했어요. 잠시 후 다시 시도해 주세요.';
+      _storageTransferError = '그룹을 지우지 못했어요. 잠시 뒤 다시 시도해 주세요.';
       notifyListeners();
     }
   }

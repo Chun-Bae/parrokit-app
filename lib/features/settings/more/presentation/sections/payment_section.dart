@@ -105,7 +105,7 @@ class PaymentSection extends StatelessWidget {
     } catch (_) {}
 
     if (offering == null) {
-      showToast('상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      showToast('상품 정보를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.');
       return;
     }
     if (!context.mounted) return;

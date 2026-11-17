@@ -75,7 +75,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _isCheckingNickname = false;
         _isNicknameAvailable = false;
         _hasCheckedNickname = false;
-        _nicknameCheckMessage = '닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.';
+        _nicknameCheckMessage = '닉네임을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.';
       });
     }
   }
@@ -109,10 +109,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         case 'invalid-email':
           showToast('이메일 형식이 올바르지 않아요.');
         case 'too-many-requests':
-          showToast('요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
+          showToast('요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.');
         default:
           showToast(
-              userErrorMessage(e, fallback: '가입하지 못했어요. 잠시 후 다시 시도해 주세요.'));
+              userErrorMessage(e, fallback: '가입하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. 계정은 만들어졌는데 Firestore

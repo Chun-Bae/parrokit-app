@@ -6,7 +6,7 @@ import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/data/local/app_database.dart';
 
 /// 저장하지 못했을 때 시트 안에 적는 말.
-const String groupCollectionSaveFailed = '저장하지 못했어요. 잠시 후 다시 해 주세요.';
+const String groupCollectionSaveFailed = '저장하지 못했어요. 잠시 뒤 다시 해 주세요.';
 
 class GroupCollectionManagerModal extends StatefulWidget {
   final int? initialGroupId;

@@ -66,7 +66,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _isCheckingNickname = false;
         _isNicknameAvailable = false;
         _hasCheckedNickname = false;
-        _nicknameCheckMessage = '닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.';
+        _nicknameCheckMessage = '닉네임을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.';
       });
     }
   }

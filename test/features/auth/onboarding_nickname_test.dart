@@ -42,7 +42,7 @@ void main() {
 
     // 전에는 실패 때 _hasCheckedNickname을 false로 두는 바람에 안내가 가려져,
     // 확인을 눌러도 아무 일도 없는 것처럼 보였다.
-    expect(find.text('닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('닉네임을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.'), findsOneWidget);
   });
 
   testWidgets('쓸 수 있는 닉네임과 이미 쓰는 닉네임을 구분해 알린다', (tester) async {

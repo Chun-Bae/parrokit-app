@@ -110,7 +110,7 @@ extension CommunityProviderUserAction on CommunityProvider {
             p.copyWith(likeCount: p.likeCount + (originalState ? 1 : -1));
       }
       // 앱은 이 동작을 '공감'이라 부른다. '추천'은 쓰지 않는 말이다(5차).
-      _errorMessage = '공감하지 못했어요. 잠시 후 다시 해 주세요.';
+      _errorMessage = '공감하지 못했어요. 잠시 뒤 다시 해 주세요.';
       // 되돌리기만 하면 하트가 슬쩍 돌아갈 뿐이라 왜인지 알 수 없었다.
       // 부르는 화면이 여럿이라 여기서 한 번만 알린다(5차 382).
       showToast(_errorMessage!);
@@ -153,7 +153,7 @@ extension CommunityProviderUserAction on CommunityProvider {
           scrapCount: p.scrapCount + (originalState ? 1 : -1),
         );
       }
-      _errorMessage = '스크랩하지 못했어요. 잠시 후 다시 해 주세요.';
+      _errorMessage = '스크랩하지 못했어요. 잠시 뒤 다시 해 주세요.';
       showToast(_errorMessage!);
       _notifyListenersSafe();
     }

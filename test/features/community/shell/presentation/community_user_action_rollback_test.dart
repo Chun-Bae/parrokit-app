@@ -93,7 +93,7 @@ void main() {
     expect(provider.isPostLiked('a'), isFalse);
     expect(provider.posts.firstWhere((p) => p.id == 'a').likeCount, 3);
     // 안내는 앱이 쓰는 말('공감')과 말투로(5차, 예전 '추천 처리에 실패했습니다.').
-    expect(provider.errorMessage, '공감하지 못했어요. 잠시 후 다시 해 주세요.');
+    expect(provider.errorMessage, '공감하지 못했어요. 잠시 뒤 다시 해 주세요.');
   });
 
   test('기다리는 사이 목록이 바뀌어도 되돌릴 글을 다시 찾는다', () async {

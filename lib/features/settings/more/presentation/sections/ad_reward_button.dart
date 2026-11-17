@@ -99,7 +99,7 @@ class _AdRewardButtonState extends State<AdRewardButton> {
     AdService().showRewardedAd(
       onRewarded: (coins) async {
         if (coins == null) {
-          showToast('광고가 아직 준비 중이에요. 잠시 후 다시 시도해 주세요.');
+          showToast('광고가 아직 준비 중이에요. 잠시 뒤 다시 시도해 주세요.');
           return;
         }
 
@@ -115,7 +115,7 @@ class _AdRewardButtonState extends State<AdRewardButton> {
             await userProvider.addCoins(coins);
           } catch (e) {
             AppLogger.e('[AdReward] 광고 보상 지급 실패 coins=$coins', error: e);
-            showToast('광고 보상 지급에 실패했어요. 잠시 후 다시 시도해 주세요.');
+            showToast('광고 보상 지급에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
             return;
           }
           showToast('패롯 $coins개를 받았어요!');

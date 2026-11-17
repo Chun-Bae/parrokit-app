@@ -47,7 +47,7 @@ void main() {
 
     // 온보딩과 같은 문제였다. 실패 때 _hasCheckedNickname을 false로 돌려서
     // 안내가 조건에 걸려 안 보였다.
-    expect(find.text('닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('닉네임을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.'), findsOneWidget);
   });
 
   testWidgets('쓸 수 있는 닉네임과 이미 쓰는 닉네임을 구분해 알린다', (tester) async {

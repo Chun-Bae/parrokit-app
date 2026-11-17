@@ -34,7 +34,7 @@ class _CoinStoreSectionState extends State<CoinStoreSection> {
     try {
       final products = await Purchases.getProducts([pkg.productId]);
       if (products.isEmpty) {
-        showToast('상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        showToast('상품 정보를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.');
         return;
       }
 

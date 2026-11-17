@@ -52,10 +52,10 @@ class _SignInScreenState extends State<SignInScreen> {
         case 'user-not-found':
           showToast('등록되지 않은 이메일이에요.');
         case 'too-many-requests':
-          showToast('요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
+          showToast('요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.');
         default:
           showToast(
-              userErrorMessage(e, fallback: '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.'));
+              userErrorMessage(e, fallback: '로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       }
     } catch (e) {
       // FirebaseAuthException만 잡고 있었다. Firestore 쓰기 실패나 타임아웃처럼
@@ -64,7 +64,7 @@ class _SignInScreenState extends State<SignInScreen> {
       // 일반 catch를 두고 있다.
       AppLogger.e('[Auth] 이메일 로그인 실패', error: e);
       if (!mounted) return;
-      showToast('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      showToast('로그인 중 오류가 발생했습니다. 잠시 뒤 다시 시도해 주세요.');
     }
   }
 

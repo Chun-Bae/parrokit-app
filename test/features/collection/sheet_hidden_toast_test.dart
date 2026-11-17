@@ -33,7 +33,7 @@ void main() {
     // 알리는 말이 시트 뒤에 깔렸다.
     expect('Navigator.of(context).pop()'.allMatches(source).length, 2);
     expect(source.contains("ValueKey('group-collection-error')"), isTrue);
-    expect(groupCollectionSaveFailed, '저장하지 못했어요. 잠시 후 다시 해 주세요.');
+    expect(groupCollectionSaveFailed, '저장하지 못했어요. 잠시 뒤 다시 해 주세요.');
   });
 
   test('목소리 고르기 시트는 미리듣기 실패를 시트 안에 적는다', () {
