@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
 import 'package:parrokit/features/settings/more/presentation/sections/ads_removal_section.dart';
+import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 
 Future<int> _open(
@@ -94,10 +95,12 @@ void main() {
 
   test('어느 화면을 띄울지 짚어 준다', () {
     expect(adsRemovalOfferingId, 'parrokit_ads_removed');
-    final code = File(
-            'lib/features/settings/more/presentation/sections/ads_removal_section.dart')
+    expect(parrotStoreOfferingId, 'parrokit_coins');
+    // 광고 제거와 패롯 충전이 같은 흐름을 두 벌로 적지 않는다(5차 464).
+    final shared = File(
+            'lib/features/settings/more/presentation/sections/store_paywall.dart')
         .readAsStringSync();
-    expect(code, contains('offerings.all[adsRemovalOfferingId]'));
-    expect(code, contains('RevenueCatUI.presentPaywall(offering: offering)'));
+    expect(shared, contains('offerings.all[offeringId]'));
+    expect(shared, contains('RevenueCatUI.presentPaywall(offering: offering)'));
   });
 }

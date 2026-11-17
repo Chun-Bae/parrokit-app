@@ -4,6 +4,7 @@
 // "환전소" 섹션(설명 한 줄 + 버튼)이 따로 있었다. 하는 일은 같고 글만 줄였다.
 // 두 재화 설명은 ? 버튼 하나로 모았다.
 
+import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
@@ -103,6 +104,19 @@ class WalletSection extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: AdRewardButton(style: buttonStyle)),
+                const SizedBox(width: 8),
+                // 바로 위 설명이 '광고를 보거나 충전해서 받아요'라고 하면서
+                // 충전할 길은 주지 않았다(5차 464). 광고 제거와 같은 결함이다.
+                Expanded(
+                  child: FilledButton.icon(
+                    key: const ValueKey('parrot-topup'),
+                    style: buttonStyle,
+                    onPressed: () => showParrotStorePaywall(context),
+                    icon:
+                        const Icon(Icons.add_circle_outline_rounded, size: 18),
+                    label: const Text('충전'),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: FilledButton.icon(

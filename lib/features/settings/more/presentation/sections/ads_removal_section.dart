@@ -10,18 +10,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
-import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
-import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import '../widgets/nav_tile.dart';
 
 const String adsRemovalTitle = '광고 제거';
-
-/// 광고 제거 화면이 붙어 있는 offering. RevenueCat 대시보드와 같아야 한다.
-const String adsRemovalOfferingId = 'parrokit_ads_removed';
 
 /// 아직 못 산 사람에게 보여 주는 한 줄.
 const String adsRemovalBuySubtitle = '한 번 사면 쇼츠 광고가 사라져요.';
@@ -31,9 +25,6 @@ const String adsRemovalOwnedSubtitle = '광고를 지웠어요.';
 
 /// 구독 중인 사람. 또 살 까닭이 없다.
 const String adsRemovalInSubscriptionSubtitle = '구독에 들어 있어요.';
-
-/// 살 수 없을 때.
-const String adsRemovalNotReadyToast = '지금은 광고 제거를 살 수 없어요. 잠시 뒤 다시 해 주세요.';
 
 /// 줄에 적을 말. 상태 셋을 한 곳에서 고른다.
 String adsRemovalSubtitle({required bool subscribed, required bool owned}) {
@@ -47,22 +38,6 @@ String adsRemovalSubtitle({required bool subscribed, required bool owned}) {
 String adsRemovalStateLabel({required bool subscribed, required bool owned}) {
   if (subscribed) return '구독 포함';
   return owned ? '켜짐' : '꺼짐';
-}
-
-/// 광고 제거 화면을 연다. 어느 화면을 띄울지 꼭 짚어 준다(5차 461에서
-/// 구독을 눌렀더니 광고 제거 화면이 뜬 것과 반대 방향의 같은 실수를 막는다).
-Future<void> showAdsRemovalPaywall(BuildContext context) async {
-  try {
-    final offerings = await Purchases.getOfferings().timeout(shortCallTimeout);
-    final offering = offerings.all[adsRemovalOfferingId];
-    if (offering == null) {
-      showToast(adsRemovalNotReadyToast);
-      return;
-    }
-    await RevenueCatUI.presentPaywall(offering: offering);
-  } catch (_) {
-    showToast(adsRemovalNotReadyToast);
-  }
 }
 
 class AdsRemovalSection extends StatelessWidget {
