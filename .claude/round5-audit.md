@@ -67,11 +67,22 @@
 - **firestore.rules** — 단어 유의어 한도(`synonyms` 10개)를 validWord에 더했다. 지금 배포된 규칙은 모르는 칸이라 그대로 통과하므로 급하지 않다. 다음에 규칙을 배포할 때 같이 나간다:
   `npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126`
 
-- **RevenueCat 대시보드 설정 (사용자만 할 수 있음)** — 함수는 떠 있지만 아직 아무 이벤트도 오지 않는다.
-  1. 상품(월 구독 2개)과 entitlement `parrokit_sub_light` / `parrokit_sub_pro`, offering을 만든다
-  2. Integrations > Webhooks에 주소를 넣는다: `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`
-  3. 비밀값을 쓰려면 함수 환경변수 `REVENUECAT_WEBHOOK_SECRET`과 대시보드 Authorization 헤더를 같은 값으로 둔다
-  4. 구독용 Paywall을 만들면 `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
+- **RevenueCat 대시보드 — 2026-11-17에 둘은 끝냈다**(사용자가 로그인해 주고 맡김)
+  - 끝남: entitlement `parrokit_sub_light`(라이트)·`parrokit_sub_pro`(프로) 생성
+  - 끝남: Webhook 'Parrokit Firebase' 등록(Active, Production+Sandbox, 모든 이벤트).
+    주소 `https://us-central1-parrokit-45126.cloudfunctions.net/onSubscriptionEvent`.
+    함수가 살아 있는 것은 GET에 405가 오는 것으로 확인했다. 테스트 이벤트 전송은
+    200을 받았지만 대시보드 이벤트 목록에는 아무것도 안 뜬다(실제 구독이 생겨야
+    알 수 있을 듯)
+  - **남음 1 — 웹훅 비밀값**: 지금 Authorization 헤더가 비어 있어 함수가 검사를
+    건너뛴다(`subscriptionEvent.ts:126`은 환경변수가 있을 때만 본다). 아무나 가짜
+    이벤트를 쏠 수 있으니 출시 전에 값을 정해 **대시보드와 함수 양쪽에 같은 값**을
+    넣는다. 값은 사용자가 정한다(여기 적지 않는다)
+  - **남음 2 — App Store Connect 월 구독 상품 2개**(₩2,900·₩7,900, 같은 구독 그룹).
+    지금 App Store 상품은 RemoveAds와 코인 4종뿐이다. 상품이 있어야 entitlement에
+    붙이고 offering·Paywall을 만들 수 있다
+  - **남음 3 — offering과 Paywall**: 상품이 생기면 만든다. Paywall이 서면
+    `--dart-define=PK_REAL_PAYWALL=true` 빌드에서 진짜 화면이 뜬다
 
 - **함수 checkStorageQuota (93f105d1)** — 저장 트리거 둘(onUserFileUploaded·onUserFileDeleted)은
   2026-11-15 19:30에 배포했다. 올리기 전에 자리를 묻는 이 함수만 남았다. 배포 전에는 앱이
