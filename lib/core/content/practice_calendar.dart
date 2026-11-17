@@ -81,18 +81,31 @@ class PracticeCalendar {
     return out;
   }
 
+  /// 숫자 하나를 안전하게 읽는다(5차 453).
+  ///
+  /// `getInt`는 저장된 값이 double이면 타입 오류를 **던진다**. XP 자리는
+  /// 지금 double로 적히는데 아래에서 getInt로 읽고 있어서, load가 통째로
+  /// 넘어졌다. 그러면 recordOne도 함께 넘어져 **따라 말하기를 해도 학습
+  /// 캘린더에 하나도 쌓이지 않았다**('학습 0일 · 누적 0문장').
+  static int? _readInt(SharedPreferences prefs, String key) {
+    final value = prefs.get(key);
+    return value is num ? value.toInt() : null;
+  }
+
   static Future<PracticeCalendarData> load(String accountId) async {
     final prefs = await SharedPreferences.getInstance();
     final counts = _decodeCounts(prefs.getString(historyKey(accountId)));
     final goals = _decodeCounts(prefs.getString(goalsKey(accountId)), max: 100);
     // 예전에는 XP 자리에 누적 문장 수를 적었다. 그 값도 읽어 준다.
-    final legacyTotal = prefs.getInt('parrokit.speaking.xp.v1.$accountId') ?? 0;
+    // 지금 그 자리에는 double이 들어 있으므로 숫자로만 받아 본다.
+    final legacyTotal =
+        _readInt(prefs, 'parrokit.speaking.xp.v1.$accountId') ?? 0;
     return PracticeCalendarData(
       counts: counts,
       goals: goals,
-      total: prefs.getInt(totalKey(accountId)) ?? legacyTotal,
-      dailyGoal:
-          (prefs.getInt(goalKey(accountId)) ?? defaultDailyGoal).clamp(1, 100),
+      total: _readInt(prefs, totalKey(accountId)) ?? legacyTotal,
+      dailyGoal: (_readInt(prefs, goalKey(accountId)) ?? defaultDailyGoal)
+          .clamp(1, 100),
     );
   }
 

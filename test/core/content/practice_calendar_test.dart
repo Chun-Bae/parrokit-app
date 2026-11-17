@@ -175,4 +175,43 @@ void main() {
       expect(code, contains('PracticeCalendar.setDailyGoal('));
     });
   });
+
+  group('XP 자리에 double이 들어 있을 때(5차 453)', () {
+    // 예전 누적 문장 수를 읽으려고 XP 키를 getInt로 읽었는데, XP는 지금
+    // double로 적힌다. 그래서 load가 타입 오류로 넘어졌고, recordOne도
+    // 함께 넘어져 따라 말하기를 해도 캘린더가 늘 '학습 0일'이었다.
+    setUp(() => SharedPreferences.setMockInitialValues({
+          'parrokit.speaking.xp.v1.me': 7.4,
+        }));
+
+    test('읽다가 넘어지지 않는다', () async {
+      final data = await PracticeCalendar.load('me');
+
+      expect(data.total, 7, reason: 'double은 잘라서 읽는다');
+      expect(data.dailyGoal, PracticeCalendar.defaultDailyGoal);
+    });
+
+    test('따라 말하기가 그날 자리에 쌓인다', () async {
+      final day = DateTime(2026, 11, 17);
+
+      final after = await PracticeCalendar.recordOne('me', now: day);
+
+      expect(after.counts[PracticeCalendar.dateKey(day)], 1);
+      expect(after.total, 8);
+
+      // 다시 읽어도 남아 있다(저장까지 갔다).
+      final reloaded = await PracticeCalendar.load('me');
+      expect(reloaded.counts[PracticeCalendar.dateKey(day)], 1);
+    });
+
+    test('목표 자리에 double이 있어도 기본값으로 버틴다', () async {
+      SharedPreferences.setMockInitialValues({
+        'parrokit.practice.daily_goal.v1.me': 5.0,
+      });
+
+      final data = await PracticeCalendar.load('me');
+
+      expect(data.dailyGoal, PracticeCalendar.defaultDailyGoal);
+    });
+  });
 }
