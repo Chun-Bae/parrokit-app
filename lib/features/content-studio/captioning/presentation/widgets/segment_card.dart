@@ -135,7 +135,7 @@ class SegmentCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   LabeledTextField(
                     label: '원문',
-                    hint: '원문 입력',
+                    hint: '원문 적기',
                     controller: originalCtl,
                     clearable: true,
                     horizontal: true,
@@ -143,7 +143,7 @@ class SegmentCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   LabeledTextField(
                     label: '해석',
-                    hint: '해석 입력',
+                    hint: '해석 적기',
                     controller: koCtl,
                     clearable: true,
                     horizontal: true,
@@ -151,7 +151,7 @@ class SegmentCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   LabeledTextField(
                     label: '발음',
-                    hint: '발음 입력',
+                    hint: '발음 적기',
                     controller: pronCtl,
                     clearable: true,
                     horizontal: true,

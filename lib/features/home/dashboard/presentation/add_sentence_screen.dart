@@ -103,115 +103,117 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
         child: child!,
       ),
       child: Scaffold(
-      appBar: AppBar(title: const Text('문장 추가')),
-      // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: ListenableBuilder(
-            listenable: Listenable.merge([
-              controller.text,
-              controller.translation,
-            ]),
-            builder: (context, _) => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FilledButton(
-                  key: const ValueKey('save-sentence'),
-                  onPressed: controller.canSave ? save : null,
-                  style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52)),
-                  child: const Text('추가'),
-                ),
-                // 꺼진 버튼만 보고는 무엇이 빠졌는지 알 수 없었다(5차,
-                // 커뮤니티 글쓰기와 같게).
-                if (controller.blockedReason case final reason?) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    reason,
-                    key: const ValueKey('add-sentence-blocked-reason'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+        appBar: AppBar(title: const Text('문장 추가')),
+        // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            child: ListenableBuilder(
+              listenable: Listenable.merge([
+                controller.text,
+                controller.translation,
+              ]),
+              builder: (context, _) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FilledButton(
+                    key: const ValueKey('save-sentence'),
+                    onPressed: controller.canSave ? save : null,
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52)),
+                    child: const Text('추가'),
                   ),
+                  // 꺼진 버튼만 보고는 무엇이 빠졌는지 알 수 없었다(5차,
+                  // 커뮤니티 글쓰기와 같게).
+                  if (controller.blockedReason case final reason?) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      reason,
+                      key: const ValueKey('add-sentence-blocked-reason'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ],
                 ],
+              ),
+            ),
+          ),
+        ),
+        body: ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) => SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              children: [
+                LearningLanguagePicker(
+                  key: const ValueKey('sentence-language'),
+                  value: controller.language,
+                  onChanged: controller.setLanguage,
+                ),
+                const SizedBox(height: 16),
+                if (controller.canTransliterate) ...[
+                  _HangulTransliterateRow(controller: controller),
+                  const SizedBox(height: 16),
+                ],
+                TextField(
+                  key: const ValueKey('sentence-text'),
+                  controller: controller.text,
+                  style: context.texts.titleLarge,
+                  maxLength: sentenceMaxLength,
+                  maxLines: null,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: '원문',
+                    hintText: '연습할 문장을 적어 주세요',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListenableBuilder(
+                  listenable: controller.text,
+                  builder: (context, _) =>
+                      _AutoFillCard(controller: controller),
+                ),
+                const SizedBox(height: 12),
+                const SizedBox(height: 4),
+                TextField(
+                  key: const ValueKey('sentence-translation'),
+                  controller: controller.translation,
+                  style: context.texts.titleMedium,
+                  maxLines: null,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: '뜻',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: controller.fillStatus == AssistStatus.loading
+                        ? const _LoadingDot()
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const ValueKey('sentence-pronunciation'),
+                  controller: controller.pronunciation,
+                  style: context.texts.bodyMedium,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: '발음 (선택)',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: controller.fillStatus == AssistStatus.loading
+                        ? const _LoadingDot()
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                    child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워둬도 돼요.',
+                        style: context.texts.bodySmall.copyWith(color: muted))),
               ],
             ),
           ),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: controller,
-        builder: (context, _) => SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            children: [
-              LearningLanguagePicker(
-                key: const ValueKey('sentence-language'),
-                value: controller.language,
-                onChanged: controller.setLanguage,
-              ),
-              const SizedBox(height: 16),
-              if (controller.canTransliterate) ...[
-                _HangulTransliterateRow(controller: controller),
-                const SizedBox(height: 16),
-              ],
-              TextField(
-                key: const ValueKey('sentence-text'),
-                controller: controller.text,
-                style: context.texts.titleLarge,
-                maxLength: sentenceMaxLength,
-                maxLines: null,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: '원문',
-                  hintText: '연습할 문장을 입력하세요',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ListenableBuilder(
-                listenable: controller.text,
-                builder: (context, _) => _AutoFillCard(controller: controller),
-              ),
-              const SizedBox(height: 12),
-              const SizedBox(height: 4),
-              TextField(
-                key: const ValueKey('sentence-translation'),
-                controller: controller.translation,
-                style: context.texts.titleMedium,
-                maxLines: null,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: '뜻',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: controller.fillStatus == AssistStatus.loading
-                      ? const _LoadingDot()
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey('sentence-pronunciation'),
-                controller: controller.pronunciation,
-                style: context.texts.bodyMedium,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  labelText: '발음 (선택)',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: controller.fillStatus == AssistStatus.loading
-                      ? const _LoadingDot()
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                  child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워둬도 돼요.',
-                      style: context.texts.bodySmall.copyWith(color: muted))),
-            ],
-          ),
-        ),
-      ),
-    ),
     );
   }
 }

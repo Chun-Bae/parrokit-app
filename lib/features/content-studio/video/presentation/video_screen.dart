@@ -526,7 +526,7 @@ class _VideoRecommendationFilterSheetState
                 TextField(
                   controller: _languageController,
                   decoration: const InputDecoration(
-                    labelText: '외국어 직접 입력',
+                    labelText: '외국어 직접 적기',
                     hintText: '예: 프랑스어, 태국어',
                   ),
                 ),
@@ -550,14 +550,14 @@ class _VideoRecommendationFilterSheetState
                 TextField(
                   controller: _situationController,
                   decoration: const InputDecoration(
-                    labelText: '상황 직접 입력',
+                    labelText: '상황 직접 적기',
                     hintText: '예: 공항 체크인, 생일 파티',
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 if (!_hasRecommendationInput) ...[
                   Text(
-                    '외국어와 상황을 모두 입력해 주세요.',
+                    '외국어와 상황을 모두 적어 주세요.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.error,
                       height: 1.35,

@@ -134,7 +134,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              '앵무새가 말하고 기록할 언어를 선택하세요.',
+              '앵무새가 말하고 기록할 언어를 골라 주세요.',
               style: context.texts.bodySmall
                   .copyWith(color: colors.onSurfaceVariant),
             ),

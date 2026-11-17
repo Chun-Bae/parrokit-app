@@ -205,7 +205,7 @@ class CaptioningProvider extends ChangeNotifier
   Future<void> startStt(AsrEngine engine) async {
     final generateDraft = _generateDraftByEngine[engine]!;
     if (picked == null || (picked!.path ?? '').isEmpty) {
-      showToast('먼저 영상 파일을 선택해 주세요.');
+      showToast(ClipValidator.noFileMessage);
       return;
     }
 
@@ -230,8 +230,7 @@ class CaptioningProvider extends ChangeNotifier
     final cost = captionParrotCost(durationMs);
     if (userProvider.coins < cost) {
       // 할 수 있는 일(광고 보기·구독)을 시트로 알린다(5차 4단계).
-      unawaited(showNotEnoughParrots(
-          needed: cost, have: userProvider.coins));
+      unawaited(showNotEnoughParrots(needed: cost, have: userProvider.coins));
       _setSttState(SttProcessState.idle);
       return;
     }
@@ -379,7 +378,7 @@ class CaptioningProvider extends ChangeNotifier
   Future<void> save() async {
     final stagedPath = picked?.path;
     if (stagedPath == null || stagedPath.isEmpty) {
-      showToast('영상 파일을 먼저 선택해 주세요.');
+      showToast(ClipValidator.noFileMessage);
       return;
     }
 
@@ -389,8 +388,8 @@ class CaptioningProvider extends ChangeNotifier
       normalizedPath = await audioToVideo.ensureMp4(stagedPath);
     } catch (e, st) {
       AppLogger.e('저장 전 영상 변환 실패', error: e, stackTrace: st);
-      showToast(userErrorMessage(e,
-          fallback: '영상을 준비하지 못했어요. 다른 파일로 다시 시도해 주세요.'));
+      showToast(
+          userErrorMessage(e, fallback: '영상을 준비하지 못했어요. 다른 파일로 다시 시도해 주세요.'));
       return;
     }
 
@@ -418,8 +417,7 @@ class CaptioningProvider extends ChangeNotifier
       notifyListeners();
     } catch (e, st) {
       AppLogger.e('클립 저장 실패', error: e, stackTrace: st);
-      showToast(userErrorMessage(e,
-          fallback: '저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
+      showToast(userErrorMessage(e, fallback: '저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
       _saveState = EditSaveState.error;
       notifyListeners();
     }
@@ -554,8 +552,7 @@ String sttCostLine(int? durationMs) => durationMs == null || durationMs <= 0
 /// 글은 음성 만들기와 같은 곳(parrot_cost_text.dart)에서 가져온다.
 String? sttShortOfParrotsLine({required int? durationMs, required int coins}) {
   if (durationMs == null || durationMs <= 0) return null;
-  return parrotShortfallLine(
-      cost: captionParrotCost(durationMs), coins: coins);
+  return parrotShortfallLine(cost: captionParrotCost(durationMs), coins: coins);
 }
 
 /// 자동 자막 가격. 10초에 1패롯, 올림. functions/src/pricing.ts의 captionCost와 같다.

@@ -24,7 +24,7 @@ void main() {
           tags: ['태그1'],
         ),
         throwsA(isA<ArgumentError>()
-            .having((e) => e.message, 'message', '제목을 입력해 주세요.')),
+            .having((e) => e.message, 'message', '제목을 적어 주세요.')),
       );
     });
 
@@ -37,7 +37,7 @@ void main() {
           tags: ['태그1'],
         ),
         throwsA(isA<ArgumentError>()
-            .having((e) => e.message, 'message', '내용을 입력해 주세요.')),
+            .having((e) => e.message, 'message', '내용을 적어 주세요.')),
       );
     });
 
@@ -50,7 +50,7 @@ void main() {
           tags: ['태그1'],
         ),
         throwsA(isA<ArgumentError>()
-            .having((e) => e.message, 'message', '주제를 선택해 주세요.')),
+            .having((e) => e.message, 'message', '주제를 골라 주세요.')),
       );
     });
 
@@ -79,7 +79,7 @@ void main() {
           tags: [longTag],
         ),
         throwsA(isA<ArgumentError>().having((e) => e.message, 'message',
-            '태그는 ${PostValidator.maxTagLength}글자 이하로 입력해 주세요.')),
+            '태그는 ${PostValidator.maxTagLength}글자 이하로 적어 주세요.')),
       );
     });
   });

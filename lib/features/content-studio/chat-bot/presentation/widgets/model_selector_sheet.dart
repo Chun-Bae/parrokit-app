@@ -37,7 +37,7 @@ void showModelSelectorBottomSheet(
             ),
             const SizedBox(height: 6),
             Text(
-              '작업 성격에 맞는 Gemini AI 모델을 선택하세요.',
+              '하려는 일에 맞는 Gemini AI 모델을 골라 주세요.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? context.tokens.textTertiary

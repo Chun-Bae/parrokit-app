@@ -95,7 +95,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '닉네임을 입력해 차단할 수 있어요.',
+              '닉네임을 적어 차단할 수 있어요.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),

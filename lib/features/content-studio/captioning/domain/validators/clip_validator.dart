@@ -49,7 +49,7 @@ class ClipValidator {
     return result.isValid ? null : result.errorMessage;
   }
 
-  static const noFileMessage = '영상 파일을 먼저 선택해 주세요.';
+  static const noFileMessage = '영상을 먼저 골라 주세요.';
 
   /// 자막을 만드는 중이라 아직 저장할 수 없을 때(5차 318).
   /// 전에는 이때 저장 단추가 말없이 꺼져 있어, 왜 안 눌리는지 알 수 없었다.

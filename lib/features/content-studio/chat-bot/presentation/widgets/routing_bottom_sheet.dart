@@ -36,7 +36,7 @@ void showRoutingBottomSheet(BuildContext context, ChatBotProvider provider) {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '원하시는 작업을 선택해 주세요',
+                    '무엇을 할지 골라 주세요',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: context.tokens.textPrimary,

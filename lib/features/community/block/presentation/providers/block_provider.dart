@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/nickname_rule.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
@@ -72,7 +73,7 @@ class BlockProvider extends ChangeNotifier {
 
     final trimmedDisplayName = displayName.trim();
     if (trimmedDisplayName.isEmpty) {
-      _errorMessage = '닉네임을 입력해 주세요.';
+      _errorMessage = nicknameNeededMessage;
       notifyListeners();
       return false;
     }

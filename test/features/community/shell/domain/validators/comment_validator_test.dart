@@ -14,7 +14,7 @@ void main() {
       expect(
         () => CommentValidator.validateForCreate('   '),
         throwsA(isA<ArgumentError>()
-            .having((e) => e.message, 'message', '댓글 내용을 입력해 주세요.')),
+            .having((e) => e.message, 'message', '댓글 내용을 적어 주세요.')),
       );
     });
   });
