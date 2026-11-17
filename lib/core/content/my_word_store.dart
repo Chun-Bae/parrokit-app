@@ -455,6 +455,51 @@ class MyWordStore {
   ///
   /// 'projections'를 고를 때 단어장에 'projection'이 있으면, 새로 만들지 않고
   /// 그 단어에 이 문장을 예문으로 붙인다. 같은 문장이면 더하지 않는다.
+  /// 고칠 수 있는 칸을 한 번에 저장한다(5차 469, 사용자 요청).
+  ///
+  /// 전에는 뜻·발음·유의어·예문을 각각 다른 창에서 고치고 저장도 따로
+  /// 했다. 한 화면에서 고치게 되면서 저장도 한 번에 한다.
+  static Future<bool> saveEdits(
+    String accountId,
+    String id, {
+    required String meaning,
+    required String pronunciation,
+    required List<String> synonyms,
+    required List<WordExample> examples,
+  }) async {
+    final nextMeaning = clipToLength(meaning.trim(), meaningMaxLength);
+    final nextSound = clipToLength(pronunciation.trim(), meaningMaxLength);
+    final nextSynonyms = clipWordSynonyms(synonyms);
+    final nextExamples = clipWordExamples(examples);
+
+    final device = await _loadDevice(accountId);
+    final index = device.indexWhere((w) => w.id == id);
+    if (index >= 0) {
+      device[index] = device[index].copyWith(
+        meaning: nextMeaning,
+        pronunciation: nextSound,
+        synonyms: nextSynonyms,
+        examples: nextExamples,
+      );
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setMeaning(id, nextMeaning);
+        await cloud!.setPronunciation(id, nextSound);
+        await cloud!.setSynonyms(id, nextSynonyms);
+        await cloud!.setExamples(id, nextExamples);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   static Future<bool> addExample(
     String accountId,
     String id,

@@ -83,14 +83,30 @@ void main() {
     expect(saved?.translation, '엄청 커요.');
   });
 
-  test('단어 상세에 예문 더하기와 고치기가 있다', () {
-    final code = File(
+  test('예문을 더하고 고치는 길은 고치기 한 창에 있다(5차 469)', () {
+    // 전에는 상세에 '예문 넣기'와 예문마다 고치기·빼기가 따로 있었다.
+    // 뜻·발음·유의어까지 한 창에서 손보게 되면서 그 창으로 모았다.
+    final detail = File(
             'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart')
         .readAsStringSync()
         .replaceAll(RegExp(r'\s+'), ' ');
-    expect(code, contains("ValueKey('add-word-example')"));
-    expect(code, contains("ValueKey('edit-word-example-\$index')"));
-    expect(code, contains('MyWordStore.updateExample('));
+    expect(detail, contains("ValueKey('edit-word')"));
+    expect(detail, contains("ValueKey('edit-word-example-\$index')"));
+
+    final sheet = File(
+            'lib/features/collection/shell/presentation/widgets/word_edit_sheet.dart')
+        .readAsStringSync()
+        .replaceAll(RegExp(r'\s+'), ' ');
+    for (final key in [
+      "ValueKey('edit-word-meaning-input')",
+      "ValueKey('edit-word-pronunciation-input')",
+      "ValueKey('edit-word-synonym-add')",
+      "ValueKey('edit-word-example-add')",
+      "ValueKey('edit-word-save')",
+    ]) {
+      expect(sheet, contains(key), reason: key);
+    }
+    expect(sheet, contains('MyWordStore.saveEdits('));
   });
 
   testWidgets('단어를 처음 만들 때도 예문 뜻을 적을 수 있다', (tester) async {

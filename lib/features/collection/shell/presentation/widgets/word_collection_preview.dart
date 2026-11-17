@@ -1,6 +1,7 @@
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/word_edit_sheet.dart';
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
@@ -530,63 +531,6 @@ String wordDueLabel(DateTime? due, DateTime now) {
 /// 버린다. 부르는 쪽에서 showDialog가 끝나자마자 버렸더니, 닫히는 동안
 /// 그려지는 중에 "used after being disposed"가 났다(5차).
 /// 한 줄짜리 값을 고치는 창. 뜻과 발음이 함께 쓴다(5차 468).
-class _MeaningDialog extends StatefulWidget {
-  const _MeaningDialog({
-    required this.word,
-    required this.meaning,
-    this.label = '뜻',
-    this.inputKey = const ValueKey('word-meaning-input'),
-    this.saveKey = const ValueKey('word-meaning-save'),
-    this.hint,
-  });
-
-  final String word;
-  final String meaning;
-
-  /// '뜻' 또는 '발음'. 제목에 쓴다.
-  final String label;
-  final Key inputKey;
-  final Key saveKey;
-  final String? hint;
-
-  @override
-  State<_MeaningDialog> createState() => _MeaningDialogState();
-}
-
-class _MeaningDialogState extends State<_MeaningDialog> {
-  late final _controller = TextEditingController(text: widget.meaning);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.meaning.isEmpty
-            ? '${widget.label} 적기'
-            : '${widget.label} 고치기'),
-        content: TextField(
-          key: widget.inputKey,
-          controller: _controller,
-          autofocus: true,
-          maxLength: meaningMaxLength,
-          decoration: InputDecoration(hintText: widget.hint ?? widget.word),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            key: widget.saveKey,
-            onPressed: () => Navigator.pop(context, _controller.text),
-            child: const Text('저장'),
-          ),
-        ],
-      );
-}
 
 /// 예문을 적거나 고치는 작은 창(5차 338, 사용자 요청).
 ///
@@ -816,40 +760,6 @@ class _SynonymEditorState extends State<SynonymEditor> {
 }
 
 /// 유의어를 적는 창. 뜻 고치기 창과 같은 모양으로 둔다(5차).
-class _SynonymsDialog extends StatefulWidget {
-  const _SynonymsDialog({required this.word, required this.synonyms});
-
-  final String word;
-  final List<String> synonyms;
-
-  @override
-  State<_SynonymsDialog> createState() => _SynonymsDialogState();
-}
-
-class _SynonymsDialogState extends State<_SynonymsDialog> {
-  late List<String> _synonyms = [...widget.synonyms];
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
-        content: SynonymEditor(
-          key: const ValueKey('word-synonyms-input'),
-          synonyms: _synonyms,
-          onChanged: (next) => setState(() => _synonyms = next),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            key: const ValueKey('word-synonyms-save'),
-            onPressed: () => Navigator.pop(context, _synonyms),
-            child: const Text('저장'),
-          ),
-        ],
-      );
-}
 
 class _WordDetailSheet extends StatefulWidget {
   const _WordDetailSheet({
@@ -905,48 +815,8 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
 
   /// 유의어를 적거나 고친다. 추가할 때만 적을 수 있으면 나중에 알게 된
   /// 유의어를 넣을 길이 없다(5차).
-  Future<void> _editSynonyms() async {
-    final next = await showDialog<List<String>>(
-      context: context,
-      builder: (_) => _SynonymsDialog(
-        word: widget.word.word,
-        synonyms: synonyms,
-      ),
-    );
-    if (!mounted || next == null) return;
-
-    final parsed = clipWordSynonyms(next);
-    final saved =
-        await MyWordStore.setSynonyms(widget.accountId, widget.word.id, parsed);
-    if (!mounted) return;
-    if (!saved) {
-      showNotice('유의어를 저장하지 못했어요. 다시 시도해 주세요.');
-      return;
-    }
-    setState(() => synonyms = parsed);
-  }
 
   /// 예문을 새로 적는다(5차 338, 사용자 요청).
-  Future<void> _addExample() async {
-    if (examples.length >= examplesMaxCount) {
-      showNotice('예문은 $examplesMaxCount개까지 넣을 수 있어요.');
-      return;
-    }
-    final example = await showDialog<WordExample>(
-      context: context,
-      builder: (_) => WordExampleDialog(word: widget.word.word),
-    );
-    if (!mounted || example == null) return;
-
-    final added =
-        await MyWordStore.addExample(widget.accountId, widget.word.id, example);
-    if (!mounted) return;
-    if (!added) {
-      showNotice('예문을 더하지 못했어요. 같은 예문이 이미 있는지 봐 주세요.');
-      return;
-    }
-    setState(() => examples = [...examples, example]);
-  }
 
   /// 뜻과 예문을 한 번에 받아 넣는다(5차 467, 사용자 요청).
   ///
@@ -1048,97 +918,37 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
   }
 
   /// 예문 하나를 고친다(5차 338, 사용자 요청).
-  Future<void> _editExample(int index) async {
-    final next = await showDialog<WordExample>(
-      context: context,
-      builder: (_) =>
-          WordExampleDialog(word: widget.word.word, example: examples[index]),
-    );
-    if (!mounted || next == null) return;
-
-    final saved = await MyWordStore.updateExample(
-        widget.accountId, widget.word.id, index, next);
-    if (!mounted) return;
-    if (!saved) {
-      showNotice('예문을 고치지 못했어요. 다시 시도해 주세요.');
-      return;
-    }
-    setState(() => examples = [...examples]..[index] = next);
-  }
 
   /// 예문 하나를 뺀다. 되돌릴 수 없으니 한 번 묻는다(5차 328).
-  Future<void> _removeExample(int index) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        key: const ValueKey('remove-example-confirm'),
-        content: const Text('이 예문을 뺄까요?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('취소')),
-          FilledButton(
-              key: const ValueKey('remove-example-ok'),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('빼기')),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
-
-    final removed = await MyWordStore.removeExample(
-        widget.accountId, widget.word.id, index);
-    if (!mounted) return;
-    if (!removed) {
-      showNotice('예문을 빼지 못했어요. 다시 시도해 주세요.');
-      return;
-    }
-    setState(() => examples = [...examples]..removeAt(index));
-  }
 
   /// 뜻을 적거나 고친다. 전에는 뜻이 비어 있으면 지우고 다시 넣는 수밖에
   /// 없었다(문장에서 단어만 고르면 뜻이 비어 있다, 5차).
-  Future<void> _editMeaning() async {
-    final next = await showDialog<String>(
-      context: context,
-      builder: (_) => _MeaningDialog(word: widget.word.word, meaning: meaning),
+
+  /// 뜻·발음·유의어·예문을 한 창에서 고친다(5차 469, 사용자 요청).
+  ///
+  /// 전에는 항목마다 작은 창이 따로 떴다. 한 낱말을 손보려면 창을 네 번
+  /// 열었다 닫아야 했다.
+  Future<void> _editWord() async {
+    final next = await showWordEditSheet(
+      context,
+      word: widget.word.copyWith(
+        meaning: meaning,
+        pronunciation: pronunciation,
+        synonyms: synonyms,
+        examples: examples,
+      ),
+      accountId: widget.accountId,
     );
     if (!mounted || next == null) return;
-
-    final saved =
-        await MyWordStore.setMeaning(widget.accountId, widget.word.id, next);
-    if (!mounted) return;
-    if (!saved) {
-      showNotice('뜻을 저장하지 못했어요. 다시 시도해 주세요.');
-      return;
-    }
-    setState(() => meaning = next.trim());
+    setState(() {
+      meaning = next.meaning;
+      pronunciation = next.pronunciation;
+      synonyms = next.synonyms;
+      examples = next.examples;
+    });
   }
 
   /// 발음을 적거나 고친다(5차 468, 사용자 요청).
-  Future<void> _editPronunciation() async {
-    final next = await showDialog<String>(
-      context: context,
-      builder: (_) => _MeaningDialog(
-        word: widget.word.word,
-        meaning: pronunciation,
-        label: '발음',
-        inputKey: const ValueKey('word-pronunciation-input'),
-        saveKey: const ValueKey('word-pronunciation-save'),
-        hint: '한글로 소리 나는 대로',
-      ),
-    );
-    if (!mounted || next == null) return;
-
-    final saved = await MyWordStore.setPronunciation(
-        widget.accountId, widget.word.id, next);
-    if (!mounted) return;
-    if (!saved) {
-      showNotice('발음을 저장하지 못했어요. 다시 시도해 주세요.');
-      return;
-    }
-    setState(() => pronunciation = next.trim());
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1188,10 +998,11 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                                   ? colors.onSurfaceVariant
                                   : null)),
                     ),
+                    // 뜻·발음·유의어·예문을 한 창에서 고친다(5차 469).
                     TextButton(
-                      key: const ValueKey('edit-word-meaning'),
-                      onPressed: _editMeaning,
-                      child: Text(meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
+                      key: const ValueKey('edit-word'),
+                      onPressed: _editWord,
+                      child: const Text('고치기'),
                     ),
                   ],
                 ),
@@ -1208,12 +1019,6 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                           style: context.texts.bodyMedium.copyWith(
                               color: colors.onSurfaceVariant)),
                     ),
-                    TextButton(
-                      key: const ValueKey('edit-word-pronunciation'),
-                      onPressed: _editPronunciation,
-                      child:
-                          Text(pronunciation.isEmpty ? '발음 적기' : '발음 고치기'),
-                    ),
                   ],
                 ),
                 // 유의어는 칩으로 한 줄에 모아 보여 준다(5차, 사용자 요청).
@@ -1222,11 +1027,6 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 Row(
                   children: [
                     Expanded(child: Text('유의어', style: muted)),
-                    TextButton(
-                      key: const ValueKey('edit-word-synonyms'),
-                      onPressed: _editSynonyms,
-                      child: Text(synonyms.isEmpty ? '유의어 적기' : '유의어 고치기'),
-                    ),
                   ],
                 ),
                 if (synonyms.isEmpty)
@@ -1269,11 +1069,12 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 예문을 누르면 고친다(5차 338, 사용자 요청).
+                        // 예문을 누르면 고치기 창이 열린다. 거기서 뜻·발음·
+                        // 유의어까지 한 번에 손본다(5차 469).
                         Expanded(
                           child: InkWell(
                             key: ValueKey('edit-word-example-$index'),
-                            onTap: () => _editExample(index),
+                            onTap: _editWord,
                             child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1288,13 +1089,6 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                           ),
                         ),
                         // 더할 수는 있는데 뺄 길이 없었다(5차 328).
-                        IconButton(
-                          key: ValueKey('remove-word-example-$index'),
-                          tooltip: '이 예문 빼기',
-                          visualDensity: VisualDensity.compact,
-                          onPressed: () => _removeExample(index),
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                        ),
                       ],
                     ),
                   ),
@@ -1303,12 +1097,6 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    TextButton.icon(
-                      key: const ValueKey('add-word-example'),
-                      onPressed: _addExample,
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: Text(examples.isEmpty ? '예문 넣기' : '예문 더 넣기'),
-                    ),
                     // 직접 적지 않아도 되게 한다(5차 467, 사용자 요청).
                     TextButton.icon(
                       key: const ValueKey('fill-word-examples'),

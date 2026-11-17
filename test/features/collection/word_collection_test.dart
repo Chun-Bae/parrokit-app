@@ -115,25 +115,30 @@ void main() {
     await tester.tap(find.text('huge'));
     await tester.pumpAndSettle();
 
-    // 아직 없으면 '유의어 적기'.
+    // 아직 없으면 그렇게 적는다.
     expect(find.byKey(const ValueKey('word-detail-synonyms-empty')),
         findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('edit-word-synonyms')));
+    // 469부터 뜻·발음·유의어·예문을 '고치기' 한 창에서 손본다.
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
     await tester.pumpAndSettle();
 
-    // 창에서도 '추가'로 하나씩 넣는다. 붙여넣은 'big, large'는 한 번에 둘.
     await tester.enterText(
-        find.byKey(const ValueKey('word-synonyms')), 'big, large');
-    await tester.tap(find.byKey(const ValueKey('add-synonym')));
+        find.byKey(const ValueKey('edit-word-synonym-input')), 'big');
+    await tester.tap(find.byKey(const ValueKey('edit-word-synonym-add')));
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('word-synonyms-save')));
+    await tester.enterText(
+        find.byKey(const ValueKey('edit-word-synonym-input')), 'large');
+    await tester.tap(find.byKey(const ValueKey('edit-word-synonym-add')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('edit-word-save')));
     await tester.pumpAndSettle();
 
     expect((await MyWordStore.load('guest')).single.synonyms, ['big', 'large']);
     expect(find.text('big'), findsOneWidget);
     expect(find.text('large'), findsOneWidget);
-    // 적고 나면 '유의어 고치기'로 바뀐다.
-    expect(find.text('유의어 고치기'), findsOneWidget);
+    // 적고 나면 '아직 적지 않았어요'가 사라진다.
+    expect(find.byKey(const ValueKey('word-detail-synonyms-empty')),
+        findsNothing);
   });
 
   testWidgets('웹에서 찾기는 단어를 적어야 열린다', (tester) async {
@@ -194,11 +199,11 @@ void main() {
 
     // 전에는 '단어 지우기'뿐이라, 뜻을 안 적고 저장하면 지우고 다시 넣는
     // 수밖에 없었다.
-    await tester.tap(find.byKey(const ValueKey('edit-word-meaning')));
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
     await tester.pumpAndSettle();
     await tester.enterText(
-        find.byKey(const ValueKey('word-meaning-input')), '천천히');
-    await tester.tap(find.byKey(const ValueKey('word-meaning-save')));
+        find.byKey(const ValueKey('edit-word-meaning-input')), '천천히');
+    await tester.tap(find.byKey(const ValueKey('edit-word-save')));
     await tester.pumpAndSettle();
 
     expect(find.text('천천히'), findsWidgets);
@@ -206,23 +211,28 @@ void main() {
     expect((await MyWordStore.load('guest')).single.meaning, '천천히');
   });
 
-  testWidgets('뜻이 있으면 고치기로 바꾼다', (tester) async {
+  testWidgets('고치기 한 창에서 뜻·발음을 함께 바꾼다(5차 469)', (tester) async {
     await MyWordStore.add('guest',
         language: '영어', word: 'nuance', meaning: '미묘한 차이');
     await openWordTab(tester);
 
     await tester.tap(find.text('nuance'));
     await tester.pumpAndSettle();
-    expect(find.text('뜻 고치기'), findsOneWidget);
+    // 항목마다 단추가 서 있던 것을 '고치기' 하나로 모았다.
+    expect(find.byKey(const ValueKey('edit-word')), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('edit-word-meaning')));
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
     await tester.pumpAndSettle();
     await tester.enterText(
-        find.byKey(const ValueKey('word-meaning-input')), '뉘앙스');
-    await tester.tap(find.byKey(const ValueKey('word-meaning-save')));
+        find.byKey(const ValueKey('edit-word-meaning-input')), '뉘앙스');
+    await tester.enterText(
+        find.byKey(const ValueKey('edit-word-pronunciation-input')), '뉘앙스');
+    await tester.tap(find.byKey(const ValueKey('edit-word-save')));
     await tester.pumpAndSettle();
 
-    expect((await MyWordStore.load('guest')).single.meaning, '뉘앙스');
+    final saved = (await MyWordStore.load('guest')).single;
+    expect(saved.meaning, '뉘앙스');
+    expect(saved.pronunciation, '뉘앙스');
   });
 
   testWidgets('단어가 없으면 빈 화면과 단어 추가를 보여주고 예시 데이터는 없다', (tester) async {
