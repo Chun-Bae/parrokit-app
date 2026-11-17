@@ -1444,5 +1444,8 @@ npx -y firebase-tools@latest deploy --only functions --project parrokit-45126
   - 부팅된 기기의 `Dead` **8.3GB**(끄지 않으면 못 지운다)
   둘 다 내 판단으로 지우기에는 커서 사용자에게 물었다. `build/test_cache`
   43MB만 비워 1.2GB를 만들고 테스트를 돌렸다
+  - **사용자가 XcodeBuildMCP 캐시를 지우라고 해서 지웠다. 23GB가 됐다.**
+    안에 든 것은 DerivedData·logs·result-bundles·test-products라 다시 생긴다.
+    기기의 `Dead` 8.3GB는 그대로 뒀다(끄려면 또 물어야 한다)
 - 겪은 것: 검사 테스트의 정규식 `'[^']*변경[^']*'`가 **줄바꿈을 넘어가서**
   파일 하나가 통째로 잡혔다. `[^'\n]`으로 막았다
