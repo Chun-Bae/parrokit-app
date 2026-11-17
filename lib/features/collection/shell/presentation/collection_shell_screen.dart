@@ -13,13 +13,7 @@ import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/home/dashboard/presentation/add_sentence_screen.dart';
-import 'package:parrokit/data/local/app_database.dart';
-import 'package:parrokit/features/collection/library/domain/library_mode.dart';
 import 'package:parrokit/features/collection/library/presentation/providers/tag_filter_provider.dart';
-import 'package:parrokit/features/collection/library/presentation/sections/library_folder_section.dart';
-import 'package:parrokit/features/collection/library/presentation/sections/library_tag_section.dart';
-import 'package:parrokit/features/collection/library/presentation/widgets/bookmark_tabs.dart';
-import 'package:parrokit/features/collection/library/presentation/widgets/storage_scope_tabs.dart';
 
 import 'library_search.dart';
 import 'widgets/sentence_collection_preview.dart';
@@ -54,12 +48,12 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
-  LibraryTab _clipView = LibraryTab.folder;
-
   /// 탭 안쪽 화면이 올려 두는 머리줄 단(문장 탭, 단어 탭). 클립 탭은 아직 없다.
   /// 이 단들이 앱바·탭 아래에 붙어, 커뮤니티처럼 덜 중요한 줄부터 접힌다(5차 336).
   late final Map<int, CollectionHeaderSlot> _headerSlots;
-  String _storageMode = ClipStorageConstants.storageModeLocal;
+  // 클립 탭은 새 화면만 쓴다. 저장 위치 탭은 없어졌지만, 앱이 켜질 때
+  // 어떤 위치를 보고 있는지는 provider에 알려 준다(기본은 이 기기).
+  static const String _storageMode = ClipStorageConstants.storageModeLocal;
 
   @override
   void initState() {
@@ -119,46 +113,12 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     super.dispose();
   }
 
-  void _onStorageModeChanged(String mode) {
-    if (_storageMode == mode) return;
-    setState(() => _storageMode = mode);
-    context.read<ClipProvider>().setActiveStorageMode(mode);
-  }
-
-  void _onTagSelected(Tag tag) =>
-      context.read<TagFilterProvider>().addTag(tag.name);
-
-  void _onTagDeleted(String name) =>
-      context.read<TagFilterProvider>().removeTag(name);
-
-  void _onSelectAllTags() {
-    final clipProvider = context.read<ClipProvider>();
-    if (clipProvider.distinctTags.isEmpty) return;
-    context.read<TagFilterProvider>().setTags(
-          clipProvider.distinctTags.map((tag) => tag.name),
-        );
-  }
-
-  void _onClearResult() => context.read<TagFilterProvider>().clearTags();
-
-  Future<void> _onRefreshRemoteClips() async {
-    final clipProvider = context.read<ClipProvider>();
-    if (_storageMode == ClipStorageConstants.storageModeServer) {
-      await clipProvider.pullRemoteServerClips();
-    } else if (_storageMode == ClipStorageConstants.storageModeGoogleDrive) {
-      await clipProvider.pullRemoteCloudClips();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final clipProvider = context.watch<ClipProvider>();
-    final tagProvider = context.watch<TagFilterProvider>();
     final isClipTab = _tabController.index == 1;
     final isClipSelectionMode = isClipTab && clipProvider.isCollectionMenuOpen;
-    final isCollectionSelectionMode =
-        isClipSelectionMode && clipProvider.selectedCollectionId != null;
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -201,18 +161,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                   headerSlot: _headerSlots[0],
                 ),
               ),
-              // 새 클립 화면(폴더 + 모든 클립). 더보기 > 앱에서 끄면 예전 화면.
-              ValueListenableBuilder<bool>(
-                valueListenable: AppConfig.newClipLibraryListenable,
-                builder: (context, useNew, _) => useNew
-                    ? const ClipLibraryHome()
-                    : _buildClipPage(
-                        context,
-                        clipProvider,
-                        tagProvider,
-                        hideControls: isCollectionSelectionMode,
-                      ),
-              ),
+              // 클립 탭은 새 화면(폴더 + 모든 클립)만 쓴다. 더보기의 스위치는
+              // 없앴다(사용자 결정 2026-11-17).
+              const ClipLibraryHome(),
               _KeepAlive(
                 child: WordCollectionPreview(headerSlot: _headerSlots[2]),
               ),
@@ -308,71 +259,6 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
     );
   }
 
-  Widget _buildClipPage(
-    BuildContext context,
-    ClipProvider clipProvider,
-    TagFilterProvider tagProvider, {
-    required bool hideControls,
-  }) {
-    return Column(
-      children: [
-        if (!hideControls) ...[
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: TextButton.icon(
-                onPressed: () => context.pushNamed(AppRoutes.clipDiscover),
-                icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
-                label: const Text('이어보기·추천'),
-              ),
-            ),
-          ),
-          StorageScopeTabs(
-            value: _storageMode,
-            onChanged: _onStorageModeChanged,
-          ),
-          const SizedBox(height: 8),
-          BookmarkTabs(
-            value: _clipView,
-            onChanged: (value) => setState(() => _clipView = value),
-          ),
-          const SizedBox(height: 4),
-        ],
-        Expanded(
-          child: _buildClipContent(context, clipProvider, tagProvider),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildClipContent(
-    BuildContext context,
-    ClipProvider clipProvider,
-    TagFilterProvider tagProvider,
-  ) {
-    if (_clipView == LibraryTab.tag) {
-      return LibraryTagSection(
-        allTags: clipProvider.distinctTags,
-        selectedTags: tagProvider.activeTagNames.toSet(),
-        onTagSelected: _onTagSelected,
-        onTagDeleted: _onTagDeleted,
-        onSelectAll: _onSelectAllTags,
-        onClearResult: _onClearResult,
-      );
-    }
-
-    if (_storageMode == ClipStorageConstants.storageModeLocal) {
-      return const LibraryFolderSection();
-    }
-
-    return RefreshIndicator(
-      onRefresh: _onRefreshRemoteClips,
-      child: const LibraryFolderSection(),
-    );
-  }
-
   Future<void> _showSearchSheet(BuildContext context) async {
     final accountId = context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
     // 예전엔 입력칸만 있고 아무것도 찾지 않았다. 이제 내 문장·단어와 클립
@@ -426,8 +312,9 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
       );
       if (result == null) return;
       messenger.showSnackBar(SnackBar(
-          content:
-              Text(result.added ? sentenceSavedToMineMessage : sentenceAlreadySavedMessage)));
+          content: Text(result.added
+              ? sentenceSavedToMineMessage
+              : sentenceAlreadySavedMessage)));
     } catch (_) {
       messenger.showSnackBar(
           const SnackBar(content: Text(sentenceSaveFailedMessage)));

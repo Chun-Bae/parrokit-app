@@ -9,10 +9,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/state/provider/theme_provider.dart';
 import '../widgets/practice_reminder_tile.dart';
-import '../widgets/switch_tile.dart';
 import '../widgets/theme_tile.dart';
 
 /// 앱 설정 섹션.
@@ -33,19 +31,8 @@ class AppSettingsSection extends StatelessWidget {
             },
           ),
           const PracticeReminderTile(),
-          ValueListenableBuilder<bool>(
-            valueListenable: AppConfig.newClipLibraryListenable,
-            builder: (context, value, _) => SwitchTile(
-              icon: Icons.video_library_outlined,
-              title: '새 클립 화면',
-              subtitle: '보관함 클립 탭을 폴더와 모든 클립 목록으로 봐요',
-              value: value,
-              onChanged: (next) {
-                AppConfig.newClipLibrary = next;
-                AppConfig.saveToPrefs();
-              },
-            ),
-          ),
+          // '새 클립 화면' 스위치는 없앴다(사용자 결정 2026-11-17).
+          // 클립 탭은 새 화면만 쓴다.
         ],
       ),
     );

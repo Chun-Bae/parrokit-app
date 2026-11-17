@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:parrokit/core/content/word_search_url.dart';
@@ -33,14 +32,8 @@ class AppConfig {
   /// 보관함: 마지막으로 본 상단 탭(0 문장, 1 클립, 2 단어)
   static int libraryTab = 0;
 
-  /// 보관함 클립 탭을 새 화면(폴더 + 모든 클립)으로 볼지. 끄면 예전 화면.
-  /// 보관함이 다른 탭에 떠 있는 채로 바뀌므로 알림을 받을 수 있게 둔다.
-  static final ValueNotifier<bool> newClipLibraryListenable =
-      ValueNotifier<bool>(true);
-  static bool get newClipLibrary => newClipLibraryListenable.value;
-
-  static set newClipLibrary(bool value) =>
-      newClipLibraryListenable.value = value;
+  // '새 클립 화면' 스위치는 없앴다(사용자 결정 2026-11-17). 클립 탭은
+  // 새 화면만 쓴다. 예전에 저장해 둔 newClipLibrary 값은 읽지 않는다.
 
   /// 저장 공간
   static int localKeepSpaceBytes = _defaultLocalKeepSpaceBytes;
@@ -62,7 +55,6 @@ class AppConfig {
     sentenceExplore = p.getBool('sentenceExplore') ?? true;
     wordExplore = p.getBool('wordExplore') ?? false;
     libraryTab = (p.getInt('libraryTab') ?? 0).clamp(0, 2);
-    newClipLibrary = p.getBool('newClipLibrary') ?? true;
     localKeepSpaceBytes =
         p.getInt('localKeepSpaceBytes') ?? _defaultLocalKeepSpaceBytes;
   }
@@ -83,7 +75,6 @@ class AppConfig {
     await p.setBool('sentenceExplore', sentenceExplore);
     await p.setBool('wordExplore', wordExplore);
     await p.setInt('libraryTab', libraryTab);
-    await p.setBool('newClipLibrary', newClipLibrary);
     await p.setInt('localKeepSpaceBytes', localKeepSpaceBytes);
   }
 }
