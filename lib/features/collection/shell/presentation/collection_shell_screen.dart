@@ -25,6 +25,7 @@ import 'package:parrokit/features/content-studio/video/domain/models/video_gener
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'widgets/collection_header_slot.dart';
+import 'package:parrokit/core/shared/widgets/keep_alive.dart';
 
 class CollectionShellScreen extends StatefulWidget {
   const CollectionShellScreen({super.key});
@@ -92,8 +93,15 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
   }
 
   void _handleTabChanged() {
-    if (_tabController.indexIsChanging || !mounted) return;
+    if (!mounted) return;
+    // 머리줄(언어·주제 같은 탭별 줄)은 **누른 즉시** 바꾼다(5차 466).
+    //
+    // 전에는 indexIsChanging일 때 통째로 건너뛰어서, 넘어가는 동안 앞 탭의
+    // 줄이 그대로 남아 있다가 애니메이션이 끝나고서야 바뀌었다. 탭 표시는
+    // 손가락을 따라 움직이는데 머리줄만 늦어 어긋나 보였다.
     setState(() {});
+    // 아래는 자리가 완전히 바뀐 뒤에만 한다.
+    if (_tabController.indexIsChanging) return;
     if (AppConfig.libraryTab != _tabController.index) {
       AppConfig.libraryTab = _tabController.index;
       AppConfig.saveToPrefs();
@@ -157,15 +165,17 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
           body: TabBarView(
             controller: _tabController,
             children: [
-              _KeepAlive(
+              TabKeepAlive(
                 child: SentenceCollectionPreview(
                   headerSlot: _headerSlots[0],
                 ),
               ),
               // 클립 탭은 새 화면(폴더 + 모든 클립)만 쓴다. 더보기의 스위치는
               // 없앴다(사용자 결정 2026-11-17).
-              const ClipLibraryHome(),
-              _KeepAlive(
+              // 이 탭만 살려 두지 않아서, 클립으로 옮길 때마다 폴더와 클립을
+              // 다시 읽느라 깜빡였다(5차 466).
+              const TabKeepAlive(child: ClipLibraryHome()),
+              TabKeepAlive(
                 child: WordCollectionPreview(headerSlot: _headerSlots[2]),
               ),
             ],
@@ -494,28 +504,5 @@ class _AddMaterialTile extends StatelessWidget {
         const Icon(Icons.chevron_right_rounded),
       ]),
     );
-  }
-}
-
-/// TabBarView는 화면 밖으로 넘긴 탭을 버리고 돌아올 때 새로 만든다. 그때마다
-/// 목록을 다시 읽으며 깜빡여서, 보관함 탭들은 살려 둔다.
-class _KeepAlive extends StatefulWidget {
-  const _KeepAlive({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_KeepAlive> createState() => _KeepAliveState();
-}
-
-class _KeepAliveState extends State<_KeepAlive>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
   }
 }

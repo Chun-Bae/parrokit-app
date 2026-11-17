@@ -17,6 +17,7 @@ import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/core/shared/theme/app_colors.dart';
 import 'package:parrokit/core/shared/widgets/expandable_action_fab.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/keep_alive.dart';
 
 class CommunityShellScreen extends StatefulWidget {
   const CommunityShellScreen({super.key});
@@ -204,17 +205,28 @@ class _CommunityShellScreenState extends State<CommunityShellScreen>
                 ? const AlwaysScrollableScrollPhysics()
                 : const NeverScrollableScrollPhysics(),
             children: [
-              BoardScreen(selectedFilter: _selectedBoardFilter),
+              // 네 탭 모두 살려 둔다(5차 466). 전에는 탭을 옮길 때마다
+              // 목록을 처음부터 다시 읽어 빈 화면이 잠깐 보이고 스크롤도
+              // 맨 위로 돌아갔다.
+              TabKeepAlive(
+                child: BoardScreen(selectedFilter: _selectedBoardFilter),
+              ),
               // 공유된 문장 둘러보기(5차 340, 사용자 요청). 언어·주제 줄은
               // 이 화면이 제 안에 들고 있어서 머리줄 필터 자리는 비워 둔다.
-              const SentenceCollectionPreview(exploreOnly: true),
-              QuestionScreen(
-                selectedStatus: _selectedQuestionStatus,
-                selectedSort: _selectedQuestionSort,
+              const TabKeepAlive(
+                child: SentenceCollectionPreview(exploreOnly: true),
               ),
-              VoteScreen(
-                selectedFilter: _normalizedVoteFilter(_selectedVoteFilter),
-                swipeEnabled: !_headerVisible,
+              TabKeepAlive(
+                child: QuestionScreen(
+                  selectedStatus: _selectedQuestionStatus,
+                  selectedSort: _selectedQuestionSort,
+                ),
+              ),
+              TabKeepAlive(
+                child: VoteScreen(
+                  selectedFilter: _normalizedVoteFilter(_selectedVoteFilter),
+                  swipeEnabled: !_headerVisible,
+                ),
               ),
             ],
           ),
