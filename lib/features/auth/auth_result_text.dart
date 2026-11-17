@@ -21,3 +21,7 @@ const String resetMailSentMessage = '비밀번호를 다시 정하는 메일을 
 
 /// 그 메일을 보내지 못했을 때.
 const String resetMailFailedMessage = '메일을 보내지 못했어요. 잠시 뒤 다시 해 주세요.';
+
+/// 그 이메일로 가입한 사람이 없을 때. 로그인과 비밀번호 찾기가 같은 말을
+/// 쓴다(5차 437).
+const String emailNotFoundMessage = '등록되지 않은 이메일이에요.';

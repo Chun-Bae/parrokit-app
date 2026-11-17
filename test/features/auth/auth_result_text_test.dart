@@ -6,6 +6,7 @@
 // userErrorMessage가 이미 같은 문장으로 옮긴다.
 import 'dart:io';
 
+import 'package:parrokit/core/shared/utils/nickname_rule.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/features/auth/auth_result_text.dart';
 
@@ -60,5 +61,44 @@ void main() {
       expect(code, contains('loadOlderPostsLabel'), reason: path);
       expect(code, isNot(contains("'이전 글 더 보기'")), reason: path);
     }
+  });
+
+  test('남은 인증 글귀도 한 곳에서 꺼내 쓴다(5차 437)', () {
+    // 닉네임 확인 실패는 온보딩·회원가입 두 곳이, 등록되지 않은 이메일은
+    // 로그인·비밀번호 찾기 두 곳이 각자 적고 있었다.
+    expect(nicknameCheckFailedMessage, contains('닉네임을 확인하지 못했어요'));
+    expect(emailNotFoundMessage, '등록되지 않은 이메일이에요.');
+
+    for (final path in [
+      'lib/features/auth/onboarding/onboarding_screen.dart',
+      'lib/features/auth/sign-up/sign_up_screen.dart',
+    ]) {
+      final code = File(path).readAsStringSync();
+      expect(code, contains('nicknameCheckFailedMessage'), reason: path);
+      expect(code, isNot(contains("'닉네임을 확인하지 못했어요")), reason: path);
+    }
+    for (final path in [
+      'lib/features/auth/sign-in/sign_in_screen.dart',
+      'lib/features/auth/find-pw/find_pw_screen.dart',
+    ]) {
+      final code = File(path).readAsStringSync();
+      expect(code, contains('emailNotFoundMessage'), reason: path);
+      expect(code, isNot(contains("showToast('등록되지 않은")), reason: path);
+    }
+  });
+
+  test("'잘 되지 않았어요' 대신 무엇이 안 됐는지 말한다(5차 437)", () {
+    expect(nicknameSaveFailedMessage, contains('이름을 정하지 못했어요'));
+
+    final offenders = <String>[];
+    for (final e in Directory('lib').listSync(recursive: true)) {
+      if (e is! File || !e.path.endsWith('.dart')) continue;
+      for (final line in e
+          .readAsLinesSync()
+          .where((l) => !l.trimLeft().startsWith('//'))) {
+        if (line.contains("'잘 되지 않았어요")) offenders.add(e.path);
+      }
+    }
+    expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 }

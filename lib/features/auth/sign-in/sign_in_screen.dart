@@ -52,7 +52,7 @@ class _SignInScreenState extends State<SignInScreen> {
         case 'wrong-password':
           showToast('이메일 또는 비밀번호가 올바르지 않아요.');
         case 'user-not-found':
-          showToast('등록되지 않은 이메일이에요.');
+          showToast(emailNotFoundMessage);
         default:
           showToast(userErrorMessage(e, fallback: signInFailedMessage()));
       }

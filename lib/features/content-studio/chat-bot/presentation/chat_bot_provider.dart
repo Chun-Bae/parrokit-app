@@ -11,6 +11,11 @@ import 'package:parrokit/features/content-studio/video/domain/models/video_gener
 /// 전에는 늘 '비디오 생성'을 돕는다고 했는데, 입구가 숨겨져 있어 눌러도
 /// '영상 만들기는 지금 쉬고 있어요'만 떴다(5차).
 @visibleForTesting
+
+/// 답을 가져오지 못했을 때 말풍선에 적는 말(5차 437).
+/// 전에는 '잘 되지 않았어요'라 무엇이 안 됐는지 알 수 없었다.
+const String chatBotAnswerFailedMessage = '답을 가져오지 못했어요. 다시 해 주세요.';
+
 String chatBotGreeting({bool videoEnabled = kVideoStudioEnabled}) =>
     videoEnabled
         ? '안녕하세요! 음성과 영상 만들기를 도와줄 챗봇이에요.\n어떤 영상이나 음성을 만들고 싶으신가요?'
@@ -245,7 +250,7 @@ class ChatBotProvider extends ChangeNotifier {
               e.message != null &&
               e.message!.trim().isNotEmpty
           ? e.message!
-          : '잘 되지 않았어요. 다시 시도해 주세요.';
+          : chatBotAnswerFailedMessage;
       _messages.insert(
         0,
         AiChatMessage(

@@ -45,7 +45,7 @@ class _FindPwScreenState extends State<FindPwScreen> {
       if (!mounted) return;
       switch (e.code) {
         case 'user-not-found':
-          showToast('등록되지 않은 이메일이에요.');
+          showToast(emailNotFoundMessage);
         case 'invalid-email':
           showToast(emailInvalidMessage);
         default:

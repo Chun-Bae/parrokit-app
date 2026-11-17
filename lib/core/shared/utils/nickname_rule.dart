@@ -21,3 +21,11 @@ const String nicknameTakenMessage = '이미 누가 쓰고 있어요.';
 /// "'중복 확인'을 먼저 눌러 주세요."라고 해 같은 화면 안에서도 달랐다.
 /// 무엇을 누르면 되는지 말하는 쪽으로 맞춘다.
 const String nicknameCheckNeededMessage = "'중복 확인'을 먼저 눌러 주세요.";
+
+/// 중복 확인이 서버 쪽 사정으로 막혔을 때(5차 437).
+/// 온보딩과 회원가입이 같은 말을 쓴다.
+const String nicknameCheckFailedMessage = '닉네임을 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.';
+
+/// 이름을 정하지 못했을 때. 전에는 '잘 되지 않았어요'라 무엇이 안 됐는지
+/// 알 수 없었다(5차 437).
+const String nicknameSaveFailedMessage = '이름을 정하지 못했어요. 다시 시도해 주세요.';
