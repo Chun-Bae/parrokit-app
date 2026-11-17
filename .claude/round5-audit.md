@@ -65,8 +65,6 @@
 
 ## 배포 필요 (사용자가 직접)
 
-- **`firestore.rules`의 예문 개수를 5 → 10으로 올려야 한다**(반복 468): 467에서 앱 상한만 올려서, 로그인 사용자는 6개째부터 서버 저장이 조용히 거부된다. 규칙 파일은 고쳤고 배포만 남았다
-  - 명령: `npx -y firebase-tools@latest deploy --only firestore:rules --project parrokit-45126`
 - **함수를 한 번 더 배포해야 발음이 온다**(반복 468): 2026-11-17 22:35 배포본에는 `pronunciation`이 없다(기기 로그에서 응답 키가 `[dailyLimit, remainingToday, translation, examples]`였다). 배포를 시작한 시점이 발음을 넣기 직전이었다
   - 명령: `npx -y firebase-tools@latest deploy --only functions:suggestSentenceInfo --project parrokit-45126`
 - **단어 모드(뜻 + 예문)를 `suggestSentenceInfo`에 넣었다**(반복 467): `functions/src/sentenceAssist.ts`에 `mode: "word"`를 더했다. 발음 대신 예문을 만들고, 앱이 보낸 기존 예문과 겹치지 않게 한다(온도 0.2). 앱은 이미 이 모드를 부른다
@@ -993,5 +991,7 @@
   `pronunciation`이 없다. 배포를 시작한 시점이 발음을 넣기 직전이었다.
   코드는 맞으니 다시 배포하면 된다
 - analyze 깨끗, 전체 1575개 통과. 라이트·다크 둘 다 보고 되돌렸다
+- **사용자가 `firestore:rules`를 배포했다**(22:45, `released rules`). 예문
+  10개까지 서버에 저장된다
 - 남은 거리: 뜻·발음·유의어·예문을 **한 창에서** 고치기(사용자 요청).
   지금은 항목마다 작은 창이 뜬다 - 각각 다른 시기에 따로 붙은 탓이다
