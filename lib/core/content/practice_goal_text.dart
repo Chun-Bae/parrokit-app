@@ -1,0 +1,37 @@
+// 하루 목표와 학습 캘린더가 세는 것의 말(5차 466).
+//
+// 홈 한 화면이 '내가 연습한 문장'을 세 숫자로 말하고 있었다.
+//   - 내 문장 기록 '연습한 문장 6'  → 한 번이라도 다룬 문장 **가짓수**
+//   - 학습 캘린더 '누적 2문장'      → 따라 말한 **횟수** 누계
+//   - 내 문장 기록 '따라 말하기 5회' → 따라 말한 횟수(기록 DB 기준)
+// 셋 다 '문장'이라고 적혀 있어 어느 것이 맞는 수인지 알 수 없었다.
+// 같은 문장을 다섯 번 따라 말해도 목표 '5문장'이 채워지므로, 목표와
+// 캘린더가 세는 것은 가짓수가 아니라 횟수다.
+//
+// 그래서 '문장'은 가짓수에만 쓰고, 목표·캘린더는 '번'으로 적는다.
+
+/// 목표와 캘린더가 세는 단위.
+const String practiceCountUnit = '번';
+
+/// '3 / 5번' 처럼.
+String practiceOfGoalLabel(int done, int goal) =>
+    '$done / $goal$practiceCountUnit';
+
+/// 목표까지 남은 것.
+String practiceRemainingLabel(int remaining) =>
+    '$remaining$practiceCountUnit 남음';
+
+/// 지금까지 쌓인 전체.
+String practiceTotalLabel(int total) =>
+    '지금까지 총 $total$practiceCountUnit 연습했어요';
+
+/// 학습 캘린더 머리의 누계.
+String practiceCalendarTotalLabel(int total) =>
+    '누적 $total$practiceCountUnit';
+
+/// 하루 목표를 정하는 창.
+const String dailyGoalDialogTitle = '오늘의 연습 목표';
+const String dailyGoalDialogQuestion = '하루에 몇 번 따라 말할까요?';
+
+/// 캘린더에서 날짜를 아직 안 눌렀을 때.
+const String practiceCalendarHint = '날짜를 누르면 그날 연습한 횟수를 볼 수 있어요.';

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/content/practice_goal_text.dart';
 
 class StudyGardenPreview extends StatefulWidget {
   const StudyGardenPreview({
@@ -117,7 +118,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
-                  '누적 ${widget.totalPracticed}문장',
+                  practiceCalendarTotalLabel(widget.totalPracticed),
                   style: context.texts.labelSmall.copyWith(color: ink),
                 ),
               ),
@@ -188,7 +189,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               final complete = count >= goal;
               final label = future
                   ? '${date.month}월 $day일, 아직 오지 않은 날'
-                  : '${date.month}월 $day일, $count문장 연습${complete ? ', 목표 완료' : ''}';
+                  : '${date.month}월 $day일, $count$practiceCountUnit 연습${complete ? ', 목표 완료' : ''}';
 
               return Semantics(
                 label: label,
@@ -272,8 +273,10 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
           const SizedBox(height: 12),
           Text(
             selected == null
-                ? '날짜를 누르면 그날 연습한 문장 수를 볼 수 있어요.'
-                : '${selected!.month}월 ${selected!.day}일 · $selectedCount / ${goalFor(selected!)}문장${selectedCount! >= goalFor(selected!) ? ' · 목표 완료' : ''}',
+                ? practiceCalendarHint
+                : '${selected!.month}월 ${selected!.day}일 · '
+                    '${practiceOfGoalLabel(selectedCount!, goalFor(selected!))}'
+                    '${selectedCount >= goalFor(selected!) ? ' · 목표 완료' : ''}',
             style: context.texts.labelSmall.copyWith(color: muted, height: 1.5),
           ),
         ],

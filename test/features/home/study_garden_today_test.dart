@@ -37,7 +37,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(labelOf(tester, '11월 17일'), '11월 17일, 3문장 연습');
+    expect(labelOf(tester, '11월 17일'), '11월 17일, 3번 연습');
   });
 
   testWidgets('앞으로 올 날은 아직 오지 않은 날이라고 말한다', (tester) async {
@@ -61,6 +61,6 @@ void main() {
       counts: {'2026-11-18': 2},
     ));
     await tester.pumpAndSettle();
-    expect(labelOf(tester, '11월 18일'), '11월 18일, 2문장 연습');
+    expect(labelOf(tester, '11월 18일'), '11월 18일, 2번 연습');
   });
 }

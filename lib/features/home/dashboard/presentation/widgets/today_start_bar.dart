@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/content/practice_goal_text.dart';
 
 /// 새 디자인 홈의 "오늘" 한 줄. 무대 바로 아래에 오늘 목표 진행과 학습 시작
 /// 버튼을 함께 둔다. 전에는 학습하러 가기 버튼이 내 문장 기록 카드 아래에
@@ -81,7 +82,7 @@ class TodayStartBar extends StatelessWidget {
                       style: context.texts.headlineSmall.copyWith(
                           color: palette.ink, fontWeight: FontWeight.w800)),
                   TextSpan(
-                      text: ' / $safeGoal 문장',
+                      text: ' / $safeGoal$practiceCountUnit',
                       style: context.texts.bodyMedium
                           .copyWith(color: palette.muted)),
                 ]),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/content/practice_goal_text.dart';
 
 class TodayPracticeSummary extends StatelessWidget {
   const TodayPracticeSummary({
@@ -101,13 +102,15 @@ class TodayPracticeSummary extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 5, bottom: 3),
                 child: Text(
-                  '/ $safeGoal문장',
+                  '/ $safeGoal$practiceCountUnit',
                   style: context.texts.bodyLarge.copyWith(color: muted),
                 ),
               ),
               const Spacer(),
               Text(
-                isComplete ? '목표 달성!' : '${safeGoal - completed}문장 남음',
+                isComplete
+                    ? '목표 달성!'
+                    : practiceRemainingLabel(safeGoal - completed),
                 style: context.texts.bodySmall
                     .copyWith(color: isComplete ? palette.good : accent),
               ),
@@ -131,7 +134,7 @@ class TodayPracticeSummary extends StatelessWidget {
               Icon(Icons.auto_awesome_rounded, size: 16, color: accent),
               const SizedBox(width: 7),
               Text(
-                '지금까지 총 $total문장을 연습했어요',
+                practiceTotalLabel(total),
                 style: context.texts.bodySmall.copyWith(color: muted),
               ),
             ],
@@ -175,12 +178,12 @@ class _DailyGoalDialogState extends State<DailyGoalDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('오늘의 문장 목표'),
+      title: const Text(dailyGoalDialogTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('하루에 몇 문장을 따라 말할까요?'),
+          const Text(dailyGoalDialogQuestion),
           const SizedBox(height: 14),
           TextField(
             controller: controller,
@@ -189,7 +192,7 @@ class _DailyGoalDialogState extends State<DailyGoalDialog> {
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => submit(),
             decoration: const InputDecoration(
-              suffixText: '문장',
+              suffixText: practiceCountUnit,
               border: OutlineInputBorder(),
               helperText: '1~100 사이로 설정할 수 있어요.',
             ),

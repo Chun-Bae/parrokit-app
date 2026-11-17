@@ -27,7 +27,7 @@ void main() {
     // 옆의 '학습하기'(영상 학습)는 이 수를 올리지 않는다.
     expect(find.text('오늘 목표 · 따라 말하기'), findsOneWidget);
     // 숫자와 단위는 한 Text.rich라 합쳐진 글로 본다.
-    expect(find.text('2 / 5 문장', findRichText: true), findsOneWidget);
+    expect(find.text('2 / 5번', findRichText: true), findsOneWidget);
   });
 
   testWidgets('다 채우면 완료라고만 적는다', (tester) async {
@@ -37,7 +37,7 @@ void main() {
 
   testWidgets('목표가 0이어도 나누기로 깨지지 않는다', (tester) async {
     await tester.pumpWidget(_app(completed: 0, goal: 0));
-    expect(find.text('0 / 1 문장', findRichText: true), findsOneWidget);
+    expect(find.text('0 / 1번', findRichText: true), findsOneWidget);
   });
 
   testWidgets('목표 바꾸기를 누르면 알려 준다', (tester) async {
