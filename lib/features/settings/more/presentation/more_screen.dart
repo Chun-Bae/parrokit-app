@@ -12,6 +12,7 @@
 // ============================================================================
 
 import 'package:parrokit/features/settings/more/presentation/sections/ads_removal_section.dart';
+import 'package:parrokit/features/settings/more/presentation/sections/parrot_topup_section.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -88,6 +89,9 @@ class _MoreScreenState extends State<MoreScreen> {
             const SubscriptionSection(),
             // 광고 제거는 한 번 사는 것이라 구독과 다른 줄로 둔다(5차 463).
             const AdsRemovalSection(),
+            // 패롯도 파는 것이라 상품 칸에 둔다(5차 466). 지갑 카드의
+            // '충전' 버튼은 그대로 둔다 - 잔액을 보고 바로 누르는 자리다.
+            const ParrotTopupSection(),
             const _GroupLabel('데이터'),
             const DataSection(),
             const _GroupLabel('앱'),

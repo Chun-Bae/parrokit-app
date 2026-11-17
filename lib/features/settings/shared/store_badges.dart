@@ -61,11 +61,13 @@ const StoreBadge adsRemovalBadge = StoreBadge(
   asset: 'assets/icons/store_ads_removed.svg',
 );
 
-/// 패롯 충전. 색은 패롯 화폐 그림(assets/currency/parrot.svg)의 초록.
+/// 패롯 충전. 앱이 패롯을 보여 줄 때 쓰는 그림을 그대로 쓴다.
+/// 색은 그 그림의 초록이다(버튼 안처럼 그림을 못 쓰는 자리에서 쓴다).
 const StoreBadge parrotTopupBadge = StoreBadge(
   name: '패롯 충전',
   icon: Icons.add_circle_rounded,
   colors: [Color(0xFF6EE7B7), Color(0xFF059669)],
+  asset: 'assets/currency/parrot.svg',
 );
 
 /// 화면에 쓰는 상품 그림 전부. 테스트가 이 목록을 돈다.
