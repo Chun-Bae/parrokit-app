@@ -127,7 +127,7 @@ void main() {
     // 상세로 나가지 않고 이 창 안에서 받는다.
     await tester.tap(find.byKey(const ValueKey('edit-word-fill-examples')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('edit-word-fill-count-1')));
+    await tester.tap(find.byKey(const ValueKey('example-count-1')));
     await tester.pumpAndSettle();
 
     // 예문 단추이므로 예문만 들어간다. 뜻·발음은 위 단추가 맡는다.
@@ -264,6 +264,23 @@ void main() {
     for (final key in ['edit-word-fill', 'edit-word-fill-examples']) {
       final button = tester.widget<ButtonStyleButton>(find.byKey(ValueKey(key)));
       expect(button.onPressed, isNotNull, reason: key);
+    }
+  });
+
+  test('개수 고르기 창을 두 화면이 함께 쓴다(5차 474)', () {
+    // 전에는 고치기 창에만 있어서, 추가 시트에서는 몇 개가 오는지도
+    // 상한이 몇 개인지도 알 수 없었다.
+    final sheet = File(
+            'lib/features/collection/shell/presentation/widgets/example_count_sheet.dart')
+        .readAsStringSync();
+    expect(sheet, contains('examplesMaxCount'), reason: '상한을 적어 준다');
+
+    for (final path in [
+      'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart',
+      'lib/features/collection/shell/presentation/widgets/word_edit_sheet.dart',
+    ]) {
+      expect(File(path).readAsStringSync(), contains('askExampleCount('),
+          reason: path);
     }
   });
 

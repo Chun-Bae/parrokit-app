@@ -1,6 +1,7 @@
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/example_count_sheet.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_edit_sheet.dart';
 import 'dart:async';
 
@@ -1205,6 +1206,18 @@ class _AddWordSheetState extends State<AddWordSheet> {
       setState(() => fillNote = '예문은 $examplesMaxCount개까지 넣을 수 있어요.');
       return;
     }
+    // 몇 개를 받을지 고르게 한다. 상한도 여기서 보여 준다(5차 474).
+    final already = [
+      for (final c in _examples)
+        if (c.text.trim().isNotEmpty) c,
+    ].length;
+    final count = await askExampleCount(
+      context,
+      room: emptySlots.length + room < 1 ? 1 : emptySlots.length + room,
+      already: already,
+    );
+    if (!mounted || count == null) return;
+
     setState(() {
       fillingExamples = true;
       fillNote = null;
@@ -1218,7 +1231,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
           for (final c in _examples)
             if (c.text.trim().isNotEmpty) c.text.trim(),
         ],
-        count: emptySlots.isEmpty ? 1 : emptySlots.length,
+        count: count,
       );
       if (!mounted) return;
       var slot = 0;
@@ -1286,6 +1299,13 @@ class _AddWordSheetState extends State<AddWordSheet> {
         used: _assistUsed,
         limit: _assist.dailyLimit,
       );
+
+  /// 단추 아래에 적을 말. 막혀 있으면 까닭부터 말한다(5차 474).
+  String _fillHint(String whenReady) {
+    if (_word.text.trim().isEmpty) return wordFillNeedsWordHint;
+    if (_exhausted) return assistQuotaExhaustedMessage;
+    return whenReady;
+  }
 
   /// 오늘 쓴 횟수. 서버에서 못 받아오면 null.
   int? get _assistUsed {
@@ -1429,7 +1449,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   ],
                 ),
                 Text(
-                  _exhausted ? assistQuotaExhaustedMessage : wordFillBasicsHint,
+                  _fillHint(wordFillBasicsHint),
                   key: const ValueKey('word-autofill-hint'),
                   style: context.texts.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1582,9 +1602,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   ],
                 ),
                 Text(
-                  _exhausted
-                      ? assistQuotaExhaustedMessage
-                      : wordFillExamplesHint,
+                  _fillHint(wordFillExamplesHint),
                   key: const ValueKey('word-examples-hint'),
                   style: context.texts.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1905,6 +1923,12 @@ double wordReviewProgress({required int index, required int total}) {
 
 /// 단어 뜻 채우기의 남은 횟수 안내. 숫자만 있으면 쓴 횟수인지 남은
 /// 횟수인지 알 수 없어서 문장 추가 화면과 같은 말로 적는다(5차).
+/// 단어를 아직 안 적어서 채울 수 없을 때(5차 474, 사용자가 헷갈렸다).
+///
+/// 단추가 흐린데 까닭이 없어서, 쓸 수 없는 기능인 줄 알았다. 횟수를 다
+/// 썼을 때는 까닭을 적으면서 이쪽은 아무 말도 안 하고 있었다.
+const String wordFillNeedsWordHint = '단어를 적으면 채울 수 있어요';
+
 /// 오늘 횟수를 다 썼을 때(5차 473).
 ///
 /// 네 곳에 손으로 적혀 있던 말이다. 한 곳에서 꺼내 쓴다.

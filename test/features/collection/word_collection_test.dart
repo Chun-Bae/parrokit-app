@@ -422,6 +422,26 @@ void main() {
     expect(find.text('미묘한 차이'), findsOneWidget);
   });
 
+  testWidgets('단어가 없어 막혔으면 그 까닭을 적는다(5차 474)', (tester) async {
+    await openAddSheet(tester, FakeAssist());
+    await tester.pumpAndSettle();
+
+    // 단추가 흐린데 까닭이 없으면 쓸 수 없는 기능인 줄 안다.
+    expect(find.text(wordFillNeedsWordHint), findsWidgets);
+    for (final key in ['fill-word-meaning', 'fill-word-examples']) {
+      final button = tester.widget<ButtonStyleButton>(find.byKey(ValueKey(key)));
+      expect(button.onPressed, isNull, reason: key);
+    }
+
+    await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
+    await tester.pump();
+
+    // 적고 나면 무엇을 채우는지로 바뀐다.
+    expect(find.text(wordFillNeedsWordHint), findsNothing);
+    expect(find.text(wordFillBasicsHint), findsOneWidget);
+    expect(find.text(wordFillExamplesHint), findsOneWidget);
+  });
+
   testWidgets('남은 횟수를 버튼 옆에 적는다', (tester) async {
     await openAddSheet(tester, FakeAssist());
     await tester.pumpAndSettle();

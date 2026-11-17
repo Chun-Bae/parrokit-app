@@ -9,7 +9,6 @@
 // 자동 채우기도 여기 둔다(5차 470, 사용자 지적). 상세에만 있었더니, 예문을
 // 손보러 이 창에 들어온 사람이 자동으로 받으려면 창을 닫고 나가야 했다.
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
@@ -19,6 +18,7 @@ import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/example_count_sheet.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_collection_preview.dart';
 
 /// 고치기 시트를 연다. 저장했으면 바뀐 낱말을 돌려준다.
@@ -222,8 +222,13 @@ class _WordEditSheetState extends State<WordEditSheet> {
       setState(() => _notice = '예문은 $examplesMaxCount개까지 넣을 수 있어요.');
       return;
     }
-    final count = await _askCount(
-      emptySlots.length + room < 1 ? 1 : emptySlots.length + room,
+    final count = await askExampleCount(
+      context,
+      room: emptySlots.length + room < 1 ? 1 : emptySlots.length + room,
+      already: [
+        for (final c in _exampleTexts)
+          if (c.text.trim().isNotEmpty) c,
+      ].length,
     );
     if (!mounted || count == null) return;
 
@@ -275,31 +280,6 @@ class _WordEditSheetState extends State<WordEditSheet> {
         });
       }
     }
-  }
-
-  /// 몇 개를 받을지 고른다. 남은 자리보다 많이 고를 수 없다.
-  Future<int?> _askCount(int room) {
-    final choices = [for (var n = 1; n <= room && n <= 5; n++) n];
-    return showCupertinoModalPopup<int>(
-      context: context,
-      builder: (sheetContext) => CupertinoActionSheet(
-        title: const Text('예문 몇 개를 만들까요?'),
-        message: Text('$examplesMaxCount개까지 둘 수 있어요.'),
-        actions: [
-          for (final n in choices)
-            CupertinoActionSheetAction(
-              key: ValueKey('edit-word-fill-count-$n'),
-              onPressed: () => Navigator.of(sheetContext).pop(n),
-              child: Text('$n개'),
-            ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.of(sheetContext).pop(),
-          child: const Text('취소'),
-        ),
-      ),
-    );
   }
 
   Future<void> _save() async {
