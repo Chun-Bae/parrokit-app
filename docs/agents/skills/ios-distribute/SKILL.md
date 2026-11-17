@@ -13,7 +13,9 @@ description: >-
 확인한 뒤 한 번에 한다.
 
 GitHub Actions 경로는 2026-11-17에 걷어냈다(사용자 결정: 안 쓴다).
-`.github/workflows/ios-distribute.yml`이 아직 남아 있어도 이 스킬은 쓰지 않는다.
+워크플로 파일도 지웠으니 되살리지 않는다. GitHub Secrets(ENV_FILE,
+IOS_CERT_P12_BASE64 등)는 저장소 설정에 남아 있을 수 있다 - 치우려면
+사용자가 GitHub에서 직접 지운다.
 
 ## 프로젝트 값 (비밀 아님)
 

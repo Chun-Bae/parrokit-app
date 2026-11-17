@@ -10,7 +10,7 @@ description: >-
 프로젝트 규칙은 `CLAUDE.md`(AGENTS.md)를 따른다.
 
 GitHub Actions 경로는 2026-11-17에 걷어냈다(사용자 결정: 안 쓴다).
-`.github/workflows/ios-distribute.yml`이 남아 있어도 쓰지 않고, 로컬 빌드로만 한다.
+워크플로 파일도 지웠다. 로컬 빌드로만 하고 되살리지 않는다.
 
 ## 하는 일
 
