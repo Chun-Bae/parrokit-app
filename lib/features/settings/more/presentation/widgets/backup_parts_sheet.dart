@@ -1,7 +1,11 @@
 // 백업·불러오기에서 무엇을 다룰지 고르는 시트(5차 345, 사용자 요청).
 //
 // 전에는 백업이 클립과 자막만 담았는데 이름이 그냥 '백업'이라 문장까지 담기는
-// 줄 알기 쉬웠다. 이제 문장·단어·클립을 골라서 담고 되돌린다.
+// 줄 알기 쉬웠다. 이제 문장·단어·클립을 골라서 담고 불러온다.
+//
+// 되돌리는 쪽 이름은 '불러오기'다(5차 487). 여는 단추와 진행 창은
+// '불러오기'인데 이 시트만 '되돌리기'라, 한 흐름이 두 이름으로
+// 불렸다.
 
 import 'package:flutter/material.dart';
 
@@ -51,13 +55,13 @@ class _BackupPartsSheetState extends State<BackupPartsSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(restoring ? '무엇을 되돌릴까요?' : '무엇을 백업할까요?',
+            Text(restoring ? '무엇을 불러올까요?' : '무엇을 백업할까요?',
                 style: context.texts.titleLarge
                     .copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
             Text(
                 restoring
-                    ? '고른 것만 백업 파일에서 되돌려요. 파일에 없는 것은 건너뛰어요.'
+                    ? '고른 것만 백업 파일에서 불러와요. 파일에 없는 것은 건너뛰어요.'
                     : '고른 것만 한 파일에 담아요.',
                 style: context.texts.bodySmall
                     .copyWith(color: colors.onSurfaceVariant)),
@@ -85,7 +89,7 @@ class _BackupPartsSheetState extends State<BackupPartsSheet> {
               keyValue: const ValueKey('backup-part-clips'),
               icon: Icons.smart_display_rounded,
               title: '클립과 자막',
-              subtitle: restoring ? '되돌린 뒤 앱이 다시 켜져요' : '영상 파일까지 담아서 파일이 커요',
+              subtitle: restoring ? '불러온 뒤 앱이 다시 켜져요' : '영상 파일까지 담아서 파일이 커요',
               value: parts.clips,
               onChanged: (v) =>
                   setState(() => parts = parts.copyWith(clips: v)),
@@ -97,7 +101,7 @@ class _BackupPartsSheetState extends State<BackupPartsSheet> {
                 key: const ValueKey('backup-parts-confirm'),
                 onPressed:
                     parts.isEmpty ? null : () => Navigator.pop(context, parts),
-                child: Text(restoring ? '되돌리기' : '백업하기'),
+                child: Text(restoring ? '불러오기' : '백업하기'),
               ),
             ),
             if (parts.isEmpty)

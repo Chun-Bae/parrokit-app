@@ -100,7 +100,7 @@ void main() {
 
   test('되돌린 결과를 사람 말로 적는다', () {
     expect(studyRestoreSummary((sentences: 12, words: 3)),
-        '문장 12개 · 단어 3개를 되돌렸어요.');
+        '문장 12개 · 단어 3개를 불러왔어요.');
     expect(
         studyRestoreSummary((sentences: 0, words: 0)), '새로 들어온 문장과 단어는 없어요.');
   });

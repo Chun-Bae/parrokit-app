@@ -142,7 +142,9 @@ String studyRestoreSummary(StudyRestoreCount count) {
     if (count.words > 0) '단어 ${count.words}개',
   ];
   if (parts.isEmpty) return '새로 들어온 문장과 단어는 없어요.';
-  return '${parts.join(' · ')}를 되돌렸어요.';
+  // 이 안내는 백업 불러오기와 '문장·단어 파일에서 불러오기' 둘 다 쓴다.
+  // 흐름 이름이 '불러오기'라 끝말도 맞춘다(5차 487).
+  return '${parts.join(' · ')}를 불러왔어요.';
 }
 
 /// 백업에 담을 것들(5차 345, 사용자 요청: 문장·단어·클립을 고르게).

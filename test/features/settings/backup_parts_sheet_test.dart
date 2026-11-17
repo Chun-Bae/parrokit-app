@@ -80,10 +80,13 @@ void main() {
         isTrue);
   });
 
-  testWidgets('불러오기는 말이 다르다', (tester) async {
+  // 여는 단추와 진행 창이 '불러오기'인데 이 시트만 '되돌리기'였다(5차 487).
+  testWidgets('불러오기는 말이 다르고, 흐름과 같은 이름을 쓴다', (tester) async {
     await _pump(tester, restoring: true);
-    expect(find.text('무엇을 되돌릴까요?'), findsOneWidget);
-    expect(find.text('되돌리기'), findsOneWidget);
+    expect(find.text('무엇을 불러올까요?'), findsOneWidget);
+    expect(find.text('불러오기'), findsOneWidget);
+    expect(find.text('무엇을 백업할까요?'), findsNothing);
+    expect(find.text('되돌리기'), findsNothing);
   });
 
   test('클립 카드의 백업 단추도 고르는 시트를 거친다', () {

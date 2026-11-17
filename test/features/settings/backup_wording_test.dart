@@ -44,6 +44,26 @@ void main() {
     expect(text.contains('문장과 단어는 그대로예요'), isFalse);
   });
 
+  // 한 흐름을 두 이름으로 부르던 것(5차 487). 여는 단추와 진행 창은
+  // '불러오기'인데 고르기 시트만 '되돌리기'였고, 끝난 뒤 안내는
+  // '되돌렸어요'였다.
+  test('되돌리는 쪽은 어디서나 불러오기라 부른다', () {
+    const paths = [
+      'lib/features/settings/more/presentation/widgets/backup_parts_sheet.dart',
+      'lib/features/settings/more/presentation/widgets/backup_progress_dialog.dart',
+      'lib/core/content/study_data_transfer.dart',
+    ];
+    for (final path in paths) {
+      final code = File(path)
+          .readAsLinesSync()
+          .where((l) => !l.trimLeft().startsWith('//'))
+          .join('\n');
+      for (final word in ['되돌릴까요', '되돌리기', '되돌려요', '되돌렸어요', '되돌린 뒤']) {
+        expect(code.contains(word), isFalse, reason: '$path: $word');
+      }
+    }
+  });
+
   test('문장·단어는 study.json 한 곳을 거쳐 담긴다', () {
     // 설정(SharedPreferences)을 통째로 담지 않는다. 담는 것은 study_data_transfer가
     // 만든 글 하나뿐이고, 예전 백업에는 그 파일이 없다.
