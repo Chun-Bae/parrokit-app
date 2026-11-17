@@ -203,7 +203,7 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                       TextField(
                         controller: _titleController,
                         decoration: InputDecoration(
-                          hintText: '제목을 적어 주세요',
+                          hintText: writeTitleHint,
                           filled: true,
                           fillColor: Colors.transparent,
                           hintStyle: context.texts.headlineSmall

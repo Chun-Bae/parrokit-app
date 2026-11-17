@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/content/shared_sentence_match.dart';
 import 'dart:async';
@@ -1609,7 +1610,8 @@ class _SentenceEditDialogState extends State<SentenceEditDialog> {
                 key: const ValueKey('edit-sentence-pron'),
                 controller: _pron,
                 onChanged: (_) => setState(() => _hint = null),
-                decoration: const InputDecoration(labelText: '발음 (비워도 돼요)'),
+                decoration: const InputDecoration(
+                    labelText: pronunciationOptionalLabel),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -1618,7 +1620,8 @@ class _SentenceEditDialogState extends State<SentenceEditDialog> {
                 maxLines: 2,
                 minLines: 1,
                 onChanged: (_) => setState(() => _hint = null),
-                decoration: const InputDecoration(labelText: '뜻 (비워도 돼요)'),
+                decoration:
+                    const InputDecoration(labelText: meaningOptionalLabel),
               ),
               if (_hint case final hint?)
                 Padding(

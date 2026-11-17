@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -198,7 +199,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                   style: context.texts.bodyMedium,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    labelText: '발음 (비워도 돼요)',
+                    labelText: pronunciationOptionalLabel,
                     border: const OutlineInputBorder(),
                     suffixIcon: controller.fillStatus == AssistStatus.loading
                         ? const _LoadingDot()

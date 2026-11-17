@@ -13,3 +13,19 @@ const String studioVoiceTabName = '음성 만들기';
 
 /// 대본으로 짧은 영상을 만드는 화면.
 const String studioVideoTabName = '영상 만들기';
+
+// ── 입구에 적는 한 줄 설명(5차 436) ─────────────────────────────────
+//
+// 만드는 화면으로 들어가는 자리가 셋이다: 콘텐츠 제작 첫 화면, 보관함의
+// '무엇을 추가할까요?' 시트, 홈 무대의 전환 단추. 설명을 각자 적다 보니
+// 같은 클립 만들기를 한쪽은 '영상에 자막을 달아 클립으로 저장해요',
+// 다른 쪽은 '영상과 자막을 함께 보관해요'라고 했다.
+
+/// 새 클립(영상에 자막 달기).
+const String studioClipTabDescription = '영상에 자막을 달아 클립으로 보관해요';
+
+/// 음성 만들기.
+const String studioVoiceTabDescription = '문장을 읽어 주는 음성을 만들어요';
+
+/// 영상 만들기.
+const String studioVideoTabDescription = '대본으로 짧은 영상을 만들어요';

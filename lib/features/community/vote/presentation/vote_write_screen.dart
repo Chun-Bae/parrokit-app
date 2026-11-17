@@ -347,7 +347,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       TextField(
                         controller: _titleController,
                         decoration: InputDecoration(
-                          hintText: '투표 제목을 적어 주세요',
+                          hintText: voteTitleHint,
                           hintStyle: context.texts.headlineSmall
                               .copyWith(color: colorScheme.onSurfaceVariant),
                           filled: true,

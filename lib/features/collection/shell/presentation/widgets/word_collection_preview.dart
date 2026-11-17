@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -604,7 +605,8 @@ class _WordExampleDialogState extends State<WordExampleDialog> {
               maxLines: 2,
               minLines: 1,
               maxLength: exampleMaxLength,
-              decoration: const InputDecoration(labelText: '뜻 (비워도 돼요)'),
+              decoration:
+                  const InputDecoration(labelText: meaningOptionalLabel),
             ),
             if (_hint != null)
               Padding(
@@ -1409,7 +1411,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   controller: _meaning,
                   maxLength: 200,
                   decoration: const InputDecoration(
-                    labelText: '뜻 (비워도 돼요)',
+                    labelText: meaningOptionalLabel,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -1518,8 +1520,9 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     maxLines: 2,
                     minLines: 1,
                     decoration: InputDecoration(
-                      labelText:
-                          _examples.length == 1 ? '예문 (비워도 돼요)' : '예문 ${index + 1}',
+                      labelText: _examples.length == 1
+                          ? '예문 (비워도 돼요)'
+                          : '예문 ${index + 1}',
                       border: const OutlineInputBorder(),
                       suffixIcon: _examples.length == 1
                           ? null

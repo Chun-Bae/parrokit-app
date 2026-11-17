@@ -50,3 +50,9 @@ String? writeBlockedReason({
   }
   return null;
 }
+
+/// 제목 칸에 적어 두는 힌트. 게시판과 질문 두 화면이 같은 말을 쓴다(5차 436).
+const String writeTitleHint = '제목을 적어 주세요';
+
+/// 투표는 무엇의 제목인지 밝힌다.
+const String voteTitleHint = '투표 제목을 적어 주세요';

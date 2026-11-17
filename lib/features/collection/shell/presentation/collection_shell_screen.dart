@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/hub/presentation/studio_tab_names.dart';
 import 'package:parrokit/core/content/sentence_share_text.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:flutter/material.dart';
@@ -367,7 +368,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               _AddMaterialTile(
                 icon: Icons.smart_display_rounded,
                 title: '클립 추가',
-                subtitle: '영상과 자막을 함께 보관해요',
+                subtitle: studioClipTabDescription,
                 // 예전엔 탭만 바꿔서 '추가'를 눌러도 아무것도 열리지 않았다(5차).
                 // 문장 추가처럼 바로 클립 만들기 화면을 연다.
                 onTap: () {
@@ -396,7 +397,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
               _AddMaterialTile(
                 icon: Icons.graphic_eq_rounded,
                 title: '음성 만들기',
-                subtitle: '문장을 읽어 주는 음성을 만들어요',
+                subtitle: studioVoiceTabDescription,
                 usesParrots: true,
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -407,7 +408,7 @@ class _CollectionShellScreenState extends State<CollectionShellScreen>
                 _AddMaterialTile(
                   icon: Icons.movie_creation_outlined,
                   title: '영상 만들기',
-                  subtitle: '대본으로 짧은 영상을 만들어요',
+                  subtitle: studioVideoTabDescription,
                   usesParrots: true,
                   onTap: () {
                     Navigator.pop(sheetContext);

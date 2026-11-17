@@ -364,7 +364,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                               controller: _titleController,
                               onChanged: (_) => setState(() {}),
                               decoration: InputDecoration(
-                                hintText: '제목을 적어 주세요',
+                                hintText: writeTitleHint,
                                 hintStyle: context.texts.headlineSmall
                                     .copyWith(color: mutedText),
                                 border: InputBorder.none,
@@ -444,8 +444,7 @@ class _BoardWriteScreenState extends State<BoardWriteScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _TipBullet(
-                                    text:
-                                        '자동 자막 만들기, 쉐도잉 팁, 학습 루틴을 자유롭게 공유해요.',
+                                    text: '자동 자막 만들기, 쉐도잉 팁, 학습 루틴을 자유롭게 공유해요.',
                                     forceWhite: isDark,
                                   ),
                                   const SizedBox(height: 14),

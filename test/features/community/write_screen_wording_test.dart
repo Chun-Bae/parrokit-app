@@ -5,6 +5,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 
 const _screens = [
   'lib/features/community/board/presentation/board_write_screen.dart',
@@ -45,9 +46,12 @@ void main() {
   });
 
   test('제목 칸 안내는 세 화면이 같은 꼴이다', () {
-    expect(_code(_screens[0]), contains("hintText: '제목을 적어 주세요'"));
-    expect(_code(_screens[1]), contains("hintText: '제목을 적어 주세요'"));
+    // 436에서 힌트를 write_blocked_reason 한 곳으로 모았다.
+    expect(writeTitleHint, '제목을 적어 주세요');
+    expect(_code(_screens[0]), contains('hintText: writeTitleHint'));
+    expect(_code(_screens[1]), contains('hintText: writeTitleHint'));
     // 투표는 무엇의 제목인지 밝힌다.
-    expect(_code(_screens[2]), contains("hintText: '투표 제목을 적어 주세요'"));
+    expect(voteTitleHint, '투표 제목을 적어 주세요');
+    expect(_code(_screens[2]), contains('hintText: voteTitleHint'));
   });
 }
