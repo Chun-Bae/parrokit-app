@@ -66,4 +66,46 @@ void main() {
         .join('\n');
     expect(code, contains('rootNavigator: true'));
   });
+
+  test('시트 키를 화면 높이로 정하지 않는다(5차 432)', () {
+    // 이 시트만 화면 높이로 자기 키를 정해서, 뜨는 자리보다 커지면
+    // 윗부분이 부모 밖으로 나갔다. 보이기는 해도 터치를 못 받는다.
+    final code = File(
+            'lib/features/content-studio/chat-bot/presentation/widgets/chat_bot_sheet.dart')
+        .readAsLinesSync()
+        .where((l) => !l.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(code, contains('LayoutBuilder'));
+    expect(code, contains('constraints.maxHeight'));
+  });
+
+  testWidgets('자리가 좁으면 시트가 그 자리를 넘지 않는다(5차 432)', (tester) async {
+    final provider = ChatBotProvider(useCase: SendChatMessageUseCase(_Repo()));
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: ChangeNotifierProvider.value(
+        value: provider,
+        child: Builder(
+          builder: (context) => Scaffold(
+            // 셸이 아래에 줄을 하나 깔아 자리가 줄어든 상황을 흉내 낸다.
+            bottomNavigationBar: const SizedBox(height: 120),
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => showChatBotSheet(context),
+                child: const Text('열기'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+
+    final sheet = tester.getRect(find.text('만들기 도우미'));
+    final screen = tester.getRect(find.byType(MaterialApp));
+    expect(sheet.top, greaterThanOrEqualTo(screen.top),
+        reason: '시트 머리가 화면 위로 넘어가면 그 부분은 눌리지 않는다');
+  });
 }
