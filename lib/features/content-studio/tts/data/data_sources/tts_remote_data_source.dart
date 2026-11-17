@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'dart:io';
@@ -31,7 +32,7 @@ class TtsRemoteDataSource {
     // 기능이라 조용히 틀리면 안 된다.
     final cacheKey =
         sha256.convert(utf8.encode(cacheKeyData)).toString().substring(0, 32);
-    
+
     final tempDir = await getTemporaryDirectory();
     final ext = provider == TtsProviderType.google ? 'mp3' : 'wav';
     final file = File('${tempDir.path}/tts_$cacheKey.$ext');
@@ -43,7 +44,8 @@ class TtsRemoteDataSource {
     }
 
     // 3. 캐시 미스: Firebase Functions 호출
-    AppLogger.i('[TTS][Repository] Calling generateTts text_length=${text.length} provider=${provider.name} voiceId=$voiceId modelId=$modelId');
+    AppLogger.i(
+        '[TTS][Repository] Calling generateTts text_length=${text.length} provider=${provider.name} voiceId=$voiceId modelId=$modelId');
     final callable = FirebaseFunctions.instance.httpsCallable('generateTts');
 
     try {
@@ -55,40 +57,46 @@ class TtsRemoteDataSource {
         if (modelId != null) 'modelId': modelId,
         if (speakingRate != null) 'speakingRate': speakingRate,
         if (pitch != null) 'pitch': pitch,
-        if (elevenLabsSettings != null) 'elevenLabsSettings': elevenLabsSettings.toJson(),
+        if (elevenLabsSettings != null)
+          'elevenLabsSettings': elevenLabsSettings.toJson(),
         if (serverCharge) 'serverCharge': true,
         if (serverCharge) 'requestId': const Uuid().v4(),
-      });
+      }).timeout(generateCallTimeout);
       onCharged?.call((response.data['chargedParrots'] as num?)?.toInt() ?? 0);
       AppLogger.i('[TTS][Repository] generateTts success');
 
       // 4. 결과 저장
       final String base64Audio = response.data['audioBase64'];
       final bytes = base64Decode(base64Audio);
-      
+
       await file.writeAsBytes(bytes);
       final size = await file.length();
-      AppLogger.i('[TTS][Repository] File saved to ${file.path} (size: $size bytes)');
+      AppLogger.i(
+          '[TTS][Repository] File saved to ${file.path} (size: $size bytes)');
 
       return file.path;
     } catch (e) {
-      AppLogger.e('[TTS][Repository] Failed to generateTts provider=${provider.name}', error: e);
+      AppLogger.e(
+          '[TTS][Repository] Failed to generateTts provider=${provider.name}',
+          error: e);
       rethrow;
     }
   }
 
   Future<List<Map<String, dynamic>>> listVoices(String languageCode) async {
     final callable = FirebaseFunctions.instance.httpsCallable('listTtsVoices');
-    final response = await callable.call({'languageCode': languageCode});
-    
+    final response = await callable
+        .call({'languageCode': languageCode}).timeout(shortCallTimeout);
+
     final List<dynamic> voices = response.data['voices'];
     return voices.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<List<Map<String, dynamic>>> listElevenLabsVoices() async {
-    final callable = FirebaseFunctions.instance.httpsCallable('listElevenLabsVoices');
-    final response = await callable.call();
-    
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('listElevenLabsVoices');
+    final response = await callable.call().timeout(shortCallTimeout);
+
     final List<dynamic> voices = response.data['voices'];
     return voices.map((e) => Map<String, dynamic>.from(e)).toList();
   }

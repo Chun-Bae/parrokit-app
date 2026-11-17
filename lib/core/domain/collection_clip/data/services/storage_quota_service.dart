@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 // 서버에 올리기 전에 "들어갈 자리가 있는지" 서버에 묻는다(5차 구독 3단계).
 //
 // 앱이 자기 기기 목록을 더해 세던 값은 기기마다 다르고 앱이 고치면 그만이라
@@ -50,7 +51,8 @@ class StorageQuotaService {
     try {
       final result = await _functions
           .httpsCallable('checkStorageQuota')
-          .call<Map<Object?, Object?>>({'bytes': bytes});
+          .call<Map<Object?, Object?>>({'bytes': bytes}).timeout(
+              shortCallTimeout);
       final data = Map<String, dynamic>.from(result.data);
       return StorageQuotaResult(
         allowed: data['allowed'] == true,

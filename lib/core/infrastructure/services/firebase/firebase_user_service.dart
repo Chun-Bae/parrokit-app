@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 // lib/services/firebase_user_service.dart
 
@@ -89,7 +90,7 @@ class FirebaseUserService {
             isParrotsToCrackers ? 'parrotsToCrackers' : 'crackersToParrots',
         'amount': amount,
         'requestId': const Uuid().v4(),
-      });
+      }).timeout(shortCallTimeout);
       final data = Map<String, dynamic>.from(result.data as Map);
       return (
         parrots: (data['parrots'] as num).toInt(),

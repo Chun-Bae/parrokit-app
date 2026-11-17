@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_naver_login/flutter_naver_login.dart';
@@ -18,8 +19,8 @@ class NaverEmailInUseException implements Exception {
 }
 
 /// Naver Login Service
-/// 
-/// 네이버 로그인은 OIDC를 기본 지원하지 않으므로, 
+///
+/// 네이버 로그인은 OIDC를 기본 지원하지 않으므로,
 /// 1. flutter_naver_login 으로 Access Token 발급
 /// 2. Firebase Cloud Functions (createNaverCustomToken) 에 토큰 전송하여 검증 및 Custom Token 발급
 /// 3. 발급된 Custom Token 으로 FirebaseAuth 에 로그인
@@ -44,10 +45,11 @@ class NaverSsoService {
       }
 
       // 3. Cloud Functions 호출하여 Custom Token 받아오기
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('createNaverCustomToken');
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('createNaverCustomToken');
       final response = await callable.call(<String, dynamic>{
         'accessToken': accessToken,
-      });
+      }).timeout(shortCallTimeout);
 
       final String? customToken = response.data['customToken'];
       if (customToken == null || customToken.isEmpty) {
@@ -55,9 +57,9 @@ class NaverSsoService {
       }
 
       // 4. Custom Token으로 Firebase Auth 로그인
-      final UserCredential userCredential = await _auth.signInWithCustomToken(customToken);
+      final UserCredential userCredential =
+          await _auth.signInWithCustomToken(customToken);
       return userCredential;
-      
     } on FirebaseFunctionsException catch (e) {
       // 같은 이메일로 다른 방법(구글·애플 등)으로 가입한 계정이 있다.
       // 다른 실패와 달리 다시 해도 같으니 안내 문구를 화면까지 올린다.

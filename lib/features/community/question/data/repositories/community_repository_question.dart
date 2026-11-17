@@ -17,8 +17,9 @@ mixin CommunityRepositoryQuestion {
       if (post.expireAt != null) {
         json['expireAt'] = post.expireAt!.toUtc().toIso8601String();
       }
-      final result =
-          await _functions.httpsCallable('createQuestion').call({'post': json});
+      final result = await _functions
+          .httpsCallable('createQuestion')
+          .call({'post': json}).timeout(shortCallTimeout);
       final data = Map<String, dynamic>.from(result.data as Map);
       return Post.fromJson(Map<String, dynamic>.from(data['post'] as Map));
     } on FirebaseFunctionsException catch (e) {
@@ -38,7 +39,7 @@ mixin CommunityRepositoryQuestion {
       await _functions.httpsCallable('acceptAnswer').call({
         'postId': postId,
         'commentId': commentId,
-      });
+      }).timeout(shortCallTimeout);
     } on FirebaseFunctionsException catch (e) {
       throw Exception(e.message ?? '답변 채택에 실패했습니다.');
     }

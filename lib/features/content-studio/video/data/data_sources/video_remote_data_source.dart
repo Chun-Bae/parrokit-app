@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -40,7 +41,7 @@ class VideoRemoteDataSource {
         'debug': debug,
         // 패롯은 서버가 깎는다. 실패하면 서버가 돌려준다.
         'serverCharge': true,
-      });
+      }).timeout(generateCallTimeout);
 
       final operationName = result.data['operationName'] as String;
       AppLogger.i(
@@ -84,7 +85,7 @@ class VideoRemoteDataSource {
       final callable = _functions.httpsCallable('getVideoOperationStatus');
       final result = await callable.call<Map<String, dynamic>>({
         'operationName': operationName,
-      });
+      }).timeout(shortCallTimeout);
 
       AppLogger.i(
           '[VideoDataSource][CheckOperation] success done=${result.data['done']}');
@@ -100,7 +101,8 @@ class VideoRemoteDataSource {
     AppLogger.i('[VideoDataSource][ListRecent] start');
     try {
       final callable = _functions.httpsCallable('listVideoGenerations');
-      final result = await callable.call<Map<String, dynamic>>();
+      final result =
+          await callable.call<Map<String, dynamic>>().timeout(shortCallTimeout);
       final items = result.data['items'];
       if (items is! List) {
         return const [];

@@ -1,3 +1,4 @@
+import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../domain/entities/ai_chat_message.dart';
 
@@ -28,7 +29,7 @@ class AiChatRemoteDataSource {
       'history': historyData,
       'model': model,
       'chatbotMode': chatbotMode,
-    });
+    }).timeout(generateCallTimeout);
 
     final Map<String, dynamic> data =
         Map<String, dynamic>.from(response.data as Map);
@@ -77,7 +78,7 @@ class AiChatRemoteDataSource {
   Future<Map<String, dynamic>> fetchUsage() async {
     final callable =
         FirebaseFunctions.instance.httpsCallable('getChatbotUsage');
-    final response = await callable.call();
+    final response = await callable.call().timeout(shortCallTimeout);
     return Map<String, dynamic>.from(response.data as Map);
   }
 }
