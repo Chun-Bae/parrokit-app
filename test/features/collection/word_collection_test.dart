@@ -32,6 +32,15 @@ class FakeAssist implements SentenceAssist {
   Future<String?> transliterate(
           {required String language, required String hangul}) async =>
       null;
+  @override
+  Future<WordSuggestion> suggestWord({
+    required String language,
+    required String word,
+    List<String> existingExamples = const [],
+    int count = 1,
+  }) async =>
+      const WordSuggestion();
+
 }
 
 Future<void> openAddSheet(WidgetTester tester, FakeAssist assist) async {

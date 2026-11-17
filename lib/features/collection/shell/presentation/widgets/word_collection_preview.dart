@@ -488,6 +488,7 @@ Future<void> showWordDetails(
   BuildContext context, {
   required MyWord word,
   required String accountId,
+  SentenceAssist? assist,
 }) async {
   final reviews = await WordReviewStore.loadAll(accountId);
   if (!context.mounted) return;
@@ -498,6 +499,7 @@ Future<void> showWordDetails(
       word: word,
       review: reviews[word.id],
       accountId: accountId,
+      assist: assist,
       onDelete: () async {
         if (!context.mounted) return;
         if (!await confirmDeleteWord(context, word.word)) return;
@@ -838,6 +840,7 @@ class _WordDetailSheet extends StatefulWidget {
     required this.review,
     required this.accountId,
     required this.onDelete,
+    this.assist,
   });
 
   final MyWord word;
@@ -845,12 +848,19 @@ class _WordDetailSheet extends StatefulWidget {
   final String accountId;
   final VoidCallback onDelete;
 
+  /// 테스트에서 가짜를 넣는 자리. 비우면 서버를 부른다.
+  final SentenceAssist? assist;
+
   @override
   State<_WordDetailSheet> createState() => _WordDetailSheetState();
 }
 
 class _WordDetailSheetState extends State<_WordDetailSheet> {
   late String meaning = widget.word.meaning;
+  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
+
+  /// 예문을 만들어 받는 중.
+  bool fillingExamples = false;
 
   /// 시트 안에 적는 알림. 스낵바는 시트 뒤에 깔려 보이지 않는다(5차 392).
   String? notice;
@@ -918,6 +928,93 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
       return;
     }
     setState(() => examples = [...examples, example]);
+  }
+
+  /// 뜻과 예문을 한 번에 받아 넣는다(5차 467, 사용자 요청).
+  ///
+  /// 직접 더한 낱말에는 예문이 없어서 쓰임을 볼 길이 없었다. 서버에
+  /// 지금 들고 있는 예문을 함께 보내, 그것과 겹치지 않는 것만 받는다.
+  Future<void> _fillExamples() async {
+    final room = examplesMaxCount - examples.length;
+    if (room <= 0) {
+      showNotice('예문은 $examplesMaxCount개까지 넣을 수 있어요.');
+      return;
+    }
+    final count = await _askExampleCount(room);
+    if (!mounted || count == null) return;
+
+    setState(() => fillingExamples = true);
+    String? note;
+    try {
+      final suggestion = await _assist.suggestWord(
+        language: widget.word.language,
+        word: widget.word.word,
+        existingExamples: [for (final e in examples) e.text],
+        count: count,
+      );
+      if (!mounted) return;
+      // 뜻이 비어 있을 때만 채운다. 직접 적어 둔 뜻을 덮지 않는다.
+      final suggested = suggestion.translation?.trim() ?? '';
+      if (meaning.trim().isEmpty && suggested.isNotEmpty) {
+        final saved = await MyWordStore.setMeaning(
+            widget.accountId, widget.word.id, suggested);
+        if (!mounted) return;
+        if (saved) setState(() => meaning = suggested);
+      }
+      var added = 0;
+      for (final example in suggestion.examples) {
+        if (examples.length >= examplesMaxCount) break;
+        final next = WordExample(
+          text: example.text,
+          translation: example.translation,
+        );
+        final ok = await MyWordStore.addExample(
+            widget.accountId, widget.word.id, next);
+        if (!mounted) return;
+        if (!ok) continue; // 같은 예문이 이미 있으면 건너뛴다.
+        added++;
+        setState(() => examples = [...examples, next]);
+      }
+      if (added == 0) {
+        note = '새 예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
+      }
+    } on SentenceAssistQuotaExceeded {
+      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+    } on SentenceAssistUnavailable catch (e) {
+      note = e.reason;
+    } catch (_) {
+      note = '예문을 만들지 못했어요. 잠시 뒤 다시 해 주세요.';
+    } finally {
+      if (mounted) {
+        setState(() => fillingExamples = false);
+        if (note != null) showNotice(note);
+      }
+    }
+  }
+
+  /// 몇 개를 받을지 고른다. 남은 자리보다 많이 고를 수 없다.
+  Future<int?> _askExampleCount(int room) {
+    final choices = [for (var n = 1; n <= room && n <= 5; n++) n];
+    return showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('예문 몇 개를 만들까요?'),
+        content: Text('지금 ${examples.length}개 있어요. '
+            '$examplesMaxCount개까지 둘 수 있어요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('취소'),
+          ),
+          for (final n in choices)
+            TextButton(
+              key: ValueKey('example-count-$n'),
+              onPressed: () => Navigator.of(dialogContext).pop(n),
+              child: Text('$n개'),
+            ),
+        ],
+      ),
+    );
   }
 
   /// 예문 하나를 고친다(5차 338, 사용자 요청).
@@ -1126,14 +1223,28 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                 ],
                 // 이미 만든 단어에도 예문을 더할 수 있어야 한다(5차 338, 사용자 요청).
                 const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    key: const ValueKey('add-word-example'),
-                    onPressed: _addExample,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text(examples.isEmpty ? '예문 넣기' : '예문 더 넣기'),
-                  ),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      key: const ValueKey('add-word-example'),
+                      onPressed: _addExample,
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: Text(examples.isEmpty ? '예문 넣기' : '예문 더 넣기'),
+                    ),
+                    // 직접 적지 않아도 되게 한다(5차 467, 사용자 요청).
+                    TextButton.icon(
+                      key: const ValueKey('fill-word-examples'),
+                      onPressed: fillingExamples ? null : _fillExamples,
+                      icon: fillingExamples
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.auto_awesome_rounded, size: 18),
+                      label: const Text('자동으로 넣기'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(

@@ -26,6 +26,39 @@ abstract class SentenceAssist {
     required String language,
     required String hangul,
   });
+
+  /// 낱말의 뜻과 예문을 함께 제안한다(5차 467).
+  ///
+  /// 전에는 낱말에도 문장용 [suggest]를 그대로 썼다. 그쪽은 쓰지도 않을
+  /// 한글 발음까지 만들고 예문은 안 만들어서, 직접 더한 낱말에는 예문이
+  /// 영영 없었다.
+  ///
+  /// [existingExamples]에 지금 들고 있는 예문을 넘기면 그것과 겹치지 않게
+  /// 만든다. [count]는 만들 예문 수다(남은 자리보다 많이 오지 않는다).
+  Future<WordSuggestion> suggestWord({
+    required String language,
+    required String word,
+    List<String> existingExamples,
+    int count,
+  });
+}
+
+/// 낱말 하나에 대한 제안.
+class WordSuggestion {
+  const WordSuggestion({this.translation, this.examples = const []});
+
+  final String? translation;
+  final List<SuggestedExample> examples;
+
+  bool get isEmpty =>
+      (translation == null || translation!.trim().isEmpty) && examples.isEmpty;
+}
+
+class SuggestedExample {
+  const SuggestedExample({required this.text, this.translation = ''});
+
+  final String text;
+  final String translation;
 }
 
 class SentenceSuggestion {
@@ -80,6 +113,15 @@ class UnavailableSentenceAssist implements SentenceAssist {
   Future<String?> transliterate({
     required String language,
     required String hangul,
+  }) =>
+      Future.error(const SentenceAssistUnavailable());
+
+  @override
+  Future<WordSuggestion> suggestWord({
+    required String language,
+    required String word,
+    List<String> existingExamples = const [],
+    int count = 1,
   }) =>
       Future.error(const SentenceAssistUnavailable());
 }

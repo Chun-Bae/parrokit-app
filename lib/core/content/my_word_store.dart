@@ -617,7 +617,9 @@ const int exampleMaxLength = 300;
 const int topicMaxLength = 40;
 
 /// 한 단어에 둘 수 있는 예문 수. 서버에 올리는 양을 묶어 두려고 정한다.
-const int examplesMaxCount = 5;
+/// 한 낱말이 들고 갈 수 있는 예문 수. 서버의 MAX_WORD_EXAMPLES와 같아야 한다.
+/// 자동으로 예문을 만들 수 있게 되면서 5개로는 금방 찼다(5차 467, 사용자 요청).
+const int examplesMaxCount = 10;
 
 /// 유의어 하나의 길이와 개수.
 const int synonymMaxLength = 40;

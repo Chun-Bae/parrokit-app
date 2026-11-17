@@ -261,10 +261,11 @@ void main() {
       expect(w.exampleTranslation, '내가 알아낼게.');
     });
 
-    test('빈 예문은 버리고 다섯 개까지만 둔다', () {
+    test('빈 예문은 버리고 상한까지만 둔다', () {
       final clipped = clipWordExamples([
         const WordExample(text: ' '),
-        for (var i = 0; i < 7; i++) WordExample(text: '예문 $i'),
+        for (var i = 0; i < examplesMaxCount + 2; i++)
+          WordExample(text: '예문 $i'),
       ]);
       expect(clipped, hasLength(examplesMaxCount));
       expect(clipped.first.text, '예문 0');

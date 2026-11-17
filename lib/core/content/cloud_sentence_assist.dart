@@ -123,4 +123,41 @@ class CloudSentenceAssist implements SentenceAssist {
     });
     return map['text'] as String?;
   }
+
+  @override
+  Future<WordSuggestion> suggestWord({
+    required String language,
+    required String word,
+    List<String> existingExamples = const [],
+    int count = 1,
+  }) async {
+    final map = await _call({
+      'mode': 'word',
+      'language': language,
+      'text': word,
+      // 이미 들고 있는 예문을 함께 보낸다. 서버가 이것과 겹치지 않게 만든다.
+      'existingExamples': existingExamples,
+      'count': count,
+    });
+    return WordSuggestion(
+      translation: map['translation'] as String?,
+      examples: _readExamples(map['examples']),
+    );
+  }
+
+  static List<SuggestedExample> _readExamples(Object? raw) {
+    if (raw is! List) return const [];
+    final out = <SuggestedExample>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final text = item['text'];
+      if (text is! String || text.trim().isEmpty) continue;
+      final translation = item['translation'];
+      out.add(SuggestedExample(
+        text: text.trim(),
+        translation: translation is String ? translation.trim() : '',
+      ));
+    }
+    return out;
+  }
 }
