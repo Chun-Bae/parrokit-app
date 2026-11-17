@@ -141,6 +141,7 @@ class CloudSentenceAssist implements SentenceAssist {
     });
     return WordSuggestion(
       translation: map['translation'] as String?,
+      pronunciation: map['pronunciation'] as String?,
       examples: _readExamples(map['examples']),
     );
   }

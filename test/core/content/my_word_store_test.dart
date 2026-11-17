@@ -28,6 +28,14 @@ class FakeWordCloud implements WordCloud {
   }
 
   @override
+  Future<void> setPronunciation(String id, String pronunciation) async {
+    if (fail) throw Exception('permission-denied');
+    final index = stored.indexWhere((w) => w.id == id);
+    if (index < 0) throw Exception('not-found');
+    stored[index] = stored[index].copyWith(pronunciation: pronunciation);
+  }
+
+  @override
   Future<void> setMeaning(String id, String meaning) async {
     if (fail) throw Exception('permission-denied');
     final index = stored.indexWhere((w) => w.id == id);

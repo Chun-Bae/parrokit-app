@@ -9,8 +9,15 @@ import 'package:parrokit/features/collection/shell/presentation/widgets/word_col
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeAssist implements SentenceAssist {
-  FakeAssist({this.translation = '미묘한 차이', this.quota = false});
+  FakeAssist({
+    this.translation = '미묘한 차이',
+    this.pronunciation = '뉘앙스',
+    this.examples = const [],
+    this.quota = false,
+  });
   final String translation;
+  final String pronunciation;
+  final List<SuggestedExample> examples;
   final bool quota;
   final calls = <String>[];
 
@@ -38,8 +45,15 @@ class FakeAssist implements SentenceAssist {
     required String word,
     List<String> existingExamples = const [],
     int count = 1,
-  }) async =>
-      const WordSuggestion();
+  }) async {
+    calls.add('$language:$word');
+    if (quota) throw const SentenceAssistQuotaExceeded();
+    return WordSuggestion(
+      translation: translation,
+      pronunciation: pronunciation,
+      examples: examples,
+    );
+  }
 
 }
 
@@ -386,7 +400,8 @@ void main() {
     await openAddSheet(tester, assist);
     final fill = find.byKey(const ValueKey('fill-word-meaning'));
     // 222에서 입력칸 안의 아이콘을 이름 있는 버튼으로 바꿨다.
-    expect(find.text('뜻 채우기'), findsOneWidget);
+    // 468에서 뜻만이 아니라 발음·예문도 함께 채우게 되어 이름을 바꿨다.
+    expect(find.text('자동으로 채우기'), findsOneWidget);
     expect(tester.widget<ButtonStyleButton>(fill).onPressed, isNull);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
     await tester.pump();
@@ -414,6 +429,12 @@ void main() {
     await openAddSheet(tester, assist);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
     await tester.enterText(find.byKey(const ValueKey('word-meaning')), '내 뜻');
+    // 468부터 발음과 예문도 함께 채운다. 빈 칸이 하나라도 있으면 물으러
+    // 가는 것이 맞으므로, 묻지 않는 것을 보려면 셋 다 차 있어야 한다.
+    await tester.enterText(
+        find.byKey(const ValueKey('word-pronunciation')), '내 발음');
+    await tester.enterText(
+        find.byKey(const ValueKey('word-example-0')), '내 예문');
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('fill-word-meaning')));
     await tester.pumpAndSettle();

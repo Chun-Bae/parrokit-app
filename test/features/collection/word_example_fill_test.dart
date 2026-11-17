@@ -11,10 +11,15 @@ import 'package:parrokit/features/collection/shell/presentation/widgets/word_col
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeAssist implements SentenceAssist {
-  _FakeAssist({this.examples = const [], this.translation});
+  _FakeAssist({
+    this.examples = const [],
+    this.translation,
+    this.pronunciation,
+  });
 
   final List<SuggestedExample> examples;
   final String? translation;
+  final String? pronunciation;
 
   /// 마지막으로 서버에 보낸 값.
   List<String>? sentExisting;
@@ -52,7 +57,11 @@ class _FakeAssist implements SentenceAssist {
     sentWord = word;
     sentExisting = existingExamples;
     sentCount = count;
-    return WordSuggestion(translation: translation, examples: examples);
+    return WordSuggestion(
+      translation: translation,
+      pronunciation: pronunciation,
+      examples: examples,
+    );
   }
 }
 
@@ -143,4 +152,59 @@ void main() {
   test('상한은 서버와 같은 10개다', () {
     expect(examplesMaxCount, 10);
   });
+
+  test('발음은 예전에 저장한 단어에 없어도 읽힌다', () {
+    // 예전 형식에는 pronunciation 칸이 아예 없다(5차 468).
+    final old = MyWord.fromJson({
+      'id': 'en:huge',
+      'language': '영어',
+      'word': 'huge',
+      'meaning': '거대한',
+    });
+    expect(old, isNotNull);
+    expect(old!.pronunciation, '');
+
+    final now = MyWord.fromJson({
+      ...old.toJson(),
+      'pronunciation': '휴지',
+    });
+    expect(now!.pronunciation, '휴지');
+  });
+
+  test('발음만 고쳐도 나머지는 그대로다', () async {
+    await MyWordStore.add('guest',
+        language: '영어',
+        word: 'huge',
+        meaning: '거대한',
+        example: '예문',
+        synonyms: const ['big']);
+    final word = (await MyWordStore.loadFor('guest', '영어')).single;
+
+    expect(await MyWordStore.setPronunciation('guest', word.id, ' 휴지 '),
+        isTrue);
+    final after = (await MyWordStore.loadFor('guest', '영어')).single;
+    expect(after.pronunciation, '휴지');
+    expect(after.meaning, '거대한');
+    expect(after.synonyms, ['big']);
+    expect(after.examples.single.text, '예문');
+  });
+
+  testWidgets('자동으로 넣기가 발음도 채운다', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(
+      translation: '거대한',
+      pronunciation: '휴지',
+      examples: const [SuggestedExample(text: 'A huge wave.')],
+    );
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('fill-word-examples')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('example-count-1')));
+    await tester.pumpAndSettle();
+
+    final after = (await MyWordStore.loadFor('guest', '영어')).single;
+    expect(after.pronunciation, '휴지');
+  });
 }
+

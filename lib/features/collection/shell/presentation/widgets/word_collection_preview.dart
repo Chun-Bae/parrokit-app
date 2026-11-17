@@ -3,6 +3,7 @@ import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:parrokit/core/content/word_search_url.dart';
@@ -528,11 +529,25 @@ String wordDueLabel(DateTime? due, DateTime now) {
 /// 뜻을 적는 작은 창. 입력칸 컨트롤러를 이 창이 가지고 있다가 닫힐 때
 /// 버린다. 부르는 쪽에서 showDialog가 끝나자마자 버렸더니, 닫히는 동안
 /// 그려지는 중에 "used after being disposed"가 났다(5차).
+/// 한 줄짜리 값을 고치는 창. 뜻과 발음이 함께 쓴다(5차 468).
 class _MeaningDialog extends StatefulWidget {
-  const _MeaningDialog({required this.word, required this.meaning});
+  const _MeaningDialog({
+    required this.word,
+    required this.meaning,
+    this.label = '뜻',
+    this.inputKey = const ValueKey('word-meaning-input'),
+    this.saveKey = const ValueKey('word-meaning-save'),
+    this.hint,
+  });
 
   final String word;
   final String meaning;
+
+  /// '뜻' 또는 '발음'. 제목에 쓴다.
+  final String label;
+  final Key inputKey;
+  final Key saveKey;
+  final String? hint;
 
   @override
   State<_MeaningDialog> createState() => _MeaningDialogState();
@@ -549,13 +564,15 @@ class _MeaningDialogState extends State<_MeaningDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
+        title: Text(widget.meaning.isEmpty
+            ? '${widget.label} 적기'
+            : '${widget.label} 고치기'),
         content: TextField(
-          key: const ValueKey('word-meaning-input'),
+          key: widget.inputKey,
           controller: _controller,
           autofocus: true,
           maxLength: meaningMaxLength,
-          decoration: InputDecoration(hintText: widget.word),
+          decoration: InputDecoration(hintText: widget.hint ?? widget.word),
         ),
         actions: [
           TextButton(
@@ -563,7 +580,7 @@ class _MeaningDialogState extends State<_MeaningDialog> {
             child: const Text('취소'),
           ),
           FilledButton(
-            key: const ValueKey('word-meaning-save'),
+            key: widget.saveKey,
             onPressed: () => Navigator.pop(context, _controller.text),
             child: const Text('저장'),
           ),
@@ -857,6 +874,7 @@ class _WordDetailSheet extends StatefulWidget {
 
 class _WordDetailSheetState extends State<_WordDetailSheet> {
   late String meaning = widget.word.meaning;
+  late String pronunciation = widget.word.pronunciation;
   late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
 
   /// 예문을 만들어 받는 중.
@@ -953,13 +971,20 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
         count: count,
       );
       if (!mounted) return;
-      // 뜻이 비어 있을 때만 채운다. 직접 적어 둔 뜻을 덮지 않는다.
+      // 뜻과 발음은 비어 있을 때만 채운다. 직접 적어 둔 것을 덮지 않는다.
       final suggested = suggestion.translation?.trim() ?? '';
       if (meaning.trim().isEmpty && suggested.isNotEmpty) {
         final saved = await MyWordStore.setMeaning(
             widget.accountId, widget.word.id, suggested);
         if (!mounted) return;
         if (saved) setState(() => meaning = suggested);
+      }
+      final sound = suggestion.pronunciation?.trim() ?? '';
+      if (pronunciation.trim().isEmpty && sound.isNotEmpty) {
+        final saved = await MyWordStore.setPronunciation(
+            widget.accountId, widget.word.id, sound);
+        if (!mounted) return;
+        if (saved) setState(() => pronunciation = sound);
       }
       var added = 0;
       for (final example in suggestion.examples) {
@@ -993,26 +1018,31 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
   }
 
   /// 몇 개를 받을지 고른다. 남은 자리보다 많이 고를 수 없다.
+  ///
+  /// 전에는 AlertDialog에 단추를 세로로 쌓았는데, 여섯 개가 한 줄씩
+  /// 서서 창이 길쭉하고 어디를 눌러야 할지 잘 안 보였다(5차 468).
+  /// 아래에서 올라오는 고르기 시트로 둔다.
   Future<int?> _askExampleCount(int room) {
     final choices = [for (var n = 1; n <= room && n <= 5; n++) n];
-    return showDialog<int>(
+    return showCupertinoModalPopup<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (sheetContext) => CupertinoActionSheet(
         title: const Text('예문 몇 개를 만들까요?'),
-        content: Text('지금 ${examples.length}개 있어요. '
+        message: Text('지금 ${examples.length}개 있어요. '
             '$examplesMaxCount개까지 둘 수 있어요.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('취소'),
-          ),
           for (final n in choices)
-            TextButton(
+            CupertinoActionSheetAction(
               key: ValueKey('example-count-$n'),
-              onPressed: () => Navigator.of(dialogContext).pop(n),
+              onPressed: () => Navigator.of(sheetContext).pop(n),
               child: Text('$n개'),
             ),
         ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(sheetContext).pop(),
+          child: const Text('취소'),
+        ),
       ),
     );
   }
@@ -1085,6 +1115,31 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     setState(() => meaning = next.trim());
   }
 
+  /// 발음을 적거나 고친다(5차 468, 사용자 요청).
+  Future<void> _editPronunciation() async {
+    final next = await showDialog<String>(
+      context: context,
+      builder: (_) => _MeaningDialog(
+        word: widget.word.word,
+        meaning: pronunciation,
+        label: '발음',
+        inputKey: const ValueKey('word-pronunciation-input'),
+        saveKey: const ValueKey('word-pronunciation-save'),
+        hint: '한글로 소리 나는 대로',
+      ),
+    );
+    if (!mounted || next == null) return;
+
+    final saved = await MyWordStore.setPronunciation(
+        widget.accountId, widget.word.id, next);
+    if (!mounted) return;
+    if (!saved) {
+      showNotice('발음을 저장하지 못했어요. 다시 시도해 주세요.');
+      return;
+    }
+    setState(() => pronunciation = next.trim());
+  }
+
   @override
   Widget build(BuildContext context) {
     final word = widget.word;
@@ -1096,7 +1151,9 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
     return SafeArea(
       child: Stack(
         children: [
-          Padding(
+          // 발음 줄이 늘고 예문도 10개까지 들어가면서 시트가 넘쳤다.
+          // 길어지면 안에서 밀어 볼 수 있게 한다(5차 468).
+          SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1135,6 +1192,27 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                       key: const ValueKey('edit-word-meaning'),
                       onPressed: _editMeaning,
                       child: Text(meaning.isEmpty ? '뜻 적기' : '뜻 고치기'),
+                    ),
+                  ],
+                ),
+                // 발음 줄. 뜻과 같은 꼴로 둔다(5차 468, 사용자 요청).
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                          pronunciation.isEmpty
+                              ? '발음을 아직 적지 않았어요'
+                              : pronunciation,
+                          key: const ValueKey('word-detail-pronunciation'),
+                          style: context.texts.bodyMedium.copyWith(
+                              color: colors.onSurfaceVariant)),
+                    ),
+                    TextButton(
+                      key: const ValueKey('edit-word-pronunciation'),
+                      onPressed: _editPronunciation,
+                      child:
+                          Text(pronunciation.isEmpty ? '발음 적기' : '발음 고치기'),
                     ),
                   ],
                 ),
@@ -1354,6 +1432,9 @@ class _AddWordSheetState extends State<AddWordSheet> {
   late final _word = TextEditingController(text: widget.initialWord);
   final _meaning = TextEditingController();
 
+  /// 한글 발음. 자동 채우기가 함께 채운다(5차 468, 사용자 요청).
+  final _pronunciation = TextEditingController();
+
   /// 유의어·동의어. '추가'를 눌러 하나씩 넣는다(5차, 사용자 요청).
   List<String> _synonymList = const [];
 
@@ -1377,12 +1458,22 @@ class _AddWordSheetState extends State<AddWordSheet> {
   /// 사용자에게 보이지 않았다. 시트 안에 적어야 보인다.
   String? fillNote;
 
-  /// 단어의 뜻을 서버에 물어 채운다. 이미 적은 뜻은 덮지 않는다.
+  /// 뜻·발음·예문을 서버에 물어 한 번에 채운다(5차 468, 사용자 요청).
+  ///
+  /// 전에는 뜻만 채웠고, 그것도 문장용 프롬프트라 쓰지도 않을 발음까지
+  /// 만들고 있었다. 이미 적어 둔 칸은 덮지 않는다.
   Future<void> fillMeaning() async {
     final word = _word.text.trim();
     if (word.isEmpty || filling) return;
-    // 이미 적은 뜻은 덮지 않는다. 묻기 전에 알려서 하루 횟수도 아낀다(5차 368).
-    if (_meaning.text.trim().isNotEmpty) {
+    // 뜻과 발음이 둘 다 차 있으면 물을 까닭이 없다. 예문 칸이 비어 있으면
+    // 예문만 받으러 간다.
+    final wantsMeaning = _meaning.text.trim().isEmpty;
+    final wantsSound = _pronunciation.text.trim().isEmpty;
+    final emptyExamples = [
+      for (final (index, c) in _examples.indexed)
+        if (c.text.trim().isEmpty) index,
+    ];
+    if (!wantsMeaning && !wantsSound && emptyExamples.isEmpty) {
       setState(() => fillNote = wordMeaningAlreadyHint);
       return;
     }
@@ -1392,17 +1483,43 @@ class _AddWordSheetState extends State<AddWordSheet> {
     });
     String? note;
     try {
-      final suggestion =
-          await _assist.suggest(language: widget.language, text: word);
-      final meaning = suggestion.translation?.trim() ?? '';
+      final suggestion = await _assist.suggestWord(
+        language: widget.language,
+        word: word,
+        // 이미 적어 둔 예문과 겹치지 않게 한다.
+        existingExamples: [
+          for (final c in _examples)
+            if (c.text.trim().isNotEmpty) c.text.trim(),
+        ],
+        count: emptyExamples.isEmpty ? 1 : emptyExamples.length,
+      );
       if (!mounted) return;
-      if (meaning.isEmpty) {
-        note = '뜻을 찾지 못했어요. 직접 적어 주세요.';
-      } else if (_meaning.text.trim().isEmpty) {
+      final meaning = suggestion.translation?.trim() ?? '';
+      final sound = suggestion.pronunciation?.trim() ?? '';
+      if (wantsMeaning && _meaning.text.trim().isEmpty && meaning.isNotEmpty) {
         _meaning.text = meaning;
-      } else {
-        // 기다리는 동안 직접 적었으면 그 글을 지킨다.
-        note = wordMeaningAlreadyHint;
+      }
+      if (wantsSound &&
+          _pronunciation.text.trim().isEmpty &&
+          sound.isNotEmpty) {
+        _pronunciation.text = sound;
+      }
+      // 비어 있는 예문 칸부터 채우고, 모자라면 칸을 늘린다.
+      var slot = 0;
+      for (final example in suggestion.examples) {
+        if (slot < emptyExamples.length) {
+          final at = emptyExamples[slot];
+          _examples[at].text = example.text;
+          _exampleMeanings[at].text = example.translation;
+        } else {
+          _examples.add(TextEditingController(text: example.text));
+          _exampleMeanings
+              .add(TextEditingController(text: example.translation));
+        }
+        slot++;
+      }
+      if (meaning.isEmpty && suggestion.examples.isEmpty) {
+        note = '뜻을 찾지 못했어요. 직접 적어 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
       note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
@@ -1472,6 +1589,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void dispose() {
     _word.dispose();
     _meaning.dispose();
+    _pronunciation.dispose();
     for (final c in [..._examples, ..._exampleMeanings]) {
       c.dispose();
     }
@@ -1502,6 +1620,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
       language: widget.language,
       word: _word.text,
       meaning: _meaning.text,
+      pronunciation: _pronunciation.text,
       synonyms: clipWordSynonyms(_synonymList),
       examples: [
         for (final (index, c) in _examples.indexed)
@@ -1561,6 +1680,17 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+                // 발음 칸(5차 468, 사용자 요청). 뜻과 함께 자동으로 찬다.
+                TextField(
+                  key: const ValueKey('word-pronunciation'),
+                  controller: _pronunciation,
+                  maxLength: 200,
+                  decoration: const InputDecoration(
+                    labelText: pronunciationOptionalLabel,
+                    hintText: '한글로 소리 나는 대로',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 // 뜻 채우기는 하루 몇 번만 쓸 수 있다. 전에는 입력칸 안에
                 // 반짝이 아이콘만 있어서 무엇을 하는 단추인지, 몇 번 남았는지
                 // 알 수 없었다. 문장 추가 화면처럼 이름과 남은 횟수를 적는다(5차).
@@ -1576,7 +1706,8 @@ class _AddWordSheetState extends State<AddWordSheet> {
                               dimension: 16,
                               child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: const Text('뜻 채우기'),
+                      // 이제 뜻만이 아니라 발음과 예문도 함께 채운다(5차 468).
+                      label: const Text('자동으로 채우기'),
                     ),
                     const SizedBox(width: 8),
                     Expanded(

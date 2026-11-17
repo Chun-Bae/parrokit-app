@@ -46,6 +46,7 @@ const TransliterateOutput = z.object({
 // 문장용 프롬프트는 쓰지도 않을 한글 발음까지 만들고 있었다.
 const WordOutput = z.object({
   translation: z.string(),
+  pronunciation: z.string(),
   examples: z.array(
     z.object({
       text: z.string(),
@@ -281,8 +282,11 @@ async function suggestWord(
     config: {temperature: 0.2},
     output: {schema: WordOutput},
     prompt:
-      `다음 ${language} 낱말의 한국어 뜻과 예문 ${count}개를 만들어라.\n` +
+      `다음 ${language} 낱말의 한국어 뜻과 한글 발음, ` +
+      `예문 ${count}개를 만들어라.\n` +
       "- translation: 가장 흔한 뜻 한 줄. 품사와 설명은 넣지 마라.\n" +
+      "- pronunciation: 소리 나는 대로 적은 한글 표기 한 줄 " +
+      "(예: huge → 휴지). 부호는 빼라.\n" +
       `- examples: ${count}개. 각 항목은 그 낱말을 실제로 쓴 ` +
       `${language} 문장 한 줄(text)과 그 한국어 뜻(translation).\n` +
       "- 예문은 짧고 일상에서 쓰는 말로, 서로 다른 상황과 문형으로 만들어라.\n" +
@@ -291,7 +295,7 @@ async function suggestWord(
       avoidBlock +
       `<word>${word}</word>`,
   });
-  return response.output ?? {translation: "", examples: []};
+  return response.output ?? {translation: "", pronunciation: "", examples: []};
 }
 
 /**

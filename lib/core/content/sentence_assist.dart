@@ -45,13 +45,22 @@ abstract class SentenceAssist {
 
 /// 낱말 하나에 대한 제안.
 class WordSuggestion {
-  const WordSuggestion({this.translation, this.examples = const []});
+  const WordSuggestion({
+    this.translation,
+    this.pronunciation,
+    this.examples = const [],
+  });
 
   final String? translation;
+
+  /// 한글로 적은 소리(5차 468). 낱말 화면이 이것을 그대로 쓴다.
+  final String? pronunciation;
   final List<SuggestedExample> examples;
 
   bool get isEmpty =>
-      (translation == null || translation!.trim().isEmpty) && examples.isEmpty;
+      (translation == null || translation!.trim().isEmpty) &&
+      (pronunciation == null || pronunciation!.trim().isEmpty) &&
+      examples.isEmpty;
 }
 
 class SuggestedExample {

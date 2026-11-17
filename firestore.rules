@@ -192,15 +192,18 @@ service cloud.firestore {
           && d.word is string && d.word.size() > 0 && d.word.size() <= 80
           && d.language is string && d.language.size() <= 20
           && d.get('meaning', '') is string && d.get('meaning', '').size() <= 200
+          // 한글 발음 표기(5차 468, 사용자 요청). 없을 수 있다.
+          && d.get('pronunciation', '') is string
+          && d.get('pronunciation', '').size() <= 200
           && d.get('example', '') is string && d.get('example', '').size() <= 300
           && d.get('exampleTranslation', '') is string
           && d.get('exampleTranslation', '').size() <= 300
           && d.get('sourceSentenceId', '') is string
-          // 예문 여러 개(5차). 한 단어에 5개까지. 규칙은 목록 안을 하나씩
-          // 볼 수 없어 개수만 막고, 글자 수는 앱이 줄여서 올린다
-          // (my_word_store.dart의 clipWordExamples).
+          // 예문 여러 개(5차). 한 단어에 10개까지(5차 467에 5개에서 올렸다).
+          // 규칙은 목록 안을 하나씩 볼 수 없어 개수만 막고, 글자 수는 앱이
+          // 줄여서 올린다(my_word_store.dart의 clipWordExamples).
           && d.get('examples', []) is list
-          && d.get('examples', []).size() <= 5
+          && d.get('examples', []).size() <= 10
           // 유의어(5차, 사용자 요청). 한 단어에 10개까지. 글자 수는 앱이
           // 줄여서 올린다(my_word_store.dart의 clipWordSynonyms).
           && d.get('synonyms', []) is list

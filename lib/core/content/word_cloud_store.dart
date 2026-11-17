@@ -32,8 +32,7 @@ class FirestoreWordCloud implements WordCloud {
             legacyText: doc.data()['example'] as String? ?? '',
             legacyTranslation:
                 doc.data()['exampleTranslation'] as String? ?? '',
-            legacySentenceId:
-                doc.data()['sourceSentenceId'] as String? ?? '',
+            legacySentenceId: doc.data()['sourceSentenceId'] as String? ?? '',
           ),
           // 유의어는 나중에 생긴 칸이라, 예전 문서에는 없다(5차).
           synonyms: parseWordSynonyms(doc.data()['synonyms']),
@@ -76,6 +75,10 @@ class FirestoreWordCloud implements WordCloud {
   @override
   Future<void> setMeaning(String id, String meaning) =>
       _words.doc(id).update({'meaning': meaning});
+
+  @override
+  Future<void> setPronunciation(String id, String pronunciation) =>
+      _words.doc(id).update({'pronunciation': pronunciation});
 
   @override
   Future<void> setSynonyms(String id, List<String> synonyms) =>

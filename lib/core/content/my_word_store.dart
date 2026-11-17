@@ -61,6 +61,7 @@ class MyWord {
     required this.language,
     required this.word,
     this.meaning = '',
+    this.pronunciation = '',
     String example = '',
     String exampleTranslation = '',
     String sourceSentenceId = '',
@@ -86,6 +87,10 @@ class MyWord {
   final String word;
   final String meaning;
 
+  /// 한글로 적은 소리. 없을 수 있고, 예전에 저장한 단어에는 아예 없다
+  /// (읽을 때 빈 값이 된다, 5차 468 사용자 요청).
+  final String pronunciation;
+
   /// 예문 목록. 비어 있을 수 있다.
   final List<WordExample> examples;
 
@@ -105,11 +110,32 @@ class MyWord {
   final String topic;
   final DateTime? addedAt;
 
+  /// 한 가지만 바꾼 사본. 필드를 하나씩 다시 적다 보면 새 칸이 생길 때마다
+  /// 빠뜨린 자리에서 값이 조용히 지워진다(5차 468에 발음을 더하며 겪었다).
+  MyWord copyWith({
+    String? meaning,
+    String? pronunciation,
+    List<WordExample>? examples,
+    List<String>? synonyms,
+  }) =>
+      MyWord(
+        id: id,
+        language: language,
+        word: word,
+        meaning: meaning ?? this.meaning,
+        pronunciation: pronunciation ?? this.pronunciation,
+        examples: examples ?? this.examples,
+        synonyms: synonyms ?? this.synonyms,
+        topic: topic,
+        addedAt: addedAt,
+      );
+
   Map<String, Object> toJson() => {
         'id': id,
         'language': language,
         'word': word,
         'meaning': meaning,
+        'pronunciation': pronunciation,
         // 예전 형식(예문 하나)도 함께 쓴다. 예전 앱이 읽을 수 있고 서버 규칙도
         // 이 이름을 본다.
         'example': example,
@@ -133,6 +159,8 @@ class MyWord {
       language: language,
       word: word,
       meaning: text('meaning'),
+      // 예전에 저장한 단어에는 이 칸이 없다. 없으면 빈 값이다.
+      pronunciation: text('pronunciation'),
       // 예전 형식은 예문이 하나였다. examples가 없으면 그 하나를 쓴다.
       examples: parseWordExamples(
         json['examples'],
@@ -182,6 +210,9 @@ abstract class WordCloud {
 
   /// 뜻만 고친다. 규칙(firestore.rules의 words)에서 update를 허용한다.
   Future<void> setMeaning(String id, String meaning);
+
+  /// 발음만 고친다(5차 468).
+  Future<void> setPronunciation(String id, String pronunciation);
 
   /// 유의어만 고친다(5차).
   Future<void> setSynonyms(String id, List<String> synonyms);
@@ -278,6 +309,7 @@ class MyWordStore {
     required String language,
     required String word,
     String meaning = '',
+    String pronunciation = '',
     String example = '',
     String exampleTranslation = '',
     String sourceSentenceId = '',
@@ -309,6 +341,7 @@ class MyWordStore {
       language: language,
       word: clipToLength(trimmed, wordMaxLength),
       meaning: clipToLength(meaning.trim(), meaningMaxLength),
+      pronunciation: clipToLength(pronunciation.trim(), meaningMaxLength),
       examples: clipWordExamples(given),
       synonyms: clipWordSynonyms(synonyms),
       topic: clipToLength(topic, topicMaxLength),
@@ -344,17 +377,8 @@ class MyWordStore {
     final device = await _loadDevice(accountId);
     final index = device.indexWhere((w) => w.id == id);
     if (index >= 0) {
-      device[index] = MyWord(
-        id: device[index].id,
-        language: device[index].language,
-        word: device[index].word,
-        meaning: clipped,
-        examples: device[index].examples,
-        // 뜻만 고치는 것이라 유의어는 그대로 둔다. 안 넘기면 지워졌다(5차).
-        synonyms: device[index].synonyms,
-        topic: device[index].topic,
-        addedAt: device[index].addedAt,
-      );
+      // 뜻만 바꾼다. 나머지는 copyWith가 그대로 들고 온다(5차 468).
+      device[index] = device[index].copyWith(meaning: clipped);
       await _saveDevice(accountId, device);
       revision.value++;
       return true;
@@ -383,16 +407,7 @@ class MyWordStore {
     final device = await _loadDevice(accountId);
     final index = device.indexWhere((w) => w.id == id);
     if (index >= 0) {
-      device[index] = MyWord(
-        id: device[index].id,
-        language: device[index].language,
-        word: device[index].word,
-        meaning: device[index].meaning,
-        examples: device[index].examples,
-        synonyms: clipped,
-        topic: device[index].topic,
-        addedAt: device[index].addedAt,
-      );
+      device[index] = device[index].copyWith(synonyms: clipped);
       await _saveDevice(accountId, device);
       revision.value++;
       return true;
@@ -400,6 +415,33 @@ class MyWordStore {
     if (_useCloud(accountId)) {
       try {
         await cloud!.setSynonyms(id, clipped);
+        revision.value++;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /// 발음만 고친다(5차 468, 사용자 요청).
+  static Future<bool> setPronunciation(
+    String accountId,
+    String id,
+    String pronunciation,
+  ) async {
+    final clipped = clipToLength(pronunciation.trim(), meaningMaxLength);
+    final device = await _loadDevice(accountId);
+    final index = device.indexWhere((w) => w.id == id);
+    if (index >= 0) {
+      device[index] = device[index].copyWith(pronunciation: clipped);
+      await _saveDevice(accountId, device);
+      revision.value++;
+      return true;
+    }
+    if (_useCloud(accountId)) {
+      try {
+        await cloud!.setPronunciation(id, clipped);
         revision.value++;
         return true;
       } catch (_) {
@@ -432,16 +474,7 @@ class MyWordStore {
     final device = await _loadDevice(accountId);
     final deviceIndex = device.indexWhere((w) => w.id == id);
     if (deviceIndex >= 0) {
-      device[deviceIndex] = MyWord(
-        id: before.id,
-        language: before.language,
-        word: before.word,
-        meaning: before.meaning,
-        examples: next,
-        synonyms: before.synonyms,
-        topic: before.topic,
-        addedAt: before.addedAt,
-      );
+      device[deviceIndex] = before.copyWith(examples: next);
       await _saveDevice(accountId, device);
       revision.value++;
       return true;
@@ -477,16 +510,7 @@ class MyWordStore {
     final device = await _loadDevice(accountId);
     final deviceIndex = device.indexWhere((w) => w.id == id);
     if (deviceIndex >= 0) {
-      device[deviceIndex] = MyWord(
-        id: before.id,
-        language: before.language,
-        word: before.word,
-        meaning: before.meaning,
-        examples: next,
-        synonyms: before.synonyms,
-        topic: before.topic,
-        addedAt: before.addedAt,
-      );
+      device[deviceIndex] = before.copyWith(examples: next);
       await _saveDevice(accountId, device);
       revision.value++;
       return true;
@@ -522,16 +546,7 @@ class MyWordStore {
     final device = await _loadDevice(accountId);
     final deviceIndex = device.indexWhere((w) => w.id == id);
     if (deviceIndex >= 0) {
-      device[deviceIndex] = MyWord(
-        id: before.id,
-        language: before.language,
-        word: before.word,
-        meaning: before.meaning,
-        examples: next,
-        synonyms: before.synonyms,
-        topic: before.topic,
-        addedAt: before.addedAt,
-      );
+      device[deviceIndex] = before.copyWith(examples: next);
       await _saveDevice(accountId, device);
       revision.value++;
       return true;
