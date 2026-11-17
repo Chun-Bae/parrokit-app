@@ -1,3 +1,4 @@
+import 'package:parrokit/core/app/router/broken_link_screen.dart';
 // ============================================================================
 // lib/core/router/app_router.dart
 // ============================================================================
@@ -110,11 +111,7 @@ GoRouter buildAppRouter({
         builder: (context, state) {
           final voteId = state.pathParameters['voteId'];
           if (voteId == null || voteId.isEmpty) {
-            return const Scaffold(
-              body: Center(
-                child: Text('voteId가 필요합니다.'),
-              ),
-            );
+            return const BrokenLinkScreen();
           }
           return VoteViewScreen(voteId: voteId);
         },
@@ -125,11 +122,7 @@ GoRouter buildAppRouter({
         builder: (context, state) {
           final questionId = state.pathParameters['questionId'];
           if (questionId == null || questionId.isEmpty) {
-            return const Scaffold(
-              body: Center(
-                child: Text('questionId가 필요합니다.'),
-              ),
-            );
+            return const BrokenLinkScreen();
           }
           return QuestionViewScreen(questionId: questionId);
         },
@@ -173,11 +166,7 @@ GoRouter buildAppRouter({
         builder: (context, state) {
           final postId = state.pathParameters['postId'];
           if (postId == null || postId.isEmpty) {
-            return const Scaffold(
-              body: Center(
-                child: Text('postId가 필요합니다. (/community/board/:postId)'),
-              ),
-            );
+            return const BrokenLinkScreen();
           }
           return BoardViewScreen(postId: postId);
         },
@@ -431,10 +420,9 @@ ShellRoute get _shellRoute => ShellRoute(
             reverseTransitionDuration: const Duration(milliseconds: 240),
             // 콘텐츠 제작 첫 화면에서 고른 탭(?tab=0~2)으로 연다. 없으면 0.
             child: ContentStudioHubScreen(
-              initialIndex: (int.tryParse(
-                          state.uri.queryParameters['tab'] ?? '') ??
-                      0)
-                  .clamp(0, 2),
+              initialIndex:
+                  (int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0)
+                      .clamp(0, 2),
             ),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
@@ -516,11 +504,7 @@ ShellRoute get _shellRoute => ShellRoute(
                 final clipIdStr = state.uri.queryParameters['clipId'];
                 final clipId = int.tryParse(clipIdStr ?? '');
                 if (clipId == null) {
-                  return const Scaffold(
-                    body: Center(
-                      child: Text('clipId가 필요합니다. (?clipId=123)'),
-                    ),
-                  );
+                  return const BrokenLinkScreen();
                 }
                 return ClipPlayerScreen(clipId: clipId);
               },
