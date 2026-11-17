@@ -1296,20 +1296,11 @@ class _PhraseSettingsDialogState extends State<_PhraseSettingsDialog> {
               value: language,
               onChanged: (value) => setState(() => language = value),
             ),
-            const SizedBox(height: 8),
-            Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                decoration: BoxDecoration(
-                    color: palette.surfaceSoft,
-                    borderRadius: BorderRadius.circular(AppRadius.md)),
-                child: Row(children: [
-                  Icon(Icons.lock_outline_rounded, size: 16, color: muted),
-                  const SizedBox(width: 7),
-                  Text('그 외 언어는 준비 중',
-                      style: context.texts.bodySmall.copyWith(color: muted)),
-                ])),
+            // 전에는 여기 자물쇠와 '그 외 언어는 준비 중'이 붙어 있었다.
+            // 바로 위 고르개가 영어·일본어·중국어를 다 내주는데 그 밑에서
+            // 잠겼다고 하니 어긋나 보였고, 고르개 안에 이미 '새 언어는 이
+            // 목록에 계속 추가할 수 있어요.'가 있어 같은 말이 두 번이었다.
+            // 고르개를 쓰는 다른 네 화면에는 이 줄이 없다(5차 481).
             const SizedBox(height: 18),
             Row(children: [
               Expanded(
