@@ -1459,6 +1459,46 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   decoration: const InputDecoration(
                       labelText: '단어나 표현', border: OutlineInputBorder()),
                 ),
+                // 단추를 단어 칸 바로 아래에 둔다(5차 471, 사용자 요청).
+                // 전에는 뜻·발음 칸 아래에 있어서 그 둘만 채우는 줄 알았다.
+                // 예문 칸은 유의어 다음이라 한참 밑에 있다.
+                Row(
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const ValueKey('fill-word-meaning'),
+                      onPressed: _word.text.trim().isEmpty || filling
+                          ? null
+                          : fillMeaning,
+                      icon: filling
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.auto_awesome_rounded, size: 18),
+                      label: const Text('자동으로 채우기'),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        wordAssistUsageLabel(
+                          used: _assistUsed,
+                          limit: _assist.dailyLimit,
+                          failed: _usageFailed ||
+                              (_usageChecked && _assistUsed == null),
+                        ),
+                        key: const ValueKey('word-assist-usage'),
+                        style: context.texts.bodySmall.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  wordAutoFillHint,
+                  key: const ValueKey('word-autofill-hint'),
+                  style: context.texts.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   key: const ValueKey('word-meaning'),
@@ -1479,41 +1519,6 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     hintText: '한글로 소리 나는 대로',
                     border: OutlineInputBorder(),
                   ),
-                ),
-                // 뜻 채우기는 하루 몇 번만 쓸 수 있다. 전에는 입력칸 안에
-                // 반짝이 아이콘만 있어서 무엇을 하는 단추인지, 몇 번 남았는지
-                // 알 수 없었다. 문장 추가 화면처럼 이름과 남은 횟수를 적는다(5차).
-                Row(
-                  children: [
-                    FilledButton.tonalIcon(
-                      key: const ValueKey('fill-word-meaning'),
-                      onPressed: _word.text.trim().isEmpty || filling
-                          ? null
-                          : fillMeaning,
-                      icon: filling
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      // 이제 뜻만이 아니라 발음과 예문도 함께 채운다(5차 468).
-                      label: const Text('자동으로 채우기'),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        wordAssistUsageLabel(
-                          used: _assistUsed,
-                          limit: _assist.dailyLimit,
-                          failed: _usageFailed ||
-                              (_usageChecked && _assistUsed == null),
-                        ),
-                        key: const ValueKey('word-assist-usage'),
-                        style: context.texts.bodySmall.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ],
                 ),
                 if (fillNote != null)
                   Padding(
@@ -1940,6 +1945,12 @@ double wordReviewProgress({required int index, required int total}) {
 
 /// 단어 뜻 채우기의 남은 횟수 안내. 숫자만 있으면 쓴 횟수인지 남은
 /// 횟수인지 알 수 없어서 문장 추가 화면과 같은 말로 적는다(5차).
+/// 자동 채우기가 무엇을 채우는지(5차 471, 사용자 요청).
+///
+/// 단추만 보고는 뜻만 채우는 줄 알았다. 추가 시트에서는 단추가 뜻·발음 칸
+/// 아래에 있고 예문 칸은 한참 밑이라 더 그랬다.
+const String wordAutoFillHint = '뜻·발음·예문을 한 번에 받아요';
+
 String wordAssistUsageLabel({
   required int? used,
   required int? limit,

@@ -19,6 +19,7 @@ import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/word_collection_preview.dart';
 
 /// 고치기 시트를 연다. 저장했으면 바뀐 낱말을 돌려준다.
 Future<MyWord?> showWordEditSheet(
@@ -305,7 +306,14 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 471).
+            Text(
+              wordAutoFillHint,
+              key: const ValueKey('edit-word-autofill-hint'),
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
             TextField(
               key: const ValueKey('edit-word-meaning-input'),
               controller: _meaning,

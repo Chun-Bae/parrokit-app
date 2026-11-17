@@ -3,6 +3,8 @@
 // 직접 더한 낱말에는 예문이 없어 쓰임을 볼 길이 없었다. 서버에 지금 들고
 // 있는 예문을 함께 보내, 그것과 겹치지 않는 것만 받는다.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
@@ -171,6 +173,8 @@ void main() {
     expect(find.text('휴지'), findsOneWidget);
     expect(find.text('A huge wave.'), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('edit-word-save')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('edit-word-save')));
     await tester.pumpAndSettle();
 
@@ -178,6 +182,30 @@ void main() {
     expect(after.meaning, '거대한');
     expect(after.pronunciation, '휴지');
     expect(after.examples.single.text, 'A huge wave.');
+  });
+
+  test('두 화면이 자동 채우기 설명을 한 곳에서 꺼내 쓴다(5차 471)', () {
+    expect(wordAutoFillHint, contains('예문'));
+    for (final path in [
+      'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart',
+      'lib/features/collection/shell/presentation/widgets/word_edit_sheet.dart',
+    ]) {
+      final src = File(path).readAsStringSync();
+      expect(src.contains('wordAutoFillHint'), isTrue, reason: path);
+    }
+  });
+
+  test('추가 시트는 단추를 입력칸보다 먼저 둔다(5차 471)', () {
+    // 뜻·발음 칸 아래에 있으면 그 둘만 채우는 줄 안다. 예문 칸은 한참 밑이다.
+    final src = File(
+            'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart')
+        .readAsStringSync();
+    final button = src.indexOf("ValueKey('fill-word-meaning')");
+    final meaning = src.indexOf("ValueKey('word-meaning')");
+    final example = src.indexOf("ValueKey('word-example-" r"$index')");
+    expect(button, greaterThan(-1));
+    expect(button, lessThan(meaning), reason: '단추가 뜻 칸보다 앞에 와야 한다');
+    expect(button, lessThan(example));
   });
 
   test('상한은 서버와 같은 10개다', () {
