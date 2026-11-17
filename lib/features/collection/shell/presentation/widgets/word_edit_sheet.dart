@@ -80,6 +80,29 @@ class _WordEditSheetState extends State<WordEditSheet> {
   bool _saving = false;
   bool _filling = false;
   bool _fillingExamples = false;
+
+  /// 오늘 남은 횟수. 이 창은 열릴 때 한 번 물어본다(5차 473).
+  /// 전에는 아예 묻지 않아서, 다 쓴 뒤에도 단추가 눌렸다.
+  bool _usageChecked = false;
+
+  bool get _exhausted => _usageChecked &&
+      wordAssistExhausted(
+        used: _assist.dailyLimit == null || _assist.remainingToday == null
+            ? null
+            : _assist.dailyLimit! - _assist.remainingToday!,
+        limit: _assist.dailyLimit,
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    _assist.refreshUsage().then((_) {
+      if (mounted) setState(() => _usageChecked = true);
+    }).catchError((_) {
+      // 못 읽어도 단추는 쓸 수 있게 둔다. 서버가 막으면 그때 알린다.
+      if (mounted) setState(() => _usageChecked = false);
+    });
+  }
   String? _notice;
 
   @override
@@ -169,7 +192,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
         note = '받지 못했어요. 잠시 뒤 다시 해 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
-      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+      note = assistQuotaExhaustedMessage;
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
@@ -239,7 +262,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
         note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
-      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+      note = assistQuotaExhaustedMessage;
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
@@ -338,7 +361,8 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 // 예문을 손보러 들어온 자리에서 바로 받을 수 있게 한다(5차 470).
                 TextButton.icon(
                   key: const ValueKey('edit-word-fill'),
-                  onPressed: _filling || _saving ? null : _fillBasics,
+                  onPressed:
+                      _filling || _saving || _exhausted ? null : _fillBasics,
                   icon: _filling
                       ? const SizedBox(
                           width: 16,
@@ -352,7 +376,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
             ),
             // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
             Text(
-              wordFillBasicsHint,
+              _exhausted ? assistQuotaExhaustedMessage : wordFillBasicsHint,
               key: const ValueKey('edit-word-autofill-hint'),
               style: context.texts.bodySmall
                   .copyWith(color: colors.onSurfaceVariant),
@@ -423,7 +447,9 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 ),
                 TextButton.icon(
                   key: const ValueKey('edit-word-fill-examples'),
-                  onPressed: _fillingExamples || _saving ? null : _fillExamples,
+                  onPressed: _fillingExamples || _saving || _exhausted
+                      ? null
+                      : _fillExamples,
                   icon: _fillingExamples
                       ? const SizedBox(
                           width: 16,
@@ -436,7 +462,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
               ],
             ),
             Text(
-              wordFillExamplesHint,
+              _exhausted ? assistQuotaExhaustedMessage : wordFillExamplesHint,
               key: const ValueKey('edit-word-examples-hint'),
               style:
                   context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant),

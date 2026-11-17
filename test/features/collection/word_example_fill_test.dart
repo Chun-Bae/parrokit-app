@@ -17,7 +17,12 @@ class _FakeAssist implements SentenceAssist {
     this.examples = const [],
     this.translation,
     this.pronunciation,
+    this.limit,
+    this.remaining,
   });
+
+  final int? limit;
+  final int? remaining;
 
   final List<SuggestedExample> examples;
   final String? translation;
@@ -29,9 +34,9 @@ class _FakeAssist implements SentenceAssist {
   String? sentWord;
 
   @override
-  int? get remainingToday => null;
+  int? get remainingToday => remaining;
   @override
-  int? get dailyLimit => null;
+  int? get dailyLimit => limit;
   @override
   Future<void> refreshUsage() async {}
 
@@ -204,6 +209,62 @@ void main() {
         .readAsStringSync();
     // 상세 시트의 단추는 뺐다. 추가 시트의 것만 남는다.
     expect('ValueKey(\'fill-word-examples\')'.allMatches(src).length, 1);
+  });
+
+  test('오늘 다 썼는지 센다(5차 473)', () {
+    expect(wordAssistExhausted(used: 3, limit: 3), isTrue);
+    expect(wordAssistExhausted(used: 2, limit: 3), isFalse);
+    // 모르면 막지 않는다. 서버가 막으면 그때 알린다.
+    expect(wordAssistExhausted(used: null, limit: 3), isFalse);
+    expect(wordAssistExhausted(used: 3, limit: null), isFalse);
+  });
+
+  test('다 썼다는 말을 한 곳에서 꺼내 쓴다(5차 473)', () {
+    expect(assistQuotaExhaustedMessage, contains('내일'));
+    for (final path in [
+      'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart',
+      'lib/features/collection/shell/presentation/widgets/word_edit_sheet.dart',
+    ]) {
+      final src = File(path)
+          .readAsStringSync()
+          .split('\n')
+          .where((line) => !line.trimLeft().startsWith('//'))
+          .join('\n');
+      // 상수 선언 말고는 손으로 적힌 자리가 없어야 한다.
+      final handWritten = "'오늘 자동 채우기를 모두 썼어요".allMatches(src).length;
+      final declared = src.contains('const String assistQuotaExhaustedMessage');
+      expect(handWritten, declared ? 1 : 0, reason: path);
+    }
+  });
+
+  testWidgets('오늘 다 썼으면 단추를 막고 까닭을 미리 보여 준다(5차 473)', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(limit: 3, remaining: 0);
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+
+    // 눌러 보기 전에 까닭이 보인다.
+    expect(find.text(assistQuotaExhaustedMessage), findsWidgets);
+    for (final key in ['edit-word-fill', 'edit-word-fill-examples']) {
+      final button = tester.widget<ButtonStyleButton>(find.byKey(ValueKey(key)));
+      expect(button.onPressed, isNull, reason: key);
+    }
+  });
+
+  testWidgets('남았으면 단추를 막지 않는다(5차 473)', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(limit: 3, remaining: 2);
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+
+    for (final key in ['edit-word-fill', 'edit-word-fill-examples']) {
+      final button = tester.widget<ButtonStyleButton>(find.byKey(ValueKey(key)));
+      expect(button.onPressed, isNotNull, reason: key);
+    }
   });
 
   test('상한은 서버와 같은 10개다', () {

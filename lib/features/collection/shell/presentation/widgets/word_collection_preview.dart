@@ -1175,7 +1175,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
         note = '뜻을 찾지 못했어요. 직접 적어 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
-      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+      note = assistQuotaExhaustedMessage;
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
@@ -1239,7 +1239,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
         note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
-      note = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+      note = assistQuotaExhaustedMessage;
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
@@ -1280,6 +1280,12 @@ class _AddWordSheetState extends State<AddWordSheet> {
   /// 서버에서 횟수를 받아왔는지. 못 받아오면 안내를 지운다.
   bool _usageChecked = false;
   bool _usageFailed = false;
+
+  /// 오늘 횟수를 다 썼나. 다 썼으면 단추를 막는다(5차 473).
+  bool get _exhausted => wordAssistExhausted(
+        used: _assistUsed,
+        limit: _assist.dailyLimit,
+      );
 
   /// 오늘 쓴 횟수. 서버에서 못 받아오면 null.
   int? get _assistUsed {
@@ -1394,9 +1400,10 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   children: [
                     FilledButton.tonalIcon(
                       key: const ValueKey('fill-word-meaning'),
-                      onPressed: _word.text.trim().isEmpty || filling
-                          ? null
-                          : fillMeaning,
+                      onPressed:
+                          _word.text.trim().isEmpty || filling || _exhausted
+                              ? null
+                              : fillMeaning,
                       icon: filling
                           ? const SizedBox.square(
                               dimension: 16,
@@ -1422,7 +1429,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   ],
                 ),
                 Text(
-                  wordFillBasicsHint,
+                  _exhausted ? assistQuotaExhaustedMessage : wordFillBasicsHint,
                   key: const ValueKey('word-autofill-hint'),
                   style: context.texts.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1560,7 +1567,9 @@ class _AddWordSheetState extends State<AddWordSheet> {
                       ),
                     TextButton.icon(
                       key: const ValueKey('fill-word-examples'),
-                      onPressed: _word.text.trim().isEmpty || fillingExamples
+                      onPressed: _word.text.trim().isEmpty ||
+                              fillingExamples ||
+                              _exhausted
                           ? null
                           : fillExamples,
                       icon: fillingExamples
@@ -1573,7 +1582,9 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   ],
                 ),
                 Text(
-                  wordFillExamplesHint,
+                  _exhausted
+                      ? assistQuotaExhaustedMessage
+                      : wordFillExamplesHint,
                   key: const ValueKey('word-examples-hint'),
                   style: context.texts.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1894,6 +1905,18 @@ double wordReviewProgress({required int index, required int total}) {
 
 /// 단어 뜻 채우기의 남은 횟수 안내. 숫자만 있으면 쓴 횟수인지 남은
 /// 횟수인지 알 수 없어서 문장 추가 화면과 같은 말로 적는다(5차).
+/// 오늘 횟수를 다 썼을 때(5차 473).
+///
+/// 네 곳에 손으로 적혀 있던 말이다. 한 곳에서 꺼내 쓴다.
+const String assistQuotaExhaustedMessage = '오늘 자동 채우기를 모두 썼어요. 내일 다시 쓸 수 있어요.';
+
+/// 오늘 횟수를 다 썼는지(5차 473).
+///
+/// 다 썼으면 단추를 눌리지 않게 두고 까닭을 미리 보여 준다. 전에는 눌러
+/// 보고서야 "다 썼어요"를 알았다.
+bool wordAssistExhausted({int? used, int? limit}) =>
+    used != null && limit != null && limit > 0 && used >= limit;
+
 /// 뜻·발음 채우기 단추 아래 설명(5차 472).
 ///
 /// 뜻·발음과 예문은 쓰임이 다르다. 뜻·발음은 한 번 채우면 끝이고, 예문은
