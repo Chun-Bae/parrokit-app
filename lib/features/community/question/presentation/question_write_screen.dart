@@ -300,7 +300,9 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
                                 Text('마감 기한 ⏳',
                                     style: context.texts.titleMedium.copyWith(
                                         color: colorScheme.onSurface)),
-                                Text('$_deadlineDays일 후',
+                                // 앱은 'N일 뒤'로 적는다(복습·투표 카드·
+                                // 프로필). 여기만 '후'였다(5차 496).
+                                Text('$_deadlineDays일 뒤',
                                     style: valueTextStyle),
                               ],
                             ),

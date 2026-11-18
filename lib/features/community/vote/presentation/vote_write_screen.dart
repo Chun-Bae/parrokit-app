@@ -386,12 +386,17 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                       Divider(color: dividerColor, height: 1, thickness: 1),
                       const SizedBox(height: 24),
 
-                      // ── 투표 기간 설정 ──
+                      // ── 투표 마감 설정 ──
+                      //
+                      // 앱은 투표가 끝나는 때를 어디서나 '마감'이라 부른다 -
+                      // 카드의 'N일 뒤 마감', 거르개 '마감', 알림 '투표가
+                      // 마감됐어요'(479). 질문 쓰기도 '마감 기한'이다.
+                      // 만드는 화면만 '투표 진행 기간 · N일 동안'이었다(5차 496).
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '투표 진행 기간',
+                            '마감 기한',
                             style: context.texts.bodyLarge
                                 .copyWith(color: colorScheme.onSurface),
                           ),
@@ -409,7 +414,7 @@ class _VoteWriteScreenState extends State<VoteWriteScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    '$_selectedExpirationDays일 동안',
+                                    '$_selectedExpirationDays일 뒤',
                                     style: context.texts.bodyMedium
                                         .copyWith(color: colorScheme.onSurface),
                                   ),
