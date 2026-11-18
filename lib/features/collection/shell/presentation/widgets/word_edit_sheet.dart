@@ -97,6 +97,9 @@ class _WordEditSheetState extends State<WordEditSheet> {
   @override
   void initState() {
     super.initState();
+    for (var i = 0; i < _exampleTexts.length; i++) {
+      _watchExample(_exampleTexts[i], _exampleMeanings[i]);
+    }
     _assist.refreshUsage().then((_) {
       if (mounted) setState(() => _usageChecked = true);
     }).catchError((_) {
@@ -105,6 +108,28 @@ class _WordEditSheetState extends State<WordEditSheet> {
     });
   }
   String? _notice;
+
+  /// 지금 저장을 막는 까닭. 누르기 전에 보여 준다(5차 504).
+  ///
+  /// 빈 예문 칸은 그냥 버리지만, **뜻만 적어 둔 칸**은 버리면 적은 글이
+  /// 말없이 사라진다.
+  String? get _blocked {
+    final at = wordExampleMissingTextAt(
+      [for (final c in _exampleTexts) c.text],
+      [for (final c in _exampleMeanings) c.text],
+    );
+    return at == null ? null : wordExampleNeedsTextMessage(at);
+  }
+
+  /// 적는 대로 단추와 안내가 따라 바뀐다.
+  void _watchExample(TextEditingController text, TextEditingController meaning) {
+    text.addListener(_onExampleChanged);
+    meaning.addListener(_onExampleChanged);
+  }
+
+  void _onExampleChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
@@ -141,8 +166,11 @@ class _WordEditSheetState extends State<WordEditSheet> {
       return;
     }
     setState(() {
-      _exampleTexts.add(TextEditingController());
-      _exampleMeanings.add(TextEditingController());
+      final text = TextEditingController();
+      final meaning = TextEditingController();
+      _watchExample(text, meaning);
+      _exampleTexts.add(text);
+      _exampleMeanings.add(meaning);
       _exampleSources.add('');
       _notice = null;
     });
@@ -323,7 +351,9 @@ class _WordEditSheetState extends State<WordEditSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final notice = _notice;
+    // 막힌 까닭이 있으면 그것부터 적는다. 꺼진 단추 바로 위다(5차 504).
+    final blocked = _blocked;
+    final notice = blocked ?? _notice;
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -518,7 +548,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
               width: double.infinity,
               child: FilledButton(
                 key: const ValueKey('edit-word-save'),
-                onPressed: _saving ? null : _save,
+                onPressed: _saving || blocked != null ? null : _save,
                 child: Text(_saving ? '저장 중…' : '저장'),
               ),
             ),

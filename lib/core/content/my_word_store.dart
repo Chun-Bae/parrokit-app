@@ -681,6 +681,29 @@ const int topicMaxLength = 40;
 /// 자동으로 예문을 만들 수 있게 되면서 5개로는 금방 찼다(5차 467, 사용자 요청).
 const int examplesMaxCount = 10;
 
+/// 예문 뜻만 적고 예문을 비워 둔 칸이 있을 때 막는 까닭(5차 504).
+///
+/// 저장은 빈 예문 칸을 버린다(칸만 열어 두고 저장해도 괜찮아야 하니까).
+/// 그런데 **뜻만 적어 둔 칸도 함께 버려졌다.** 적어 둔 글이 말 한마디 없이
+/// 사라져서, 저장하고 돌아오면 쓴 적 없는 것처럼 보였다.
+/// 이제 그 칸이 있으면 저장을 막고 몇 번째 칸인지 짚는다.
+///
+/// [index]는 화면에 적힌 번호(1부터)다.
+String wordExampleNeedsTextMessage(int index) =>
+    '예문 $index를 적어 주세요. 뜻만 적으면 담지 못해요.';
+
+/// 뜻만 적힌 첫 예문 칸의 번호(1부터). 없으면 null.
+///
+/// [texts]와 [meanings]는 길이가 같아야 한다.
+int? wordExampleMissingTextAt(List<String> texts, List<String> meanings) {
+  for (var i = 0; i < texts.length; i++) {
+    final text = texts[i].trim();
+    final meaning = i < meanings.length ? meanings[i].trim() : '';
+    if (text.isEmpty && meaning.isNotEmpty) return i + 1;
+  }
+  return null;
+}
+
 /// 유의어 하나의 길이와 개수.
 const int synonymMaxLength = 40;
 const int synonymsMaxCount = 10;
