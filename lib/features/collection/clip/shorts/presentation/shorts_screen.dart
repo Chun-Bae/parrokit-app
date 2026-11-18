@@ -236,9 +236,11 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
                   child: Builder(builder: (_) {
                     // 클립이 묶음(10개)보다 적으면 그만큼만 그린다. 전에는
                     // 늘 10칸이라 두 개뿐이어도 여덟 개가 남은 듯 보였다(5차).
+                    // 피드에 실린 수를 세면 같은 클립을 또 실을 때마다 칸이
+                    // 늘어 같은 결함이 돌아왔다(5차 491). 서로 다른 클립을 센다.
                     final bar = shortsProgress(
                       currentIndex: current,
-                      clipCount: shorts.shorts.length,
+                      clipIds: [for (final s in shorts.shorts) s.clip.id],
                       pageSize: ShortsProvider.pageSize,
                     );
                     final item = shorts.shorts[current];
