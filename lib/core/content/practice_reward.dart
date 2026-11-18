@@ -339,6 +339,9 @@ String rewardCrackerCount(int crackers) {
   return '${crackers < 0 ? '-' : ''}$buffer';
 }
 
+/// 알림 본문에 한 줄로 붙이는 말. 예약 알림은 그날 몇 개를 뽑을지 모른다.
+const String practiceRewardShortInvite = '따라 말하면 크래커를 받아요';
+
 /// 연습 알림과 화면이 함께 쓰는 말. 수는 말하지 않는다.
 String get practiceRewardInvite =>
     '따라 말하면 크래커를 받아요. 많게는 ${rewardCrackerCount(rewardMaxCrackers)}개까지요.';

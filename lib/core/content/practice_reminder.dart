@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'practice_reward.dart';
+
 /// 연습 알림(기기에서 예약하는 알림).
 ///
 /// 서버를 쓰지 않는다. 앱이 켜져 있을 때 앞으로 며칠치를 한꺼번에 예약하고,
@@ -219,12 +221,43 @@ class PracticeReminderSettings {
 /// 바로 울려 버린다(5차, 사용자와 정함).
 const reminderMinLead = Duration(seconds: 10);
 
+/// 알림 시각을 앞뒤로 이만큼까지 흔든다(5차 505, 사용자 요청).
+///
+/// 매일 같은 시각에 오면 금세 지루해진다. 그렇다고 아무 때나 뽑으면 하루에
+/// 한 번도 안 오는 날이 생기고, 왜 그 시각에 왔는지 설명할 수도 없다.
+/// 그래서 간격은 그대로 두고 시각만 흔든다. 흔드는 값은 날짜로 정해지므로
+/// 같은 날에 몇 번을 다시 예약해도 같은 시각이 나온다(테스트가 볼 수 있다).
+const int reminderJitterMinutes = 15;
+
+/// [seed]·[day]·[slot]으로 정해지는 -[jitter]~+[jitter]분.
+///
+/// Random을 쓰지 않는다. 앱을 열 때마다 다시 예약하는데, 그때마다 다른 값이
+/// 나오면 같은 알림이 이리저리 움직인다.
+int reminderJitterFor(int seed, int day, int slot, int jitter) {
+  if (jitter <= 0) return 0;
+  var h = 0x811c9dc5 ^ seed;
+  for (final value in [day, slot]) {
+    h = (h ^ (value + 0x9e3779b9)) & 0x7fffffff;
+    h = (h * 16777619) & 0x7fffffff;
+  }
+  return h % (jitter * 2 + 1) - jitter;
+}
+
 /// [now] 다음으로 오는 알림 시각들.
 ///
 /// [intervalMinutes]가 0이면 하루 한 번 [hour]:[minute]에. 0보다 크면 그날
 /// [hour]:[minute]부터 [endHour]시까지 그 간격마다. 어느 쪽이든 지금보다
 /// [minLead]만큼은 뒤의 것만 담고, 기기가 들고 있을 수 있는 수([maxCount])에서
 /// 끊는다.
+///
+/// 간격으로 받을 때 **오늘치는 지금([now])부터 다시 센다**(5차 505, 사용자
+/// 요청). 전에는 날마다 같은 격자(8:00·10:00·12:00…)에 박혀 있어서, 앱을 쓴
+/// 직후에도 늘 같은 시각에 왔다. 이제 앱을 열면 그때부터 한 간격 뒤가 첫
+/// 알림이다. 간격은 그대로인데 오는 시각은 매일 달라진다.
+///
+/// 거기에 [jitterMinutes]만큼 앞뒤로 흔든다. 흔드는 값은 날짜로 정해지므로
+/// 같은 날 다시 예약해도 같은 시각이 나온다. [hour]~[endHour] 밖으로는
+/// 나가지 않으므로 새벽에 울리지 않는다.
 List<DateTime> reminderTimes(
   DateTime now,
   int hour,
@@ -235,30 +268,62 @@ List<DateTime> reminderTimes(
   int endHour = PracticeReminder.defaultEndHour,
   int endMinute = 0,
   int maxCount = PracticeReminder.maxPending,
+  int jitterMinutes = reminderJitterMinutes,
+  int seed = 0,
 }) {
+  final earliest = now.add(minLead);
+
   if (intervalMinutes <= 0) {
     var first = DateTime(now.year, now.month, now.day, hour, minute);
     if (first.difference(now) < minLead) {
       first = first.add(const Duration(days: 1));
     }
-    return [
-      for (var i = 0; i < days && i < maxCount; i++)
-        DateTime(first.year, first.month, first.day + i, hour, minute),
-    ];
+    final times = <DateTime>[];
+    for (var i = 0; i < days && times.length < maxCount; i++) {
+      final at = DateTime(first.year, first.month, first.day + i, hour, minute);
+      // 하루 한 번일 때는 그날 안에서만 흔든다(날이 넘어가면 안 온 날이 생긴다).
+      final shifted = at.add(Duration(
+          minutes: reminderJitterFor(seed, i, 0, jitterMinutes)));
+      final kept = shifted.day == at.day && !shifted.isBefore(earliest)
+          ? shifted
+          : at;
+      if (!kept.isBefore(earliest)) times.add(kept);
+    }
+    return times;
   }
 
-  final earliest = now.add(minLead);
+  final interval = Duration(minutes: intervalMinutes);
   final times = <DateTime>[];
   for (var day = 0; day < days && times.length < maxCount; day++) {
     final start = DateTime(now.year, now.month, now.day + day, hour, minute);
     final end =
         DateTime(now.year, now.month, now.day + day, endHour, endMinute);
-    var at = start;
     // 시작이 끝보다 늦으면(예: 밤 11시 시작, 밤 10시까지) 그날은 한 번만.
     final last = end.isBefore(start) ? start : end;
+
+    // 오늘치는 앱을 연 지금부터 한 간격 뒤에 시작한다. 아직 시작 시각이
+    // 안 됐으면(아침에 열었는데 저녁부터 받는 설정) 시작 시각부터다.
+    var at = start;
+    if (day == 0 && !now.isBefore(start)) {
+      final fromNow = now.add(interval);
+      if (fromNow.isAfter(start)) at = fromNow;
+    }
+
+    var slot = 0;
     while (!at.isAfter(last) && times.length < maxCount) {
-      if (!at.isBefore(earliest)) times.add(at);
-      at = at.add(Duration(minutes: intervalMinutes));
+      final shifted = at.add(Duration(
+          minutes: reminderJitterFor(seed, day, slot, jitterMinutes)));
+      // 흔들어도 그날 창 안에, 앞 알림보다 뒤에, 지금보다 뒤에 둔다.
+      var kept = shifted;
+      if (kept.isBefore(start)) kept = start;
+      if (kept.isAfter(last)) kept = last;
+      if (times.isNotEmpty && !kept.isAfter(times.last)) kept = at;
+      if (!kept.isBefore(earliest) &&
+          (times.isEmpty || kept.isAfter(times.last))) {
+        times.add(kept);
+      }
+      at = at.add(interval);
+      slot++;
     }
   }
   return times;
@@ -335,10 +400,16 @@ List<String> pickReminderLines(List<String> sentences, int count) {
 }
 
 /// 알림에 보일 제목과 본문. 적어 둔 문장이 없으면 문장 없이 부른다.
+///
+/// 본문 끝에 크래커 한 줄을 붙인다(5차 505, 사용자 요청). 액수는 뽑기라
+/// 적지 않는다. 며칠 전에 깔아 둔 알림은 그날 몇 개를 뽑을지 모른다.
 ({String title, String body}) reminderContent(String? sentence) {
   const title = '오늘 따라 말하기';
   final text = sentence?.trim() ?? '';
   return text.isEmpty
-      ? (title: title, body: '앵무새가 기다려요. 한 문장만 따라 말해 볼까요?')
-      : (title: title, body: text);
+      ? (
+          title: title,
+          body: '앵무새가 기다려요. $practiceRewardShortInvite.',
+        )
+      : (title: title, body: '$text\n$practiceRewardShortInvite');
 }

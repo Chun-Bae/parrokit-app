@@ -4,13 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:parrokit/core/content/practice_reminder.dart';
+import 'package:parrokit/core/content/practice_reward.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  // 흔들림(jitter)은 5차 505에서 들어왔다. 격자 자체를 보는 테스트는 끄고
+  // 본다. 흔들림은 아래 '시각 흔들기와 앵커' 묶음에서 따로 본다.
   group('알림 시각', () {
     test('오늘 그 시각이 아직 안 지났으면 오늘부터', () {
-      final times = reminderTimes(DateTime(2026, 11, 14, 9), 20, 0, days: 3);
+      final times = reminderTimes(DateTime(2026, 11, 14, 9), 20, 0,
+          days: 3, jitterMinutes: 0);
       expect(times.first, DateTime(2026, 11, 14, 20));
       expect(times[1], DateTime(2026, 11, 15, 20));
       expect(times.length, 3);
@@ -18,25 +22,28 @@ void main() {
 
     test('이미 지났으면 내일부터', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 20, 1), 20, 0,
-          days: 2);
+          days: 2, jitterMinutes: 0);
       expect(times.first, DateTime(2026, 11, 15, 20));
       expect(times.last, DateTime(2026, 11, 16, 20));
     });
 
     test('딱 그 시각이면 내일부터(지금 울릴 알림은 예약하지 않는다)', () {
-      final times = reminderTimes(DateTime(2026, 11, 14, 20), 20, 0, days: 1);
+      final times = reminderTimes(DateTime(2026, 11, 14, 20), 20, 0,
+          days: 1, jitterMinutes: 0);
       expect(times.single, DateTime(2026, 11, 15, 20));
     });
 
     test('너무 가까우면(10초 안쪽) 내일로 미룬다', () {
       // 9초 뒤: 예약이 끝나기도 전에 지나갈 수 있다.
       expect(
-          reminderTimes(DateTime(2026, 11, 14, 19, 59, 51), 20, 0, days: 1)
+          reminderTimes(DateTime(2026, 11, 14, 19, 59, 51), 20, 0,
+                  days: 1, jitterMinutes: 0)
               .single,
           DateTime(2026, 11, 15, 20));
       // 11초 뒤: 오늘 울린다.
       expect(
-          reminderTimes(DateTime(2026, 11, 14, 19, 59, 49), 20, 0, days: 1)
+          reminderTimes(DateTime(2026, 11, 14, 19, 59, 49), 20, 0,
+                  days: 1, jitterMinutes: 0)
               .single,
           DateTime(2026, 11, 14, 20));
     });
@@ -44,14 +51,15 @@ void main() {
     test('간격은 바꿔 줄 수 있다', () {
       expect(
           reminderTimes(DateTime(2026, 11, 14, 19, 59, 51), 20, 0,
-                  days: 1, minLead: Duration.zero)
+                  days: 1, minLead: Duration.zero, jitterMinutes: 0)
               .single,
           DateTime(2026, 11, 14, 20));
     });
 
     test('달을 넘어가도 날짜가 이어진다', () {
       // 11월 30일 9시에는 그날 8시 30분이 지났으므로 12월 1일부터.
-      final times = reminderTimes(DateTime(2026, 11, 30, 9), 8, 30, days: 3);
+      final times = reminderTimes(DateTime(2026, 11, 30, 9), 8, 30,
+          days: 3, jitterMinutes: 0);
       expect(times[0], DateTime(2026, 12, 1, 8, 30));
       expect(times[1], DateTime(2026, 12, 2, 8, 30));
       expect(times[2], DateTime(2026, 12, 3, 8, 30));
@@ -75,10 +83,21 @@ void main() {
   });
 
   group('알림 글', () {
-    test('문장이 있으면 그대로 본문에 쓴다', () {
+    test('문장은 본문 첫 줄에 그대로 쓰고 크래커 한 줄을 붙인다(5차 505)', () {
       final c = reminderContent('How was your day?');
       expect(c.title, '오늘 따라 말하기');
-      expect(c.body, 'How was your day?');
+      expect(c.body.split('\n').first, 'How was your day?');
+      expect(c.body, contains(practiceRewardShortInvite));
+    });
+
+    test('알림은 받을 크래커 수를 약속하지 않는다', () {
+      // 며칠 전에 깔아 둔 알림은 그날 몇 개를 뽑을지 모른다.
+      for (final c in [reminderContent('Hi'), reminderContent(null)]) {
+        for (final tier in rewardTiers) {
+          expect(c.body.contains('${tier.crackers}'), isFalse,
+              reason: '${tier.crackers}개를 약속하면 사실이 아닐 수 있다');
+        }
+      }
     });
 
     test('문장이 없으면 문장 없이 부른다', () {
@@ -137,10 +156,84 @@ void main() {
     });
   });
 
+  group('시각 흔들기와 앵커 (5차 505)', () {
+    test('같은 날 다시 예약하면 같은 시각이 나온다', () {
+      // 앱을 열 때마다 다시 예약한다. 그때마다 다른 값이면 같은 알림이
+      // 이리저리 움직인다. 그래서 Random을 쓰지 않는다.
+      List<DateTime> run() => reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
+          days: 5, intervalMinutes: 120, endHour: 21);
+      expect(run(), run());
+    });
+
+    test('흔들어도 시작~끝 시각 밖으로 나가지 않는다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
+          days: 7, intervalMinutes: 120, endHour: 21, jitterMinutes: 30);
+      for (final at in times) {
+        final start = DateTime(at.year, at.month, at.day, 9);
+        final end = DateTime(at.year, at.month, at.day, 21);
+        expect(at.isBefore(start), isFalse, reason: '$at가 시작 전이다');
+        expect(at.isAfter(end), isFalse, reason: '$at가 끝 뒤다');
+      }
+    });
+
+    test('하루 한 번일 때도 그날을 넘지 않는다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 7), 23, 50,
+          days: 10, jitterMinutes: 30);
+      for (var i = 0; i < times.length; i++) {
+        expect(times[i].hour, greaterThanOrEqualTo(23),
+            reason: '${times[i]}가 다음 날로 넘어갔다');
+      }
+      // 하루 한 번이면 날수만큼 온다. 흔들려서 빠진 날이 없어야 한다.
+      expect(times.length, 10);
+    });
+
+    test('시각은 언제나 앞의 것보다 뒤다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
+          days: 7, intervalMinutes: 60, endHour: 21, jitterMinutes: 30);
+      for (var i = 1; i < times.length; i++) {
+        expect(times[i].isAfter(times[i - 1]), isTrue,
+            reason: '${times[i - 1]} 뒤에 ${times[i]}');
+      }
+    });
+
+    test('흔들어도 지금보다 앞선 알림은 담지 않는다', () {
+      final now = DateTime(2026, 11, 14, 9, 30);
+      final times = reminderTimes(now, 9, 0,
+          days: 3, intervalMinutes: 60, endHour: 21, jitterMinutes: 30);
+      for (final at in times) {
+        expect(at.isBefore(now.add(reminderMinLead)), isFalse, reason: '$at');
+      }
+    });
+
+    test('날마다 다른 시각에 온다', () {
+      // 흔들림의 목적이다. 같은 분에만 오면 흔든 뜻이 없다.
+      final times = reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
+          days: 14, intervalMinutes: 0, jitterMinutes: 15);
+      expect(times.map((t) => t.minute).toSet().length, greaterThan(3));
+    });
+
+    test('흔들림을 0으로 주면 예전 격자 그대로다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
+          days: 2, intervalMinutes: 0, jitterMinutes: 0);
+      expect(times, [DateTime(2026, 11, 14, 9), DateTime(2026, 11, 15, 9)]);
+    });
+
+    test('흔드는 값은 -흔들림~+흔들림 사이다', () {
+      for (var day = 0; day < 40; day++) {
+        for (var slot = 0; slot < 20; slot++) {
+          final value = reminderJitterFor(0, day, slot, 15);
+          expect(value, greaterThanOrEqualTo(-15));
+          expect(value, lessThanOrEqualTo(15));
+        }
+      }
+      expect(reminderJitterFor(0, 1, 1, 0), 0);
+    });
+  });
+
   group('간격으로 받기', () {
     test('간격을 주면 시작 시각부터 끝 시각까지 그 간격마다', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
-          days: 1, intervalMinutes: 180, endHour: 18);
+          days: 1, intervalMinutes: 180, endHour: 18, jitterMinutes: 0);
       expect(times, [
         DateTime(2026, 11, 14, 9),
         DateTime(2026, 11, 14, 12),
@@ -151,41 +244,73 @@ void main() {
 
     test('끝 시각에 딱 떨어지지 않으면 넘기지 않는다', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
-          days: 1, intervalMinutes: 300, endHour: 18);
+          days: 1, intervalMinutes: 300, endHour: 18, jitterMinutes: 0);
       expect(times, [DateTime(2026, 11, 14, 9), DateTime(2026, 11, 14, 14)]);
     });
 
-    test('오늘 이미 지난 칸은 빼고 다음 칸부터', () {
+    test('오늘치는 지금부터 한 간격 뒤에 시작한다(5차 505)', () {
+      // 전에는 날마다 9·11·13·15·17시 격자에 박혀 있어서, 13시 30분에 앱을
+      // 열어도 다음 알림은 늘 15시였다. 이제는 앱을 연 그때부터 센다.
       final times = reminderTimes(DateTime(2026, 11, 14, 13, 30), 9, 0,
-          days: 2, intervalMinutes: 120, endHour: 17);
-      expect(times.first, DateTime(2026, 11, 14, 15));
-      expect(times[1], DateTime(2026, 11, 14, 17));
-      expect(times[2], DateTime(2026, 11, 15, 9));
+          days: 2, intervalMinutes: 120, endHour: 17, jitterMinutes: 0);
+      expect(times.first, DateTime(2026, 11, 14, 15, 30));
+      expect(times[1], DateTime(2026, 11, 15, 9), reason: '내일은 시작 시각부터');
     });
 
-    test('너무 가까운 칸(10초 안쪽)도 건너뛴다', () {
-      final times = reminderTimes(DateTime(2026, 11, 14, 14, 59, 55), 9, 0,
-          days: 1, intervalMinutes: 120, endHour: 17);
-      expect(times.first, DateTime(2026, 11, 14, 17));
+    test('시작 시각 전에 열면 시작 시각부터다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
+          days: 1, intervalMinutes: 120, endHour: 13, jitterMinutes: 0);
+      expect(times.first, DateTime(2026, 11, 14, 9),
+          reason: '7시에 열었다고 7시 2시간 뒤(9시)보다 앞서 울리지는 않는다');
+      expect(times, [
+        DateTime(2026, 11, 14, 9),
+        DateTime(2026, 11, 14, 11),
+        DateTime(2026, 11, 14, 13),
+      ]);
+    });
+
+    test('끝 시각을 지나 열면 오늘은 더 오지 않는다', () {
+      final times = reminderTimes(DateTime(2026, 11, 14, 18), 9, 0,
+          days: 2, intervalMinutes: 120, endHour: 17, jitterMinutes: 0);
+      expect(times.first, DateTime(2026, 11, 15, 9));
+    });
+
+    test('앵커로 세므로 첫 알림이 지금과 너무 가까울 일이 없다', () {
+      // 전에는 격자에 박혀 있어서 지금과 5초 떨어진 칸이 나올 수 있었다.
+      // 그 칸은 예약이 끝나기도 전에 지나가므로 건너뛰어야 했다. 이제는
+      // 언제 열어도 첫 알림이 한 간격 뒤다.
+      final now = DateTime(2026, 11, 14, 14, 59, 55);
+      final times = reminderTimes(now, 9, 0,
+          days: 1, intervalMinutes: 120, endHour: 17, jitterMinutes: 0);
+      expect(times.first, now.add(const Duration(minutes: 120)));
+      expect(times.first.difference(now), greaterThan(reminderMinLead));
     });
 
     test('기기가 들고 있을 수 있는 수에서 끊는다', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 0), 9, 0,
-          days: 14, intervalMinutes: 30, endHour: 22, maxCount: 5);
+          days: 14,
+          intervalMinutes: 30,
+          endHour: 22,
+          maxCount: 5,
+          jitterMinutes: 0);
       expect(times.length, 5);
       expect(times.last, DateTime(2026, 11, 14, 11));
     });
 
     test('시작이 끝보다 늦으면 그날은 한 번만', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 8), 23, 0,
-          days: 2, intervalMinutes: 60, endHour: 22);
+          days: 2, intervalMinutes: 60, endHour: 22, jitterMinutes: 0);
       expect(times, [DateTime(2026, 11, 14, 23), DateTime(2026, 11, 15, 23)]);
     });
 
     test('가장 짧은 간격은 1분이고 그대로 예약한다', () {
       expect(reminderIntervalChoices.where((m) => m > 0).reduce(min), 1);
       final times = reminderTimes(DateTime(2026, 11, 14, 8, 59), 9, 0,
-          days: 1, intervalMinutes: 1, endHour: 10, maxCount: 3);
+          days: 1,
+          intervalMinutes: 1,
+          endHour: 10,
+          maxCount: 3,
+          jitterMinutes: 0);
       expect(times, [
         DateTime(2026, 11, 14, 9),
         DateTime(2026, 11, 14, 9, 1),
@@ -195,7 +320,11 @@ void main() {
 
     test('그만 받을 시각은 분까지 본다', () async {
       final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
-          days: 1, intervalMinutes: 60, endHour: 11, endMinute: 30);
+          days: 1,
+          intervalMinutes: 60,
+          endHour: 11,
+          endMinute: 30,
+          jitterMinutes: 0);
       expect(times.last, DateTime(2026, 11, 14, 11));
 
       await PracticeReminder.save(const PracticeReminderSettings(
@@ -212,7 +341,7 @@ void main() {
 
     test('간격이 0이면 예전처럼 하루 한 번', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 8), 9, 0,
-          days: 2, intervalMinutes: 0);
+          days: 2, intervalMinutes: 0, jitterMinutes: 0);
       expect(times, [DateTime(2026, 11, 14, 9), DateTime(2026, 11, 15, 9)]);
     });
 

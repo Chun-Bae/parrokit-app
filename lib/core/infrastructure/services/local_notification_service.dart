@@ -94,7 +94,8 @@ class LocalNotificationService {
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         final ios = plugin.resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
-        return await ios?.requestPermissions(alert: true, badge: true, sound: true) ??
+        return await ios?.requestPermissions(
+                alert: true, badge: true, sound: true) ??
             false;
       }
       final android = plugin.resolvePlatformSpecificImplementation<
@@ -141,8 +142,7 @@ class LocalNotificationService {
     );
 
     for (var i = 0; i < times.length; i++) {
-      final content =
-          reminderContent(i < lines.length ? lines[i] : null);
+      final content = reminderContent(i < lines.length ? lines[i] : null);
       try {
         await plugin.zonedSchedule(
           practiceIdBase + i,
@@ -197,26 +197,62 @@ Future<void> applyPracticeReminder({
 ///
 /// 며칠치만 예약해 두므로 열 때마다 다시 채워야 알림이 끊기지 않는다.
 /// 문장을 못 읽어도(오프라인·로그인 전) 적어 둔 문장으로 예약한다.
+///
+/// 간격으로 받을 때는 다시 예약하는 이 순간부터 오늘치를 다시 센다
+/// (reminderTimes). 그래서 앱을 쓴 뒤에는 그만큼 뒤로 밀린다(5차 505).
 Future<void> refreshPracticeReminder(String accountId) async {
   try {
     final settings = await PracticeReminder.load();
     if (!settings.enabled) return;
-    var candidates = [
-      for (final text in await PracticeReminder.loadLines())
-        ReminderCandidate(text: text),
-    ];
-    try {
-      final mine = await MySentenceStore.load(accountId);
-      if (mine.isNotEmpty) {
-        candidates = await reminderCandidatesFor(accountId, mine);
-      }
-    } catch (_) {
-      // 못 읽으면 지난번에 적어 둔 문장을 그대로 쓴다.
-    }
-    await applyPracticeReminder(settings: settings, candidates: candidates);
+    await applyPracticeReminder(
+      settings: settings,
+      candidates: await _reminderCandidates(accountId),
+    );
   } catch (e) {
     AppLogger.e('[Reminder] 앱 시작 때 다시 예약 실패', error: e);
   }
+}
+
+/// 오늘 받을 크래커를 다 받았을 때 부른다. 오늘 남은 알림을 지우고 내일부터
+/// 다시 깐다(5차 505).
+///
+/// 예약 알림은 며칠 전에 미리 깔아 두므로 '오늘은 이미 다 받았다'를 알 수
+/// 없다. 그대로 두면 더 줄 것이 없는데도 '따라 말하면 크래커를 받아요'라고
+/// 부른다. 다 받은 그 순간에 다시 깔아서 못 지킬 약속을 지운다.
+Future<void> skipTodayPracticeReminders(String accountId) async {
+  try {
+    final settings = await PracticeReminder.load();
+    if (!settings.enabled) return;
+    final now = DateTime.now();
+    // 오늘 창이 끝난 시각으로 보고 예약하면 오늘치는 모두 빠진다.
+    final afterToday = DateTime(
+            now.year, now.month, now.day, settings.endHour, settings.endMinute)
+        .add(const Duration(minutes: 1));
+    await applyPracticeReminder(
+      settings: settings,
+      candidates: await _reminderCandidates(accountId),
+      now: afterToday.isAfter(now) ? afterToday : now,
+    );
+  } catch (e) {
+    AppLogger.e('[Reminder] 오늘 알림 건너뛰기 실패', error: e);
+  }
+}
+
+/// 알림에 띄울 후보. 문장을 못 읽으면 지난번에 적어 둔 문장을 그대로 쓴다.
+Future<List<ReminderCandidate>> _reminderCandidates(String accountId) async {
+  var candidates = [
+    for (final text in await PracticeReminder.loadLines())
+      ReminderCandidate(text: text),
+  ];
+  try {
+    final mine = await MySentenceStore.load(accountId);
+    if (mine.isNotEmpty) {
+      candidates = await reminderCandidatesFor(accountId, mine);
+    }
+  } catch (_) {
+    // 못 읽으면 지난번에 적어 둔 문장을 그대로 쓴다.
+  }
+  return candidates;
 }
 
 /// 내 문장에 이 기기의 연습 기록을 붙여 알림 후보로 만든다.
