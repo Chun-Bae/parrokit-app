@@ -15,6 +15,10 @@ import 'package:parrokit/features/settings/more/presentation/widgets/card_contai
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 
 /// 받아 둔 영상이 하나도 없을 때. 무엇을 하면 생기는지와 갈 길을 준다.
+/// 이 화면의 이름. 들어오는 칸(더보기 '받아 둔 영상')·앱바·맨 위 카드가
+/// 한 말을 쓴다(5차 497).
+const String cachedScreenTitle = '받아 둔 영상';
+
 const String cachedEmptyTitle = '받아 둔 영상이 아직 없어요';
 const String cachedEmptyBody =
     '서버에 둔 영상을 한 번 보면 이 기기에 받아 둬요. 그다음부터는 인터넷이 없어도 열려요.';
@@ -168,7 +172,10 @@ class _StorageCacheManagementScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '기기에 받아 둔 파일',
+                  // 화면 제목·더보기 칸과 같은 말로(5차 497). 들어올 때는
+                  // '받아 둔 영상'인데 맨 위 카드만 '파일'이라 불렀다.
+                  // 아래 설명문은 원본과 견주는 자리라 '받아 둔 파일' 그대로.
+                  cachedScreenTitle,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -197,7 +204,9 @@ class _StorageCacheManagementScreenState
           ],
           const SizedBox(height: 10),
           Text(
-            '보관 용량: ${formatBytes(usedBytes)}',
+            // '보관 용량'은 저장 용량 시트의 '보관한 영상'(이 기기에 둔 클립
+            // 원본)과 헷갈렸다. 여기 숫자는 받아 둔 것만 센다(5차 497).
+            '받아 둔 용량: ${formatBytes(usedBytes)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -299,7 +308,7 @@ class _StorageCacheManagementScreenState
       backgroundColor: cs.surface,
       appBar: AppBar(
         // 들어온 줄('받아 둔 영상')과 같은 말(5차).
-        title: const Text('받아 둔 영상'),
+        title: const Text(cachedScreenTitle),
       ),
       body: SafeArea(
         child: RefreshIndicator(
