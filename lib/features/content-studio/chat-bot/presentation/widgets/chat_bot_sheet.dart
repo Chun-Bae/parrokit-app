@@ -4,6 +4,7 @@ import 'package:parrokit/features/content-studio/shared/studio_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import '../chat_bot_provider.dart';
+import '../chat_bot_text.dart';
 import 'gradient_helper.dart';
 import 'chat_bubble.dart';
 import 'typing_indicator.dart';
@@ -318,11 +319,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
-                                    provider.chatbotMode == 'tts'
-                                        ? '음성 만들기를 도와줄게요'
-                                        : provider.chatbotMode == 'video'
-                                            ? '영상 만들기를 도와줄게요'
-                                            : '무엇이든 물어보세요',
+                                    chatBotSubtitle(provider.chatbotMode),
                                     style: context.texts.labelSmall.copyWith(
                                       color: isDark
                                           ? context.tokens.textTertiary
@@ -664,9 +661,7 @@ class _ChatBotSheetState extends State<_ChatBotSheet> {
                               focusNode: _focusNode,
                               style: theme.textTheme.bodyMedium,
                               decoration: InputDecoration(
-                                hintText: kVideoStudioEnabled
-                                    ? '음성이나 영상 만들기 요청을 적어 보세요...'
-                                    : '음성으로 만들 내용을 적어 보세요...',
+                                hintText: chatBotInputHint(provider.chatbotMode),
                                 hintStyle: theme.textTheme.bodyMedium?.copyWith(
                                   color: context.tokens.textTertiary,
                                 ),

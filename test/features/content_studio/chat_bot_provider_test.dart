@@ -10,7 +10,7 @@ import 'package:parrokit/features/content-studio/chat-bot/domain/entities/ai_cha
 import 'package:parrokit/features/content-studio/chat-bot/domain/repositories/ai_chat_repository.dart';
 import 'package:parrokit/features/content-studio/chat-bot/domain/usecases/send_chat_message_usecase.dart';
 import 'package:parrokit/features/content-studio/chat-bot/presentation/chat_bot_provider.dart';
-import 'package:parrokit/features/content-studio/video/domain/models/video_generation_models.dart';
+import 'package:parrokit/features/content-studio/chat-bot/presentation/chat_bot_text.dart';
 
 class _Repo implements AiChatRepository {
   final pending = <Completer<AiChatMessage>>[];
@@ -107,21 +107,57 @@ void main() {
     expect(provider.messages.any((m) => m.text == '첫 답'), isFalse);
   });
 
-  group('첫 인사', () {
-    test('영상 만들기를 숨긴 동안에는 영상을 돕는다고 하지 않는다', () {
-      final off = chatBotGreeting(videoEnabled: false);
-      expect(off.contains('영상'), isFalse);
-      expect(off.contains('음성 만들기'), isTrue);
+  group('제 할 일을 밝히는 세 말(5차 502)', () {
+    // 전에는 부제만 모드를 보고, 인사와 힌트는 kVideoStudioEnabled를 봤다.
+    // 그래서 'general' 모드에서 '무엇이든 물어보세요'라면서 적는 칸에는
+    // '음성으로 만들 내용을 적어 보세요'라고 했다.
+    test('아무 모드도 아닐 때는 음성·영상을 콕 집지 않는다', () {
+      expect(chatBotSubtitle(chatBotGeneralMode), '무엇이든 물어보세요');
+      final greeting = chatBotGreeting(chatBotGeneralMode);
+      expect(greeting.contains('음성'), isFalse);
+      expect(greeting.contains('영상'), isFalse);
+      final hint = chatBotInputHint(chatBotGeneralMode);
+      expect(hint.contains('음성'), isFalse);
+      expect(hint.contains('영상'), isFalse);
     });
 
-    test('영상 만들기를 켜면 영상도 함께 안내한다', () {
-      final on = chatBotGreeting(videoEnabled: true);
-      expect(on.contains('영상'), isTrue);
+    test('음성 모드면 셋 다 음성을 말한다', () {
+      for (final line in [
+        chatBotSubtitle(chatBotTtsMode),
+        chatBotGreeting(chatBotTtsMode),
+        chatBotInputHint(chatBotTtsMode),
+      ]) {
+        expect(line.contains('음성'), isTrue, reason: line);
+        expect(line.contains('영상'), isFalse, reason: line);
+      }
     });
 
-    test('지금 설정(kVideoStudioEnabled)에 맞는 인사를 쓴다', () {
-      expect(chatBotGreeting(),
-          chatBotGreeting(videoEnabled: kVideoStudioEnabled));
+    test('영상 모드면 셋 다 영상을 말한다', () {
+      for (final line in [
+        chatBotSubtitle(chatBotVideoMode),
+        chatBotGreeting(chatBotVideoMode),
+        chatBotInputHint(chatBotVideoMode),
+      ]) {
+        expect(line.contains('영상'), isTrue, reason: line);
+      }
+    });
+
+    test('모드마다 힌트가 다르다', () {
+      final hints = {
+        chatBotInputHint(chatBotGeneralMode),
+        chatBotInputHint(chatBotTtsMode),
+        chatBotInputHint(chatBotVideoMode),
+      };
+      expect(hints.length, 3);
+    });
+
+    test('대화를 새로 시작하면 아무 모드도 아닌 인사로 돌아간다', () {
+      final provider = ChatBotProvider(
+          useCase: SendChatMessageUseCase(_Repo()));
+      provider.updateChatbotMode(chatBotTtsMode);
+      provider.resetChatbot();
+      expect(provider.chatbotMode, chatBotGeneralMode);
+      expect(provider.messages.first.text, chatBotGreeting(chatBotGeneralMode));
     });
   });
 
