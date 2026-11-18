@@ -87,7 +87,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
   /// 둘러보기 화면의 공유 문장 정렬. true면 좋아요 순, false면 최신 순.
   bool sortPopular = true;
   String language = '영어';
-  String category = '전체';
+  String category = allSentenceTopics;
   String accountId = 'guest';
 
   /// 지금 둘러보기에 공개 중인 내 문장 id들('공유 중' 칩, 5차).
@@ -616,7 +616,7 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         .toList()
         .reversed
         .toList();
-    final visibleShared = (category == '전체'
+    final visibleShared = (category == allSentenceTopics
         ? [...shared]
         : shared.where((item) => item.topic == category).toList());
     if (explore && sortPopular) {
@@ -650,6 +650,8 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
         onOpen: openCommunityDetails,
         onViewAll: () => openSharedSentences(context),
         onRetry: loadShared,
+        emptyMessage: sharedSentencesEmptyMessage(
+            category: category, anyShared: shared.isNotEmpty),
       ),
     );
     // 머리줄에 올리는 건 그리는 중이 아니라 그린 뒤에 한다.
@@ -738,12 +740,18 @@ class _SentenceCollectionPreviewState extends State<SentenceCollectionPreview> {
                         onAction: loadShared)
                   else if (visibleShared.isEmpty)
                     // 빈 화면에서 바로 공유할 수 있게 한다. 전에는 안내만 있고
-                    // 어디서 공유하는지 말하지 않았다(5차 343).
+                    // 어디서 공유하는지 말하지 않았다(5차 343). 주제로 걸러
+                    // 비었으면 공유가 아니라 주제를 되돌리는 게 갈 길이다(500).
                     _SharedMessage(
                         key: const ValueKey('shared-message'),
-                        text: '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.',
-                        actionLabel: shareMySentenceLabel,
-                        onAction: () => showShareMySentenceSheet(context))
+                        text: sharedSentencesEmptyMessage(
+                            category: category, anyShared: shared.isNotEmpty),
+                        actionLabel: shared.isEmpty
+                            ? shareMySentenceLabel
+                            : showAllSentenceTopicsLabel,
+                        onAction: shared.isEmpty
+                            ? () => showShareMySentenceSheet(context)
+                            : () => setState(() => category = allSentenceTopics))
                   else
                     ...visibleShared.map((sentence) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -1398,6 +1406,7 @@ class _ExploreStrip extends StatelessWidget {
     required this.onOpen,
     required this.onViewAll,
     required this.onRetry,
+    required this.emptyMessage,
   });
 
   final List<SharedSentence> sentences;
@@ -1411,6 +1420,9 @@ class _ExploreStrip extends StatelessWidget {
 
   /// 못 불러왔을 때 다시 불러온다. 아래 목록에는 있던 길이 여기엔 없었다(5차 394).
   final VoidCallback onRetry;
+
+  /// 보일 게 없을 때 할 말. 주제로 걸러 빈 것인지까지 가려서 받는다(5차 500).
+  final String emptyMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -1458,7 +1470,7 @@ class _ExploreStrip extends StatelessWidget {
         else if (sentences.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text('아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.', style: muted),
+            child: Text(emptyMessage, style: muted),
           )
         else
           SizedBox(

@@ -30,3 +30,32 @@ String sentenceTopicLabel(String topic, {required bool mine}) {
   }
   return value;
 }
+
+/// 주제를 고르지 않은 상태. 칩 목록의 첫 칸이고, 거르지 않는다는 뜻이다.
+const String allSentenceTopics = '전체';
+
+/// 주제를 거르지 않았는데도 공유된 문장이 하나도 없을 때.
+const String noSharedSentenceMessage = '아직 공유된 문장이 없어요. 내 문장을 공유해 보세요.';
+
+/// 고른 주제로 걸러 비었을 때 되돌아가는 길.
+const String showAllSentenceTopicsLabel = '모든 주제 보기';
+
+/// 공유 문장이 하나도 안 보일 때 할 말.
+///
+/// [category]는 고른 주제 칩, [anyShared]는 주제를 떠나 공유된 문장이 하나라도
+/// 있는지다.
+///
+/// 전에는 걸러서 빈 것과 정말 하나도 없는 것을 가리지 않고 둘 다 '아직 공유된
+/// 문장이 없어요. 내 문장을 공유해 보세요.'라고 했다. '일상'을 고르면 다른
+/// 주제에는 문장이 있는데도 아무도 공유하지 않은 것처럼 읽혔고, 갈 길도 직접
+/// 공유하라는 것 하나뿐이라 주제를 되돌리면 된다는 걸 알려 주지 않았다(5차 500).
+String sharedSentencesEmptyMessage({
+  required String category,
+  required bool anyShared,
+}) {
+  final topic = category.trim();
+  if (!anyShared || topic.isEmpty || topic == allSentenceTopics) {
+    return noSharedSentenceMessage;
+  }
+  return "'$topic' 주제에 공유된 문장이 아직 없어요.";
+}

@@ -5,11 +5,12 @@
 // 목록 안에 둔다.
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/sentence_topic_label.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 
 /// 문장 주제 칩. 목록과 머리줄이 같은 값을 쓴다.
 const List<String> sentenceCategories = [
-  '전체',
+  allSentenceTopics,
   '일상',
   '여행',
   '카페',
