@@ -19,6 +19,7 @@ import 'package:video_player/video_player.dart';
 import 'package:parrokit/data/local/app_database.dart'; // Segment 타입 사용
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/widgets/video_layer_placeholder.dart';
+import 'package:parrokit/features/collection/clip/shorts/presentation/widgets/action_rail.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/sections/shorts_page_subtitle_section.dart';
 import 'package:parrokit/features/collection/clip/shorts/presentation/sections/shorts_page_control_section.dart';
 
@@ -375,7 +376,9 @@ class _ShortsPageState extends State<ShortsPage>
           if (currentSeg != null)
             Positioned(
               left: 16,
-              right: 16,
+              // 오른쪽은 액션 레일 자리를 비운다. 전에는 가로를 다 써서
+              // 긴 자막의 첫 줄이 '연습' 단추 글자를 가로질렀다(5차 492).
+              right: shortsSubtitleRightInset,
               bottom: navInset + 56,
               child: IgnorePointer(
                 child: ShortsPageSubtitleSection(

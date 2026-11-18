@@ -255,7 +255,8 @@ class _ShortsScreenScreenState extends State<ShortsScreen> {
               ),
               // Right action rail
               Positioned(
-                right: 12,
+                // 자막이 비워 두는 자리와 같은 값을 쓴다(5차 492).
+                right: shortsActionRailRight,
                 // 탐색 줄·자막과 같이 탭 바 위로 올린다.
                 bottom: MediaQuery.paddingOf(context).bottom + 120,
                 child: ActionRail(
