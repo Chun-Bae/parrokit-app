@@ -20,7 +20,11 @@ void showCommunityWriteBottomSheet(BuildContext context) {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '커뮤니티 글쓰기',
+                // 제목이 '커뮤니티 글쓰기'라 그 안의 첫 줄 '글쓰기'와 겹쳤다.
+                // 누른 단추도 '글쓰기'여서 같은 말이 세 겹이었다(5차 494).
+                // 이 시트가 하는 일은 무엇을 올릴지 고르는 것이다. 보관함의
+                // '+' 시트('무엇을 추가할까요?')와 같은 꼴로 묻는다.
+                '무엇을 올릴까요?',
                 style: context.texts.headlineSmall
                     .copyWith(color: colorScheme.onSurface),
               ),
