@@ -19,7 +19,9 @@ import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
+import 'package:parrokit/core/content/practice_reward.dart';
 import 'package:parrokit/core/content/speaking_xp.dart';
+import 'package:parrokit/core/state/practice_reward_grant.dart';
 import 'package:parrokit/core/content/practice_calendar.dart';
 import 'package:parrokit/core/content/practice_log.dart';
 import 'package:parrokit/core/speech/presentation/speech_practice_view.dart';
@@ -1978,10 +1980,16 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     // 바로 위 '내 문장 기록'과 어긋나 보였다(5차).
     await PracticeCalendar.recordOne(widget.accountId);
     if (!mounted) return;
+    // 따라 말하기 한 번에 크래커를 뽑아 준다. 상한에 걸리면 0이고, 그러면
+    // 알리지 않는다(연습 자체는 막지 않는다)(5차 505).
+    final reward = await grantPracticeReward(context, widget.accountId);
+    if (!mounted) return;
     final scoreText = score == null ? '' : '${(score * 100).round()}점 · ';
+    final rewardText =
+        reward.isEmpty ? '' : ' · ${practiceRewardEarned(reward.crackers)}';
     showNotice(total == null
-        ? '따라 말하기 완료 · $scoreText기록했어요'
-        : '따라 말하기 완료 · $scoreText+${xpText(xpGain(score))} XP');
+        ? '따라 말하기 완료 · $scoreText기록했어요$rewardText'
+        : '따라 말하기 완료 · $scoreText+${xpText(xpGain(score))} XP$rewardText');
     await loadActivity();
   }
 

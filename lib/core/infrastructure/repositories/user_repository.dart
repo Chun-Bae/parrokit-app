@@ -27,7 +27,7 @@ class UserRepository {
   final KakaoSsoService _kakaoSsoService;
   final NaverSsoService _naverSsoService;
   final AppleSsoService _appleSsoService;
-  
+
   UserRepository(
     this._userPrefs,
     this._authService,
@@ -388,7 +388,6 @@ class UserRepository {
     return user;
   }
 
-
   /// 유저 정보를 저장(업데이트)합니다.
   /// 예: 서버에서 프로필/코인 값을 받아온 경우 등에 사용.
   Future<void> saveUser(AppUser user) async {
@@ -420,6 +419,36 @@ class UserRepository {
     );
     await _userPrefs.saveUser(updated);
 
+    return updated;
+  }
+
+  /// 크래커를 delta 만큼 증감시키고, 갱신된 유저를 반환합니다(연습 보상).
+  ///
+  /// 로그인하지 않았으면 서버에 사용자 문서가 없어서 기기에만 적는다.
+  Future<AppUser?> addCrackers(int delta) async {
+    final current = _userPrefs.loadUser();
+    if (current == null) return null;
+
+    if (_authService.currentUser == null) {
+      final updated = current.copyWith(
+        crackers: current.crackers + delta,
+        updatedAt: DateTime.now(),
+      );
+      await _userPrefs.saveUser(updated);
+      return updated;
+    }
+
+    // 서버 값 기준으로 더하고, 서버가 돌려준 값으로 캐시를 맞춘다.
+    final balances = await _firebaseUserService.addCrackers(
+      uid: current.id,
+      delta: delta,
+    );
+    final updated = current.copyWith(
+      parrots: balances.parrots,
+      crackers: balances.crackers,
+      updatedAt: DateTime.now(),
+    );
+    await _userPrefs.saveUser(updated);
     return updated;
   }
 
@@ -567,7 +596,8 @@ class UserRepository {
 
     if (uid != null) {
       try {
-        await _firebaseUserService.releaseNickname(uid: uid, nickname: nickname);
+        await _firebaseUserService.releaseNickname(
+            uid: uid, nickname: nickname);
       } catch (e) {
         // 여기서 실패해도 탈퇴 자체는 끝났다. 닉네임만 남는다.
         AppLogger.w('[UserRepository] 닉네임 선점 해제 실패 nickname=$nickname: $e');
@@ -606,7 +636,7 @@ class UserRepository {
     final existingLocal = _userPrefs.loadUser();
     // 다른 로그인 경로와 같이 0에서 시작한다. 전에는 Apple만 20·1000이라,
     // 서버 문서는 0인데 첫 화면에 없는 패롯·크래커가 보였다.
-final user = mergeAppUser(
+    final user = mergeAppUser(
       uid: fbUser.uid,
       authDisplayName: fbUser.displayName,
       authEmail: fbUser.email,

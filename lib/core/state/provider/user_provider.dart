@@ -97,6 +97,17 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  /// 크래커를 delta 만큼 증감시키고, 변경 사항을 UI에 반영합니다(연습 보상).
+  Future<void> addCrackers(int delta) async {
+    if (_currentUser == null) return;
+
+    final updated = await _userRepository.addCrackers(delta);
+    if (updated != null) {
+      _currentUser = updated;
+      notifyListeners();
+    }
+  }
+
   /// 유저 정보를 외부(서버, 프로필 편집 화면 등)에서 갱신했을 때 호출합니다.
   Future<void> updateUser(AppUser user) async {
     await _userRepository.saveUser(user);

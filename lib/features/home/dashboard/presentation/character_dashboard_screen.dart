@@ -21,6 +21,9 @@ import 'widgets/today_practice_summary.dart';
 import 'widgets/today_start_bar.dart';
 import 'widgets/trending_sentences_preview.dart';
 import 'stage_preview_screen.dart';
+import 'package:parrokit/core/content/practice_reward.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/state/practice_reward_grant.dart';
 
 /// 앱 홈 화면. 앵무새 무대([StagePreviewScreen])를 맨 위에 품고,
 /// 연습 기록과 추천 문장, 학습 잔디를 함께 보여준다.
@@ -110,10 +113,14 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
 
   Future<void> recordCompletedSentence() async {
     final accountId = loadedAccountId ?? 'guest';
+    // 따라 말하기 한 번에 크래커를 뽑아 준다. 보관함 문장 창과 같은 장부를
+    // 쓰므로 상한도 함께 센다(5차 505).
+    final reward = await grantPracticeReward(context, accountId);
     // 적는 곳은 공용이다. 보관함 문장 창에서 따라 말해도 같은 자리에
     // 쌓인다(5차).
     final data = await PracticeCalendar.recordOne(accountId);
     if (!mounted) return;
+    if (!reward.isEmpty) showToast(practiceRewardEarned(reward.crackers));
     setState(() {
       practiceCounts = data.counts;
       practiceGoals = data.goals;

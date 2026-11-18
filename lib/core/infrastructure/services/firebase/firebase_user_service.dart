@@ -77,6 +77,25 @@ class FirebaseUserService {
     });
   }
 
+  /// 크래커를 [delta]만큼 더한다(연습 보상). 패롯은 건드리지 않는다.
+  ///
+  /// 지금은 앱이 자기 문서의 크래커를 쓸 수 있어서 여기서 더한다. 고쳐 쓸 수
+  /// 있다는 뜻이므로, 제대로 막으려면 서버 함수로 옮겨야 한다(5차 505).
+  Future<({int parrots, int crackers})> addCrackers({
+    required String uid,
+    required int delta,
+  }) async {
+    final ref = _firestore.collection('users').doc(uid);
+    return _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(ref);
+      final data = snapshot.data() ?? const <String, dynamic>{};
+      final parrots = (data['parrots'] as num?)?.toInt() ?? 0;
+      final crackers = ((data['crackers'] as num?)?.toInt() ?? 0) + delta;
+      transaction.update(ref, {'crackers': crackers});
+      return (parrots: parrots, crackers: crackers);
+    });
+  }
+
   /// 패롯과 크래커를 바꾼다. 환율과 잔액 확인은 서버(exchangeCurrency 함수)가
   /// 한다. 전에는 앱이 빼는 양과 넣는 양을 정해 직접 썼다.
   /// [amount]는 빼는 쪽의 수량이다.

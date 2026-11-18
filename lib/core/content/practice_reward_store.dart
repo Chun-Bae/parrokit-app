@@ -39,10 +39,12 @@ class PracticeRewardStore {
     }
   }
 
-  /// 연습 한 번에 줄 크래커를 뽑아 장부에 적는다.
+  /// 줄 크래커를 뽑는다. 장부에는 아직 적지 않는다.
   ///
   /// 상한에 걸리면 남은 만큼으로 깎는다. 0이면 [RewardGrant.isEmpty]다.
-  static Future<RewardGrant> grant(
+  /// 잔액에 더하는 데 실패했는데 장부에만 적히면 받지도 않고 상한이 깎인다.
+  /// 그래서 뽑기와 적기를 나눴다([confirm]).
+  static Future<RewardGrant> prepare(
     String accountId, {
     Random? random,
     DateTime? now,
@@ -54,11 +56,31 @@ class PracticeRewardStore {
       return RewardGrant(crackers: 0, rolled: rolled, cap: ledger.tightest);
     }
     if (rolled <= allowance) {
-      await save(accountId, ledger.plus(rolled));
       return RewardGrant(crackers: rolled, rolled: rolled);
     }
-    await save(accountId, ledger.plus(allowance));
     return RewardGrant(
         crackers: allowance, rolled: rolled, cap: ledger.tightest);
+  }
+
+  /// 실제로 준 크래커를 장부에 적는다. 잔액에 더한 뒤에 부른다.
+  static Future<void> confirm(
+    String accountId,
+    RewardGrant grant, {
+    DateTime? now,
+  }) async {
+    if (grant.isEmpty) return;
+    final ledger = await load(accountId, now: now);
+    await save(accountId, ledger.plus(grant.crackers));
+  }
+
+  /// 뽑아서 바로 장부에 적는다. 잔액을 건드리지 않는 자리에서 쓴다.
+  static Future<RewardGrant> grant(
+    String accountId, {
+    Random? random,
+    DateTime? now,
+  }) async {
+    final grant = await prepare(accountId, random: random, now: now);
+    await confirm(accountId, grant, now: now);
+    return grant;
   }
 }

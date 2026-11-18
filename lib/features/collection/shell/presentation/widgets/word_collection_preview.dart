@@ -13,7 +13,9 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
+import 'package:parrokit/core/content/practice_reward.dart';
 import 'package:parrokit/core/content/word_review_store.dart';
+import 'package:parrokit/core/state/practice_reward_grant.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
@@ -1687,6 +1689,12 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
   /// 화면이 그대로여서 처음부터 다시 하는 것처럼 보였다(5차).
   int round = 0;
 
+  /// 이 창에서 받은 크래커. 다 마친 화면에 적는다(5차 505).
+  int earnedCrackers = 0;
+
+  /// 상한에 걸려 깎였으면 어느 상한인지. 없으면 null.
+  RewardCap? rewardCap;
+
   Future<void> answer(ReviewRating rating) async {
     final word = queue[index];
     final known = rating != ReviewRating.again;
@@ -1702,6 +1710,14 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
       }
       index++;
       revealed = false;
+    });
+    // 한 번 답할 때마다 크래커를 뽑아 준다. '다시'도 복습이라 센다.
+    // 상한은 PracticeRewardStore가 지킨다(5차 505).
+    final grant = await grantPracticeReward(context, widget.accountId);
+    if (!mounted) return;
+    setState(() {
+      earnedCrackers += grant.crackers;
+      if (grant.capped) rewardCap = grant.cap;
     });
   }
 
@@ -1773,6 +1789,21 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
               Text('알아요 $knownCount개 · 다시 ${queue.length - knownCount}개',
                   style: context.texts.bodySmall
                       .copyWith(color: colors.onSurfaceVariant)),
+              if (earnedCrackers > 0) ...[
+                const SizedBox(height: 6),
+                Text(practiceRewardEarned(earnedCrackers),
+                    key: const ValueKey('review-earned-crackers'),
+                    style: context.texts.labelLarge
+                        .copyWith(color: colors.primary)),
+              ],
+              if (rewardCap != null) ...[
+                const SizedBox(height: 6),
+                Text(practiceRewardCappedMessage(rewardCap!),
+                    key: const ValueKey('review-reward-capped'),
+                    textAlign: TextAlign.center,
+                    style: context.texts.bodySmall
+                        .copyWith(color: colors.onSurfaceVariant)),
+              ],
               const SizedBox(height: 20),
               if (again.isNotEmpty) ...[
                 SizedBox(
