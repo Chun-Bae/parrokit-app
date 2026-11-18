@@ -149,7 +149,7 @@ class BackupService {
     BackupParts parts = const BackupParts.all(),
     String accountId = 'guest',
   }) async {
-    if (parts.isEmpty) throw Exception('백업할 것을 하나는 골라 주세요.');
+    if (parts.isEmpty) throw Exception(backupNoPartsMessage);
     // 1단계: 데이터 확인
     onProgress?.call(BackupProgress(state: BackupProgressState.checking));
 

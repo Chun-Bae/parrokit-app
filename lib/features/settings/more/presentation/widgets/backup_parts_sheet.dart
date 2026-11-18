@@ -107,9 +107,10 @@ class _BackupPartsSheetState extends State<BackupPartsSheet> {
             if (parts.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text('하나는 골라 주세요.',
-                    style:
-                        context.texts.bodySmall.copyWith(color: colors.error)),
+                child: Text(backupNoPartsMessage,
+                    key: const ValueKey('backup-parts-blocked-reason'),
+                    style: context.texts.bodySmall
+                        .copyWith(color: colors.onSurfaceVariant)),
               ),
           ],
         ),

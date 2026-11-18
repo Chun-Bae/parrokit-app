@@ -42,6 +42,38 @@ void main() {
         isTrue);
   });
 
+  testWidgets('막힌 까닭을 빨강으로 적지 않는다(5차 503)', (tester) async {
+    // 아직 안 고른 것은 잘못이 아니라 할 일이다. 같은 자리의 다른 화면
+    // (새 클립 '영상을 먼저 골라 주세요.', 음성 만들기 '읽을 글을 적어
+    // 주세요.')도 흐린 글씨를 쓴다(475의 규칙).
+    await _pump(tester, restoring: false);
+    for (final key in const [
+      'backup-part-sentences',
+      'backup-part-words',
+      'backup-part-clips',
+    ]) {
+      await tester.tap(find.byKey(ValueKey(key)));
+      await tester.pump();
+    }
+    final reason = tester.widget<Text>(
+        find.byKey(const ValueKey('backup-parts-blocked-reason')));
+    final colors = Theme.of(
+            tester.element(find.byKey(const ValueKey('backup-parts-confirm'))))
+        .colorScheme;
+    expect(reason.style?.color, colors.onSurfaceVariant);
+    expect(reason.style?.color, isNot(colors.error));
+  });
+
+  test('시트와 백업을 시작하는 쪽이 같은 말을 쓴다(5차 503)', () {
+    final service = File('lib/core/infrastructure/services/backup_service.dart')
+        .readAsLinesSync()
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(service, contains('throw Exception(backupNoPartsMessage)'));
+    // 손으로 적은 옛말이 남아 있지 않다.
+    expect(service.contains('백업할 것을 하나는 골라 주세요'), isFalse);
+  });
+
   testWidgets('하나도 고르지 않으면 단추가 꺼지고 까닭을 적는다', (tester) async {
     await _pump(tester, restoring: false);
     for (final key in const [
@@ -52,7 +84,7 @@ void main() {
       await tester.tap(find.byKey(ValueKey(key)));
       await tester.pump();
     }
-    expect(find.text('하나는 골라 주세요.'), findsOneWidget);
+    expect(find.text(backupNoPartsMessage), findsOneWidget);
     expect(
         tester
             .widget<FilledButton>(
