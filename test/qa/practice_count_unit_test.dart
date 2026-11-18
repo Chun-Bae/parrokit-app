@@ -17,7 +17,7 @@ void main() {
     expect(practiceOfGoalLabel(2, 5), '2 / 5번');
     expect(practiceRemainingLabel(3), '3번 남음');
     expect(practiceTotalLabel(12), contains('12번'));
-    expect(practiceCalendarTotalLabel(12), '누적 12번');
+    expect(practiceCalendarMonthLabel(11, 12), '11월 12번');
     expect(dailyGoalDialogQuestion, contains('몇 번'));
     expect(practiceCalendarHint, contains('횟수'));
   });

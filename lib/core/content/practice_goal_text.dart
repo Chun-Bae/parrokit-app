@@ -25,9 +25,17 @@ String practiceRemainingLabel(int remaining) =>
 String practiceTotalLabel(int total) =>
     '지금까지 총 $total$practiceCountUnit 연습했어요';
 
-/// 학습 캘린더 머리의 누계.
-String practiceCalendarTotalLabel(int total) =>
-    '누적 $total$practiceCountUnit';
+/// 학습 캘린더 머리의 수(5차 501).
+///
+/// 전에는 '누적 N번'이라 처음부터 지금까지를 적었다. 그런데 그 값은 캘린더가
+/// 따로 들고 있는 누계라, 같은 화면 위쪽 '내 문장 기록 · 따라 말하기 N회'와
+/// 어긋났다(3번 vs 6번). 기록을 쌓기 시작한 때가 달라서인데, 보는 사람은
+/// 같은 것을 세는 두 숫자가 다른 이유를 알 길이 없었다.
+///
+/// 그래서 캘린더가 **스스로 아는 것**, 곧 지금 펼친 달의 합을 적는다.
+/// 날짜를 눌러 더해 보면 맞는 수라 어긋날 수 없다.
+String practiceCalendarMonthLabel(int month, int total) =>
+    '$month월 $total$practiceCountUnit';
 
 /// 하루 목표를 정하는 창.
 const String dailyGoalDialogTitle = '오늘의 연습 목표';

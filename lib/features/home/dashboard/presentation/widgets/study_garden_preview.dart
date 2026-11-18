@@ -11,14 +11,12 @@ class StudyGardenPreview extends StatefulWidget {
     required this.practiceCounts,
     required this.practiceGoals,
     required this.dailyGoal,
-    required this.totalPracticed,
     this.now,
   });
 
   final Map<String, int> practiceCounts;
   final Map<String, int> practiceGoals;
   final int dailyGoal;
-  final int totalPracticed;
 
   /// '오늘'로 볼 때. 테스트에서 고정한다. 비우면 그릴 때마다 지금을 본다.
   final DateTime? now;
@@ -89,6 +87,9 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
     final activeDays = monthDates.where((date) => countFor(date) > 0).length;
     final completedDays =
         monthDates.where((date) => countFor(date) >= goalFor(date)).length;
+    // 머리의 수는 지금 펼친 달의 합이다. 날짜를 더해 보면 맞는다(5차 501).
+    final monthTotal =
+        monthDates.fold<int>(0, (sum, date) => sum + countFor(date));
     final isCurrentMonth =
         month.year == today.year && month.month == today.month;
     final selectedCount = selected == null ? null : countFor(selected!);
@@ -118,7 +119,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
-                  practiceCalendarTotalLabel(widget.totalPracticed),
+                  practiceCalendarMonthLabel(month.month, monthTotal),
                   style: context.texts.labelSmall.copyWith(color: ink),
                 ),
               ),

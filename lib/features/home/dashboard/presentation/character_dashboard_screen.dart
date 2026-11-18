@@ -238,7 +238,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                     practiceCounts: practiceCounts,
                     practiceGoals: practiceGoals,
                     dailyGoal: dailyGoal,
-                    totalPracticed: totalPracticed,
                   ),
                 ]
                     .map((child) => child is StagePreviewScreen

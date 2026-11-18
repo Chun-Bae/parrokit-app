@@ -22,7 +22,6 @@ Widget _garden({required DateTime now, Map<String, int> counts = const {}}) =>
             practiceCounts: counts,
             practiceGoals: const {},
             dailyGoal: 5,
-            totalPracticed: 0,
             now: now,
           ),
         ),

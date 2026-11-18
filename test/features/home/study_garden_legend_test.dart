@@ -17,7 +17,6 @@ void main() {
             practiceCounts: {},
             practiceGoals: {},
             dailyGoal: 5,
-            totalPracticed: 0,
           ),
         ),
       ),

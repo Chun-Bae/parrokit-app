@@ -41,7 +41,6 @@ void main() {
           practiceCounts: {},
           practiceGoals: {},
           dailyGoal: 5,
-          totalPracticed: 0,
         );
 
     await tester.pumpWidget(wrap(AppTheme.light, build));
