@@ -45,6 +45,13 @@ import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 /// 서버가 그 언어의 기본 목소리를 고른다(5차).
 const String ttsDefaultVoiceNotice = '목소리 목록을 못 불러왔어요. 그대로 만들면 기본 목소리로 읽어 줘요.';
 
+/// '음성 만들기'가 꺼져 있는 까닭(5차 499).
+///
+/// 읽을 글이 비면 단추가 꺼지는데 그 까닭이 어디에도 없었다. 그 자리의
+/// 다른 줄(패롯 모자람·목소리 목록 실패)은 이미 까닭을 적고 있어서,
+/// 가장 흔한 까닭만 말이 없는 꼴이었다. 칸 이름('읽을 글')을 그대로 쓴다.
+const String ttsNeedsTextMessage = '읽을 글을 적어 주세요.';
+
 class TtsScreen extends StatelessWidget {
   const TtsScreen({super.key});
 
@@ -507,6 +514,18 @@ class _TtsScreenContentState extends State<_TtsScreenContent> {
                           ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ],
+                  // 꺼진 단추 바로 위에 까닭을 적는다(5차 499). 빨강은
+                  // '다 썼다'에만 쓰므로 여기는 그냥 안내다.
+                  if (!provider.isGenerating && provider.text.trim().isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      child: Text(
+                        ttsNeedsTextMessage,
+                        key: const ValueKey('tts-needs-text'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ),
                   const SizedBox(height: AppSpacing.sm),
                   Container(
                     width: double.infinity,
