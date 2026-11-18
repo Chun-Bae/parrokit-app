@@ -41,10 +41,16 @@ class _BoardScreenState extends State<BoardScreen> {
       // 카테고리로 거르면 읽어 온 페이지에 맞는 글이 없을 수 있다. 더 오래된
       // 글이 남아 있으면 이어 읽을 수 있게 한다.
       final canLoadMore = provider.hasMorePosts && !provider.isLoading;
+      // 갈래를 골라 둔 사람에게 '아직 올라온 글이 없어요'는 거짓이다.
+      // 게시판에는 글이 있는데 그 갈래에만 없는 것이다. 질문·투표 탭은
+      // 이미 조건을 골랐는지에 따라 갈라 말한다(5차 493).
+      final filtered = widget.selectedFilter != CommunityFilters.defaultBoard;
       return AppEmptyState(
         icon: Icons.forum_outlined,
-        title: '아직 올라온 글이 없어요.',
-        description: '첫 글을 남겨 보세요.',
+        title: filtered ? '고른 갈래에 맞는 글이 없어요.' : '아직 올라온 글이 없어요.',
+        description: filtered
+            ? '다른 갈래를 골라 보거나 직접 글을 남겨 보세요.'
+            : '첫 글을 남겨 보세요.',
         actionLabel: canLoadMore ? loadOlderPostsLabel : null,
         onAction: canLoadMore ? () => loadMorePostsFrom(context) : null,
       );

@@ -42,6 +42,19 @@ void main() {
     expect(code, contains("'다른 조건을 골라 보거나 직접 질문해 보세요.'"));
   });
 
+  // 게시판만 거른 사실을 무시했다(5차 493). '꿀팁'으로 걸러 비었을 때도
+  // '아직 올라온 글이 없어요'라고 해서, 게시판에 글이 있는데 없다고 했다.
+  test('게시판 빈 화면도 거르개에 따라 다른 말을 한다', () {
+    final code =
+        _code('lib/features/community/board/presentation/board_screen.dart');
+    expect(code, contains("'아직 올라온 글이 없어요.'"));
+    expect(code, contains("'첫 글을 남겨 보세요.'"));
+    expect(code, contains("'고른 갈래에 맞는 글이 없어요.'"));
+    expect(code, contains("'다른 갈래를 골라 보거나 직접 글을 남겨 보세요.'"));
+    // 고른 갈래가 '전체'인지로 갈린다.
+    expect(code, contains('CommunityFilters.defaultBoard'));
+  });
+
   test('투표 빈 화면 셋이 모두 같은 말투다', () {
     final code =
         _code('lib/features/community/vote/presentation/vote_screen.dart');
