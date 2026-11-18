@@ -8,14 +8,32 @@ import 'package:parrokit/features/community/shared/presentation/write_blocked_re
 String _flat(String code) => code.replaceAll(RegExp(r'\s+'), ' ');
 
 void main() {
-  test('빠진 것을 위에서부터 하나씩 알려 준다', () {
+  // 차례는 화면에 놓인 차례다(5차 495). 게시판은 위에서부터 주제·제목·내용인데
+  // 제목부터 물어서, 빈 화면이 맨 위의 주제를 건너뛰고 제목을 가리켰다.
+  test('빠진 것을 화면에 놓인 차례대로 하나씩 알려 준다', () {
+    // 아무것도 안 고른 게시판: 맨 위 칸인 주제부터.
+    expect(
+        writeBlockedReason(
+            hasTitle: false, hasContent: false, hasTopic: false),
+        '주제를 골라 주세요.');
+    expect(
+        writeBlockedReason(hasTitle: false, hasContent: false, hasTopic: true),
+        '제목을 적어 주세요.');
+    expect(
+        writeBlockedReason(hasTitle: true, hasContent: false, hasTopic: true),
+        '내용을 적어 주세요.');
+    // 제목·내용을 먼저 쓴 사람도 마지막에 맨 위로 돌아가지 않는다.
+    expect(
+        writeBlockedReason(hasTitle: true, hasContent: true, hasTopic: false),
+        '주제를 골라 주세요.');
+  });
+
+  // 주제가 없는 화면(질문·투표)은 제목부터다.
+  test('주제를 쓰지 않는 화면은 제목부터 묻는다', () {
     expect(
         writeBlockedReason(hasTitle: false, hasContent: false), '제목을 적어 주세요.');
     expect(
         writeBlockedReason(hasTitle: true, hasContent: false), '내용을 적어 주세요.');
-    expect(
-        writeBlockedReason(hasTitle: true, hasContent: true, hasTopic: false),
-        '주제를 골라 주세요.');
   });
 
   test('다 채우면 막지 않는다', () {

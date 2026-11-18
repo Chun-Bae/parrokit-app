@@ -32,6 +32,10 @@ String writeTooManyTagsMessage(int max) => '태그는 $max개까지 넣을 수 �
 /// 올릴 수 없는 까닭. 올릴 수 있으면 null.
 ///
 /// [optionCount]·[filledOptionCount]는 투표에만 쓴다(없으면 따지지 않는다).
+/// 묻는 차례는 **화면에 놓인 차례**다(5차 495). 게시판 글쓰기는 위에서부터
+/// 주제·제목·내용인데 제목부터 물어서, 아무것도 안 적은 화면이 맨 위의 빈
+/// 주제를 건너뛰고 '제목을 적어 주세요'라고 했다. 제목과 내용을 먼저 쓴
+/// 사람은 다 쓰고 나서야 맨 위로 돌아가라는 말을 들었다.
 String? writeBlockedReason({
   required bool hasTitle,
   required bool hasContent,
@@ -39,9 +43,9 @@ String? writeBlockedReason({
   int? optionCount,
   int? filledOptionCount,
 }) {
+  if (!hasTopic) return writeNeedsTopicMessage;
   if (!hasTitle) return writeNeedsTitleMessage;
   if (!hasContent) return writeNeedsContentMessage;
-  if (!hasTopic) return writeNeedsTopicMessage;
   if (optionCount != null) {
     if (optionCount < 2) return writeNeedsTwoOptionsMessage;
     if ((filledOptionCount ?? optionCount) < optionCount) {
