@@ -9,6 +9,11 @@ import {
   sanitizeLimits,
   TierLimits,
 } from "./subscriptionTier";
+import {
+  DEFAULT_EXAMPLE_LIMITS,
+  DEFAULT_EXAMPLES_PER_WORD,
+  splitExampleSpend,
+} from "./exampleQuota";
 import {vertexAI} from "@genkit-ai/google-genai";
 
 // 문장 추가 화면의 "뜻·발음 채우기"와 "한글로 원문 만들기"를 맡는다.
@@ -21,9 +26,12 @@ const USAGE_COLLECTION = "sentence-assist-usage";
 // 한도와 예외 대상은 코드가 아니라 이 문서에서 읽는다. 콘솔에서 고치면 배포 없이 바로 적용된다.
 //   config/sentenceAssist = {
 //     dailyLimit: 3,                        // 무료 한도(예전 이름, 그대로 둔다)
-//     tierLimits: {light: 15, pro: 60},     // 구독 단계별 한도
+//     tierLimits: {light: 15, pro: 60},     // 구독 단계별 뜻·발음 채우기 한도
+//     exampleLimits: {free: 5, light: 30},  // 단계별 하루 예문 생성 개수
+//     examplesPerWord: {free: 3, light: 5}, // 단계별 낱말당 예문 상한(10 이하)
 //     unlimitedUids: ["uid1", ...],
 //   }
+// 예문은 뜻·발음 채우기와 다른 한도다. 호출 수가 아니라 만든 예문 수를 센다.
 const CONFIG_DOC = "config/sentenceAssist";
 const CONFIG_CACHE_MS = 30 * 1000;
 const MAX_TEXT_LENGTH = 80;
@@ -63,6 +71,8 @@ const MAX_AVOID_LENGTH = 200;
 interface AssistConfig {
   dailyLimit: number;
   tierLimits: Partial<TierLimits>;
+  exampleLimits: Partial<TierLimits>;
+  examplesPerWord: Partial<TierLimits>;
   unlimitedUids: Set<string>;
 }
 
@@ -81,6 +91,8 @@ async function loadConfig(): Promise<AssistConfig> {
   }
   let dailyLimit = DEFAULT_DAILY_LIMIT;
   let tierLimits: Partial<TierLimits> = {};
+  let exampleLimits: Partial<TierLimits> = {};
+  let examplesPerWord: Partial<TierLimits> = {};
   let unlimitedUids = new Set<string>();
   try {
     const snapshot = await admin.firestore().doc(CONFIG_DOC).get();
@@ -91,6 +103,8 @@ async function loadConfig(): Promise<AssistConfig> {
         dailyLimit = limit;
       }
       tierLimits = sanitizeLimits(data.tierLimits);
+      exampleLimits = sanitizeLimits(data.exampleLimits);
+      examplesPerWord = sanitizeLimits(data.examplesPerWord);
       if (Array.isArray(data.unlimitedUids)) {
         unlimitedUids = new Set(
           data.unlimitedUids.filter((v: unknown) => typeof v === "string")
@@ -100,7 +114,13 @@ async function loadConfig(): Promise<AssistConfig> {
   } catch (error) {
     console.error("[SentenceAssist] config read failed", error);
   }
-  const value = {dailyLimit, tierLimits, unlimitedUids};
+  const value = {
+    dailyLimit,
+    tierLimits,
+    exampleLimits,
+    examplesPerWord,
+    unlimitedUids,
+  };
   cachedConfig = {value, at: now};
   return value;
 }
@@ -120,6 +140,32 @@ function limitFor(tier: SubscriptionTier, config: AssistConfig): number {
 }
 
 /**
+ * 이 사람의 단계가 하루에 만들 수 있는 예문 수.
+ *
+ * @param {SubscriptionTier} tier 단계
+ * @param {AssistConfig} config 설정
+ * @return {number} 하루 예문 한도
+ */
+function exampleLimitFor(tier: SubscriptionTier, config: AssistConfig): number {
+  return {...DEFAULT_EXAMPLE_LIMITS, ...config.exampleLimits}[tier];
+}
+
+/**
+ * 이 사람의 단계에서 낱말 하나가 들 수 있는 예문 수. 절대 상한을 넘지 않는다.
+ *
+ * @param {SubscriptionTier} tier 단계
+ * @param {AssistConfig} config 설정
+ * @return {number} 낱말당 예문 상한
+ */
+function examplesPerWordFor(
+  tier: SubscriptionTier,
+  config: AssistConfig
+): number {
+  const value = {...DEFAULT_EXAMPLES_PER_WORD, ...config.examplesPerWord}[tier];
+  return Math.min(Math.max(value, 0), MAX_WORD_EXAMPLES);
+}
+
+/**
  * 한국 시간 기준 오늘 날짜(YYYY-MM-DD). 한국 자정에 횟수가 새로 시작된다.
  *
  * @return {string} 오늘 날짜
@@ -129,53 +175,124 @@ function todayKst(): string {
 }
 
 /**
- * 사용자가 오늘 쓴 횟수를 읽는다.
+ * 사용자가 오늘 쓴 양. count는 뜻·발음 채우기 호출 수, examples는 만든 예문 수.
  *
  * @param {string} uid 사용자 ID
- * @return {Promise<number>} 오늘 쓴 횟수
+ * @return {Promise<{count: number, examples: number}>} 오늘 쓴 양
  */
-async function usedToday(uid: string): Promise<number> {
-  const snapshot = await admin
-    .firestore()
-    .collection(USAGE_COLLECTION)
-    .doc(`${uid}_${todayKst()}`)
-    .get();
-  return (snapshot.data()?.count as number | undefined) || 0;
+async function usedToday(
+  uid: string
+): Promise<{
+  count: number;
+  examples: number;
+  credits: number;
+  assistCredits: number;
+}> {
+  const db = admin.firestore();
+  const [usage, user] = await Promise.all([
+    db.collection(USAGE_COLLECTION).doc(`${uid}_${todayKst()}`).get(),
+    db.collection("users").doc(uid).get(),
+  ]);
+  const data = usage.data();
+  return {
+    count: (data?.count as number | undefined) || 0,
+    examples: (data?.examples as number | undefined) || 0,
+    // 패롯으로 사 둔 몫. 하루 한도와 다른 주머니다(5차 532·535).
+    credits: (user.data()?.exampleCredits as number | undefined) || 0,
+    assistCredits: (user.data()?.assistCredits as number | undefined) || 0,
+  };
 }
 
 /**
- * 오늘 횟수를 1 올린다. 동시에 여러 번 눌러도 한도를 넘지 않게 트랜잭션으로 한다.
+ * 오늘 횟수를 1 올리고 만든 예문 수를 더한다. 동시에 여러 번 눌러도 한도를
+ * 넘지 않게 트랜잭션으로 한다. 예문은 모델을 부르기 전에 남은 만큼만
+ * 만들게 잘랐으므로 여기서는 더하기만 한다(동시 요청으로 조금 넘칠 수 있다).
  *
  * @param {string} uid 사용자 ID
  * @param {number} limit 하루 한도
- * @return {Promise<number>} 올린 뒤 오늘 쓴 횟수
+ * @param {number} examplesMade 이번에 만든 예문 수
+ * @param {boolean} chargeAssist 뜻·발음 채우기 횟수를 1 올릴지
+ * @param {number} exampleLimit 하루 예문 한도. 넘는 몫은 사 둔 몫에서 깎는다.
+ * @return {Promise<{count: number, examples: number, credits: number}>}
+ *   올린 뒤 오늘 쓴 양과 남은 몫
  */
-async function incrementUsage(uid: string, limit: number): Promise<number> {
+async function incrementUsage(
+  uid: string,
+  limit: number,
+  examplesMade = 0,
+  chargeAssist = true,
+  exampleLimit = Number.MAX_SAFE_INTEGER
+): Promise<{
+  count: number;
+  examples: number;
+  credits: number;
+  assistCredits: number;
+}> {
   const date = todayKst();
-  const ref = admin
-    .firestore()
-    .collection(USAGE_COLLECTION)
-    .doc(`${uid}_${date}`);
-  return admin.firestore().runTransaction(async (tx) => {
-    const snapshot = await tx.get(ref);
+  const db = admin.firestore();
+  const ref = db.collection(USAGE_COLLECTION).doc(`${uid}_${date}`);
+  const userRef = db.collection("users").doc(uid);
+  return db.runTransaction(async (tx) => {
+    // 읽기를 모두 먼저 한다(Firestore 트랜잭션 규칙).
+    const [snapshot, userSnap] = await Promise.all([
+      tx.get(ref),
+      tx.get(userRef),
+    ]);
     const current = (snapshot.data()?.count as number | undefined) || 0;
-    if (current >= limit) {
+    const examples = (snapshot.data()?.examples as number | undefined) || 0;
+    const credits =
+      (userSnap.data()?.exampleCredits as number | undefined) || 0;
+    const assistCredits =
+      (userSnap.data()?.assistCredits as number | undefined) || 0;
+    // 뜻·발음도 하루분부터 쓰고 모자라면 사 둔 몫에서 깎는다(5차 535).
+    const assistSpend = chargeAssist ?
+      splitExampleSpend(limit - current, assistCredits, 1) :
+      {fromDay: 0, fromCredits: 0};
+    if (chargeAssist && assistSpend.fromDay + assistSpend.fromCredits <= 0) {
       throw new HttpsError(
         "resource-exhausted",
         "오늘 자동 채우기 횟수를 모두 썼어요. 내일 다시 쓸 수 있어요."
       );
     }
+    // 하루 몫부터 쓰고 모자라면 사 둔 몫에서 깎는다(5차 532).
+    const spend = splitExampleSpend(
+      exampleLimit - examples,
+      credits,
+      examplesMade
+    );
+    const nextCount = current + assistSpend.fromDay;
+    const nextExamples = examples + spend.fromDay;
+    const nextCredits = credits - spend.fromCredits;
+    const nextAssistCredits = assistCredits - assistSpend.fromCredits;
     tx.set(
       ref,
       {
         uid,
         date,
-        count: current + 1,
+        count: nextCount,
+        examples: nextExamples,
         updatedAt: admin.firestore.Timestamp.now(),
       },
       {merge: true}
     );
-    return current + 1;
+    if (spend.fromCredits > 0 || assistSpend.fromCredits > 0) {
+      tx.set(
+        userRef,
+        {
+          ...(spend.fromCredits > 0 ? {exampleCredits: nextCredits} : {}),
+          ...(assistSpend.fromCredits > 0 ?
+            {assistCredits: nextAssistCredits} :
+            {}),
+        },
+        {merge: true}
+      );
+    }
+    return {
+      count: nextCount,
+      examples: nextExamples,
+      credits: nextCredits,
+      assistCredits: nextAssistCredits,
+    };
   });
 }
 
@@ -323,33 +440,45 @@ function readExistingExamples(raw: unknown): string[] {
 }
 
 /**
- * 몇 개를 만들지 고른다. 남은 자리보다 많이 만들지 않는다.
+ * 몇 개를 만들지 고른다. 낱말당 상한의 남은 자리와 오늘 남은 예문 수보다
+ * 많이 만들지 않는다.
  *
  * 0을 보내면 예문을 만들지 않고 뜻과 발음만 돌려준다(5차 472). 앱이
  * '뜻·발음 채우기'와 '예문 채우기'를 따로 두면서, 뜻만 필요할 때 쓰지도
  * 않을 예문까지 만들던 것을 막는다.
  *
+ * 오늘 예문이 0개 남았으면 던지지 않고 0을 돌려준다. 뜻·발음은 받게 두고,
+ * 앱은 응답의 madeExamples로 예문이 안 왔음을 안다.
+ *
  * @param {unknown} raw 앱이 보낸 값
  * @param {number} already 이미 들고 있는 예문 수
+ * @param {number} perWord 이 단계의 낱말당 예문 상한
+ * @param {number} remaining 오늘 남은 예문 수
  * @return {number} 만들 개수. 0이면 예문을 만들지 않는다
  */
-function readExampleCount(raw: unknown, already: number): number {
+function readExampleCount(
+  raw: unknown,
+  already: number,
+  perWord: number,
+  remaining: number
+): number {
   const asked = typeof raw === "number" && Number.isFinite(raw) ?
     Math.floor(raw) :
     1;
   if (asked <= 0) return 0;
-  const room = Math.max(MAX_WORD_EXAMPLES - already, 0);
+  const room = Math.max(perWord - already, 0);
   if (room === 0) {
     throw new HttpsError(
       "failed-precondition",
-      `예문은 ${MAX_WORD_EXAMPLES}개까지만 둘 수 있어요.`
+      `지금 단계에서는 예문을 낱말마다 ${perWord}개까지 둘 수 있어요.`
     );
   }
-  return Math.min(asked, room);
+  return Math.max(Math.min(asked, room, remaining), 0);
 }
 
 // 앱에서 호출한다.
 //   mode "suggest"(뜻·발음) | "transliterate"(한글→원문): 같은 하루 횟수를 나눠 쓴다.
+//   mode "word": count가 0이면 뜻·발음 횟수를 1 쓰고, 0보다 크면 예문 한도만 쓴다.
 //   mode "status": 모델을 부르지 않고 오늘 쓴 횟수만 알려 준다. 횟수를 쓰지 않는다.
 // 실패한 요청은 횟수에서 빼지 않는다.
 export const suggestSentenceInfo = onCall(
@@ -367,10 +496,22 @@ export const suggestSentenceInfo = onCall(
       const config = await loadConfig();
       const tier = await loadTier(uid);
       const limit = limitFor(tier, config);
-      const used = config.unlimitedUids.has(uid) ? 0 : await usedToday(uid);
+      const exampleLimit = exampleLimitFor(tier, config);
+      const used = config.unlimitedUids.has(uid) ?
+        {count: 0, examples: 0, credits: 0, assistCredits: 0} :
+        await usedToday(uid);
       return {
         dailyLimit: limit,
-        remainingToday: Math.max(limit - used, 0),
+        // 오늘 쓸 수 있는 횟수 = 하루 남은 수 + 사 둔 몫(5차 535).
+        remainingToday:
+          Math.max(limit - used.count, 0) + used.assistCredits,
+        assistCredits: used.assistCredits,
+        exampleDailyLimit: exampleLimit,
+        // 오늘 쓸 수 있는 예문 = 하루 남은 수 + 사 둔 몫(5차 532).
+        examplesRemainingToday:
+          Math.max(exampleLimit - used.examples, 0) + used.credits,
+        exampleCredits: used.credits,
+        maxExamplesPerWord: examplesPerWordFor(tier, config),
         tier,
       };
     }
@@ -387,22 +528,46 @@ export const suggestSentenceInfo = onCall(
     const config = await loadConfig();
     const tier = await loadTier(uid);
     const dailyLimit = limitFor(tier, config);
+    const exampleLimit = exampleLimitFor(tier, config);
+    const perWord = examplesPerWordFor(tier, config);
     const unlimited = config.unlimitedUids.has(uid);
     // 어떤 uid가 어떤 한도로 판단됐는지 남겨 둔다. 예외 대상을 정할 때 이 uid를 쓴다.
     console.log(
       `[SentenceAssist] uid=${uid} mode=${mode} tier=${tier} ` +
-        `limit=${dailyLimit} unlimited=${unlimited}`
+        `limit=${dailyLimit} examples=${exampleLimit} unlimited=${unlimited}`
     );
 
-    if (!unlimited && (await usedToday(uid)) >= dailyLimit) {
+    const usedBefore = unlimited ?
+      {count: 0, examples: 0, credits: 0, assistCredits: 0} :
+      await usedToday(uid);
+    // 예문을 달라는 word 요청(count > 0)은 예문 한도만 쓴다. 뜻·발음 채우기
+    // 횟수는 건드리지 않는다. 두 한도는 다른 축이다.
+    const wantsExamples =
+      mode === "word" &&
+      (typeof data.count !== "number" || data.count > 0);
+    const chargesAssist = !wantsExamples;
+    const assistRemaining = unlimited ?
+      1 :
+      Math.max(dailyLimit - usedBefore.count, 0) + usedBefore.assistCredits;
+    if (chargesAssist && !unlimited && assistRemaining <= 0) {
       throw new HttpsError(
         "resource-exhausted",
         "오늘 자동 채우기 횟수를 모두 썼어요. 내일 다시 쓸 수 있어요."
       );
     }
+    const examplesRemaining = unlimited ?
+      MAX_WORD_EXAMPLES :
+      Math.max(exampleLimit - usedBefore.examples, 0) + usedBefore.credits;
+    if (wantsExamples && !unlimited && examplesRemaining <= 0) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "오늘 만들 수 있는 예문을 다 썼어요. 내일 다시 만들 수 있어요."
+      );
+    }
 
     try {
       let result: Record<string, unknown>;
+      let examplesMade = 0;
       if (mode === "transliterate") {
         result = await transliterate(
           language,
@@ -410,21 +575,47 @@ export const suggestSentenceInfo = onCall(
         );
       } else if (mode === "word") {
         const existing = readExistingExamples(data.existingExamples);
-        const count = readExampleCount(data.count, existing.length);
+        const count = readExampleCount(
+          data.count,
+          existing.length,
+          perWord,
+          examplesRemaining
+        );
         result = await suggestWord(
           language,
           requireText(data.text, "낱말"),
           existing,
           count
         );
+        const made = result.examples;
+        examplesMade = Array.isArray(made) ? Math.min(made.length, count) : 0;
+        if (Array.isArray(made) && made.length > count) {
+          result = {...result, examples: made.slice(0, count)};
+        }
       } else {
         result = await suggest(language, requireText(data.text, "원문"));
       }
-      const used = unlimited ? 0 : await incrementUsage(uid, dailyLimit);
+      const used = unlimited ?
+        {count: 0, examples: 0, credits: 0, assistCredits: 0} :
+        await incrementUsage(
+          uid,
+          dailyLimit,
+          examplesMade,
+          chargesAssist,
+          exampleLimit
+        );
       return {
         ...result,
         dailyLimit,
-        remainingToday: Math.max(dailyLimit - used, 0),
+        remainingToday:
+          Math.max(dailyLimit - used.count, 0) + used.assistCredits,
+        assistCredits: used.assistCredits,
+        exampleDailyLimit: exampleLimit,
+        examplesRemainingToday:
+          Math.max(exampleLimit - used.examples, 0) + used.credits,
+        exampleCredits: used.credits,
+        maxExamplesPerWord: perWord,
+        madeExamples: examplesMade,
       };
     } catch (error: unknown) {
       if (error instanceof HttpsError) throw error;

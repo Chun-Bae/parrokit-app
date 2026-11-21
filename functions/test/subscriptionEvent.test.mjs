@@ -4,11 +4,13 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {createRequire} from "node:module";
+import {readFileSync} from "node:fs";
 
 const require = createRequire(import.meta.url);
 const {
   subscriptionFromEvent,
   shouldSkipEvent,
+  authorized,
   LIGHT_ENTITLEMENT,
   PRO_ENTITLEMENT,
 } = require("../lib/subscriptionEvent.js");
@@ -109,3 +111,75 @@ test("기간 끝 시각을 모르면 null로 둔다", () => {
   const state = subscriptionFromEvent(event({expiration_at_ms: null}));
   assert.equal(state.periodEnd, null);
 });
+
+// 비밀값 검사(5차 527).
+//
+// 전에는 `if (expected && ...)`라 비밀값이 없으면 검사를 통째로 건너뛰었다.
+// 실제로 설정돼 있지 않아서, 함수 주소만 알면 누구나 가짜 결제 이벤트를
+// 넣어 맥스 단계와 패롯 700개를 받을 수 있었다.
+test("헤더가 없으면 받지 않는다", () => {
+  assert.equal(authorized(undefined, "s3cr3t"), false);
+  assert.equal(authorized("", "s3cr3t"), false);
+});
+
+test("값이 다르면 받지 않는다", () => {
+  assert.equal(authorized("wrong!", "s3cr3t"), false);
+});
+
+test("길이가 달라도 던지지 않고 거절한다", () => {
+  // timingSafeEqual은 길이가 다르면 예외를 던진다. 그대로 두면 401이
+  // 아니라 500이 나고, 보내는 쪽은 다시 보내 온다.
+  assert.equal(authorized("s3cr3t-and-more", "s3cr3t"), false);
+  assert.equal(authorized("s3c", "s3cr3t"), false);
+});
+
+test("같으면 받는다", () => {
+  assert.equal(authorized("s3cr3t", "s3cr3t"), true);
+});
+
+test("비밀값이 없으면 통째로 거절한다", () => {
+  // 설정을 빠뜨린 쪽이 뚫린 쪽보다 낫다. 코드에서 그 분기를 지킨다.
+  const source = readFileSync(
+    new URL("../src/subscriptionEvent.ts", import.meta.url),
+    "utf8"
+  );
+  assert.ok(source.includes("webhook secret not configured"));
+  // 왜 그렇게 뒀는지는 주석이 설명하므로, 실제로 도는 줄만 본다.
+  const code = source
+    .split("\n")
+    .filter((line) => {
+      const t = line.trimStart();
+      return !t.startsWith("//") && !t.startsWith("*") && !t.startsWith("/*");
+    })
+    .join("\n");
+  assert.ok(
+    !code.includes("if (expected && "),
+    "비밀값이 없을 때 검사를 건너뛰면 안 된다"
+  );
+  assert.ok(code.includes("secrets: [webhookSecret]"));
+});
+
+// 대시보드 'Send test event'가 가짜 사용자 문서를 만들던 것(5차 528).
+//
+// 테스트 본문의 app_user_id는 임시 id 접두사가 없는 그냥 UUID라
+// $RCAnonymousID 걸름을 지나갔다. 그대로 두면 누를 때마다
+// users/<그 UUID>에 subscription이 적힌다.
+test("대시보드 테스트 이벤트는 반영하지 않는다", () => {
+  const out = subscriptionFromEvent({
+    event: {
+      ...base,
+      id: "E384B1B2-18CF-4D24-9086-31FD1AE6DD84",
+      app_user_id: "cc24ac1a-12be-4a95-9aac-7358aeead2f7",
+      type: "TEST",
+      entitlement_ids: null,
+    },
+  });
+  assert.equal(out, null);
+});
+
+test("진짜 이벤트는 그대로 받는다", () => {
+  const out = subscriptionFromEvent({event: {...base, type: "INITIAL_PURCHASE"}});
+  assert.notEqual(out, null);
+  assert.equal(out.tier, "light");
+});
+

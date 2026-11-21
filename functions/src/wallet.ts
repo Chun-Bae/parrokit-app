@@ -30,6 +30,25 @@ export interface Balance {
  */
 export interface FullBalance extends Balance {
   subParrots: number;
+
+  /**
+   * 패롯으로 바꿔 둔 예문 생성 몫(5차 532, 사용자 요청).
+   *
+   * 하루 한도와 **다른 주머니**다. 하루 한도는 날마다 새로 차고(타이머),
+   * 이쪽은 안 사라진다. 쓸 때는 하루 한도부터 쓰고 모자랄 때만 깎는다 —
+   * 먼저 사라질 것부터 쓰는 [splitParrotSpend]와 같은 원칙이다.
+   *
+   * 되돌리기(크레딧 → 패롯)는 없다. 한 방향이다.
+   */
+  exampleCredits: number;
+
+  /**
+   * 패롯으로 바꿔 둔 뜻·발음 채우기 몫(5차 535, 사용자 요청).
+   *
+   * 예문 몫과 같은 규칙이다 - 하루 한도부터 쓰고 모자랄 때만 깎이며,
+   * 날이 바뀌어도 사라지지 않는다. 세는 단위만 다르다(호출 횟수).
+   */
+  assistCredits: number;
 }
 
 /**
@@ -97,6 +116,8 @@ export async function readWallet(
     parrots: toInt(data.parrots ?? data.coins),
     crackers: toInt(data.crackers),
     subParrots: toInt(data.subParrots),
+    exampleCredits: toInt(data.exampleCredits),
+    assistCredits: toInt(data.assistCredits),
   };
 }
 
@@ -138,13 +159,23 @@ export function writeWallet(
   const spend = delta.subFirst === false ?
     {sub: 0, normal: parrotsDelta} :
     splitParrotSpend(wallet.subParrots + subDelta, parrotsDelta);
+  const creditsDelta = delta.exampleCredits ?? 0;
+  const assistDelta = delta.assistCredits ?? 0;
   const after: FullBalance = {
     parrots: wallet.parrots + spend.normal,
     crackers: wallet.crackers + crackersDelta,
     subParrots: wallet.subParrots + subDelta + spend.sub,
+    exampleCredits: wallet.exampleCredits + creditsDelta,
+    assistCredits: wallet.assistCredits + assistDelta,
   };
   if (after.parrots < 0 || after.subParrots < 0) {
     throw new HttpsError("failed-precondition", "보유하신 패롯이 부족합니다.");
+  }
+  if (after.exampleCredits < 0) {
+    throw new HttpsError("failed-precondition", "남은 예문 몫이 모자라요.");
+  }
+  if (after.assistCredits < 0) {
+    throw new HttpsError("failed-precondition", "남은 채우기 몫이 모자라요.");
   }
   if (after.crackers < 0) {
     throw new HttpsError("failed-precondition", "보유하신 크래커가 부족합니다.");
@@ -156,6 +187,8 @@ export function writeWallet(
       parrots: after.parrots,
       crackers: after.crackers,
       subParrots: after.subParrots,
+      exampleCredits: after.exampleCredits,
+      assistCredits: after.assistCredits,
       coins: admin.firestore.FieldValue.delete(),
       updatedAt: now,
     },
@@ -165,6 +198,8 @@ export function writeWallet(
     parrots: spend.normal,
     crackers: crackersDelta,
     subParrots: subDelta + spend.sub,
+    exampleCredits: creditsDelta,
+    assistCredits: assistDelta,
     balanceAfter: after,
     reason: entry.reason,
     meta: entry.meta ?? {},
@@ -193,6 +228,8 @@ export async function applyLedger(
         parrots: wallet.parrots,
         crackers: wallet.crackers,
         subParrots: wallet.subParrots,
+        exampleCredits: wallet.exampleCredits,
+        assistCredits: wallet.assistCredits,
         applied: false,
       };
     }

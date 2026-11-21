@@ -53,7 +53,23 @@ test("모르는 단계 이름은 무료로 본다", () => {
 });
 
 test("단계별 기본 한도는 무료 3, 라이트 15, 프로 60", () => {
-  assert.deepEqual(DEFAULT_ASSIST_LIMITS, {free: 3, light: 15, pro: 60});
+  assert.deepEqual(DEFAULT_ASSIST_LIMITS, {
+    free: 3,
+    light: 15,
+    plus: 30,
+    pro: 60,
+    max: 120,
+  });
+  assert.equal(limitForTier("plus"), 30);
+  assert.equal(limitForTier("max"), 120);
+  assert.equal(
+    tierFromUserDoc({subscription: {tier: "max", status: "active"}}),
+    "max"
+  );
+  assert.equal(
+    tierFromUserDoc({subscription: {tier: "plus", status: "grace"}}),
+    "plus"
+  );
   assert.equal(limitForTier("free"), 3);
   assert.equal(limitForTier("light"), 15);
   assert.equal(limitForTier("pro"), 60);

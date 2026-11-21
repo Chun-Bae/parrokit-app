@@ -6,6 +6,7 @@ import {captionCost} from "./pricing";
 import {applyLedger, requestIdOf} from "./wallet";
 import {defineSecret} from "firebase-functions/params";
 import {getStorage} from "firebase-admin/storage";
+import {r2Delete, r2DownloadToFile, r2Head, r2Secrets} from "./r2Client";
 import {promises as fs} from "fs";
 import {tmpdir} from "os";
 import {basename, extname, join} from "path";
@@ -61,7 +62,7 @@ interface OpenAiErrorBody {
 export const generateCaptions = onCall(
   {
     enforceAppCheck: ENFORCE_APP_CHECK,
-    secrets: [openaiApiKey],
+    secrets: [openaiApiKey, ...r2Secrets],
     timeoutSeconds: 540,
     memory: "1GiB",
   },
@@ -89,16 +90,27 @@ export const generateCaptions = onCall(
     }
     let produced = false;
 
-    const bucket = getStorage().bucket();
-    const file = bucket.file(input.storagePath);
+    // 원본은 R2(caption-inputs/{uid}/...)에 있다. 옛 앱은 Firebase Storage에
+    // 올리고 부르므로, R2에 없으면 그쪽을 본다.
+    const legacyFile = getStorage().bucket().file(input.storagePath);
+    const r2Info = await r2Head(input.storagePath);
+    const useR2 = r2Info !== null;
     const tempPath = join(
       tmpdir(),
       `caption_${uid}_${Date.now()}${extname(input.storagePath) || ".bin"}`
     );
 
     try {
-      const [metadata] = await file.getMetadata();
-      const fileSize = Number(metadata.size ?? 0);
+      let fileSize = 0;
+      let sourceContentType: string | undefined;
+      if (useR2) {
+        fileSize = r2Info.size;
+        sourceContentType = r2Info.contentType;
+      } else {
+        const [metadata] = await legacyFile.getMetadata();
+        fileSize = Number(metadata.size ?? 0);
+        sourceContentType = metadata.contentType;
+      }
       if (!Number.isFinite(fileSize) || fileSize <= 0) {
         throw new HttpsError(
           "invalid-argument",
@@ -112,14 +124,18 @@ export const generateCaptions = onCall(
         );
       }
 
-      await file.download({destination: tempPath});
+      if (useR2) {
+        await r2DownloadToFile(input.storagePath, tempPath);
+      } else {
+        await legacyFile.download({destination: tempPath});
+      }
 
       const apiKey = openaiApiKey.value();
       const asrSegments = await transcribeWithOpenAi({
         apiKey,
         filePath: tempPath,
         filename: basename(input.storagePath),
-        contentType: metadata.contentType || contentTypeFor(input.storagePath),
+        contentType: sourceContentType || contentTypeFor(input.storagePath),
       });
 
       console.log(
@@ -154,7 +170,11 @@ export const generateCaptions = onCall(
       );
     } finally {
       await fs.unlink(tempPath).catch(() => undefined);
-      await file.delete({ignoreNotFound: true}).catch(() => undefined);
+      if (useR2) {
+        await r2Delete(input.storagePath).catch(() => undefined);
+      } else {
+        await legacyFile.delete({ignoreNotFound: true}).catch(() => undefined);
+      }
     }
   }
 );

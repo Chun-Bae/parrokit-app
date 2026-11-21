@@ -16,13 +16,16 @@ import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ENFORCE_APP_CHECK} from "./appCheck";
 import {SubscriptionTier} from "./subscriptionEvent";
-import {tierFromUserDoc, TierLimits} from "./subscriptionTier";
+import {TIER_KEYS, tierFromUserDoc, TierLimits} from "./subscriptionTier";
+import {r2Head, r2Secrets} from "./r2Client";
 
 /** 단계별 서버 저장 한도(바이트). config/subscription.storage로 바꿀 수 있다. */
 export const DEFAULT_STORAGE_QUOTAS: TierLimits = {
   free: 0,
-  light: 5 * 1024 * 1024 * 1024,
+  light: 10 * 1024 * 1024 * 1024,
+  plus: 20 * 1024 * 1024 * 1024,
   pro: 30 * 1024 * 1024 * 1024,
+  max: 80 * 1024 * 1024 * 1024,
 };
 
 /**
@@ -51,7 +54,7 @@ export function sanitizeStorage(value: unknown): Partial<TierLimits> {
   const map = value as Record<string, unknown>;
   const out: Partial<TierLimits> = {};
   const max = 1024 * 1024 * 1024 * 1024; // 1TB
-  for (const key of ["free", "light", "pro"] as const) {
+  for (const key of TIER_KEYS) {
     const limit = map[key];
     if (
       typeof limit === "number" &&
@@ -161,12 +164,21 @@ export const onUserFileUploaded = onObjectFinalized(
   }
 );
 
+// R2로 옮긴 뒤 Firebase Storage의 옛 사본을 지우면 이 트리거가 온다. 같은
+// 키가 R2에 살아 있으면 사용량은 그대로여야 하므로 0으로 적지 않는다.
 export const onUserFileDeleted = onObjectDeleted(
-  {memory: "256MiB"},
+  {memory: "512MiB", secrets: r2Secrets},
   async (event) => {
     const uid = uidFromObjectName(event.data.name);
     if (!uid) return;
-    await recordObjectSize(uid, event.data.name as string, 0);
+    const name = event.data.name as string;
+    try {
+      if (await r2Head(name)) return;
+    } catch (error) {
+      console.warn("[Storage] R2 head failed, keeping usage", name, error);
+      return;
+    }
+    await recordObjectSize(uid, name, 0);
   }
 );
 

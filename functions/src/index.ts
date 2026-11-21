@@ -16,9 +16,12 @@ export * from "./communityNotifications";
 export * from "./contentStudioAi";
 export * from "./captioningAi";
 export * from "./sentenceAssist";
+export * from "./exampleCredits";
 
 export * from "./wallet";
 export * from "./questions";
 export * from "./adReward";
 export * from "./subscriptionEvent";
 export * from "./storageUsage";
+export * from "./r2";
+export * from "./r2Legacy";

@@ -10,6 +10,13 @@ import {ENFORCE_APP_CHECK, appCheckOptions} from "./appCheck";
 import {defineSecret} from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import {getStorage} from "firebase-admin/storage";
+import {
+  r2Delete,
+  r2Head,
+  r2PresignGet,
+  r2PutBytes,
+  r2Secrets,
+} from "./r2Client";
 import {genkit} from "genkit";
 import {vertexAI} from "@genkit-ai/google-genai";
 import {enableFirebaseTelemetry} from "@genkit-ai/firebase";
@@ -449,7 +456,6 @@ async function downloadAndStoreVideo(params: {
   downloadUrl: string;
   mimeType: string;
 }> {
-  const operatorAccount = isOperatorUid(params.uid);
   let bytes: Buffer.Buffer;
   let mimeType = "video/mp4";
 
@@ -499,28 +505,11 @@ async function downloadAndStoreVideo(params: {
     bytes = Buffer.Buffer.from(await response.arrayBuffer());
   }
 
+  // 생성 영상은 R2에 둔다. 만료(expiresAt)는 Firestore 문서가 들고 있고,
+  // 상태 조회·목록에서 지난 것을 지운다. 사용자에겐 1시간짜리 서명 주소만 준다.
   const storagePath = buildVideoStoragePath(params.uid, params.generationId);
-  const file = getStorage().bucket().file(storagePath);
-
-  await file.save(bytes, {
-    contentType: mimeType,
-    resumable: false,
-    metadata: {
-      metadata: {
-        uid: params.uid,
-        generationId: params.generationId,
-        expiresAt: operatorAccount ?
-          null :
-          new Date(Date.now() + VIDEO_STORAGE_TTL_MS).toISOString(),
-      },
-    },
-  });
-
-  const [downloadUrl] = await file.getSignedUrl({
-    action: "read",
-    expires: Date.now() + 60 * 60 * 1000,
-  });
-
+  await r2PutBytes(storagePath, bytes, mimeType);
+  const downloadUrl = await r2PresignGet(storagePath);
   return {
     storagePath,
     downloadUrl,
@@ -535,6 +524,10 @@ async function downloadAndStoreVideo(params: {
  * @return {Promise<string>} signed URL
  */
 async function signVideoStoragePath(storagePath: string): Promise<string> {
+  if (await r2Head(storagePath)) {
+    return r2PresignGet(storagePath);
+  }
+  // R2로 옮기기 전에 만든 영상은 Firebase Storage에 있다.
   const [downloadUrl] = await getStorage()
     .bucket()
     .file(storagePath)
@@ -544,6 +537,25 @@ async function signVideoStoragePath(storagePath: string): Promise<string> {
     });
 
   return downloadUrl;
+}
+
+/**
+ * 저장된 영상을 지운다. R2와 옛 Firebase Storage 둘 다 본다.
+ *
+ * @param {string} storagePath 경로
+ * @return {Promise<void>}
+ */
+async function deleteStoredVideo(storagePath: string): Promise<void> {
+  await r2Delete(storagePath).catch((error) => {
+    console.warn("[Video] R2 delete failed", storagePath, error);
+  });
+  await getStorage()
+    .bucket()
+    .file(storagePath)
+    .delete({ignoreNotFound: true})
+    .catch((error) => {
+      console.warn("[Video] legacy delete failed", storagePath, error);
+    });
 }
 
 /**
@@ -1198,7 +1210,7 @@ export const listElevenLabsVoices = onCall(
 
 // 6. 비디오 생성 (Veo 3.1)
 export const generateVideo = onCall(
-  {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
+  {secrets: [geminiApiKey, ...r2Secrets], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     let generationId: string | null = null;
     let chargedUid: string | null = null;
@@ -1331,7 +1343,7 @@ export const generateVideo = onCall(
 
 // 7. 비디오 생성 상태 확인 (폴링용)
 export const getVideoOperationStatus = onCall(
-  {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
+  {secrets: [geminiApiKey, ...r2Secrets], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     try {
       const uid = request.auth?.uid;
@@ -1393,9 +1405,7 @@ export const getVideoOperationStatus = onCall(
                 currentGenerationData.storagePath :
                 null;
             if (expiredStoragePath) {
-              await getStorage().bucket().file(expiredStoragePath).delete({
-                ignoreNotFound: true,
-              });
+              await deleteStoredVideo(expiredStoragePath);
             }
             await docSnapshot.ref.delete();
             return {
@@ -1507,7 +1517,7 @@ export const getVideoOperationStatus = onCall(
 );
 
 export const listVideoGenerations = onCall(
-  {secrets: [geminiApiKey], enforceAppCheck: ENFORCE_APP_CHECK},
+  {secrets: [geminiApiKey, ...r2Secrets], enforceAppCheck: ENFORCE_APP_CHECK},
   async (request) => {
     try {
       const uid = request.auth?.uid;
@@ -1533,9 +1543,7 @@ export const listVideoGenerations = onCall(
             const storagePath =
               typeof data.storagePath === "string" ? data.storagePath : null;
             if (storagePath) {
-              await getStorage().bucket().file(storagePath).delete({
-                ignoreNotFound: true,
-              });
+              await deleteStoredVideo(storagePath);
             }
             await doc.ref.delete();
             return null;

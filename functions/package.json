@@ -15,6 +15,7 @@
     "test:questions": "npm run build && node --test test/questionExpiry.test.mjs",
     "test:community": "npm run build && node --test test/communityNotificationText.test.mjs",
     "test:adreward": "npm run build && node --test test/adReward.test.mjs",
+    "test:credits": "npm run build && node --test test/exampleCredits.test.mjs",
     "test:subscription": "npm run build && node --test test/subscriptionEvent.test.mjs",
     "test:tier": "npm run build && node --test test/subscriptionTier.test.mjs",
     "test:storage": "npm run build && FIREBASE_CONFIG='{\"storageBucket\":\"demo-parrokit.appspot.com\",\"projectId\":\"demo-parrokit\"}' GCLOUD_PROJECT=demo-parrokit node --test test/storageUsage.test.mjs",
@@ -28,6 +29,9 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1171.0",
+    "@aws-sdk/lib-storage": "^3.1171.0",
+    "@aws-sdk/s3-request-presigner": "^3.1171.0",
     "@elevenlabs/elevenlabs-js": "^2.51.0",
     "@genkit-ai/firebase": "^1.36.0",
     "@genkit-ai/google-genai": "^1.36.0",

@@ -9,14 +9,46 @@
 // 새 상태를 덮지 않게 이벤트 시각을 함께 본다.
 
 import * as admin from "firebase-admin";
+import {timingSafeEqual} from "crypto";
 import {
   expireSubscriptionParrots,
+  GrantedRecord,
+  grantedFrom,
   grantSubscriptionParrots,
 } from "./subscriptionGrant";
 import {onRequest} from "firebase-functions/v2/https";
+import {defineSecret} from "firebase-functions/params";
+
+/**
+ * RevenueCat 대시보드 Webhook의 Authorization 헤더에 적은 값.
+ *
+ * Secret Manager에 둔다(R2 키와 같은 방식). .env에 적으면 그 파일이
+ * .gitignore에 걸려 있지 않아 실수로 커밋될 수 있다.
+ */
+const webhookSecret = defineSecret("REVENUECAT_WEBHOOK_SECRET");
+
+/**
+ * 헤더가 맞는지. 시간차로 값을 알아내지 못하게 상수 시간으로 비교한다.
+ *
+ * @param {string | undefined} header 요청의 Authorization 헤더.
+ * @param {string} expected 대시보드에 적어 둔 값.
+ * @return {boolean} 같으면 true.
+ */
+export function authorized(
+  header: string | undefined,
+  expected: string
+): boolean {
+  if (typeof header !== "string") return false;
+  const a = Buffer.from(header);
+  const b = Buffer.from(expected);
+  // timingSafeEqual은 길이가 다르면 던진다. 길이도 비교 대상이므로
+  // 먼저 거르되, 그 뒤 비교는 상수 시간으로 한다.
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 /** 구독 단계. 앱의 SubscriptionTier와 같은 말이다. */
-export type SubscriptionTier = "free" | "light" | "pro";
+export type SubscriptionTier = "free" | "light" | "plus" | "pro" | "max";
 
 /**
  * 구독 상태.
@@ -40,7 +72,9 @@ export interface SubscriptionState {
 
 /** entitlement 이름. RevenueCat 대시보드에 같은 이름으로 만든다. */
 export const LIGHT_ENTITLEMENT = "parrokit_sub_light";
+export const PLUS_ENTITLEMENT = "parrokit_sub_plus";
 export const PRO_ENTITLEMENT = "parrokit_sub_pro";
+export const MAX_ENTITLEMENT = "parrokit_sub_max";
 
 /** 혜택이 끝났다고 보는 이벤트. */
 const ENDED_TYPES = new Set(["EXPIRATION", "REFUND", "SUBSCRIPTION_PAUSED"]);
@@ -53,7 +87,10 @@ function toInt(value: unknown): number | null {
 
 function tierOf(entitlements: unknown): SubscriptionTier {
   if (!Array.isArray(entitlements)) return "free";
+  // 높은 단계부터 본다. 둘 이상 들고 있으면(갈아타는 중) 높은 쪽.
+  if (entitlements.includes(MAX_ENTITLEMENT)) return "max";
   if (entitlements.includes(PRO_ENTITLEMENT)) return "pro";
+  if (entitlements.includes(PLUS_ENTITLEMENT)) return "plus";
   if (entitlements.includes(LIGHT_ENTITLEMENT)) return "light";
   return "free";
 }
@@ -81,6 +118,12 @@ export function subscriptionFromEvent(body: unknown): SubscriptionState | null {
   if (!uid || !type) return null;
   // RevenueCat이 아직 로그인 전 임시 id를 보내면 우리 계정이 아니다.
   if (uid.startsWith("$RCAnonymousID:")) return null;
+  // 대시보드의 'Send test event'. 실제 구독이 아니다(5차 528).
+  //
+  // 본문의 app_user_id는 임시 id 접두사가 없는 그냥 UUID라 위 걸름을
+  // 지나간다. 그대로 두면 테스트를 누를 때마다 users/<그 UUID>에
+  // subscription이 적혀 가짜 문서가 쌓인다.
+  if (type === "TEST") return null;
 
   const tier = tierOf(data.entitlement_ids);
   const eventId = typeof data.id === "string" && data.id.length > 0 ?
@@ -116,15 +159,30 @@ export function shouldSkipEvent(
 
 // index.ts가 코드 전체(genkit, TTS 등)를 함께 불러와서 기본 256MiB로는 모자란다.
 export const onSubscriptionEvent = onRequest(
-  {memory: "512MiB"},
+  {memory: "512MiB", secrets: [webhookSecret]},
   async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).send("method not allowed");
       return;
     }
-    // RevenueCat 대시보드에 적은 값과 같아야 받는다. 설정 전에는 막지 않는다.
-    const expected = process.env.REVENUECAT_WEBHOOK_SECRET;
-    if (expected && req.get("authorization") !== expected) {
+    // RevenueCat 대시보드에 적은 값과 같아야 받는다.
+    //
+    // 비밀값이 없으면 **거절한다**. 전에는 `if (expected && ...)`라 값이
+    // 없으면 검사를 통째로 건너뛰었고, 실제로 설정돼 있지 않아서 주소만
+    // 알면 누구나 가짜 결제 이벤트를 넣어 맥스 단계와 패롯을 받을 수
+    // 있었다. 설정을 빠뜨린 쪽이 뚫린 쪽보다 낫다.
+    const expected = webhookSecret.value();
+    if (!expected) {
+      // 로그는 영어로 둔다. 서버의 한글 글은 사용자에게 그대로 보일 수
+      // 있어 앱 말투 규칙을 받는다(5차 438).
+      console.error(
+        "[Subscription] REVENUECAT_WEBHOOK_SECRET missing - event rejected. " +
+          "Set it with functions:secrets:set and redeploy."
+      );
+      res.status(503).send("webhook secret not configured");
+      return;
+    }
+    if (!authorized(req.get("authorization"), expected)) {
       res.status(401).send("unauthorized");
       return;
     }
@@ -138,11 +196,15 @@ export const onSubscriptionEvent = onRequest(
 
     const ref = admin.firestore().collection("users").doc(next.uid);
     let saveApplied = true;
+    // 기간 중에 단계를 올렸는지 보려면 저장하기 전의 지급 기록이 필요하다
+    // (5차 530). 트랜잭션이 덮어쓰기 전에 꺼내 둔다.
+    let granted: GrantedRecord | null = null;
     await admin.firestore().runTransaction(async (tx) => {
       const snapshot = await tx.get(ref);
       const saved = snapshot.data()?.subscription as
         | FirebaseFirestore.DocumentData
         | undefined;
+      granted = grantedFrom(saved);
       if (shouldSkipEvent(saved, next)) {
         saveApplied = false;
         return;
@@ -167,7 +229,7 @@ export const onSubscriptionEvent = onRequest(
     if (saveApplied) {
       // 이번 기간 몫을 넣고(같은 기간이면 한 번만), 끝났으면 남은 것을 지운다.
       try {
-        await grantSubscriptionParrots(next);
+        await grantSubscriptionParrots(next, granted);
         await expireSubscriptionParrots(next);
       } catch (error) {
         // 지급이 실패해도 상태는 저장됐다. 다음 이벤트에서 같은 키로 다시 시도된다.

@@ -17,14 +17,21 @@ const {
 const GB = 1024 * 1024 * 1024;
 
 test("단계별 한도는 무료 0, 라이트 5GB, 프로 30GB", () => {
-  assert.deepEqual(DEFAULT_STORAGE_QUOTAS, {free: 0, light: 5 * GB, pro: 30 * GB});
+  assert.deepEqual(DEFAULT_STORAGE_QUOTAS, {
+    free: 0,
+    light: 10 * GB,
+    plus: 20 * GB,
+    pro: 30 * GB,
+    max: 80 * GB,
+  });
   assert.equal(quotaForTier("free"), 0);
-  assert.equal(quotaForTier("light"), 5 * GB);
+  assert.equal(quotaForTier("light"), 10 * GB);
+  assert.equal(quotaForTier("max"), 80 * GB);
   assert.equal(quotaForTier("pro"), 30 * GB);
 });
 
 test("설정값이 기본값을 이기고 이상한 값은 버린다", () => {
-  assert.equal(quotaForTier("light", {light: 10 * GB}), 10 * GB);
+  assert.equal(quotaForTier("light", {light: 12 * GB}), 12 * GB);
   assert.equal(quotaForTier("pro", {pro: -1}), 30 * GB);
   assert.equal(quotaForTier("pro", {pro: 2 * 1024 * GB}), 30 * GB, "1TB 넘는 값은 버린다");
   assert.deepEqual(sanitizeStorage({light: 1.5}), {});

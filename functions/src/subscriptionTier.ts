@@ -10,10 +10,21 @@ import {SubscriptionTier} from "./subscriptionEvent";
 export interface TierLimits {
   free: number;
   light: number;
+  plus: number;
   pro: number;
+  max: number;
 }
 
-export const DEFAULT_ASSIST_LIMITS: TierLimits = {free: 3, light: 15, pro: 60};
+/** 낮은 단계부터. 설정 문서를 읽을 때 이 키만 본다. */
+export const TIER_KEYS = ["free", "light", "plus", "pro", "max"] as const;
+
+export const DEFAULT_ASSIST_LIMITS: TierLimits = {
+  free: 3,
+  light: 15,
+  plus: 30,
+  pro: 60,
+  max: 120,
+};
 
 /**
  * users/{uid}.subscription 맵에서 지금 쓸 수 있는 단계를 읽는다.
@@ -30,8 +41,15 @@ export function tierFromUserDoc(data: unknown): SubscriptionTier {
   if (!sub || typeof sub !== "object") return "free";
   const map = sub as Record<string, unknown>;
   if (map.status === "expired") return "free";
-  if (map.tier === "pro") return "pro";
-  if (map.tier === "light") return "light";
+  const tier = map.tier;
+  if (
+    tier === "light" ||
+    tier === "plus" ||
+    tier === "pro" ||
+    tier === "max"
+  ) {
+    return tier;
+  }
   return "free";
 }
 
@@ -60,7 +78,7 @@ export function sanitizeLimits(value: unknown): Partial<TierLimits> {
   if (!value || typeof value !== "object") return {};
   const map = value as Record<string, unknown>;
   const out: Partial<TierLimits> = {};
-  for (const key of ["free", "light", "pro"] as const) {
+  for (const key of TIER_KEYS) {
     const limit = map[key];
     if (Number.isInteger(limit) && (limit as number) >= 0 &&
       (limit as number) <= 10000) {
