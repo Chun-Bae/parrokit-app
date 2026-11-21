@@ -9,6 +9,7 @@
 //   node scripts/recount_clip_storage.mjs --apply   # 고치기
 
 import {execFileSync} from "node:child_process";
+import {createHash} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {dirname, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -111,26 +112,39 @@ for (const doc of users.docs) {
 
   // storage_objects도 실제 클립만 남긴다.
   const sub = await doc.ref.collection("storage_objects").get();
-  const batch = db.batch();
-  for (const d of sub.docs) batch.delete(d.ref);
+  const writes = [];
+  for (const d of sub.docs) writes.push((b) => b.delete(d.ref));
   for (const o of actual.keys) {
-    const id = Buffer.from(o.key).toString("base64url").slice(0, 400);
-    batch.set(doc.ref.collection("storage_objects").doc(id), {
-      name: o.key,
-      size: o.size,
-    });
+    // storageUsage.ts의 objectDocId와 같아야 한다(5차 549). 전에는 여기서
+    // base64를 400자로 잘랐는데, 함수 쪽은 sha256으로 바뀌었다. 다르면
+    // 트리거가 이 문서를 못 찾아 사용량이 또 어긋난다.
+    const id = createHash("sha256").update(o.key).digest("base64url");
+    writes.push((b) =>
+      b.set(doc.ref.collection("storage_objects").doc(id), {
+        name: o.key,
+        size: o.size,
+      })
+    );
   }
-  batch.set(
-    doc.ref,
-    {
-      storage: {
-        usedBytes: actual.bytes,
-        objectCount: actual.count,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  writes.push((b) =>
+    b.set(
+      doc.ref,
+      {
+        storage: {
+          usedBytes: actual.bytes,
+          objectCount: actual.count,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
       },
-    },
-    {merge: true}
+      {merge: true}
+    )
   );
-  await batch.commit();
+
+  // Firestore 배치는 500개까지다. 클립이 많은 사람에서 통째로 터졌다.
+  for (let i = 0; i < writes.length; i += 450) {
+    const batch = db.batch();
+    for (const write of writes.slice(i, i + 450)) write(batch);
+    await batch.commit();
+  }
 }
 console.log(apply ? `고친 사용자 ${fixed}명` : `고칠 사용자 ${fixed}명(보기만)`);
