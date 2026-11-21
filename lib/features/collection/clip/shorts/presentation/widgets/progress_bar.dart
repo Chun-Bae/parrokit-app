@@ -39,9 +39,8 @@ class ProgressBar extends StatelessWidget {
             height: 3,
             margin: EdgeInsets.only(right: i == total - 1 ? 0 : AppSpacing.xs),
             decoration: BoxDecoration(
-              color: active
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.35),
+              color:
+                  active ? Colors.white : Colors.white.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(AppRadius.track),
             ),
           ),

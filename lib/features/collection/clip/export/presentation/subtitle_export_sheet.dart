@@ -99,8 +99,9 @@ class SubtitleExportSheetState extends State<SubtitleExportSheet> {
       return;
     }
     setState(() {
-      stage =
-          result.isSuccess ? SubtitleExportStage.done : SubtitleExportStage.failed;
+      stage = result.isSuccess
+          ? SubtitleExportStage.done
+          : SubtitleExportStage.failed;
       resultPath = result.path;
       message = result.message;
     });
@@ -149,8 +150,8 @@ class SubtitleExportSheetState extends State<SubtitleExportSheet> {
             Text(
               bodyText,
               key: const ValueKey('subtitle-export-body'),
-              style:
-                  context.texts.bodyReading.copyWith(color: cs.onSurfaceVariant),
+              style: context.texts.bodyReading
+                  .copyWith(color: cs.onSurfaceVariant),
             ),
             if (stage == SubtitleExportStage.running) ...[
               const SizedBox(height: 16),

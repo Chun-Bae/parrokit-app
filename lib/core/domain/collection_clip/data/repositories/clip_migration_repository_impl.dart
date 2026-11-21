@@ -18,7 +18,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import 'package:drift/drift.dart';
@@ -27,6 +26,7 @@ import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/domain/collection_clip/data/services/storage_quota_service.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/domain/collection_clip/data/utils/clip_path_utils.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_source_ref_datasource.dart';
@@ -128,7 +128,9 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         '[Clip][Storage] server-upload blocked clipId=$clipId '
         'tier=${quota.tier} need=$fileSize left=${quota.remainingBytes}',
       );
-      throw StateError(storageQuotaMessage(quota));
+      // 자리가 없다는 말은 사용자가 고칠 수 있는 일이라 그대로 보여 준다
+      // (5차 518). 뭉뚱그린 '서버에 저장하지 못했어요'로 덮이면 안 된다.
+      throw ClipTransferBlocked(storageQuotaMessage(quota));
     }
     final storagePath =
         'users/${user.uid}/clips/$remoteDocId/video$normalizedExtension';
@@ -150,65 +152,37 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
     final thumbnailFileSize = hasThumbnail ? await thumbnailFile.length() : 0;
     final combinedUploadTotal = fileSize + thumbnailFileSize;
 
+    // 이번 호출에서 올린 키. 뒤 단계가 엎어지면 이것만 지운다(5차 510).
+    final uploadedKeys = <String>[];
+
     Future<({String storagePath, String downloadUrl})> uploadToPath(
       String storagePath, {
       required File uploadFile,
       required String uploadContentType,
       required int baseBytes,
     }) async {
-      final storageRef = FirebaseStorage.instance.ref(storagePath);
-      final metadata = SettableMetadata(contentType: uploadContentType);
       final uploadFileSize = await uploadFile.length();
       AppLogger.d(
         '[Clip][Storage] server-upload start clipId=$clipId path=$storagePath contentType=$uploadContentType bytes=$uploadFileSize',
       );
-
-      Future<({String storagePath, String downloadUrl})> runTask(
-        UploadTask uploadTask, {
-        required bool isRetry,
-      }) async {
-        late final StreamSubscription<TaskSnapshot> subscription;
-        try {
-          subscription = uploadTask.snapshotEvents.listen((snapshot) {
-            onProgress?.call(
-              baseBytes + snapshot.bytesTransferred,
-              combinedUploadTotal,
-              isRetry ? '서버에 업로드하고 있어요 (다시 시도하는 중)' : '서버에 업로드하고 있어요',
-            );
-          });
-
-          final taskSnapshot = await uploadTask;
-          AppLogger.d(
-            '[Clip][Storage] server-upload-finished clipId=$clipId path=$storagePath',
+      // R2는 presigned PUT 한 번이라 이어 올리기가 없다. 끊기면 처음부터다.
+      final result = await UserFileStorage.instance.uploadFile(
+        uploadFile,
+        path: storagePath,
+        contentType: uploadContentType,
+        onProgress: (sent, _) {
+          onProgress?.call(
+            baseBytes + sent,
+            combinedUploadTotal,
+            '서버에 업로드하고 있어요',
           );
-          final downloadUrl = await taskSnapshot.ref.getDownloadURL();
-          return (storagePath: storagePath, downloadUrl: downloadUrl);
-        } finally {
-          await subscription.cancel();
-        }
-      }
-
-      try {
-        return await runTask(
-          storageRef.putFile(uploadFile, metadata),
-          isRetry: false,
-        );
-      } on fb.FirebaseException catch (e, st) {
-        AppLogger.w(
-          '[Clip][Storage] server-upload putFile-failed clipId=$clipId path=$storagePath code=${e.code} message=${e.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        final bytes = await uploadFile.readAsBytes();
-        AppLogger.d(
-          '[Clip][Storage] server-upload fallback-putData clipId=$clipId path=$storagePath bytes=${bytes.length}',
-        );
-        return runTask(
-          storageRef.putData(bytes, metadata),
-          isRetry: true,
-        );
-      }
+        },
+      );
+      AppLogger.d(
+        '[Clip][Storage] server-upload-finished clipId=$clipId path=$storagePath',
+      );
+      uploadedKeys.add(result.path);
+      return (storagePath: result.path, downloadUrl: result.url);
     }
 
     late final ({String storagePath, String downloadUrl}) uploadResult;
@@ -359,6 +333,7 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         error: e,
         stackTrace: st,
       );
+      await _discardUploadedObjects(uploadedKeys, clipId: clipId);
       rethrow;
     } on Exception catch (e, st) {
       AppLogger.e(
@@ -366,7 +341,32 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
         error: e,
         stackTrace: st,
       );
+      await _discardUploadedObjects(uploadedKeys, clipId: clipId);
       rethrow;
+    }
+  }
+
+  /// 서버로 옮기다 엎어졌을 때 이번에 올린 파일을 지운다.
+  ///
+  /// 영상은 올라갔는데 썸네일이나 Firestore 쓰기에서 실패하면, 클립은
+  /// 기기에 그대로 남는데 R2에는 아무도 가리키지 않는 파일이 남는다.
+  /// r2FinishUpload가 이미 용량에 더해 놓았으므로 그 파일은 화면에
+  /// 보이지도 않으면서 구독 용량만 먹는다. 다시 눌러 볼 때마다 새
+  /// remoteDocId로 또 하나씩 쌓인다(5차 510).
+  ///
+  /// 이미 서버에 있던 클립은 위에서 일찍 돌아가므로, 여기 담긴 키는
+  /// 모두 이번 호출이 올린 것이다. 지우다 또 실패해도 원래 오류를
+  /// 덮지 않게 조용히 넘어간다.
+  Future<void> _discardUploadedObjects(
+    List<String> keys, {
+    required int clipId,
+  }) async {
+    for (final key in keys) {
+      final gone = await UserFileStorage.instance.deleteQuietly(path: key);
+      AppLogger.i(
+        '[Clip][Storage] server-upload rollback clipId=$clipId '
+        'path=$key deleted=$gone',
+      );
     }
   }
 

@@ -1282,9 +1282,6 @@ PODS:
   - Firebase/Messaging (12.13.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 12.13.0)
-  - Firebase/Storage (12.13.0):
-    - Firebase/CoreOnly
-    - FirebaseStorage (~> 12.13.0)
   - firebase_auth (6.5.1):
     - Firebase/Auth (= 12.13.0)
     - firebase_core
@@ -1298,10 +1295,6 @@ PODS:
     - Flutter
   - firebase_messaging (16.2.2):
     - Firebase/Messaging (= 12.13.0)
-    - firebase_core
-    - Flutter
-  - firebase_storage (13.4.1):
-    - Firebase/Storage (= 12.13.0)
     - firebase_core
     - Flutter
   - FirebaseAppCheckInterop (12.13.0)
@@ -1386,13 +1379,6 @@ PODS:
     - nanopb (~> 3.30910.0)
     - PromisesSwift (~> 2.1)
   - FirebaseSharedSwift (12.13.0)
-  - FirebaseStorage (12.13.0):
-    - FirebaseAppCheckInterop (~> 12.13.0)
-    - FirebaseAuthInterop (~> 12.13.0)
-    - FirebaseCore (~> 12.13.0)
-    - FirebaseCoreExtension (~> 12.13.0)
-    - GoogleUtilities/Environment (~> 8.1)
-    - GTMSessionFetcher/Core (< 6.0, >= 3.4)
   - Flutter (1.0.0)
   - flutter_file_dialog (0.0.1):
     - Flutter
@@ -1599,23 +1585,23 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
-  - purchases_flutter (10.19.1):
+  - purchases_flutter (11.0.3):
     - Flutter
-    - PurchasesHybridCommon (= 19.17.2)
-  - purchases_ui_flutter (10.19.1):
+    - PurchasesHybridCommon (= 20.9.0)
+  - purchases_ui_flutter (11.0.3):
     - Flutter
-    - PurchasesHybridCommonUI (= 19.17.2)
-  - PurchasesHybridCommon (19.17.2):
-    - RevenueCat (= 5.99.0)
-  - PurchasesHybridCommonUI (19.17.2):
-    - PurchasesHybridCommon (= 19.17.2)
-    - RevenueCatUI (= 5.99.0)
+    - PurchasesHybridCommonUI (= 20.9.0)
+  - PurchasesHybridCommon (20.9.0):
+    - RevenueCat (= 5.103.0)
+  - PurchasesHybridCommonUI (20.9.0):
+    - PurchasesHybridCommon (= 20.9.0)
+    - RevenueCatUI (= 5.103.0)
   - RecaptchaInterop (101.0.0)
   - restart_app (1.7.3):
     - Flutter
-  - RevenueCat (5.99.0)
-  - RevenueCatUI (5.99.0):
-    - RevenueCat (= 5.99.0)
+  - RevenueCat (5.103.0)
+  - RevenueCatUI (5.103.0):
+    - RevenueCat (= 5.103.0)
   - rive_common (0.0.1):
     - Flutter
   - SDWebImage (5.21.7):
@@ -1687,7 +1673,6 @@ DEPENDENCIES:
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_crashlytics (from `.symlinks/plugins/firebase_crashlytics/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
-  - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
   - flutter_file_dialog (from `.symlinks/plugins/flutter_file_dialog/ios`)
   - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
@@ -1721,6 +1706,11 @@ DEPENDENCIES:
   - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
+    - RevenueCat
+    - RevenueCatUI
   trunk:
     - abseil
     - AppAuth
@@ -1747,7 +1737,6 @@ SPEC REPOS:
     - FirebaseRemoteConfigInterop
     - FirebaseSessions
     - FirebaseSharedSwift
-    - FirebaseStorage
     - Google-Mobile-Ads-SDK
     - GoogleDataTransport
     - GoogleSignIn
@@ -1764,11 +1753,7 @@ SPEC REPOS:
     - OrderedSet
     - PromisesObjC
     - PromisesSwift
-    - PurchasesHybridCommon
-    - PurchasesHybridCommonUI
     - RecaptchaInterop
-    - RevenueCat
-    - RevenueCatUI
     - SDWebImage
     - sqlite3
     - SwiftyGif
@@ -1800,8 +1785,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_crashlytics/ios"
   firebase_messaging:
     :path: ".symlinks/plugins/firebase_messaging/ios"
-  firebase_storage:
-    :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
     :path: Flutter
   flutter_file_dialog:
@@ -1888,7 +1871,6 @@ SPEC CHECKSUMS:
   firebase_core: 0013f886fbd0b4950865551eaab47784424bfdb5
   firebase_crashlytics: fae0a58bac6eaaef4cdacc72f9e55fef1e0be0a1
   firebase_messaging: b875e4088ddd9ecd1834f6c89f6e0a1ffc7d98f0
-  firebase_storage: 400da7dd1eaeb5f4b5e583dd67cdabe4ce62b4d6
   FirebaseAppCheckInterop: db09d7412340fb4b5a8727d4d410e5a5c780dd56
   FirebaseAuth: fedecd40125af7f898ba4f0a328ac9f3a9c3b8c4
   FirebaseAuthInterop: 63d36ca102054d7336f87aec87b1c68a0bab77e0
@@ -1905,7 +1887,6 @@ SPEC CHECKSUMS:
   FirebaseRemoteConfigInterop: 4801ab93a543ef8fedfb40ae2f66d03e3fdcb864
   FirebaseSessions: 0e5f64cd99400275798fcb5e2b773dd000ca02c1
   FirebaseSharedSwift: 76bdd9de8ff1da7a601236ee058253e36206978e
-  FirebaseStorage: a4709ed4e33f0b19dc6ac4889bb3c946fe8865ef
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_file_dialog: ca8d7fbd1772d4f0c2777b4ab20a7787ef4e7dd8
   flutter_inappwebview_ios: b89ba3482b96fb25e00c967aae065701b66e9b99
@@ -1939,14 +1920,14 @@ SPEC CHECKSUMS:
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
-  purchases_flutter: e835a212175a42c86eda660b9f3bf555f7d666ad
-  purchases_ui_flutter: 209f9fe57170bc3d0f4e1d3fd2279142133f53d6
-  PurchasesHybridCommon: b1b74239edae2a2233dfc3ef7ab8fc9a0cd69fab
-  PurchasesHybridCommonUI: daacf21ab91cbc3cbf015f213d8735608d16fa26
+  purchases_flutter: 9ceb2e0cda50652ad5273c08001754c005daa586
+  purchases_ui_flutter: f62b44a860c26cfe79564e2a078dcdf2c6ddc49b
+  PurchasesHybridCommon: 6f43160f66c966baf5d4b5d3e5fb448d48904382
+  PurchasesHybridCommonUI: ccb7a520081b49ee863341536424dff930f055d2
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   restart_app: 0714144901e260eae68f7afc2fc4aacc1a323ad2
-  RevenueCat: 8e91d216b71708bb2c97be0aa86f47bfdb450655
-  RevenueCatUI: dc55e7560ba885ba9f8dd703f911b7ff65b677d5
+  RevenueCat: ceb7b3d27ecf3ac26674ef9a75b45cbd57c8f699
+  RevenueCatUI: 5191f13c2e8420b9398ecff5352ad671775dec66
   rive_common: dd421daaf9ae69f0125aa761dd96abd278399952
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
   share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
@@ -1962,6 +1943,6 @@ SPEC CHECKSUMS:
   video_thumbnail: b637e0ad5f588ca9945f6e2c927f73a69a661140
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
-PODFILE CHECKSUM: 1f742d69a195659095d453b28915893204d0ef77
+PODFILE CHECKSUM: c4017e299c755c4c778d5ff02f8d602049604d45
 
 COCOAPODS: 1.16.2

@@ -86,6 +86,11 @@ class _WordEditSheetState extends State<WordEditSheet> {
   /// 전에는 아예 묻지 않아서, 다 쓴 뒤에도 단추가 눌렸다.
   bool _usageChecked = false;
 
+  /// 아직 횟수를 묻는 중인지. 묻는 동안에는 채우기 단추를 막는다(5차 515).
+  /// 한도를 모르는 채로 누르면 다 쓴 사람도 눌러 본 뒤에야 막혔다는 걸
+  /// 알게 된다. 성공이든 실패든 한 번 끝나면 다시 열어 준다.
+  bool _usageLoading = true;
+
   bool get _exhausted => _usageChecked &&
       assistExhausted(
         used: _assist.dailyLimit == null || _assist.remainingToday == null
@@ -94,17 +99,61 @@ class _WordEditSheetState extends State<WordEditSheet> {
         limit: _assist.dailyLimit,
       );
 
+  /// 오늘 예문을 다 만들었나. 뜻·발음 채우기 횟수와는 다른 한도다.
+  bool get _examplesExhausted =>
+      _usageChecked && _assist.examplesRemainingToday == 0;
+
+  /// 뜻과 발음이 이미 다 차 있는지. 채우기가 할 일이 없다(5차 525).
+  ///
+  /// _fillBasics는 이때 서버를 부르지 않고 돌아선다(한도를 아끼려는 것이라
+  /// 맞다). 그런데 단추는 켜진 채였고 까닭은 시트 맨 아래에만 적혀서,
+  /// 눌러도 아무 일이 없는 것처럼 보였다.
+  bool get _basicsFilled =>
+      _meaning.text.trim().isNotEmpty &&
+      _pronunciation.text.trim().isNotEmpty;
+
+  /// 예문 단추가 막힌 까닭. 단추 바로 아래 줄에 적는다.
+  ///
+  /// 전에는 _notice에만 적었는데 그 줄은 예문 칸을 다 지나 시트 맨 아래에
+  /// 있어서, 단추를 눌러도 아무 일도 안 일어난 것처럼 보였다(5차 506).
+  String? get _examplesBlocked {
+    if (_examplesExhausted) return exampleQuotaExhaustedText;
+    final cap = _assist.maxExamplesPerWord;
+    if (cap == null) return null;
+    final filled = [
+      for (final c in _exampleTexts)
+        if (c.text.trim().isNotEmpty) c,
+    ].length;
+    if (filled >= cap && _exampleTexts.length >= cap) {
+      return exampleFillCapText(cap);
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     for (var i = 0; i < _exampleTexts.length; i++) {
       _watchExample(_exampleTexts[i], _exampleMeanings[i]);
     }
+    // 손으로 적어 넣어도 단추가 제때 꺼지게 한다(5차 525).
+    _meaning.addListener(_onBasicsChanged);
+    _pronunciation.addListener(_onBasicsChanged);
     _assist.refreshUsage().then((_) {
-      if (mounted) setState(() => _usageChecked = true);
+      if (mounted) {
+        setState(() {
+          _usageChecked = true;
+          _usageLoading = false;
+        });
+      }
     }).catchError((_) {
       // 못 읽어도 단추는 쓸 수 있게 둔다. 서버가 막으면 그때 알린다.
-      if (mounted) setState(() => _usageChecked = false);
+      if (mounted) {
+        setState(() {
+          _usageChecked = false;
+          _usageLoading = false;
+        });
+      }
     });
   }
   String? _notice;
@@ -131,8 +180,14 @@ class _WordEditSheetState extends State<WordEditSheet> {
     if (mounted) setState(() {});
   }
 
+  void _onBasicsChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _meaning.removeListener(_onBasicsChanged);
+    _pronunciation.removeListener(_onBasicsChanged);
     _meaning.dispose();
     _pronunciation.dispose();
     _synonymInput.dispose();
@@ -242,13 +297,32 @@ class _WordEditSheetState extends State<WordEditSheet> {
   /// 않게 서버로 함께 보낸다.
   Future<void> _fillExamples() async {
     if (_fillingExamples || _saving) return;
-    final room = examplesMaxCount - _exampleTexts.length;
+    // 상한을 모르면 묻기 전에 서버에 물어 온다. 모르는 채로 물으면 시트가
+    // 틀린 상한을 적고, 서버가 깎을 개수를 고르게 된다(5차 507).
+    if (_assist.maxExamplesPerWord == null) {
+      setState(() => _fillingExamples = true);
+      await _assist.refreshUsage();
+      if (!mounted) return;
+      setState(() => _fillingExamples = false);
+    }
+    if (_assist.examplesRemainingToday == 0) {
+      // 까닭은 _examplesBlocked가 단추 바로 아래에 적는다. 여기서 _notice에도
+      // 같은 문장을 넣으면 시트 맨 아래에 똑같은 말이 한 번 더 나온다.
+      // 누르기 전에는 한도를 몰라 단추가 열려 있으므로, 눌러서 여기까지
+      // 오는 길이 실제로 있다(5차 513).
+      setState(() {});
+      return;
+    }
+    final cap = _assist.maxExamplesPerWord ?? examplesMaxCount;
+    final room = cap - _exampleTexts.length;
     final emptySlots = [
       for (final (index, c) in _exampleTexts.indexed)
         if (c.text.trim().isEmpty) index,
     ];
     if (room <= 0 && emptySlots.isEmpty) {
-      setState(() => _notice = '예문은 $examplesMaxCount개까지 넣을 수 있어요.');
+      // 까닭은 _examplesBlocked가 단추 바로 아래에 적는다. 시트 맨 아래
+      // _notice에만 적으면 눌러도 아무 일 없는 것처럼 보인다(5차 506).
+      setState(() {});
       return;
     }
     final count = await askExampleCount(
@@ -258,6 +332,9 @@ class _WordEditSheetState extends State<WordEditSheet> {
         for (final c in _exampleTexts)
           if (c.text.trim().isNotEmpty) c,
       ].length,
+      maxPerWord: _assist.maxExamplesPerWord,
+      remainingToday: _assist.examplesRemainingToday,
+      exampleCredits: _assist.exampleCredits,
     );
     if (!mounted || count == null) return;
 
@@ -295,8 +372,10 @@ class _WordEditSheetState extends State<WordEditSheet> {
       if (suggestion.examples.isEmpty) {
         note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
       }
-    } on SentenceAssistQuotaExceeded {
-      note = assistQuotaExhaustedMessage;
+    } on SentenceAssistQuotaExceeded catch (e) {
+      // 예문 한도와 뜻·발음 한도는 다른 축이다. 다 쓴 쪽을 적는다(5차 517).
+      note =
+          e.examples ? exampleQuotaExhaustedText : assistQuotaExhaustedMessage;
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
@@ -372,8 +451,13 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 // 예문을 손보러 들어온 자리에서 바로 받을 수 있게 한다(5차 470).
                 TextButton.icon(
                   key: const ValueKey('edit-word-fill'),
-                  onPressed:
-                      _filling || _saving || _exhausted ? null : _fillBasics,
+                  onPressed: _filling ||
+                          _saving ||
+                          _usageLoading ||
+                          _exhausted ||
+                          _basicsFilled
+                      ? null
+                      : _fillBasics,
                   icon: _filling
                       ? const SizedBox(
                           width: 16,
@@ -387,7 +471,14 @@ class _WordEditSheetState extends State<WordEditSheet> {
             ),
             // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
             Text(
-              _exhausted ? assistQuotaExhaustedMessage : wordFillBasicsHint,
+              assistFillHint(
+                loading: _usageLoading,
+                whenReady: _basicsFilled
+                    ? wordFillBasicsDoneHint
+                    : _exhausted
+                        ? assistQuotaExhaustedMessage
+                        : wordFillBasicsHint,
+              ),
               key: const ValueKey('edit-word-autofill-hint'),
               style: context.texts.bodySmall
                   .copyWith(color: colors.onSurfaceVariant),
@@ -458,7 +549,10 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 ),
                 TextButton.icon(
                   key: const ValueKey('edit-word-fill-examples'),
-                  onPressed: _fillingExamples || _saving || _exhausted
+                  onPressed: _fillingExamples ||
+                          _saving ||
+                          _usageLoading ||
+                          _examplesBlocked != null
                       ? null
                       : _fillExamples,
                   icon: _fillingExamples
@@ -473,7 +567,10 @@ class _WordEditSheetState extends State<WordEditSheet> {
               ],
             ),
             Text(
-              _exhausted ? assistQuotaExhaustedMessage : wordFillExamplesHint,
+              assistFillHint(
+                loading: _usageLoading,
+                whenReady: _examplesBlocked ?? wordFillExamplesHint,
+              ),
               key: const ValueKey('edit-word-examples-hint'),
               style:
                   context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant),

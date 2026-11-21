@@ -77,8 +77,7 @@ bool isSubscribedNow(BuildContext context) {
   final byServer = context.read<SubscriptionProvider?>()?.isSubscribed;
   if (byServer == true) return true;
   final active = context.read<IapProvider?>()?.activeEntitlements ?? const {};
-  return active.contains(lightEntitlementId) ||
-      active.contains(proEntitlementId);
+  return active.any(subscriptionEntitlementIds.contains);
 }
 
 class PreviewPaywallPresenter implements PaywallPresenter {

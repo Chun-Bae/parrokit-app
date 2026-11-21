@@ -41,7 +41,8 @@ abstract class ClipPlayerEngine implements Listenable {
   String get title;
 
   /// 파일을 읽는다. 끝나면 [isReady]가 참이 된다.
-  Future<void> open(String absolutePath, {double speed = 1.0, String title = ''});
+  Future<void> open(String absolutePath,
+      {double speed = 1.0, String title = ''});
 
   Future<void> play();
 
@@ -134,8 +135,7 @@ class VideoPlayerEngine extends ChangeNotifier implements ClipPlayerEngine {
   Future<void> pause() async => _controller?.pause();
 
   @override
-  Future<void> seekTo(Duration position) async =>
-      _controller?.seekTo(position);
+  Future<void> seekTo(Duration position) async => _controller?.seekTo(position);
 
   @override
   Future<void> setSpeed(double speed) async =>

@@ -16,6 +16,7 @@ import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'widgets/study_garden_preview.dart';
+import 'widgets/study_trend_chart.dart';
 import 'widgets/sentence_history_dashboard.dart';
 import 'widgets/today_practice_summary.dart';
 import 'widgets/today_start_bar.dart';
@@ -44,6 +45,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
   int dailyGoal = 5;
   int totalPracticed = 0;
   Map<String, int> practiceCounts = {};
+  Map<String, int> wordReviewCounts = {};
   Map<String, int> practiceGoals = {};
 
   @override
@@ -104,6 +106,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
         dailyGoal = data.dailyGoal;
         practiceCounts = data.counts;
         practiceGoals = data.goals;
+        wordReviewCounts = data.wordCounts;
         totalPracticed = data.total;
       });
     } catch (_) {
@@ -124,6 +127,7 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     setState(() {
       practiceCounts = data.counts;
       practiceGoals = data.goals;
+      wordReviewCounts = data.wordCounts;
       totalPracticed = data.total;
     });
   }
@@ -244,7 +248,15 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
                   StudyGardenPreview(
                     practiceCounts: practiceCounts,
                     practiceGoals: practiceGoals,
+                    wordReviewCounts: wordReviewCounts,
                     dailyGoal: dailyGoal,
+                  ),
+                  const SizedBox(height: 30),
+                  // 캘린더는 '어느 날 했는지', 그래프는 '얼마나 했는지'를
+                  // 보여 준다. 같은 기록을 읽으므로 수가 어긋나지 않는다.
+                  StudyTrendChart(
+                    practiceCounts: practiceCounts,
+                    wordReviewCounts: wordReviewCounts,
                   ),
                 ]
                     .map((child) => child is StagePreviewScreen

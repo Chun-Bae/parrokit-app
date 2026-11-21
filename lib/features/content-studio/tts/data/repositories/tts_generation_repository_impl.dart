@@ -20,7 +20,7 @@ class TtsGenerationRepositoryImpl implements TtsGenerationRepository {
     void Function(int chargedParrots)? onCharged,
   }) async {
     return remoteDataSource.generateTts(
-      text: text, 
+      text: text,
       language: language,
       provider: provider,
       voiceId: voiceId,

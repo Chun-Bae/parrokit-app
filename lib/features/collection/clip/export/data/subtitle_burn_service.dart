@@ -56,8 +56,8 @@ class SubtitleBurnService {
       return const SubtitleBurnResult(message: videoMissingHint);
     }
 
-    final workDir = Directory(
-        '${(await getTemporaryDirectory()).path}/subtitle-burn');
+    final workDir =
+        Directory('${(await getTemporaryDirectory()).path}/subtitle-burn');
     if (!await workDir.exists()) await workDir.create(recursive: true);
 
     final subtitlePath = '${workDir.path}/subtitle.srt';
@@ -125,8 +125,8 @@ class SubtitleBurnService {
   /// 내보내고 남은 파일을 지운다. 영상이라 꽤 크다.
   static Future<void> clearWorkDir() async {
     try {
-      final dir = Directory(
-          '${(await getTemporaryDirectory()).path}/subtitle-burn');
+      final dir =
+          Directory('${(await getTemporaryDirectory()).path}/subtitle-burn');
       if (await dir.exists()) await dir.delete(recursive: true);
     } catch (error) {
       AppLogger.w('[SubtitleBurn] 임시 파일을 지우지 못했어요: $error');

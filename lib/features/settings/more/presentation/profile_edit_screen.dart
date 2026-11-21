@@ -1,9 +1,10 @@
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/utils/user_error_message.dart';
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:provider/provider.dart';
@@ -143,11 +144,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 finalPhotoUrl.startsWith('file://'))) {
           final file = File(finalPhotoUrl);
           // 파일명에 타임스탬프를 붙여 중복 방지 (확장자는 편의상 jpg 처리, 원한다면 추출 로직 추가 가능)
-          final ref = FirebaseStorage.instance.ref().child(
-              'users/${currentUser!.id}/profile_${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-          await ref.putFile(file);
-          finalPhotoUrl = await ref.getDownloadURL();
+          final uploaded = await UserFileStorage.instance.uploadFile(
+            file,
+            path:
+                'users/${currentUser!.id}/profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            contentType: 'image/jpeg',
+          );
+          finalPhotoUrl = uploaded.url;
         }
 
         // 2. 빈 문자열 '' 은 기본 프사(제거)를 의미합니다
@@ -155,17 +158,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             .updatePhotoUrl(finalPhotoUrl == '' ? null : finalPhotoUrl);
 
         // 3. 저장까지 끝났으면 예전 프사를 지운다 (용량 절약)
+        // 카카오·애플 프로필 사진 같은 바깥 주소는 서버가 "관리 안 함"으로
+        // 답하고 지우지 않는다. 실패해도 진행은 계속된다.
+        //
+        // 기다리지 않는다. R2로 옮긴 뒤로 지우기도 Cloud Function이라,
+        // 찬 함수가 깨어나는 20초를 사용자가 빈 화면으로 서서 기다렸다.
+        // 올리기 20초 + 지우기 20초로 사진 한 장 바꾸는 데 1분이 걸렸다
+        // (5차 511). 결과는 화면에 쓰이지 않고 deleteQuietly는 던지지도
+        // 않으니, 띄워 두고 저장을 끝낸다.
         final previousPhotoUrl = currentUser?.photoUrl;
-        if (previousPhotoUrl != null &&
-            previousPhotoUrl.contains('firebasestorage.googleapis.com')) {
-          try {
-            await FirebaseStorage.instance
-                .refFromURL(previousPhotoUrl)
-                .delete();
-          } catch (e) {
-            // 삭제 실패하더라도 (이미 없거나 권한문제 등) 진행은 계속되도록 catch 처리
-            AppLogger.w('[Profile] 옛 프로필 사진 삭제 실패: $e');
-          }
+        if (previousPhotoUrl != null && previousPhotoUrl.startsWith('https://')) {
+          unawaited(UserFileStorage.instance.deleteQuietly(url: previousPhotoUrl));
         }
       }
 

@@ -84,8 +84,7 @@ class NativeClipPlayerEngine extends ChangeNotifier
     Duration? clipEnd,
     bool loop = false,
   }) =>
-      _player.setRange(
-          clipBegin: clipBegin, clipEnd: clipEnd, loop: loop);
+      _player.setRange(clipBegin: clipBegin, clipEnd: clipEnd, loop: loop);
 
   @override
   Future<void> close() async {

@@ -2,7 +2,11 @@
 //
 // 전에는 토스트 한 줄('패롯이 부족합니다. (필요 5 / 보유 4)')뿐이라 무엇을
 // 할 수 있는지 알 수 없었다. 할 수 있는 일을 버튼으로 둔다.
-// 패롯 충전은 스토어 상품이 아직 없어서 넣지 않는다.
+//
+// 충전은 한동안 빠져 있었다. 그때는 스토어 상품이 없었기 때문인데,
+// parrokit_coins 상품과 그 화면이 생긴 뒤에도 이 시트만 그대로여서,
+// 패롯이 모자라다고 알리면서 정작 사는 길은 안 알려 줬다. 광고로 받는
+// 3개로는 모자란 경우(6개 필요)가 흔한데도 그랬다(5차 512).
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +15,7 @@ import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/features/settings/more/presentation/sections/ad_reward_button.dart';
+import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
@@ -18,6 +23,9 @@ import 'package:parrokit/features/settings/subscription/presentation/subscriptio
 
 /// 제목과 본문. 무엇에 얼마가 필요한지 그대로 적는다.
 const String notEnoughParrotsTitle = '패롯이 모자라요';
+
+/// 충전 단추에 적을 말.
+const String notEnoughParrotsTopupLabel = '패롯 충전하기';
 
 String notEnoughParrotsBody({required int needed, required int have}) =>
     '이번 작업에 $needed개가 필요한데 $have개가 있어요.';
@@ -41,6 +49,7 @@ Future<void> showNotEnoughParrotsSheet(
   required int needed,
   required int have,
   PaywallPresenter? presenter,
+  Future<void> Function(BuildContext context)? onTopup,
 }) {
   return showAppSheet<void>(
     context: context,
@@ -48,6 +57,7 @@ Future<void> showNotEnoughParrotsSheet(
       needed: needed,
       have: have,
       presenter: presenter,
+      onTopup: onTopup,
     ),
   );
 }
@@ -58,6 +68,7 @@ class NotEnoughParrotsSheet extends StatelessWidget {
     required this.needed,
     required this.have,
     this.presenter,
+    this.onTopup,
   });
 
   final int needed;
@@ -65,6 +76,9 @@ class NotEnoughParrotsSheet extends StatelessWidget {
 
   /// 테스트에서 가짜를 넣기 위한 자리.
   final PaywallPresenter? presenter;
+
+  /// 충전 화면을 여는 방법. 테스트에서 바꿔 끼운다.
+  final Future<void> Function(BuildContext context)? onTopup;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +106,19 @@ class NotEnoughParrotsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             AdRewardButton(style: buttonStyle),
+            const SizedBox(height: 10),
+            // 광고로 받는 3개로 모자랄 때 바로 살 수 있는 길. 단계와
+            // 상관없이 보여 준다. 구독자도 패롯은 떨어진다.
+            OutlinedButton(
+              key: const ValueKey('not-enough-topup'),
+              style:
+                  OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                (onTopup ?? showParrotStorePaywall)(context);
+              },
+              child: const Text(notEnoughParrotsTopupLabel),
+            ),
             if (tier == SubscriptionTier.free) ...[
               const SizedBox(height: 10),
               OutlinedButton(

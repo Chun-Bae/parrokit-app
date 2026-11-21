@@ -275,8 +275,8 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
     finishAttempt(success: true);
     unawaited(stopListening());
     final auto = canAutoListen;
-    setState(() => message =
-        auto ? '잘했어요! 다음 문장으로 넘어가요.' : '잘했어요! 체크를 누르면 다음 문장으로 넘어가요.');
+    setState(() =>
+        message = auto ? '잘했어요! 다음 문장으로 넘어가요.' : '잘했어요! 체크를 누르면 다음 문장으로 넘어가요.');
     if (!auto) return;
     autoTimer?.cancel();
     autoTimer = Timer(_autoAdvanceDelay, () {
@@ -447,8 +447,7 @@ class SpeechPracticeViewState extends State<SpeechPracticeView> {
             Text(heard,
                 key: const ValueKey('speech-heard'),
                 textAlign: TextAlign.center,
-                style:
-                    context.texts.bodyReading.copyWith(color: palette.ink)),
+                style: context.texts.bodyReading.copyWith(color: palette.ink)),
           ]),
         ),
       if (message != null)

@@ -13,12 +13,12 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/domain/collection_clip/data/utils/clip_path_utils.dart';
 import 'clip_source_ref_datasource.dart';
@@ -45,7 +45,8 @@ class ClipFileSyncDatasource {
       throw StateError('로컬 파일을 찾을 수 없습니다.');
     }
 
-    final sourceRef = await sourceRefDatasource.requireCurrentClipSourceRef(clip);
+    final sourceRef =
+        await sourceRefDatasource.requireCurrentClipSourceRef(clip);
     final cacheEntry =
         await sourceRefDatasource.getClipCacheEntryForSourceRef(sourceRef);
     if (cacheEntry != null) {
@@ -59,7 +60,8 @@ class ClipFileSyncDatasource {
     final relativePath = await ClipPathUtils.defaultCachePathForClip(
       clipId: clip.id,
       remoteDocId: sourceRef.remoteDocId,
-      extensionHint: sourceRef.provider == ClipStorageConstants.providerGoogleDrive
+      extensionHint: sourceRef.provider ==
+              ClipStorageConstants.providerGoogleDrive
           ? p.extension(sourceRef.storagePath ?? sourceRef.remoteFileId ?? '')
           : p.extension(sourceRef.storagePath ?? ''),
     );
@@ -207,7 +209,8 @@ class ClipFileSyncDatasource {
   }) async {
     final entries = await (db.select(db.clipCacheEntries)
           ..where(
-            (c) => c.ownerScope.equals(ownerScope) & c.ownerKey.equals(ownerKey),
+            (c) =>
+                c.ownerScope.equals(ownerScope) & c.ownerKey.equals(ownerKey),
           ))
         .get();
     if (entries.isEmpty) return;
@@ -222,7 +225,8 @@ class ClipFileSyncDatasource {
 
     await (db.delete(db.clipCacheEntries)
           ..where(
-            (c) => c.ownerScope.equals(ownerScope) & c.ownerKey.equals(ownerKey),
+            (c) =>
+                c.ownerScope.equals(ownerScope) & c.ownerKey.equals(ownerKey),
           ))
         .go();
 
@@ -235,17 +239,19 @@ class ClipFileSyncDatasource {
     ClipSourceRef sourceRef,
     File destination,
   ) async {
-    final ref = sourceRef.storagePath != null && sourceRef.storagePath!.isNotEmpty
-        ? FirebaseStorage.instance.ref(sourceRef.storagePath!)
-        : (sourceRef.downloadUrl != null && sourceRef.downloadUrl!.isNotEmpty
-            ? FirebaseStorage.instance.refFromURL(sourceRef.downloadUrl!)
-            : null);
-    if (ref == null) {
+    final hasPath =
+        sourceRef.storagePath != null && sourceRef.storagePath!.isNotEmpty;
+    final hasUrl =
+        sourceRef.downloadUrl != null && sourceRef.downloadUrl!.isNotEmpty;
+    if (!hasPath && !hasUrl) {
       throw StateError('서버 파일 경로를 찾을 수 없습니다.');
     }
 
-    await destination.parent.create(recursive: true);
-    await ref.writeToFile(destination);
+    await UserFileStorage.instance.downloadToFile(
+      path: hasPath ? sourceRef.storagePath : null,
+      url: hasUrl ? sourceRef.downloadUrl : null,
+      destination: destination,
+    );
   }
 
   Future<void> _restoreCloudClipFile(

@@ -13,8 +13,10 @@ import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
+import 'package:parrokit/core/content/practice_calendar.dart';
 import 'package:parrokit/core/content/practice_reward.dart';
 import 'package:parrokit/core/content/word_review_store.dart';
+import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/practice_reward_grant.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -24,6 +26,7 @@ import 'package:parrokit/features/collection/library/presentation/widgets/swipe_
 import 'package:parrokit/features/collection/shared/collection_tokens.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
+import 'package:parrokit/core/shared/widgets/reward_celebration.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
@@ -516,6 +519,13 @@ Future<void> showWordDetails(
     ),
   );
 }
+
+/// 복습을 끝내지 않고 창을 닫았을 때 알려 줄 말(5차 515, 사용자 요청).
+///
+/// 고른 답은 그때그때 저장되는데 창을 내리면 아무 말이 없어서, 한 것이
+/// 날아간 줄 알기 쉬웠다. 한 문제도 안 풀었으면 알릴 것이 없으니 비운다.
+String? wordReviewPartialMessage(int solved) =>
+    solved <= 0 ? null : '$solved문제 풀었어요';
 
 /// 복습 단계를 적는 말. 목록 줄과 상세가 같이 쓴다(5차 482).
 @visibleForTesting
@@ -1210,13 +1220,28 @@ class _AddWordSheetState extends State<AddWordSheet> {
   Future<void> fillExamples() async {
     final word = _word.text.trim();
     if (word.isEmpty || fillingExamples) return;
+    // 상한을 모르면 묻기 전에 서버에 물어 온다(5차 507).
+    if (_assist.maxExamplesPerWord == null) {
+      setState(() => fillingExamples = true);
+      await _assist.refreshUsage();
+      if (!mounted) return;
+      setState(() => fillingExamples = false);
+    }
+    if (_assist.examplesRemainingToday == 0) {
+      // 까닭은 _examplesBlocked가 단추 바로 아래에 적는다. fillNote에도
+      // 넣으면 시트 아래에 똑같은 말이 한 번 더 나온다(5차 513).
+      setState(() {});
+      return;
+    }
     final emptySlots = [
       for (final (index, c) in _examples.indexed)
         if (c.text.trim().isEmpty) index,
     ];
-    final room = examplesMaxCount - _examples.length;
+    final cap = _assist.maxExamplesPerWord ?? examplesMaxCount;
+    final room = cap - _examples.length;
     if (emptySlots.isEmpty && room <= 0) {
-      setState(() => fillNote = '예문은 $examplesMaxCount개까지 넣을 수 있어요.');
+      // 위와 같다. 낱말당 상한도 _examplesBlocked가 이미 적는다(5차 513).
+      setState(() {});
       return;
     }
     // 몇 개를 받을지 고르게 한다. 상한도 여기서 보여 준다(5차 474).
@@ -1228,6 +1253,9 @@ class _AddWordSheetState extends State<AddWordSheet> {
       context,
       room: emptySlots.length + room < 1 ? 1 : emptySlots.length + room,
       already: already,
+      maxPerWord: _assist.maxExamplesPerWord,
+      remainingToday: _assist.examplesRemainingToday,
+      exampleCredits: _assist.exampleCredits,
     );
     if (!mounted || count == null) return;
 
@@ -1264,8 +1292,10 @@ class _AddWordSheetState extends State<AddWordSheet> {
       if (suggestion.examples.isEmpty) {
         note = '예문을 받지 못했어요. 잠시 뒤 다시 해 주세요.';
       }
-    } on SentenceAssistQuotaExceeded {
-      note = assistQuotaExhaustedMessage;
+    } on SentenceAssistQuotaExceeded catch (e) {
+      // 예문 한도와 뜻·발음 한도는 다른 축이다. 다 쓴 쪽을 적는다(5차 517).
+      note =
+          e.examples ? exampleQuotaExhaustedText : assistQuotaExhaustedMessage;
     } on SentenceAssistUnavailable catch (e) {
       note = e.reason;
     } catch (_) {
@@ -1307,17 +1337,53 @@ class _AddWordSheetState extends State<AddWordSheet> {
   bool _usageChecked = false;
   bool _usageFailed = false;
 
+  /// 아직 횟수를 묻는 중인지. 묻는 동안에는 채우기 단추를 막는다(5차 515).
+  ///
+  /// 전에는 '횟수 확인 중…'이 떠 있는데도 단추가 눌렸다. 그때는 한도를
+  /// 모르니 다 쓴 사람도 누를 수 있었고, 눌러서야 막혔다는 걸 알았다.
+  /// 성공이든 실패든 한 번 끝나면 다시 열어 준다.
+  bool _usageLoading = true;
+
   /// 오늘 횟수를 다 썼나. 다 썼으면 단추를 막는다(5차 473).
   bool get _exhausted => assistExhausted(
         used: _assistUsed,
         limit: _assist.dailyLimit,
       );
 
+  /// 오늘 예문을 다 만들었나. 뜻·발음 채우기 횟수와는 다른 한도다.
+  bool get _examplesExhausted => _assist.examplesRemainingToday == 0;
+
+  /// 예문 단추가 막힌 까닭. 없으면 null.
+  String? get _examplesBlocked {
+    if (_examplesExhausted) return exampleQuotaExhaustedText;
+    final cap = _assist.maxExamplesPerWord;
+    if (cap == null) return null;
+    final filled = [
+      for (final c in _examples)
+        if (c.text.trim().isNotEmpty) c,
+    ].length;
+    if (filled >= cap && _examples.length >= cap) {
+      return exampleFillCapText(cap);
+    }
+    return null;
+  }
+
   /// 단추 아래에 적을 말. 막혀 있으면 까닭부터 말한다(5차 474).
   String _fillHint(String whenReady) {
     if (_word.text.trim().isEmpty) return wordFillNeedsWordHint;
     if (_exhausted) return assistQuotaExhaustedMessage;
     return whenReady;
+  }
+
+  /// 예문 단추 아래에 적을 말. 예문 한도로 판단한다.
+  String _fillExamplesHint() {
+    if (_word.text.trim().isEmpty) return wordFillNeedsWordHint;
+    // 뜻·발음 쪽은 단추 옆 '오늘 N/M회 사용' 자리가 '횟수 확인 중…'을
+    // 대신 적어 준다. 예문 쪽에는 그 자리가 없어 여기서 적는다(5차 519).
+    return assistFillHint(
+      loading: _usageLoading,
+      whenReady: _examplesBlocked ?? wordFillExamplesHint,
+    );
   }
 
   /// 오늘 쓴 횟수. 서버에서 못 받아오면 null.
@@ -1335,9 +1401,19 @@ class _AddWordSheetState extends State<AddWordSheet> {
     // 횟수만 가져온다(모델을 부르지 않으므로 한 번도 쓰지 않는다).
     // 못 가져오면 '확인 중'에 갇히지 않게 안내를 지운다.
     _assist.refreshUsage().then((_) {
-      if (mounted) setState(() => _usageChecked = true);
+      if (mounted) {
+        setState(() {
+          _usageChecked = true;
+          _usageLoading = false;
+        });
+      }
     }).catchError((_) {
-      if (mounted) setState(() => _usageFailed = true);
+      if (mounted) {
+        setState(() {
+          _usageFailed = true;
+          _usageLoading = false;
+        });
+      }
     });
   }
 
@@ -1433,10 +1509,12 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   children: [
                     FilledButton.tonalIcon(
                       key: const ValueKey('fill-word-meaning'),
-                      onPressed:
-                          _word.text.trim().isEmpty || filling || _exhausted
-                              ? null
-                              : fillMeaning,
+                      onPressed: _word.text.trim().isEmpty ||
+                              filling ||
+                              _usageLoading ||
+                              _exhausted
+                          ? null
+                          : fillMeaning,
                       icon: filling
                           ? const SizedBox.square(
                               dimension: 16,
@@ -1602,7 +1680,8 @@ class _AddWordSheetState extends State<AddWordSheet> {
                       key: const ValueKey('fill-word-examples'),
                       onPressed: _word.text.trim().isEmpty ||
                               fillingExamples ||
-                              _exhausted
+                              _usageLoading ||
+                              _examplesBlocked != null
                           ? null
                           : fillExamples,
                       icon: fillingExamples
@@ -1615,7 +1694,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   ],
                 ),
                 Text(
-                  _fillHint(wordFillExamplesHint),
+                  _fillExamplesHint(),
                   key: const ValueKey('word-examples-hint'),
                   style: context.texts.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1654,6 +1733,64 @@ class _AddWordSheetState extends State<AddWordSheet> {
 }
 
 /// 오늘 복습. 단어를 보고 뜻을 떠올린 뒤 "뜻 보기", 그다음 "다시"/"알아요".
+/// 마친 화면에 적는 결과 한 줄. 단어와 고른 답을 나란히 둔다(5차 509).
+class _ReviewResultRow extends StatelessWidget {
+  const _ReviewResultRow({required this.word, required this.rating});
+
+  final MyWord word;
+  final ReviewRating rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final known = rating != ReviewRating.again;
+    return Row(
+      children: [
+        Icon(
+          known ? Icons.check_rounded : Icons.refresh_rounded,
+          size: 18,
+          color: known ? colors.primary : colors.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            word.word,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.texts.bodyMedium,
+          ),
+        ),
+        if (word.meaning.trim().isNotEmpty) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              word.meaning.trim(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
+            ),
+          ),
+        ],
+        const SizedBox(width: 8),
+        Text(
+          reviewRatingLabel(rating),
+          style: context.texts.labelSmall.copyWith(
+              color: known ? colors.primary : colors.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+}
+
+/// 고른 답을 적는 말. 버튼에 쓰는 말과 같게 둔다.
+String reviewRatingLabel(ReviewRating rating) => switch (rating) {
+      ReviewRating.again => '다시',
+      ReviewRating.known => '알아요',
+      ReviewRating.easy => '쉬워요',
+    };
+
 class WordReviewSheet extends StatefulWidget {
   const WordReviewSheet({
     super.key,
@@ -1685,9 +1822,18 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
   /// 이번 바퀴에서 '다시'를 고른 단어.
   final List<MyWord> again = [];
 
+  /// 이번 바퀴에 본 단어와 고른 답. 마친 화면에 하나씩 적어 준다(5차 509).
+  /// 전에는 '알아요 N개 · 다시 M개'만 적어서, 어떤 단어를 틀렸는지 보려면
+  /// 목록으로 돌아가 하나씩 열어 봐야 했다.
+  final List<({MyWord word, ReviewRating rating})> answered = [];
+
   /// 몇 바퀴째인지(0이면 오늘 처음 도는 중). '다시' 고른 것만 다시 돌 때
   /// 화면이 그대로여서 처음부터 다시 하는 것처럼 보였다(5차).
   int round = 0;
+
+  /// 이 창에서 푼 문제 수. '다시' 바퀴를 돌아도 더해진다. 끝내지 않고
+  /// 닫을 때 몇 개를 풀었는지 알리는 데 쓴다(5차 515).
+  int solvedCount = 0;
 
   /// 이 창에서 받은 크래커. 다 마친 화면에 적는다(5차 505).
   int earnedCrackers = 0;
@@ -1702,7 +1848,12 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
         .then((next) {
       if (mounted) setState(() => reviews[word.id] = next);
     }));
+    // 학습 캘린더에도 쌓는다(사용자 요청). 따라 말하기와 다른 자리에 세므로
+    // 하루 목표와 칸 색은 그대로다. '다시'도 복습이라 센다(크래커와 같은 셈).
+    unawaited(PracticeCalendar.recordWordReview(widget.accountId));
     setState(() {
+      answered.add((word: word, rating: rating));
+      solvedCount++;
       if (known) {
         knownCount++;
       } else {
@@ -1719,7 +1870,16 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
       earnedCrackers += grant.crackers;
       if (grant.capped) rewardCap = grant.cap;
     });
+    // 이번 바퀴를 다 돌았으면 받은 크래커를 크게 보여 준다(5차 509).
+    // 한 바퀴에 한 번만 띄운다. '다시' 고른 것을 또 돌면 그 바퀴 끝에 또 뜬다.
+    if (index >= queue.length && earnedCrackers > 0 && !celebrated) {
+      celebrated = true;
+      await showRewardCelebration(context, crackers: earnedCrackers);
+    }
   }
+
+  /// 이번 바퀴에서 덮개를 이미 띄웠는지.
+  bool celebrated = false;
 
   /// 이 답을 고르면 며칠 뒤에 다시 나오는지.
   String nextLabelFor(ReviewRating rating) {
@@ -1735,11 +1895,25 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
     setState(() {
       queue = List.of(again);
       again.clear();
+      answered.clear();
+      // 이 바퀴도 다 돌면 다시 '짜잔'을 띄운다(5차 509).
+      celebrated = false;
       index = 0;
       knownCount = 0;
       revealed = false;
       round++;
     });
+  }
+
+  @override
+  void dispose() {
+    // 다 풀고 나면 마친 화면이 이미 셈을 보여 준다. 중간에 닫았을 때만
+    // 알린다. 토스트는 창이 사라진 뒤에 떠야 해서 여기서 부른다(5차 515).
+    if (index < queue.length) {
+      final message = wordReviewPartialMessage(solvedCount);
+      if (message != null) showToast(message);
+    }
+    super.dispose();
   }
 
   @override
@@ -1803,6 +1977,25 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
                     textAlign: TextAlign.center,
                     style: context.texts.bodySmall
                         .copyWith(color: colors.onSurfaceVariant)),
+              ],
+              if (answered.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                // 본 단어를 하나씩 되짚어 준다. 많으면 이 자리만 넘긴다.
+                Flexible(
+                  child: ListView.separated(
+                    key: const ValueKey('review-result-list'),
+                    shrinkWrap: true,
+                    itemCount: answered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (context, i) {
+                      final item = answered[i];
+                      return _ReviewResultRow(
+                        word: item.word,
+                        rating: item.rating,
+                      );
+                    },
+                  ),
+                ),
               ],
               const SizedBox(height: 20),
               if (again.isNotEmpty) ...[
@@ -1983,6 +2176,14 @@ const String wordFillBasicsHint = '한 번만 채우면 돼요';
 
 /// 예문 채우기 단추 아래 설명(5차 472).
 const String wordFillExamplesHint = '겹치지 않는 예문을 받아요';
+
+/// 뜻과 발음이 이미 다 차 있을 때(5차 525).
+///
+/// 고치기 시트는 이때 서버를 부르지 않고 돌아서는데, 까닭은 시트 맨 아래
+/// _notice에만 적었다. 단추는 파랗게 켜진 채라, 눌러도 아무 일이 없는
+/// 것처럼 보였다(506·515·519에서 고친 것과 같은 결함).
+/// 문장 추가 화면도 같은 말을 쓴다(526).
+const String wordFillBasicsDoneHint = assistBasicsDoneMessage;
 
 String wordAssistUsageLabel({
   required int? used,

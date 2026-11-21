@@ -20,6 +20,14 @@ Future<void> initRevenueCat(UserProvider userProvider) async {
     }
 
     if (apiKey != null && apiKey.isNotEmpty) {
+      // 디버그 빌드에서는 SDK 로그를 debug까지 연다(5차 514).
+      //
+      // Paywall의 구매 복원·구매 흐름을 RevenueCatUI는 debug 레벨로만 적는다.
+      // 기본(info)에서는 복원을 눌러도 로그 한 줄이 안 남아, 시뮬레이터에서
+      // 눌린 건지 아닌지조차 알 수 없었다. 출시 빌드는 그대로 둔다.
+      if (kDebugMode) {
+        await Purchases.setLogLevel(LogLevel.debug);
+      }
       await Purchases.configure(PurchasesConfiguration(apiKey));
       if (userProvider.isLoggedIn && userProvider.currentUser != null) {
         await Purchases.logIn(userProvider.currentUser!.id);

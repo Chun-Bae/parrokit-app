@@ -26,7 +26,7 @@ class Post {
   final List<DateTime> editHistory;
   final List<VoteOption>? voteOptions;
   final DateTime? voteEndTime;
-  
+
   // --- Q&A 전용 필드 ---
   final String questionStatus; // 'waiting', 'resolved', 'expired'
   final String? acceptedCommentId;
@@ -103,13 +103,16 @@ class Post {
       id: id ?? this.id,
       postType: postType ?? this.postType,
       category: category ?? this.category,
-      targetLanguage: clearTargetLanguage ? null : (targetLanguage ?? this.targetLanguage),
+      targetLanguage:
+          clearTargetLanguage ? null : (targetLanguage ?? this.targetLanguage),
       title: title ?? this.title,
       content: content ?? this.content,
       tags: tags ?? this.tags,
       authorId: authorId ?? this.authorId,
       authorNickname: authorNickname ?? this.authorNickname,
-      authorAvatarUrl: clearAuthorAvatarUrl ? null : (authorAvatarUrl ?? this.authorAvatarUrl),
+      authorAvatarUrl: clearAuthorAvatarUrl
+          ? null
+          : (authorAvatarUrl ?? this.authorAvatarUrl),
       snippet: snippet ?? this.snippet,
       hasImage: hasImage ?? this.hasImage,
       imageUrls: imageUrls ?? this.imageUrls,
@@ -125,7 +128,9 @@ class Post {
       voteOptions: voteOptions ?? this.voteOptions,
       voteEndTime: clearVoteEndTime ? null : (voteEndTime ?? this.voteEndTime),
       questionStatus: questionStatus ?? this.questionStatus,
-      acceptedCommentId: clearAcceptedCommentId ? null : (acceptedCommentId ?? this.acceptedCommentId),
+      acceptedCommentId: clearAcceptedCommentId
+          ? null
+          : (acceptedCommentId ?? this.acceptedCommentId),
       rewardCrackers: rewardCrackers ?? this.rewardCrackers,
       expireAt: clearExpireAt ? null : (expireAt ?? this.expireAt),
     );
@@ -139,13 +144,18 @@ class Post {
       targetLanguage: json['targetLanguage'] as String?,
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+              [],
       authorId: json['authorId'] as String? ?? '',
       authorNickname: json['authorNickname'] as String? ?? '',
       authorAvatarUrl: json['authorAvatarUrl'] as String?,
       snippet: json['snippet'] as String? ?? '',
       hasImage: json['hasImage'] as bool? ?? false,
-      imageUrls: (json['imageUrls'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
       likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       commentCount: (json['commentCount'] as num?)?.toInt() ?? 0,
@@ -157,7 +167,7 @@ class Post {
       editHistory: (json['editHistory'] as List<dynamic>?)
               ?.map((e) => _parseDateTime(e))
               .whereType<DateTime>()
-              .toList() ?? 
+              .toList() ??
           [],
       voteOptions: (json['voteOptions'] as List<dynamic>?)
           ?.map((e) => VoteOption.fromJson(e as Map<String, dynamic>))
@@ -194,8 +204,10 @@ class Post {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'editHistory': editHistory.map((e) => e.toIso8601String()).toList(),
-      if (voteOptions != null) 'voteOptions': voteOptions!.map((e) => e.toJson()).toList(),
-      if (voteEndTime != null) 'voteEndTime': voteEndTime!.toUtc().toIso8601String(),
+      if (voteOptions != null)
+        'voteOptions': voteOptions!.map((e) => e.toJson()).toList(),
+      if (voteEndTime != null)
+        'voteEndTime': voteEndTime!.toUtc().toIso8601String(),
       'questionStatus': questionStatus,
       'acceptedCommentId': acceptedCommentId,
       'rewardCrackers': rewardCrackers,

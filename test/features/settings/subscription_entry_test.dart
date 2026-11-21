@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 import 'package:parrokit/features/settings/subscription/presentation/paywall_presenter.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_preview_sheet.dart';
@@ -56,14 +57,18 @@ void main() {
   });
 
   group('미리보기 화면', () {
-    testWidgets('두 단계와 혜택, 값을 보여 준다', (tester) async {
+    testWidgets('네 단계와 혜택, 값을 보여 준다', (tester) async {
       await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
 
       expect(find.text('라이트'), findsOneWidget);
+      expect(find.text('플러스'), findsOneWidget);
       expect(find.text('프로'), findsOneWidget);
-      expect(find.text('월 ₩2,900'), findsOneWidget);
+      expect(find.text('맥스'), findsOneWidget);
+      expect(find.text('월 ₩4,000'), findsOneWidget);
+      expect(find.text('월 ₩20,000'), findsOneWidget);
       expect(find.text('매달 패롯 100개'), findsOneWidget);
       expect(find.text('서버 백업 30GB'), findsOneWidget);
+      expect(find.text('예문 생성 하루 500개'), findsOneWidget);
       expect(find.text('라이트 시작하기'), findsOneWidget);
     });
 
@@ -86,7 +91,7 @@ void main() {
       // 살 수 있어 보였다. 이제 눌리지 않고, 까닭은 누르기 전에 보인다.
       await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
 
-      for (final key in ['start-light', 'start-pro']) {
+      for (final key in ['start-light', 'start-plus', 'start-pro', 'start-max']) {
         final button = tester.widget<FilledButton>(
             find.byKey(ValueKey(key), skipOffstage: false));
         expect(button.onPressed, isNull, reason: key);
@@ -124,6 +129,37 @@ void main() {
       ]) {
         expect(text, isNot(contains('습니다')), reason: text);
       }
+    });
+  });
+
+  // 뜻·발음과 예문은 서로 다른 축인데, 전에는 예문만 숫자를 적고 뜻·발음은
+  // '하루 한도가 늘어요'로 뭉뚱그렸다. 두 가지가 있다는 것도, 얼마나 되는지도
+  // 알 수 없었다(5차 531).
+  group('혜택 줄', () {
+    test('두 한도를 숫자로 나눠 적는다', () {
+      final light = subscriptionTiers
+          .firstWhere((c) => c.tier == SubscriptionTier.light)
+          .benefits;
+      expect(light, contains('뜻·발음 채우기 하루 15번'));
+      expect(light, contains('예문 생성 하루 30개'));
+      expect(light, contains('한 낱말에 예문 5개까지'));
+      // 숫자 없이 뭉뚱그리던 줄은 사라졌다.
+      expect(light.any((l) => l.contains('한도가 늘어요')), isFalse);
+    });
+
+    test('단계마다 수가 다르다', () {
+      for (final copy in subscriptionTiers) {
+        expect(
+          copy.benefits,
+          contains('뜻·발음 채우기 하루 ${dailyAssistFor(copy.tier)}번'),
+        );
+        expect(
+          copy.benefits,
+          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}개'),
+        );
+      }
+      // 맥스가 가장 많다.
+      expect(dailyAssistFor(SubscriptionTier.max), 120);
     });
   });
 }

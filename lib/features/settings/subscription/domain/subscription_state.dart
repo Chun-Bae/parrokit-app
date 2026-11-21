@@ -21,7 +21,17 @@ enum SubscriptionStatus {
 
 /// entitlement 이름. 서버(functions/src/subscriptionEvent.ts)와 같아야 한다.
 const String lightEntitlementId = 'parrokit_sub_light';
+const String plusEntitlementId = 'parrokit_sub_plus';
 const String proEntitlementId = 'parrokit_sub_pro';
+const String maxEntitlementId = 'parrokit_sub_max';
+
+/// 구독 entitlement 전부. 하나라도 있으면 구독 중이다.
+const Set<String> subscriptionEntitlementIds = {
+  lightEntitlementId,
+  plusEntitlementId,
+  proEntitlementId,
+  maxEntitlementId,
+};
 
 class SubscriptionState {
   const SubscriptionState({
@@ -43,8 +53,12 @@ class SubscriptionState {
 
 SubscriptionTier _tierFromName(Object? value) {
   switch (value) {
+    case 'max':
+      return SubscriptionTier.max;
     case 'pro':
       return SubscriptionTier.pro;
+    case 'plus':
+      return SubscriptionTier.plus;
     case 'light':
       return SubscriptionTier.light;
     default:
@@ -84,13 +98,17 @@ SubscriptionState subscriptionFromServer(Map<String, dynamic>? map) {
 
 /// RevenueCat이 들고 있는 entitlement로 본 상태. 서버 값이 아직 없을 때 쓴다.
 SubscriptionState subscriptionFromEntitlements(Set<String> active) {
-  if (active.contains(proEntitlementId)) {
-    return const SubscriptionState(
-        tier: SubscriptionTier.pro, status: SubscriptionStatus.active);
-  }
-  if (active.contains(lightEntitlementId)) {
-    return const SubscriptionState(
-        tier: SubscriptionTier.light, status: SubscriptionStatus.active);
+  // 높은 단계부터 본다. 서버 tierOf와 같은 순서.
+  const byEntitlement = [
+    (maxEntitlementId, SubscriptionTier.max),
+    (proEntitlementId, SubscriptionTier.pro),
+    (plusEntitlementId, SubscriptionTier.plus),
+    (lightEntitlementId, SubscriptionTier.light),
+  ];
+  for (final (id, tier) in byEntitlement) {
+    if (active.contains(id)) {
+      return SubscriptionState(tier: tier, status: SubscriptionStatus.active);
+    }
   }
   return SubscriptionState.free;
 }
@@ -98,12 +116,12 @@ SubscriptionState subscriptionFromEntitlements(Set<String> active) {
 /// 개발 빌드에서 단계를 바꿔 보는 길: --dart-define=PK_FAKE_TIER=pro
 SubscriptionState? subscriptionFromFakeTier(String fakeTier) {
   switch (fakeTier) {
+    case 'max':
     case 'pro':
-      return const SubscriptionState(
-          tier: SubscriptionTier.pro, status: SubscriptionStatus.active);
+    case 'plus':
     case 'light':
-      return const SubscriptionState(
-          tier: SubscriptionTier.light, status: SubscriptionStatus.active);
+      return SubscriptionState(
+          tier: _tierFromName(fakeTier), status: SubscriptionStatus.active);
     case 'free':
       return SubscriptionState.free;
     default:

@@ -7,6 +7,18 @@ class FakeAssist implements SentenceAssist {
   int? remainingToday;
   @override
   int? dailyLimit;
+  @override
+  int? examplesRemainingToday;
+  @override
+  int? exampleDailyLimit;
+  @override
+  int? maxExamplesPerWord;
+
+  @override
+  int? exampleCredits;
+
+  @override
+  int? assistCredits;
   int refreshCalls = 0;
   final suggestCalls = <String>[];
   Future<SentenceSuggestion> Function(String text)? onSuggest;
@@ -298,5 +310,57 @@ void _exhaustedTests() {
 
   test('횟수를 모르면 막지 않는다', () {
     expect(make(FakeAssist()).exhausted, isFalse);
+  });
+
+  // 손으로 다 적어 두면 채우기가 덮어쓸 자리가 없다. 그런데도 서버를 불러
+  // 하루 횟수만 한 번 버렸다(5차 526). 기기에서 3/3을 그렇게 채웠다.
+  group('채울 자리가 없을 때', () {
+    test('손으로 둘 다 적었으면 부르지 않는다', () async {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
+      final controller = AddSentenceController(assist: assist, language: '영어');
+      controller.text.text = 'Hello';
+      controller.translation.text = '내가 적은 뜻';
+      controller.pronunciation.text = '내가 적은 발음';
+
+      expect(controller.hasFillRoom, isFalse);
+      await controller.fill();
+      expect(assist.suggestCalls, isEmpty);
+      controller.dispose();
+    });
+
+    test('한쪽만 적었으면 아직 부를 수 있다', () async {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
+      final controller = AddSentenceController(assist: assist, language: '영어');
+      controller.text.text = 'Hello';
+      controller.translation.text = '내가 적은 뜻';
+
+      expect(controller.hasFillRoom, isTrue);
+      await controller.fill();
+      expect(assist.suggestCalls, ['Hello']);
+      // 손으로 적은 뜻은 그대로 두고 발음만 채운다.
+      expect(controller.translation.text, '내가 적은 뜻');
+      expect(controller.pronunciation.text, '발:Hello');
+      controller.dispose();
+    });
+
+    test('자동으로 채운 값만 있으면 다시 받을 수 있다', () async {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
+      final controller = AddSentenceController(assist: assist, language: '영어');
+      controller.text.text = 'Hello';
+
+      await controller.fill();
+      expect(assist.suggestCalls.length, 1);
+      // 자동으로 채운 값 그대로면 '다시 받기'를 막지 않는다.
+      expect(controller.hasFillRoom, isTrue);
+      await controller.fill();
+      expect(assist.suggestCalls.length, 2);
+      controller.dispose();
+    });
   });
 }

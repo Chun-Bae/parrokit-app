@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/content/study_data_transfer.dart';
 import 'package:parrokit/features/settings/more/presentation/widgets/backup_progress_dialog.dart';
 
 Future<String> _descriptionOf(
@@ -42,6 +43,35 @@ void main() {
     expect(text, contains('없는 것만 더해요'));
     expect(text, contains('모두 지워지고'));
     expect(text.contains('문장과 단어는 그대로예요'), isFalse);
+  });
+
+  // 고른 것과 상관없이 늘 같은 글이 떴다(5차 521). 단어만 담는데도 '클립과
+  // 자막은 영상 파일까지 담아서 파일이 커요'가 뜨고, 문장만 불러오는 사람도
+  // '지금 기기의 클립과 자막은 모두 지워지고'를 읽었다.
+  test('고르지 않은 것은 안내에 적지 않는다', () {
+    const words = BackupParts(clips: false, sentences: false, words: true);
+    final backup = backupDialogDescription(
+        type: BackupDialogType.backup, parts: words);
+    expect(backup, contains('고른 것'));
+    expect(backup.contains('클립'), isFalse);
+
+    final restore = backupDialogDescription(
+        type: BackupDialogType.restore, parts: words);
+    expect(restore, contains('없는 것만 더해요'));
+    expect(restore.contains('클립'), isFalse);
+    expect(restore.contains('다시 시작'), isFalse);
+  });
+
+  test('클립만 불러오면 문장·단어 이야기를 하지 않는다', () {
+    const clips = BackupParts(clips: true, sentences: false, words: false);
+    final restore = backupDialogDescription(
+        type: BackupDialogType.restore, parts: clips);
+    expect(restore, contains('모두 지워지고'));
+    expect(restore.contains('없는 것만 더해요'), isFalse);
+
+    final backup = backupDialogDescription(
+        type: BackupDialogType.backup, parts: clips);
+    expect(backup, contains('파일이 커요'));
   });
 
   // 한 흐름을 두 이름으로 부르던 것(5차 487). 여는 단추와 진행 창은

@@ -19,8 +19,7 @@ int speakingLevel(double totalXp) =>
 double xpInLevel(double totalXp) => math.max(0, totalXp) % xpPerLevel;
 
 /// 점수(0~1)로 받는 XP. 100점이면 1 XP.
-double xpGain(double? score) =>
-    math.max(minXpGain, score ?? 0).clamp(0.0, 1.0);
+double xpGain(double? score) => math.max(minXpGain, score ?? 0).clamp(0.0, 1.0);
 
 /// 저장할 XP. 소수 둘째 자리까지만 남긴다.
 double nextXp(double previous, double gain) =>

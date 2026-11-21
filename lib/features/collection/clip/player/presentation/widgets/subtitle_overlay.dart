@@ -43,8 +43,8 @@ class SubtitleOverlay extends StatelessWidget {
                 Text(
                   pron,
                   textAlign: TextAlign.center,
-                  style: base(14,
-                      w: FontWeight.w500, c: videoSubtitlePronColor),
+                  style:
+                      base(14, w: FontWeight.w500, c: videoSubtitlePronColor),
                 ),
               ],
               if (ko.isNotEmpty) ...[

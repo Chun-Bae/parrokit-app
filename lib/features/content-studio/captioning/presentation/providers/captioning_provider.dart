@@ -149,6 +149,24 @@ class CaptioningProvider extends ChangeNotifier
       tags.isEmpty &&
       collectionNameCtl.text.trim() == (initialCollectionName ?? '').trim();
 
+  /// 불러온 직후의 모습. 편집 모드에서 바뀐 것이 있는지 견준다(5차 523).
+  String? _loadedFingerprint;
+
+  /// 편집으로 열었는데 아무것도 바꾸지 않았는지.
+  ///
+  /// [isUntouchedNew]가 `clipId == null`을 요구해서, 편집 모드는 구경만 하고
+  /// 나가도 늘 '지금 나가면 적은 내용이 모두 사라져요'가 떴다. 파일 정보 칸을
+  /// 펼쳤다 닫기만 해도 그랬다. 매번 뜨는 경고는 읽히지 않아서, 정작 고친 것이
+  /// 있을 때도 그냥 눌러 버리게 된다.
+  ///
+  /// 불러오기가 실패해 스냅샷이 없으면 예전처럼 묻는다.
+  bool get isUnchangedEdit =>
+      clipId != null &&
+      _loadedFingerprint != null &&
+      _formFingerprint() == _loadedFingerprint;
+
+  String _formFingerprint() => clipFormFingerprint(_buildFormData());
+
   // 저장 후 닫기 플래그
   bool _shouldClose = false;
   bool get shouldClose => _shouldClose;
@@ -490,6 +508,9 @@ class CaptioningProvider extends ChangeNotifier
       if (form.filePath != null && form.filePath!.isNotEmpty) {
         await setExistingFile(form.filePath!);
       }
+
+      // 다 채운 뒤의 모습을 적어 둔다. 나갈 때 이것과 같으면 묻지 않는다.
+      if (!_disposed) _loadedFingerprint = _formFingerprint();
     } catch (e, st) {
       if (_disposed) return;
       AppLogger.e('편집할 클립 불러오기 실패', error: e, stackTrace: st);

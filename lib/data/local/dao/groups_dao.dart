@@ -13,7 +13,8 @@ class GroupsDao extends DatabaseAccessor<AppDatabase> with _$GroupsDaoMixin {
         ..orderBy([(g) => OrderingTerm.asc(g.name)]))
       .get();
 
-  Future<int> insertGroup(String name, String storageMode, {String? remoteId}) =>
+  Future<int> insertGroup(String name, String storageMode,
+          {String? remoteId}) =>
       into(groups).insert(GroupsCompanion.insert(
         name: name,
         storageMode: Value(storageMode),
@@ -23,8 +24,10 @@ class GroupsDao extends DatabaseAccessor<AppDatabase> with _$GroupsDaoMixin {
   Future<void> deleteGroupById(int id) =>
       (delete(groups)..where((g) => g.id.equals(id))).go();
 
-  Future<Group?> findById(int id) =>
-      (select(groups)..where((g) => g.id.equals(id))..limit(1)).getSingleOrNull();
+  Future<Group?> findById(int id) => (select(groups)
+        ..where((g) => g.id.equals(id))
+        ..limit(1))
+      .getSingleOrNull();
 
   Future<Group?> findByRemoteId(String remoteId) => (select(groups)
         ..where((g) => g.remoteId.equals(remoteId))

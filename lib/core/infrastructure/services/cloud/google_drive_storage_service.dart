@@ -407,8 +407,10 @@ class GoogleDriveStorageService {
     }
 
     final headers = await _authorizationHeaders(account);
-    final clipsFolderId = await _ensureFolderPath(account, headers, const ['clips']);
-    final result = await _listChildFolders(parentId: clipsFolderId, headers: headers);
+    final clipsFolderId =
+        await _ensureFolderPath(account, headers, const ['clips']);
+    final result =
+        await _listChildFolders(parentId: clipsFolderId, headers: headers);
     AppLogger.i(
       '[GoogleDrive][List] clip-folders account=${_maskAccount(account)} '
       'clipsFolderId=$clipsFolderId count=${result.length}',

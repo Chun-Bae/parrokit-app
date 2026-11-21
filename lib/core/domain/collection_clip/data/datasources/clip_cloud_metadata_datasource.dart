@@ -58,7 +58,8 @@ class ClipCloudMetadataDatasource {
       // 자체가 독립 동기화된 경우), 없으면 collectionName으로 폴백한다.
       // 그룹/콜렉션 구조 자체를 옮길 때 그룹까지 따라가지는 않는다.
       if (collection != null) 'collectionName': collection.name,
-      if (collection?.remoteId != null) 'collectionRemoteId': collection!.remoteId,
+      if (collection?.remoteId != null)
+        'collectionRemoteId': collection!.remoteId,
       // 참고용 정보일 뿐 pull sync에서 자동으로 적용하지 않는다 — 그룹은
       // 저장위치별로 독립된 개념이라 이동/당겨오기 시 그대로 따라가지
       // 않는다.

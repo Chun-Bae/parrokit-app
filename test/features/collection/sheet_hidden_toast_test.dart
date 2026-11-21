@@ -16,12 +16,54 @@ String _read(String path) => File(path).readAsStringSync();
 Iterable<String> _codeLines(String source) =>
     source.split('\n').where((l) => !l.trimLeft().startsWith('//'));
 
+/// [needle]이 들어 있는 줄 번호. 주석 줄은 뺀다.
+Iterable<int> _lineNumbersWith(String source, String needle) {
+  final lines = source.split('\n');
+  return [
+    for (final (i, line) in lines.indexed)
+      if (!line.trimLeft().startsWith('//') && line.contains(needle)) i,
+  ];
+}
+
+/// [at] 줄을 품고 있는 메서드의 선언 줄. 못 찾으면 빈 문자열.
+/// if·for 같은 흐름 제어 줄은 건너뛴다.
+const List<String> _notMethodStarts = [
+  'if',
+  'else',
+  'for',
+  'while',
+  'switch',
+  'case',
+  'try',
+  'catch',
+  'finally',
+  'do',
+  'return',
+];
+
+String _enclosingMethod(String source, int at) {
+  final lines = source.split('\n');
+  for (var i = at; i >= 0; i--) {
+    final line = lines[i].trim();
+    if (!line.endsWith('{') || !line.contains('(')) continue;
+    if (line.startsWith('//')) continue;
+    final head = line.split(RegExp(r'[ (]')).first;
+    if (_notMethodStarts.contains(head)) continue;
+    return line.substring(0, line.length - 1).trim();
+  }
+  return '';
+}
+
 void main() {
   test('단어 추가 시트는 토스트를 쓰지 않는다', () {
     final source = _read('lib/features/collection/shell/presentation/'
         'widgets/word_collection_preview.dart');
-    expect(_codeLines(source).where((l) => l.contains('showToast')), isEmpty,
-        reason: '시트 안에서 띄운 토스트는 시트 뒤에 깔려 보이지 않는다');
+    // 띄워 둔 시트 위에서 부르는 토스트만 막는다. 창이 사라진 뒤에 부르는
+    // dispose 안은 가려질 것이 없으므로 그대로 둔다(5차 515).
+    for (final at in _lineNumbersWith(source, 'showToast')) {
+      expect(_enclosingMethod(source, at), 'void dispose()',
+          reason: '시트 안에서 띄운 토스트는 시트 뒤에 깔려 보이지 않는다');
+    }
     // 찾을 단어가 없다는 말도 시트 안 자리(word-fill-note)에 적는다.
     expect(source.contains('fillNote = wordSearchNeedsWordHint'), isTrue);
   });

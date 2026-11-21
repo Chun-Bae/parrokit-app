@@ -24,6 +24,8 @@ import '../../../../data/models/clip_item.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
+import 'package:parrokit/core/domain/collection_clip/data/services/storage_quota_service.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/remote_doc_id_resolver.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_source_ref_datasource.dart';
 import 'package:parrokit/core/domain/collection_clip/data/datasources/clip_thumbnail_datasource.dart';
@@ -46,6 +48,29 @@ import 'package:parrokit/core/domain/collection_clip/domain/repositories/group_r
 import 'package:parrokit/core/domain/collection_clip/domain/repositories/collection_repository.dart';
 import 'mixins/clip_tag_mixin.dart';
 import 'mixins/clip_action_mixin.dart';
+
+/// 옮기기가 엎어졌을 때 사용자에게 적을 말.
+///
+/// 속사정(파일 경로, 서버 오류 코드)은 보여 주지 않고 뭉뚱그린 말을 적는다.
+/// 다만 자리가 모자라거나 구독이 없어서 막힌 것은 사용자가 고칠 수 있는
+/// 일이라 그 말을 그대로 적는다. 전에는 모두 뭉뚱그려서, "서버가 가득
+/// 찼어요. 안 보는 영상을 지우거나..."도 "서버에 저장하지 못했어요"로
+/// 보였다(5차 518).
+String clipTransferErrorText(Object error, String fallback) => switch (error) {
+      ClipTransferBlocked(:final message) => message,
+      UserFileStorageException(:final message) => message,
+      _ => fallback,
+    };
+
+/// 여러 개를 옮기다 중간에 멈췄을 때 덮개에 적을 말(5차 522).
+///
+/// 옮기기는 첫 실패에서 멈춘다. 그런데 덮개는 왜 멈췄는지만 적고 몇 개까지
+/// 갔는지는 말하지 않았다. 5개를 고르고 3개째까지 올라간 뒤 자리가 모자라
+/// 멈추면, 덮개에는 '서버가 가득 찼어요'만 뜨고 토스트에는 '3개를 서버에
+/// 백업했어요'가 떠서 둘이 엇갈렸다.
+String bulkTransferErrorText(String reason, {required int done, required int total}) =>
+    done <= 0 ? reason : '$done/$total개까지 옮겼어요. $reason';
+
 
 class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   @override
@@ -374,7 +399,7 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = failureMessage;
+      _storageTransferError = clipTransferErrorText(e, failureMessage);
       notifyListeners();
       return false;
     }
@@ -675,11 +700,13 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
   /// 이동(moveClipToServer 등)과 같은 오버레이 상태를 공유하므로, 그
   /// 메서드들이 각자 오버레이를 열고 닫지 않도록 여기서는 저장소를 직접
   /// 호출합니다.
-  Future<void> moveClipsToStorage(
+  /// 실제로 옮긴 클립 수를 돌려준다. 중간에 엎어지면 그때까지 옮긴 수다.
+  /// 호출부가 "몇 개를 백업했어요"를 참말로 적을 수 있어야 한다(5차 518).
+  Future<int> moveClipsToStorage(
     List<int> clipIds,
     String target,
   ) async {
-    if (clipIds.isEmpty || _isStorageTransferRunning) return;
+    if (clipIds.isEmpty || _isStorageTransferRunning) return 0;
 
     final title = switch (target) {
       ClipStorageConstants.storageModeLocal => '내 기기로 옮기는 중',
@@ -691,8 +718,8 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
     final total = clipIds.length;
     startStorageTransfer(total, '$total개 클립을 옮길 준비를 하고 있어요', title: title);
 
+    var progress = 0;
     try {
-      var progress = 0;
       for (final clipId in clipIds) {
         switch (target) {
           case ClipStorageConstants.storageModeLocal:
@@ -725,11 +752,16 @@ class ClipProvider extends ChangeNotifier with ClipTagMixin, ClipActionMixin {
       );
       _isStorageTransferRunning = false;
       _storageTransferSucceeded = false;
-      _storageTransferError = moveInterruptedMessage;
+      _storageTransferError = bulkTransferErrorText(
+        clipTransferErrorText(e, moveInterruptedMessage),
+        done: progress,
+        total: total,
+      );
       notifyListeners();
     } finally {
       closeCollectionMenu();
     }
+    return progress;
   }
 
   /// 활성 저장위치 탭을 바꾸고 그 탭의 그룹 목록을 새로 불러옵니다.

@@ -16,11 +16,10 @@
 
 import 'package:drift/drift.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:parrokit/data/local/app_database.dart';
-import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'cached_files_on_disk.dart';
 
@@ -55,7 +54,8 @@ class ClipSourceRefDatasource {
   Future<List<Clip>> visibleClips() async {
     final rows = await db.select(db.clips).get();
     final appAccountId = _currentAccountId;
-    final googleAccountKey = await googleDriveStorageService.currentAccountKey();
+    final googleAccountKey =
+        await googleDriveStorageService.currentAccountKey();
 
     return rows.where((clip) {
       if (clip.ownerScope == ClipStorageConstants.ownerScopeDevice) {
@@ -80,7 +80,8 @@ class ClipSourceRefDatasource {
   Future<List<Clip>> visibleRemoteClips() async {
     final clips = await visibleClips();
     return clips
-        .where((clip) => clip.storageMode != ClipStorageConstants.storageModeLocal)
+        .where(
+            (clip) => clip.storageMode != ClipStorageConstants.storageModeLocal)
         .toList();
   }
 
@@ -289,7 +290,8 @@ class ClipSourceRefDatasource {
   Future<List<ClipCacheEntry>> currentCacheEntries() async {
     final entries = await db.select(db.clipCacheEntries).get();
     final appAccountId = _currentAccountId;
-    final googleAccountKey = await googleDriveStorageService.currentAccountKey();
+    final googleAccountKey =
+        await googleDriveStorageService.currentAccountKey();
 
     final ownerMatched = entries.where((entry) {
       if (entry.ownerScope == ClipStorageConstants.ownerScopeAppAccount) {
@@ -353,21 +355,10 @@ class ClipSourceRefDatasource {
     String? storagePath,
     String? downloadUrl,
   }) async {
-    final ref = storagePath != null && storagePath.isNotEmpty
-        ? FirebaseStorage.instance.ref(storagePath)
-        : (downloadUrl != null && downloadUrl.isNotEmpty
-            ? FirebaseStorage.instance.refFromURL(downloadUrl)
-            : null);
-    if (ref == null) return;
-
-    try {
-      await ref.delete();
-    } catch (e, st) {
-      AppLogger.w(
-        '[Clip][Storage] remote-delete failed',
-        error: e,
-        stackTrace: st,
-      );
-    }
+    // 실패는 서비스가 w로 남기고 false를 돌려준다. 흐름은 막지 않는다.
+    await UserFileStorage.instance.deleteQuietly(
+      path: storagePath,
+      url: downloadUrl,
+    );
   }
 }

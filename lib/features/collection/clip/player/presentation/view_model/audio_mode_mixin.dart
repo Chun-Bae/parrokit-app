@@ -55,9 +55,7 @@ mixin AudioModeMixin on ChangeNotifier {
   /// [autoPlay]면 바로 이어서 튼다. 앱을 내렸을 때 끊기지 않게 하려는 것이라
   /// 사용자가 다시 재생을 누를 일이 없어야 한다(5차, 사용자 요청).
   Future<void> enterAudioOnlyMode({bool autoPlay = false}) async {
-    if (isBackground ||
-        !engine.isReady ||
-        clip == null) {
+    if (isBackground || !engine.isReady || clip == null) {
       return;
     }
 

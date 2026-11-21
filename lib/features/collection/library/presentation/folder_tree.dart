@@ -36,11 +36,8 @@ class ClipFolder {
 }
 
 /// '  여행 / 일본/ ' → '여행/일본'. 빈 칸은 버린다. 다 비면 ''.
-String normalizeFolderPath(String name) => name
-    .split('/')
-    .map((s) => s.trim())
-    .where((s) => s.isNotEmpty)
-    .join('/');
+String normalizeFolderPath(String name) =>
+    name.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).join('/');
 
 /// 맨 위 폴더 목록(이름 순)과 경로 → 폴더 표를 만든다. 클립이 하나도 없는
 /// 폴더(하위까지)는 뺀다. [keepEmpty]면 빈 폴더도 둔다(보관함에서 '새 폴더'로

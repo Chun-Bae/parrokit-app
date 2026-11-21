@@ -145,10 +145,21 @@ class AddSentenceController extends ChangeNotifier {
         )
       : null;
 
+  /// 채우기가 바꿀 수 있는 칸이 남았는지(5차 526).
+  ///
+  /// 뜻과 발음을 손으로 다 적어 두면 [_apply]가 아무것도 덮어쓰지 않는다.
+  /// 그런데도 단추가 열려 있어서, 눌러 보면 서버를 부르고 하루 횟수만 한 번
+  /// 줄고 화면은 그대로였다(기기에서 그렇게 한 번을 버렸다).
+  ///
+  /// 자동으로 채운 값만 있으면 '다시 받기'로 쓸 수 있으니 그대로 열어 둔다.
+  bool get hasFillRoom =>
+      _isOverwritable(translation, _lastAutoTranslation) ||
+      _isOverwritable(pronunciation, _lastAutoPronunciation);
+
   /// 지금 원문으로 뜻과 발음을 요청한다. 화면의 "뜻·발음 채우기" 버튼이 이걸 부른다.
   Future<void> fill() async {
     final source = text.text.trim();
-    if (source.isEmpty || _disposed) return;
+    if (source.isEmpty || _disposed || !hasFillRoom) return;
     final token = ++_fillToken;
     fillStatus = AssistStatus.loading;
     notifyListeners();

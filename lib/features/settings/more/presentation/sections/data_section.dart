@@ -72,6 +72,7 @@ class _DataSectionState extends State<DataSection> {
       barrierDismissible: false,
       builder: (context) => BackupProgressDialog(
         type: type,
+        parts: parts,
         onStart: (onProgress) => restoring
             ? BackupService.instance.restoreBackup(
                 onProgress: onProgress, only: parts, accountId: accountId)

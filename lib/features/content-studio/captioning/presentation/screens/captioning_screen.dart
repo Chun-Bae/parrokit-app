@@ -212,7 +212,10 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
                           const SizedBox(height: 16),
                           Text(
                             '클립 정보를 불러오고 있어요',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurfaceVariant,
@@ -234,7 +237,8 @@ class _CaptioningBodyState extends State<_CaptioningBody> {
       BuildContext context, CaptioningProvider vm) async {
     if (vm.isSttProcessing) return;
     // 아무것도 안 했으면 잃을 것이 없으니 묻지 않고 닫는다.
-    if (vm.isUntouchedNew) {
+    // 편집으로 열어 구경만 한 때도 마찬가지다(5차 523).
+    if (vm.isUntouchedNew || vm.isUnchangedEdit) {
       await _close(context, null);
       return;
     }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,6 +25,18 @@ class _UsageAssist implements SentenceAssist {
   int? dailyLimit;
   @override
   int? remainingToday;
+  @override
+  int? examplesRemainingToday;
+  @override
+  int? exampleDailyLimit;
+  @override
+  int? maxExamplesPerWord;
+
+  @override
+  int? exampleCredits;
+
+  @override
+  int? assistCredits;
 
   @override
   Future<void> refreshUsage() async {}
@@ -45,6 +59,21 @@ class _UsageAssist implements SentenceAssist {
     int count = 1,
   }) async =>
       const WordSuggestion();
+}
+
+
+/// 횟수 조회가 늦게 끝나는 도우미. 다 읽기 전까지는 한도를 모른다.
+class _SlowUsageAssist extends _UsageAssist {
+  _SlowUsageAssist() : super(dailyLimit: null, remainingToday: null);
+
+  final done = Completer<void>();
+
+  @override
+  Future<void> refreshUsage() async {
+    await done.future;
+    dailyLimit = 3;
+    remainingToday = 3;
+  }
 }
 
 void main() {
@@ -210,5 +239,32 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('assist-quota-upsell')), findsNothing);
+  });
+
+  // 횟수를 읽는 동안 누르면, 이미 다 쓴 사람도 서버에 한 번 부딪히고 나서야
+  // 안다. 단어 시트와 같게 읽는 동안은 막는다(5차 516).
+  testWidgets('횟수를 읽는 동안에는 채우기도 변환도 눌리지 않는다', (tester) async {
+    final assist = _SlowUsageAssist();
+    await tester.pumpWidget(withSubscription(
+        AddSentenceScreen(language: '일본어', assist: assist)));
+    await tester.enterText(
+        find.byKey(const ValueKey('sentence-text')), 'こんにちは');
+    await tester.pump();
+
+    FilledButton fill() => tester
+        .widget<FilledButton>(find.byKey(const ValueKey('auto-fill-now')));
+    FilledButton convert() => tester
+        .widget<FilledButton>(find.byKey(const ValueKey('transliterate')));
+
+    expect(find.byKey(const ValueKey('usage-loading')), findsOneWidget);
+    expect(fill().onPressed, isNull, reason: '횟수를 읽는 중이다');
+    expect(convert().onPressed, isNull, reason: '변환도 같은 횟수를 쓴다');
+
+    assist.done.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('usage-count')), findsOneWidget);
+    expect(fill().onPressed, isNotNull);
+    expect(convert().onPressed, isNotNull);
   });
 }

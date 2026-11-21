@@ -26,6 +26,7 @@ import 'sections/data_section.dart';
 import 'sections/delete_account_section.dart';
 import 'sections/info_section.dart';
 import 'sections/logout_section.dart';
+import 'sections/assist_usage_section.dart';
 import 'sections/wallet_section.dart';
 import 'sections/subscription_section.dart';
 
@@ -83,6 +84,9 @@ class _MoreScreenState extends State<MoreScreen> {
             const AccountSection(),
             const SizedBox(height: AppSpacing.md),
             const WalletSection(),
+            // 잔액 바로 아래에 하루 한도를 둔다(사용자 요청). 전에는 단어나
+            // 문장 창을 열어야만 보여서, 다 쓴 뒤에야 알게 됐다.
+            const AssistUsageSection(),
             // 칸 이름이 '구독'인데 그 안에 '구독'과 '광고 제거'가 함께
             // 있어 겹쳐 보였다. 파는 것을 묶는 칸이므로 '상품'으로 둔다(5차 465).
             const _GroupLabel('상품'),

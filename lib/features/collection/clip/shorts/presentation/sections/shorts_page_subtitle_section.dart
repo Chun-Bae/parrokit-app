@@ -83,8 +83,7 @@ class ShortsPageSubtitleSection extends StatelessWidget {
       .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);
 
   static final _pronStyle = AppTextScale.bodyMedium
-      .copyWith(
-          color: videoSubtitlePronColor, height: 1.25, shadows: _shadows);
+      .copyWith(color: videoSubtitlePronColor, height: 1.25, shadows: _shadows);
 
   static final _transStyle = AppTextScale.bodyLarge
       .copyWith(color: Colors.white, height: 1.25, shadows: _shadows);

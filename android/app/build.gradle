@@ -30,6 +30,9 @@ android {
     }
 
     compileOptions {
+        // flutter_local_notifications가 요구한다. 없으면 빌드가
+        // checkDebugAarMetadata에서 "requires core library desugaring"으로 멈춘다.
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
@@ -81,5 +84,8 @@ dependencies {
     // 한 단계 낮은 버전으로 강제 고정
     implementation "androidx.core:core-ktx:1.15.0"
     implementation "androidx.core:core:1.15.0"
+
+    // coreLibraryDesugaringEnabled이 쓰는 라이브러리.
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
 }

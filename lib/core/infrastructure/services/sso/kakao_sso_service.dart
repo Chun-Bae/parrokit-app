@@ -40,7 +40,7 @@ class KakaoSsoService {
 
       // Firebase OIDC Provider 사용 (Firebase Console에서 oidc.kakao로 등록해야 함)
       final provider = fb.OAuthProvider('oidc.kakao');
-      
+
       // Kakao에서 발급받은 idToken과 accessToken을 사용해 Credential 생성
       return provider.credential(
         idToken: idToken,

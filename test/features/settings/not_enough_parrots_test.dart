@@ -38,6 +38,7 @@ Future<void> _open(
   WidgetTester tester, {
   required SubscriptionProvider subscription,
   _FakePaywall? paywall,
+  Future<void> Function(BuildContext context)? onTopup,
   int needed = 5,
   int have = 4,
 }) async {
@@ -49,7 +50,11 @@ Future<void> _open(
           ThemeData(colorScheme: cs, textTheme: appTextTheme(cs, isDark: false)),
       home: Scaffold(
         body: NotEnoughParrotsSheet(
-            needed: needed, have: have, presenter: paywall),
+          needed: needed,
+          have: have,
+          presenter: paywall,
+          onTopup: onTopup,
+        ),
       ),
     ),
   ));
@@ -79,6 +84,34 @@ void main() {
     await _open(tester, subscription: subscription);
 
     expect(find.byKey(const ValueKey('not-enough-subscribe')), findsNothing);
+  });
+
+  // 충전은 단계와 상관없이 보여 준다. 광고로 받는 3개로 모자랄 때
+  // 바로 살 수 있는 길이 없으면, 모자라다고 알리고 끝난다(5차 512).
+  testWidgets('충전하기는 무료에게도 구독자에게도 보인다', (tester) async {
+    for (final tier in ['free', 'pro']) {
+      final subscription = await _subscription(tester, tier: tier);
+      await _open(tester, subscription: subscription);
+
+      expect(find.byKey(const ValueKey('not-enough-topup')), findsOneWidget,
+          reason: '$tier 단계에도 충전 단추가 있어야 한다');
+      expect(find.text(notEnoughParrotsTopupLabel), findsOneWidget);
+    }
+  });
+
+  testWidgets('충전하기를 누르면 충전 화면으로 간다', (tester) async {
+    final subscription = await _subscription(tester, tier: 'free');
+    var opened = 0;
+    await _open(
+      tester,
+      subscription: subscription,
+      onTopup: (_) async => opened++,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('not-enough-topup')));
+    await tester.pump();
+
+    expect(opened, 1);
   });
 
   testWidgets('구독 보기를 누르면 구독 화면으로 간다', (tester) async {

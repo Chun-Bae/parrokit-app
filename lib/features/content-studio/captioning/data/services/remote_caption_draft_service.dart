@@ -5,7 +5,7 @@ import 'package:parrokit/features/content-studio/captioning/data/constants/edit_
 // ============================================================================
 //
 // [역할]
-// 자동 자막 생성을 Firebase Storage + Cloud Functions 경유로 요청합니다.
+// 자동 자막 생성을 R2 업로드 + Cloud Functions 경유로 요청합니다.
 //
 // [레이어]
 // Data Layer > Services
@@ -15,11 +15,11 @@ import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -42,10 +42,10 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
   RemoteCaptionDraftService({
     required this.engine,
     FirebaseAuth? auth,
-    FirebaseStorage? storage,
+    UserFileStorage? storage,
     FirebaseFunctions? functions,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _storage = storage ?? FirebaseStorage.instance,
+        _storage = storage ?? UserFileStorage.instance,
         _functions = functions ?? FirebaseFunctions.instance;
 
   /// 길이 한도는 ClipValidator 한 곳에서 정한다(5차 434).
@@ -53,7 +53,7 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
 
   final AsrEngine engine;
   final FirebaseAuth _auth;
-  final FirebaseStorage _storage;
+  final UserFileStorage _storage;
   final FirebaseFunctions _functions;
   final Uuid _uuid = const Uuid();
 
@@ -86,12 +86,15 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
     final extension = p.extension(uploadPath).toLowerCase();
     final storagePath =
         'caption-inputs/${user.uid}/$requestId/source${extension.isEmpty ? '.bin' : extension}';
-    final ref = _storage.ref(storagePath);
     final contentType = lookupMimeType(uploadPath) ?? 'audio/wav';
 
     try {
       onProgress?.call(0, 1, '파일 업로드 중');
-      await ref.putFile(file, SettableMetadata(contentType: contentType));
+      await _storage.uploadFile(
+        file,
+        path: storagePath,
+        contentType: contentType,
+      );
       onProgress?.call(1, 1, EditStrings.sttRunningLabel);
       final callable = _functions.httpsCallable(
         'generateCaptions',
@@ -111,6 +114,8 @@ class RemoteCaptionDraftService implements CaptionDraftGenerator {
       return DraftResult(segments: segments, coinCost: coinCost);
     } on FirebaseFunctionsException catch (e) {
       throw RemoteCaptionDraftException(_messageForFunctionsError(e));
+    } on UserFileStorageException catch (e) {
+      throw RemoteCaptionDraftException(e.message);
     } finally {
       if (shouldDeleteUploadFile) {
         await file.delete().catchError((_) => file);

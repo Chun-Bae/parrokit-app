@@ -185,13 +185,25 @@ class AppShell extends StatelessWidget {
                         ? null
                         : () async {
                             if (!ensureBackupAllowed(context)) return;
-                            final count = selectedClipIds.length;
-                            await clipProvider.moveClipsToStorage(
+                            final asked = selectedClipIds.length;
+                            final moved = await clipProvider.moveClipsToStorage(
                               selectedClipIds,
                               ClipStorageConstants.storageModeServer,
                             );
                             if (!context.mounted) return;
-                            showToast(backupDoneMessage(count));
+                            // 하나도 못 올렸으면 덮개가 까닭을 보여 준다.
+                            // 전에는 고른 수를 그대로 적어서, 자리가 모자라
+                            // 아무것도 못 올린 때에도 "5개를 서버에
+                            // 백업했어요"라고 했다(5차 518).
+                            //
+                            // 중간에 막힌 때도 마찬가지였다. 3개까지 올라가고
+                            // 멈추면 덮개에는 '서버가 가득 찼어요'가, 토스트에는
+                            // '3개를 서버에 백업했어요'가 함께 떠서 엇갈렸다.
+                            // 덮개가 몇 개까지 갔는지도 적으니, 다 못 올린
+                            // 때는 토스트를 띄우지 않는다(5차 522).
+                            if (moved >= asked && moved > 0) {
+                              showToast(backupDoneMessage(moved));
+                            }
                             clipProvider.closeCollectionMenu();
                           },
                   ),

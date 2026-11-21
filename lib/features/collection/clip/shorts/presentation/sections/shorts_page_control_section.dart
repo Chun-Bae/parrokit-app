@@ -87,12 +87,12 @@ class _ShortsPageControlSectionState extends State<ShortsPageControlSection> {
                   child: Text(
                     clockLabel,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          shadows: const [
-                            Shadow(color: Colors.black87, blurRadius: 4),
-                          ],
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      shadows: const [
+                        Shadow(color: Colors.black87, blurRadius: 4),
+                      ],
+                    ),
                   ),
                 ),
               ),

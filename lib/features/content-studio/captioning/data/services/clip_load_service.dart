@@ -55,8 +55,8 @@ class ClipLoadService {
           (await clipProvider.db.collectionsDao.findById(collectionId))?.name;
     }
 
-    final tagList =
-        await ClipDetailQueryDatasource(clipProvider.db).tagNamesForClip(clipId);
+    final tagList = await ClipDetailQueryDatasource(clipProvider.db)
+        .tagNamesForClip(clipId);
 
     // SegmentInput으로 변환
     final segmentInputs = clipView.segments

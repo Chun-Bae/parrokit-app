@@ -18,8 +18,25 @@ String? assistUsageLabel({required int? used, required int? limit}) {
 /// 아직 받아 오는 중.
 const String assistUsageLoadingLabel = '횟수 확인 중…';
 
+/// 횟수를 묻는 동안 채우기 단추 아래에 적을 말(5차 519).
+///
+/// 단추는 묻는 동안 막아 둔다(5차 515). 그런데 그 아래 줄은 그대로
+/// '한 번만 채우면 돼요', '겹치지 않는 예문을 받아요'라고 적혀 있어서,
+/// 누를 수 있는 단추가 안 눌리는 것처럼 보였다. 서버가 쉬다 깨는 첫
+/// 조회는 30초 가까이 걸려서 그 동안 고장으로 읽힌다. 기다리는 중이라고
+/// 적어 준다.
+String assistFillHint({required bool loading, required String whenReady}) =>
+    loading ? assistUsageLoadingLabel : whenReady;
+
 /// 못 받았을 때. 누르면 다시 확인한다는 것까지 적는다.
 const String assistUsageUnknownLabel = '횟수를 확인하지 못했어요 · 탭해서 다시 확인';
+
+/// 뜻과 발음이 이미 다 차 있어 채우기가 할 일이 없을 때(5차 525·526).
+///
+/// 단어 고치기 시트와 문장 추가 화면이 같은 말을 쓴다. 두 곳 모두 단추가
+/// 켜진 채라 눌러도 아무 일이 없었고, 문장 쪽은 서버까지 불러 하루 횟수를
+/// 한 번 버렸다.
+const String assistBasicsDoneMessage = '뜻과 발음을 이미 적어 두었어요.';
 
 /// 오늘 횟수를 다 썼을 때(5차 473 → 475에 문장 쪽과 합쳤다).
 ///

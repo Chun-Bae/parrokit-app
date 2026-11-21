@@ -18,11 +18,11 @@ class ElevenLabsVoiceSettings {
   });
 
   Map<String, dynamic> toJson() => {
-    if (stability != null) 'stability': stability,
-    if (similarityBoost != null) 'similarity_boost': similarityBoost,
-    if (style != null) 'style': style,
-    if (useSpeakerBoost != null) 'use_speaker_boost': useSpeakerBoost,
-  };
+        if (stability != null) 'stability': stability,
+        if (similarityBoost != null) 'similarity_boost': similarityBoost,
+        if (style != null) 'style': style,
+        if (useSpeakerBoost != null) 'use_speaker_boost': useSpeakerBoost,
+      };
 }
 
 abstract class TtsGenerationRepository {

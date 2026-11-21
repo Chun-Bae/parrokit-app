@@ -20,10 +20,17 @@ class PracticeCalendarData {
     required this.goals,
     required this.total,
     required this.dailyGoal,
+    this.wordCounts = const {},
   });
 
   /// 날짜(yyyy-MM-dd) → 그날 따라 말한 문장 수.
   final Map<String, int> counts;
+
+  /// 날짜(yyyy-MM-dd) → 그날 복습한 단어 수(사용자 요청).
+  ///
+  /// 따라 말하기와 따로 센다. 하루 목표와 칸 색은 지금처럼 따라 말한 수만
+  /// 보므로, 단어를 많이 복습했다고 '목표 완료'가 되지는 않는다.
+  final Map<String, int> wordCounts;
 
   /// 날짜 → 그날의 목표. 목표를 바꿔도 지난 날은 그때 목표로 본다.
   final Map<String, int> goals;
@@ -62,6 +69,10 @@ class PracticeCalendar {
   static String totalKey(String accountId) =>
       'parrokit.practice.total.v1.$accountId';
 
+  /// 날짜별 단어 복습 수. 따라 말하기 기록과 다른 자리에 둔다.
+  static String wordHistoryKey(String accountId) =>
+      'parrokit.practice.word_history.v1.$accountId';
+
   static Map<String, int> _decodeCounts(String? raw, {int max = 1000}) {
     if (raw == null) return {};
     final out = <String, int>{};
@@ -96,6 +107,8 @@ class PracticeCalendar {
     final prefs = await SharedPreferences.getInstance();
     final counts = _decodeCounts(prefs.getString(historyKey(accountId)));
     final goals = _decodeCounts(prefs.getString(goalsKey(accountId)), max: 100);
+    final wordCounts =
+        _decodeCounts(prefs.getString(wordHistoryKey(accountId)));
     // 예전에는 XP 자리에 누적 문장 수를 적었다. 그 값도 읽어 준다.
     // 지금 그 자리에는 double이 들어 있으므로 숫자로만 받아 본다.
     final legacyTotal =
@@ -103,6 +116,7 @@ class PracticeCalendar {
     return PracticeCalendarData(
       counts: counts,
       goals: goals,
+      wordCounts: wordCounts,
       total: _readInt(prefs, totalKey(accountId)) ?? legacyTotal,
       dailyGoal: (_readInt(prefs, goalKey(accountId)) ?? defaultDailyGoal)
           .clamp(1, 100),
@@ -138,6 +152,7 @@ class PracticeCalendar {
     return PracticeCalendarData(
       counts: data.counts,
       goals: goals,
+      wordCounts: data.wordCounts,
       total: data.total,
       dailyGoal: next,
     );
@@ -174,7 +189,43 @@ class PracticeCalendar {
     return PracticeCalendarData(
       counts: counts,
       goals: goals,
+      wordCounts: data.wordCounts,
       total: total,
+      dailyGoal: data.dailyGoal,
+    );
+  }
+
+  /// 단어 하나를 복습한 것을 오늘 자리에 더한다(사용자 요청).
+  ///
+  /// 따라 말하기와 섞지 않는다. 하루 목표는 따라 말한 수로 재는데, 단어
+  /// 복습까지 그 수에 넣으면 단어만 넘겨도 '목표 완료'가 되어 버린다.
+  /// 캘린더는 두 수를 나란히 적는다.
+  ///
+  /// 돌려주는 값은 더한 뒤의 기록이다. 저장에 실패해도 더한 값을 돌려주어
+  /// 화면이 바로 반영할 수 있게 한다.
+  static Future<PracticeCalendarData> recordWordReview(
+    String accountId, {
+    DateTime? now,
+  }) async {
+    final data = await load(accountId);
+    final key = dateKey(now ?? DateTime.now());
+    final wordCounts = Map<String, int>.from(data.wordCounts);
+    wordCounts[key] = (wordCounts[key] ?? 0) + 1;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          wordHistoryKey(accountId), jsonEncode(wordCounts));
+    } catch (_) {
+      // 지금 화면 기록은 살리고 다음에 다시 저장해 본다.
+    }
+    revision.value++;
+
+    return PracticeCalendarData(
+      counts: data.counts,
+      goals: data.goals,
+      wordCounts: wordCounts,
+      total: data.total,
       dailyGoal: data.dailyGoal,
     );
   }

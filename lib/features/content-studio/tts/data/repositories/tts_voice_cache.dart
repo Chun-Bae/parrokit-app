@@ -10,14 +10,16 @@ class TtsVoiceCache {
   List<TtsElevenLabsVoice>? get elevenLabsVoices => _elevenLabsVoices;
 
   /// 세션 캐시: 메모리에 데이터가 없으면 서버에서 받아오고, 있으면 메모리 값을 반환합니다.
-  Future<List<TtsElevenLabsVoice>> fetchElevenLabsVoicesIfNeeded(TtsRemoteDataSource dataSource) async {
+  Future<List<TtsElevenLabsVoice>> fetchElevenLabsVoicesIfNeeded(
+      TtsRemoteDataSource dataSource) async {
     if (_elevenLabsVoices != null) {
       return _elevenLabsVoices!;
     }
-    
+
     try {
       final data = await dataSource.listElevenLabsVoices();
-      _elevenLabsVoices = data.map((json) => TtsElevenLabsVoice.fromJson(json)).toList();
+      _elevenLabsVoices =
+          data.map((json) => TtsElevenLabsVoice.fromJson(json)).toList();
       return _elevenLabsVoices!;
     } catch (e) {
       // 에러 발생 시 메모리에 캐싱하지 않고 빈 리스트를 반환하거나 에러를 전파합니다.

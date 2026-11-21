@@ -29,7 +29,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       'messageId=${message.messageId ?? "unknown"}',
     );
   } catch (e) {
-    AppLogger.e('[CommunityNotification][FCM] background handler failed', error: e);
+    AppLogger.e('[CommunityNotification][FCM] background handler failed',
+        error: e);
   }
 }
 

@@ -49,11 +49,13 @@ class UserPrefs {
     final photoUrl = prefs.getString(_keyPhotoUrl);
     final parrots = prefs.getInt(_keyParrots) ?? 0;
     final crackers = prefs.getInt(_keyCrackers) ?? 0;
-    final unreadNotificationCount = prefs.getInt(_keyUnreadNotificationCount) ?? 0;
+    final unreadNotificationCount =
+        prefs.getInt(_keyUnreadNotificationCount) ?? 0;
     final blockedUserIds = prefs.getStringList(_keyBlockedUserIds) ?? const [];
-    
+
     final lastNicknameStr = prefs.getString(_keyLastNicknameChangedAt);
-    final lastNicknameChangedAt = lastNicknameStr != null ? DateTime.tryParse(lastNicknameStr) : null;
+    final lastNicknameChangedAt =
+        lastNicknameStr != null ? DateTime.tryParse(lastNicknameStr) : null;
 
     return AppUser(
       id: id,
@@ -93,11 +95,13 @@ class UserPrefs {
 
     await prefs.setInt(_keyParrots, user.parrots);
     await prefs.setInt(_keyCrackers, user.crackers);
-    await prefs.setInt(_keyUnreadNotificationCount, user.unreadNotificationCount);
+    await prefs.setInt(
+        _keyUnreadNotificationCount, user.unreadNotificationCount);
     await prefs.setStringList(_keyBlockedUserIds, user.blockedUserIds);
 
     if (user.lastNicknameChangedAt != null) {
-      await prefs.setString(_keyLastNicknameChangedAt, user.lastNicknameChangedAt!.toIso8601String());
+      await prefs.setString(_keyLastNicknameChangedAt,
+          user.lastNicknameChangedAt!.toIso8601String());
     } else {
       await prefs.remove(_keyLastNicknameChangedAt);
     }

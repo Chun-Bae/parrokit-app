@@ -214,8 +214,8 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                       if (!await videoExists(path)) {
                         if (!context.mounted) return;
                         // 서버에만 있고 아직 안 받은 클립이면 그렇게 알린다.
-                        showToast(missingVideoHint(
-                            vm.clip?.storageMode ?? 'local'));
+                        showToast(
+                            missingVideoHint(vm.clip?.storageMode ?? 'local'));
                         return;
                       }
                       if (!context.mounted) return;
@@ -224,8 +224,8 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                         videoPath: path,
                         segments: vm.segments,
                         clipTitle: vm.clip!.title,
-                        videoLength: Duration(
-                            milliseconds: vm.clip!.durationMs),
+                        videoLength:
+                            Duration(milliseconds: vm.clip!.durationMs),
                       );
                     },
                   ),
@@ -382,9 +382,8 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                 flex: 3,
                 child: Center(
                   child: AspectRatio(
-                    aspectRatio: engine.aspectRatio == 0
-                        ? 16 / 9
-                        : engine.aspectRatio,
+                    aspectRatio:
+                        engine.aspectRatio == 0 ? 16 / 9 : engine.aspectRatio,
                     child: _buildVideoStack(context, vm, isLight),
                   ),
                 ),
@@ -663,8 +662,7 @@ class _ClipPlayerViewState extends State<_ClipPlayerView>
                   opacity:
                       vm.isBackground || vm.scope != PlayScope.full ? 0.4 : 1.0,
                   child: Builder(builder: (context) {
-                    final blockedReason =
-                        pauseEachLineDisabledReason(vm.scope);
+                    final blockedReason = pauseEachLineDisabledReason(vm.scope);
                     return TogglePill(
                       key: const ValueKey('pause-each-line'),
                       icon: Icons.pause_circle_outline_rounded,
@@ -757,7 +755,9 @@ class _ScopeSwitch extends StatelessWidget {
                 horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             decoration: BoxDecoration(
               color: selected
-                  ? (isLight ? cs.primary.withValues(alpha: 0.14) : Colors.white24)
+                  ? (isLight
+                      ? cs.primary.withValues(alpha: 0.14)
+                      : Colors.white24)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),

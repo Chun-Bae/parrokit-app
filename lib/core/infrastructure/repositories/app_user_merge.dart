@@ -18,8 +18,10 @@ AppUser mergeAppUser({
   String? authPhotoUrl,
   AppUser? server,
   AppUser? local,
+
   /// 만든 날짜가 어디에도 없을 때 지금으로 둘지. 회원가입 길에서 쓴다.
   bool createdAtDefaultsToNow = false,
+
   /// 메일이 어디에도 없을 때 빈 글로 둘지(null 대신).
   bool emailDefaultsToEmpty = false,
   DateTime? now,
@@ -34,11 +36,9 @@ AppUser mergeAppUser({
     parrots: server?.parrots ?? local?.parrots ?? 0,
     subParrots: server?.subParrots ?? local?.subParrots ?? 0,
     crackers: server?.crackers ?? local?.crackers ?? 0,
-    unreadNotificationCount: server?.unreadNotificationCount ??
-        local?.unreadNotificationCount ??
-        0,
-    blockedUserIds:
-        server?.blockedUserIds ?? local?.blockedUserIds ?? const [],
+    unreadNotificationCount:
+        server?.unreadNotificationCount ?? local?.unreadNotificationCount ?? 0,
+    blockedUserIds: server?.blockedUserIds ?? local?.blockedUserIds ?? const [],
     createdAt: server?.createdAt ??
         local?.createdAt ??
         (createdAtDefaultsToNow ? at : null),

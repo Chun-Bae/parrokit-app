@@ -43,3 +43,14 @@ const String dailyGoalDialogQuestion = '하루에 몇 번 따라 말할까요?';
 
 /// 캘린더에서 날짜를 아직 안 눌렀을 때.
 const String practiceCalendarHint = '날짜를 누르면 그날 연습한 횟수를 볼 수 있어요.';
+
+/// 단어 복습이 세는 단위(사용자 요청). 따라 말하기의 '번'과 가른다.
+const String wordReviewCountUnit = '개';
+
+/// 학습 캘린더 머리 옆에 적는 그달 단어 복습 수. 0이면 적지 않는다.
+String? wordReviewMonthLabel(int total) =>
+    total <= 0 ? null : '단어 $total$wordReviewCountUnit';
+
+/// 날짜를 눌렀을 때 그날 복습한 단어 수. 0이면 적지 않는다.
+String? wordReviewDayLabel(int count) =>
+    count <= 0 ? null : '단어 $count$wordReviewCountUnit';

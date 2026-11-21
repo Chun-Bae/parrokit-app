@@ -9,7 +9,8 @@ import '../tables/recent_clip_views.dart';
 
 part 'collections_dao.g.dart';
 
-@DriftAccessor(tables: [Collections, Clips, Segments, Tags, ClipTags, RecentClipViews])
+@DriftAccessor(
+    tables: [Collections, Clips, Segments, Tags, ClipTags, RecentClipViews])
 class CollectionsDao extends DatabaseAccessor<AppDatabase>
     with _$CollectionsDaoMixin {
   CollectionsDao(super.db);
@@ -67,7 +68,8 @@ class CollectionsDao extends DatabaseAccessor<AppDatabase>
         ..limit(1))
       .getSingleOrNull();
 
-  Future<Collection?> findByNameAndStorageMode(String name, String storageMode) =>
+  Future<Collection?> findByNameAndStorageMode(
+          String name, String storageMode) =>
       (select(collections)
             ..where(
               (c) => c.name.equals(name) & c.storageMode.equals(storageMode),

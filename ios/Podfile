@@ -1,3 +1,7 @@
+# CocoaPods CDN(trunk)이 2026-11부터 raw.githubusercontent로 리다이렉트돼 CocoaPods가
+# 스펙을 못 받는다(HTTP2 framing 오류). git 스펙 저장소를 쓴다.
+source 'https://github.com/CocoaPods/Specs.git'
+
 # Uncomment this line to define a global platform for your project
 platform :ios, '15.5'
 

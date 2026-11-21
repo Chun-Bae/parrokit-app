@@ -51,9 +51,7 @@ class TieredHeaderDelegate extends SliverPersistentHeaderDelegate {
 
     // 붙는 단: 자기 자리까지는 같이 올라오고, 맨 위에 닿으면 아래 단들이
     // 다 접힐 때까지 버틴다. 그 뒤에는 같이 올라간다.
-    final after = tiers
-        .skip(index + 1)
-        .fold<double>(0, (s, t) => s + t.height);
+    final after = tiers.skip(index + 1).fold<double>(0, (s, t) => s + t.height);
     if (shrinkOffset <= before) return before - shrinkOffset;
     if (shrinkOffset <= before + after) return 0;
     return (before + after) - shrinkOffset;

@@ -31,11 +31,45 @@ void main() {
     expect(moved.length, 1);
   });
 
+  test('문장 id를 실은 표도 홈으로 간다(5차 508)', () {
+    expect(
+      reminderRouteFor(practiceReminderPayloadFor('s1')),
+      AppRoutes.dashboardPath,
+    );
+    expect(reminderSentenceIdFor(practiceReminderPayloadFor('s1')), 's1');
+    // id가 없으면 예전 표 그대로다.
+    expect(practiceReminderPayloadFor(''), practiceReminderPayload);
+    expect(practiceReminderPayloadFor('  '), practiceReminderPayload);
+    expect(reminderSentenceIdFor(practiceReminderPayload), isNull);
+    expect(reminderSentenceIdFor('something_else'), isNull);
+    expect(reminderSentenceIdFor(null), isNull);
+  });
+
+  test('문장 id가 실려 있으면 그 문장 시트까지 연다(5차 508)', () {
+    final moved = <String>[];
+    final opened = <String>[];
+    LocalNotificationService.go = moved.add;
+    LocalNotificationService.openSentence = (id) async => opened.add(id);
+    addTearDown(() {
+      LocalNotificationService.go = (_) {};
+      LocalNotificationService.openSentence = (_) async {};
+    });
+
+    LocalNotificationService.handleTap(practiceReminderPayloadFor('s1'));
+    expect(moved, [AppRoutes.dashboardPath]);
+    expect(opened, ['s1']);
+
+    // id가 없는 예전 표는 홈까지만 간다.
+    LocalNotificationService.handleTap(practiceReminderPayload);
+    expect(moved.length, 2);
+    expect(opened, ['s1']);
+  });
+
   test('예약할 때 표를 붙이고, 누름을 받는 길도 걸어 둔다', () {
     final code =
         File('lib/core/infrastructure/services/local_notification_service.dart')
             .readAsStringSync();
-    expect(code, contains('payload: practiceReminderPayload'));
+    expect(code, contains('payload: practiceReminderPayloadFor('));
     expect(code, contains('onDidReceiveNotificationResponse:'));
     // 알림을 눌러 앱이 켜진 경우도 본다.
     expect(code, contains('getNotificationAppLaunchDetails'));

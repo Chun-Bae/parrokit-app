@@ -21,12 +21,12 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'package:parrokit/data/local/app_database.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/cloud/google_drive_storage_service.dart';
+import 'package:parrokit/core/infrastructure/services/cloud/user_file_storage.dart';
 import 'package:parrokit/core/domain/collection_clip/data/constants/clip_storage_constants.dart';
 import 'package:parrokit/core/domain/collection_clip/data/utils/clip_path_utils.dart';
 import 'clip_source_ref_datasource.dart';
@@ -62,7 +62,8 @@ class ClipThumbnailDatasource {
     final thumbnailPath = remoteDocId == null || remoteDocId.isEmpty
         ? 'media/thumbnails/clip_$clipId.jpg'
         : 'media/thumbnails/$remoteDocId.jpg';
-    final thumbnailFile = File(await ClipPathUtils.absolutePathFor(thumbnailPath));
+    final thumbnailFile =
+        File(await ClipPathUtils.absolutePathFor(thumbnailPath));
     await thumbnailFile.parent.create(recursive: true);
 
     try {
@@ -135,7 +136,8 @@ class ClipThumbnailDatasource {
     final sourceRef = await sourceRefDatasource.getCurrentClipSourceRef(clip);
     if (sourceRef == null) return null;
 
-    final restoredPath = await _restoreRemoteThumbnailFile(sourceRef: sourceRef);
+    final restoredPath =
+        await _restoreRemoteThumbnailFile(sourceRef: sourceRef);
     if (restoredPath == null) return null;
 
     await db.update(db.clips).replace(
@@ -148,7 +150,8 @@ class ClipThumbnailDatasource {
     required ClipSourceRef sourceRef,
   }) async {
     final thumbnailPath = 'media/thumbnails/${sourceRef.remoteDocId}.jpg';
-    final destination = File(await ClipPathUtils.absolutePathFor(thumbnailPath));
+    final destination =
+        File(await ClipPathUtils.absolutePathFor(thumbnailPath));
 
     try {
       AppLogger.d(
@@ -156,7 +159,8 @@ class ClipThumbnailDatasource {
       );
       if (sourceRef.provider == ClipStorageConstants.providerServer) {
         await _restoreServerThumbnailFile(sourceRef, destination);
-      } else if (sourceRef.provider == ClipStorageConstants.providerGoogleDrive) {
+      } else if (sourceRef.provider ==
+          ClipStorageConstants.providerGoogleDrive) {
         await _restoreCloudThumbnailFile(sourceRef, destination);
       } else {
         AppLogger.w(
@@ -189,19 +193,19 @@ class ClipThumbnailDatasource {
     ClipSourceRef sourceRef,
     File destination,
   ) async {
-    final ref = sourceRef.thumbnailStoragePath != null &&
-            sourceRef.thumbnailStoragePath!.isNotEmpty
-        ? FirebaseStorage.instance.ref(sourceRef.thumbnailStoragePath!)
-        : (sourceRef.thumbnailDownloadUrl != null &&
-                sourceRef.thumbnailDownloadUrl!.isNotEmpty
-            ? FirebaseStorage.instance.refFromURL(sourceRef.thumbnailDownloadUrl!)
-            : null);
-    if (ref == null) {
+    final hasPath = sourceRef.thumbnailStoragePath != null &&
+        sourceRef.thumbnailStoragePath!.isNotEmpty;
+    final hasUrl = sourceRef.thumbnailDownloadUrl != null &&
+        sourceRef.thumbnailDownloadUrl!.isNotEmpty;
+    if (!hasPath && !hasUrl) {
       throw StateError('서버 썸네일 경로를 찾을 수 없습니다.');
     }
 
-    await destination.parent.create(recursive: true);
-    await ref.writeToFile(destination);
+    await UserFileStorage.instance.downloadToFile(
+      path: hasPath ? sourceRef.thumbnailStoragePath : null,
+      url: hasUrl ? sourceRef.thumbnailDownloadUrl : null,
+      destination: destination,
+    );
   }
 
   Future<void> _restoreCloudThumbnailFile(

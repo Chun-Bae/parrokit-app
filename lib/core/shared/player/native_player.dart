@@ -63,8 +63,7 @@ class NativePlayerState {
   bool get hasClipRange => clipEnd > clipBegin;
 
   /// 가로세로 비. 모르면 16:9로 본다.
-  double get aspectRatio =>
-      (width > 0 && height > 0) ? width / height : 16 / 9;
+  double get aspectRatio => (width > 0 && height > 0) ? width / height : 16 / 9;
 
   /// 영상을 열지 못했을 때만 값이 있다.
   final String? errorMessage;
@@ -135,8 +134,7 @@ class NativePlayerController extends ChangeNotifier {
   Future<void> create() async {
     if (_disposed || _textureId != null) return;
     try {
-      final made = await _channel
-          .invokeMapMethod<String, dynamic>('create');
+      final made = await _channel.invokeMapMethod<String, dynamic>('create');
       final id = (made?['textureId'] as num?)?.toInt();
       if (id == null || _disposed) return;
       _textureId = id;
@@ -253,8 +251,7 @@ class NativePlayerController extends ChangeNotifier {
     _sub?.cancel();
     if (id != null) {
       unawaited(_channel
-          .invokeMethod<void>('dispose', {'textureId': id})
-          .catchError((_) {}));
+          .invokeMethod<void>('dispose', {'textureId': id}).catchError((_) {}));
     }
     _textureId = null;
     super.dispose();

@@ -7,7 +7,7 @@ class GenerateTtsUseCase {
   const GenerateTtsUseCase(this.repository);
 
   Future<String> call({
-    required String text, 
+    required String text,
     required String language,
     TtsProviderType provider = TtsProviderType.google,
     String? voiceId,
@@ -20,7 +20,7 @@ class GenerateTtsUseCase {
   }) async {
     TtsValidator.validateText(text);
     return repository.generateTts(
-      text: text, 
+      text: text,
       language: language,
       provider: provider,
       voiceId: voiceId,

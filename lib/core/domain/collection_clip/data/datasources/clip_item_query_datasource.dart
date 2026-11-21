@@ -36,7 +36,8 @@ class ClipItemQueryDatasource {
   );
 
   Future<List<ClipItem>> fetchClipItemsByStorageMode(String storageMode) async {
-    final clips = await sourceRefDatasource.visibleClipsByStorageMode(storageMode);
+    final clips =
+        await sourceRefDatasource.visibleClipsByStorageMode(storageMode);
     return buildClipItems(clips);
   }
 
@@ -50,7 +51,8 @@ class ClipItemQueryDatasource {
     final pairs = <({Clip clip, String filePath})>[];
 
     for (final clip in remoteClips) {
-      final cacheEntry = await sourceRefDatasource.getCurrentClipCacheEntry(clip);
+      final cacheEntry =
+          await sourceRefDatasource.getCurrentClipCacheEntry(clip);
       if (cacheEntry == null) continue;
       pairs.add((clip: clip, filePath: cacheEntry.filePath));
     }
@@ -87,7 +89,8 @@ class ClipItemQueryDatasource {
             ..orderBy([(s) => OrderingTerm.asc(s.startMs)]))
           .get();
 
-      Uint8List? thumbBytes = await thumbnailDatasource.loadThumbnailBytes(clip);
+      Uint8List? thumbBytes =
+          await thumbnailDatasource.loadThumbnailBytes(clip);
       String? previewPath;
       if (thumbBytes == null) {
         previewPath = await _resolveExistingPreviewPath(clip);

@@ -17,7 +17,12 @@ migrate_working_dir/
 *.ipr
 *.iws
 .idea/
+
+# 비밀값. `.env`만 적혀 있어서 functions/.env.parrokit-45126 같은 파일은
+# 걸리지 않고 `??`로 남아 있었다(실수로 커밋될 자리였다).
 .env
+.env.*
+!.env.example
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line

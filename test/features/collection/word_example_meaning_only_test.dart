@@ -16,6 +16,21 @@ class _SilentAssist implements SentenceAssist {
   int? get remainingToday => 0;
   @override
   int? get dailyLimit => 0;
+
+  @override
+  int? get examplesRemainingToday => null;
+
+  @override
+  int? get exampleDailyLimit => null;
+
+  @override
+  int? get maxExamplesPerWord => null;
+
+  @override
+  int? get exampleCredits => null;
+
+  @override
+  int? get assistCredits => null;
   @override
   Future<void> refreshUsage() async {}
   @override

@@ -96,8 +96,8 @@ class _AppTimePickerSheetState extends State<_AppTimePickerSheet> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm,
-                AppSpacing.lg, AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
             child: Row(
               children: [
                 Expanded(

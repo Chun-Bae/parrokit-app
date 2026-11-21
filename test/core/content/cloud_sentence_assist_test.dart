@@ -240,4 +240,41 @@ void main() {
       expect(functions.calls.length, 1);
     });
   });
+
+  test('예문 한도를 다 쓰면 예문 쪽만 0으로 적는다(5차 517)', () async {
+    // 서버는 두 한도 모두 resource-exhausted로 거절한다. 전에는 어느
+    // 쪽이든 뜻·발음 횟수를 0으로 적어서, 예문을 다 쓴 사람의 '뜻·발음
+    // 채우기'까지 꺼졌다.
+    final functions = _FakeFunctions((_) => throw _error('resource-exhausted'));
+    final assist = CloudSentenceAssist(functions: functions);
+
+    await expectLater(
+      assist.suggestWord(language: '영어', word: 'huge', count: 3),
+      throwsA(isA<SentenceAssistQuotaExceeded>()
+          .having((e) => e.examples, 'examples', isTrue)),
+    );
+    expect(assist.examplesRemainingToday, 0);
+    expect(assist.remainingToday, isNull, reason: '뜻·발음 횟수는 건드리지 않는다');
+  });
+
+  test('뜻·발음 한도를 다 쓰면 그쪽만 0으로 적는다(5차 517)', () async {
+    final functions = _FakeFunctions((_) => throw _error('resource-exhausted'));
+    final assist = CloudSentenceAssist(functions: functions);
+
+    await expectLater(
+      assist.suggestWord(language: '영어', word: 'huge', count: 0),
+      throwsA(isA<SentenceAssistQuotaExceeded>()
+          .having((e) => e.examples, 'examples', isFalse)),
+    );
+    expect(assist.remainingToday, 0);
+    expect(assist.examplesRemainingToday, isNull);
+  });
+
+  test('예문을 쓰는 부름인지 서버와 같은 규칙으로 가린다(5차 517)', () {
+    expect(assistCallWantsExamples({'mode': 'word', 'count': 1}), isTrue);
+    expect(assistCallWantsExamples({'mode': 'word'}), isTrue);
+    expect(assistCallWantsExamples({'mode': 'word', 'count': 0}), isFalse);
+    expect(assistCallWantsExamples({'mode': 'suggest'}), isFalse);
+    expect(assistCallWantsExamples({'mode': 'transliterate'}), isFalse);
+  });
 }

@@ -65,12 +65,9 @@ class LibraryEntityRemoteSyncDatasource {
     required String uid,
     required String kind,
   }) async {
-    final snapshot = await firestoreMetadataDatasource
-        .libraryCollectionRef(uid, kind)
-        .get();
-    return snapshot.docs
-        .map((doc) => MapEntry(doc.id, doc.data()))
-        .toList();
+    final snapshot =
+        await firestoreMetadataDatasource.libraryCollectionRef(uid, kind).get();
+    return snapshot.docs.map((doc) => MapEntry(doc.id, doc.data())).toList();
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -92,8 +89,7 @@ class LibraryEntityRemoteSyncDatasource {
     required String kind,
     required String remoteId,
   }) async {
-    final files =
-        await googleDriveStorageService.listFilesInFolderPath([kind]);
+    final files = await googleDriveStorageService.listFilesInFolderPath([kind]);
     final fileId = files['$remoteId.json'];
     if (fileId == null) return;
     await googleDriveStorageService.deleteFile(fileId);
@@ -102,12 +98,12 @@ class LibraryEntityRemoteSyncDatasource {
   Future<Map<String, Map<String, dynamic>>> listCloudEntities(
     String kind,
   ) async {
-    final files =
-        await googleDriveStorageService.listFilesInFolderPath([kind]);
+    final files = await googleDriveStorageService.listFilesInFolderPath([kind]);
     final result = <String, Map<String, dynamic>>{};
     for (final entry in files.entries) {
       if (!entry.key.endsWith('.json')) continue;
-      final remoteId = entry.key.substring(0, entry.key.length - '.json'.length);
+      final remoteId =
+          entry.key.substring(0, entry.key.length - '.json'.length);
       final content =
           await googleDriveStorageService.downloadFileContent(entry.value);
       if (content == null) continue;

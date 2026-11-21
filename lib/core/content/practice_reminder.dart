@@ -18,6 +18,7 @@ class PracticeReminder {
   static const hourKey = 'parrokit.practice_reminder.hour.v1';
   static const minuteKey = 'parrokit.practice_reminder.minute.v1';
   static const linesKey = 'parrokit.practice_reminder.lines.v1';
+  static const lineIdsKey = 'parrokit.practice_reminder.line_ids.v1';
   static const pickKey = 'parrokit.practice_reminder.pick.v1';
   static const intervalKey = 'parrokit.practice_reminder.interval.v1';
   static const endHourKey = 'parrokit.practice_reminder.end_hour.v1';
@@ -83,6 +84,18 @@ class PracticeReminder {
   static Future<void> saveLines(List<String> lines) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(linesKey, jsonEncode(lines));
+  }
+
+  /// 적어 둔 문장과 같은 차례의 문장 id. 글과 따로 두는 까닭은 예전에
+  /// 적어 둔 글만 있는 기기에서도 그대로 읽히게 하려는 것이다(5차 508).
+  static Future<List<String>> loadLineIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    return [...?prefs.getStringList(lineIdsKey)];
+  }
+
+  static Future<void> saveLineIds(List<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(lineIdsKey, ids);
   }
 
   /// 알림에 쓸 문장으로 고른 것들의 id. 비어 있으면 내 문장 전부를 쓴다.
@@ -351,6 +364,19 @@ List<String> orderReminderLines(
   List<ReminderCandidate> candidates,
   ReminderPick pick, {
   Random? random,
+}) =>
+    [
+      for (final c in orderReminderCandidates(candidates, pick, random: random))
+        c.text,
+    ];
+
+/// 차례를 정하되 후보 그대로 돌려준다. 알림에 문장 id를 함께 실으려면
+/// 글만으로는 모자라서, 누름을 받았을 때 그 문장을 찾을 수 있게 id를 들고
+/// 간다(5차 508).
+List<ReminderCandidate> orderReminderCandidates(
+  List<ReminderCandidate> candidates,
+  ReminderPick pick, {
+  Random? random,
 }) {
   final usable = [
     for (final c in candidates)
@@ -385,11 +411,23 @@ List<String> orderReminderLines(
         return order[a]!.compareTo(order[b]!);
       });
   }
-  return [for (final c in usable) c.text];
+  return usable;
 }
 
 /// 알림에 넣을 문장을 날짜 수만큼 고른다. 문장이 적으면 돌려 쓴다.
 /// 문장이 없으면 빈 목록(그러면 기본 문구로 알린다).
+List<ReminderCandidate> pickReminderCandidates(
+  List<ReminderCandidate> candidates,
+  int count,
+) {
+  final usable = [
+    for (final c in candidates)
+      if (c.text.trim().isNotEmpty) c,
+  ];
+  if (usable.isEmpty || count <= 0) return const [];
+  return [for (var i = 0; i < count; i++) usable[i % usable.length]];
+}
+
 List<String> pickReminderLines(List<String> sentences, int count) {
   final usable = [
     for (final s in sentences)

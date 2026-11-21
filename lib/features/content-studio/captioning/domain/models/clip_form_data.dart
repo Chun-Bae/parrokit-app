@@ -96,3 +96,18 @@ class ClipFormData {
 }
 
 const _sentinel = Object();
+
+/// 입력칸에 담긴 것을 한 줄로 적는다. 바뀌었는지 견주는 데만 쓴다(5차 523).
+///
+/// 편집으로 연 클립은 구경만 하고 나가도 '지금 나가면 적은 내용이 모두
+/// 사라져요'가 떴다. 불러온 직후의 이 줄과 나갈 때의 줄을 견줘서, 같으면
+/// 묻지 않는다.
+String clipFormFingerprint(ClipFormData data) => [
+      data.collectionName ?? '',
+      data.clipTitle,
+      data.durationMs?.toString() ?? '',
+      data.filePath ?? '',
+      data.tags.join('\u0001'),
+      for (final seg in data.segments)
+        [seg.start, seg.end, seg.original, seg.pron, seg.ko].join('\u0002'),
+    ].join('\u0003');

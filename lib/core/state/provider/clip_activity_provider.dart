@@ -135,8 +135,7 @@ class ClipActivityProvider extends ChangeNotifier {
         });
 
     // 2) collections 자동 갱신 (collections 테이블 기준 집계)
-    _collectionsSub = db
-        .customSelect(r'''
+    _collectionsSub = db.customSelect(r'''
 SELECT
   col.id            AS cid,
   col.name          AS colName,
@@ -146,9 +145,7 @@ FROM collections col
 LEFT JOIN clips c ON c.collection_id = col.id
 GROUP BY col.id
 ORDER BY col.name;
-''', readsFrom: {db.collections, db.clips})
-        .watch()
-        .listen((rows) {
+''', readsFrom: {db.collections, db.clips}).watch().listen((rows) {
           collections = rows
               .map<(int, String, String?, int)>((row) => (
                     row.data['cid'] as int,

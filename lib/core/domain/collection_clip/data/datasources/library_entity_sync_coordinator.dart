@@ -53,7 +53,8 @@ class LibraryEntitySyncCoordinator {
   /// reconcile 로직이 "아직 원격에 안 보이는 방금 만든 그룹"을 "원격에서
   /// 지워짐"으로 오인해서 지워버리는 레이스가 생깁니다.
   Future<Group> createGroup(String name, String storageMode) async {
-    final remoteId = _needsRemoteId(storageMode) ? remoteDocIdResolver.newClipDocId() : null;
+    final remoteId =
+        _needsRemoteId(storageMode) ? remoteDocIdResolver.newClipDocId() : null;
     if (remoteId != null) {
       await _upsertRemoteEntity(
         storageMode: storageMode,
@@ -62,8 +63,10 @@ class LibraryEntitySyncCoordinator {
         fields: {'name': name},
       );
     }
-    final id = await db.groupsDao.insertGroup(name, storageMode, remoteId: remoteId);
-    return Group(id: id, name: name, storageMode: storageMode, remoteId: remoteId);
+    final id =
+        await db.groupsDao.insertGroup(name, storageMode, remoteId: remoteId);
+    return Group(
+        id: id, name: name, storageMode: storageMode, remoteId: remoteId);
   }
 
   /// createGroup과 같은 이유로 원격 업로드를 먼저 끝내고 로컬에 insert합니다.
@@ -72,7 +75,8 @@ class LibraryEntitySyncCoordinator {
     String storageMode, {
     List<int> groupIds = const [],
   }) async {
-    final remoteId = _needsRemoteId(storageMode) ? remoteDocIdResolver.newClipDocId() : null;
+    final remoteId =
+        _needsRemoteId(storageMode) ? remoteDocIdResolver.newClipDocId() : null;
     if (remoteId != null) {
       final groupRemoteIds = await _remoteIdsForGroups(groupIds);
       await _upsertRemoteEntity(
@@ -92,7 +96,8 @@ class LibraryEntitySyncCoordinator {
             remoteId: Value(remoteId),
           ),
         );
-    return Collection(id: id, name: name, storageMode: storageMode, remoteId: remoteId);
+    return Collection(
+        id: id, name: name, storageMode: storageMode, remoteId: remoteId);
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -181,21 +186,16 @@ class LibraryEntitySyncCoordinator {
     return true;
   }
 
-  static String _normPath(String v) => v
-      .split('/')
-      .map((s) => s.trim())
-      .where((s) => s.isNotEmpty)
-      .join('/');
+  static String _normPath(String v) =>
+      v.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).join('/');
 
   /// [name]이 [oldPath] 아래 폴더면 [newPath] 아래로 옮긴 이름, 아니면 null.
   /// 경로 비교는 칸마다 앞뒤 공백을 뗀 모양으로 한다. 예:
   /// renamedFolderPath('여행/일본', '여행', '여행2') == '여행2/일본'
-  static String? renamedFolderPath(String name, String oldPath, String newPath) {
-    String norm(String v) => v
-        .split('/')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .join('/');
+  static String? renamedFolderPath(
+      String name, String oldPath, String newPath) {
+    String norm(String v) =>
+        v.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).join('/');
     final from = norm(oldPath);
     final to = norm(newPath);
     final current = norm(name);
@@ -209,7 +209,8 @@ class LibraryEntitySyncCoordinator {
     await db.collectionsDao.updateName(id, newName);
     final remoteId = collection.remoteId;
     if (remoteId != null) {
-      final groupRemoteIds = await _remoteIdsForGroups(await _groupIdsForCollection(id));
+      final groupRemoteIds =
+          await _remoteIdsForGroups(await _groupIdsForCollection(id));
       await _upsertRemoteEntity(
         storageMode: collection.storageMode,
         kind: _kindCollections,
@@ -256,9 +257,10 @@ class LibraryEntitySyncCoordinator {
   /// 있던 걸 remoteId만 붙여 "입양"한 경우는 세지 않음 — 목록에 새로
   /// 보일 게 없으므로 UI 새로고침을 유발할 필요가 없음).
   Future<int> pullServer(String uid) async {
-    final groupDocs = await remoteSyncDatasource.listServerEntities(uid: uid, kind: _kindGroups);
-    final collectionDocs =
-        await remoteSyncDatasource.listServerEntities(uid: uid, kind: _kindCollections);
+    final groupDocs = await remoteSyncDatasource.listServerEntities(
+        uid: uid, kind: _kindGroups);
+    final collectionDocs = await remoteSyncDatasource.listServerEntities(
+        uid: uid, kind: _kindCollections);
     return _pullGroupsAndCollections(
       storageMode: ClipStorageConstants.storageModeServer,
       groupEntities: {for (final e in groupDocs) e.key: e.value},
@@ -267,8 +269,10 @@ class LibraryEntitySyncCoordinator {
   }
 
   Future<int> pullCloud() async {
-    final groupEntities = await remoteSyncDatasource.listCloudEntities(_kindGroups);
-    final collectionEntities = await remoteSyncDatasource.listCloudEntities(_kindCollections);
+    final groupEntities =
+        await remoteSyncDatasource.listCloudEntities(_kindGroups);
+    final collectionEntities =
+        await remoteSyncDatasource.listCloudEntities(_kindCollections);
     return _pullGroupsAndCollections(
       storageMode: ClipStorageConstants.storageModeGoogleDrive,
       groupEntities: groupEntities,
@@ -286,9 +290,10 @@ class LibraryEntitySyncCoordinator {
 
   /// 반환값은 이번에 정리된(삭제된) 그룹/콜렉션 개수입니다.
   Future<int> reconcileServerAfterClips(String uid) async {
-    final groupDocs = await remoteSyncDatasource.listServerEntities(uid: uid, kind: _kindGroups);
-    final collectionDocs =
-        await remoteSyncDatasource.listServerEntities(uid: uid, kind: _kindCollections);
+    final groupDocs = await remoteSyncDatasource.listServerEntities(
+        uid: uid, kind: _kindGroups);
+    final collectionDocs = await remoteSyncDatasource.listServerEntities(
+        uid: uid, kind: _kindCollections);
     return _reconcileGoneEntities(
       storageMode: ClipStorageConstants.storageModeServer,
       remoteGroupIds: groupDocs.map((e) => e.key).toSet(),
@@ -297,8 +302,10 @@ class LibraryEntitySyncCoordinator {
   }
 
   Future<int> reconcileCloudAfterClips() async {
-    final groupEntities = await remoteSyncDatasource.listCloudEntities(_kindGroups);
-    final collectionEntities = await remoteSyncDatasource.listCloudEntities(_kindCollections);
+    final groupEntities =
+        await remoteSyncDatasource.listCloudEntities(_kindGroups);
+    final collectionEntities =
+        await remoteSyncDatasource.listCloudEntities(_kindCollections);
     return _reconcileGoneEntities(
       storageMode: ClipStorageConstants.storageModeGoogleDrive,
       remoteGroupIds: groupEntities.keys.toSet(),
@@ -329,13 +336,15 @@ class LibraryEntitySyncCoordinator {
       await (db.delete(db.groupCollections)
             ..where((gc) => gc.collectionId.equals(collection.id)))
           .go();
-      await (db.delete(db.collections)..where((c) => c.id.equals(collection.id)))
+      await (db.delete(db.collections)
+            ..where((c) => c.id.equals(collection.id)))
           .go();
       removedCount++;
     }
 
     final localGroups = await (db.select(db.groups)
-          ..where((g) => g.storageMode.equals(storageMode) & g.remoteId.isNotNull()))
+          ..where((g) =>
+              g.storageMode.equals(storageMode) & g.remoteId.isNotNull()))
         .get();
     for (final group in localGroups) {
       final remoteId = group.remoteId;
@@ -381,7 +390,8 @@ class LibraryEntitySyncCoordinator {
       );
       if (created) createdCount++;
       final groupRemoteIds =
-          (entry.value['groupRemoteIds'] as List?)?.whereType<String>() ?? const [];
+          (entry.value['groupRemoteIds'] as List?)?.whereType<String>() ??
+              const [];
       for (final groupRemoteId in groupRemoteIds) {
         final localGroupId = remoteIdToLocalGroupId[groupRemoteId];
         if (localGroupId == null) continue;
@@ -412,13 +422,15 @@ class LibraryEntitySyncCoordinator {
       return (byRemoteId.id, false);
     }
 
-    final unsynced = await db.groupsDao.findByNameAndStorageMode(name, storageMode);
+    final unsynced =
+        await db.groupsDao.findByNameAndStorageMode(name, storageMode);
     if (unsynced != null && unsynced.remoteId == null) {
       await db.groupsDao.updateRemoteId(unsynced.id, remoteId);
       return (unsynced.id, false);
     }
 
-    final id = await db.groupsDao.insertGroup(name, storageMode, remoteId: remoteId);
+    final id =
+        await db.groupsDao.insertGroup(name, storageMode, remoteId: remoteId);
     return (id, true);
   }
 
@@ -437,7 +449,8 @@ class LibraryEntitySyncCoordinator {
       return (byRemoteId.id, false);
     }
 
-    final unsynced = await db.collectionsDao.findByNameAndStorageMode(name, storageMode);
+    final unsynced =
+        await db.collectionsDao.findByNameAndStorageMode(name, storageMode);
     if (unsynced != null && unsynced.remoteId == null) {
       await db.collectionsDao.updateRemoteId(unsynced.id, remoteId);
       return (unsynced.id, false);
@@ -493,9 +506,11 @@ class LibraryEntitySyncCoordinator {
     if (storageMode == ClipStorageConstants.storageModeServer) {
       final uid = _currentUid();
       if (uid == null) return;
-      await remoteSyncDatasource.deleteServerEntity(uid: uid, kind: kind, remoteId: remoteId);
+      await remoteSyncDatasource.deleteServerEntity(
+          uid: uid, kind: kind, remoteId: remoteId);
     } else if (storageMode == ClipStorageConstants.storageModeGoogleDrive) {
-      await remoteSyncDatasource.deleteCloudEntity(kind: kind, remoteId: remoteId);
+      await remoteSyncDatasource.deleteCloudEntity(
+          kind: kind, remoteId: remoteId);
     }
   }
 

@@ -5,7 +5,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/content/practice_reminder.dart';
@@ -13,16 +16,40 @@ import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/default_conversation_sentences.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
+import 'package:parrokit/core/state/provider/user_provider.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart'
+    show showSentenceDetails;
 
 /// 연습 알림에 붙이는 표. 눌렀을 때 어디로 갈지 가린다(5차 378).
 const String practiceReminderPayload = 'practice_reminder';
+
+/// 문장 id를 실은 표. 누르면 그 문장의 시트까지 연다(5차 508).
+///
+/// 예전 표(`practice_reminder`)도 그대로 받는다. 며칠 전에 깔아 둔 알림이
+/// 아직 기기에 남아 있기 때문이다.
+String practiceReminderPayloadFor(String sentenceId) =>
+    sentenceId.trim().isEmpty
+        ? practiceReminderPayload
+        : '$practiceReminderPayload:${sentenceId.trim()}';
+
+/// 표에 실린 문장 id. 없으면 null.
+String? reminderSentenceIdFor(String? payload) {
+  if (payload == null) return null;
+  const prefix = '$practiceReminderPayload:';
+  if (!payload.startsWith(prefix)) return null;
+  final id = payload.substring(prefix.length).trim();
+  return id.isEmpty ? null : id;
+}
 
 /// 연습 알림을 눌렀을 때 열 화면. 그 밖의 표는 null(그냥 앱만 연다).
 ///
 /// 전에는 표가 없어서 눌러도 보던 화면이 그대로였다. 연습하라고 부른
 /// 알림이니 앵무새가 있는 홈으로 간다.
 String? reminderRouteFor(String? payload) =>
-    payload == practiceReminderPayload ? AppRoutes.dashboardPath : null;
+    payload == practiceReminderPayload ||
+            reminderSentenceIdFor(payload) != null
+        ? AppRoutes.dashboardPath
+        : null;
 
 /// 기기에서 예약하는 알림. 서버(FCM)를 거치지 않는다.
 ///
@@ -49,11 +76,54 @@ class LocalNotificationService {
     context.go(route);
   }
 
+  /// 알림에 실린 문장의 시트를 여는 길. 테스트에서 바꿔 끼운다.
+  @visibleForTesting
+  static Future<void> Function(String sentenceId) openSentence =
+      _openSentenceSheet;
+
   /// 알림을 눌렀을 때. 표가 연습 알림이면 홈으로 간다(5차 378).
+  ///
+  /// 표에 문장 id가 실려 있으면 그 문장의 시트까지 연다(5차 508). 홈으로
+  /// 먼저 옮기는 것은 그대로다. 시트를 닫으면 연습하던 자리가 나온다.
   static void handleTap(String? payload) {
     final route = reminderRouteFor(payload);
     if (route == null) return;
     go(route);
+    final sentenceId = reminderSentenceIdFor(payload);
+    if (sentenceId == null) return;
+    unawaited(openSentence(sentenceId));
+  }
+
+  /// 홈이 올라온 뒤에 그 문장의 시트를 연다. 문장을 못 찾으면 아무것도
+  /// 하지 않는다(지운 문장일 수 있다).
+  static Future<void> _openSentenceSheet(String sentenceId) async {
+    try {
+      final context = rootNavigatorKey.currentContext;
+      if (context == null) return;
+      final accountId =
+          context.read<UserProvider?>()?.currentUser?.id ?? 'guest';
+      final mine = await MySentenceStore.load(accountId);
+      DefaultConversationSentence? found;
+      for (final s in mine) {
+        if (s.id == sentenceId) {
+          found = s;
+          break;
+        }
+      }
+      if (found == null) return;
+      final sentence = found;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = rootNavigatorKey.currentContext;
+        if (ctx == null) return;
+        unawaited(showSentenceDetails(
+          ctx,
+          sentence: sentence,
+          accountId: accountId,
+        ));
+      });
+    } catch (e) {
+      AppLogger.w('[Reminder] 문장 시트를 열지 못했어요: $e');
+    }
   }
 
   /// 알림을 눌러서 앱이 켜진 경우. 화면이 올라온 뒤에 옮긴다.
@@ -117,9 +187,12 @@ class LocalNotificationService {
   }
 
   /// [times]마다 하나씩 예약한다. [lines]는 같은 자리의 문장(없으면 기본 문구).
+  /// [lines]는 같은 자리의 문장, [sentenceIds]는 같은 자리의 문장 id다.
+  /// id가 모자라면 그 자리는 id 없이 깐다(예전처럼 홈까지만 간다).
   static Future<void> schedulePracticeReminders({
     required List<DateTime> times,
     required List<String> lines,
+    List<String> sentenceIds = const [],
   }) async {
     await init();
     await cancelPracticeReminders();
@@ -151,7 +224,8 @@ class LocalNotificationService {
           tz.TZDateTime.from(times[i], tz.UTC),
           details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          payload: practiceReminderPayload,
+          payload: practiceReminderPayloadFor(
+              i < sentenceIds.length ? sentenceIds[i] : ''),
         );
       } catch (e) {
         AppLogger.e('[Reminder] 알림 예약 실패', error: e);
@@ -174,6 +248,7 @@ Future<void> applyPracticeReminder({
   if (!settings.enabled) {
     await LocalNotificationService.cancelPracticeReminders();
     await PracticeReminder.saveLines(const []);
+    await PracticeReminder.saveLineIds(const []);
     return;
   }
   final times = reminderTimes(
@@ -186,11 +261,14 @@ Future<void> applyPracticeReminder({
   );
   final chosen =
       chosenReminderCandidates(candidates, await PracticeReminder.loadChosen());
-  final ordered = orderReminderLines(chosen, settings.pick, random: random);
-  final lines = pickReminderLines(ordered, times.length);
+  final ordered = orderReminderCandidates(chosen, settings.pick, random: random);
+  final picked = pickReminderCandidates(ordered, times.length);
+  final lines = [for (final c in picked) c.text];
+  final ids = [for (final c in picked) c.id];
   await PracticeReminder.saveLines(lines);
+  await PracticeReminder.saveLineIds(ids);
   await LocalNotificationService.schedulePracticeReminders(
-      times: times, lines: lines);
+      times: times, lines: lines, sentenceIds: ids);
 }
 
 /// 앱을 열 때 호출한다. 꺼져 있으면 아무것도 하지 않는다.
@@ -240,9 +318,14 @@ Future<void> skipTodayPracticeReminders(String accountId) async {
 
 /// 알림에 띄울 후보. 문장을 못 읽으면 지난번에 적어 둔 문장을 그대로 쓴다.
 Future<List<ReminderCandidate>> _reminderCandidates(String accountId) async {
+  final savedLines = await PracticeReminder.loadLines();
+  final savedIds = await PracticeReminder.loadLineIds();
   var candidates = [
-    for (final text in await PracticeReminder.loadLines())
-      ReminderCandidate(text: text),
+    for (var i = 0; i < savedLines.length; i++)
+      ReminderCandidate(
+        text: savedLines[i],
+        id: i < savedIds.length ? savedIds[i] : '',
+      ),
   ];
   try {
     final mine = await MySentenceStore.load(accountId);

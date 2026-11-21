@@ -46,11 +46,25 @@ const StoreBadge lightTierBadge = StoreBadge(
   colors: [Color(0xFF7DD3FC), Color(0xFF0284C7)],
 );
 
+/// 구독 - 플러스.
+const StoreBadge plusTierBadge = StoreBadge(
+  name: '플러스',
+  icon: Icons.auto_awesome_rounded,
+  colors: [Color(0xFF6EE7B7), Color(0xFF059669)],
+);
+
 /// 구독 - 프로.
 const StoreBadge proTierBadge = StoreBadge(
   name: '프로',
   icon: Icons.diamond_rounded,
   colors: [Color(0xFFA78BFA), Color(0xFF6D28D9)],
+);
+
+/// 구독 - 맥스.
+const StoreBadge maxTierBadge = StoreBadge(
+  name: '맥스',
+  icon: Icons.workspace_premium_rounded,
+  colors: [Color(0xFFFCD34D), Color(0xFFD97706)],
 );
 
 /// 광고 제거. 한 번 사는 것이라 선물 상자.
@@ -74,7 +88,9 @@ const StoreBadge parrotTopupBadge = StoreBadge(
 const List<StoreBadge> storeBadges = [
   freeTierBadge,
   lightTierBadge,
+  plusTierBadge,
   proTierBadge,
+  maxTierBadge,
   adsRemovalBadge,
   parrotTopupBadge,
 ];
@@ -85,8 +101,12 @@ StoreBadge subscriptionTierBadgeOf(SubscriptionTier tier) {
       return freeTierBadge;
     case SubscriptionTier.light:
       return lightTierBadge;
+    case SubscriptionTier.plus:
+      return plusTierBadge;
     case SubscriptionTier.pro:
       return proTierBadge;
+    case SubscriptionTier.max:
+      return maxTierBadge;
   }
 }
 

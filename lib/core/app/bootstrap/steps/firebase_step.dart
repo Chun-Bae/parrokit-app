@@ -34,7 +34,8 @@ void initCrashlytics() {
   try {
     AppLogger.i('[Bootstrap][Crashlytics] start');
     if (kReleaseMode) {
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
       PlatformDispatcher.instance.onError = (error, stack) {
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
         return true;

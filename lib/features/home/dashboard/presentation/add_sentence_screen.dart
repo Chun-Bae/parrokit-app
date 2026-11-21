@@ -263,10 +263,13 @@ class _HangulTransliterateRow extends StatelessWidget {
                 key: const ValueKey('transliterate'),
                 // 변환도 같은 하루 횟수를 쓴다. 다 썼으면 눌러 보기 전에
                 // 막고 까닭을 적는다(5차 478).
-                onPressed:
-                    status == AssistStatus.loading || controller.exhausted
-                        ? null
-                        : controller.transliterate,
+                // 변환도 같은 횟수를 쓰므로, 횟수를 읽는 동안에는
+                // 함께 막는다(5차 516).
+                onPressed: status == AssistStatus.loading ||
+                        controller.usageStatus == UsageStatus.loading ||
+                        controller.exhausted
+                    ? null
+                    : controller.transliterate,
                 style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
                 child: status == AssistStatus.loading
                     ? const SizedBox(
@@ -323,7 +326,11 @@ class _AutoFillCard extends StatelessWidget {
             ? assistQuotaExhaustedMessage
             : controller.text.text.trim().isEmpty
                 ? assistNeedsTextHint('문장')
-                : null,
+                // 손으로 다 적어 두면 채우기가 덮어쓸 자리가 없다. 눌러도
+                // 아무 일이 없으니 까닭을 적고 단추를 끈다(5차 526).
+                : !controller.hasFillRoom
+                    ? assistBasicsDoneMessage
+                    : null,
       };
 
   @override
@@ -339,9 +346,14 @@ class _AutoFillCard extends StatelessWidget {
       Row(children: [
         FilledButton.tonalIcon(
           key: const ValueKey('auto-fill-now'),
+          // 횟수를 읽는 동안에는 누르지 못하게 한다(5차 516). 다 썼는지
+          // 모르는 채로 눌리면, 이미 바닥난 사람이 서버에 한 번 더
+          // 부딪히고 나서야 '다 썼어요'를 본다.
           onPressed: controller.text.text.trim().isEmpty ||
                   status == AssistStatus.loading ||
-                  exhausted
+                  controller.usageStatus == UsageStatus.loading ||
+                  exhausted ||
+                  !controller.hasFillRoom
               ? null
               : controller.fill,
           icon: status == AssistStatus.loading

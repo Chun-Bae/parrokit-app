@@ -137,6 +137,7 @@ class _ClipLibraryHomeState extends State<ClipLibraryHome>
       barrierDismissible: false,
       builder: (_) => BackupProgressDialog(
         type: BackupDialogType.backup,
+        parts: parts,
         onStart: (onProgress) => BackupService.instance.createBackup(
             onProgress: onProgress, parts: parts, accountId: accountId),
       ),

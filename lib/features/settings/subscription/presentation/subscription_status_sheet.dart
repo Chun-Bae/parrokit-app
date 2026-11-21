@@ -118,7 +118,7 @@ class SubscriptionStatusSheet extends StatelessWidget {
                 style: context.texts.bodySmall
                     .copyWith(color: cs.onSurfaceVariant, height: 1.5)),
             const SizedBox(height: 20),
-            if (state.tier == SubscriptionTier.light)
+            if (!isTopTier(state.tier))
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: FilledButton(

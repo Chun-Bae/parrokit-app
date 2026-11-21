@@ -50,9 +50,7 @@ class SubscriptionSection extends StatelessWidget {
                 context,
                 onManage: () => openStoreSubscriptions(context),
                 onRestore: () => restorePurchases(context),
-                onUpgrade: tier == SubscriptionTier.light
-                    ? () => paywall.show(context)
-                    : null,
+                onUpgrade: isTopTier(tier) ? null : () => paywall.show(context),
               )
             : paywall.show(context),
       ),

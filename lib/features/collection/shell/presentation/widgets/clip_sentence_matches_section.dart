@@ -136,7 +136,8 @@ class _ClipMatchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return ListTile(
-      key: ValueKey('clip-match-${match.segment.clipId}-${match.segment.startMs}'),
+      key: ValueKey(
+          'clip-match-${match.segment.clipId}-${match.segment.startMs}'),
       contentPadding: EdgeInsets.zero,
       dense: true,
       trailing: Icon(Icons.play_circle_outline_rounded, color: colors.primary),

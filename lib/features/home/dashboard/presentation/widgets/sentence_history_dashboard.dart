@@ -140,7 +140,8 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
                       .copyWith(color: muted, height: 1.5)))
         else ...[
           _Stats(data: data),
-          if (practice case final log? when !log.isEmpty && !widget.compact) ...[
+          if (practice case final log?
+              when !log.isEmpty && !widget.compact) ...[
             const SizedBox(height: 10),
             _AttemptLine(log: log),
           ],

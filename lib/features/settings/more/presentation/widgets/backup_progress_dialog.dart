@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/content/study_data_transfer.dart';
 
 enum BackupDialogType {
   backup,
@@ -56,6 +57,33 @@ bool _isUserFacingMessage(String message) {
     return false;
   }
   return true;
+}
+
+/// 확인 창에 적을 안내. 고른 것만 말한다(5차 521).
+///
+/// 순수 함수로 둬서 조합마다 글을 테스트로 지킬 수 있게 한다.
+String backupDialogDescription({
+  required BackupDialogType type,
+  required BackupParts parts,
+}) {
+  final lines = <String>[];
+  if (type == BackupDialogType.backup) {
+    lines.add('앞에서 고른 것을 파일 하나로 묶어 둬요.');
+    lines.add("묶은 파일은 앱 밖에 저장돼서, 나중에 '불러오기'로 다시 넣을 수 있어요.");
+    if (parts.clips) {
+      lines.add('클립과 자막은 영상 파일까지 담아서 파일이 커요.');
+    }
+    return lines.join('\n\n');
+  }
+  lines.add('백업해 둔 파일(.zip)에서 앞에서 고른 것만 불러와요.');
+  if (parts.needsStudyFile) {
+    lines.add('문장과 단어는 없는 것만 더해요(같은 것은 건너뛰어요).');
+  }
+  if (parts.clips) {
+    lines.add('클립과 자막은 지금 기기의 것이 모두 지워지고 백업 때의 것으로 바뀌어요. '
+        '다 되면 앱이 다시 시작돼요. 꺼지면 다시 열어 주세요.');
+  }
+  return lines.join('\n\n');
 }
 
 /// 백업/복원 진행 단계
@@ -104,6 +132,9 @@ class BackupProgress {
 class BackupProgressDialog extends StatefulWidget {
   final BackupDialogType type;
 
+  /// 앞 시트에서 고른 것(5차 521). 안내가 고르지 않은 것까지 말하지 않게 한다.
+  final BackupParts parts;
+
   /// 작업 실행 함수
   /// onProgress 콜백을 받아 진행 정보를 보고해야 함
   final Future<void> Function(Function(BackupProgress) onProgress) onStart;
@@ -112,6 +143,7 @@ class BackupProgressDialog extends StatefulWidget {
     super.key,
     required this.type,
     required this.onStart,
+    this.parts = const BackupParts.all(),
   });
 
   @override
@@ -154,17 +186,13 @@ class _BackupProgressDialogState extends State<BackupProgressDialog> {
   /// 앞 화면에서 고른 것(문장·단어·클립)만 담거나 되돌린다(5차 345).
   /// 클립과 자막은 paro.db와 영상 파일이라 파일이 크고, 되돌리면 지금 것이
   /// 모두 바뀐다. 문장과 단어는 없는 것만 더한다.
-  String get _description {
-    if (widget.type == BackupDialogType.backup) {
-      return '앞에서 고른 것을 파일 하나로 묶어 둬요.\n\n'
-          '묶은 파일은 앱 밖에 저장돼서, 나중에 \'불러오기\'로 다시 넣을 수 있어요.\n\n'
-          '클립과 자막은 영상 파일까지 담아서 파일이 커요.';
-    }
-    return '백업해 둔 파일(.zip)에서 앞에서 고른 것만 불러와요.\n\n'
-        '문장과 단어는 없는 것만 더해요(같은 것은 건너뛰어요).\n\n'
-        '클립과 자막을 고르면 지금 기기의 클립과 자막은 모두 지워지고 백업 때의 '
-        '것으로 바뀌어요. 다 되면 앱이 다시 시작돼요. 꺼지면 다시 열어 주세요.';
-  }
+  ///
+  /// 고르지 않은 것은 말하지 않는다(5차 521). 전에는 고른 것과 상관없이 늘
+  /// 같은 글이라, 단어만 담는데도 '클립과 자막은 영상 파일까지 담아서 파일이
+  /// 커요'가 떴다. 불러오는 쪽은 더 나빠서, 문장만 불러오는 사람도 '지금
+  /// 기기의 클립과 자막은 모두 지워지고'를 읽었다.
+  String get _description =>
+      backupDialogDescription(type: widget.type, parts: widget.parts);
 
   String get _startLabel =>
       widget.type == BackupDialogType.backup ? '백업 시작' : '불러오기 시작';

@@ -44,7 +44,8 @@ class ClipRemoteLibrarySyncDatasource {
   /// [uid] 계정의 서버 클립 중 이 기기에 없는 것을 로컬로 받아옵니다.
   /// 새로 반영된 클립 개수를 반환합니다.
   Future<int> pullServerClips(String uid) async {
-    final snapshot = await firestoreMetadataDatasource.libraryClipsRef(uid).get();
+    final snapshot =
+        await firestoreMetadataDatasource.libraryClipsRef(uid).get();
     AppLogger.i(
       '[Clip][RemoteSync] server-pull start uid=$uid docs=${snapshot.docs.length}',
     );
@@ -149,7 +150,8 @@ class ClipRemoteLibrarySyncDatasource {
         remoteDocId: remoteDocId,
       );
       if (existingClipId != null) {
-        AppLogger.d('[Clip][RemoteSync] cloud-pull skip-existing remoteDocId=$remoteDocId');
+        AppLogger.d(
+            '[Clip][RemoteSync] cloud-pull skip-existing remoteDocId=$remoteDocId');
         final backfilled = await _backfillUncategorizedIfNeeded(
           existingClipId,
           ClipStorageConstants.storageModeGoogleDrive,
@@ -269,12 +271,16 @@ class ClipRemoteLibrarySyncDatasource {
         .get();
 
     await db.transaction(() async {
-      await (db.delete(db.clipCacheEntries)..where((c) => c.clipId.equals(clipId)))
+      await (db.delete(db.clipCacheEntries)
+            ..where((c) => c.clipId.equals(clipId)))
           .go();
-      await (db.delete(db.clipSourceRefs)..where((c) => c.clipId.equals(clipId)))
+      await (db.delete(db.clipSourceRefs)
+            ..where((c) => c.clipId.equals(clipId)))
           .go();
-      await (db.delete(db.segments)..where((s) => s.clipId.equals(clipId))).go();
-      await (db.delete(db.clipTags)..where((ct) => ct.clipId.equals(clipId))).go();
+      await (db.delete(db.segments)..where((s) => s.clipId.equals(clipId)))
+          .go();
+      await (db.delete(db.clipTags)..where((ct) => ct.clipId.equals(clipId)))
+          .go();
       await (db.delete(db.clips)..where((c) => c.id.equals(clipId))).go();
     });
 
@@ -327,7 +333,8 @@ class ClipRemoteLibrarySyncDatasource {
   /// 예전 버전에서 콜렉션 정보 없이 당겨온 클립(collectionId=null)을
   /// "미분류" 콜렉션으로 채워 넣습니다. 실제로 채워 넣었으면 true를
   /// 반환합니다.
-  Future<bool> _backfillUncategorizedIfNeeded(int clipId, String storageMode) async {
+  Future<bool> _backfillUncategorizedIfNeeded(
+      int clipId, String storageMode) async {
     final clip = await (db.select(db.clips)
           ..where((c) => c.id.equals(clipId))
           ..limit(1))
@@ -377,7 +384,8 @@ class ClipRemoteLibrarySyncDatasource {
     String? collectionRemoteId,
   }) async {
     if (collectionRemoteId != null && collectionRemoteId.isNotEmpty) {
-      final byRemoteId = await db.collectionsDao.findByRemoteId(collectionRemoteId);
+      final byRemoteId =
+          await db.collectionsDao.findByRemoteId(collectionRemoteId);
       if (byRemoteId != null) return byRemoteId.id;
     }
     final name = collectionName != null && collectionName.trim().isNotEmpty
@@ -438,8 +446,8 @@ class ClipRemoteLibrarySyncDatasource {
   }
 
   Future<int> _ensureTag(String name) async {
-    final found =
-        await (db.select(db.tags)..where((t) => t.name.equals(name))).getSingleOrNull();
+    final found = await (db.select(db.tags)..where((t) => t.name.equals(name)))
+        .getSingleOrNull();
     if (found != null) return found.id;
     return db.into(db.tags).insert(TagsCompanion.insert(name: name));
   }

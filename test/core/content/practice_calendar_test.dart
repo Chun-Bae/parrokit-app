@@ -214,4 +214,69 @@ void main() {
       expect(data.dailyGoal, PracticeCalendar.defaultDailyGoal);
     });
   });
+
+  // 단어 복습도 캘린더에 쌓는다(사용자 요청). 따라 말하기와 섞지 않는다 —
+  // 하루 목표는 따라 말한 수로 재는데, 단어까지 넣으면 단어만 넘겨도
+  // '목표 완료'가 되어 버린다.
+  group('단어 복습', () {
+    test('복습하면 그날 자리에 쌓인다', () async {
+      final day = DateTime(2026, 11, 21);
+
+      final after = await PracticeCalendar.recordWordReview('me', now: day);
+
+      expect(after.wordCounts[PracticeCalendar.dateKey(day)], 1);
+      // 다시 읽어도 남아 있다.
+      final reloaded = await PracticeCalendar.load('me');
+      expect(reloaded.wordCounts[PracticeCalendar.dateKey(day)], 1);
+    });
+
+    test('따라 말한 수와 목표는 건드리지 않는다', () async {
+      final day = DateTime(2026, 11, 21);
+
+      await PracticeCalendar.recordWordReview('me', now: day);
+      await PracticeCalendar.recordWordReview('me', now: day);
+      await PracticeCalendar.recordWordReview('me', now: day);
+
+      final data = await PracticeCalendar.load('me');
+      expect(data.wordCounts[PracticeCalendar.dateKey(day)], 3);
+      expect(data.counts[PracticeCalendar.dateKey(day)], isNull);
+      expect(data.total, 0);
+    });
+
+    test('따라 말하기를 더해도 단어 수는 남는다', () async {
+      final day = DateTime(2026, 11, 21);
+
+      await PracticeCalendar.recordWordReview('me', now: day);
+      final after = await PracticeCalendar.recordOne('me', now: day);
+
+      expect(after.counts[PracticeCalendar.dateKey(day)], 1);
+      expect(after.wordCounts[PracticeCalendar.dateKey(day)], 1);
+    });
+
+    test('목표를 바꿔도 단어 수는 남는다', () async {
+      final day = DateTime(2026, 11, 21);
+
+      await PracticeCalendar.recordWordReview('me', now: day);
+      final after = await PracticeCalendar.setDailyGoal('me', 9, now: day);
+
+      expect(after.wordCounts[PracticeCalendar.dateKey(day)], 1);
+      expect(after.dailyGoal, 9);
+    });
+
+    test('계정이 다르면 따로 쌓인다', () async {
+      final day = DateTime(2026, 11, 21);
+
+      await PracticeCalendar.recordWordReview('me', now: day);
+
+      final other = await PracticeCalendar.load('you');
+      expect(other.wordCounts, isEmpty);
+    });
+
+    test('복습 화면이 실제로 이 자리에 적는다', () {
+      final source = File(
+              'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart')
+          .readAsStringSync();
+      expect(source, contains('PracticeCalendar.recordWordReview('));
+    });
+  });
 }

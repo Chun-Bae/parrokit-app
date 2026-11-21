@@ -227,7 +227,9 @@ class _FolderField extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  path.isEmpty ? EditStrings.collectionHint : path.split('/').join(' › '),
+                  path.isEmpty
+                      ? EditStrings.collectionHint
+                      : path.split('/').join(' › '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(

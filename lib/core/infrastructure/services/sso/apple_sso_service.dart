@@ -9,8 +9,13 @@ class AppleSsoService {
 
   /// 임의의 nonce 문자열(재생 공격 방지용)을 생성합니다.
   String _generateNonce([int length = 32]) {
-    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = List.generate(length, (_) => charset[DateTime.now().microsecondsSinceEpoch % charset.length]).join();
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = List.generate(
+            length,
+            (_) =>
+                charset[DateTime.now().microsecondsSinceEpoch % charset.length])
+        .join();
     return random;
   }
 
@@ -28,7 +33,8 @@ class AppleSsoService {
       final hashedNonce = _sha256ofString(rawNonce);
 
       // 1. Apple 로그인 시도 (네이티브 화면 호출)
-      final AuthorizationCredentialAppleID appleCredential = await SignInWithApple.getAppleIDCredential(
+      final AuthorizationCredentialAppleID appleCredential =
+          await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
@@ -46,15 +52,20 @@ class AppleSsoService {
       final AuthCredential credential = OAuthProvider('apple.com').credential(
         idToken: idToken,
         rawNonce: rawNonce,
-        accessToken: appleCredential.authorizationCode, // Firebase에서 일부 기능에 사용할 수 있음
+        accessToken:
+            appleCredential.authorizationCode, // Firebase에서 일부 기능에 사용할 수 있음
       );
 
       // 4. Firebase 로그인 수행
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
 
       // (선택) 처음 가입 시 이름 업데이트
-      if (appleCredential.givenName != null || appleCredential.familyName != null) {
-        final name = "${appleCredential.familyName ?? ''} ${appleCredential.givenName ?? ''}".trim();
+      if (appleCredential.givenName != null ||
+          appleCredential.familyName != null) {
+        final name =
+            "${appleCredential.familyName ?? ''} ${appleCredential.givenName ?? ''}"
+                .trim();
         if (name.isNotEmpty && userCredential.user?.displayName == null) {
           await userCredential.user?.updateDisplayName(name);
         }

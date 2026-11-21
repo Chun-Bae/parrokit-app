@@ -268,8 +268,7 @@ class VideoProvider extends ChangeNotifier {
     );
     if (userProvider.coins < cost) {
       // 할 수 있는 일(광고 보기·구독)을 시트로 알린다(5차 4단계).
-      unawaited(showNotEnoughParrots(
-          needed: cost, have: userProvider.coins));
+      unawaited(showNotEnoughParrots(needed: cost, have: userProvider.coins));
       return;
     }
     _pendingCost = cost;

@@ -114,8 +114,8 @@ mixin EditFileMixin on ChangeNotifier {
       _isVideoLoading = false;
       notifyListeners();
       AppLogger.e('오디오를 영상으로 변환 실패', error: e, stackTrace: st);
-      showToast(userErrorMessage(e,
-          fallback: '오디오 파일을 열지 못했어요. 다른 파일로 다시 시도해 주세요.'));
+      showToast(
+          userErrorMessage(e, fallback: '오디오 파일을 열지 못했어요. 다른 파일로 다시 시도해 주세요.'));
       return;
     }
 

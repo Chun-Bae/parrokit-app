@@ -56,10 +56,14 @@ class Comment {
       id: id ?? this.id,
       authorId: authorId ?? this.authorId,
       authorNickname: authorNickname ?? this.authorNickname,
-      authorAvatarUrl: clearAuthorAvatarUrl ? null : (authorAvatarUrl ?? this.authorAvatarUrl),
+      authorAvatarUrl: clearAuthorAvatarUrl
+          ? null
+          : (authorAvatarUrl ?? this.authorAvatarUrl),
       content: content ?? this.content,
       parentId: clearParentId ? null : (parentId ?? this.parentId),
-      replyToNickname: clearReplyToNickname ? null : (replyToNickname ?? this.replyToNickname),
+      replyToNickname: clearReplyToNickname
+          ? null
+          : (replyToNickname ?? this.replyToNickname),
       postId: postId ?? this.postId,
       postType: postType ?? this.postType,
       likeCount: likeCount ?? this.likeCount,

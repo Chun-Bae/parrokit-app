@@ -50,7 +50,9 @@ class _OneLinePrinter extends LogPrinter {
     final level = event.level.name.toUpperCase();
     final message = event.message;
     final error = event.error;
-    final line = error == null ? '[$level] $message' : '[$level] $message | error=$error';
+    final line = error == null
+        ? '[$level] $message'
+        : '[$level] $message | error=$error';
     return [line];
   }
 }

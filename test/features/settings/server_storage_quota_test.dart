@@ -16,8 +16,10 @@ Future<void> settle() =>
 void main() {
   test('단계별 한도는 서버(storageUsage.ts)와 같다', () {
     expect(serverStorageQuotaBytes(SubscriptionTier.free), 0);
-    expect(serverStorageQuotaBytes(SubscriptionTier.light), 5 * gb);
+    expect(serverStorageQuotaBytes(SubscriptionTier.light), 10 * gb);
+    expect(serverStorageQuotaBytes(SubscriptionTier.plus), 20 * gb);
     expect(serverStorageQuotaBytes(SubscriptionTier.pro), 30 * gb);
+    expect(serverStorageQuotaBytes(SubscriptionTier.max), 80 * gb);
   });
 
   test('서버 저장 막대를 그리는 곳은 모두 단계별 한도를 쓴다', () {

@@ -223,7 +223,8 @@ mixin EditSegmentMixin on ChangeNotifier {
     return '앞뒤 구간과 겹치지 않게 시각을 옮겼어요.';
   }
 
-  String _adjustReason(int startMs, int endMs, int lowerBound, int upperBound) =>
+  String _adjustReason(
+          int startMs, int endMs, int lowerBound, int upperBound) =>
       adjustReasonFor(startMs, endMs, lowerBound, upperBound,
           upperIsVideoEnd: upperBound == _maxDurationMs);
 

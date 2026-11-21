@@ -302,8 +302,9 @@ class ClipRepositoryImpl implements ClipRepository {
       final keepsFile = filePath == prevClip.filePath;
       final thumbnailPath = await thumbnailDatasource.ensureThumbnailFile(
         clipId: clipId,
-        videoPath:
-            keepsFile ? (prevClip.sourceFilePath ?? prevClip.filePath) : filePath,
+        videoPath: keepsFile
+            ? (prevClip.sourceFilePath ?? prevClip.filePath)
+            : filePath,
         existingThumbnailPath: prevClip.thumbnailFilePath,
       );
       final storageBytes =
@@ -317,9 +318,8 @@ class ClipRepositoryImpl implements ClipRepository {
           filePath: keepsFile ? const Value.absent() : Value(filePath),
           sourceFilePath: keepsFile ? const Value.absent() : Value(filePath),
           thumbnailFilePath: Value(thumbnailPath),
-          storageBytes: storageBytes == null
-              ? const Value.absent()
-              : Value(storageBytes),
+          storageBytes:
+              storageBytes == null ? const Value.absent() : Value(storageBytes),
           durationMs: Value(durationMs),
           storageMode:
               storageMode == null ? const Value.absent() : Value(storageMode),

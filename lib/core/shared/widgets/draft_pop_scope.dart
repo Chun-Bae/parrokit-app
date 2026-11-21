@@ -18,8 +18,8 @@ Future<bool> confirmDiscardDraft(BuildContext context) async {
         TextButton(
           key: const ValueKey('draft-discard'),
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text('버리기',
-              style: TextStyle(color: dialogContext.tokens.danger)),
+          child:
+              Text('버리기', style: TextStyle(color: dialogContext.tokens.danger)),
         ),
       ],
     ),

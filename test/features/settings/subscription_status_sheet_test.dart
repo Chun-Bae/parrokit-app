@@ -110,20 +110,43 @@ void main() {
     expect(find.text(subscriptionParrotRowTitle), findsOneWidget);
     expect(find.text(subscriptionStorageRowTitle), findsOneWidget);
     expect(find.text('62 / 100 남음'), findsOneWidget);
-    expect(find.textContaining('1.0 GB / 5.0 GB'), findsOneWidget);
+    expect(find.textContaining('1.0 GB / 10 GB'), findsOneWidget);
     expect(find.byKey(const ValueKey('status-notice')), findsNothing);
   });
 
-  testWidgets('라이트에게만 프로로 올리기를 보여 준다', (tester) async {
+  testWidgets('맥스가 아니면 올리기를 보여 준다', (tester) async {
     final light = await _subscription(tester, tier: 'light', status: 'active');
     await _open(tester, subscription: light, onUpgrade: () {});
     expect(find.byKey(const ValueKey('status-upgrade')), findsOneWidget);
 
     final pro = await _subscription(tester, tier: 'pro', status: 'active');
     await _open(tester, subscription: pro, onUpgrade: () {});
-    expect(find.byKey(const ValueKey('status-upgrade')), findsNothing);
+    expect(find.byKey(const ValueKey('status-upgrade')), findsOneWidget);
     expect(find.text('프로'), findsOneWidget);
     expect(find.text('400 남음'), findsNothing);
+
+    final max = await _subscription(tester, tier: 'max', status: 'active');
+    await _open(tester, subscription: max, onUpgrade: () {});
+    expect(find.byKey(const ValueKey('status-upgrade')), findsNothing);
+    expect(find.text('맥스'), findsOneWidget);
+  });
+
+  testWidgets('올리기 단추가 자기 단계를 가리키지 않는다', (tester) async {
+    // '프로로 올리기'로 박혀 있어서 프로를 쓰는 사람도 프로를 권유받았다(5차 520).
+    for (final name in ['light', 'plus', 'pro']) {
+      final sub = await _subscription(tester, tier: name, status: 'active');
+      await _open(tester, subscription: sub, onUpgrade: () {});
+      final label = tester.widget<Text>(find.descendant(
+        of: find.byKey(const ValueKey('status-upgrade')),
+        matching: find.byType(Text),
+      ));
+      expect(label.data, subscriptionUpgradeLabel);
+      for (final tier in SubscriptionTier.values) {
+        expect(subscriptionUpgradeLabel.contains(subscriptionTierName(tier)),
+            isFalse,
+            reason: '올리기 단추에 단계 이름을 박으면 다른 단계에서 틀린 말이 된다');
+      }
+    }
   });
 
   testWidgets('해지를 예약하면 언제 끝나는지 알린다', (tester) async {

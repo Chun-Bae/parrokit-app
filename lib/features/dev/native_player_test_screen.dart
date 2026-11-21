@@ -136,13 +136,12 @@ class _NativePlayerTestScreenState extends State<NativePlayerTestScreen> {
             child: const Text('처음으로'),
           ),
           OutlinedButton(
-            onPressed: () => _player.seek(
-                state.position + const Duration(seconds: 2)),
+            onPressed: () =>
+                _player.seek(state.position + const Duration(seconds: 2)),
             child: const Text('2초 뒤로'),
           ),
           OutlinedButton(
-            onPressed: () =>
-                _player.setSpeed(state.speed == 1.0 ? 1.5 : 1.0),
+            onPressed: () => _player.setSpeed(state.speed == 1.0 ? 1.5 : 1.0),
             child: Text(state.speed == 1.0 ? '1.5배' : '1배'),
           ),
           OutlinedButton(

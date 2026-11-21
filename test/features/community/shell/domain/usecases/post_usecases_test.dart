@@ -61,14 +61,14 @@ void main() {
         snippet: 'snippet',
       );
 
-      when(mockImageService.deleteImageFromStorage(any))
-          .thenAnswer((_) async => true);
+      when(mockImageService.deleteImagesQuietly(any))
+          .thenAnswer((_) async => {});
       when(mockRepository.deletePost(any)).thenAnswer((_) async => {});
 
       await deletePostUseCase.execute(post);
 
-      verify(mockImageService.deleteImageFromStorage('url1')).called(1);
-      verify(mockImageService.deleteImageFromStorage('url2')).called(1);
+      // 한 장씩이 아니라 한꺼번에 보낸다(5차 511).
+      verify(mockImageService.deleteImagesQuietly(['url1', 'url2'])).called(1);
       verify(mockRepository.deletePost('post_123')).called(1);
     });
 

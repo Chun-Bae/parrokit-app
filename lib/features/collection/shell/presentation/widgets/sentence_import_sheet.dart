@@ -419,24 +419,24 @@ class _SentenceImportSheetState extends State<SentenceImportSheet> {
               ),
             ),
           Row(children: [
-          TextButton(
-            key: const ValueKey('import-cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          const Spacer(),
-          FilledButton(
-            key: const ValueKey('import-start'),
-            // 하나도 안 골랐으면 눌러도 아무 일이 없었다. 까닭을 알린다(5차).
-            onPressed: _selected.isEmpty
-                ? () => setState(() => _showPickHint = true)
-                : _start,
-            style: _selected.isEmpty
-                ? FilledButton.styleFrom(
-                    backgroundColor: colors.primary.withValues(alpha: 0.4))
-                : null,
-            child: Text('${_selected.length}개 가져오기'),
-          ),
+            TextButton(
+              key: const ValueKey('import-cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            const Spacer(),
+            FilledButton(
+              key: const ValueKey('import-start'),
+              // 하나도 안 골랐으면 눌러도 아무 일이 없었다. 까닭을 알린다(5차).
+              onPressed: _selected.isEmpty
+                  ? () => setState(() => _showPickHint = true)
+                  : _start,
+              style: _selected.isEmpty
+                  ? FilledButton.styleFrom(
+                      backgroundColor: colors.primary.withValues(alpha: 0.4))
+                  : null,
+              child: Text('${_selected.length}개 가져오기'),
+            ),
           ]),
         ]);
       case _Phase.running:

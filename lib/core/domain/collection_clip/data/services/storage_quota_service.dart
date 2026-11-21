@@ -40,6 +40,21 @@ String storageQuotaMessage(StorageQuotaResult result) => result.quotaBytes == 0
     ? '서버 저장은 구독하면 쓸 수 있어요. 이 영상은 기기에 그대로 있어요.'
     : '서버가 가득 찼어요. 안 보는 영상을 지우거나 더 큰 단계로 올리면 담을 수 있어요.';
 
+/// 사용자가 손쓸 수 있는 까닭이라서 그대로 보여 줘야 하는 실패(5차 518).
+///
+/// 클립 옮기기는 실패하면 뭉뚱그린 말("서버에 저장하지 못했어요")을 적는다.
+/// 속사정을 그대로 보여 주지 않으려는 것인데, 자리가 모자라거나 구독이
+/// 없어서 막힌 것은 사용자가 고칠 수 있는 일이라 그 말을 그대로 적어야
+/// 한다. 그 둘을 가르려고 이 예외를 따로 둔다.
+class ClipTransferBlocked implements Exception {
+  const ClipTransferBlocked(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class StorageQuotaService {
   StorageQuotaService({FirebaseFunctions? functions}) : _given = functions;
 

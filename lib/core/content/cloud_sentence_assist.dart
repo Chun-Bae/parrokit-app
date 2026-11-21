@@ -6,6 +6,17 @@ import 'package:flutter/foundation.dart';
 import 'sentence_assist.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
+/// 이 부름이 예문 한도를 쓰는지(5차 517).
+///
+/// 서버(sentenceAssist.ts)의 wantsExamples와 같은 규칙이어야 한다. 두 한도는
+/// 모두 resource-exhausted로 거절되므로, 어느 쪽이 바닥났는지는 보낸 값으로
+/// 가릴 수밖에 없다. 낱말을 묻되 count가 0이면 뜻·발음만 받는 것이라
+/// 예문 한도를 쓰지 않는다.
+bool assistCallWantsExamples(Map<String, Object> data) {
+  final count = data['count'];
+  return data['mode'] == 'word' && (count is! num || count > 0);
+}
+
 /// 서버 함수 `suggestSentenceInfo`(Gemini 2.5 Flash-Lite)를 부르는 도우미.
 /// 두 기능이 같은 하루 횟수를 나눠 쓰고, 남은 횟수는 응답으로 받는다.
 class CloudSentenceAssist implements SentenceAssist {
@@ -26,12 +37,32 @@ class CloudSentenceAssist implements SentenceAssist {
   FirebaseFunctions? _functions;
   int? _remainingToday;
   int? _dailyLimit;
+  int? _examplesRemainingToday;
+  int? _exampleDailyLimit;
+  int? _maxExamplesPerWord;
+  int? _exampleCredits;
+  int? _assistCredits;
 
   @override
   int? get remainingToday => _remainingToday;
 
   @override
   int? get dailyLimit => _dailyLimit;
+
+  @override
+  int? get examplesRemainingToday => _examplesRemainingToday;
+
+  @override
+  int? get exampleDailyLimit => _exampleDailyLimit;
+
+  @override
+  int? get maxExamplesPerWord => _maxExamplesPerWord;
+
+  @override
+  int? get exampleCredits => _exampleCredits;
+
+  @override
+  int? get assistCredits => _assistCredits;
 
   @override
   Future<void> refreshUsage() async {
@@ -68,6 +99,7 @@ class CloudSentenceAssist implements SentenceAssist {
       AppLogger.w('[assist] Firebase 준비 안 됨: $e');
       throw const SentenceAssistUnavailable();
     }
+    final wantsExamples = assistCallWantsExamples(data);
     try {
       final result = await callable.call<Object?>(data).timeout(timeout);
       final body = result.data;
@@ -77,6 +109,20 @@ class CloudSentenceAssist implements SentenceAssist {
       if (remaining is num) _remainingToday = remaining.toInt();
       final limit = map['dailyLimit'];
       if (limit is num) _dailyLimit = limit.toInt();
+      final examplesRemaining = map['examplesRemainingToday'];
+      if (examplesRemaining is num) {
+        _examplesRemainingToday = examplesRemaining.toInt();
+      }
+      final exampleLimit = map['exampleDailyLimit'];
+      if (exampleLimit is num) _exampleDailyLimit = exampleLimit.toInt();
+      final perWord = map['maxExamplesPerWord'];
+      if (perWord is num) _maxExamplesPerWord = perWord.toInt();
+      // 패롯으로 사 둔 몫(5차 532). examplesRemainingToday에는 이미 더해져
+      // 있고, 이 값은 '하루 한도와 따로 가진 것'을 따로 보여 줄 때 쓴다.
+      final credits = map['exampleCredits'];
+      if (credits is num) _exampleCredits = credits.toInt();
+      final assistCredits = map['assistCredits'];
+      if (assistCredits is num) _assistCredits = assistCredits.toInt();
       debugPrint('[assist] ${data['mode']} ok, remaining=$_remainingToday');
       return map;
     } on FirebaseFunctionsException catch (e) {
@@ -85,8 +131,19 @@ class CloudSentenceAssist implements SentenceAssist {
       AppLogger.w('[assist] ${data['mode']} 실패: ${e.code} ${e.message}');
       switch (e.code) {
         case 'resource-exhausted':
-          _remainingToday = 0;
-          throw const SentenceAssistQuotaExceeded();
+          // 서버는 두 한도 모두 같은 코드로 돌려준다. 예문을 받으려던
+          // 부름이었으면 예문 쪽을 0으로 적는다. 전에는 늘 뜻·발음
+          // 횟수를 0으로 적어서, 예문을 다 쓴 사람의 '뜻·발음 채우기'가
+          // 멀쩡한데도 꺼지고, 정작 예문 단추는 열린 채로 남았다(5차 517).
+          if (wantsExamples) {
+            // 서버가 거절했다는 것은 하루 몫도 사 둔 몫도 없다는 뜻이다.
+            _examplesRemainingToday = 0;
+            _exampleCredits = 0;
+          } else {
+            _remainingToday = 0;
+            _assistCredits = 0;
+          }
+          throw SentenceAssistQuotaExceeded(examples: wantsExamples);
         case 'unauthenticated':
           throw const SentenceAssistUnavailable('로그인하면 쓸 수 있어요.');
         default:

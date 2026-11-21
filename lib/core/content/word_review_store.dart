@@ -106,13 +106,11 @@ class WordReviewStore {
       _ => (interval * ease).round(),
     };
     // 바로 떠오른 단어는 한 번 더 밀어 준다(SM-2의 easy bonus).
-    final withBonus =
-        rating == ReviewRating.easy ? (base * 1.3).round() : base;
+    final withBonus = rating == ReviewRating.easy ? (base * 1.3).round() : base;
     return withBonus.clamp(1, maxInterval);
   }
 
-  static String _key(String accountId) =>
-      'parrokit.word_reviews.v1.$accountId';
+  static String _key(String accountId) => 'parrokit.word_reviews.v1.$accountId';
 
   static Future<Map<String, WordReview>> loadAll(String accountId) async {
     final prefs = await SharedPreferences.getInstance();

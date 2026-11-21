@@ -11,12 +11,19 @@ class StudyGardenPreview extends StatefulWidget {
     required this.practiceCounts,
     required this.practiceGoals,
     required this.dailyGoal,
+    this.wordReviewCounts = const {},
     this.now,
   });
 
   final Map<String, int> practiceCounts;
   final Map<String, int> practiceGoals;
   final int dailyGoal;
+
+  /// 날짜(yyyy-MM-dd) → 그날 복습한 단어 수(사용자 요청).
+  ///
+  /// 칸 색과 '목표 완료'는 따라 말한 수만 본다. 단어 복습은 그 옆에
+  /// 나란히 적기만 한다.
+  final Map<String, int> wordReviewCounts;
 
   /// '오늘'로 볼 때. 테스트에서 고정한다. 비우면 그릴 때마다 지금을 본다.
   final DateTime? now;
@@ -50,6 +57,9 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
       '${date.day.toString().padLeft(2, '0')}';
 
   int countFor(DateTime date) => widget.practiceCounts[dateKey(date)] ?? 0;
+
+  int wordCountFor(DateTime date) =>
+      widget.wordReviewCounts[dateKey(date)] ?? 0;
 
   int goalFor(DateTime date) =>
       widget.practiceGoals[dateKey(date)] ?? widget.dailyGoal;
@@ -90,9 +100,14 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
     // 머리의 수는 지금 펼친 달의 합이다. 날짜를 더해 보면 맞는다(5차 501).
     final monthTotal =
         monthDates.fold<int>(0, (sum, date) => sum + countFor(date));
+    final monthWordTotal =
+        monthDates.fold<int>(0, (sum, date) => sum + wordCountFor(date));
+    final monthWordLabel = wordReviewMonthLabel(monthWordTotal);
     final isCurrentMonth =
         month.year == today.year && month.month == today.month;
     final selectedCount = selected == null ? null : countFor(selected!);
+    final selectedWordLabel =
+        selected == null ? null : wordReviewDayLabel(wordCountFor(selected!));
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -123,6 +138,22 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                   style: context.texts.labelSmall.copyWith(color: ink),
                 ),
               ),
+              if (monthWordLabel != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  key: const ValueKey('calendar-month-words'),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: palette.surfaceAlt,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Text(
+                    monthWordLabel,
+                    style: context.texts.labelSmall.copyWith(color: ink),
+                  ),
+                ),
+              ],
             ],
           ),
           // "연습한 문장이 많을수록 날짜가 진해져요" 부제는 아래 범례
@@ -188,9 +219,12 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
               final current = date == today;
               final chosen = date == selected;
               final complete = count >= goal;
+              final wordLabel = wordReviewDayLabel(wordCountFor(date));
               final label = future
                   ? '${date.month}월 $day일, 아직 오지 않은 날'
-                  : '${date.month}월 $day일, $count$practiceCountUnit 연습${complete ? ', 목표 완료' : ''}';
+                  : '${date.month}월 $day일, $count$practiceCountUnit 연습'
+                      '${wordLabel == null ? '' : ', $wordLabel 복습'}'
+                      '${complete ? ', 목표 완료' : ''}';
 
               return Semantics(
                 label: label,
@@ -277,6 +311,7 @@ class _StudyGardenPreviewState extends State<StudyGardenPreview> {
                 ? practiceCalendarHint
                 : '${selected!.month}월 ${selected!.day}일 · '
                     '${practiceOfGoalLabel(selectedCount!, goalFor(selected!))}'
+                    '${selectedWordLabel == null ? '' : ' · $selectedWordLabel'}'
                     '${selectedCount >= goalFor(selected!) ? ' · 목표 완료' : ''}',
             style: context.texts.labelSmall.copyWith(color: muted, height: 1.5),
           ),

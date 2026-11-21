@@ -7,7 +7,6 @@ class ClipItem {
   final List<Segment> segments;
   final Uint8List? thumbnail;
 
-
   const ClipItem({
     required this.clip,
     required this.tags,

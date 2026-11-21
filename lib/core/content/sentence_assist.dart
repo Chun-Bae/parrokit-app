@@ -11,6 +11,23 @@ abstract class SentenceAssist {
   /// 서버가 알려 준 하루 한도. 아직 모르면 null.
   int? get dailyLimit;
 
+  /// 오늘 더 만들 수 있는 예문 수. 뜻·발음 채우기와 다른 한도다. 모르면 null.
+  int? get examplesRemainingToday;
+
+  /// 하루에 만들 수 있는 예문 수. 모르면 null.
+  int? get exampleDailyLimit;
+
+  /// 이 단계에서 낱말 하나가 들 수 있는 예문 수. 모르면 null.
+  int? get maxExamplesPerWord;
+
+  /// 패롯으로 사 둔 예문 몫(5차 532). 하루 한도와 다른 주머니라 사라지지
+  /// 않는다. [examplesRemainingToday]에는 이 수가 이미 더해져 있다.
+  int? get exampleCredits;
+
+  /// 패롯으로 사 둔 뜻·발음 채우기 몫(5차 535). [remainingToday]에 이미
+  /// 더해져 있다.
+  int? get assistCredits;
+
   /// 모델을 부르지 않고 오늘 쓴 횟수만 서버에서 가져온다. 횟수를 쓰지 않는다.
   Future<void> refreshUsage();
 
@@ -83,10 +100,15 @@ class SentenceSuggestion {
 
 /// 오늘 횟수를 모두 썼을 때 던진다. 화면은 내일 다시 쓸 수 있다고 안내한다.
 class SentenceAssistQuotaExceeded implements Exception {
-  const SentenceAssistQuotaExceeded();
+  const SentenceAssistQuotaExceeded({this.examples = false});
+
+  /// 다 쓴 것이 예문 한도인지(5차 517). 서버는 두 한도 모두
+  /// `resource-exhausted`로 돌려주므로 어느 쪽인지 여기에 실어 나른다.
+  /// 뜻·발음 채우기 한도와 예문 생성 한도는 서로 다른 축이다.
+  final bool examples;
 
   @override
-  String toString() => 'SentenceAssistQuotaExceeded';
+  String toString() => 'SentenceAssistQuotaExceeded(examples: $examples)';
 }
 
 /// 구현이 연결되지 않았을 때 던진다. 화면은 자동 기능을 끄고 직접 입력하게 안내한다.
@@ -107,6 +129,21 @@ class UnavailableSentenceAssist implements SentenceAssist {
 
   @override
   int? get dailyLimit => null;
+
+  @override
+  int? get examplesRemainingToday => null;
+
+  @override
+  int? get exampleDailyLimit => null;
+
+  @override
+  int? get maxExamplesPerWord => null;
+
+  @override
+  int? get exampleCredits => null;
+
+  @override
+  int? get assistCredits => null;
 
   @override
   Future<void> refreshUsage() async {}
@@ -134,6 +171,14 @@ class UnavailableSentenceAssist implements SentenceAssist {
   }) =>
       Future.error(const SentenceAssistUnavailable());
 }
+
+/// 오늘 만들 수 있는 예문을 다 썼을 때. 뜻·발음 채우기 한도와 다른 말이다.
+const String exampleQuotaExhaustedText =
+    '오늘 만들 수 있는 예문을 다 썼어요. 내일 다시 만들 수 있어요.';
+
+/// 이 낱말에 더 만들어 줄 자리가 없을 때. 직접 적는 것은 [examplesMaxCount]까지
+/// 되므로 '넣을 수 있어요'가 아니라 '만들어 줘요'라고 적는다(5차 506).
+String exampleFillCapText(int cap) => '지금 단계에서는 예문을 낱말마다 $cap개까지 만들어 줘요.';
 
 /// 키보드로 치기 어려워 한글 전사를 쓸 만한 언어.
 bool supportsHangulTransliteration(String language) =>

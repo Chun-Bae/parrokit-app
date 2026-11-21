@@ -3,6 +3,7 @@
 // 직접 더한 낱말에는 예문이 없어 쓰임을 볼 길이 없었다. 서버에 지금 들고
 // 있는 예문을 함께 보내, 그것과 겹치지 않는 것만 받는다.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -20,10 +21,21 @@ class _FakeAssist implements SentenceAssist {
     this.pronunciation,
     this.limit,
     this.remaining,
+    this.examplesRemaining,
+    this.afterRefreshExamplesRemaining,
+    this.afterRefreshMaxPerWord,
   });
 
   final int? limit;
   final int? remaining;
+
+  /// 열릴 때 아는 값. null이면 아직 서버에 묻기 전이다.
+  int? examplesRemaining;
+  int? maxPerWord;
+
+  /// refreshUsage가 돌고 나서 알게 되는 값.
+  final int? afterRefreshExamplesRemaining;
+  final int? afterRefreshMaxPerWord;
 
   final List<SuggestedExample> examples;
   final String? translation;
@@ -38,8 +50,34 @@ class _FakeAssist implements SentenceAssist {
   int? get remainingToday => remaining;
   @override
   int? get dailyLimit => limit;
+
   @override
-  Future<void> refreshUsage() async {}
+  int? get examplesRemainingToday => examplesRemaining;
+
+  @override
+  int? get exampleDailyLimit => null;
+
+  @override
+  int? get maxExamplesPerWord => maxPerWord;
+
+  @override
+  int? get exampleCredits => null;
+
+  @override
+  int? get assistCredits => null;
+  /// refreshUsage를 몇 번 불렀나. 시트가 열릴 때 한 번 부르므로, 두 번째
+  /// 부터 값을 알려 줘야 '열 때는 몰랐다가 눌러서 안다'를 흉내 낼 수 있다.
+  int refreshCount = 0;
+
+  @override
+  Future<void> refreshUsage() async {
+    refreshCount++;
+    if (refreshCount < 2) return;
+    if (afterRefreshExamplesRemaining != null) {
+      examplesRemaining = afterRefreshExamplesRemaining;
+    }
+    if (afterRefreshMaxPerWord != null) maxPerWord = afterRefreshMaxPerWord;
+  }
 
   @override
   Future<SentenceSuggestion> suggest({
@@ -97,6 +135,41 @@ Future<void> _openDetail(
   ));
   await tester.tap(find.text('열기'));
   await tester.pumpAndSettle();
+}
+
+/// 예문 한도를 다 썼다고 서버가 거절하는 가짜(5차 517).
+///
+/// 서버는 뜻·발음 한도와 예문 한도를 모두 resource-exhausted로 돌려준다.
+/// 어느 쪽인지 섞이면 멀쩡한 단추가 꺼지고 다 쓴 단추가 열린 채로 남는다.
+class _ExampleQuotaAssist extends _FakeAssist {
+  _ExampleQuotaAssist()
+      : super(limit: 5, remaining: 5, examplesRemaining: 1) {
+    maxPerWord = 3;
+  }
+
+  @override
+  Future<WordSuggestion> suggestWord({
+    required String language,
+    required String word,
+    List<String> existingExamples = const [],
+    int count = 1,
+  }) async {
+    examplesRemaining = 0;
+    throw const SentenceAssistQuotaExceeded(examples: true);
+  }
+}
+
+/// refreshUsage가 끝나지 않고 매달려 있는 가짜. '횟수 확인 중' 상태를
+/// 그대로 붙잡아 둔다.
+class _SlowAssist extends _FakeAssist {
+  _SlowAssist() : super(limit: 3, remaining: 3, examplesRemaining: 3);
+
+  final Completer<void> _gate = Completer<void>();
+
+  void finish() => _gate.complete();
+
+  @override
+  Future<void> refreshUsage() => _gate.future;
 }
 
 void main() {
@@ -240,7 +313,9 @@ void main() {
 
   testWidgets('오늘 다 썼으면 단추를 막고 까닭을 미리 보여 준다(5차 473)', (tester) async {
     final word = await _addWord();
-    final assist = _FakeAssist(limit: 3, remaining: 0);
+    // 뜻·발음 채우기는 다 썼지만 예문은 남았다. 두 한도는 다른 축이라
+    // 예문 단추는 열려 있어야 한다.
+    final assist = _FakeAssist(limit: 3, remaining: 0, examplesRemaining: 2);
 
     await _openDetail(tester, word, assist);
     await tester.tap(find.byKey(const ValueKey('edit-word')));
@@ -248,10 +323,74 @@ void main() {
 
     // 눌러 보기 전에 까닭이 보인다.
     expect(find.text(assistQuotaExhaustedMessage), findsWidgets);
-    for (final key in ['edit-word-fill', 'edit-word-fill-examples']) {
-      final button = tester.widget<ButtonStyleButton>(find.byKey(ValueKey(key)));
-      expect(button.onPressed, isNull, reason: key);
-    }
+    final fill = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill')));
+    expect(fill.onPressed, isNull);
+    final examples = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill-examples')));
+    expect(examples.onPressed, isNotNull);
+  });
+
+  testWidgets('오늘 예문을 다 만들었으면 예문 단추만 막는다', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(limit: 3, remaining: 2, examplesRemaining: 0);
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(exampleQuotaExhaustedText), findsOneWidget);
+    final fill = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill')));
+    expect(fill.onPressed, isNotNull);
+    final examples = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill-examples')));
+    expect(examples.onPressed, isNull);
+  });
+
+  // 횟수를 묻는 동안에는 채우기 단추를 막는다(5차 515, 사용자 요청).
+  // 전에는 '횟수 확인 중…'이 떠 있는데도 눌려서, 다 쓴 사람도 눌러 본
+  // 뒤에야 막혔다는 걸 알았다.
+  testWidgets('횟수 확인 중에는 뜻·발음 채우기를 막는다', (tester) async {
+    final word = await _addWord();
+    final assist = _SlowAssist();
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pump();
+
+    final whileLoading = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill')));
+    expect(whileLoading.onPressed, isNull, reason: '묻는 동안에는 막혀 있어야 한다');
+
+    assist.finish();
+    await tester.pumpAndSettle();
+
+    final afterLoading = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill')));
+    expect(afterLoading.onPressed, isNotNull, reason: '다 물으면 다시 열려야 한다');
+  });
+
+  // 열 때는 한도를 몰라 단추가 열려 있다. 눌러서 그제야 0인 걸 알면,
+  // 까닭을 단추 아래에 한 번만 적어야 한다. 전에는 거기에 더해 시트 맨
+  // 아래 알림줄에도 같은 문장을 넣어 두 번 나왔다(5차 513).
+  testWidgets('눌러서 한도 소진을 알게 돼도 안내는 한 번만 나온다', (tester) async {
+    final word = await _addWord();
+    final assist = _FakeAssist(
+      limit: 3,
+      remaining: 2,
+      afterRefreshExamplesRemaining: 0,
+      afterRefreshMaxPerWord: 3,
+    );
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill-examples')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(exampleQuotaExhaustedText), findsOneWidget);
   });
 
   testWidgets('남았으면 단추를 막지 않는다(5차 473)', (tester) async {
@@ -274,7 +413,10 @@ void main() {
     final sheet = File(
             'lib/features/collection/shell/presentation/widgets/example_count_sheet.dart')
         .readAsStringSync();
-    expect(sheet, contains('examplesMaxCount'), reason: '상한을 적어 준다');
+    // 상한은 서버가 단계별로 알려 주므로 상수가 아니라 maxPerWord로 받는다.
+    // 모를 때는 숫자를 단언하지 않는다(5차 507).
+    expect(sheet, contains('maxPerWord'), reason: '상한을 서버 값으로 받는다');
+    expect(sheet, contains('개까지 둘 수 있어요'), reason: '상한을 적어 준다');
 
     for (final path in [
       'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart',
@@ -325,5 +467,23 @@ void main() {
     expect(after.examples.single.text, '예문');
   });
 
-}
+  testWidgets('예문 한도를 다 쓰면 예문 쪽 말을 적는다(5차 517)', (tester) async {
+    final word = await _addWord();
+    final assist = _ExampleQuotaAssist();
 
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('edit-word-fill-examples')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('example-count-1')));
+    await tester.pumpAndSettle();
+
+    final notice =
+        tester.widget<Text>(find.byKey(const ValueKey('edit-word-notice')));
+    expect(notice.data, exampleQuotaExhaustedText,
+        reason: '다 쓴 것은 예문 한도다');
+    expect(find.text(assistQuotaExhaustedMessage), findsNothing,
+        reason: '뜻·발음 한도는 그대로 남아 있다');
+  });
+}

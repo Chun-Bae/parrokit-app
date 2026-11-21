@@ -48,19 +48,57 @@ void main() {
     expect(code.contains('서버 백업 5GB'), isFalse);
   });
 
-  test('뜻 채우기 한도는 숫자를 적지 않는다', () {
-    // 서버 설정(sentenceAssist의 tierLimits)에서 바뀌는 값이라, 적어 두면
-    // 화면이 거짓말을 하게 된다. 다른 안내(assistQuotaUpsellText)도 같은 규칙.
-    for (final copy in subscriptionTiers) {
-      final line =
-          copy.benefits.firstWhere((benefit) => benefit.contains('뜻 채우기'));
-      expect(RegExp(r'\d').hasMatch(line), isFalse, reason: line);
+  // 전에는 '뜻 채우기 한도는 숫자를 적지 않는다'를 지켰다. 서버 설정으로
+  // 바뀌면 화면이 거짓말을 한다는 까닭이었는데, 바로 옆 예문 한도는 이미
+  // 숫자를 적고 있어서 규칙이 한쪽에만 걸려 있었다. 그래서 사용자는 한도가
+  // 두 가지라는 것도, 뜻·발음이 얼마나 늘어나는지도 알 수 없었다.
+  //
+  // 이제 둘 다 숫자를 적는다(5차 531, 사용자 요청). 대신 거짓말하지 않도록
+  // 서버 기본값과 어긋나지 않는지를 여기서 지킨다.
+  test('뜻·발음 하루 한도는 서버(subscriptionTier.ts)와 같은 값이다', () {
+    final ts = File('functions/src/subscriptionTier.ts').readAsStringSync();
+    final block =
+        RegExp(r'DEFAULT_ASSIST_LIMITS[^=]*=\s*\{([^}]*)\}').firstMatch(ts);
+    expect(block, isNotNull, reason: '서버 쪽 기본값을 찾지 못했다');
+    final body = block!.group(1)!;
+
+    int serverValue(String key) =>
+        int.parse(RegExp('$key:' r'\s*(\d+)').firstMatch(body)!.group(1)!);
+
+    for (final tier in SubscriptionTier.values) {
+      expect(dailyAssistFor(tier), serverValue(tier.name), reason: tier.name);
     }
+  });
+
+  test('예문 하루 한도도 서버(exampleQuota.ts)와 같은 값이다', () {
+    final ts = File('functions/src/exampleQuota.ts').readAsStringSync();
+    final block =
+        RegExp(r'DEFAULT_EXAMPLE_LIMITS[^=]*=\s*\{([^}]*)\}').firstMatch(ts);
+    expect(block, isNotNull, reason: '서버 쪽 기본값을 찾지 못했다');
+    final body = block!.group(1)!;
+
+    int serverValue(String key) =>
+        int.parse(RegExp('$key:' r'\s*(\d+)').firstMatch(body)!.group(1)!);
+
+    for (final tier in SubscriptionTier.values) {
+      expect(dailyExamplesFor(tier), serverValue(tier.name), reason: tier.name);
+    }
+  });
+
+  test('두 한도를 나눠 적고, 권유 글에는 숫자를 적지 않는다', () {
+    for (final copy in subscriptionTiers) {
+      expect(copy.benefits,
+          contains('뜻·발음 채우기 하루 ${dailyAssistFor(copy.tier)}번'));
+      expect(copy.benefits,
+          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}개'));
+    }
+    // 권유 글은 단계를 모르는 자리에서도 쓰므로 숫자를 적지 않는다.
     expect(RegExp(r'\d').hasMatch(assistQuotaUpsellText), isFalse);
   });
 
   test('서버 저장 한도 표기는 바이트 값과 맞는다', () {
-    expect(serverStorageQuotaLabel(SubscriptionTier.light), '5GB');
+    expect(serverStorageQuotaLabel(SubscriptionTier.light), '10GB');
     expect(serverStorageQuotaLabel(SubscriptionTier.pro), '30GB');
+    expect(serverStorageQuotaLabel(SubscriptionTier.max), '80GB');
   });
 }

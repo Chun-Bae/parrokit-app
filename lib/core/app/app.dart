@@ -24,8 +24,7 @@ class _AppState extends State<App> {
     final userProvider = context.watch<UserProvider>();
     final clipProvider = context.read<ClipProvider>();
 
-    final uid =
-        userProvider.isLoggedIn ? userProvider.currentUser?.id : null;
+    final uid = userProvider.isLoggedIn ? userProvider.currentUser?.id : null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       clipProvider.syncRemoteClipsOnLogin(uid);
     });
