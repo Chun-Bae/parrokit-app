@@ -458,10 +458,15 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
     like: Color(0xFFFF657E),
     likeSoft: Color(0xFFFFE5E9),
     likeInk: Color(0xFFBC4055),
+    // 학습 캘린더 칸 색. 0은 안 한 날이고 4는 목표를 다 채운 날이다.
+    //
+    // 1단계가 0단계와 너무 가까웠다(F0F5FA vs DDEAF8, RGB 차이 19·11·2).
+    // 흰 카드 위에서는 같은 색으로 보여서, 하루 목표 5번 중 1번을 한 날이
+    // '안 한 날'과 구분되지 않았다(5차 538). 1·2단계를 내려 눈금을 벌린다.
     garden: [
       Color(0xFFF0F5FA),
-      Color(0xFFDDEAF8),
-      Color(0xFFB9D2EF),
+      Color(0xFFC5DCF4),
+      Color(0xFF9AC2EA),
       Color(0xFF6FA3FF),
       Color(0xFF0064FF),
     ],
@@ -492,10 +497,11 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
     like: Color(0xFFFF8097),
     likeSoft: Color(0xFF3A1F26),
     likeInk: Color(0xFFFFADBB),
+    // 어두운 쪽도 같은 까닭으로 1·2단계를 벌린다(5차 538).
     garden: [
       Color(0xFF1C2735),
-      Color(0xFF26384D),
-      Color(0xFF32516E),
+      Color(0xFF2E4866),
+      Color(0xFF3A6391),
       Color(0xFF2F6BC2),
       Color(0xFF3C8DFF),
     ],
