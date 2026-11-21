@@ -44,6 +44,15 @@ abstract class SentenceAssist {
     required String hangul,
   });
 
+  /// 한국어 뜻을 [language] 문장으로 바꾼다. 만들 수 없으면 null(5차 540).
+  ///
+  /// [transliterate]의 반대 방향이다. 그쪽은 소리를 알 때, 이쪽은 뜻만 알
+  /// 때 쓴다. 한글 전사를 쓰지 않는 언어에서도 쓸 수 있다.
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  });
+
   /// 낱말의 뜻과 예문을 함께 제안한다(5차 467).
   ///
   /// 전에는 낱말에도 문장용 [suggest]를 그대로 썼다. 그쪽은 쓰지도 않을
@@ -163,6 +172,13 @@ class UnavailableSentenceAssist implements SentenceAssist {
       Future.error(const SentenceAssistUnavailable());
 
   @override
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  }) =>
+      Future.error(const SentenceAssistUnavailable());
+
+  @override
   Future<WordSuggestion> suggestWord({
     required String language,
     required String word,
@@ -180,6 +196,3 @@ const String exampleQuotaExhaustedText =
 /// 되므로 '넣을 수 있어요'가 아니라 '만들어 줘요'라고 적는다(5차 506).
 String exampleFillCapText(int cap) => '지금 단계에서는 예문을 낱말마다 $cap개까지 만들어 줘요.';
 
-/// 키보드로 치기 어려워 한글 전사를 쓸 만한 언어.
-bool supportsHangulTransliteration(String language) =>
-    language == '일본어' || language == '중국어';

@@ -23,6 +23,8 @@ class FakeAssist implements SentenceAssist {
   final suggestCalls = <String>[];
   Future<SentenceSuggestion> Function(String text)? onSuggest;
   Future<String?> Function(String hangul)? onTransliterate;
+  final composeCalls = <String>[];
+  Future<String?> Function(String meaning)? onCompose;
 
   @override
   Future<void> refreshUsage() async {
@@ -51,6 +53,15 @@ class FakeAssist implements SentenceAssist {
   Future<String?> transliterate(
           {required String language, required String hangul}) =>
       onTransliterate?.call(hangul) ?? Future.value('변환:$hangul');
+
+  @override
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  }) {
+    composeCalls.add(meaning);
+    return onCompose?.call(meaning) ?? Future.value('원문:$meaning');
+  }
 }
 
 AddSentenceController make(FakeAssist assist, {String language = '영어'}) =>
@@ -196,28 +207,40 @@ void main() {
     c.dispose();
   });
 
-  test('한글 전사는 일본어와 중국어에서만 쓰고 결과를 원문칸에 넣는다', () async {
-    expect(make(FakeAssist()).canTransliterate, isFalse);
-    final c = make(FakeAssist(), language: '일본어');
-    expect(c.canTransliterate, isTrue);
-    c.hangul.text = '곤니치와';
+  test('적어 둔 발음으로 원문을 만들어 원문칸에 넣는다', () async {
+    // 전에는 일본어·중국어 전용 한글칸에서만 됐다. 발음칸 하나로 모았고
+    // 영어에서도 쓴다(5차 541, 사용자 요청).
+    final c = make(FakeAssist());
+    expect(c.canMakeFromSound, isFalse);
+    c.pronunciation.text = '헬로 데어';
+    expect(c.canMakeFromSound, isTrue);
     await c.transliterate();
-    expect(c.text.text, '변환:곤니치와');
+    expect(c.text.text, '변환:헬로 데어');
     expect(c.transliterateStatus, AssistStatus.idle);
+    c.dispose();
+  });
+
+  test('손으로 적어 둔 원문은 덮지 않는다', () async {
+    final c = make(FakeAssist(), language: '일본어');
+    c.text.text = '내가 적은 원문';
+    c.pronunciation.text = '곤니치와';
+
+    expect(c.canMakeFromSound, isFalse);
+    await c.transliterate();
+    expect(c.text.text, '내가 적은 원문');
     c.dispose();
   });
 
   test('전사가 안 되면 상태만 바뀌고 원문은 그대로다', () async {
     final assist = FakeAssist()..onTransliterate = (_) async => null;
     final c = make(assist, language: '중국어');
-    c.text.text = '你';
-    c.hangul.text = '니하오';
+    c.pronunciation.text = '니하오';
     await c.transliterate();
     expect(c.transliterateStatus, AssistStatus.failed);
-    expect(c.text.text, '你');
+    expect(c.text.text, isEmpty);
     final unavailable = AddSentenceController(
         language: '중국어', assist: const UnavailableSentenceAssist())
-      ..hangul.text = '니하오';
+      ..pronunciation.text = '니하오';
     await unavailable.transliterate();
     expect(unavailable.transliterateStatus, AssistStatus.unavailable);
     c.dispose();
@@ -229,17 +252,15 @@ void main() {
       ..onTransliterate =
           (_) => Future.error(const SentenceAssistQuotaExceeded());
     final c = AddSentenceController(language: '일본어', assist: assist);
-    c.hangul.text = '곤니치와';
+    c.pronunciation.text = '곤니치와';
     await c.transliterate();
     expect(c.transliterateStatus, AssistStatus.quotaExceeded);
     c.dispose();
   });
 
-  test('언어를 바꾸면 전사 가능 여부와 저장 언어가 바뀐다', () {
+  test('언어를 바꾸면 저장 언어가 바뀐다', () {
     final c = make(FakeAssist());
-    expect(c.canTransliterate, isFalse);
     c.setLanguage('일본어');
-    expect(c.canTransliterate, isTrue);
     c.text.text = 'こんにちは';
     c.translation.text = '안녕하세요';
     expect(c.build()!.language, '일본어');
@@ -364,69 +385,99 @@ void _exhaustedTests() {
     });
   });
 
-  // 한글 전사로 적은 소리가 곧 발음인데 발음칸에 똑같이 다시 쳐야 했다
-  // (5차 539, 사용자 요청).
-  group('적어 둔 한글 소리 가져오기', () {
-    AddSentenceController make({String language = '일본어'}) {
+  // 뜻만 알 때 원문을 만든다(5차 540, 사용자 요청). 한글 전사는 소리를
+  // 알아야 쓴다.
+  group('뜻으로 원문 만들기', () {
+    AddSentenceController build({String language = '일본어'}) {
       final assist = FakeAssist()
         ..remainingToday = 3
         ..dailyLimit = 3;
       return AddSentenceController(assist: assist, language: language);
     }
 
-    test('적어 둔 소리가 있으면 가져올 수 있다', () {
-      final c = make();
-      c.hangul.text = '곤니치와';
+    test('뜻이 있고 원문이 비었으면 만들 수 있다', () {
+      final c = build();
+      c.translation.text = '안녕하세요';
 
-      expect(c.canCopyHangul, isTrue);
-      c.copyHangulToPronunciation();
-      expect(c.pronunciation.text, '곤니치와');
+      expect(c.canCompose, isTrue);
       c.dispose();
     });
 
-    test('적어 둔 소리가 없으면 권하지 않는다', () {
-      final c = make();
-      expect(c.canCopyHangul, isFalse);
-      c.hangul.text = '   ';
-      expect(c.canCopyHangul, isFalse);
+    test('한글 전사를 안 쓰는 언어에서도 쓴다', () {
+      // 영어는 키보드로 칠 수 있어 한글 전사가 없다. 그래도 뜻만 알고
+      // 원문을 모르는 일은 똑같이 생긴다.
+      final c = build(language: '영어');
+      c.translation.text = '안녕하세요';
+
+      expect(c.canCompose, isTrue);
       c.dispose();
     });
 
-    test('한글 전사를 안 쓰는 언어에는 없다', () {
-      final c = make(language: '영어');
-      c.hangul.text = '헬로';
-      expect(c.canCopyHangul, isFalse);
+    test('뜻이 비었으면 권하지 않는다', () {
+      final c = build();
+
+      expect(c.canCompose, isFalse);
       c.dispose();
     });
 
-    test('손으로 적어 둔 발음은 덮지 않는다', () {
-      final c = make();
-      c.hangul.text = '곤니치와';
-      c.pronunciation.text = '내가 적은 발음';
+    test('손으로 적어 둔 원문은 덮지 않는다', () async {
+      final c = build();
+      c.translation.text = '안녕하세요';
+      c.text.text = '내가 적은 원문';
 
-      expect(c.canCopyHangul, isFalse);
-      c.copyHangulToPronunciation();
-      expect(c.pronunciation.text, '내가 적은 발음');
+      expect(c.canCompose, isFalse);
+      await c.compose();
+      expect(c.text.text, '내가 적은 원문');
       c.dispose();
     });
 
-    test('이미 같은 값이면 권하지 않는다', () {
-      final c = make();
-      c.hangul.text = '곤니치와';
-      c.copyHangulToPronunciation();
+    test('만든 원문을 원문칸에 넣는다', () async {
+      final c = build();
+      c.translation.text = '안녕하세요';
 
-      expect(c.canCopyHangul, isFalse);
+      await c.compose();
+
+      expect(c.text.text, '원문:안녕하세요');
+      expect(c.composeStatus, AssistStatus.idle);
       c.dispose();
     });
 
-    test('가져온 값은 채우기가 덮어쓸 수 있다', () {
-      // 자동으로 채운 것과 같이 다룬다. 그 뒤 '뜻·발음 채우기'를 눌러
-      // 더 나은 발음이 오면 바뀌어야 한다.
-      final c = make();
-      c.hangul.text = '곤니치와';
-      c.copyHangulToPronunciation();
+    test('자동으로 채운 원문은 다시 만들 수 있다', () async {
+      final c = build();
+      c.translation.text = '안녕하세요';
+      await c.compose();
 
-      expect(c.hasFillRoom, isTrue);
+      expect(c.canCompose, isTrue);
+      c.dispose();
+    });
+
+    test('빈 응답은 실패로 둔다', () async {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3
+        ..onCompose = ((_) async => '  ');
+      final c = AddSentenceController(assist: assist, language: '일본어');
+      c.translation.text = '안녕하세요';
+
+      await c.compose();
+
+      expect(c.composeStatus, AssistStatus.failed);
+      expect(c.text.text, isEmpty);
+      c.dispose();
+    });
+
+    test('하루 횟수를 다 쓰면 그렇게 알린다', () async {
+      final assist = FakeAssist()
+        ..remainingToday = 0
+        ..dailyLimit = 3
+        ..onCompose =
+            ((_) async => throw const SentenceAssistQuotaExceeded());
+      final c = AddSentenceController(assist: assist, language: '일본어');
+      c.translation.text = '안녕하세요';
+
+      await c.compose();
+
+      expect(c.composeStatus, AssistStatus.quotaExceeded);
       c.dispose();
     });
   });

@@ -154,10 +154,6 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                   onChanged: controller.setLanguage,
                 ),
                 const SizedBox(height: 16),
-                if (controller.canTransliterate) ...[
-                  _HangulTransliterateRow(controller: controller),
-                  const SizedBox(height: 16),
-                ],
                 TextField(
                   key: const ValueKey('sentence-text'),
                   controller: controller.text,
@@ -179,62 +175,21 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                 ),
                 const SizedBox(height: 12),
                 const SizedBox(height: 4),
-                TextField(
-                  key: const ValueKey('sentence-translation'),
-                  controller: controller.translation,
-                  style: context.texts.titleMedium,
-                  maxLines: null,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: '뜻',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: controller.fillStatus == AssistStatus.loading
-                        ? const _LoadingDot()
-                        : null,
-                  ),
+                // 만들기 단추는 뜻칸과 원문칸이 바뀔 때 나타나고 사라진다.
+                ListenableBuilder(
+                  listenable: Listenable.merge(
+                      [controller.translation, controller.text]),
+                  builder: (context, _) =>
+                      _TranslationRow(controller: controller),
                 ),
                 const SizedBox(height: 12),
-                // 가져오기 단추는 한글칸과 발음칸이 바뀔 때 나타나고
+                // 원문 만들기 단추는 발음칸과 원문칸이 바뀔 때 나타나고
                 // 사라진다. 본문 전체를 다시 그리지 않도록 이 줄만 듣는다.
                 ListenableBuilder(
                   listenable: Listenable.merge(
-                      [controller.hangul, controller.pronunciation]),
-                  builder: (context, _) => Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            key: const ValueKey('sentence-pronunciation'),
-                            controller: controller.pronunciation,
-                            style: context.texts.bodyMedium,
-                            textInputAction: TextInputAction.done,
-                            decoration: InputDecoration(
-                              labelText: pronunciationOptionalLabel,
-                              border: const OutlineInputBorder(),
-                              suffixIcon:
-                                  controller.fillStatus == AssistStatus.loading
-                                      ? const _LoadingDot()
-                                      : null,
-                            ),
-                          ),
-                        ),
-                        // 위에 적은 한글 소리가 곧 발음이다. 똑같이 다시 치지
-                        // 않게 가져온다(5차 539, 사용자 요청).
-                        if (controller.canCopyHangul) ...[
-                          const SizedBox(width: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: OutlinedButton(
-                              key: const ValueKey(
-                                  'copy-hangul-to-pronunciation'),
-                              onPressed: controller.copyHangulToPronunciation,
-                              style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(72, 48)),
-                              child: const Text(copyHangulLabel),
-                            ),
-                          ),
-                        ],
-                      ]),
+                      [controller.pronunciation, controller.text]),
+                  builder: (context, _) =>
+                      _PronunciationRow(controller: controller),
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -261,78 +216,150 @@ class _LoadingDot extends StatelessWidget {
           child: CircularProgressIndicator(strokeWidth: 2)));
 }
 
-/// 키보드로 치기 어려운 언어를 한글 소리로 적어 원문으로 바꾼다.
-class _HangulTransliterateRow extends StatelessWidget {
-  const _HangulTransliterateRow({required this.controller});
+/// 뜻칸과 그 옆의 '만들기'(뜻 → 원문, 5차 540, 사용자 요청).
+///
+/// 한글 전사는 소리를 알아야 쓴다. 뜻만 아는 경우가 더 흔해서 반대 길을
+/// 둔다. 원문이 비어 있거나 자동으로 채운 값일 때만 단추가 보인다.
+class _TranslationRow extends StatelessWidget {
+  const _TranslationRow({required this.controller});
+  final AddSentenceController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = controller.composeStatus;
+    // 만드는 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다.
+    final busy = status == AssistStatus.loading ||
+        controller.usageStatus == UsageStatus.loading;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          child: TextField(
+            key: const ValueKey('sentence-translation'),
+            controller: controller.translation,
+            style: context.texts.titleMedium,
+            maxLines: null,
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(
+              labelText: '뜻',
+              border: const OutlineInputBorder(),
+              suffixIcon: controller.fillStatus == AssistStatus.loading
+                  ? const _LoadingDot()
+                  : null,
+            ),
+          ),
+        ),
+        if (controller.canCompose) ...[
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: FilledButton.tonal(
+              key: const ValueKey('compose-from-meaning'),
+              // 뜻·발음 채우기, 한글 변환과 같은 하루 횟수를 나눠 쓴다.
+              onPressed:
+                  busy || controller.exhausted ? null : controller.compose,
+              style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
+              child: busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text(makeSentenceLabel),
+            ),
+          ),
+        ],
+      ]),
+      if (status == AssistStatus.unavailable ||
+          status == AssistStatus.failed ||
+          status == AssistStatus.quotaExceeded)
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            switch (status) {
+              AssistStatus.unavailable => '지금은 원문 만들기를 쓸 수 없어요. 원문을 직접 적어 주세요.',
+              AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
+              _ => '원문을 만들지 못했어요. 다시 해 보거나 직접 적어 주세요.',
+            },
+            key: const ValueKey('compose-message'),
+            style: context.texts.bodySmall.copyWith(
+                color: status == AssistStatus.quotaExceeded
+                    ? Theme.of(context).colorScheme.error
+                    : HomeTokens.of(context).muted),
+          ),
+        ),
+    ]);
+  }
+}
+
+/// 발음칸과 그 옆의 '원문 만들기'(발음 → 원문, 5차 541, 사용자 요청).
+///
+/// 전에는 일본어·중국어 전용 '한글로 소리 적기' 칸이 따로 있었다. 발음칸에
+/// 같은 것을 또 적게 하는 꼴이어서 그 칸을 걷어내고 여기로 모았다. 영어에서도
+/// '헬로 데어'로 "Hello there"를 받는다.
+class _PronunciationRow extends StatelessWidget {
+  const _PronunciationRow({required this.controller});
   final AddSentenceController controller;
 
   @override
   Widget build(BuildContext context) {
     final status = controller.transliterateStatus;
-    // 변환 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다.
+    // 만드는 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다.
     final busy = status == AssistStatus.loading ||
         controller.usageStatus == UsageStatus.loading;
-    final example = controller.language == '일본어' ? '곤니치와' : '니하오';
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
-            child: TextField(
-          key: const ValueKey('sentence-hangul'),
-          controller: controller.hangul,
-          style: context.texts.titleMedium,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => controller.transliterate(),
-          decoration: InputDecoration(
-            labelText: '한글로 소리 적기',
-            hintText: '예: $example',
-            border: const OutlineInputBorder(),
+          child: TextField(
+            key: const ValueKey('sentence-pronunciation'),
+            controller: controller.pronunciation,
+            style: context.texts.bodyMedium,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: pronunciationOptionalLabel,
+              border: const OutlineInputBorder(),
+              suffixIcon: controller.fillStatus == AssistStatus.loading
+                  ? const _LoadingDot()
+                  : null,
+            ),
           ),
-        )),
-        const SizedBox(width: 8),
-        Padding(
+        ),
+        if (controller.canMakeFromSound) ...[
+          const SizedBox(width: 8),
+          Padding(
             padding: const EdgeInsets.only(top: 4),
             child: FilledButton.tonal(
-                key: const ValueKey('transliterate'),
-                // 변환도 같은 하루 횟수를 쓴다. 다 썼으면 눌러 보기 전에
-                // 막고 까닭을 적는다(5차 478).
-                // 변환도 같은 횟수를 쓰므로, 횟수를 읽는 동안에는
-                // 함께 막는다(5차 516).
-                onPressed: busy || controller.exhausted
-                    ? null
-                    : controller.transliterate,
-                style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
-                // 횟수를 읽는 동안에도 돌린다(5차 539, 사용자 지적).
-                // 서버가 쉬다 깨는 첫 조회는 15초를 넘기는데, 그동안
-                // 단추가 회색으로 죽어만 있어 고장으로 보였다.
-                child: busy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('변환'))),
+              key: const ValueKey('transliterate'),
+              // 뜻·발음 채우기와 같은 하루 횟수를 나눠 쓴다(5차 478).
+              onPressed:
+                  busy || controller.exhausted ? null : controller.transliterate,
+              style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
+              child: busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text(makeSentenceLabel),
+            ),
+          ),
+        ],
       ]),
       if (status == AssistStatus.unavailable ||
           status == AssistStatus.failed ||
-          status == AssistStatus.quotaExceeded ||
-          controller.exhausted)
+          status == AssistStatus.quotaExceeded)
         Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-                switch (status) {
-                  AssistStatus.unavailable =>
-                    '지금은 한글 변환을 쓸 수 없어요. 원문을 직접 적어 주세요.',
-                  // 한글 변환도 같은 하루 횟수를 나눠 쓴다. 같은 말로 적는다(5차 475).
-                  AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
-                  AssistStatus.failed => '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
-                  _ => assistQuotaExhaustedMessage,
-                },
-                key: const ValueKey('transliterate-message'),
-                // 다 썼다는 말은 두 줄이 같은 빨강으로 적는다(5차 478).
-                style: context.texts.bodySmall.copyWith(
-                    color: status == AssistStatus.quotaExceeded ||
-                            controller.exhausted
-                        ? Theme.of(context).colorScheme.error
-                        : HomeTokens.of(context).muted))),
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            switch (status) {
+              AssistStatus.unavailable => '지금은 원문 만들기를 쓸 수 없어요. 원문을 직접 적어 주세요.',
+              AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
+              _ => '원문을 만들지 못했어요. 다시 해 보거나 직접 적어 주세요.',
+            },
+            key: const ValueKey('transliterate-message'),
+            style: context.texts.bodySmall.copyWith(
+                color: status == AssistStatus.quotaExceeded
+                    ? Theme.of(context).colorScheme.error
+                    : HomeTokens.of(context).muted),
+          ),
+        ),
     ]);
   }
 }

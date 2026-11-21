@@ -170,6 +170,13 @@ class _SilentAssist implements SentenceAssist {
       null;
 
   @override
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  }) async =>
+      null;
+
+  @override
   Future<WordSuggestion> suggestWord({
     required String language,
     required String word,

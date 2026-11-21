@@ -182,6 +182,19 @@ class CloudSentenceAssist implements SentenceAssist {
   }
 
   @override
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  }) async {
+    final map = await _call({
+      'mode': 'compose',
+      'language': language,
+      'meaning': meaning,
+    });
+    return map['text'] as String?;
+  }
+
+  @override
   Future<WordSuggestion> suggestWord({
     required String language,
     required String word,

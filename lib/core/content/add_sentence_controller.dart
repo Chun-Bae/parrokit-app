@@ -68,21 +68,31 @@ class AddSentenceController extends ChangeNotifier {
   final translation = TextEditingController();
   final pronunciation = TextEditingController();
 
-  /// 한글 전사 입력칸. 일본어·중국어에서만 쓴다.
-  final hangul = TextEditingController();
-
   /// 오늘 사용 횟수를 읽는 중인지, 읽었는지, 못 읽었는지.
   UsageStatus usageStatus = UsageStatus.loading;
 
   AssistStatus fillStatus = AssistStatus.idle;
   AssistStatus transliterateStatus = AssistStatus.idle;
 
+  /// 뜻으로 원문을 만드는 중인지(5차 540).
+  AssistStatus composeStatus = AssistStatus.idle;
+
   String _lastAutoTranslation = '';
   String _lastAutoPronunciation = '';
+
+  /// 자동으로 채운 원문. 손으로 적은 원문을 덮지 않으려고 기억해 둔다.
+  String _lastAutoText = '';
   int _fillToken = 0;
   bool _disposed = false;
 
-  bool get canTransliterate => supportsHangulTransliteration(language);
+  /// 적어 둔 발음으로 원문을 만들 수 있는지(5차 541, 사용자 요청).
+  ///
+  /// 전에는 일본어·중국어 전용 '한글로 소리 적기' 칸이 따로 있었다. 발음칸과
+  /// 같은 것을 두 번 적게 하는 꼴이라 그 칸을 걷어내고 발음칸 하나로 모았다.
+  /// 영어에서도 '헬로 데어'로 "Hello there"를 받을 수 있다.
+  bool get canMakeFromSound =>
+      pronunciation.text.trim().isNotEmpty &&
+      _isOverwritable(text, _lastAutoText);
 
   /// 서버가 알려 준 오늘 남은 횟수. 아직 모르면 null.
   int? get remainingToday => assist.remainingToday;
@@ -133,6 +143,7 @@ class AddSentenceController extends ChangeNotifier {
     _fillToken++;
     fillStatus = AssistStatus.idle;
     transliterateStatus = AssistStatus.idle;
+    composeStatus = AssistStatus.idle;
     notifyListeners();
   }
 
@@ -202,35 +213,59 @@ class AddSentenceController extends ChangeNotifier {
   bool _isOverwritable(TextEditingController field, String lastAuto) =>
       field.text.trim().isEmpty || field.text.trim() == lastAuto;
 
-  /// 위에 적은 한글 소리를 발음칸으로 가져올 수 있는지(5차 539, 사용자 요청).
+  /// 뜻으로 원문을 만들 수 있는지(5차 540, 사용자 요청).
   ///
-  /// 한글 전사는 '곤니치와'처럼 소리를 적어 こんにちは를 받는 기능이다.
-  /// 그 적어 둔 소리가 곧 발음인데, 발음칸에 똑같이 다시 쳐야 했다.
+  /// 한글 전사는 소리를 알 때만 쓴다. 뜻만 아는 경우가 더 흔해서 반대 길도
+  /// 둔다. 한글 전사를 안 쓰는 언어(영어 등)에서도 쓸 수 있다.
   ///
-  /// 발음칸이 비어 있거나 자동으로 채운 값 그대로일 때만 권한다. 손으로
-  /// 고쳐 둔 것을 덮지 않는다([_isOverwritable]과 같은 규칙).
-  bool get canCopyHangul =>
-      canTransliterate &&
-      hangul.text.trim().isNotEmpty &&
-      hangul.text.trim() != pronunciation.text.trim() &&
-      _isOverwritable(pronunciation, _lastAutoPronunciation);
+  /// 원문이 비어 있거나 자동으로 채운 값 그대로일 때만 권한다. 손으로 적어
+  /// 둔 원문을 덮지 않는다([_isOverwritable]과 같은 규칙).
+  bool get canCompose =>
+      translation.text.trim().isNotEmpty &&
+      _isOverwritable(text, _lastAutoText);
 
-  /// 위에 적은 한글 소리를 발음칸에 넣는다.
+  /// 뜻으로 대상 언어 문장을 만들어 원문칸에 넣는다.
   ///
-  /// 자동으로 채운 것과 같이 다룬다. 그래야 그 뒤에 '뜻·발음 채우기'를
-  /// 눌러도 덮어쓸 수 있고, 손으로 고치면 거기서 멈춘다.
-  void copyHangulToPronunciation() {
-    if (!canCopyHangul) return;
-    final sound = hangul.text.trim();
-    pronunciation.text = sound;
-    _lastAutoPronunciation = sound;
+  /// 하루 횟수는 뜻·발음 채우기, 한글 전사와 같은 주머니를 쓴다(서버가
+  /// 정한다). 실패한 요청은 횟수에서 빠지지 않는다.
+  Future<void> compose() async {
+    final source = translation.text.trim();
+    if (source.isEmpty || _disposed || !_isOverwritable(text, _lastAutoText)) {
+      return;
+    }
+    composeStatus = AssistStatus.loading;
+    notifyListeners();
+    try {
+      final made = await assist.compose(language: language, meaning: source);
+      if (_disposed) return;
+      if (made == null || made.trim().isEmpty) {
+        composeStatus = AssistStatus.failed;
+      } else {
+        text.text = made.trim();
+        _lastAutoText = made.trim();
+        composeStatus = AssistStatus.idle;
+      }
+    } on SentenceAssistQuotaExceeded {
+      if (_disposed) return;
+      composeStatus = AssistStatus.quotaExceeded;
+    } on SentenceAssistUnavailable {
+      if (_disposed) return;
+      composeStatus = AssistStatus.unavailable;
+    } catch (_) {
+      if (_disposed) return;
+      composeStatus = AssistStatus.failed;
+    }
     notifyListeners();
   }
 
-  /// 한글로 적은 소리를 대상 언어 글자로 바꿔 원문칸에 넣는다.
+  /// 적어 둔 발음을 대상 언어 글자로 바꿔 원문칸에 넣는다.
+  ///
+  /// [compose]와 하는 일이 같고 재료만 다르다. 이쪽은 소리를 알 때 쓴다.
   Future<void> transliterate() async {
-    final source = hangul.text.trim();
-    if (!canTransliterate || source.isEmpty || _disposed) return;
+    final source = pronunciation.text.trim();
+    if (source.isEmpty || _disposed || !_isOverwritable(text, _lastAutoText)) {
+      return;
+    }
     transliterateStatus = AssistStatus.loading;
     notifyListeners();
     try {
@@ -241,6 +276,7 @@ class AddSentenceController extends ChangeNotifier {
         transliterateStatus = AssistStatus.failed;
       } else {
         text.text = converted.trim();
+        _lastAutoText = converted.trim();
         transliterateStatus = AssistStatus.idle;
       }
     } on SentenceAssistQuotaExceeded {
@@ -262,7 +298,6 @@ class AddSentenceController extends ChangeNotifier {
     text.dispose();
     translation.dispose();
     pronunciation.dispose();
-    hangul.dispose();
     super.dispose();
   }
 }

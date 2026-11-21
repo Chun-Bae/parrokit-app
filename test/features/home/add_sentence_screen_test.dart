@@ -52,6 +52,13 @@ class _UsageAssist implements SentenceAssist {
       null;
 
   @override
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  }) async =>
+      null;
+
+  @override
   Future<WordSuggestion> suggestWord({
     required String language,
     required String word,
@@ -76,17 +83,35 @@ class _SlowUsageAssist extends _UsageAssist {
   }
 }
 
+/// 뜻을 원문으로 바꿔 주는 도우미(5차 540).
+class _ComposeAssist extends _UsageAssist {
+  _ComposeAssist() : super(dailyLimit: 3, remainingToday: 3);
+
+  final calls = <String>[];
+
+  @override
+  Future<String?> compose({
+    required String language,
+    required String meaning,
+  }) async {
+    calls.add(meaning);
+    return 'こんにちは';
+  }
+}
+
 void main() {
-  testWidgets('영어에는 한글 전사칸이 없다', (tester) async {
-    await open(tester, '영어');
+  testWidgets('한글 소리 전용 칸은 없다', (tester) async {
+    // 발음칸이 같은 일을 하므로 걷어냈다(5차 541, 사용자 요청).
+    await open(tester, '일본어');
     expect(find.byKey(const ValueKey('sentence-hangul')), findsNothing);
     expect(find.byKey(const ValueKey('auto-fill-now')), findsOneWidget);
   });
 
-  testWidgets('일본어는 한글 전사칸이 있고 준비 중이면 안내한다', (tester) async {
+  testWidgets('발음을 적으면 단추가 생기고 준비 중이면 안내한다', (tester) async {
     await open(tester, '일본어');
     await tester.enterText(
-        find.byKey(const ValueKey('sentence-hangul')), '곤니치와');
+        find.byKey(const ValueKey('sentence-pronunciation')), '곤니치와');
+    await tester.pump();
     await tester.tap(find.byKey(const ValueKey('transliterate')));
     await tester.pump();
     await tester.pump();
@@ -130,14 +155,14 @@ void main() {
     expect(find.textContaining('자동으로 채우기'), findsNothing);
   });
 
-  testWidgets('언어를 고르면 한글 전사칸이 나타나고 사라진다', (tester) async {
+  testWidgets('영어에서도 발음으로 원문을 만들 수 있다', (tester) async {
+    // 전에는 일본어·중국어에만 있었다. 영어도 '헬로 데어'를 적을 수 있다.
     await open(tester, '영어');
-    expect(find.byKey(const ValueKey('sentence-hangul')), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('sentence-language')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('일본어').last);
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('sentence-hangul')), findsOneWidget);
+    expect(find.byKey(const ValueKey('transliterate')), findsNothing);
+    await tester.enterText(
+        find.byKey(const ValueKey('sentence-pronunciation')), '헬로 데어');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('transliterate')), findsOneWidget);
   });
 
   testWidgets('서버가 알려 준 횟수를 버튼 옆에 "쓴 횟수 / 한도"로 보여준다', (tester) async {
@@ -248,7 +273,7 @@ void main() {
     await tester.pumpWidget(withSubscription(
         AddSentenceScreen(language: '일본어', assist: assist)));
     await tester.enterText(
-        find.byKey(const ValueKey('sentence-text')), 'こんにちは');
+        find.byKey(const ValueKey('sentence-pronunciation')), '곤니치와');
     await tester.pump();
 
     FilledButton fill() => tester
@@ -264,8 +289,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('usage-count')), findsOneWidget);
-    expect(fill().onPressed, isNotNull);
     expect(convert().onPressed, isNotNull);
+
+    // 원문을 손으로 적으면 만들기 단추는 사라지고 채우기가 켜진다.
+    await tester.enterText(
+        find.byKey(const ValueKey('sentence-text')), 'こんにちは');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('transliterate')), findsNothing);
+    expect(fill().onPressed, isNotNull);
   });
 
   // 서버가 쉬다 깨는 첫 조회는 15초를 넘긴다. 그동안 변환 단추가 회색으로
@@ -274,6 +305,9 @@ void main() {
     final assist = _SlowUsageAssist();
     await tester.pumpWidget(withSubscription(
         AddSentenceScreen(language: '일본어', assist: assist)));
+    await tester.pump();
+    await tester.enterText(
+        find.byKey(const ValueKey('sentence-pronunciation')), '곤니치와');
     await tester.pump();
 
     final button = find.byKey(const ValueKey('transliterate'));
@@ -296,46 +330,61 @@ void main() {
     expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
   });
 
-  // 한글 전사로 적은 소리가 곧 발음인데 발음칸에 똑같이 다시 쳐야 했다.
-  group('적어 둔 한글 소리 가져오기', () {
-    const key = ValueKey('copy-hangul-to-pronunciation');
-
-    testWidgets('소리를 적으면 발음칸 옆에 단추가 생긴다', (tester) async {
-      await tester.pumpWidget(withSubscription(AddSentenceScreen(
-          language: '일본어',
-          assist: _UsageAssist(dailyLimit: 3, remainingToday: 3))));
+  // 뜻만 알 때 원문을 만든다(5차 540, 사용자 요청).
+  group('뜻으로 원문 만들기', () {
+    testWidgets('뜻을 적으면 만들기 단추가 나오고 원문을 채운다', (tester) async {
+      final assist = _ComposeAssist();
+      await tester.pumpWidget(withSubscription(
+          AddSentenceScreen(language: '일본어', assist: assist)));
       await tester.pump();
 
-      expect(find.byKey(key), findsNothing);
+      expect(find.byKey(const ValueKey('compose-from-meaning')), findsNothing);
 
       await tester.enterText(
-          find.byKey(const ValueKey('sentence-hangul')), '곤니치와');
-      await tester.pumpAndSettle();
-      expect(find.byKey(key), findsOneWidget);
-
-      await tester.tap(find.byKey(key));
-      await tester.pumpAndSettle();
-
+          find.byKey(const ValueKey('sentence-translation')), '안녕하세요');
+      await tester.pump();
       expect(
-        tester
-            .widget<TextField>(
-                find.byKey(const ValueKey('sentence-pronunciation')))
-            .controller!
-            .text,
-        '곤니치와',
-      );
-      // 가져오고 나면 더 권하지 않는다.
-      expect(find.byKey(key), findsNothing);
-    });
+          find.byKey(const ValueKey('compose-from-meaning')), findsOneWidget);
 
-    testWidgets('한글 전사를 안 쓰는 언어에는 없다', (tester) async {
-      await tester.pumpWidget(withSubscription(AddSentenceScreen(
-          language: '영어',
-          assist: _UsageAssist(dailyLimit: 3, remainingToday: 3))));
+      await tester.tap(find.byKey(const ValueKey('compose-from-meaning')));
+      await tester.pump();
       await tester.pump();
 
-      expect(find.byKey(const ValueKey('sentence-hangul')), findsNothing);
-      expect(find.byKey(key), findsNothing);
+      expect(assist.calls, ['안녕하세요']);
+      expect(
+          tester
+              .widget<TextField>(
+                  find.byKey(const ValueKey('sentence-text')))
+              .controller!
+              .text,
+          'こんにちは');
+    });
+
+    testWidgets('원문을 손으로 적어 두면 단추가 없다', (tester) async {
+      await tester.pumpWidget(withSubscription(
+          AddSentenceScreen(language: '일본어', assist: _ComposeAssist())));
+      await tester.pump();
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-translation')), '안녕하세요');
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-text')), '내가 적은 원문');
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('compose-from-meaning')), findsNothing);
+    });
+
+    testWidgets('영어에서도 쓸 수 있다', (tester) async {
+      await tester.pumpWidget(withSubscription(
+          AddSentenceScreen(language: '영어', assist: _ComposeAssist())));
+      await tester.pump();
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-translation')), '안녕하세요');
+      await tester.pump();
+
+      expect(
+          find.byKey(const ValueKey('compose-from-meaning')), findsOneWidget);
     });
   });
 }
