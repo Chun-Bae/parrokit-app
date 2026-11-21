@@ -9,9 +9,12 @@ import assert from "node:assert/strict";
 import {createRequire} from "node:module";
 
 const require = createRequire(import.meta.url);
-const {expiredCaptionInputs, CAPTION_INPUT_MAX_AGE_MS} = require(
-  "../lib/r2Client.js"
-);
+const {
+  expiredCaptionInputs,
+  CAPTION_INPUT_MAX_AGE_MS,
+  captionInputsFull,
+  CAPTION_INPUT_MAX_PENDING_BYTES,
+} = require("../lib/r2Client.js");
 
 const NOW = Date.UTC(2026, 10, 22, 4, 0, 0);
 const at = (ms) => new Date(NOW - ms);
@@ -43,4 +46,22 @@ test("빈 목록은 아무것도 고르지 않는다", () => {
 
 test("두는 기간은 하루다", () => {
   assert.equal(CAPTION_INPUT_MAX_AGE_MS, 24 * HOUR);
+});
+
+// 자막 입력은 클립이 아니라 저장 한도를 타지 않는다. 아무 검사도 없으면
+// 서버 저장이 0인 무료 사용자도 끝없이 올린다(5차 550).
+test("한꺼번에 둘 수 있는 양을 넘으면 막는다", () => {
+  const GB = 1024 * 1024 * 1024;
+  assert.equal(captionInputsFull([], 1 * GB), false);
+  assert.equal(captionInputsFull([{size: 1 * GB}], 1 * GB), false);
+  assert.equal(captionInputsFull([{size: 1 * GB}], 1 * GB + 1), true);
+  assert.equal(captionInputsFull([{size: 3 * GB}], 1), true);
+});
+
+test("이상한 크기는 0으로 본다", () => {
+  assert.equal(captionInputsFull([{size: NaN}, {size: -5}], 1), false);
+});
+
+test("두는 양은 2GB다", () => {
+  assert.equal(CAPTION_INPUT_MAX_PENDING_BYTES, 2 * 1024 * 1024 * 1024);
 });

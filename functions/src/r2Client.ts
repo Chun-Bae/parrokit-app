@@ -169,6 +169,39 @@ export async function r2Delete(key: string): Promise<void> {
   );
 }
 
+/**
+ * 한 사람이 자막 입력에 한꺼번에 둘 수 있는 양(5차 550).
+ *
+ * caption-inputs는 클립이 아니라서 저장 한도(users/{uid}.storage)를 타지
+ * 않는다. r2SignUpload도 uidFromObjectName이 null이라 검사를 건너뛴다.
+ * 그래서 서버 저장이 0인 무료 사용자도 512MB짜리를 몇 개든 올릴 수 있었고,
+ * 앱은 올린 뒤 지우지 않아 하루 한 번 도는 청소를 기다려야 했다.
+ *
+ * 자막 한 번에 원본 하나를 올린다. 2GB면 끝나지 않은 작업 스무 번쯤
+ * 들어가므로 쓰는 데 걸리지 않는다.
+ */
+export const CAPTION_INPUT_MAX_PENDING_BYTES = 2 * 1024 * 1024 * 1024;
+
+/**
+ * 자막 입력을 더 올릴 수 있는지(5차 550).
+ *
+ * @param {Array} held 지금 두고 있는 것
+ * @param {number} nextBytes 이번에 올릴 양
+ * @param {number} maxBytes 한꺼번에 둘 수 있는 양
+ * @return {boolean} 넘치면 true
+ */
+export function captionInputsFull(
+  held: Array<{size: number}>,
+  nextBytes: number,
+  maxBytes: number = CAPTION_INPUT_MAX_PENDING_BYTES
+): boolean {
+  let sum = 0;
+  for (const object of held) {
+    if (Number.isFinite(object.size) && object.size > 0) sum += object.size;
+  }
+  return sum + nextBytes > maxBytes;
+}
+
 /** 자막 입력 파일을 얼마나 두는지. 하루. */
 export const CAPTION_INPUT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 

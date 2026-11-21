@@ -28,6 +28,7 @@ import {
   r2Delete,
   r2Head,
   expiredCaptionInputs,
+  captionInputsFull,
   r2KeyFromUrl,
   r2List,
   r2PresignGet,
@@ -122,6 +123,17 @@ export const r2SignUpload = onCall(
         throw new HttpsError(
           "resource-exhausted",
           "서버 저장 공간이 모자라요."
+        );
+      }
+    } else if (key.startsWith(`caption-inputs/${uid}/`)) {
+      // 자막 입력은 클립이 아니라서 저장 한도를 타지 않는다. 그렇다고
+      // 아무 검사도 없으면 서버 저장이 0인 무료 사용자도 끝없이 올릴 수
+      // 있다(5차 550). 앱은 올린 뒤 지우지 않고 하루 한 번 청소만 돈다.
+      const held = await r2List(`caption-inputs/${uid}/`);
+      if (captionInputsFull(held, size)) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "자막으로 올린 파일이 아직 많이 남아 있어요. 잠시 뒤 다시 해 주세요."
         );
       }
     }
