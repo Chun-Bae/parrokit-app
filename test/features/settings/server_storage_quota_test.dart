@@ -22,6 +22,42 @@ void main() {
     expect(serverStorageQuotaBytes(SubscriptionTier.max), 80 * gb);
   });
 
+  // 위 줄은 '서버와 같다'고 말만 할 뿐, 서버를 읽지 않아 어긋나도 잡지
+  // 못했다. 실제로 라이트를 5GB에서 10GB로 올렸을 때 서버 테스트 한 곳이
+  // 5GB로 남아 조용히 깨져 있었다(5차 547). 서버 값을 읽어 맞춘다.
+  test('서버 파일에 적힌 수와 실제로 맞춘다', () {
+    final ts =
+        File('functions/src/storageUsage.ts').readAsStringSync();
+    final block = RegExp(
+            r'DEFAULT_STORAGE_QUOTAS:\s*TierLimits\s*=\s*\{([^}]*)\}')
+        .firstMatch(ts);
+    expect(block, isNotNull, reason: '서버에서 한도 표를 찾지 못했다');
+
+    int serverGb(String tier) {
+      final line = RegExp('$tier:\\s*([0-9]+)\\s*\\*\\s*1024')
+          .firstMatch(block!.group(1)!);
+      if (line == null) {
+        // free는 0이라 곱셈이 없다.
+        final zero = RegExp('$tier:\\s*0').firstMatch(block.group(1)!);
+        expect(zero, isNotNull, reason: tier);
+        return 0;
+      }
+      return int.parse(line.group(1)!);
+    }
+
+    expect(serverStorageQuotaBytes(SubscriptionTier.free), 0);
+    expect(serverGb('free'), 0);
+    for (final (name, tier) in [
+      ('light', SubscriptionTier.light),
+      ('plus', SubscriptionTier.plus),
+      ('pro', SubscriptionTier.pro),
+      ('max', SubscriptionTier.max),
+    ]) {
+      expect(serverStorageQuotaBytes(tier), serverGb(name) * gb,
+          reason: '$name 한도가 서버와 다르다');
+    }
+  });
+
   test('서버 저장 막대를 그리는 곳은 모두 단계별 한도를 쓴다', () {
     // 예전 보관함 화면은 1GB를 박아 둬서, 라이트(5GB) 구독자가 2GB만 써도
     // '가득 찼다'고 했다(5차).

@@ -8,7 +8,13 @@ const require = createRequire(import.meta.url);
 const admin = require("firebase-admin");
 admin.initializeApp({projectId: "demo-parrokit"});
 const db = admin.firestore();
-const {recordObjectSize, storageStatus} = require("../lib/storageUsage.js");
+const {
+  recordObjectSize,
+  storageStatus,
+  DEFAULT_STORAGE_QUOTAS,
+  objectDocId,
+  legacyObjectDocId,
+} = require("../lib/storageUsage.js");
 
 const storageOf = async (uid) =>
   (await db.collection("users").doc(uid).get()).data()?.storage ?? {};
@@ -81,7 +87,9 @@ test("남은 용량은 서버가 센 값과 서버가 정한 단계로만 따진
   const status = await storageStatus("uid-1");
   assert.equal(status.tier, "light");
   assert.equal(status.usedBytes, 1000);
-  assert.equal(status.quotaBytes, 5 * 1024 * 1024 * 1024);
+  // 숫자를 박아 두면 한도를 올릴 때 조용히 깨진다. 실제로 2026-11-21에
+  // 라이트가 5GB에서 10GB로 오른 뒤 이 줄만 5GB로 남아 있었다(5차 547).
+  assert.equal(status.quotaBytes, DEFAULT_STORAGE_QUOTAS.light);
   assert.equal(status.remainingBytes, status.quotaBytes - 1000);
 });
 
@@ -92,4 +100,40 @@ test("무료는 서버에 담을 자리가 없다", async () => {
   assert.equal(status.tier, "free");
   assert.equal(status.quotaBytes, 0);
   assert.equal(status.remainingBytes, 0);
+});
+
+// 문서 id를 자른 base64에서 해시로 바꿨다(5차 547). 이미 적어 둔 문서를
+// 버리면 그만큼의 바이트가 영영 남는다.
+test("옛 id로 적어 둔 것을 이어받는다", async () => {
+  const name = "users/uid-1/clips/doc1/video.mp4";
+  const objects = db.collection("users").doc("uid-1")
+    .collection("storage_objects");
+  await db.collection("users").doc("uid-1")
+    .set({storage: {usedBytes: 1000, objectCount: 1}});
+  await objects.doc(legacyObjectDocId(name)).set({name, size: 1000});
+
+  // 같은 크기로 또 와도 두 번 세지 않고, 새 id로 옮겨만 둔다.
+  assert.equal(await recordObjectSize("uid-1", name, 1000), 0);
+  assert.equal((await storageOf("uid-1")).usedBytes, 1000);
+  assert.ok((await objects.doc(objectDocId(name)).get()).exists);
+  assert.ok(!(await objects.doc(legacyObjectDocId(name)).get()).exists);
+
+  // 지우면 옛 기록만큼 줄어든다.
+  await recordObjectSize("uid-1", name, 0);
+  assert.equal((await storageOf("uid-1")).usedBytes, 0);
+  assert.equal((await storageOf("uid-1")).objectCount, 0);
+});
+
+test("옛 id로 적어 둔 것을 덮어쓰면 차이만 더한다", async () => {
+  const name = "users/uid-1/clips/doc2/video.mp4";
+  const objects = db.collection("users").doc("uid-1")
+    .collection("storage_objects");
+  await db.collection("users").doc("uid-1")
+    .set({storage: {usedBytes: 1000, objectCount: 1}});
+  await objects.doc(legacyObjectDocId(name)).set({name, size: 1000});
+
+  assert.equal(await recordObjectSize("uid-1", name, 1500), 500);
+  assert.equal((await storageOf("uid-1")).usedBytes, 1500);
+  assert.equal((await storageOf("uid-1")).objectCount, 1);
+  assert.ok(!(await objects.doc(legacyObjectDocId(name)).get()).exists);
 });

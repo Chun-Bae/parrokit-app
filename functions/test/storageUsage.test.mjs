@@ -11,12 +11,13 @@ const {
   sanitizeStorage,
   uidFromObjectName,
   objectDocId,
+  legacyObjectDocId,
   DEFAULT_STORAGE_QUOTAS,
 } = require("../lib/storageUsage.js");
 
 const GB = 1024 * 1024 * 1024;
 
-test("단계별 한도는 무료 0, 라이트 5GB, 프로 30GB", () => {
+test("단계별 한도는 무료 0, 라이트 10GB, 프로 30GB", () => {
   assert.deepEqual(DEFAULT_STORAGE_QUOTAS, {
     free: 0,
     light: 10 * GB,
@@ -56,4 +57,23 @@ test("문서 id는 경로마다 다르고 '/'가 없다", () => {
   assert.notEqual(id, objectDocId("users/uid-1/clips/b.mp4"));
   assert.equal(id, objectDocId("users/uid-1/clips/a.mp4"), "같은 경로는 같은 id");
   assert.ok(objectDocId("users/uid-1/" + "x".repeat(2000)).length <= 400);
+});
+
+// 키는 512자까지 받는데 옛 id는 base64로 바꾼 뒤 400자(입력 300바이트)에서
+// 잘랐다. 앞 300바이트가 같은 키들이 한 문서를 써서, 한 파일의 크기가 다른
+// 파일 것으로 덮이고 사용량이 실제보다 적게 잡혔다(5차 547).
+test("긴 경로도 서로 다른 문서를 쓴다", () => {
+  const head = "users/" + "u".repeat(28) + "/clips/" + "a".repeat(260);
+  const one = `${head}/video1.mp4`;
+  const two = `${head}/video2.mp4`;
+  assert.ok(one.length > 300 && one.length <= 512, "허용되는 길이여야 한다");
+  assert.notEqual(objectDocId(one), objectDocId(two));
+  // 옛 방식은 같은 문서를 썼다. 그 사실을 적어 두어 되돌아오지 않게 한다.
+  assert.equal(legacyObjectDocId(one), legacyObjectDocId(two));
+});
+
+test("문서 id는 길이가 일정하다", () => {
+  const short = objectDocId("users/uid-1/clips/a.mp4");
+  const long = objectDocId("users/uid-1/clips/" + "x".repeat(400) + ".mp4");
+  assert.equal(short.length, long.length);
 });

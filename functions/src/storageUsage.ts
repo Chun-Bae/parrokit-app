@@ -18,6 +18,7 @@ import {ENFORCE_APP_CHECK} from "./appCheck";
 import {SubscriptionTier} from "./subscriptionEvent";
 import {TIER_KEYS, tierFromUserDoc, TierLimits} from "./subscriptionTier";
 import {r2Head, r2Secrets} from "./r2Client";
+import {createHash} from "crypto";
 
 /** 단계별 서버 저장 한도(바이트). config/subscription.storage로 바꿀 수 있다. */
 export const DEFAULT_STORAGE_QUOTAS: TierLimits = {
@@ -94,6 +95,23 @@ export function uidFromObjectName(name: string | undefined): string | null {
  * @return {string} 문서 id
  */
 export function objectDocId(name: string): string {
+  return createHash("sha256").update(name).digest("base64url");
+}
+
+/**
+ * 옛 방식으로 만든 문서 id(5차 547).
+ *
+ * base64url로 바꾼 뒤 400자에서 잘랐다. 400자는 입력 300바이트치인데 키는
+ * 512자까지 받으므로, 앞 300바이트가 같은 키들이 한 문서를 썼다. 그러면
+ * 한 파일의 크기가 다른 파일 것으로 덮이고 objectCount도 늘지 않아,
+ * 사용량이 실제보다 적게 잡히고 한도를 넘겨 올릴 수 있었다.
+ *
+ * 이미 적어 둔 문서를 버리지 않으려고 읽을 때만 함께 본다.
+ *
+ * @param {string} name 객체 이름
+ * @return {string} 옛 문서 id
+ */
+export function legacyObjectDocId(name: string): string {
   return Buffer.from(name).toString("base64url").slice(0, 400);
 }
 
@@ -114,23 +132,34 @@ export async function recordObjectSize(
 ): Promise<number> {
   const db = admin.firestore();
   const userRef = db.collection("users").doc(uid);
-  const objectRef = userRef
-    .collection("storage_objects")
-    .doc(objectDocId(name));
+  const objects = userRef.collection("storage_objects");
+  const objectRef = objects.doc(objectDocId(name));
+  // 옛 id로 적어 둔 것이 있으면 그 크기를 이어받는다(5차 547). 없으면
+  // 읽기 한 번으로 끝난다.
+  const legacyRef = objects.doc(legacyObjectDocId(name));
   return db.runTransaction(async (tx) => {
-    const [userSnap, objectSnap] = await Promise.all([
+    const [userSnap, objectSnap, legacySnap] = await Promise.all([
       tx.get(userRef),
       tx.get(objectRef),
+      tx.get(legacyRef),
     ]);
-    const before = (objectSnap.data()?.size as number | undefined) ?? 0;
+    const known = objectSnap.exists ? objectSnap : legacySnap;
+    const before = (known.data()?.size as number | undefined) ?? 0;
     const delta = size - before;
-    if (delta === 0 && objectSnap.exists === (size > 0)) return 0;
+    if (delta === 0 && known.exists === (size > 0)) {
+      // 옛 문서만 있으면 새 id로 옮겨 두고 끝낸다.
+      if (!objectSnap.exists && legacySnap.exists) {
+        tx.set(objectRef, {name, size: before}, {merge: true});
+        tx.delete(legacyRef);
+      }
+      return 0;
+    }
 
     const storage = userSnap.data()?.storage as
       | {usedBytes?: number; objectCount?: number}
       | undefined;
     const usedBytes = Math.max(0, (storage?.usedBytes ?? 0) + delta);
-    const countDelta = (size > 0 ? 1 : 0) - (objectSnap.exists ? 1 : 0);
+    const countDelta = (size > 0 ? 1 : 0) - (known.exists ? 1 : 0);
     const objectCount = Math.max(0, (storage?.objectCount ?? 0) + countDelta);
 
     tx.set(
@@ -148,6 +177,9 @@ export async function recordObjectSize(
       tx.set(objectRef, {name, size}, {merge: true});
     } else {
       tx.delete(objectRef);
+    }
+    if (legacySnap.exists && legacyRef.path !== objectRef.path) {
+      tx.delete(legacyRef);
     }
     return delta;
   });
