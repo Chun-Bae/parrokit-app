@@ -11,4 +11,4 @@ const String meaningOptionalLabel = '뜻 (비워도 돼요)';
 ///
 /// '만들기'만으로는 무엇이 만들어지는지 알 수 없었다(사용자 지적).
 /// 뜻칸 옆과 발음칸 옆 모두 같은 말을 쓴다 - 하는 일이 같고 재료만 다르다.
-const String makeSentenceLabel = '원문 만들기';
+const String makeSentenceLabel = '원문 생성';

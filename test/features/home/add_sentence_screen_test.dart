@@ -128,7 +128,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('usage-count')), findsNothing);
     expect(find.byKey(const ValueKey('usage-unknown')), findsOneWidget);
-    expect(find.textContaining('횟수를 확인하지 못했어요'), findsOneWidget);
+    expect(find.textContaining('다시 확인'), findsOneWidget);
 
     await tester.enterText(
         find.byKey(const ValueKey('sentence-text')), 'Hello');
@@ -171,7 +171,7 @@ void main() {
         assist: _UsageAssist(dailyLimit: 3, remainingToday: 2))));
     await tester.pump();
     expect(find.byKey(const ValueKey('usage-count')), findsOneWidget);
-    expect(find.text('오늘 1/3회 사용'), findsOneWidget);
+    expect(find.text('오늘 1/3회'), findsOneWidget);
     expect(find.textContaining('남았어요'), findsNothing);
   });
 
@@ -183,7 +183,7 @@ void main() {
     await tester.enterText(
         find.byKey(const ValueKey('sentence-text')), 'Hello');
     await tester.pump();
-    expect(find.text('오늘 3/3회 사용'), findsOneWidget);
+    expect(find.text('오늘 3/3회'), findsOneWidget);
     expect(
         tester
             .widget<FilledButton>(find.byKey(const ValueKey('auto-fill-now')))
@@ -386,5 +386,27 @@ void main() {
       expect(
           find.byKey(const ValueKey('compose-from-meaning')), findsOneWidget);
     });
+  });
+
+  // 앱바 오른쪽에 둔 횟수가 가운데 제목과 부딪히면 제목이 잘린다
+  // (5차 542). 좁은 기기에서 둘 다 온전히 보여야 한다.
+  testWidgets('좁은 기기에서도 제목과 횟수가 둘 다 보인다', (tester) async {
+    tester.view.physicalSize = const Size(375 * 3, 667 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(withSubscription(AddSentenceScreen(
+        language: '영어',
+        assist: _UsageAssist(dailyLimit: 3, remainingToday: 1))));
+    await tester.pump();
+
+    expect(find.text('문장 추가'), findsOneWidget);
+    expect(find.byKey(const ValueKey('usage-count')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    final title = tester.getRect(find.text('문장 추가'));
+    final usage = tester.getRect(find.byKey(const ValueKey('usage-count')));
+    expect(title.right, lessThanOrEqualTo(usage.left),
+        reason: '제목과 횟수가 겹치면 둘 중 하나가 잘린다');
   });
 }

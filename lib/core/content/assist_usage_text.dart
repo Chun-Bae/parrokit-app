@@ -15,6 +15,15 @@ String? assistUsageLabel({required int? used, required int? limit}) {
   return '오늘 $used/$limit회 사용';
 }
 
+/// 앱바처럼 좁은 자리에 쓰는 짧은 꼴(5차 542).
+///
+/// '오늘 2/3회 사용'은 가운데 제목과 부딪힌다. 4.7인치 기기에서는 제목이
+/// 잘린다. '사용'을 떼어도 앞의 '오늘'이 쓴 횟수라는 것을 말해 준다.
+String? assistUsageShortLabel({required int? used, required int? limit}) {
+  if (used == null || limit == null) return null;
+  return '오늘 $used/$limit회';
+}
+
 /// 아직 받아 오는 중.
 const String assistUsageLoadingLabel = '횟수 확인 중…';
 
@@ -30,6 +39,14 @@ String assistFillHint({required bool loading, required String whenReady}) =>
 
 /// 못 받았을 때. 누르면 다시 확인한다는 것까지 적는다.
 const String assistUsageUnknownLabel = '횟수를 확인하지 못했어요 · 탭해서 다시 확인';
+
+/// 앱바처럼 좁은 자리에 쓰는 짧은 말(5차 542).
+const String assistUsageUnknownShortLabel = '횟수 ? · 다시 확인';
+
+/// 뜻과 발음을 한 번에 채우는 단추의 이름(5차 542, 사용자 요청).
+///
+/// '뜻·발음 채우기'였다. 옆에 선 '원문 생성' 둘과 결을 맞춘다.
+const String fillBasicsLabel = '뜻발음 생성';
 
 /// 뜻과 발음이 이미 다 차 있어 채우기가 할 일이 없을 때(5차 525·526).
 ///

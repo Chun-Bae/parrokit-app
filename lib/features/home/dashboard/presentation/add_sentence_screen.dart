@@ -105,7 +105,17 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
         child: child!,
       ),
       child: Scaffold(
-        appBar: AppBar(title: const Text('문장 추가')),
+        appBar: AppBar(
+          title: const Text('문장 추가'),
+          // 횟수는 단추 셋이 함께 쓰는 것이라 어느 한 단추 옆에 둘 수
+          // 없었다. 화면 머리로 올린다(5차 542, 사용자 요청).
+          actions: [
+            ListenableBuilder(
+              listenable: controller,
+              builder: (context, _) => _UsageAction(controller: controller),
+            ),
+          ],
+        ),
         // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
         bottomNavigationBar: SafeArea(
           child: Padding(
@@ -154,20 +164,36 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                   onChanged: controller.setLanguage,
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  key: const ValueKey('sentence-text'),
-                  controller: controller.text,
-                  style: context.texts.titleLarge,
-                  maxLength: sentenceMaxLength,
-                  maxLines: null,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: '원문',
-                    hintText: '연습할 문장을 적어 주세요',
-                    border: OutlineInputBorder(),
+                // 원문칸도 뜻·발음칸처럼 단추를 오른쪽에 둔다(5차 542,
+                // 사용자 요청). 전에는 이 칸만 단추가 아래에 있었다.
+                ListenableBuilder(
+                  listenable: controller.text,
+                  builder: (context, _) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          key: const ValueKey('sentence-text'),
+                          controller: controller.text,
+                          style: context.texts.titleLarge,
+                          maxLength: sentenceMaxLength,
+                          maxLines: null,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: '원문',
+                            hintText: '연습할 문장을 적어 주세요',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: _FillButton(controller: controller),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
                 ListenableBuilder(
                   listenable: controller.text,
                   builder: (context, _) =>
@@ -364,6 +390,87 @@ class _PronunciationRow extends StatelessWidget {
   }
 }
 
+/// '뜻발음 생성' 단추(5차 542에 원문칸 오른쪽으로 옮겼다).
+class _FillButton extends StatelessWidget {
+  const _FillButton({required this.controller});
+  final AddSentenceController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = controller.fillStatus;
+    final exhausted =
+        status == AssistStatus.quotaExceeded || controller.exhausted;
+    return FilledButton.tonal(
+      key: const ValueKey('auto-fill-now'),
+      // 횟수를 읽는 동안에는 누르지 못하게 한다(5차 516). 다 썼는지
+      // 모르는 채로 눌리면, 이미 바닥난 사람이 서버에 한 번 더
+      // 부딪히고 나서야 '다 썼어요'를 본다.
+      onPressed: controller.text.text.trim().isEmpty ||
+              status == AssistStatus.loading ||
+              controller.usageStatus == UsageStatus.loading ||
+              exhausted ||
+              !controller.hasFillRoom
+          ? null
+          : controller.fill,
+      style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
+      child: status == AssistStatus.loading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2))
+          : Text(status == AssistStatus.failed ? '다시 생성' : fillBasicsLabel),
+    );
+  }
+}
+
+/// 앱바 오른쪽에 오늘 쓴 횟수를 보여 준다(5차 542, 사용자 요청).
+///
+/// 전에는 '뜻발음 생성' 단추 옆에 있었다. 그런데 '원문 생성' 둘까지 같은
+/// 주머니를 쓰게 되면서, 한 단추 옆에 붙여 두면 그 단추만의 횟수로
+/// 읽혔다. 셋 위에 한 번만 적는다.
+class _UsageAction extends StatelessWidget {
+  const _UsageAction({required this.controller});
+  final AddSentenceController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final used = controller.usedToday;
+    final limit = controller.dailyLimit;
+    final exhausted = controller.exhausted;
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: Center(
+        child: used != null && limit != null
+            // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
+            ? Text(assistUsageShortLabel(used: used, limit: limit)!,
+                key: const ValueKey('usage-count'),
+                style: context.texts.bodySmall.copyWith(
+                    color: exhausted ? colors.error : colors.onSurfaceVariant))
+            : controller.usageStatus == UsageStatus.loading
+                ? Text(assistUsageLoadingLabel,
+                    key: const ValueKey('usage-loading'),
+                    style: context.texts.bodySmall
+                        .copyWith(color: colors.onSurfaceVariant))
+                // 못 읽었을 때도 아무것도 안 보이지 않게, 다시 확인할 수
+                // 있게 안내한다. 앱바는 좁아서 짧게 적는다.
+                : InkWell(
+                    key: const ValueKey('usage-unknown'),
+                    onTap: controller.loadUsage,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6, horizontal: 4),
+                      child: Text(assistUsageUnknownShortLabel,
+                          style: context.texts.bodySmall
+                              .copyWith(color: colors.onSurfaceVariant)),
+                    ),
+                  ),
+      ),
+    );
+  }
+}
+
 /// 뜻·발음 채우기 버튼과 그 옆에 오늘 쓴 횟수("1 / 3")를 보여준다.
 class _AutoFillCard extends StatelessWidget {
   const _AutoFillCard({required this.controller});
@@ -396,60 +503,10 @@ class _AutoFillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final status = controller.fillStatus;
-    final used = controller.usedToday;
-    final limit = controller.dailyLimit;
     final exhausted =
         status == AssistStatus.quotaExceeded || controller.exhausted;
     final note = message;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        FilledButton.tonalIcon(
-          key: const ValueKey('auto-fill-now'),
-          // 횟수를 읽는 동안에는 누르지 못하게 한다(5차 516). 다 썼는지
-          // 모르는 채로 눌리면, 이미 바닥난 사람이 서버에 한 번 더
-          // 부딪히고 나서야 '다 썼어요'를 본다.
-          onPressed: controller.text.text.trim().isEmpty ||
-                  status == AssistStatus.loading ||
-                  controller.usageStatus == UsageStatus.loading ||
-                  exhausted ||
-                  !controller.hasFillRoom
-              ? null
-              : controller.fill,
-          icon: status == AssistStatus.loading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.auto_awesome_rounded, size: 18),
-          label: Text(status == AssistStatus.failed ? '다시 채우기' : '뜻·발음 채우기',
-              style: context.texts.bodyMedium),
-        ),
-        const SizedBox(width: 12),
-        if (used != null && limit != null)
-          // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
-          Text(assistUsageLabel(used: used, limit: limit)!,
-              key: const ValueKey('usage-count'),
-              style: context.texts.bodyMedium.copyWith(
-                  color: exhausted ? colors.error : colors.onSurfaceVariant))
-        else if (controller.usageStatus == UsageStatus.loading)
-          Text(assistUsageLoadingLabel,
-              key: const ValueKey('usage-loading'),
-              style: context.texts.bodySmall
-                  .copyWith(color: colors.onSurfaceVariant))
-        else
-          // 못 읽었을 때도 아무것도 안 보이지 않게, 다시 확인할 수 있게 안내한다.
-          InkWell(
-            key: const ValueKey('usage-unknown'),
-            onTap: controller.loadUsage,
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-              child: Text(assistUsageUnknownLabel,
-                  style: context.texts.bodySmall
-                      .copyWith(color: colors.onSurfaceVariant)),
-            ),
-          ),
-      ]),
       if (note != null)
         Padding(
           padding: const EdgeInsets.only(top: 6),
