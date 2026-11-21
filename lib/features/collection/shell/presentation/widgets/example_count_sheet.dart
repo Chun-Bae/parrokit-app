@@ -5,6 +5,7 @@
 // (사용자 지적: "예문 채우기 개수 제한 안보이는데").
 
 import 'package:flutter/cupertino.dart';
+import 'package:parrokit/core/content/my_word_store.dart';
 
 /// [room]만큼까지 고르게 한다. 고르지 않으면 null.
 /// [already]는 지금 들고 있는 예문 수 - 상한과 함께 적어 준다.
@@ -36,7 +37,12 @@ Future<int?> askExampleCount(
   int? remainingToday,
   int? exampleCredits,
 }) {
-  var most = room < 5 ? room : 5;
+  // 전에는 여기서 5로 잘랐다(5차 546). 낱말당 상한은 어디나 10인데
+  // (examplesMaxCount, 서버 MAX_WORD_EXAMPLES, 플러스·프로·맥스의
+  // examplesPerWord) 고르는 자리만 5였다. 같은 시트가 '10개까지 둘 수
+  // 있어요'라고 적어 놓고 5까지만 내주었다 - 돈 낸 사람이 한 번에 10개를
+  // 받을 수 없었다. 자를 일은 room과 remainingToday가 이미 한다.
+  var most = room < examplesMaxCount ? room : examplesMaxCount;
   if (remainingToday != null && remainingToday < most) most = remainingToday;
   final choices = [for (var n = 1; n <= most; n++) n];
   final hasLine = already == 0 ? '' : '지금 $already개 있어요.';
