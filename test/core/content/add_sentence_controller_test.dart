@@ -20,11 +20,15 @@ class FakeAssist implements SentenceAssist {
   @override
   int? assistCredits;
   int refreshCalls = 0;
-  final suggestCalls = <String>[];
+
+  /// fill()이 부른 원문. completeCalls의 첫 칸이다.
+  List<String> get suggestCalls =>
+      completeCalls.map((g) => g[0]).toList();
   Future<SentenceSuggestion> Function(String text)? onSuggest;
-  Future<String?> Function(String hangul)? onTransliterate;
-  final composeCalls = <String>[];
-  Future<String?> Function(String meaning)? onCompose;
+
+  /// complete에 넘어온 세 칸. ['원문', '뜻', '발음'] 꼴로 쌓인다.
+  final completeCalls = <List<String>>[];
+  Future<SentenceComplete> Function(List<String> given)? onComplete;
 
   @override
   Future<void> refreshUsage() async {
@@ -34,7 +38,6 @@ class FakeAssist implements SentenceAssist {
   @override
   Future<SentenceSuggestion> suggest(
       {required String language, required String text}) {
-    suggestCalls.add(text);
     return onSuggest?.call(text) ??
         Future.value(SentenceSuggestion(
             translation: '뜻:$text', pronunciation: '발:$text'));
@@ -50,17 +53,22 @@ class FakeAssist implements SentenceAssist {
       const WordSuggestion();
 
   @override
-  Future<String?> transliterate(
-          {required String language, required String hangul}) =>
-      onTransliterate?.call(hangul) ?? Future.value('변환:$hangul');
-
-  @override
-  Future<String?> compose({
+  Future<SentenceComplete> complete({
     required String language,
-    required String meaning,
+    String text = '',
+    String translation = '',
+    String pronunciation = '',
   }) {
-    composeCalls.add(meaning);
-    return onCompose?.call(meaning) ?? Future.value('원문:$meaning');
+    final given = [text, translation, pronunciation];
+    completeCalls.add(given);
+    final seed = given.firstWhere((v) => v.isNotEmpty, orElse: () => '');
+    // 서버는 빈 칸을 늘 새로 만들어 준다. 덮어쓸지 말지는 컨트롤러가 정한다.
+    return onComplete?.call(given) ??
+        Future.value(SentenceComplete(
+          text: text.isNotEmpty ? text : '원문:$seed',
+          translation: '뜻:$seed',
+          pronunciation: '발:$seed',
+        ));
   }
 }
 
@@ -130,11 +138,13 @@ void main() {
 
   test('늦게 도착한 오래된 응답은 버린다', () async {
     final assist = FakeAssist();
-    final first = <String, Future<SentenceSuggestion>>{};
-    assist.onSuggest = (text) => first.putIfAbsent(
-        text,
-        () => Future.delayed(Duration(milliseconds: text == 'old' ? 200 : 10),
-            () => SentenceSuggestion(translation: '뜻:$text')));
+    final first = <String, Future<SentenceComplete>>{};
+    assist.onComplete = (given) => first.putIfAbsent(
+        given[0],
+        () => Future.delayed(
+            Duration(milliseconds: given[0] == 'old' ? 200 : 10),
+            () => SentenceComplete(
+                text: given[0], translation: '뜻:${given[0]}')));
     final c = make(assist);
     c.text.text = 'old';
     final oldCall = c.fill();
@@ -157,7 +167,7 @@ void main() {
 
   test('오늘 횟수를 다 쓰면 quotaExceeded가 된다', () async {
     final assist = FakeAssist()
-      ..onSuggest = (_) => Future.error(const SentenceAssistQuotaExceeded());
+      ..onComplete = (_) => Future.error(const SentenceAssistQuotaExceeded());
     final c = make(assist);
     c.text.text = 'Hello';
     await c.fill();
@@ -167,12 +177,12 @@ void main() {
 
   test('요청이 실패하면 failed로 두고 다시 채울 수 있다', () async {
     final assist = FakeAssist()
-      ..onSuggest = (_) => Future.error(Exception('network'));
+      ..onComplete = (_) => Future.error(Exception('network'));
     final c = make(assist);
     c.text.text = 'Hello';
     await c.fill();
     expect(c.fillStatus, AssistStatus.failed);
-    assist.onSuggest = null;
+    assist.onComplete = null;
     await c.fill();
     expect(c.translation.text, '뜻:Hello');
     expect(c.fillStatus, AssistStatus.idle);
@@ -181,9 +191,9 @@ void main() {
 
   test('남은 횟수는 도우미가 알려 준 값을 그대로 보여준다', () async {
     final assist = FakeAssist();
-    assist.onSuggest = (_) async {
+    assist.onComplete = (_) async {
       assist.remainingToday = 2;
-      return const SentenceSuggestion(translation: '안녕');
+      return const SentenceComplete(translation: '안녕');
     };
     final c = make(assist);
     expect(c.remainingToday, isNull);
@@ -204,57 +214,6 @@ void main() {
     expect(built.text, 'Hello');
     expect(built.translation, '안녕');
     expect(built.pronunciation, '');
-    c.dispose();
-  });
-
-  test('적어 둔 발음으로 원문을 만들어 원문칸에 넣는다', () async {
-    // 전에는 일본어·중국어 전용 한글칸에서만 됐다. 발음칸 하나로 모았고
-    // 영어에서도 쓴다(5차 541, 사용자 요청).
-    final c = make(FakeAssist());
-    expect(c.canMakeFromSound, isFalse);
-    c.pronunciation.text = '헬로 데어';
-    expect(c.canMakeFromSound, isTrue);
-    await c.transliterate();
-    expect(c.text.text, '변환:헬로 데어');
-    expect(c.transliterateStatus, AssistStatus.idle);
-    c.dispose();
-  });
-
-  test('손으로 적어 둔 원문은 덮지 않는다', () async {
-    final c = make(FakeAssist(), language: '일본어');
-    c.text.text = '내가 적은 원문';
-    c.pronunciation.text = '곤니치와';
-
-    expect(c.canMakeFromSound, isFalse);
-    await c.transliterate();
-    expect(c.text.text, '내가 적은 원문');
-    c.dispose();
-  });
-
-  test('전사가 안 되면 상태만 바뀌고 원문은 그대로다', () async {
-    final assist = FakeAssist()..onTransliterate = (_) async => null;
-    final c = make(assist, language: '중국어');
-    c.pronunciation.text = '니하오';
-    await c.transliterate();
-    expect(c.transliterateStatus, AssistStatus.failed);
-    expect(c.text.text, isEmpty);
-    final unavailable = AddSentenceController(
-        language: '중국어', assist: const UnavailableSentenceAssist())
-      ..pronunciation.text = '니하오';
-    await unavailable.transliterate();
-    expect(unavailable.transliterateStatus, AssistStatus.unavailable);
-    c.dispose();
-    unavailable.dispose();
-  });
-
-  test('한글 전사도 횟수를 다 쓰면 quotaExceeded가 된다', () async {
-    final assist = FakeAssist()
-      ..onTransliterate =
-          (_) => Future.error(const SentenceAssistQuotaExceeded());
-    final c = AddSentenceController(language: '일본어', assist: assist);
-    c.pronunciation.text = '곤니치와';
-    await c.transliterate();
-    expect(c.transliterateStatus, AssistStatus.quotaExceeded);
     c.dispose();
   });
 
@@ -385,9 +344,8 @@ void _exhaustedTests() {
     });
   });
 
-  // 뜻만 알 때 원문을 만든다(5차 540, 사용자 요청). 한글 전사는 소리를
-  // 알아야 쓴다.
-  group('뜻으로 원문 만들기', () {
+  // 단추 하나가 빈 칸을 다 채운다(5차 545, 사용자 요청).
+  group('빈 칸 채우기', () {
     AddSentenceController build({String language = '일본어'}) {
       final assist = FakeAssist()
         ..remainingToday = 3
@@ -395,74 +353,73 @@ void _exhaustedTests() {
       return AddSentenceController(assist: assist, language: language);
     }
 
-    test('뜻이 있고 원문이 비었으면 만들 수 있다', () {
-      final c = build();
-      c.translation.text = '안녕하세요';
-
-      expect(c.canCompose, isTrue);
-      c.dispose();
-    });
-
-    test('한글 전사를 안 쓰는 언어에서도 쓴다', () {
-      // 영어는 키보드로 칠 수 있어 한글 전사가 없다. 그래도 뜻만 알고
-      // 원문을 모르는 일은 똑같이 생긴다.
-      final c = build(language: '영어');
-      c.translation.text = '안녕하세요';
-
-      expect(c.canCompose, isTrue);
-      c.dispose();
-    });
-
-    test('뜻이 비었으면 권하지 않는다', () {
-      final c = build();
-
-      expect(c.canCompose, isFalse);
-      c.dispose();
-    });
-
-    test('손으로 적어 둔 원문은 덮지 않는다', () async {
-      final c = build();
-      c.translation.text = '안녕하세요';
-      c.text.text = '내가 적은 원문';
-
-      expect(c.canCompose, isFalse);
-      await c.compose();
-      expect(c.text.text, '내가 적은 원문');
-      c.dispose();
-    });
-
-    test('만든 원문을 원문칸에 넣는다', () async {
-      final c = build();
-      c.translation.text = '안녕하세요';
-
-      await c.compose();
-
-      expect(c.text.text, '원문:안녕하세요');
-      expect(c.composeStatus, AssistStatus.idle);
-      c.dispose();
-    });
-
-    test('자동으로 채운 원문은 다시 만들 수 있다', () async {
-      final c = build();
-      c.translation.text = '안녕하세요';
-      await c.compose();
-
-      expect(c.canCompose, isTrue);
-      c.dispose();
-    });
-
-    test('빈 응답은 실패로 둔다', () async {
+    test('셋 다 비어 있으면 부르지 않는다', () async {
       final assist = FakeAssist()
         ..remainingToday = 3
-        ..dailyLimit = 3
-        ..onCompose = ((_) async => '  ');
+        ..dailyLimit = 3;
+      final c = AddSentenceController(assist: assist, language: '일본어');
+
+      expect(c.hasFillSource, isFalse);
+      await c.fill();
+      expect(assist.completeCalls, isEmpty);
+      c.dispose();
+    });
+
+    test('뜻만 적어도 부를 수 있다', () {
+      final c = build();
+      c.translation.text = '안녕하세요';
+      expect(c.hasFillSource, isTrue);
+      c.dispose();
+    });
+
+    test('발음만 적어도 부를 수 있다', () {
+      final c = build();
+      c.pronunciation.text = '곤니치와';
+      expect(c.hasFillSource, isTrue);
+      c.dispose();
+    });
+
+    test('뜻만 적고 누르면 한 번에 원문과 발음까지 채운다', () async {
+      // 전에는 원문 생성 → 뜻발음 생성으로 두 번 불러 하루 횟수를 두 번
+      // 썼다(5차 545).
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
       final c = AddSentenceController(assist: assist, language: '일본어');
       c.translation.text = '안녕하세요';
 
-      await c.compose();
+      await c.fill();
 
-      expect(c.composeStatus, AssistStatus.failed);
-      expect(c.text.text, isEmpty);
+      expect(assist.completeCalls, [
+        ['', '안녕하세요', '']
+      ], reason: '한 번만 부른다');
+      expect(c.text.text, '원문:안녕하세요');
+      expect(c.pronunciation.text, '발:안녕하세요');
+      expect(c.translation.text, '안녕하세요', reason: '적어 둔 칸은 그대로다');
+      expect(c.fillStatus, AssistStatus.idle);
+      c.dispose();
+    });
+
+    test('손으로 적어 둔 칸은 덮지 않는다', () async {
+      final c = build();
+      c.text.text = '내가 적은 원문';
+      c.translation.text = '내가 적은 뜻';
+      c.pronunciation.text = '내가 적은 발음';
+
+      expect(c.hasFillRoom, isFalse);
+      await c.fill();
+      expect(c.text.text, '내가 적은 원문');
+      expect(c.translation.text, '내가 적은 뜻');
+      expect(c.pronunciation.text, '내가 적은 발음');
+      c.dispose();
+    });
+
+    test('자동으로 채운 칸은 다시 받을 수 있다', () async {
+      final c = build();
+      c.translation.text = '안녕하세요';
+      await c.fill();
+
+      expect(c.hasFillRoom, isTrue);
       c.dispose();
     });
 
@@ -470,14 +427,25 @@ void _exhaustedTests() {
       final assist = FakeAssist()
         ..remainingToday = 0
         ..dailyLimit = 3
-        ..onCompose =
+        ..onComplete =
             ((_) async => throw const SentenceAssistQuotaExceeded());
       final c = AddSentenceController(assist: assist, language: '일본어');
       c.translation.text = '안녕하세요';
 
-      await c.compose();
+      await c.fill();
 
-      expect(c.composeStatus, AssistStatus.quotaExceeded);
+      expect(c.fillStatus, AssistStatus.quotaExceeded);
+      c.dispose();
+    });
+
+    test('연결되지 않았으면 unavailable로 둔다', () async {
+      final c = AddSentenceController(
+          language: '일본어', assist: const UnavailableSentenceAssist());
+      c.translation.text = '안녕하세요';
+
+      await c.fill();
+
+      expect(c.fillStatus, AssistStatus.unavailable);
       c.dispose();
     });
   });

@@ -169,29 +169,24 @@ class CloudSentenceAssist implements SentenceAssist {
   }
 
   @override
-  Future<String?> transliterate({
+  Future<SentenceComplete> complete({
     required String language,
-    required String hangul,
+    String text = '',
+    String translation = '',
+    String pronunciation = '',
   }) async {
     final map = await _call({
-      'mode': 'transliterate',
+      'mode': 'complete',
       'language': language,
-      'hangul': hangul,
+      'text': text,
+      'translation': translation,
+      'pronunciation': pronunciation,
     });
-    return map['text'] as String?;
-  }
-
-  @override
-  Future<String?> compose({
-    required String language,
-    required String meaning,
-  }) async {
-    final map = await _call({
-      'mode': 'compose',
-      'language': language,
-      'meaning': meaning,
-    });
-    return map['text'] as String?;
+    return SentenceComplete(
+      text: map['text'] as String?,
+      translation: map['translation'] as String?,
+      pronunciation: map['pronunciation'] as String?,
+    );
   }
 
   @override

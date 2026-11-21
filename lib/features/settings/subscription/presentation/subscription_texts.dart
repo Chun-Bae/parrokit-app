@@ -1,5 +1,6 @@
 // 구독 화면의 글귀. 한 곳에 모아 둔다(.claude/subscription-ux.md와 같은 말).
 
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
@@ -66,7 +67,7 @@ class SubscriptionTierCopy {
         // 깎이지 않는다. 전에는 예문만 숫자를 적고 뜻·발음은 '한도가
         // 늘어요'로 뭉뚱그려서, 두 가지가 있다는 것도 얼마나 되는지도
         // 알 수 없었다(5차 531).
-        '뜻·발음 채우기 하루 ${dailyAssistFor(tier)}번',
+        '$fillBasicsLabel 하루 ${dailyAssistFor(tier)}번',
         '예문 생성 하루 ${dailyExamplesFor(tier)}개',
         '한 낱말에 예문 ${examplesPerWordFor(tier)}개까지',
       ];

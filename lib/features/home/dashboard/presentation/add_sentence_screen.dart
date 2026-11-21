@@ -3,6 +3,7 @@ import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -164,58 +165,59 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                   onChanged: controller.setLanguage,
                 ),
                 const SizedBox(height: 16),
-                // 원문칸도 뜻·발음칸처럼 단추를 오른쪽에 둔다(5차 542,
-                // 사용자 요청). 전에는 이 칸만 단추가 아래에 있었다.
-                ListenableBuilder(
-                  listenable: controller.text,
-                  builder: (context, _) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          key: const ValueKey('sentence-text'),
-                          controller: controller.text,
-                          style: context.texts.titleLarge,
-                          maxLength: sentenceMaxLength,
-                          maxLines: null,
-                          textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: '원문',
-                            hintText: '연습할 문장을 적어 주세요',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: _FillButton(controller: controller),
-                      ),
-                    ],
+                TextField(
+                  key: const ValueKey('sentence-text'),
+                  controller: controller.text,
+                  style: context.texts.titleLarge,
+                  maxLength: sentenceMaxLength,
+                  maxLines: null,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: '원문',
+                    hintText: '연습할 문장을 적어 주세요',
+                    border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 4),
+                TextField(
+                  key: const ValueKey('sentence-translation'),
+                  controller: controller.translation,
+                  style: context.texts.titleMedium,
+                  maxLines: null,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: '뜻',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: controller.fillStatus == AssistStatus.loading
+                        ? const _LoadingDot()
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const ValueKey('sentence-pronunciation'),
+                  controller: controller.pronunciation,
+                  style: context.texts.bodyMedium,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: pronunciationOptionalLabel,
+                    border: const OutlineInputBorder(),
+                    suffixIcon: controller.fillStatus == AssistStatus.loading
+                        ? const _LoadingDot()
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // 단추 하나가 셋을 다 한다(5차 545, 사용자 요청). 어느 한
+                // 칸에 매이지 않으므로 세 칸 아래에 가로로 길게 둔다.
                 ListenableBuilder(
-                  listenable: controller.text,
+                  listenable: Listenable.merge([
+                    controller.text,
+                    controller.translation,
+                    controller.pronunciation,
+                  ]),
                   builder: (context, _) =>
                       _AutoFillCard(controller: controller),
-                ),
-                const SizedBox(height: 12),
-                const SizedBox(height: 4),
-                // 만들기 단추는 뜻칸과 원문칸이 바뀔 때 나타나고 사라진다.
-                ListenableBuilder(
-                  listenable: Listenable.merge(
-                      [controller.translation, controller.text]),
-                  builder: (context, _) =>
-                      _TranslationRow(controller: controller),
-                ),
-                const SizedBox(height: 12),
-                // 원문 만들기 단추는 발음칸과 원문칸이 바뀔 때 나타나고
-                // 사라진다. 본문 전체를 다시 그리지 않도록 이 줄만 듣는다.
-                ListenableBuilder(
-                  listenable: Listenable.merge(
-                      [controller.pronunciation, controller.text]),
-                  builder: (context, _) =>
-                      _PronunciationRow(controller: controller),
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -242,155 +244,7 @@ class _LoadingDot extends StatelessWidget {
           child: CircularProgressIndicator(strokeWidth: 2)));
 }
 
-/// 뜻칸과 그 옆의 '만들기'(뜻 → 원문, 5차 540, 사용자 요청).
-///
-/// 한글 전사는 소리를 알아야 쓴다. 뜻만 아는 경우가 더 흔해서 반대 길을
-/// 둔다. 원문이 비어 있거나 자동으로 채운 값일 때만 단추가 보인다.
-class _TranslationRow extends StatelessWidget {
-  const _TranslationRow({required this.controller});
-  final AddSentenceController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final status = controller.composeStatus;
-    // 만드는 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다.
-    final busy = status == AssistStatus.loading ||
-        controller.usageStatus == UsageStatus.loading;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          child: TextField(
-            key: const ValueKey('sentence-translation'),
-            controller: controller.translation,
-            style: context.texts.titleMedium,
-            maxLines: null,
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              labelText: '뜻',
-              border: const OutlineInputBorder(),
-              suffixIcon: controller.fillStatus == AssistStatus.loading
-                  ? const _LoadingDot()
-                  : null,
-            ),
-          ),
-        ),
-        if (controller.canCompose) ...[
-          const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: FilledButton.tonal(
-              key: const ValueKey('compose-from-meaning'),
-              // 뜻·발음 채우기, 한글 변환과 같은 하루 횟수를 나눠 쓴다.
-              onPressed:
-                  busy || controller.exhausted ? null : controller.compose,
-              style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
-              child: busy
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text(makeSentenceLabel),
-            ),
-          ),
-        ],
-      ]),
-      if (status == AssistStatus.unavailable ||
-          status == AssistStatus.failed ||
-          status == AssistStatus.quotaExceeded)
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(
-            switch (status) {
-              AssistStatus.unavailable => '지금은 원문 만들기를 쓸 수 없어요. 원문을 직접 적어 주세요.',
-              AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
-              _ => '원문을 만들지 못했어요. 다시 해 보거나 직접 적어 주세요.',
-            },
-            key: const ValueKey('compose-message'),
-            style: context.texts.bodySmall.copyWith(
-                color: status == AssistStatus.quotaExceeded
-                    ? Theme.of(context).colorScheme.error
-                    : HomeTokens.of(context).muted),
-          ),
-        ),
-    ]);
-  }
-}
-
-/// 발음칸과 그 옆의 '원문 만들기'(발음 → 원문, 5차 541, 사용자 요청).
-///
-/// 전에는 일본어·중국어 전용 '한글로 소리 적기' 칸이 따로 있었다. 발음칸에
-/// 같은 것을 또 적게 하는 꼴이어서 그 칸을 걷어내고 여기로 모았다. 영어에서도
-/// '헬로 데어'로 "Hello there"를 받는다.
-class _PronunciationRow extends StatelessWidget {
-  const _PronunciationRow({required this.controller});
-  final AddSentenceController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final status = controller.transliterateStatus;
-    // 만드는 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다.
-    final busy = status == AssistStatus.loading ||
-        controller.usageStatus == UsageStatus.loading;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          child: TextField(
-            key: const ValueKey('sentence-pronunciation'),
-            controller: controller.pronunciation,
-            style: context.texts.bodyMedium,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              labelText: pronunciationOptionalLabel,
-              border: const OutlineInputBorder(),
-              suffixIcon: controller.fillStatus == AssistStatus.loading
-                  ? const _LoadingDot()
-                  : null,
-            ),
-          ),
-        ),
-        if (controller.canMakeFromSound) ...[
-          const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: FilledButton.tonal(
-              key: const ValueKey('transliterate'),
-              // 뜻·발음 채우기와 같은 하루 횟수를 나눠 쓴다(5차 478).
-              onPressed:
-                  busy || controller.exhausted ? null : controller.transliterate,
-              style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
-              child: busy
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text(makeSentenceLabel),
-            ),
-          ),
-        ],
-      ]),
-      if (status == AssistStatus.unavailable ||
-          status == AssistStatus.failed ||
-          status == AssistStatus.quotaExceeded)
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(
-            switch (status) {
-              AssistStatus.unavailable => '지금은 원문 만들기를 쓸 수 없어요. 원문을 직접 적어 주세요.',
-              AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
-              _ => '원문을 만들지 못했어요. 다시 해 보거나 직접 적어 주세요.',
-            },
-            key: const ValueKey('transliterate-message'),
-            style: context.texts.bodySmall.copyWith(
-                color: status == AssistStatus.quotaExceeded
-                    ? Theme.of(context).colorScheme.error
-                    : HomeTokens.of(context).muted),
-          ),
-        ),
-    ]);
-  }
-}
-
-/// '뜻발음 생성' 단추(5차 542에 원문칸 오른쪽으로 옮겼다).
+/// 빈 칸을 채우는 단추 하나(5차 545, 사용자 요청).
 class _FillButton extends StatelessWidget {
   const _FillButton({required this.controller});
   final AddSentenceController controller;
@@ -400,25 +254,34 @@ class _FillButton extends StatelessWidget {
     final status = controller.fillStatus;
     final exhausted =
         status == AssistStatus.quotaExceeded || controller.exhausted;
+    // 채우는 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다
+    // (5차 539). 쉬다 깨는 첫 조회는 15초를 넘기는데 그동안 단추가 회색으로
+    // 죽어만 있으면 고장으로 보인다.
+    final busy = status == AssistStatus.loading ||
+        controller.usageStatus == UsageStatus.loading;
     return FilledButton.tonal(
       key: const ValueKey('auto-fill-now'),
       // 횟수를 읽는 동안에는 누르지 못하게 한다(5차 516). 다 썼는지
       // 모르는 채로 눌리면, 이미 바닥난 사람이 서버에 한 번 더
       // 부딪히고 나서야 '다 썼어요'를 본다.
-      onPressed: controller.text.text.trim().isEmpty ||
-              status == AssistStatus.loading ||
-              controller.usageStatus == UsageStatus.loading ||
+      onPressed: !controller.hasFillSource ||
+              busy ||
               exhausted ||
               !controller.hasFillRoom
           ? null
           : controller.fill,
-      style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
-      child: status == AssistStatus.loading
+      style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(48)),
+      child: busy
           ? const SizedBox(
-              width: 16,
-              height: 16,
+              width: 18,
+              height: 18,
               child: CircularProgressIndicator(strokeWidth: 2))
-          : Text(status == AssistStatus.failed ? '다시 생성' : fillBasicsLabel),
+          : Row(mainAxisSize: MainAxisSize.min, children: [
+              const AssistIcon(AssistKind.meaning, size: 18),
+              const SizedBox(width: 8),
+              Text(status == AssistStatus.failed ? '다시 생성' : fillBasicsLabel),
+            ]),
     );
   }
 }
@@ -482,7 +345,7 @@ class _AutoFillCard extends StatelessWidget {
   /// 화면에서 같은 결함을 고쳤는데(474) 이쪽에 그대로 남아 있었다.
   String? get message => switch (controller.fillStatus) {
         AssistStatus.unavailable =>
-          '지금은 자동 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 적어 주세요.',
+          '지금은 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 적어 주세요.',
         // 소진 안내는 단어 쪽과 같은 말을 쓴다(5차 475).
         AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
         AssistStatus.failed => '자동으로 채우지 못했어요. 횟수는 줄지 않았어요.',
@@ -490,12 +353,13 @@ class _AutoFillCard extends StatelessWidget {
         // 다 쓴 줄은 눌러 보기 전에도 안다. 횟수부터 보고 말한다(5차 478).
         AssistStatus.idle => controller.exhausted
             ? assistQuotaExhaustedMessage
-            : controller.text.text.trim().isEmpty
-                ? assistNeedsTextHint('문장')
+            // 셋 가운데 하나만 적어도 나머지를 채운다(5차 545).
+            : !controller.hasFillSource
+                ? fillNeedsAnyFieldHint
                 // 손으로 다 적어 두면 채우기가 덮어쓸 자리가 없다. 눌러도
                 // 아무 일이 없으니 까닭을 적고 단추를 끈다(5차 526).
                 : !controller.hasFillRoom
-                    ? assistBasicsDoneMessage
+                    ? fillNothingLeftMessage
                     : null,
       };
 
@@ -506,7 +370,8 @@ class _AutoFillCard extends StatelessWidget {
     final exhausted =
         status == AssistStatus.quotaExceeded || controller.exhausted;
     final note = message;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _FillButton(controller: controller),
       if (note != null)
         Padding(
           padding: const EdgeInsets.only(top: 6),

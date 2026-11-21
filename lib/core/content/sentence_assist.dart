@@ -37,20 +37,16 @@ abstract class SentenceAssist {
     required String text,
   });
 
-  /// 한글로 적은 소리를 [language]의 글자로 바꾼다. 바꿀 수 없으면 null.
-  /// 예: 일본어 "곤니치와" → "こんにちは", 중국어 "니하오" → "你好"
-  Future<String?> transliterate({
-    required String language,
-    required String hangul,
-  });
-
-  /// 한국어 뜻을 [language] 문장으로 바꾼다. 만들 수 없으면 null(5차 540).
+  /// 적혀 있는 칸으로 비어 있는 칸을 채운다(5차 545, 사용자 요청).
   ///
-  /// [transliterate]의 반대 방향이다. 그쪽은 소리를 알 때, 이쪽은 뜻만 알
-  /// 때 쓴다. 한글 전사를 쓰지 않는 언어에서도 쓸 수 있다.
-  Future<String?> compose({
+  /// 전에는 길이 셋이었다 - 원문으로 뜻·발음, 발음으로 원문, 뜻으로 원문.
+  /// 사용자가 보기에는 "빈 칸을 채운다" 하나인데 각각 하루 횟수를 썼다.
+  /// 한 번에 끝낸다. 셋 가운데 적어도 하나는 적혀 있어야 한다.
+  Future<SentenceComplete> complete({
     required String language,
-    required String meaning,
+    String text,
+    String translation,
+    String pronunciation,
   });
 
   /// 낱말의 뜻과 예문을 함께 제안한다(5차 467).
@@ -67,6 +63,19 @@ abstract class SentenceAssist {
     List<String> existingExamples,
     int count,
   });
+}
+
+/// 빈 칸을 채운 결과(5차 545). 적혀 있던 칸도 그대로 담겨 온다.
+class SentenceComplete {
+  const SentenceComplete({
+    this.text,
+    this.translation,
+    this.pronunciation,
+  });
+
+  final String? text;
+  final String? translation;
+  final String? pronunciation;
 }
 
 /// 낱말 하나에 대한 제안.
@@ -165,16 +174,11 @@ class UnavailableSentenceAssist implements SentenceAssist {
       Future.error(const SentenceAssistUnavailable());
 
   @override
-  Future<String?> transliterate({
+  Future<SentenceComplete> complete({
     required String language,
-    required String hangul,
-  }) =>
-      Future.error(const SentenceAssistUnavailable());
-
-  @override
-  Future<String?> compose({
-    required String language,
-    required String meaning,
+    String text = '',
+    String translation = '',
+    String pronunciation = '',
   }) =>
       Future.error(const SentenceAssistUnavailable());
 

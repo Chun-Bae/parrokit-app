@@ -25,7 +25,7 @@ import 'package:parrokit/features/settings/subscription/presentation/providers/s
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 const String assistUsageSectionTitle = '오늘 쓴 자동 채우기';
-const String assistUsageBasicsLabel = '뜻·발음 채우기';
+const String assistUsageBasicsLabel = fillBasicsLabel;
 const String assistUsageExamplesLabel = '예문 생성';
 
 /// 'N / M번'처럼. 사 둔 몫이 있으면 같은 줄에 '+K'로 붙인다(5차 535).

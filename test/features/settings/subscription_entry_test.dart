@@ -140,7 +140,7 @@ void main() {
       final light = subscriptionTiers
           .firstWhere((c) => c.tier == SubscriptionTier.light)
           .benefits;
-      expect(light, contains('뜻·발음 채우기 하루 15번'));
+      expect(light, contains('뜻·발음·원문 생성 하루 15번'));
       expect(light, contains('예문 생성 하루 30개'));
       expect(light, contains('한 낱말에 예문 5개까지'));
       // 숫자 없이 뭉뚱그리던 줄은 사라졌다.
@@ -151,7 +151,7 @@ void main() {
       for (final copy in subscriptionTiers) {
         expect(
           copy.benefits,
-          contains('뜻·발음 채우기 하루 ${dailyAssistFor(copy.tier)}번'),
+          contains('뜻·발음·원문 생성 하루 ${dailyAssistFor(copy.tier)}번'),
         );
         expect(
           copy.benefits,

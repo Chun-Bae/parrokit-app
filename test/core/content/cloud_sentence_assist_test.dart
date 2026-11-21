@@ -101,17 +101,27 @@ void main() {
     expect(assist.dailyLimit, 10);
   });
 
-  test('한글 발음 바꾸기는 transliterate로 묻고 text를 돌려준다', () async {
-    final functions =
-        _FakeFunctions((_) => {'text': 'konnichiwa', 'remainingToday': 3});
+  test('빈 칸 채우기는 complete로 묻고 셋을 돌려준다', () async {
+    final functions = _FakeFunctions((_) => {
+          'text': 'こんにちは',
+          'translation': '안녕하세요',
+          'pronunciation': '곤니치와',
+          'remainingToday': 3,
+        });
     final assist = CloudSentenceAssist(functions: functions);
 
-    final text =
-        await assist.transliterate(language: 'ja', hangul: '곤니치와');
+    final filled =
+        await assist.complete(language: 'ja', translation: '안녕하세요');
 
-    expect(functions.calls.single,
-        {'mode': 'transliterate', 'language': 'ja', 'hangul': '곤니치와'});
-    expect(text, 'konnichiwa');
+    expect(functions.calls.single, {
+      'mode': 'complete',
+      'language': 'ja',
+      'text': '',
+      'translation': '안녕하세요',
+      'pronunciation': '',
+    });
+    expect(filled.text, 'こんにちは');
+    expect(filled.pronunciation, '곤니치와');
     expect(assist.remainingToday, 3);
   });
 
@@ -152,7 +162,7 @@ void main() {
     final assist = CloudSentenceAssist(
         functions: _FakeFunctions((_) => throw _error('unauthenticated')));
     await expectLater(
-        assist.transliterate(language: 'en', hangul: '헬로'),
+        assist.complete(language: 'en', pronunciation: '헬로'),
         throwsA(isA<SentenceAssistUnavailable>()
             .having((e) => e.reason, 'reason', '로그인하면 쓸 수 있어요.')));
   });

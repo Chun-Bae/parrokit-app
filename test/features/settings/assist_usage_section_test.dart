@@ -56,16 +56,14 @@ class _FakeAssist implements SentenceAssist {
           {required String language, required String text}) async =>
       const SentenceSuggestion();
   @override
-  Future<String?> transliterate(
-          {required String language, required String hangul}) async =>
-      null;
-
-  @override
-  Future<String?> compose({
+  Future<SentenceComplete> complete({
     required String language,
-    required String meaning,
+    String text = '',
+    String translation = '',
+    String pronunciation = '',
   }) async =>
-      null;
+      const SentenceComplete();
+
   @override
   Future<WordSuggestion> suggestWord({
     required String language,

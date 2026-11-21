@@ -88,7 +88,7 @@ void main() {
   test('두 한도를 나눠 적고, 권유 글에는 숫자를 적지 않는다', () {
     for (final copy in subscriptionTiers) {
       expect(copy.benefits,
-          contains('뜻·발음 채우기 하루 ${dailyAssistFor(copy.tier)}번'));
+          contains('뜻·발음·원문 생성 하루 ${dailyAssistFor(copy.tier)}번'));
       expect(copy.benefits,
           contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}개'));
     }

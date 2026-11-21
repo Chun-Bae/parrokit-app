@@ -71,11 +71,8 @@ class AddSentenceController extends ChangeNotifier {
   /// 오늘 사용 횟수를 읽는 중인지, 읽었는지, 못 읽었는지.
   UsageStatus usageStatus = UsageStatus.loading;
 
+  /// 빈 칸 채우기 하나로 합쳤다(5차 545). 전에는 길마다 상태가 따로 있었다.
   AssistStatus fillStatus = AssistStatus.idle;
-  AssistStatus transliterateStatus = AssistStatus.idle;
-
-  /// 뜻으로 원문을 만드는 중인지(5차 540).
-  AssistStatus composeStatus = AssistStatus.idle;
 
   String _lastAutoTranslation = '';
   String _lastAutoPronunciation = '';
@@ -84,15 +81,6 @@ class AddSentenceController extends ChangeNotifier {
   String _lastAutoText = '';
   int _fillToken = 0;
   bool _disposed = false;
-
-  /// 적어 둔 발음으로 원문을 만들 수 있는지(5차 541, 사용자 요청).
-  ///
-  /// 전에는 일본어·중국어 전용 '한글로 소리 적기' 칸이 따로 있었다. 발음칸과
-  /// 같은 것을 두 번 적게 하는 꼴이라 그 칸을 걷어내고 발음칸 하나로 모았다.
-  /// 영어에서도 '헬로 데어'로 "Hello there"를 받을 수 있다.
-  bool get canMakeFromSound =>
-      pronunciation.text.trim().isNotEmpty &&
-      _isOverwritable(text, _lastAutoText);
 
   /// 서버가 알려 준 오늘 남은 횟수. 아직 모르면 null.
   int? get remainingToday => assist.remainingToday;
@@ -142,8 +130,6 @@ class AddSentenceController extends ChangeNotifier {
     language = next;
     _fillToken++;
     fillStatus = AssistStatus.idle;
-    transliterateStatus = AssistStatus.idle;
-    composeStatus = AssistStatus.idle;
     notifyListeners();
   }
 
@@ -164,20 +150,35 @@ class AddSentenceController extends ChangeNotifier {
   ///
   /// 자동으로 채운 값만 있으면 '다시 받기'로 쓸 수 있으니 그대로 열어 둔다.
   bool get hasFillRoom =>
+      _isOverwritable(text, _lastAutoText) ||
       _isOverwritable(translation, _lastAutoTranslation) ||
       _isOverwritable(pronunciation, _lastAutoPronunciation);
 
-  /// 지금 원문으로 뜻과 발음을 요청한다. 화면의 "뜻·발음 채우기" 버튼이 이걸 부른다.
+  /// 채울 재료가 있는지. 셋 가운데 하나라도 적혀 있어야 한다(5차 545).
+  bool get hasFillSource =>
+      text.text.trim().isNotEmpty ||
+      translation.text.trim().isNotEmpty ||
+      pronunciation.text.trim().isNotEmpty;
+
+  /// 적혀 있는 칸으로 빈 칸을 채운다(5차 545, 사용자 요청).
+  ///
+  /// 전에는 단추가 셋이었다 - 원문으로 뜻·발음, 뜻으로 원문, 발음으로 원문.
+  /// 뜻만 적고 다 채우려면 두 번 눌러 하루 횟수를 두 번 썼다. 한 번에
+  /// 끝낸다. 손으로 적어 둔 칸은 [_apply]가 덮지 않는다.
   Future<void> fill() async {
-    final source = text.text.trim();
-    if (source.isEmpty || _disposed || !hasFillRoom) return;
+    if (_disposed || !hasFillSource || !hasFillRoom) return;
     final token = ++_fillToken;
     fillStatus = AssistStatus.loading;
     notifyListeners();
     try {
-      final suggestion = await assist.suggest(language: language, text: source);
+      final filled = await assist.complete(
+        language: language,
+        text: text.text.trim(),
+        translation: translation.text.trim(),
+        pronunciation: pronunciation.text.trim(),
+      );
       if (_disposed || token != _fillToken) return;
-      _apply(suggestion);
+      _apply(filled);
       fillStatus = AssistStatus.idle;
     } on SentenceAssistQuotaExceeded {
       if (_disposed || token != _fillToken) return;
@@ -192,15 +193,22 @@ class AddSentenceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _apply(SentenceSuggestion suggestion) {
-    final nextTranslation = suggestion.translation?.trim();
+  void _apply(SentenceComplete filled) {
+    final nextText = filled.text?.trim();
+    if (nextText != null &&
+        nextText.isNotEmpty &&
+        _isOverwritable(text, _lastAutoText)) {
+      text.text = nextText;
+      _lastAutoText = nextText;
+    }
+    final nextTranslation = filled.translation?.trim();
     if (nextTranslation != null &&
         nextTranslation.isNotEmpty &&
         _isOverwritable(translation, _lastAutoTranslation)) {
       translation.text = nextTranslation;
       _lastAutoTranslation = nextTranslation;
     }
-    final nextPronunciation = suggestion.pronunciation?.trim();
+    final nextPronunciation = filled.pronunciation?.trim();
     if (nextPronunciation != null &&
         nextPronunciation.isNotEmpty &&
         _isOverwritable(pronunciation, _lastAutoPronunciation)) {
@@ -212,85 +220,6 @@ class AddSentenceController extends ChangeNotifier {
   /// 비어 있거나 자동으로 채운 값 그대로면 새 제안으로 바꿔도 된다.
   bool _isOverwritable(TextEditingController field, String lastAuto) =>
       field.text.trim().isEmpty || field.text.trim() == lastAuto;
-
-  /// 뜻으로 원문을 만들 수 있는지(5차 540, 사용자 요청).
-  ///
-  /// 한글 전사는 소리를 알 때만 쓴다. 뜻만 아는 경우가 더 흔해서 반대 길도
-  /// 둔다. 한글 전사를 안 쓰는 언어(영어 등)에서도 쓸 수 있다.
-  ///
-  /// 원문이 비어 있거나 자동으로 채운 값 그대로일 때만 권한다. 손으로 적어
-  /// 둔 원문을 덮지 않는다([_isOverwritable]과 같은 규칙).
-  bool get canCompose =>
-      translation.text.trim().isNotEmpty &&
-      _isOverwritable(text, _lastAutoText);
-
-  /// 뜻으로 대상 언어 문장을 만들어 원문칸에 넣는다.
-  ///
-  /// 하루 횟수는 뜻·발음 채우기, 한글 전사와 같은 주머니를 쓴다(서버가
-  /// 정한다). 실패한 요청은 횟수에서 빠지지 않는다.
-  Future<void> compose() async {
-    final source = translation.text.trim();
-    if (source.isEmpty || _disposed || !_isOverwritable(text, _lastAutoText)) {
-      return;
-    }
-    composeStatus = AssistStatus.loading;
-    notifyListeners();
-    try {
-      final made = await assist.compose(language: language, meaning: source);
-      if (_disposed) return;
-      if (made == null || made.trim().isEmpty) {
-        composeStatus = AssistStatus.failed;
-      } else {
-        text.text = made.trim();
-        _lastAutoText = made.trim();
-        composeStatus = AssistStatus.idle;
-      }
-    } on SentenceAssistQuotaExceeded {
-      if (_disposed) return;
-      composeStatus = AssistStatus.quotaExceeded;
-    } on SentenceAssistUnavailable {
-      if (_disposed) return;
-      composeStatus = AssistStatus.unavailable;
-    } catch (_) {
-      if (_disposed) return;
-      composeStatus = AssistStatus.failed;
-    }
-    notifyListeners();
-  }
-
-  /// 적어 둔 발음을 대상 언어 글자로 바꿔 원문칸에 넣는다.
-  ///
-  /// [compose]와 하는 일이 같고 재료만 다르다. 이쪽은 소리를 알 때 쓴다.
-  Future<void> transliterate() async {
-    final source = pronunciation.text.trim();
-    if (source.isEmpty || _disposed || !_isOverwritable(text, _lastAutoText)) {
-      return;
-    }
-    transliterateStatus = AssistStatus.loading;
-    notifyListeners();
-    try {
-      final converted =
-          await assist.transliterate(language: language, hangul: source);
-      if (_disposed) return;
-      if (converted == null || converted.trim().isEmpty) {
-        transliterateStatus = AssistStatus.failed;
-      } else {
-        text.text = converted.trim();
-        _lastAutoText = converted.trim();
-        transliterateStatus = AssistStatus.idle;
-      }
-    } on SentenceAssistQuotaExceeded {
-      if (_disposed) return;
-      transliterateStatus = AssistStatus.quotaExceeded;
-    } on SentenceAssistUnavailable {
-      if (_disposed) return;
-      transliterateStatus = AssistStatus.unavailable;
-    } catch (_) {
-      if (_disposed) return;
-      transliterateStatus = AssistStatus.failed;
-    }
-    notifyListeners();
-  }
 
   @override
   void dispose() {

@@ -35,9 +35,14 @@ void main() {
     }
   });
 
-  test('문장 화면도 아직 안 적었으면 까닭을 적는다', () {
+  // 문장 화면은 단추를 하나로 합치면서 재료가 셋이 됐다(5차 545). 원문만
+  // 가리키는 말을 쓰면 뜻이나 발음만 적어도 된다는 것을 모른다.
+  test('문장 화면은 셋 가운데 하나만 적어도 된다고 적는다', () {
     final src = _sourceOf(
         'lib/features/home/dashboard/presentation/add_sentence_screen.dart');
-    expect(src.contains("assistNeedsTextHint('문장')"), isTrue);
+    expect(src.contains('fillNeedsAnyFieldHint'), isTrue);
+    expect(src.contains("assistNeedsTextHint('문장')"), isFalse);
+    expect(fillNeedsAnyFieldHint, contains('뜻'));
+    expect(fillNeedsAnyFieldHint, contains('발음'));
   });
 }
