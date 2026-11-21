@@ -267,4 +267,75 @@ void main() {
     expect(fill().onPressed, isNotNull);
     expect(convert().onPressed, isNotNull);
   });
+
+  // 서버가 쉬다 깨는 첫 조회는 15초를 넘긴다. 그동안 변환 단추가 회색으로
+  // 죽어만 있어 고장으로 보였다(5차 539, 사용자 지적).
+  testWidgets('횟수를 읽는 동안 변환 단추가 돌아간다', (tester) async {
+    final assist = _SlowUsageAssist();
+    await tester.pumpWidget(withSubscription(
+        AddSentenceScreen(language: '일본어', assist: assist)));
+    await tester.pump();
+
+    final button = find.byKey(const ValueKey('transliterate'));
+    expect(button, findsOneWidget);
+    expect(
+      find.descendant(
+          of: button, matching: find.byType(CircularProgressIndicator)),
+      findsOneWidget,
+      reason: '기다리는 중이라는 표시가 없으면 고장으로 읽힌다',
+    );
+    expect(tester.widget<FilledButton>(button).onPressed, isNull);
+
+    assist.done.complete();
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+          of: button, matching: find.byType(CircularProgressIndicator)),
+      findsNothing,
+    );
+    expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+  });
+
+  // 한글 전사로 적은 소리가 곧 발음인데 발음칸에 똑같이 다시 쳐야 했다.
+  group('적어 둔 한글 소리 가져오기', () {
+    const key = ValueKey('copy-hangul-to-pronunciation');
+
+    testWidgets('소리를 적으면 발음칸 옆에 단추가 생긴다', (tester) async {
+      await tester.pumpWidget(withSubscription(AddSentenceScreen(
+          language: '일본어',
+          assist: _UsageAssist(dailyLimit: 3, remainingToday: 3))));
+      await tester.pump();
+
+      expect(find.byKey(key), findsNothing);
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-hangul')), '곤니치와');
+      await tester.pumpAndSettle();
+      expect(find.byKey(key), findsOneWidget);
+
+      await tester.tap(find.byKey(key));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<TextField>(
+                find.byKey(const ValueKey('sentence-pronunciation')))
+            .controller!
+            .text,
+        '곤니치와',
+      );
+      // 가져오고 나면 더 권하지 않는다.
+      expect(find.byKey(key), findsNothing);
+    });
+
+    testWidgets('한글 전사를 안 쓰는 언어에는 없다', (tester) async {
+      await tester.pumpWidget(withSubscription(AddSentenceScreen(
+          language: '영어',
+          assist: _UsageAssist(dailyLimit: 3, remainingToday: 3))));
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('sentence-hangul')), findsNothing);
+      expect(find.byKey(key), findsNothing);
+    });
+  });
 }

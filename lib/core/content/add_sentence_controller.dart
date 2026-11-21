@@ -202,6 +202,31 @@ class AddSentenceController extends ChangeNotifier {
   bool _isOverwritable(TextEditingController field, String lastAuto) =>
       field.text.trim().isEmpty || field.text.trim() == lastAuto;
 
+  /// 위에 적은 한글 소리를 발음칸으로 가져올 수 있는지(5차 539, 사용자 요청).
+  ///
+  /// 한글 전사는 '곤니치와'처럼 소리를 적어 こんにちは를 받는 기능이다.
+  /// 그 적어 둔 소리가 곧 발음인데, 발음칸에 똑같이 다시 쳐야 했다.
+  ///
+  /// 발음칸이 비어 있거나 자동으로 채운 값 그대로일 때만 권한다. 손으로
+  /// 고쳐 둔 것을 덮지 않는다([_isOverwritable]과 같은 규칙).
+  bool get canCopyHangul =>
+      canTransliterate &&
+      hangul.text.trim().isNotEmpty &&
+      hangul.text.trim() != pronunciation.text.trim() &&
+      _isOverwritable(pronunciation, _lastAutoPronunciation);
+
+  /// 위에 적은 한글 소리를 발음칸에 넣는다.
+  ///
+  /// 자동으로 채운 것과 같이 다룬다. 그래야 그 뒤에 '뜻·발음 채우기'를
+  /// 눌러도 덮어쓸 수 있고, 손으로 고치면 거기서 멈춘다.
+  void copyHangulToPronunciation() {
+    if (!canCopyHangul) return;
+    final sound = hangul.text.trim();
+    pronunciation.text = sound;
+    _lastAutoPronunciation = sound;
+    notifyListeners();
+  }
+
   /// 한글로 적은 소리를 대상 언어 글자로 바꿔 원문칸에 넣는다.
   Future<void> transliterate() async {
     final source = hangul.text.trim();

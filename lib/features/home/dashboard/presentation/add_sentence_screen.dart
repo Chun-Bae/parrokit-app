@@ -194,18 +194,47 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  key: const ValueKey('sentence-pronunciation'),
-                  controller: controller.pronunciation,
-                  style: context.texts.bodyMedium,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: pronunciationOptionalLabel,
-                    border: const OutlineInputBorder(),
-                    suffixIcon: controller.fillStatus == AssistStatus.loading
-                        ? const _LoadingDot()
-                        : null,
-                  ),
+                // 가져오기 단추는 한글칸과 발음칸이 바뀔 때 나타나고
+                // 사라진다. 본문 전체를 다시 그리지 않도록 이 줄만 듣는다.
+                ListenableBuilder(
+                  listenable: Listenable.merge(
+                      [controller.hangul, controller.pronunciation]),
+                  builder: (context, _) => Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            key: const ValueKey('sentence-pronunciation'),
+                            controller: controller.pronunciation,
+                            style: context.texts.bodyMedium,
+                            textInputAction: TextInputAction.done,
+                            decoration: InputDecoration(
+                              labelText: pronunciationOptionalLabel,
+                              border: const OutlineInputBorder(),
+                              suffixIcon:
+                                  controller.fillStatus == AssistStatus.loading
+                                      ? const _LoadingDot()
+                                      : null,
+                            ),
+                          ),
+                        ),
+                        // 위에 적은 한글 소리가 곧 발음이다. 똑같이 다시 치지
+                        // 않게 가져온다(5차 539, 사용자 요청).
+                        if (controller.canCopyHangul) ...[
+                          const SizedBox(width: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: OutlinedButton(
+                              key: const ValueKey(
+                                  'copy-hangul-to-pronunciation'),
+                              onPressed: controller.copyHangulToPronunciation,
+                              style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(72, 48)),
+                              child: const Text(copyHangulLabel),
+                            ),
+                          ),
+                        ],
+                      ]),
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -240,6 +269,9 @@ class _HangulTransliterateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = controller.transliterateStatus;
+    // 변환 중이거나 횟수를 읽는 중. 둘 다 기다리는 것이라 같이 다룬다.
+    final busy = status == AssistStatus.loading ||
+        controller.usageStatus == UsageStatus.loading;
     final example = controller.language == '일본어' ? '곤니치와' : '니하오';
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -265,13 +297,14 @@ class _HangulTransliterateRow extends StatelessWidget {
                 // 막고 까닭을 적는다(5차 478).
                 // 변환도 같은 횟수를 쓰므로, 횟수를 읽는 동안에는
                 // 함께 막는다(5차 516).
-                onPressed: status == AssistStatus.loading ||
-                        controller.usageStatus == UsageStatus.loading ||
-                        controller.exhausted
+                onPressed: busy || controller.exhausted
                     ? null
                     : controller.transliterate,
                 style: FilledButton.styleFrom(minimumSize: const Size(72, 48)),
-                child: status == AssistStatus.loading
+                // 횟수를 읽는 동안에도 돌린다(5차 539, 사용자 지적).
+                // 서버가 쉬다 깨는 첫 조회는 15초를 넘기는데, 그동안
+                // 단추가 회색으로 죽어만 있어 고장으로 보였다.
+                child: busy
                     ? const SizedBox(
                         width: 16,
                         height: 16,
@@ -290,8 +323,7 @@ class _HangulTransliterateRow extends StatelessWidget {
                     '지금은 한글 변환을 쓸 수 없어요. 원문을 직접 적어 주세요.',
                   // 한글 변환도 같은 하루 횟수를 나눠 쓴다. 같은 말로 적는다(5차 475).
                   AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
-                  AssistStatus.failed =>
-                    '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
+                  AssistStatus.failed => '변환하지 못했어요. 다시 해 보거나 원문을 직접 적어 주세요.',
                   _ => assistQuotaExhaustedMessage,
                 },
                 key: const ValueKey('transliterate-message'),

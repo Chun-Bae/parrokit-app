@@ -363,4 +363,71 @@ void _exhaustedTests() {
       controller.dispose();
     });
   });
+
+  // 한글 전사로 적은 소리가 곧 발음인데 발음칸에 똑같이 다시 쳐야 했다
+  // (5차 539, 사용자 요청).
+  group('적어 둔 한글 소리 가져오기', () {
+    AddSentenceController make({String language = '일본어'}) {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
+      return AddSentenceController(assist: assist, language: language);
+    }
+
+    test('적어 둔 소리가 있으면 가져올 수 있다', () {
+      final c = make();
+      c.hangul.text = '곤니치와';
+
+      expect(c.canCopyHangul, isTrue);
+      c.copyHangulToPronunciation();
+      expect(c.pronunciation.text, '곤니치와');
+      c.dispose();
+    });
+
+    test('적어 둔 소리가 없으면 권하지 않는다', () {
+      final c = make();
+      expect(c.canCopyHangul, isFalse);
+      c.hangul.text = '   ';
+      expect(c.canCopyHangul, isFalse);
+      c.dispose();
+    });
+
+    test('한글 전사를 안 쓰는 언어에는 없다', () {
+      final c = make(language: '영어');
+      c.hangul.text = '헬로';
+      expect(c.canCopyHangul, isFalse);
+      c.dispose();
+    });
+
+    test('손으로 적어 둔 발음은 덮지 않는다', () {
+      final c = make();
+      c.hangul.text = '곤니치와';
+      c.pronunciation.text = '내가 적은 발음';
+
+      expect(c.canCopyHangul, isFalse);
+      c.copyHangulToPronunciation();
+      expect(c.pronunciation.text, '내가 적은 발음');
+      c.dispose();
+    });
+
+    test('이미 같은 값이면 권하지 않는다', () {
+      final c = make();
+      c.hangul.text = '곤니치와';
+      c.copyHangulToPronunciation();
+
+      expect(c.canCopyHangul, isFalse);
+      c.dispose();
+    });
+
+    test('가져온 값은 채우기가 덮어쓸 수 있다', () {
+      // 자동으로 채운 것과 같이 다룬다. 그 뒤 '뜻·발음 채우기'를 눌러
+      // 더 나은 발음이 오면 바뀌어야 한다.
+      final c = make();
+      c.hangul.text = '곤니치와';
+      c.copyHangulToPronunciation();
+
+      expect(c.hasFillRoom, isTrue);
+      c.dispose();
+    });
+  });
 }
