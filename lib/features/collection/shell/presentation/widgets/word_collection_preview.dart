@@ -1348,6 +1348,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
   bool get _exhausted => assistExhausted(
         used: _assistUsed,
         limit: _assist.dailyLimit,
+        credits: _assist.assistCredits ?? 0,
       );
 
   /// 오늘 예문을 다 만들었나. 뜻·발음 채우기 횟수와는 다른 한도다.
@@ -1387,12 +1388,11 @@ class _AddWordSheetState extends State<AddWordSheet> {
   }
 
   /// 오늘 쓴 횟수. 서버에서 못 받아오면 null.
-  int? get _assistUsed {
-    final remaining = _assist.remainingToday;
-    final limit = _assist.dailyLimit;
-    if (remaining == null || limit == null) return null;
-    return limit - remaining;
-  }
+  int? get _assistUsed => assistUsedToday(
+        limit: _assist.dailyLimit,
+        remaining: _assist.remainingToday,
+        credits: _assist.assistCredits ?? 0,
+      );
 
   @override
   void initState() {

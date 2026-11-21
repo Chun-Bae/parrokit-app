@@ -111,11 +111,11 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
   ///
   /// 남은 수에는 사 둔 몫이 더해져 온다. 그대로 빼면 음수가 나온다 -
   /// 기기에서 '예문 생성 -5 / 10개'가 떴다(5차 535). 사 둔 몫을 먼저 뺀다.
-  int? _used(int? limit, int? remaining, int credits) {
-    if (limit == null || remaining == null) return null;
-    final today = remaining - credits;
-    return (limit - today).clamp(0, limit);
-  }
+  int? _used(int? limit, int? remaining, int credits) => assistUsedToday(
+        limit: limit,
+        remaining: remaining,
+        credits: credits,
+      );
 
   @override
   Widget build(BuildContext context) {

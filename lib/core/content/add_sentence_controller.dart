@@ -88,20 +88,25 @@ class AddSentenceController extends ChangeNotifier {
   /// 서버가 알려 준 하루 한도. 아직 모르면 null.
   int? get dailyLimit => assist.dailyLimit;
 
+  /// 패롯으로 사 둔 뜻·발음 몫(5차 546). 하루 한도와 다른 주머니다.
+  int? get assistCredits => assist.assistCredits;
+
   /// 오늘 쓴 횟수. 한도나 남은 횟수를 아직 모르면 null.
-  int? get usedToday {
-    final limit = dailyLimit;
-    final remaining = remainingToday;
-    if (limit == null || remaining == null) return null;
-    return (limit - remaining).clamp(0, limit);
-  }
+  int? get usedToday => assistUsedToday(
+        limit: dailyLimit,
+        remaining: remainingToday,
+        credits: assist.assistCredits ?? 0,
+      );
 
   /// 오늘 횟수를 다 썼나(5차 478).
   ///
   /// 아직 못 읽었으면 false다. 모르는데 막아 두면 쓸 수 있는 사람도
   /// 못 쓴다.
-  bool get exhausted =>
-      assistExhausted(used: usedToday, limit: dailyLimit);
+  bool get exhausted => assistExhausted(
+        used: usedToday,
+        limit: dailyLimit,
+        credits: assist.assistCredits ?? 0,
+      );
 
   /// 화면을 열 때 한 번 불러 사용 횟수를 보여 준다. 모델을 부르지 않아 횟수를 쓰지 않는다.
   Future<void> loadUsage() async {

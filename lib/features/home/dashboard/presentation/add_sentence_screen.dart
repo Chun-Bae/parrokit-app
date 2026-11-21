@@ -306,7 +306,11 @@ class _UsageAction extends StatelessWidget {
       child: Center(
         child: used != null && limit != null
             // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
-            ? Text(assistUsageShortLabel(used: used, limit: limit)!,
+            ? Text(
+                assistUsageShortLabel(
+                    used: used,
+                    limit: limit,
+                    credits: controller.assistCredits ?? 0)!,
                 key: const ValueKey('usage-count'),
                 style: context.texts.bodySmall.copyWith(
                     color: exhausted ? colors.error : colors.onSurfaceVariant))

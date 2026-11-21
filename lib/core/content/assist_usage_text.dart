@@ -19,9 +19,35 @@ String? assistUsageLabel({required int? used, required int? limit}) {
 ///
 /// '오늘 2/3회 사용'은 가운데 제목과 부딪힌다. 4.7인치 기기에서는 제목이
 /// 잘린다. '사용'을 떼어도 앞의 '오늘'이 쓴 횟수라는 것을 말해 준다.
-String? assistUsageShortLabel({required int? used, required int? limit}) {
+String? assistUsageShortLabel({
+  required int? used,
+  required int? limit,
+  int credits = 0,
+}) {
   if (used == null || limit == null) return null;
-  return '오늘 $used/$limit회';
+  // 사 둔 몫이 있으면 그것까지 적는다. 다음에 누르면 그 몫이 깎이므로
+  // 하루치만 보여 주면 거짓말이 된다(5차 546).
+  final head = '오늘 $used/$limit회';
+  return credits > 0 ? '$head +$credits' : head;
+}
+
+/// 오늘 하루치를 몇 번 썼는지(5차 546).
+///
+/// 서버가 주는 remainingToday에는 패롯으로 사 둔 몫이 더해져 있다
+/// (max(한도-쓴수, 0) + assistCredits). 그래서 한도에서 그냥 빼면 하루치를
+/// 다 쓴 사람도 '오늘 2/3회'로 보였다. 기기에서 더보기 카드는 '3 / 3번 +1',
+/// 문장 추가 앱바는 '오늘 2/3회 사용'으로 같은 수를 다르게 말했다.
+///
+/// 더 나쁜 것은 그 다음이다. 아직 한 번 남은 줄 알고 누르면 돈 주고 산
+/// 몫이 깎였다.
+int? assistUsedToday({
+  required int? limit,
+  required int? remaining,
+  int credits = 0,
+}) {
+  if (limit == null || remaining == null) return null;
+  final today = remaining - credits;
+  return (limit - today).clamp(0, limit);
 }
 
 /// 아직 받아 오는 중.
@@ -84,5 +110,11 @@ String assistNeedsTextHint(String what) =>
 /// 단어 쪽에만 있던 것을 문장 화면도 쓰게 옮겼다. 문장 화면은 서버가
 /// 거절한 뒤에야 다 쓴 줄 알아서, 열자마자 3/3인데도 '문장을 적으면
 /// 채울 수 있어요'라고 적었다.
-bool assistExhausted({int? used, int? limit}) =>
-    used != null && limit != null && limit > 0 && used >= limit;
+/// [credits]는 패롯으로 사 둔 몫이다. 하루치를 다 썼어도 그것이 남아
+/// 있으면 아직 쓸 수 있다(5차 546).
+bool assistExhausted({int? used, int? limit, int credits = 0}) =>
+    credits <= 0 &&
+    used != null &&
+    limit != null &&
+    limit > 0 &&
+    used >= limit;

@@ -93,10 +93,13 @@ class _WordEditSheetState extends State<WordEditSheet> {
 
   bool get _exhausted => _usageChecked &&
       assistExhausted(
-        used: _assist.dailyLimit == null || _assist.remainingToday == null
-            ? null
-            : _assist.dailyLimit! - _assist.remainingToday!,
+        used: assistUsedToday(
+          limit: _assist.dailyLimit,
+          remaining: _assist.remainingToday,
+          credits: _assist.assistCredits ?? 0,
+        ),
         limit: _assist.dailyLimit,
+        credits: _assist.assistCredits ?? 0,
       );
 
   /// 오늘 예문을 다 만들었나. 뜻·발음 채우기 횟수와는 다른 한도다.
