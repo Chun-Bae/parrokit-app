@@ -21,6 +21,25 @@ import {vertexAI} from "@genkit-ai/google-genai";
 // Vertex AI의 Gemini 2.5 계열은 2026-10에 종료돼서 3.1 Flash-Lite를 쓴다.
 // 3.1은 us-central1에서 안 열려 있을 수 있어 글로벌 엔드포인트로 부른다.
 const MODEL = "vertexai/gemini-3.1-flash-lite";
+
+/**
+ * 생각(thinking) 설정(5차 543, 사용자 요청).
+ *
+ * Gemini 3 계열은 생각을 완전히 끌 수 없다. MINIMAL이 가장 낮은 단계이고
+ * 3.1 Flash-Lite의 기본값이기도 하다. 그래도 적어 둔다 - 기본값은 모델이
+ * 바뀌면 같이 바뀌고, 생각 토큰은 출력 단가($1.50/1M)로 매겨져서 여기서
+ * 새면 바로 돈이다. 뜻·발음과 예문은 짧은 한 줄짜리라 생각할 것이 없다.
+ *
+ * thinkingBudget은 Gemini 3부터 버려진 값이라 쓰지 않는다. thinkingLevel과
+ * 함께 보내면 400이 난다.
+ *
+ * includeThoughts를 끄면 생각한 내용을 응답에 담지 않는다. 담으면 그만큼
+ * 출력 토큰이 늘고 우리는 쓰지도 않는다.
+ */
+const THINKING = {
+  thinkingLevel: "MINIMAL",
+  includeThoughts: false,
+} as const;
 const DEFAULT_DAILY_LIMIT = 3;
 const USAGE_COLLECTION = "sentence-assist-usage";
 // 한도와 예외 대상은 코드가 아니라 이 문서에서 읽는다. 콘솔에서 고치면 배포 없이 바로 적용된다.
@@ -327,7 +346,7 @@ function requireText(value: unknown, field: string): string {
 async function suggest(language: string, text: string) {
   const response = await ai.generate({
     model: MODEL,
-    config: {temperature: 0.2},
+    config: {temperature: 0.2, thinkingConfig: THINKING},
     output: {schema: SuggestOutput},
     prompt:
       `다음 ${language} 문장의 한국어 뜻과 한글 발음 표기를 만들어라.\n` +
@@ -351,7 +370,7 @@ async function suggest(language: string, text: string) {
 async function transliterate(language: string, hangul: string) {
   const response = await ai.generate({
     model: MODEL,
-    config: {temperature: 0.1},
+    config: {temperature: 0.1, thinkingConfig: THINKING},
     output: {schema: TransliterateOutput},
     prompt:
       `한글로 적은 ${language} 발음을 ${language} 원문으로 바꿔라.\n` +
@@ -378,7 +397,7 @@ async function transliterate(language: string, hangul: string) {
 async function compose(language: string, meaning: string) {
   const response = await ai.generate({
     model: MODEL,
-    config: {temperature: 0.2},
+    config: {temperature: 0.2, thinkingConfig: THINKING},
     output: {schema: TransliterateOutput},
     prompt:
       `다음 한국어 뜻에 맞는 ${language} 문장을 만들어라.\n` +
@@ -429,7 +448,7 @@ async function suggestWord(
     "- examples: 빈 배열로 두어라. 예문은 만들지 마라.\n";
   const response = await ai.generate({
     model: MODEL,
-    config: {temperature: 0.2},
+    config: {temperature: 0.2, thinkingConfig: THINKING},
     output: {schema: WordOutput},
     prompt:
       `다음 ${language} 낱말의 한국어 뜻과 한글 발음` +
