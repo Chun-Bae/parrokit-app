@@ -7,10 +7,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// 있어서, 재화 줄 바로 아래에 붙여 두면 어느 쪽이 무엇인지 한눈에
 /// 들어오지 않았다.
 enum AssistKind {
-  /// 뜻·발음 채우기. 말풍선과 소리 물결. 파랑.
+  /// 뜻·발음 채우기. 말풍선. 파랑.
   meaning('assets/icons/assist_meaning.svg', '뜻·발음'),
 
-  /// 예문 생성. 줄이 적힌 종이와 반짝이. 보라.
+  /// 예문 생성. 줄이 적힌 종이. 보라.
   example('assets/icons/assist_example.svg', '예문');
 
   const AssistKind(this.asset, this.label);
