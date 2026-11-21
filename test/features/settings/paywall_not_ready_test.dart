@@ -12,7 +12,7 @@ import 'package:parrokit/features/settings/subscription/presentation/subscriptio
 void main() {
   test('안내 글 셋은 서로 다른 것을 말한다', () {
     expect(subscriptionNotReadyToast, contains('아직'));
-    expect(subscriptionAlreadyToast, contains('이미 구독'));
+    expect(subscriptionAlreadyToast, contains('가장 높은 단계'));
     expect(subscriptionOpenFailedToast, contains('열지 못했어요'));
     expect(
         {
@@ -29,9 +29,13 @@ void main() {
         .readAsStringSync()
         .replaceAll(RegExp(r'\s+'), ' ');
     expect(code, contains('if (result != PaywallResult.notPresented) return;'));
-    // 459에서 갈래를 나눴다. 이미 구독 중이면 Paywall을 부르지 않고 바로
-    // 알리고, 그 밖에 뜨지 않은 경우만 '아직 상품이 없다'고 말한다.
-    expect(code, contains('if (premium) { showToast(subscriptionAlreadyToast); return; }'));
+    // 459에서 갈래를 나눴다. 더 살 것이 없을 때만 바로 알리고, 그 밖에
+    // 뜨지 않은 경우만 '아직 상품이 없다'고 말한다. 단계가 넷이 된 뒤로는
+    // 구독 중이라는 것만으로 막으면 올리기가 죽는다(5차 548).
+    expect(
+        code,
+        contains('if (isTopTier(currentTierNow(context))) '
+            '{ showToast(subscriptionAlreadyToast); return; }'));
     expect(code, contains('showToast(subscriptionNotReadyToast);'));
     // 실패도 조용히 넘기지 않는다.
     expect(code, contains('showToast(subscriptionOpenFailedToast);'));

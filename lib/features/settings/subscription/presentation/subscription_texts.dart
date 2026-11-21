@@ -115,7 +115,11 @@ const String subscriptionPreviewNotice = '아직 구독 상품을 준비하는 �
 const String subscriptionNotReadyToast = '아직 구독 상품이 없어요. 준비되면 여기서 시작할 수 있어요.';
 
 /// 이미 구독 중이라 구독 화면이 뜨지 않을 때(5차 355).
-const String subscriptionAlreadyToast = '이미 구독 중이에요. 자세한 것은 구독 칸에서 볼 수 있어요.';
+///
+/// 단계가 넷이 된 뒤로는 구독 중이라고 막으면 안 된다. 올라갈 자리가
+/// 남아 있으면 Paywall을 띄운다(5차 548). 가장 높은 단계일 때만 이 말을
+/// 쓴다.
+const String subscriptionAlreadyToast = '이미 가장 높은 단계예요. 자세한 것은 구독 칸에서 볼 수 있어요.';
 
 /// 구독 화면을 여는 데 실패했을 때.
 const String subscriptionOpenFailedToast = '구독 화면을 열지 못했어요. 잠시 뒤 다시 해 주세요.';

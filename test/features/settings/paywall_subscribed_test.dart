@@ -88,7 +88,9 @@ void main() {
     final code = _code();
     expect(code.contains('presentPaywallIfNeeded(IapProvider.entitlementId)'),
         isFalse);
-    expect(code, contains('isSubscribedNow(context)'));
+    // 구독 여부를 보는 길은 남아 있다. 다만 show()에서 막는 기준은
+    // '맨 위 단계인가'로 바뀌었다(5차 548).
+    expect(code, contains('isTopTier(currentTierNow(context))'));
   });
 
   test('구독 화면을 띄울 offering을 짚어 준다(5차 461)', () {

@@ -13,6 +13,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_state.dart';
+import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/provider/iap_provider.dart';
@@ -39,8 +40,13 @@ class RevenueCatPaywallPresenter implements PaywallPresenter {
   /// 광고 제거만 산 사람에게는 안 떴다.
   @override
   Future<void> show(BuildContext context) async {
-    final premium = isSubscribedNow(context);
-    if (premium) {
+    // 구독 중이라고 막으면 안 된다(5차 548). 단계가 넷이 된 뒤로 라이트
+    // 사용자가 '올리기'를 눌러도 여기서 "이미 구독 중이에요"만 뜨고
+    // Paywall이 열리지 않았다. 출시 빌드는 이 길뿐이라 상위 단계로
+    // 올라갈 방법이 아예 없었다.
+    //
+    // 더 살 것이 없는 가장 높은 단계일 때만 막는다.
+    if (isTopTier(currentTierNow(context))) {
       showToast(subscriptionAlreadyToast);
       return;
     }
@@ -78,6 +84,14 @@ bool isSubscribedNow(BuildContext context) {
   if (byServer == true) return true;
   final active = context.read<IapProvider?>()?.activeEntitlements ?? const {};
   return active.any(subscriptionEntitlementIds.contains);
+}
+
+/// 지금 단계. [isSubscribedNow]와 같은 순서로 본다(5차 548).
+SubscriptionTier currentTierNow(BuildContext context) {
+  final byServer = context.read<SubscriptionProvider?>();
+  if (byServer != null && byServer.isSubscribed) return byServer.tier;
+  final active = context.read<IapProvider?>()?.activeEntitlements ?? const {};
+  return subscriptionFromEntitlements(active.toSet()).tier;
 }
 
 class PreviewPaywallPresenter implements PaywallPresenter {
