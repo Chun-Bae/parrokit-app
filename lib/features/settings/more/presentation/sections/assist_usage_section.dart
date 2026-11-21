@@ -8,6 +8,7 @@
 // 서로 깎지 않는다. 한 줄로 뭉뚱그리면 또 헷갈리므로 나눠 적는다(5차 531).
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:provider/provider.dart';
 
 import 'package:parrokit/core/content/assist_usage_text.dart';
@@ -172,6 +173,7 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
           ),
           const SizedBox(height: 10),
           _UsageRow(
+            kind: AssistKind.meaning,
             label: assistUsageBasicsLabel,
             value: assistUsageCount(basicsUsed, basicsLimit, '번', assistCredits),
             exhausted: basicsUsed != null && basicsUsed >= basicsLimit,
@@ -179,6 +181,7 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
           ),
           const SizedBox(height: 6),
           _UsageRow(
+            kind: AssistKind.example,
             label: assistUsageExamplesLabel,
             value: assistUsageCount(examplesUsed, examplesLimit, '개', credits),
             exhausted: examplesUsed != null && examplesUsed >= examplesLimit,
@@ -226,7 +229,8 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
                         ? const SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text(assistCreditBuyLabel(1)),
+                        : _buyLabel(
+                            AssistKind.meaning, assistCreditBuyLabel(1)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -239,7 +243,8 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
                         ? const SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text(exampleCreditBuyLabel(1)),
+                        : _buyLabel(
+                            AssistKind.example, exampleCreditBuyLabel(1)),
                   ),
                 ),
               ],
@@ -284,14 +289,26 @@ ButtonStyle _buyButtonStyle(BuildContext context, ColorScheme cs) =>
           context.texts.labelLarge.copyWith(fontWeight: FontWeight.w700),
     );
 
+/// 사기 단추 속 그림 + 말. 두 단추가 좁게 나란히 서므로 그림은 작게 둔다.
+Widget _buyLabel(AssistKind kind, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AssistIcon(kind, size: 16),
+        const SizedBox(width: 6),
+        Flexible(child: Text(text, overflow: TextOverflow.ellipsis)),
+      ],
+    );
+
 class _UsageRow extends StatelessWidget {
   const _UsageRow({
+    required this.kind,
     required this.label,
     required this.value,
     required this.exhausted,
     required this.rowKey,
   });
 
+  final AssistKind kind;
   final String label;
   final String value;
   final bool exhausted;
@@ -303,6 +320,9 @@ class _UsageRow extends StatelessWidget {
     return Row(
       key: rowKey,
       children: [
+        // 패롯·크래커 줄과 같은 결로, 무엇의 한도인지 그림으로 먼저 보인다.
+        AssistIcon(kind, size: 18),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(label,
               style: context.texts.bodyMedium
