@@ -27,6 +27,7 @@ import {
   legacyFirebaseKeyFromUrl,
   r2Delete,
   r2Head,
+  expiredCaptionInputs,
   r2KeyFromUrl,
   r2List,
   r2PresignGet,
@@ -269,17 +270,22 @@ export const cleanupCaptionInputs = onSchedule(
     schedule: "every day 04:00",
     timeZone: "Asia/Seoul",
     memory: "512MiB",
+    // 한 번에 몇천 개를 지울 수 있다. 기본 60초로는 중간에 끊긴다(5차 549).
+    timeoutSeconds: 540,
     secrets: r2Secrets,
   },
   async () => {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     const objects = await r2List("caption-inputs/");
+    const keys = expiredCaptionInputs(objects, Date.now());
     let removed = 0;
-    for (const object of objects) {
-      const modified = object.lastModified?.getTime() ?? 0;
-      if (modified > cutoff) continue;
-      await r2Delete(object.key);
-      removed++;
+    // 하나씩 기다리면 몇천 개에서 시간이 모자란다. 한 번에 스무 개씩.
+    for (let i = 0; i < keys.length; i += 20) {
+      const batch = keys.slice(i, i + 20);
+      const results = await Promise.allSettled(batch.map((k) => r2Delete(k)));
+      for (const result of results) {
+        if (result.status === "fulfilled") removed++;
+        else console.warn("[R2] caption-input delete failed", result.reason);
+      }
     }
     console.log(
       `[R2] caption-inputs cleanup: ${removed}/${objects.length} removed`

@@ -169,6 +169,39 @@ export async function r2Delete(key: string): Promise<void> {
   );
 }
 
+/** 자막 입력 파일을 얼마나 두는지. 하루. */
+export const CAPTION_INPUT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * 지울 자막 입력 파일을 고른다(5차 549).
+ *
+ * 언제 올라왔는지 모르는 파일은 **두고 간다**. 전에는 lastModified가
+ * 없으면 0으로 두고 비교해서, 모르는 파일을 모두 오래된 것으로 보고
+ * 지웠다. 목록이 그 값을 안 주는 경우는 타입에도 적혀 있다
+ * (lastModified?: Date). 지우는 쪽으로 틀리면 사용자가 방금 올린 영상이
+ * 작업 도중에 사라진다. 하루 더 남는 쪽이 싸다.
+ *
+ * @param {Array} objects 목록
+ * @param {number} nowMs 지금
+ * @param {number} maxAgeMs 두는 기간
+ * @return {string[]} 지울 키
+ */
+export function expiredCaptionInputs(
+  objects: Array<{key: string; lastModified?: Date}>,
+  nowMs: number,
+  maxAgeMs: number = CAPTION_INPUT_MAX_AGE_MS
+): string[] {
+  const cutoff = nowMs - maxAgeMs;
+  const out: string[] = [];
+  for (const object of objects) {
+    const modified = object.lastModified?.getTime();
+    if (modified === undefined || !Number.isFinite(modified)) continue;
+    if (modified > cutoff) continue;
+    out.push(object.key);
+  }
+  return out;
+}
+
 /**
  * 접두사 아래 객체를 전부 나열한다(키, 크기, 마지막 수정).
  *
