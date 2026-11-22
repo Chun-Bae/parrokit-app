@@ -165,6 +165,26 @@ class AddSentenceController extends ChangeNotifier {
       translation.text.trim().isNotEmpty ||
       pronunciation.text.trim().isNotEmpty;
 
+  /// 사용자가 손으로 적어 둔 칸 수. 자동으로 채운 값은 치지 않는다.
+  ///
+  /// 자동 값은 재료가 아니라 우리가 내놓은 것이다. 그것까지 세면 한 번
+  /// 채우고 나서 '다시 받기'를 할 수 없다.
+  int get typedFieldCount => [
+        _isOverwritable(text, _lastAutoText),
+        _isOverwritable(translation, _lastAutoTranslation),
+        _isOverwritable(pronunciation, _lastAutoPronunciation),
+      ].where((overwritable) => !overwritable).length;
+
+  /// 재료가 둘 이상이라 기준이 애매한지(5차 553, 사용자 결정).
+  ///
+  /// 두 칸을 적어 두면 셋 다 기준이 흔들린다. (뜻, 발음)으로 원문을 만들 때
+  /// 둘이 어긋나면 어느 쪽에도 맞출 수 없고, (원문, 뜻)이나 (원문, 발음)도
+  /// 어긋난 채로 두면 나머지 한 칸을 무엇에 맞춰야 하는지 알 수 없다.
+  /// 모델은 아무 말 없이 한쪽을 골라 버린다.
+  ///
+  /// 그래서 손으로 적은 칸이 하나일 때만 만든다.
+  bool get hasRivalSources => typedFieldCount >= 2;
+
   /// 적혀 있는 칸으로 빈 칸을 채운다(5차 545, 사용자 요청).
   ///
   /// 전에는 단추가 셋이었다 - 원문으로 뜻·발음, 뜻으로 원문, 발음으로 원문.
@@ -172,6 +192,7 @@ class AddSentenceController extends ChangeNotifier {
   /// 끝낸다. 손으로 적어 둔 칸은 [_apply]가 덮지 않는다.
   Future<void> fill() async {
     if (_disposed || !hasFillSource || !hasFillRoom) return;
+    if (hasRivalSources) return;
     final token = ++_fillToken;
     fillStatus = AssistStatus.loading;
     notifyListeners();

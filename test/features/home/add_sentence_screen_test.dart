@@ -360,6 +360,60 @@ void main() {
           tester.widget<FilledButton>(find.byKey(button)).onPressed, isNotNull);
     });
 
+    testWidgets('손으로 둘을 적으면 꺼지고 까닭을 적는다', (tester) async {
+      // 둘이 어긋나면 나머지 칸을 어느 쪽에 맞출지 알 수 없다(5차 553).
+      await tester.pumpWidget(withSubscription(
+          AddSentenceScreen(language: '일본어', assist: _CompleteAssist())));
+      await tester.pump();
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-translation')), '안녕하세요');
+      await tester.pump();
+      expect(tester.widget<FilledButton>(find.byKey(button)).onPressed,
+          isNotNull,
+          reason: '하나만 있을 때는 켜져야 한다');
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-pronunciation')), '아리가또');
+      await tester.pump();
+
+      expect(tester.widget<FilledButton>(find.byKey(button)).onPressed, isNull);
+      expect(find.textContaining('한 칸만 적어'), findsOneWidget);
+    });
+
+    testWidgets('원문과 뜻을 손으로 적어도 꺼진다', (tester) async {
+      await tester.pumpWidget(withSubscription(
+          AddSentenceScreen(language: '일본어', assist: _CompleteAssist())));
+      await tester.pump();
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-text')), 'こんにちは');
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-translation')), '안녕하세요');
+      await tester.pump();
+
+      expect(tester.widget<FilledButton>(find.byKey(button)).onPressed, isNull,
+          reason: '둘이 어긋나면 발음을 어느 쪽에 맞출지 알 수 없다');
+    });
+
+    testWidgets('한 번 채운 뒤에도 다시 받을 수 있다', (tester) async {
+      // 자동으로 채운 값은 재료로 치지 않는다. 세면 다시 받기가 죽는다.
+      await tester.pumpWidget(withSubscription(
+          AddSentenceScreen(language: '일본어', assist: _CompleteAssist())));
+      await tester.pump();
+
+      await tester.enterText(
+          find.byKey(const ValueKey('sentence-translation')), '안녕하세요');
+      await tester.pump();
+      await tester.tap(find.byKey(button));
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.widget<FilledButton>(find.byKey(button)).onPressed,
+          isNotNull,
+          reason: '셋이 다 찼지만 손으로 적은 것은 하나다');
+    });
+
     testWidgets('셋 다 손으로 적어 두면 꺼진다', (tester) async {
       await tester.pumpWidget(withSubscription(
           AddSentenceScreen(language: '일본어', assist: _CompleteAssist())));

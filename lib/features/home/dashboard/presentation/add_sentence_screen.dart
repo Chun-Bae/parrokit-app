@@ -265,13 +265,13 @@ class _FillButton extends StatelessWidget {
       // 모르는 채로 눌리면, 이미 바닥난 사람이 서버에 한 번 더
       // 부딪히고 나서야 '다 썼어요'를 본다.
       onPressed: !controller.hasFillSource ||
+              controller.hasRivalSources ||
               busy ||
               exhausted ||
               !controller.hasFillRoom
           ? null
           : controller.fill,
-      style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(48)),
+      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       child: busy
           ? const SizedBox(
               width: 18,
@@ -348,8 +348,7 @@ class _AutoFillCard extends StatelessWidget {
   /// 전에는 문장을 아직 안 적어 단추가 흐릴 때 아무 말도 없었다. 단어
   /// 화면에서 같은 결함을 고쳤는데(474) 이쪽에 그대로 남아 있었다.
   String? get message => switch (controller.fillStatus) {
-        AssistStatus.unavailable =>
-          '지금은 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 적어 주세요.',
+        AssistStatus.unavailable => '지금은 채우기를 쓸 수 없어요. 로그인했는지 확인하거나 직접 적어 주세요.',
         // 소진 안내는 단어 쪽과 같은 말을 쓴다(5차 475).
         AssistStatus.quotaExceeded => assistQuotaExhaustedMessage,
         AssistStatus.failed => '자동으로 채우지 못했어요. 횟수는 줄지 않았어요.',
@@ -360,11 +359,14 @@ class _AutoFillCard extends StatelessWidget {
             // 셋 가운데 하나만 적어도 나머지를 채운다(5차 545).
             : !controller.hasFillSource
                 ? fillNeedsAnyFieldHint
-                // 손으로 다 적어 두면 채우기가 덮어쓸 자리가 없다. 눌러도
-                // 아무 일이 없으니 까닭을 적고 단추를 끈다(5차 526).
-                : !controller.hasFillRoom
-                    ? fillNothingLeftMessage
-                    : null,
+                // 원문을 뜻과 발음 둘에서 만들면 어긋날 수 있다(5차 553).
+                : controller.hasRivalSources
+                    ? fillRivalSourcesMessage
+                    // 손으로 다 적어 두면 채우기가 덮어쓸 자리가 없다.
+                    // 눌러도 아무 일이 없으니 까닭을 적는다(5차 526).
+                    : !controller.hasFillRoom
+                        ? fillNothingLeftMessage
+                        : null,
       };
 
   @override

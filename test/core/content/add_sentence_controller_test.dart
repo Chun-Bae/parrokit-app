@@ -128,11 +128,19 @@ void main() {
     c.text.text = 'Hi';
     await c.fill();
     expect(c.translation.text, '뜻:Hi');
-    c.pronunciation.text = '내가 쓴 발음';
+    // 원문만 손으로 고친다. 자동으로 채운 두 칸은 재료로 치지 않으므로
+    // 다시 받을 수 있다(5차 553).
     c.text.text = 'Hi there';
     await c.fill();
     expect(c.translation.text, '뜻:Hi there');
-    expect(c.pronunciation.text, '내가 쓴 발음');
+    expect(c.pronunciation.text, '발:Hi there');
+
+    // 손으로 적은 칸은 그대로 둔다.
+    final typed = make(FakeAssist());
+    typed.translation.text = '내가 적은 뜻';
+    await typed.fill();
+    expect(typed.translation.text, '내가 적은 뜻');
+    typed.dispose();
     c.dispose();
   });
 
@@ -310,7 +318,9 @@ void _exhaustedTests() {
       controller.dispose();
     });
 
-    test('한쪽만 적었으면 아직 부를 수 있다', () async {
+    test('한쪽이 비었어도 손으로 둘을 적었으면 부르지 않는다', () async {
+      // 발음을 채울 자리는 남아 있다. 그런데 원문과 뜻이 어긋나면 그
+      // 발음을 어느 쪽에 맞출지 알 수 없다(5차 553, 사용자 결정).
       final assist = FakeAssist()
         ..remainingToday = 3
         ..dailyLimit = 3;
@@ -318,12 +328,11 @@ void _exhaustedTests() {
       controller.text.text = 'Hello';
       controller.translation.text = '내가 적은 뜻';
 
-      expect(controller.hasFillRoom, isTrue);
+      expect(controller.hasFillRoom, isTrue, reason: '발음 자리는 비어 있다');
+      expect(controller.hasRivalSources, isTrue);
       await controller.fill();
-      expect(assist.suggestCalls, ['Hello']);
-      // 손으로 적은 뜻은 그대로 두고 발음만 채운다.
-      expect(controller.translation.text, '내가 적은 뜻');
-      expect(controller.pronunciation.text, '발:Hello');
+      expect(assist.suggestCalls, isEmpty);
+      expect(controller.pronunciation.text, isEmpty);
       controller.dispose();
     });
 
@@ -447,6 +456,75 @@ void _exhaustedTests() {
 
       expect(c.fillStatus, AssistStatus.unavailable);
       c.dispose();
+    });
+  });
+
+  // 원문을 뜻과 발음 둘에서 만들면 둘이 어긋났을 때 어느 쪽에도 맞출 수
+  // 없다(5차 553, 사용자 요청). 원문이 있으면 그것이 기준이라 괜찮다.
+  group('재료 둘이 다툴 때', () {
+    AddSentenceController build() {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
+      return AddSentenceController(assist: assist, language: '일본어');
+    }
+
+    test('손으로 둘을 적으면 막는다', () {
+      for (final fill in <void Function(AddSentenceController)>[
+        (c) => c
+          ..translation.text = '안녕하세요'
+          ..pronunciation.text = '아리가또',
+        (c) => c
+          ..text.text = 'こんにちは'
+          ..translation.text = '안녕히 가세요',
+        (c) => c
+          ..text.text = 'こんにちは'
+          ..pronunciation.text = '아리가또',
+      ]) {
+        final c = build();
+        fill(c);
+        expect(c.hasRivalSources, isTrue);
+        c.dispose();
+      }
+    });
+
+    test('막힌 자리에서는 불러도 서버를 안 부른다', () async {
+      final assist = FakeAssist()
+        ..remainingToday = 3
+        ..dailyLimit = 3;
+      final c = AddSentenceController(assist: assist, language: '일본어');
+      c.translation.text = '안녕하세요';
+      c.pronunciation.text = '아리가또';
+
+      await c.fill();
+
+      expect(assist.completeCalls, isEmpty);
+      expect(c.text.text, isEmpty);
+      c.dispose();
+    });
+
+    test('자동으로 채운 값은 재료로 치지 않는다', () {
+      // 한 번 채우고 나면 셋이 다 차 있지만, 손으로 적은 것은 하나다.
+      // 그것까지 세면 '다시 받기'를 할 수 없다.
+      final c = build();
+      c.translation.text = '안녕하세요';
+      c.fill();
+      return Future<void>.delayed(Duration.zero).then((_) {
+        expect(c.typedFieldCount, 1);
+        expect(c.hasRivalSources, isFalse);
+        expect(c.hasFillRoom, isTrue);
+        c.dispose();
+      });
+    });
+
+    test('하나만 있으면 막지 않는다', () {
+      final one = build()..translation.text = '안녕하세요';
+      expect(one.hasRivalSources, isFalse);
+      one.dispose();
+
+      final other = build()..pronunciation.text = '곤니치와';
+      expect(other.hasRivalSources, isFalse);
+      other.dispose();
     });
   });
 }
