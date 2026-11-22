@@ -1528,6 +1528,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                       kind: AssistKind.meaning,
                       used: _assistUsed,
                       limit: _assist.dailyLimit,
+                      credits: _assist.assistCredits ?? 0,
                       key: const ValueKey('word-assist-usage'),
                     ),
                     const SizedBox(width: 10),
@@ -1535,6 +1536,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                       kind: AssistKind.example,
                       used: _examplesUsed,
                       limit: _assist.exampleDailyLimit,
+                      credits: _assist.exampleCredits ?? 0,
                       key: const ValueKey('word-examples-usage'),
                     ),
                   ],
@@ -2229,18 +2231,31 @@ class _UsagePair extends StatelessWidget {
     required this.kind,
     required this.used,
     required this.limit,
+    this.credits = 0,
   });
 
   final AssistKind kind;
   final int? used;
   final int? limit;
 
+  /// 패롯으로 사 둔 몫(5차 559, 사용자 결정). 하루치를 다 써도 이것이
+  /// 남아 있으면 더 쓸 수 있다. 적지 않으면 '3/3'만 보고 끝난 줄 안다.
+  final int credits;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     // 아직 모르면 자리만 비워 둔다. '—/—'는 고장으로 읽힌다.
-    final label = used == null || limit == null ? '—' : '$used/$limit';
-    final full = used != null && limit != null && limit! > 0 && used! >= limit!;
+    final label = used == null || limit == null
+        ? '—'
+        : credits > 0
+            ? '$used/$limit +$credits'
+            : '$used/$limit';
+    final full = credits <= 0 &&
+        used != null &&
+        limit != null &&
+        limit! > 0 &&
+        used! >= limit!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

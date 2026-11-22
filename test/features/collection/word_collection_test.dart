@@ -15,15 +15,23 @@ class FakeAssist implements SentenceAssist {
     this.pronunciation = '뉘앙스',
     this.examples = const [],
     this.quota = false,
+    this.assistCredits = 0,
+    this.dayLeft = 2,
   });
   final String translation;
   final String pronunciation;
   final List<SuggestedExample> examples;
   final bool quota;
+
+  @override
+  final int? assistCredits;
+
+  /// 오늘 하루치가 몇 번 남았는지. 서버는 여기에 사 둔 몫을 더해 준다.
+  final int dayLeft;
   final calls = <String>[];
 
   @override
-  int? get remainingToday => 2;
+  int? get remainingToday => dayLeft + (assistCredits ?? 0);
   @override
   int? get dailyLimit => 3;
 
@@ -39,8 +47,6 @@ class FakeAssist implements SentenceAssist {
   @override
   int? get exampleCredits => null;
 
-  @override
-  int? get assistCredits => null;
   @override
   Future<void> refreshUsage() async {}
   @override
@@ -502,6 +508,19 @@ void main() {
         find.descendant(
             of: find.byKey(const ValueKey('word-examples-usage')),
             matching: find.text('—')),
+        findsOneWidget);
+  });
+
+  // 하루치를 다 써도 사 둔 몫이 남아 있으면 더 쓸 수 있다. '3/3'만
+  // 보이면 끝난 줄 안다(5차 559, 사용자 결정).
+  testWidgets('사 둔 몫이 있으면 머리에도 +N을 적는다', (tester) async {
+    await openAddSheet(tester, FakeAssist(dayLeft: 0, assistCredits: 5));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('word-assist-usage')),
+            matching: find.text('3/3 +5')),
         findsOneWidget);
   });
 
