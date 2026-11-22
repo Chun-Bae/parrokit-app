@@ -6,6 +6,7 @@
 // 다시 보인다.
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:parrokit/features/collection/clip/player/presentation/engine/native_clip_player_engine.dart';
@@ -97,8 +98,23 @@ class ClipPlaybackHolder extends ChangeNotifier {
     _notify();
   }
 
+  /// 알린다. 그리는 중이면 그 프레임이 끝난 뒤에 알린다.
+  ///
+  /// ClipPlayerScreen.build가 [engineFor]를 부른다(5차 565). 그 자리에서
+  /// 바로 notifyListeners를 하면 이 Provider를 듣고 있는 위젯에
+  /// markNeedsBuild가 걸려 'setState() or markNeedsBuild() called during
+  /// build'가 난다. 클립을 열 때마다 났다. 엔진 쪽 알림도 그리는 중에
+  /// 올 수 있어 같은 길로 보낸다.
   void _notify() {
-    if (!_disposed) notifyListeners();
+    if (_disposed) return;
+    final binding = SchedulerBinding.instance;
+    if (binding.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      binding.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+      return;
+    }
+    notifyListeners();
   }
 
   @override

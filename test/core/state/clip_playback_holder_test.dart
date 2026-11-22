@@ -1,6 +1,8 @@
 // 새 플레이어를 화면 밖에서 들고 있는 곳(5차 4단계).
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/player/native_player.dart';
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
@@ -82,6 +84,42 @@ void main() {
     holder.engineFor(clipId: 7, title: '카페에서');
 
     expect(notified, greaterThan(0));
+  });
+
+  // ClipPlayerScreen.build가 engineFor를 부른다(5차 565). 그 자리에서 바로
+  // 알리면 이 Provider를 듣고 있는 위젯에 markNeedsBuild가 걸려
+  // 'setState() or markNeedsBuild() called during build'가 난다. 클립을
+  // 열 때마다 났다.
+  testWidgets('그리는 중에 불러도 터지지 않는다', (tester) async {
+    var notified = 0;
+    holder.addListener(() => notified++);
+
+    // ClipPlayerScreen과 같은 모양: Provider가 위에 있고, 그 아래 위젯의
+    // build가 engineFor를 부른다. 바로 알리면 이미 지어진 Provider
+    // 자리에 markNeedsBuild가 걸린다.
+    await tester.pumpWidget(
+      ChangeNotifierProvider<ClipPlaybackHolder>.value(
+        value: holder,
+        child: Builder(
+          builder: (context) {
+            context.watch<ClipPlaybackHolder>();
+            return Builder(
+              builder: (inner) {
+                inner.read<ClipPlaybackHolder>().engineFor(
+                      clipId: 7,
+                      title: '카페에서',
+                    );
+                return const SizedBox.shrink();
+              },
+            );
+          },
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    await tester.pump();
+    expect(notified, greaterThan(0), reason: '미뤘어도 알리기는 한다');
   });
 
   test('다른 소리가 나면 들고 있던 것을 놓는다', () async {
