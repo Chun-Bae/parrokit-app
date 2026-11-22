@@ -174,6 +174,7 @@ class CloudSentenceAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) async {
     final map = await _call({
       'mode': 'complete',
@@ -181,6 +182,7 @@ class CloudSentenceAssist implements SentenceAssist {
       'text': text,
       'translation': translation,
       'pronunciation': pronunciation,
+      'word': word,
     });
     return SentenceComplete(
       text: map['text'] as String?,

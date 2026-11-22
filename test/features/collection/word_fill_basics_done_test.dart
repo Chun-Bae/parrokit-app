@@ -45,6 +45,7 @@ class _CountingAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) async =>
       const SentenceComplete();
 
@@ -104,19 +105,18 @@ void main() {
     expect(assist.calls, 0);
   });
 
-  // 전에는 한쪽만 비어 있으면 채워 줬다. 이제 하나라도 적혀 있으면
-  // 막는다(5차 554, 사용자 결정). 적어 둔 뜻이 낱말과 어긋나면 발음을
-  // 어느 쪽에 맞출지 알 수 없다.
-  testWidgets('뜻만 적어 두어도 막는다', (tester) async {
+  // 단어는 재료가 낱말 하나뿐이라 뜻과 발음이 어긋날 자리가 없다. 한쪽만
+  // 비어 있으면 그것을 채운다(5차 557, 사용자 결정).
+  testWidgets('한쪽만 비어 있으면 아직 채울 수 있다', (tester) async {
     final word = await _addWord(meaning: '경향');
     await _open(tester, word, _CountingAssist());
 
-    expect(_hint(tester), wordFillBasicsDoneHint);
+    expect(_hint(tester), wordFillBasicsHint);
     expect(
       tester
           .widget<FilledButton>(find.byKey(const ValueKey('edit-word-fill')))
           .onPressed,
-      isNull,
+      isNotNull,
     );
   });
 

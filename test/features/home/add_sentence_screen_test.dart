@@ -52,6 +52,7 @@ class _UsageAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) async =>
       const SentenceComplete();
 
@@ -92,6 +93,7 @@ class _CompleteAssist extends _UsageAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) async {
     calls.add([text, translation, pronunciation]);
     return const SentenceComplete(

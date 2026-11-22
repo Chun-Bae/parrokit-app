@@ -35,7 +35,13 @@ void main() {
       final code = _code(path);
       expect(code.contains("Text('뜻·발음 채우기')"), isFalse, reason: path);
       expect(code.contains("Text('예문 채우기')"), isFalse, reason: path);
-      expect(code.contains('wordFillBasicsLabel'), isTrue, reason: path);
+      // 단어 추가 시트는 낱말도 만들 수 있어 문장 쪽 이름을 쓴다(5차 558).
+      // 고치기 시트는 낱말이 고정이라 '뜻·발음 생성' 그대로다.
+      expect(
+          code.contains('wordFillBasicsLabel') ||
+              code.contains('Text(fillBasicsLabel)'),
+          isTrue,
+          reason: path);
       expect(code.contains('wordFillExamplesLabel'), isTrue, reason: path);
     }
   });

@@ -61,6 +61,7 @@ class _FakeAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) async =>
       const SentenceComplete();
 

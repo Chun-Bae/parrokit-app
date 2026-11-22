@@ -119,6 +119,7 @@ void main() {
       'text': '',
       'translation': '안녕하세요',
       'pronunciation': '',
+      'word': false,
     });
     expect(filled.text, 'こんにちは');
     expect(filled.pronunciation, '곤니치와');

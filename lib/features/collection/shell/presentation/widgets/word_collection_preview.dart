@@ -1097,7 +1097,7 @@ const String wordSearchNeedsWordHint = '먼저 찾을 단어를 적어 주세요
 ///
 /// 전에는 서버에 묻고(하루 횟수를 써 놓고) 이미 적은 뜻은 덮지 않아서
 /// 아무 일도 일어나지 않은 것처럼 보였다.
-const String wordMeaningAlreadyHint = '이미 뜻이나 발음을 적어 두셨어요. 지우고 누르면 채워 드려요.';
+const String wordMeaningAlreadyHint = '이미 뜻과 발음을 적어 두셨어요. 지우고 누르면 채워 드려요.';
 
 /// '단어 추가' 시트의 저장 버튼이 꺼져 있는 까닭.
 const String addWordNeedsWordHint = '단어를 적어야 저장할 수 있어요.';
@@ -1162,16 +1162,17 @@ class _AddWordSheetState extends State<AddWordSheet> {
   /// 사용자에게 보이지 않았다. 시트 안에 적어야 보인다.
   String? fillNote;
 
-  /// 뜻과 발음을 서버에 물어 채운다(5차 472, 사용자 요청).
+  /// 빈 칸을 서버에 물어 채운다(5차 558, 사용자 결정).
+  ///
+  /// 문장 추가와 같은 길을 쓴다(mode "complete"). 칸 셋이 같은 꼴이라
+  /// 낱말이 원문 자리다 - 뜻만 적고 낱말을 받을 수도 있다.
   ///
   /// 예문은 따로 받는다. 뜻·발음은 한 번 채우면 끝이고 예문은 여러 개를
   /// 더 받는 것이라, 한 단추로 묶으면 무엇에 횟수를 쓰는지 흐려진다.
   /// 이미 적어 둔 칸은 덮지 않는다.
   Future<void> fillMeaning() async {
-    final word = _word.text.trim();
-    if (word.isEmpty || filling) return;
-    // 하나라도 적혀 있으면 채우지 않는다(5차 554, 사용자 결정). 고치기
-    // 시트·문장 추가와 같은 규칙이다.
+    if (filling || !_hasFillSource) return;
+    // 셋 다 차 있으면 채울 자리가 없다.
     if (_basicsTyped) {
       setState(() => fillNote = wordMeaningAlreadyHint);
       return;
@@ -1182,22 +1183,27 @@ class _AddWordSheetState extends State<AddWordSheet> {
     });
     String? note;
     try {
-      // count 0이면 서버가 예문을 만들지 않는다(5차 472).
-      final suggestion = await _assist.suggestWord(
+      final filled = await _assist.complete(
         language: widget.language,
-        word: word,
-        count: 0,
+        text: _word.text.trim(),
+        translation: _meaning.text.trim(),
+        pronunciation: _pronunciation.text.trim(),
+        word: true,
       );
       if (!mounted) return;
-      final meaning = suggestion.translation?.trim() ?? '';
-      final sound = suggestion.pronunciation?.trim() ?? '';
+      final made = filled.text?.trim() ?? '';
+      final meaning = filled.translation?.trim() ?? '';
+      final sound = filled.pronunciation?.trim() ?? '';
+      if (_word.text.trim().isEmpty && made.isNotEmpty) {
+        _word.text = made;
+      }
       if (_meaning.text.trim().isEmpty && meaning.isNotEmpty) {
         _meaning.text = meaning;
       }
       if (_pronunciation.text.trim().isEmpty && sound.isNotEmpty) {
         _pronunciation.text = sound;
       }
-      if (meaning.isEmpty && sound.isEmpty) {
+      if (made.isEmpty && meaning.isEmpty && sound.isEmpty) {
         note = '뜻을 찾지 못했어요. 직접 적어 주세요.';
       }
     } on SentenceAssistQuotaExceeded {
@@ -1336,8 +1342,6 @@ class _AddWordSheetState extends State<AddWordSheet> {
   }
 
   /// 서버에서 횟수를 받아왔는지. 못 받아오면 안내를 지운다.
-  bool _usageChecked = false;
-  bool _usageFailed = false;
 
   /// 아직 횟수를 묻는 중인지. 묻는 동안에는 채우기 단추를 막는다(5차 515).
   ///
@@ -1372,18 +1376,35 @@ class _AddWordSheetState extends State<AddWordSheet> {
   }
 
   /// 단추 아래에 적을 말. 막혀 있으면 까닭부터 말한다(5차 474).
-  /// 뜻이나 발음을 손으로 적어 두었는지(5차 554).
+  /// 채울 자리가 하나도 없는지(5차 558).
+  ///
+  /// 칸 셋이 문장 추가와 같은 꼴이 되면서 낱말도 결과가 될 수 있다.
+  /// 셋이 다 차 있을 때만 막는다.
   ///
   /// fillMeaning은 이때 서버를 부르지 않고 돌아선다. 그런데 단추는 파랗게
   /// 켜진 채였고 안내도 '한 번만 채우면 돼요'여서, 눌러도 아무 일이 없는
   /// 것처럼 보였다. 고치기 시트에서 이미 고친 결함이 이쪽에 남아 있었다
   /// (5차 506·515·519·526과 같은 결).
   bool get _basicsTyped =>
+      _word.text.trim().isNotEmpty &&
+      _meaning.text.trim().isNotEmpty &&
+      _pronunciation.text.trim().isNotEmpty;
+
+  /// 오늘 만든 예문 수. 사 둔 몫은 빼고 센다(5차 546과 같은 셈).
+  int? get _examplesUsed => assistUsedToday(
+        limit: _assist.exampleDailyLimit,
+        remaining: _assist.examplesRemainingToday,
+        credits: _assist.exampleCredits ?? 0,
+      );
+
+  /// 셋 가운데 하나라도 적혀 있어야 채울 재료가 된다(5차 558).
+  bool get _hasFillSource =>
+      _word.text.trim().isNotEmpty ||
       _meaning.text.trim().isNotEmpty ||
       _pronunciation.text.trim().isNotEmpty;
 
   String _fillHint(String whenReady) {
-    if (_word.text.trim().isEmpty) return wordFillNeedsWordHint;
+    if (!_hasFillSource) return wordFillNeedsWordHint;
     if (_exhausted) return assistQuotaExhaustedMessage;
     if (_basicsTyped) return wordFillBasicsDoneHint;
     return whenReady;
@@ -1417,20 +1438,10 @@ class _AddWordSheetState extends State<AddWordSheet> {
     _pronunciation.addListener(() => setState(() {}));
     // 횟수만 가져온다(모델을 부르지 않으므로 한 번도 쓰지 않는다).
     // 못 가져오면 '확인 중'에 갇히지 않게 안내를 지운다.
-    _assist.refreshUsage().then((_) {
-      if (mounted) {
-        setState(() {
-          _usageChecked = true;
-          _usageLoading = false;
-        });
-      }
-    }).catchError((_) {
-      if (mounted) {
-        setState(() {
-          _usageFailed = true;
-          _usageLoading = false;
-        });
-      }
+    // 성공이든 실패든 '확인 중'에서 빠져나온다. 못 가져왔으면 머리의
+    // 횟수가 '—'로 남는다(5차 558).
+    _assist.refreshUsage().whenComplete(() {
+      if (mounted) setState(() => _usageLoading = false);
     });
   }
 
@@ -1505,7 +1516,29 @@ class _AddWordSheetState extends State<AddWordSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('단어 추가', style: context.texts.titleLarge),
+                // 두 한도를 머리에 나란히 적는다(5차 558, 사용자 요청).
+                // 전에는 뜻·발음 횟수만 단추 옆에 있었고 예문 쪽은 한참
+                // 아래 단추 옆에 따로 있었다.
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('단어 추가', style: context.texts.titleLarge),
+                    ),
+                    _UsagePair(
+                      kind: AssistKind.meaning,
+                      used: _assistUsed,
+                      limit: _assist.dailyLimit,
+                      key: const ValueKey('word-assist-usage'),
+                    ),
+                    const SizedBox(width: 10),
+                    _UsagePair(
+                      kind: AssistKind.example,
+                      used: _examplesUsed,
+                      limit: _assist.exampleDailyLimit,
+                      key: const ValueKey('word-examples-usage'),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 Text('${widget.language} · 단어만 넣어도 저장돼요',
                     style: context.texts.bodySmall.copyWith(
@@ -1545,43 +1578,24 @@ class _AddWordSheetState extends State<AddWordSheet> {
                 // 아래였는데(471), 이름이 '뜻·발음 생성'이라 무엇을
                 // 만드는지는 이름이 말해 준다.
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.tonalIcon(
-                        key: const ValueKey('fill-word-meaning'),
-                        style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48)),
-                        onPressed: _word.text.trim().isEmpty ||
-                                filling ||
-                                _usageLoading ||
-                                _exhausted ||
-                                _basicsTyped
-                            ? null
-                            : fillMeaning,
-                        icon: filling
-                            ? const SizedBox.square(
-                                dimension: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2))
-                            : const AssistIcon(AssistKind.meaning, size: 18),
-                        label: const Text(wordFillBasicsLabel),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      wordAssistUsageLabel(
-                        used: _assistUsed,
-                        limit: _assist.dailyLimit,
-                        failed: _usageFailed ||
-                            (_usageChecked && _assistUsed == null),
-                      ),
-                      key: const ValueKey('word-assist-usage'),
-                      style: context.texts.bodySmall.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                // 횟수는 머리로 올렸다(5차 558). 단추는 가로로 꽉 채운다.
+                FilledButton.tonalIcon(
+                  key: const ValueKey('fill-word-meaning'),
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48)),
+                  onPressed: !_hasFillSource ||
+                          filling ||
+                          _usageLoading ||
+                          _exhausted ||
+                          _basicsTyped
+                      ? null
+                      : fillMeaning,
+                  icon: filling
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const AssistIcon(AssistKind.meaning, size: 18),
+                  label: const Text(fillBasicsLabel),
                 ),
                 Text(
                   _fillHint(wordFillBasicsHint),
@@ -2207,6 +2221,42 @@ const String wordFillExamplesHint = '겹치지 않는 예문을 받아요';
 /// 것처럼 보였다(506·515·519에서 고친 것과 같은 결함).
 /// 문장 추가 화면도 같은 말을 쓴다(526).
 const String wordFillBasicsDoneHint = assistBasicsDoneMessage;
+
+/// 머리에 다는 '그림 + 쓴 횟수 / 한도' 한 쌍(5차 558, 사용자 요청).
+class _UsagePair extends StatelessWidget {
+  const _UsagePair({
+    super.key,
+    required this.kind,
+    required this.used,
+    required this.limit,
+  });
+
+  final AssistKind kind;
+  final int? used;
+  final int? limit;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    // 아직 모르면 자리만 비워 둔다. '—/—'는 고장으로 읽힌다.
+    final label = used == null || limit == null ? '—' : '$used/$limit';
+    final full = used != null && limit != null && limit! > 0 && used! >= limit!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AssistIcon(kind, size: 16),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: context.texts.bodySmall.copyWith(
+            fontWeight: FontWeight.w700,
+            color: full ? cs.error : cs.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 String wordAssistUsageLabel({
   required int? used,

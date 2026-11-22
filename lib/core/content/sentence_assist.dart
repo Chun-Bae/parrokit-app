@@ -42,11 +42,14 @@ abstract class SentenceAssist {
   /// 전에는 길이 셋이었다 - 원문으로 뜻·발음, 발음으로 원문, 뜻으로 원문.
   /// 사용자가 보기에는 "빈 칸을 채운다" 하나인데 각각 하루 횟수를 썼다.
   /// 한 번에 끝낸다. 셋 가운데 적어도 하나는 적혀 있어야 한다.
+  /// [word]가 true면 낱말 화면에서 부른 것이다(5차 558). 서버가 원문
+  /// 자리에 문장 대신 낱말을 만든다.
   Future<SentenceComplete> complete({
     required String language,
     String text,
     String translation,
     String pronunciation,
+    bool word,
   });
 
   /// 낱말의 뜻과 예문을 함께 제안한다(5차 467).
@@ -179,6 +182,7 @@ class UnavailableSentenceAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) =>
       Future.error(const SentenceAssistUnavailable());
 

@@ -58,6 +58,7 @@ class FakeAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
+    bool word = false,
   }) {
     final given = [text, translation, pronunciation];
     completeCalls.add(given);

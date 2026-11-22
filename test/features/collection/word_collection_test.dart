@@ -57,8 +57,16 @@ class FakeAssist implements SentenceAssist {
     String text = '',
     String translation = '',
     String pronunciation = '',
-  }) async =>
-      const SentenceComplete();
+    bool word = false,
+  }) async {
+    calls.add('$language:$text');
+    if (quota) throw const SentenceAssistQuotaExceeded();
+    return SentenceComplete(
+      text: text.isEmpty ? '만든 낱말' : text,
+      translation: translation.isEmpty ? this.translation : translation,
+      pronunciation: pronunciation.isEmpty ? '발음' : pronunciation,
+    );
+  }
 
   @override
   Future<WordSuggestion> suggestWord({
@@ -446,7 +454,9 @@ void main() {
     final fill = find.byKey(const ValueKey('fill-word-meaning'));
     // 222에서 입력칸 안의 아이콘을 이름 있는 버튼으로 바꿨다.
     // 472에서 예문 채우기를 떼어 내 단추가 둘이 됐다. 이것은 뜻·발음 쪽.
-    expect(find.text(wordFillBasicsLabel), findsOneWidget);
+    // 단어 추가 시트는 낱말도 만들 수 있어 문장 쪽과 같은 이름을 쓴다
+    // (5차 558). 고치기 시트는 낱말이 고정이라 '뜻·발음 생성' 그대로다.
+    expect(find.text(fillBasicsLabel), findsOneWidget);
     expect(find.text(wordFillExamplesLabel), findsOneWidget);
     expect(tester.widget<ButtonStyleButton>(fill).onPressed, isNull);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
@@ -477,11 +487,22 @@ void main() {
     expect(find.text(wordFillExamplesHint), findsOneWidget);
   });
 
-  testWidgets('남은 횟수를 버튼 옆에 적는다', (tester) async {
+  // 두 한도를 시트 머리 오른쪽에 나란히 적는다(5차 558, 사용자 요청).
+  testWidgets('남은 횟수를 머리에 두 쌍으로 적는다', (tester) async {
     await openAddSheet(tester, FakeAssist());
     await tester.pumpAndSettle();
     // FakeAssist는 하루 3회 중 2회가 남았다고 말한다.
-    expect(find.text('오늘 1/3회 사용'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('word-assist-usage')),
+            matching: find.text('1/3')),
+        findsOneWidget);
+    // 예문 한도는 모른다고 말하므로 자리만 둔다.
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('word-examples-usage')),
+            matching: find.text('—')),
+        findsOneWidget);
   });
 
   test('횟수를 모르면 확인 중, 못 받아오면 아무 말도 안 한다', () {
@@ -490,10 +511,10 @@ void main() {
     expect(wordAssistUsageLabel(used: null, limit: null, failed: true), '');
   });
 
-  // 전에는 단추가 켜진 채였고 누른 뒤에야 까닭을 적었다. 이제 뜻이나
-  // 발음이 하나라도 적혀 있으면 단추를 끄고 누르기 전부터 적는다
-  // (5차 554, 사용자 결정. 368에서 '누른 뒤에 적는' 것까지는 고쳤다).
-  testWidgets('이미 적은 뜻이 있으면 단추를 끄고 까닭을 적는다', (tester) async {
+  // 전에는 단추가 켜진 채였고 누른 뒤에야 까닭을 적었다. 이제 채울 자리가
+  // 없으면 단추를 끄고 누르기 전부터 적는다(368에서 '누른 뒤에 적는'
+  // 것까지는 고쳤다).
+  testWidgets('뜻과 발음이 다 차 있으면 단추를 끄고 까닭을 적는다', (tester) async {
     final assist = FakeAssist();
     await openAddSheet(tester, assist);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
@@ -507,6 +528,17 @@ void main() {
     );
 
     await tester.enterText(find.byKey(const ValueKey('word-meaning')), '내 뜻');
+    await tester.pump();
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('fill-word-meaning')))
+          .onPressed,
+      isNotNull,
+      reason: '발음이 비었으니 그것을 채워 준다',
+    );
+
+    await tester.enterText(
+        find.byKey(const ValueKey('word-pronunciation')), '내 발음');
     await tester.pump();
 
     expect(
