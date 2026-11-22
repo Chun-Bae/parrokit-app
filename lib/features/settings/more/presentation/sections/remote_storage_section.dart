@@ -39,12 +39,30 @@ class RemoteStorageDetails extends StatefulWidget {
 
 class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
   /// 임시 파일이 차지하는 양. 아직 못 읽었으면 null.
+  ///
+  /// 잰 값은 CacheService가 들고 있다. 더보기의 '임시 파일' 칸과 같은
+  /// 값이어야 한다(5차 565). 각자 재던 때는 그 사이에 임시 파일이 늘면
+  /// 한 화면에서 '34 MB'와 '38 MB'가 같이 보였다.
   int? _cacheBytes;
 
   @override
   void initState() {
     super.initState();
+    CacheService.instance.sizeBytes.addListener(_onCacheSizeChanged);
+    _cacheBytes = CacheService.instance.sizeBytes.value;
     _loadCacheBytes();
+  }
+
+  void _onCacheSizeChanged() {
+    if (mounted) {
+      setState(() => _cacheBytes = CacheService.instance.sizeBytes.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    CacheService.instance.sizeBytes.removeListener(_onCacheSizeChanged);
+    super.dispose();
   }
 
   Future<void> _loadCacheBytes() async {

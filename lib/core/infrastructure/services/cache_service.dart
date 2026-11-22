@@ -15,6 +15,8 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
@@ -22,6 +24,14 @@ class CacheService {
   CacheService._();
 
   static final CacheService instance = CacheService._();
+
+  /// 마지막으로 잰 임시 파일 크기. 아직 안 쟀으면 null.
+  ///
+  /// 더보기의 '임시 파일' 칸과 저장 용량 시트가 같은 값을 보여야 한다
+  /// (5차 450, 477). 전에는 각자 제 시점에 재서, 그 사이에 임시 파일이
+  /// 늘면 한 화면 안에서 '34 MB'와 '38 MB'가 같이 보였다. 자동 자막을
+  /// 한 번 만들면 바로 그렇게 됐다.
+  final ValueNotifier<int?> sizeBytes = ValueNotifier<int?>(null);
 
   /// 캐시(임시 디렉터리) 현재 용량 계산 (bytes)
   Future<int> getCacheSize() async {
@@ -36,6 +46,7 @@ class CacheService {
           totalSize += await entity.length();
         }
       }
+      sizeBytes.value = totalSize;
       return totalSize;
     } catch (e) {
       // 용량을 못 읽으면 더보기 화면에 잘못된 수치가 뜬다.
@@ -53,6 +64,7 @@ class CacheService {
         // 삭제 후 디렉터리가 필요할 수 있으므로 다시 생성
         await tempDir.create();
       }
+      sizeBytes.value = 0;
     } catch (e) {
       // 사용자가 캐시 삭제를 눌렀는데 아무 일도 일어나지 않은 경우다.
       AppLogger.e('[Cache] 캐시 삭제 실패', error: e);

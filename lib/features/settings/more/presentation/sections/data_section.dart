@@ -37,12 +37,22 @@ class DataSection extends StatefulWidget {
 }
 
 class _DataSectionState extends State<DataSection> {
-  String _cacheSize = '';
   bool _clearingCache = false;
+
+  /// 지금 보여 줄 임시 파일 크기. 잰 값은 CacheService가 들고 있다.
+  String get _cacheSize {
+    final bytes = CacheService.instance.sizeBytes.value;
+    return bytes == null ? '' : formatBytes(bytes);
+  }
+
+  void _onCacheSizeChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    CacheService.instance.sizeBytes.addListener(_onCacheSizeChanged);
     _refreshCache();
     // 캐시 관리 화면을 한 번 열어야만 숫자가 최신으로 보이던 문제 — 이
     // 카드가 보이는 시점에 바로 최신 값을 받아오도록 한다.
@@ -51,13 +61,14 @@ class _DataSectionState extends State<DataSection> {
     });
   }
 
-  Future<void> _refreshCache() async {
-    final size = await CacheService.instance.getCacheSize();
-    if (mounted) {
-      // 같은 크기를 두 화면이 다르게 적던 것을 한 함수로 모았다(5차 477).
-      // 더보기는 '17.9 MB', 저장 용량 시트는 '18 MB'로 보였다.
-      setState(() => _cacheSize = formatBytes(size));
-    }
+  /// 다시 재게 한다. 잰 값은 CacheService가 들고 있어 저장 용량 시트와
+  /// 늘 같다(5차 477, 565). 전에는 각자 재서 숫자가 어긋났다.
+  Future<void> _refreshCache() => CacheService.instance.getCacheSize();
+
+  @override
+  void dispose() {
+    CacheService.instance.sizeBytes.removeListener(_onCacheSizeChanged);
+    super.dispose();
   }
 
   /// 무엇을 담거나 되돌릴지 먼저 고르고(5차 345, 사용자 요청) 진행한다.
