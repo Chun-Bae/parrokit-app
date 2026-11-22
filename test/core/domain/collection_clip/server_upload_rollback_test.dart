@@ -22,8 +22,22 @@ void main() {
 
   test('실패하면 올린 파일을 지운다', () {
     final calls = '_discardUploadedObjects(uploadedKeys'.allMatches(source);
-    // FirebaseException 갈래와 Exception 갈래 두 곳 모두에 있어야 한다.
+    // FirebaseException 갈래와 나머지 갈래 두 곳 모두에 있어야 한다.
     expect(calls.length, 2);
+  });
+
+  // Dart의 Error는 Exception이 아니다(5차 563). 'on Exception'으로만
+  // 받으면 StateError·TypeError가 났을 때 되돌리기를 건너뛰고, 올라간
+  // 파일이 아무도 가리키지 않는 채 용량만 먹는다. 이 블록 안에는
+  // StateError를 던지는 자리와 Firestore 값을 캐스팅하는 자리가 있다.
+  test('Error도 받아서 되돌린다', () {
+    final upload = source.substring(
+      source.indexOf('server-upload start'),
+      source.indexOf('Future<void> _discardUploadedObjects'),
+    );
+    expect(upload.contains('} on Exception catch'), isFalse,
+        reason: 'Exception만 받으면 Error에서 새어 나간다');
+    expect(upload.contains('} catch (e, st) {'), isTrue);
   });
 
   test('되돌리기는 path로 지운다', () {

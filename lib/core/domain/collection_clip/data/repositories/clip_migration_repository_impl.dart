@@ -335,7 +335,12 @@ class ClipMigrationRepositoryImpl implements ClipMigrationRepository {
       );
       await _discardUploadedObjects(uploadedKeys, clipId: clipId);
       rethrow;
-    } on Exception catch (e, st) {
+    } catch (e, st) {
+      // Exception만 잡으면 안 된다(5차 563). Dart의 Error는 Exception이
+      // 아니라서 StateError·TypeError가 나면 되돌리기를 건너뛴다. 이 블록
+      // 안에는 StateError를 던지는 자리와 Firestore 값을 캐스팅하는 자리가
+      // 있다. 건너뛰면 올라간 파일이 아무도 가리키지 않는 채 남아 용량만
+      // 먹고, 앱에서는 지울 길이 없다.
       AppLogger.e(
         '[Clip][Storage] server-upload error clipId=$clipId',
         error: e,
