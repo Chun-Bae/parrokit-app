@@ -76,6 +76,15 @@ const String assistUsageUnknownShortLabel = '횟수 ? · 다시 확인';
 /// (더보기 카드 제목) 이 단추 이름으로 쓰면 예문과 구분되지 않는다.
 const String fillBasicsLabel = '뜻·발음·원문 생성';
 
+/// 단어 쪽 같은 단추의 이름(5차 555, 사용자 지적).
+///
+/// 단어에는 원문이 없다. 낱말이 곧 재료라 만드는 것은 뜻과 발음뿐이다.
+/// '채우기'와 '생성'으로 갈려 있던 것을 '생성'으로 맞춘다.
+const String wordFillBasicsLabel = '뜻·발음 생성';
+
+/// 예문 단추의 이름. 더보기 카드도 '예문 생성'이라고 적는다.
+const String wordFillExamplesLabel = '예문 생성';
+
 /// 문장 추가에서 아직 아무것도 안 적어 채울 재료가 없을 때(5차 545).
 ///
 /// 전에는 '문장을 적으면 채울 수 있어요'였다. 이제 뜻이나 발음만 적어도

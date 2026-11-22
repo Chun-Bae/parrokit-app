@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
@@ -445,8 +446,8 @@ void main() {
     final fill = find.byKey(const ValueKey('fill-word-meaning'));
     // 222에서 입력칸 안의 아이콘을 이름 있는 버튼으로 바꿨다.
     // 472에서 예문 채우기를 떼어 내 단추가 둘이 됐다. 이것은 뜻·발음 쪽.
-    expect(find.text('뜻·발음 채우기'), findsOneWidget);
-    expect(find.text('예문 채우기'), findsOneWidget);
+    expect(find.text(wordFillBasicsLabel), findsOneWidget);
+    expect(find.text(wordFillExamplesLabel), findsOneWidget);
     expect(tester.widget<ButtonStyleButton>(fill).onPressed, isNull);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
     await tester.pump();
@@ -489,26 +490,39 @@ void main() {
     expect(wordAssistUsageLabel(used: null, limit: null, failed: true), '');
   });
 
-  testWidgets('이미 적은 뜻이 있으면 묻지 않고 그렇게 말한다(5차 368)', (tester) async {
+  // 전에는 단추가 켜진 채였고 누른 뒤에야 까닭을 적었다. 이제 뜻이나
+  // 발음이 하나라도 적혀 있으면 단추를 끄고 누르기 전부터 적는다
+  // (5차 554, 사용자 결정. 368에서 '누른 뒤에 적는' 것까지는 고쳤다).
+  testWidgets('이미 적은 뜻이 있으면 단추를 끄고 까닭을 적는다', (tester) async {
     final assist = FakeAssist();
     await openAddSheet(tester, assist);
     await tester.enterText(find.byKey(const ValueKey('word-input')), 'nuance');
-    await tester.enterText(find.byKey(const ValueKey('word-meaning')), '내 뜻');
-    // 468부터 발음과 예문도 함께 채운다. 빈 칸이 하나라도 있으면 물으러
-    // 가는 것이 맞으므로, 묻지 않는 것을 보려면 셋 다 차 있어야 한다.
-    await tester.enterText(
-        find.byKey(const ValueKey('word-pronunciation')), '내 발음');
-    await tester.enterText(
-        find.byKey(const ValueKey('word-example-0')), '내 예문');
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('fill-word-meaning')));
-    await tester.pumpAndSettle();
-    expect(find.text('내 뜻'), findsOneWidget);
-    // 전에는 서버에 묻고(하루 횟수를 쓰고) 아무 말 없이 끝났다.
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('fill-word-meaning')))
+          .onPressed,
+      isNotNull,
+      reason: '단어만 적었을 때는 켜져야 한다',
+    );
+
+    await tester.enterText(find.byKey(const ValueKey('word-meaning')), '내 뜻');
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('fill-word-meaning')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('word-autofill-hint')))
+          .data,
+      wordFillBasicsDoneHint,
+    );
     expect(assist.calls, isEmpty);
-    // 시트가 아래를 덮어 SnackBar는 보이지 않는다. 시트 안에 적는다(5차 368).
-    expect(find.byKey(const ValueKey('word-fill-note')), findsOneWidget);
-    expect(find.text(wordMeaningAlreadyHint), findsOneWidget);
+    expect(find.text('내 뜻'), findsOneWidget);
   });
 
   testWidgets('뜻이 비어 있을 때 횟수를 다 썼으면 그렇게 안내한다', (tester) async {

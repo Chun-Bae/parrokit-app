@@ -10,6 +10,7 @@
 // 손보러 이 창에 들어온 사람이 자동으로 받으려면 창을 닫고 나가야 했다.
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
@@ -472,8 +473,8 @@ class _WordEditSheetState extends State<WordEditSheet> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.auto_awesome_rounded, size: 18),
-                  label: const Text('뜻·발음 채우기'),
+                      : const AssistIcon(AssistKind.meaning, size: 18),
+                  label: const Text(wordFillBasicsLabel),
                 ),
               ],
             ),
@@ -569,8 +570,8 @@ class _WordEditSheetState extends State<WordEditSheet> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.auto_awesome_rounded, size: 18),
-                  label: const Text('예문 채우기'),
+                      : const AssistIcon(AssistKind.example, size: 18),
+                  label: const Text(wordFillExamplesLabel),
                 ),
               ],
             ),

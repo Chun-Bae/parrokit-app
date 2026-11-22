@@ -7,6 +7,7 @@ import 'package:parrokit/features/collection/shell/presentation/widgets/word_edi
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:parrokit/core/content/word_search_url.dart';
 import 'package:provider/provider.dart';
@@ -1171,8 +1172,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
     if (word.isEmpty || filling) return;
     // 하나라도 적혀 있으면 채우지 않는다(5차 554, 사용자 결정). 고치기
     // 시트·문장 추가와 같은 규칙이다.
-    if (_meaning.text.trim().isNotEmpty ||
-        _pronunciation.text.trim().isNotEmpty) {
+    if (_basicsTyped) {
       setState(() => fillNote = wordMeaningAlreadyHint);
       return;
     }
@@ -1372,9 +1372,20 @@ class _AddWordSheetState extends State<AddWordSheet> {
   }
 
   /// 단추 아래에 적을 말. 막혀 있으면 까닭부터 말한다(5차 474).
+  /// 뜻이나 발음을 손으로 적어 두었는지(5차 554).
+  ///
+  /// fillMeaning은 이때 서버를 부르지 않고 돌아선다. 그런데 단추는 파랗게
+  /// 켜진 채였고 안내도 '한 번만 채우면 돼요'여서, 눌러도 아무 일이 없는
+  /// 것처럼 보였다. 고치기 시트에서 이미 고친 결함이 이쪽에 남아 있었다
+  /// (5차 506·515·519·526과 같은 결).
+  bool get _basicsTyped =>
+      _meaning.text.trim().isNotEmpty ||
+      _pronunciation.text.trim().isNotEmpty;
+
   String _fillHint(String whenReady) {
     if (_word.text.trim().isEmpty) return wordFillNeedsWordHint;
     if (_exhausted) return assistQuotaExhaustedMessage;
+    if (_basicsTyped) return wordFillBasicsDoneHint;
     return whenReady;
   }
 
@@ -1400,6 +1411,10 @@ class _AddWordSheetState extends State<AddWordSheet> {
   void initState() {
     super.initState();
     _word.addListener(() => setState(() {}));
+    // 뜻·발음도 들어야 한다(5차 554). 하나라도 적히면 채우기 단추를 끄는데,
+    // 듣지 않으면 다른 일로 다시 그려질 때까지 켜진 채로 남는다.
+    _meaning.addListener(() => setState(() {}));
+    _pronunciation.addListener(() => setState(() {}));
     // 횟수만 가져온다(모델을 부르지 않으므로 한 번도 쓰지 않는다).
     // 못 가져오면 '확인 중'에 갇히지 않게 안내를 지운다.
     _assist.refreshUsage().then((_) {
@@ -1514,15 +1529,16 @@ class _AddWordSheetState extends State<AddWordSheet> {
                       onPressed: _word.text.trim().isEmpty ||
                               filling ||
                               _usageLoading ||
-                              _exhausted
+                              _exhausted ||
+                              _basicsTyped
                           ? null
                           : fillMeaning,
                       icon: filling
                           ? const SizedBox.square(
                               dimension: 16,
                               child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: const Text('뜻·발음 채우기'),
+                          : const AssistIcon(AssistKind.meaning, size: 18),
+                      label: const Text(wordFillBasicsLabel),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1690,8 +1706,8 @@ class _AddWordSheetState extends State<AddWordSheet> {
                           ? const SizedBox.square(
                               dimension: 16,
                               child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: const Text('예문 채우기'),
+                          : const AssistIcon(AssistKind.example, size: 18),
+                      label: const Text(wordFillExamplesLabel),
                     ),
                   ],
                 ),
