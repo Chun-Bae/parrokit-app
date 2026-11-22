@@ -15,6 +15,7 @@ import {ENFORCE_APP_CHECK} from "./appCheck";
 import * as admin from "firebase-admin";
 import {
   objectDocId,
+  legacyObjectDocId,
   recordObjectSize,
   storageStatus,
   uidFromObjectName,
@@ -82,16 +83,27 @@ function readContentType(raw: unknown): string {
 /**
  * 같은 키로 전에 적어 둔 크기. 덮어쓰기면 그 차이만 한도에 든다.
  *
+ * 옛 id로 적어 둔 것도 함께 본다(5차 552). objectDocId를 sha256으로 바꾸면서
+ * recordObjectSize는 옛 문서를 읽게 했는데 여기만 빠뜨렸다. 0으로 보이면
+ * 덮어쓰기를 새 파일로 쳐서 한도에 더 쉽게 걸리고, 걸렸을 때 '덮어쓰기면
+ * 지우지 않는다'는 갈래(prior > 0)를 타지 못해 사용자가 방금 덮어쓴 파일을
+ * 지워 버린다.
+ *
  * @param {string} uid 사용자
  * @param {string} key 객체 키
  * @return {Promise<number>} 바이트
  */
 async function priorObjectSize(uid: string, key: string): Promise<number> {
-  const snap = await admin
+  const objects = admin
     .firestore()
-    .doc(`users/${uid}/storage_objects/${objectDocId(key)}`)
-    .get();
-  const size = snap.data()?.size;
+    .collection("users")
+    .doc(uid)
+    .collection("storage_objects");
+  const [fresh, legacy] = await Promise.all([
+    objects.doc(objectDocId(key)).get(),
+    objects.doc(legacyObjectDocId(key)).get(),
+  ]);
+  const size = (fresh.exists ? fresh : legacy).data()?.size;
   return typeof size === "number" && Number.isFinite(size) ? size : 0;
 }
 

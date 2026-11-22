@@ -53,3 +53,19 @@ test("함수 쪽도 sha256을 쓴다", () => {
   assert.equal(id.length, 43);
   assert.ok(!id.includes("/"));
 });
+
+// storage_objects를 읽는 곳이 둘인데 한 곳만 옛 id를 보게 고쳤다가
+// 회귀를 냈다(5차 552). objectDocId를 sha256으로 바꾼 뒤 r2.ts의
+// priorObjectSize가 옛 문서를 못 찾아 0으로 봤고, 그러면 덮어쓰기가
+// 새 파일로 잡혀 '덮어쓰기면 지우지 않는다' 갈래를 타지 못했다.
+test("storage_objects를 읽는 곳은 모두 옛 id도 본다", () => {
+  const readers = ["../src/r2.ts", "../src/storageUsage.ts"];
+  for (const path of readers) {
+    const code = readFileSync(resolve(here, path), "utf8");
+    if (!code.includes('collection("storage_objects")')) continue;
+    assert.ok(
+      code.includes("legacyObjectDocId("),
+      `${path}: 옛 id를 보지 않는다`
+    );
+  }
+});
