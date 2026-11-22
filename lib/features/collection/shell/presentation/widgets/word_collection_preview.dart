@@ -1096,7 +1096,7 @@ const String wordSearchNeedsWordHint = '먼저 찾을 단어를 적어 주세요
 ///
 /// 전에는 서버에 묻고(하루 횟수를 써 놓고) 이미 적은 뜻은 덮지 않아서
 /// 아무 일도 일어나지 않은 것처럼 보였다.
-const String wordMeaningAlreadyHint = '이미 뜻을 적어 두셨어요. 지우고 누르면 채워 드려요.';
+const String wordMeaningAlreadyHint = '이미 뜻이나 발음을 적어 두셨어요. 지우고 누르면 채워 드려요.';
 
 /// '단어 추가' 시트의 저장 버튼이 꺼져 있는 까닭.
 const String addWordNeedsWordHint = '단어를 적어야 저장할 수 있어요.';
@@ -1169,7 +1169,9 @@ class _AddWordSheetState extends State<AddWordSheet> {
   Future<void> fillMeaning() async {
     final word = _word.text.trim();
     if (word.isEmpty || filling) return;
-    if (_meaning.text.trim().isNotEmpty &&
+    // 하나라도 적혀 있으면 채우지 않는다(5차 554, 사용자 결정). 고치기
+    // 시트·문장 추가와 같은 규칙이다.
+    if (_meaning.text.trim().isNotEmpty ||
         _pronunciation.text.trim().isNotEmpty) {
       setState(() => fillNote = wordMeaningAlreadyHint);
       return;

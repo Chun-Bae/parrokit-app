@@ -234,7 +234,9 @@ void main() {
     expect(find.text('휴지'), findsOneWidget);
   });
 
-  testWidgets('직접 적어 둔 뜻은 덮지 않는다', (tester) async {
+  // 전에는 뜻을 적어 둬도 발음만 채워 줬다. 이제 하나라도 적혀 있으면
+  // 아예 부르지 않는다(5차 554, 사용자 결정).
+  testWidgets('직접 적어 둔 뜻이 있으면 부르지 않는다', (tester) async {
     await MyWordStore.add('guest',
         language: '영어', word: 'huge', meaning: '내가 적은 뜻');
     final word = (await MyWordStore.loadFor('guest', '영어')).single;
@@ -243,14 +245,17 @@ void main() {
     await _openDetail(tester, word, assist);
     await tester.tap(find.byKey(const ValueKey('edit-word')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('edit-word-fill')));
-    await tester.pumpAndSettle();
 
-    // 상세 시트가 뒤에 남아 있어 같은 글이 둘 보인다.
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const ValueKey('edit-word-fill')))
+          .onPressed,
+      isNull,
+      reason: '적어 둔 뜻이 낱말과 어긋나면 발음을 어디에 맞출지 모른다',
+    );
     expect(find.text('내가 적은 뜻'), findsWidgets);
     expect(find.text('서버가 준 뜻'), findsNothing);
-    // 비어 있던 발음만 찬다.
-    expect(find.text('휴지'), findsOneWidget);
+    expect(find.text('휴지'), findsNothing);
   });
 
   test('뜻·발음과 예문 채우기를 나눠 두고 설명도 따로 쓴다(5차 472)', () {

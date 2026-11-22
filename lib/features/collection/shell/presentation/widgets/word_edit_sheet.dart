@@ -106,13 +106,18 @@ class _WordEditSheetState extends State<WordEditSheet> {
   bool get _examplesExhausted =>
       _usageChecked && _assist.examplesRemainingToday == 0;
 
-  /// 뜻과 발음이 이미 다 차 있는지. 채우기가 할 일이 없다(5차 525).
+  /// 뜻이나 발음을 손으로 적어 두었는지(5차 554, 사용자 결정).
+  ///
+  /// 전에는 **둘 다** 차 있을 때만 막았다. 이제 하나라도 적혀 있으면
+  /// 막는다 - 문장 쪽과 같은 규칙이다. 적어 둔 칸이 낱말과 어긋나면
+  /// 나머지 한 칸을 어느 쪽에 맞출지 알 수 없고, 모델은 아무 말 없이
+  /// 한쪽을 골라 버린다.
   ///
   /// _fillBasics는 이때 서버를 부르지 않고 돌아선다(한도를 아끼려는 것이라
   /// 맞다). 그런데 단추는 켜진 채였고 까닭은 시트 맨 아래에만 적혀서,
-  /// 눌러도 아무 일이 없는 것처럼 보였다.
+  /// 눌러도 아무 일이 없는 것처럼 보였다(5차 525).
   bool get _basicsFilled =>
-      _meaning.text.trim().isNotEmpty &&
+      _meaning.text.trim().isNotEmpty ||
       _pronunciation.text.trim().isNotEmpty;
 
   /// 예문 단추가 막힌 까닭. 단추 바로 아래 줄에 적는다.

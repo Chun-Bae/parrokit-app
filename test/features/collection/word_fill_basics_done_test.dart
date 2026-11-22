@@ -104,8 +104,24 @@ void main() {
     expect(assist.calls, 0);
   });
 
-  testWidgets('한쪽만 비어 있으면 아직 채울 수 있다', (tester) async {
+  // 전에는 한쪽만 비어 있으면 채워 줬다. 이제 하나라도 적혀 있으면
+  // 막는다(5차 554, 사용자 결정). 적어 둔 뜻이 낱말과 어긋나면 발음을
+  // 어느 쪽에 맞출지 알 수 없다.
+  testWidgets('뜻만 적어 두어도 막는다', (tester) async {
     final word = await _addWord(meaning: '경향');
+    await _open(tester, word, _CountingAssist());
+
+    expect(_hint(tester), wordFillBasicsDoneHint);
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const ValueKey('edit-word-fill')))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('둘 다 비어 있으면 채울 수 있다', (tester) async {
+    final word = await _addWord();
     await _open(tester, word, _CountingAssist());
 
     expect(_hint(tester), wordFillBasicsHint);
