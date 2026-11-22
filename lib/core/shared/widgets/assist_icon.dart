@@ -50,8 +50,9 @@ class AssistUsagePair extends StatelessWidget {
   final int? used;
   final int? limit;
 
-  /// 패롯으로 사 둔 몫. 하루치를 다 써도 이것이 남아 있으면 더 쓸 수
-  /// 있으므로 '+N'으로 적고 빨갛게 칠하지 않는다(5차 559).
+  /// 패롯으로 사 둔 몫. 좁은 자리에서는 '+N'을 따로 적지 않고 분모에
+  /// 합친다(5차 561, 사용자 요청) - 한도 3에 사 둔 몫 1이면 '3/4'다.
+  /// 쪼개 보여 주는 것은 더보기 카드가 맡는다.
   final int credits;
 
   @override
@@ -59,16 +60,11 @@ class AssistUsagePair extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     // 아직 모르면 자리만 비워 둔다. '—/—'는 고장으로 읽힌다.
-    final label = used == null || limit == null
-        ? '—'
-        : credits > 0
-            ? '$used/$limit +$credits'
-            : '$used/$limit';
-    final full = credits <= 0 &&
-        used != null &&
-        limit != null &&
-        limit! > 0 &&
-        used! >= limit!;
+    // 오늘 쓸 수 있는 전부. 사 둔 몫은 날이 바뀌어도 남으므로 하루
+    // 한도와 성격이 다르지만, 여기서는 '몇 번 더 되는지'만 보면 된다.
+    final total = limit == null ? null : limit! + (credits > 0 ? credits : 0);
+    final label = used == null || total == null ? '—' : '$used/$total';
+    final full = used != null && total != null && total > 0 && used! >= total;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

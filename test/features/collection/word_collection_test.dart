@@ -511,16 +511,16 @@ void main() {
         findsOneWidget);
   });
 
-  // 하루치를 다 써도 사 둔 몫이 남아 있으면 더 쓸 수 있다. '3/3'만
-  // 보이면 끝난 줄 안다(5차 559, 사용자 결정).
-  testWidgets('사 둔 몫이 있으면 머리에도 +N을 적는다', (tester) async {
+  // 하루치를 다 써도 사 둔 몫이 남아 있으면 더 쓸 수 있다. 좁은 자리라
+  // '+N'을 따로 적지 않고 분모에 합친다(5차 561, 사용자 요청).
+  testWidgets('사 둔 몫은 분모에 합쳐 적는다', (tester) async {
     await openAddSheet(tester, FakeAssist(dayLeft: 0, assistCredits: 5));
     await tester.pumpAndSettle();
 
     expect(
         find.descendant(
             of: find.byKey(const ValueKey('word-assist-usage')),
-            matching: find.text('3/3 +5')),
+            matching: find.text('3/8')),
         findsOneWidget);
   });
 
