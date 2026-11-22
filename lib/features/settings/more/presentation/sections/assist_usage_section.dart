@@ -183,7 +183,8 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
           _UsageRow(
             kind: AssistKind.example,
             label: assistUsageExamplesLabel,
-            value: assistUsageCount(examplesUsed, examplesLimit, '개', credits),
+            // 단위는 '번'으로 맞춘다(5차 562, 사용자 요청).
+            value: assistUsageCount(examplesUsed, examplesLimit, '번', credits),
             exhausted: examplesUsed != null && examplesUsed >= examplesLimit,
             rowKey: const ValueKey('assist-usage-examples'),
           ),

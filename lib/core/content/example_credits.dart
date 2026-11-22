@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 /// 사는 데 기다릴 시간(5차 534).
@@ -38,8 +39,10 @@ int exampleCreditGain(int packs) => exampleCreditPackCredits * packs;
 ///
 /// 두 단추를 가로로 나란히 두면서 줄였다(사용자 요청). 값은 둘 다 같은
 /// 3패롯이라 단추마다 되풀이하지 않고 카드 안내 줄에 한 번만 적는다.
+/// 단위는 '번'으로 맞춘다(5차 562, 사용자 요청). 한도를 적는 자리에서
+/// 뜻·발음·원문은 '번', 예문은 '개'로 갈려 있었다.
 String exampleCreditBuyLabel(int packs) =>
-    '예문 +${exampleCreditGain(packs)}개';
+    '예문 +${exampleCreditGain(packs)}번';
 
 /// 한 묶음 값. 두 단추가 같은 값이라 안내 줄에 한 번만 적는다.
 String creditPackPriceHint(int packs) =>
@@ -49,7 +52,7 @@ int assistCreditCost(int packs) => assistCreditPackParrots * packs;
 int assistCreditGain(int packs) => assistCreditPackCredits * packs;
 
 String assistCreditBuyLabel(int packs) =>
-    '뜻·발음 +${assistCreditGain(packs)}번';
+    '$fillBasicsSubject +${assistCreditGain(packs)}번';
 
 /// 뜻·발음 몫을 살 수 없을 때. 살 수 있으면 null.
 String? assistCreditBlocked({required int? parrots, int packs = 1}) {
@@ -59,7 +62,8 @@ String? assistCreditBlocked({required int? parrots, int packs = 1}) {
 }
 
 /// 뜻·발음 몫을 산 뒤 알리는 말.
-String assistCreditBoughtMessage(int credits) => '뜻·발음 $credits번을 받았어요.';
+String assistCreditBoughtMessage(int credits) =>
+    '$fillBasicsSubject $credits번을 받았어요.';
 
 /// 패롯이 모자랄 때.
 String exampleCreditShortMessage(int have, int packs) =>
@@ -73,7 +77,7 @@ const String exampleCreditSlowMessage =
 const String exampleCreditAlreadyMessage = '아까 누른 것이 이미 들어가 있었어요.';
 
 /// 산 뒤 알리는 말.
-String exampleCreditBoughtMessage(int credits) => '예문 $credits개를 받았어요.';
+String exampleCreditBoughtMessage(int credits) => '예문 $credits번을 받았어요.';
 
 /// 살 수 없을 때 적는 말. 살 수 있으면 null.
 String? exampleCreditBlocked({required int? parrots, int packs = 1}) {

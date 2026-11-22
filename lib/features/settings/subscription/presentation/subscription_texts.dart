@@ -68,7 +68,7 @@ class SubscriptionTierCopy {
         // 늘어요'로 뭉뚱그려서, 두 가지가 있다는 것도 얼마나 되는지도
         // 알 수 없었다(5차 531).
         '$fillBasicsLabel 하루 ${dailyAssistFor(tier)}번',
-        '예문 생성 하루 ${dailyExamplesFor(tier)}개',
+        '예문 생성 하루 ${dailyExamplesFor(tier)}번',
         '한 낱말에 예문 ${examplesPerWordFor(tier)}개까지',
       ];
 }

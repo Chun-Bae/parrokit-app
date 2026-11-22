@@ -68,7 +68,7 @@ void main() {
       expect(find.text('월 ₩20,000'), findsOneWidget);
       expect(find.text('매달 패롯 100개'), findsOneWidget);
       expect(find.text('서버 백업 30GB'), findsOneWidget);
-      expect(find.text('예문 생성 하루 500개'), findsOneWidget);
+      expect(find.text('예문 생성 하루 500번'), findsOneWidget);
       expect(find.text('라이트 시작하기'), findsOneWidget);
     });
 
@@ -141,7 +141,7 @@ void main() {
           .firstWhere((c) => c.tier == SubscriptionTier.light)
           .benefits;
       expect(light, contains('뜻·발음·원문 생성 하루 15번'));
-      expect(light, contains('예문 생성 하루 30개'));
+      expect(light, contains('예문 생성 하루 30번'));
       expect(light, contains('한 낱말에 예문 5개까지'));
       // 숫자 없이 뭉뚱그리던 줄은 사라졌다.
       expect(light.any((l) => l.contains('한도가 늘어요')), isFalse);
@@ -155,7 +155,7 @@ void main() {
         );
         expect(
           copy.benefits,
-          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}개'),
+          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}번'),
         );
       }
       // 맥스가 가장 많다.

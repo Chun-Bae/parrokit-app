@@ -58,7 +58,11 @@ const String assistUsageUnknownShortLabel = '횟수 ? · 다시 확인';
 /// 단추가 셋이던 때는 '뜻발음 생성'과 '원문 생성' 둘로 갈려 있었다. 하나로
 /// 합치면서 셋을 다 적는다. '자동 채우기'는 예문까지 아우르는 상위 말이라
 /// (더보기 카드 제목) 이 단추 이름으로 쓰면 예문과 구분되지 않는다.
-const String fillBasicsLabel = '뜻·발음·원문 생성';
+/// 무엇을 만드는지만 가리키는 말. 단추가 좁은 자리에서는 '생성'을 떼고
+/// 이것만 쓴다(5차 562) - '뜻·발음·원문 +5번'.
+const String fillBasicsSubject = '뜻·발음·원문';
+
+const String fillBasicsLabel = '$fillBasicsSubject 생성';
 
 /// 단어 쪽 같은 단추의 이름(5차 555, 사용자 지적).
 ///

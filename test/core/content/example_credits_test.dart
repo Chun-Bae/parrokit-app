@@ -95,8 +95,9 @@ void main() {
     // 두 단추를 가로로 두면서 글을 줄였다(5차 536). 값은 둘 다 같은
     // 3패롯이라 단추마다 되풀이하지 않고 안내 줄에 한 번만 적는다.
     test('단추 글은 짧고 단위를 가린다', () {
-      expect(assistCreditBuyLabel(1), '뜻·발음 +5번');
-      expect(exampleCreditBuyLabel(1), '예문 +10개');
+      // 단추가 좁아 '생성'은 떼고 주어만 쓴다(5차 562).
+      expect(assistCreditBuyLabel(1), '뜻·발음·원문 +5번');
+      expect(exampleCreditBuyLabel(1), '예문 +10번');
       // 값이 어디에도 없으면 안 된다.
       expect(creditPackPriceHint(1), '한 묶음에 패롯 3개예요.');
     });

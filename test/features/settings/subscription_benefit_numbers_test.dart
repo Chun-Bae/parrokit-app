@@ -89,7 +89,7 @@ void main() {
       expect(copy.benefits,
           contains('뜻·발음·원문 생성 하루 ${dailyAssistFor(copy.tier)}번'));
       expect(copy.benefits,
-          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}개'));
+          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}번'));
     }
     // 권유 글은 단계를 모르는 자리에서도 쓰므로 숫자를 적지 않는다.
     expect(RegExp(r'\d').hasMatch(assistQuotaUpsellText), isFalse);

@@ -184,7 +184,8 @@ void main() {
       expect(find.text(assistUsageBasicsLabel), findsOneWidget);
       expect(find.text(assistUsageExamplesLabel), findsOneWidget);
       expect(_rowValue(tester, 'assist-usage-basics'), '2 / 3번');
-      expect(_rowValue(tester, 'assist-usage-examples'), '0 / 5개');
+      // 단위는 '번'으로 맞췄다(5차 562, 사용자 요청).
+      expect(_rowValue(tester, 'assist-usage-examples'), '0 / 5번');
     });
 
     testWidgets('서버가 한도를 안 주면 단계 기본값으로 적는다', (tester) async {
@@ -194,7 +195,7 @@ void main() {
       expect(_rowValue(tester, 'assist-usage-basics'),
           '— / ${dailyAssistFor(SubscriptionTier.pro)}번');
       expect(_rowValue(tester, 'assist-usage-examples'),
-          '— / ${dailyExamplesFor(SubscriptionTier.pro)}개');
+          '— / ${dailyExamplesFor(SubscriptionTier.pro)}번');
     });
 
     testWidgets('못 읽으면 다시 물어볼 수 있게 한다', (tester) async {
@@ -261,7 +262,7 @@ void main() {
       // 하루 3번 중 0번 썼고 사 둔 10번이 더 있다.
       expect(_rowValue(tester, 'assist-usage-basics'), '0 / 3번 +10');
       // 하루 10개 중 5개 썼고 사 둔 20개가 더 있다.
-      expect(_rowValue(tester, 'assist-usage-examples'), '5 / 10개 +20');
+      expect(_rowValue(tester, 'assist-usage-examples'), '5 / 10번 +20');
       expect(find.byKey(const ValueKey('assist-usage-credits')), findsNothing);
     });
 
@@ -278,7 +279,7 @@ void main() {
           ..assistCredits = 0,
       );
 
-      expect(_rowValue(tester, 'assist-usage-examples'), '0 / 10개');
+      expect(_rowValue(tester, 'assist-usage-examples'), '0 / 10번');
     });
 
     // 남은 수에 사 둔 몫이 더해져 오는데 그대로 빼서 '-5 / 10개'가 떴다.
@@ -293,7 +294,7 @@ void main() {
         )..exampleCredits = 10,
       );
 
-      expect(_rowValue(tester, 'assist-usage-examples'), '5 / 10개 +10');
+      expect(_rowValue(tester, 'assist-usage-examples'), '5 / 10번 +10');
     });
   });
 

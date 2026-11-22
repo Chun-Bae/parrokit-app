@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
 
 /// AI가 만들어 주는 두 가지(5차 544, 사용자 요청).
 ///
@@ -7,8 +8,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// 있어서, 재화 줄 바로 아래에 붙여 두면 어느 쪽이 무엇인지 한눈에
 /// 들어오지 않았다.
 enum AssistKind {
-  /// 뜻·발음 채우기. 말풍선. 파랑.
-  meaning('assets/icons/assist_meaning.svg', '뜻·발음'),
+  /// 뜻·발음·원문 생성. 말풍선. 파랑.
+  ///
+  /// 읽어 주는 말도 단추와 맞춘다(5차 562). 단어 고치기 시트만 낱말이
+  /// 고정이라 '뜻·발음'이지만, 그 한 자리 때문에 가르지 않는다.
+  meaning('assets/icons/assist_meaning.svg', fillBasicsSubject),
 
   /// 예문 생성. 줄이 적힌 종이. 보라.
   example('assets/icons/assist_example.svg', '예문');
