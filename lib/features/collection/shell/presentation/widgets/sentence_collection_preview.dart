@@ -9,6 +9,12 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
+import 'package:parrokit/core/content/cloud_sentence_assist.dart';
+import 'package:parrokit/core/content/sentence_assist.dart';
+import 'package:parrokit/core/content/assist_usage_text.dart';
+import 'package:parrokit/core/shared/theme/components/inputs/app_input_theme.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parrokit/core/shared/utils/audio_focus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1562,9 +1568,12 @@ class _ExploreStrip extends StatelessWidget {
 /// 전에는 고치는 길이 아예 없어서, 오타 하나를 고치려면 지우고 다시 넣어야
 /// 했다. 그러면 연습 기록과 친밀도가 함께 사라졌다.
 class SentenceEditDialog extends StatefulWidget {
-  const SentenceEditDialog({super.key, required this.sentence});
+  const SentenceEditDialog({super.key, required this.sentence, this.assist});
 
   final DefaultConversationSentence sentence;
+
+  /// 빈 칸을 채워 줄 곳. 테스트에서 끼워 넣는다.
+  final SentenceAssist? assist;
 
   @override
   State<SentenceEditDialog> createState() => _SentenceEditDialogState();
@@ -1576,6 +1585,98 @@ class _SentenceEditDialogState extends State<SentenceEditDialog> {
   late final _meaning =
       TextEditingController(text: widget.sentence.translation);
   String? _hint;
+
+  /// 한도 조회는 앱에 하나 있는 것을 받아 쓴다(5차 564).
+  late final SentenceAssist _assist = widget.assist ??
+      context.read<CloudSentenceAssist?>() ??
+      const UnavailableSentenceAssist();
+
+  bool _filling = false;
+
+  /// 이미 받아 둔 숫자가 있으면 기다리지 않는다(5차 565).
+  late bool _usageLoading = _assist.dailyLimit == null;
+  late bool _usageChecked = _assist.dailyLimit != null;
+
+  /// 서버가 채워 준 결과나 막힌 까닭.
+  String? _fillNote;
+
+  int? get _assistUsed => assistUsedToday(
+        limit: _assist.dailyLimit,
+        remaining: _assist.remainingToday,
+        credits: _assist.assistCredits ?? 0,
+      );
+
+  bool get _exhausted =>
+      _usageChecked &&
+      assistExhausted(
+        used: _assistUsed,
+        limit: _assist.dailyLimit,
+        credits: _assist.assistCredits ?? 0,
+      );
+
+  List<String> get _fields =>
+      [_text.text.trim(), _pron.text.trim(), _meaning.text.trim()];
+
+  /// 채울 빈 칸이 있고, 맞출 거리가 하나라도 있는지.
+  ///
+  /// 문장 추가 화면과 달리 여기 적힌 것은 이미 한 문장에서 온 값이라 서로
+  /// 다툴 일이 없다. 그래서 두 칸이 차 있어도 남은 한 칸을 채워 준다 -
+  /// 발음만 비어 있는 문장이 흔하다(5차 565, 사용자 요청).
+  bool get _hasBlank => _fields.any((f) => f.isEmpty);
+  bool get _hasSource => _fields.any((f) => f.isNotEmpty);
+
+  @override
+  void initState() {
+    super.initState();
+    _assist.refreshUsage().whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _usageChecked = true;
+          _usageLoading = false;
+        });
+      }
+    });
+  }
+
+  /// 빈 칸을 서버에 물어 채운다. 문장 추가의 그 단추와 같은 일을 한다.
+  Future<void> _fillBasics() async {
+    if (_filling) return;
+    setState(() {
+      _filling = true;
+      _fillNote = null;
+      _hint = null;
+    });
+    try {
+      final filled = await _assist.complete(
+        language: widget.sentence.language,
+        text: _text.text.trim(),
+        translation: _meaning.text.trim(),
+        pronunciation: _pron.text.trim(),
+      );
+      if (!mounted) return;
+      setState(() {
+        if (_text.text.trim().isEmpty && (filled.text ?? '').isNotEmpty) {
+          _text.text = filled.text!;
+        }
+        if (_meaning.text.trim().isEmpty &&
+            (filled.translation ?? '').isNotEmpty) {
+          _meaning.text = filled.translation!;
+        }
+        if (_pron.text.trim().isEmpty &&
+            (filled.pronunciation ?? '').isNotEmpty) {
+          _pron.text = filled.pronunciation!;
+        }
+      });
+    } on SentenceAssistQuotaExceeded {
+      if (mounted) setState(() => _fillNote = assistQuotaExhaustedMessage);
+    } on SentenceAssistUnavailable catch (e) {
+      if (mounted) setState(() => _fillNote = e.reason);
+    } catch (_) {
+      if (mounted) setState(() => _fillNote = actionFailedMessage);
+    } finally {
+      if (mounted) setState(() => _filling = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -1604,9 +1705,28 @@ class _SentenceEditDialogState extends State<SentenceEditDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('문장 고치기'),
-        content: SingleChildScrollView(
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return AlertDialog(
+      // 단어 시트와 같은 꼴로 둔다(5차 565, 사용자 요청). 테두리를 없애고
+      // 면으로 칸을 그리고, 꼭 적어야 하는 칸만 별표를 단다.
+      title: Row(
+        children: [
+          const Expanded(child: Text('문장 고치기')),
+          AssistUsagePair(
+            kind: AssistKind.meaning,
+            used: _assistUsed,
+            limit: _assist.dailyLimit,
+            credits: _assist.assistCredits ?? 0,
+            key: const ValueKey('edit-sentence-usage'),
+          ),
+        ],
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1615,55 +1735,125 @@ class _SentenceEditDialogState extends State<SentenceEditDialog> {
                 key: const ValueKey('edit-sentence-text'),
                 controller: _text,
                 autofocus: true,
-                maxLines: 3,
+                maxLines: 4,
                 minLines: 1,
                 onChanged: (_) => setState(() => _hint = null),
-                decoration: const InputDecoration(labelText: '문장'),
+                decoration: filledInputDecoration(context,
+                    label: requiredFieldLabel('문장')),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 key: const ValueKey('edit-sentence-pron'),
                 controller: _pron,
                 onChanged: (_) => setState(() => _hint = null),
-                decoration: const InputDecoration(
-                    labelText: pronunciationOptionalLabel),
+                decoration: filledInputDecoration(
+                  context,
+                  label: wordPronunciationLabel,
+                  hint: '한글로 소리 나는 대로',
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 key: const ValueKey('edit-sentence-meaning'),
                 controller: _meaning,
-                maxLines: 2,
+                maxLines: 3,
                 minLines: 1,
                 onChanged: (_) => setState(() => _hint = null),
                 decoration:
-                    const InputDecoration(labelText: meaningOptionalLabel),
+                    filledInputDecoration(context, label: wordMeaningLabel),
               ),
-              if (_hint case final hint?)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    hint,
-                    key: const ValueKey('edit-sentence-hint'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+              // 빈 칸은 서버가 채워 줄 수 있다(5차 565, 사용자 요청).
+              // 문장 추가의 그 단추와 같은 일을 한다.
+              const SizedBox(height: AppSpacing.md),
+              FilledButton.tonalIcon(
+                key: const ValueKey('edit-sentence-fill'),
+                style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48)),
+                onPressed: _filling ||
+                        _usageLoading ||
+                        _exhausted ||
+                        !_hasBlank ||
+                        !_hasSource
+                    ? null
+                    : _fillBasics,
+                icon: _filling
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const AssistIcon(AssistKind.meaning, size: 18),
+                label: const Text(fillBasicsLabel),
+              ),
+              const SizedBox(height: AppSpacing.xs + 2),
+              Text(
+                assistFillHint(
+                  loading: _usageLoading,
+                  whenReady: _exhausted
+                      ? assistQuotaExhaustedMessage
+                      : !_hasSource
+                          ? fillNeedsAnyFieldHint
+                          : !_hasBlank
+                              ? fillNothingLeftMessage
+                              : fillNeedsAnyFieldHint,
+                ),
+                key: const ValueKey('edit-sentence-fill-hint'),
+                style:
+                    context.texts.bodySmall.copyWith(color: cs.onSurfaceVariant),
+              ),
+              if (_fillNote case final note?) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  note,
+                  key: const ValueKey('edit-sentence-fill-note'),
+                  style: context.texts.bodySmall.copyWith(color: cs.error),
+                ),
+              ],
+              // 막힌 까닭은 띠로 적는다. 전에는 회색 한 줄이라 안 보였다.
+              if (_hint case final hint?) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: cs.errorContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline_rounded,
+                          size: 16, color: cs.onErrorContainer),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          hint,
+                          key: const ValueKey('edit-sentence-hint'),
+                          style: context.texts.bodySmall
+                              .copyWith(color: cs.onErrorContainer),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ],
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            key: const ValueKey('save-sentence-edit'),
-            // 꺼진 채 두지 않고 까닭을 적는다(5차).
-            onPressed: _submit,
-            child: const Text('저장'),
-          ),
-        ],
-      );
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const ValueKey('save-sentence-edit'),
+          // 꺼진 채 두지 않고 까닭을 적는다(5차).
+          onPressed: _submit,
+          child: const Text('저장'),
+        ),
+      ],
+    );
+  }
 }
 
 /// 고칠 수 없는 까닭. 없으면 null.
@@ -2470,12 +2660,15 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                   textInputAction: TextInputAction.newline,
                   onChanged: changeMemo,
                   onTapOutside: (_) => memoFocus.unfocus(),
-                  decoration: const InputDecoration(
-                    labelText: '메모',
-                    hintText: '이 문장에 대한 메모를 남겨 보세요',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(),
-                  ),
+                  // 테두리 없는 면으로(5차 565, 사용자 요청). 글자 수는
+                  // 한도에 가까워졌을 때만 적는다.
+                  buildCounter: nearLimitCounter,
+                  decoration: filledInputDecoration(
+                    context,
+                    label: '메모',
+                    hint: '이 문장에 대한 메모를 남겨 보세요',
+                    showCounter: true,
+                  ).copyWith(alignLabelWithHint: true),
                 ),
               ],
               const SizedBox(height: 14),
