@@ -20,6 +20,9 @@ import 'package:parrokit/core/content/word_review_store.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
 import 'package:parrokit/core/state/practice_reward_grant.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/components/inputs/app_input_theme.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_empty_state.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
@@ -734,11 +737,14 @@ class _SynonymEditorState extends State<SynonymEditor> {
                 maxLength: synonymMaxLength,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _add(),
-                decoration: InputDecoration(
-                  labelText: '유의어 (비워도 돼요)',
-                  hintText: '하나씩 적고 추가 — big',
+                decoration: filledInputDecoration(
+                  context,
+                  label: '하나씩 적고 추가',
+                  hint: 'big',
+                  showCounter: true,
+                ).copyWith(
+                  // 글자 수가 아니라 넣은 개수라 뜻이 있다. 그대로 둔다.
                   counterText: '${widget.synonyms.length}/$synonymsMaxCount',
-                  border: const OutlineInputBorder(),
                 ),
               ),
             ),
@@ -1151,7 +1157,10 @@ class _AddWordSheetState extends State<AddWordSheet> {
   late final List<TextEditingController> _exampleMeanings = [
     TextEditingController(text: widget.exampleTranslation)
   ];
-  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
+  late final SentenceAssist _assist = widget.assist ??
+      // 앱에 하나 있는 것을 받는다(5차 564). 없는 곳(테스트)에서는 새로 만든다.
+      context.read<CloudSentenceAssist?>() ??
+      CloudSentenceAssist();
   bool saving = false;
   bool filling = false;
   bool fillingExamples = false;
@@ -1348,7 +1357,12 @@ class _AddWordSheetState extends State<AddWordSheet> {
   /// 전에는 '횟수 확인 중…'이 떠 있는데도 단추가 눌렸다. 그때는 한도를
   /// 모르니 다 쓴 사람도 누를 수 있었고, 눌러서야 막혔다는 걸 알았다.
   /// 성공이든 실패든 한 번 끝나면 다시 열어 준다.
-  bool _usageLoading = true;
+  /// 앱이 이미 받아 둔 숫자가 있으면 그것으로 먼저 보여 준다(5차 565).
+  ///
+  /// 한도 조회는 앱에 하나뿐이라 다른 화면이 받아 둔 값이 있다. 그걸
+  /// 두고도 '횟수 확인 중…'에 묶어 두고 단추를 막았다. 서버가 쉬다
+  /// 깨면 조회가 15초씩 두 번 걸려서, 아는 값을 들고 30초를 기다렸다.
+  late bool _usageLoading = _assist.dailyLimit == null;
 
   /// 오늘 횟수를 다 썼나. 다 썼으면 단추를 막는다(5차 473).
   bool get _exhausted => assistExhausted(
@@ -1503,27 +1517,106 @@ class _AddWordSheetState extends State<AddWordSheet> {
     Navigator.pop(context, result);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  /// 예문 한 짝(원문 + 뜻)을 한 장에 담는다(5차 565, 사용자 요청).
+  ///
+  /// 전에는 두 칸이 6px로, 다음 예문과는 8px로 떨어져 있어 어디까지가 한
+  /// 짝인지 보이지 않았다. 지우기 단추도 칸 안(suffixIcon)에 있어 적을
+  /// 자리를 깎았다.
+  ///
+  /// 이 메서드는 build보다 위에 있어야 한다. word_example_fill_test가
+  /// 소스에서 'word-example-$index'가 'fill-word-examples'보다 먼저
+  /// 나오는지 본다.
+  Widget _exampleCard(int index) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+      decoration: BoxDecoration(
+        color: context.tokens.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Text('${index + 1}',
+                    style:
+                        context.texts.labelSmall.copyWith(color: cs.primary)),
+              ),
+              const Spacer(),
+              if (_examples.length > 1)
+                IconButton(
+                  key: ValueKey('remove-word-example-$index'),
+                  tooltip: '이 예문 지우기',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => removeExampleField(index),
+                  icon: Icon(Icons.close_rounded,
+                      size: 18, color: cs.onSurfaceVariant),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextField(
+            key: ValueKey('word-example-$index'),
+            controller: _examples[index],
+            maxLength: 300,
+            minLines: 1,
+            maxLines: 3,
+            buildCounter: nearLimitCounter,
+            decoration: filledInputDecoration(context,
+                label: wordExampleLabel, showCounter: true),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            key: ValueKey('word-example-meaning-$index'),
+            controller: _exampleMeanings[index],
+            maxLength: 300,
+            minLines: 1,
+            maxLines: 3,
+            buildCounter: nearLimitCounter,
+            decoration: filledInputDecoration(context,
+                label: wordExampleMeaningLabel, showCounter: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 머리. 제목과 두 한도를 한 줄에 둔다(5차 558).
+  Widget _header() {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SafeArea(
-        // 칸이 늘어 화면이 작으면 넘쳤다(유의어 칩·찾을 곳 고르기, 5차).
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 두 한도를 머리에 나란히 적는다(5차 558, 사용자 요청).
-                // 전에는 뜻·발음 횟수만 단추 옆에 있었고 예문 쪽은 한참
-                // 아래 단추 옆에 따로 있었다.
-                Row(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('단어 추가', style: context.texts.titleLarge),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: context.tokens.surfaceContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Text('단어 추가', style: context.texts.titleLarge),
-                    ),
                     AssistUsagePair(
                       kind: AssistKind.meaning,
                       used: _assistUsed,
@@ -1541,235 +1634,288 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text('${widget.language} · 단어만 넣어도 저장돼요',
-                    style: context.texts.bodySmall.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 14),
-                TextField(
-                  key: const ValueKey('word-input'),
-                  controller: _word,
-                  autofocus: widget.initialWord.isEmpty,
-                  maxLength: 80,
-                  decoration: const InputDecoration(
-                      labelText: '단어나 표현', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const ValueKey('word-meaning'),
-                  controller: _meaning,
-                  maxLength: 200,
-                  decoration: const InputDecoration(
-                    labelText: meaningOptionalLabel,
-                    border: OutlineInputBorder(),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text('${widget.language} · 단어만 넣어도 저장돼요',
+              style: context.texts.bodySmall.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+
+  /// 가운데. 네 덩이로 끊는다 - 낱말, 받아 오기, 유의어, 예문.
+  Widget _body() {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, AppSpacing.sm),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 뜻을 서버에 물어보기 전에 웹 사전을 먼저 열어 보는 길(5차,
+          // 사용자 요청). 패롯이 들지 않는다. 적기 전에 찾아보는 것이라
+          // 칸보다 위에 둔다(5차 565, 사용자 요청).
+          Row(
+            children: [
+              OutlinedButton.icon(
+                key: const ValueKey('search-word-web'),
+                onPressed: _openWebSearch,
+                icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                label: const Text('웹에서 찾기'),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              PopupMenuButton<WordSearchSite>(
+                key: const ValueKey('word-search-site'),
+                tooltip: '어디서 찾을지 고르기',
+                initialValue: AppConfig.wordSearchSite,
+                onSelected: (site) {
+                  setState(() => AppConfig.wordSearchSite = site);
+                  AppConfig.saveToPrefs();
+                },
+                itemBuilder: (context) => [
+                  for (final site in WordSearchSite.values)
+                    PopupMenuItem<WordSearchSite>(
+                      key: ValueKey('word-search-site-${site.name}'),
+                      value: site,
+                      child: Text(wordSearchSiteLabel(site, widget.language)),
+                    ),
+                ],
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: context.tokens.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppConfig.wordSearchSite.label,
+                        key: const ValueKey('word-search-site-label'),
+                        style: context.texts.bodySmall
+                            .copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      const Icon(Icons.arrow_drop_down_rounded, size: 18),
+                    ],
                   ),
                 ),
-                // 발음 칸(5차 468, 사용자 요청). 뜻과 함께 자동으로 찬다.
-                TextField(
-                  key: const ValueKey('word-pronunciation'),
-                  controller: _pronunciation,
-                  maxLength: 200,
-                  decoration: const InputDecoration(
-                    labelText: pronunciationOptionalLabel,
-                    hintText: '한글로 소리 나는 대로',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                // 문장 추가와 같은 차례로 둔다(5차 556, 사용자 요청).
-                // 단어 - 뜻 - 발음 - 단추. 전에는 단추가 단어 칸 바로
-                // 아래였는데(471), 이름이 '뜻·발음 생성'이라 무엇을
-                // 만드는지는 이름이 말해 준다.
-                const SizedBox(height: 10),
-                // 횟수는 머리로 올렸다(5차 558). 단추는 가로로 꽉 채운다.
-                FilledButton.tonalIcon(
-                  key: const ValueKey('fill-word-meaning'),
-                  style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48)),
-                  onPressed: !_hasFillSource ||
-                          filling ||
-                          _usageLoading ||
-                          _exhausted ||
-                          _basicsTyped
-                      ? null
-                      : fillMeaning,
-                  icon: filling
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const AssistIcon(AssistKind.meaning, size: 18),
-                  label: const Text(fillBasicsLabel),
-                ),
-                Text(
-                  _fillHint(wordFillBasicsHint),
-                  key: const ValueKey('word-autofill-hint'),
-                  style: context.texts.bodySmall.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                if (fillNote != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // 꼭 적어야 하는 칸만 별표를 단다(5차 565, 사용자 요청).
+          // 나머지는 꼬리말 없이 둔다 - 별표가 없으면 안 적어도 된다.
+          TextField(
+            key: const ValueKey('word-input'),
+            controller: _word,
+            autofocus: widget.initialWord.isEmpty,
+            maxLength: 80,
+            textInputAction: TextInputAction.next,
+            decoration: filledInputDecoration(context, label: wordFieldLabel),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            key: const ValueKey('word-meaning'),
+            controller: _meaning,
+            maxLength: 200,
+            decoration:
+                filledInputDecoration(context, label: wordMeaningLabel),
+          ),
+          // 발음 칸(5차 468, 사용자 요청). 뜻과 함께 자동으로 찬다.
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            key: const ValueKey('word-pronunciation'),
+            controller: _pronunciation,
+            maxLength: 200,
+            decoration: filledInputDecoration(
+              context,
+              label: wordPronunciationLabel,
+              hint: '한글로 소리 나는 대로',
+            ),
+          ),
+          // 문장 추가와 같은 차례로 둔다(5차 556, 사용자 요청).
+          // 단어 - 뜻 - 발음 - 단추.
+          const SizedBox(height: AppSpacing.xl),
+          FilledButton.tonalIcon(
+            key: const ValueKey('fill-word-meaning'),
+            style:
+                FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            onPressed: !_hasFillSource ||
+                    filling ||
+                    _usageLoading ||
+                    _exhausted ||
+                    _basicsTyped
+                ? null
+                : fillMeaning,
+            icon: filling
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const AssistIcon(AssistKind.meaning, size: 18),
+            label: const Text(fillBasicsLabel),
+          ),
+          const SizedBox(height: AppSpacing.xs + 2),
+          Text(
+            _fillHint(wordFillBasicsHint),
+            key: const ValueKey('word-autofill-hint'),
+            style: context.texts.bodySmall.copyWith(color: cs.onSurfaceVariant),
+          ),
+          if (fillNote != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: cs.errorContainer,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 16, color: cs.onErrorContainer),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
                     child: Text(
                       fillNote!,
                       key: const ValueKey('word-fill-note'),
                       style: context.texts.bodySmall
-                          .copyWith(color: Theme.of(context).colorScheme.error),
-                    ),
-                  ),
-                // 뜻을 서버에 물어보는 것 말고, 웹 사전을 직접 열어 보고
-                // 싶을 때가 있다(5차, 사용자 요청). 패롯이 들지 않는다.
-                // 어디서 찾을지도 고를 수 있다(5차, 사용자 요청).
-                Row(
-                  children: [
-                    FilledButton.tonalIcon(
-                      key: const ValueKey('search-word-web'),
-                      onPressed: _openWebSearch,
-                      icon: const Icon(Icons.travel_explore_rounded, size: 18),
-                      label: const Text('웹에서 찾기'),
-                    ),
-                    const SizedBox(width: 4),
-                    PopupMenuButton<WordSearchSite>(
-                      key: const ValueKey('word-search-site'),
-                      tooltip: '어디서 찾을지 고르기',
-                      initialValue: AppConfig.wordSearchSite,
-                      onSelected: (site) {
-                        setState(() => AppConfig.wordSearchSite = site);
-                        AppConfig.saveToPrefs();
-                      },
-                      itemBuilder: (context) => [
-                        for (final site in WordSearchSite.values)
-                          PopupMenuItem<WordSearchSite>(
-                            key: ValueKey('word-search-site-${site.name}'),
-                            value: site,
-                            child: Text(
-                                wordSearchSiteLabel(site, widget.language)),
-                          ),
-                      ],
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            AppConfig.wordSearchSite.label,
-                            key: const ValueKey('word-search-site-label'),
-                            style: context.texts.bodySmall.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant),
-                          ),
-                          const Icon(Icons.arrow_drop_down_rounded, size: 18),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SynonymEditor(
-                  synonyms: _synonymList,
-                  onChanged: (next) => setState(() => _synonymList = next),
-                ),
-                const SizedBox(height: 8),
-                for (final (index, controller) in _examples.indexed) ...[
-                  if (index > 0) const SizedBox(height: 8),
-                  TextField(
-                    key: ValueKey('word-example-$index'),
-                    controller: controller,
-                    maxLength: 300,
-                    maxLines: 2,
-                    minLines: 1,
-                    decoration: InputDecoration(
-                      labelText: _examples.length == 1
-                          ? '예문 (비워도 돼요)'
-                          : '예문 ${index + 1}',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _examples.length == 1
-                          ? null
-                          : IconButton(
-                              key: ValueKey('remove-word-example-$index'),
-                              tooltip: '이 예문 지우기',
-                              onPressed: () => removeExampleField(index),
-                              icon: const Icon(Icons.close_rounded, size: 20),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // 예문 뜻. 고치는 창과 같은 칸을 처음 만들 때도 둔다(5차 344).
-                  TextField(
-                    key: ValueKey('word-example-meaning-$index'),
-                    controller: _exampleMeanings[index],
-                    maxLength: 300,
-                    maxLines: 2,
-                    minLines: 1,
-                    decoration: const InputDecoration(
-                      labelText: '예문 뜻 (비워도 돼요)',
-                      border: OutlineInputBorder(),
+                          .copyWith(color: cs.onErrorContainer),
                     ),
                   ),
                 ],
-                // 예문 단추는 예문 칸 옆에 둔다(5차 472, 사용자 요청).
-                // 뜻·발음 단추는 맨 위에 있다. 쓰임이 다르니 자리도 나눈다.
-                Row(
-                  children: [
-                    if (_examples.length < examplesMaxCount)
-                      TextButton.icon(
-                        key: const ValueKey('add-word-example'),
-                        onPressed: addExampleField,
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('예문 더 넣기'),
-                      ),
-                    TextButton.icon(
-                      key: const ValueKey('fill-word-examples'),
-                      onPressed: _word.text.trim().isEmpty ||
-                              fillingExamples ||
-                              _usageLoading ||
-                              _examplesBlocked != null
-                          ? null
-                          : fillExamples,
-                      icon: fillingExamples
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const AssistIcon(AssistKind.example, size: 18),
-                      label: const Text(wordFillExamplesLabel),
-                    ),
-                  ],
-                ),
-                Text(
-                  _fillExamplesHint(),
-                  key: const ValueKey('word-examples-hint'),
-                  style: context.texts.bodySmall.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    key: const ValueKey('save-word'),
-                    onPressed:
-                        _word.text.trim().isEmpty || saving ? null : save,
-                    style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48)),
-                    child: const Text('저장'),
-                  ),
-                ),
-                // 버튼이 왜 꺼져 있는지 적는다(5차, 새 클립 화면과 같게).
-                // 예전에는 흐린 채 눌러도 아무 일이 없었다.
-                if (_word.text.trim().isEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    addWordNeedsWordHint,
-                    key: const ValueKey('save-word-hint'),
-                    textAlign: TextAlign.center,
-                    style: context.texts.bodySmall.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ],
+              ),
             ),
+          ],
+          const SizedBox(height: AppSpacing.xl),
+          _SheetSectionTitle(wordSynonymLabel),
+          const SizedBox(height: AppSpacing.sm),
+          SynonymEditor(
+            synonyms: _synonymList,
+            onChanged: (next) => setState(() => _synonymList = next),
           ),
+          const SizedBox(height: AppSpacing.xl),
+          _SheetSectionTitle(wordExampleLabel),
+          const SizedBox(height: AppSpacing.sm),
+          for (final (index, _) in _examples.indexed) _exampleCard(index),
+          // 예문 단추는 예문 칸 아래에 둔다(5차 472·565). 뜻·발음 단추는
+          // 위에 있다. 쓰임이 다르니 자리도 나눈다.
+          Row(
+            children: [
+              if (_examples.length < examplesMaxCount)
+                TextButton.icon(
+                  key: const ValueKey('add-word-example'),
+                  onPressed: addExampleField,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('예문 더 넣기'),
+                ),
+              const Spacer(),
+              TextButton.icon(
+                key: const ValueKey('fill-word-examples'),
+                onPressed: _word.text.trim().isEmpty ||
+                        fillingExamples ||
+                        _usageLoading ||
+                        _examplesBlocked != null
+                    ? null
+                    : fillExamples,
+                icon: fillingExamples
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const AssistIcon(AssistKind.example, size: 18),
+                label: const Text(wordFillExamplesLabel),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            _fillExamplesHint(),
+            key: const ValueKey('word-examples-hint'),
+            style: context.texts.bodySmall.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 바닥. 저장을 늘 보이게 둔다(5차 565).
+  ///
+  /// 전에는 통째로 한 스크롤이라, 예문을 몇 개 넣으면 저장이 화면 밖으로
+  /// 밀렸다.
+  Widget _footer() {
+    final cs = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(top: BorderSide(color: context.tokens.dividerSubtle)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                key: const ValueKey('save-word'),
+                onPressed: _word.text.trim().isEmpty || saving ? null : save,
+                style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52)),
+                child: const Text('저장'),
+              ),
+            ),
+            // 버튼이 왜 꺼져 있는지 적는다(5차, 새 클립 화면과 같게).
+            if (_word.text.trim().isEmpty) ...[
+              const SizedBox(height: AppSpacing.xs + 2),
+              Text(
+                addWordNeedsWordHint,
+                key: const ValueKey('save-word-hint'),
+                textAlign: TextAlign.center,
+                style: context.texts.bodySmall
+                    .copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        top: false,
+        // 칸이 늘어 화면이 작으면 넘쳤다(유의어 칩·찾을 곳 고르기, 5차).
+        // 가운데만 구르고 머리와 저장은 제자리에 있는다(5차 565).
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _header(),
+            Flexible(child: SingleChildScrollView(child: _body())),
+            _footer(),
+          ],
         ),
       ),
     );
   }
 }
+
+/// 시트 안 섹션 제목(5차 565).
+class _SheetSectionTitle extends StatelessWidget {
+  const _SheetSectionTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(title, style: context.texts.titleMedium);
+}
+
 
 /// 오늘 복습. 단어를 보고 뜻을 떠올린 뒤 "뜻 보기", 그다음 "다시"/"알아요".
 /// 마친 화면에 적는 결과 한 줄. 단어와 고른 답을 나란히 둔다(5차 509).

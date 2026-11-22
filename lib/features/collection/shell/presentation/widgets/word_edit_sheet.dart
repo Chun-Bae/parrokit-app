@@ -12,10 +12,14 @@
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/core/content/assist_usage_text.dart';
+import 'package:provider/provider.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_word_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/components/inputs/app_input_theme.dart';
+import 'package:parrokit/core/shared/theme/app_tokens.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
@@ -77,7 +81,10 @@ class _WordEditSheetState extends State<WordEditSheet> {
     for (final e in widget.word.examples) e.sourceSentenceId,
   ];
 
-  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
+  late final SentenceAssist _assist = widget.assist ??
+      // 앱에 하나 있는 것을 받는다(5차 564). 없는 곳(테스트)에서는 새로 만든다.
+      context.read<CloudSentenceAssist?>() ??
+      CloudSentenceAssist();
 
   bool _saving = false;
   bool _filling = false;
@@ -85,12 +92,18 @@ class _WordEditSheetState extends State<WordEditSheet> {
 
   /// 오늘 남은 횟수. 이 창은 열릴 때 한 번 물어본다(5차 473).
   /// 전에는 아예 묻지 않아서, 다 쓴 뒤에도 단추가 눌렸다.
-  bool _usageChecked = false;
+  /// 앱이 이미 받아 둔 숫자가 있으면 그것으로 먼저 보여 준다(5차 565).
+  ///
+  /// 한도 조회는 앱에 하나뿐이라 다른 화면이 받아 둔 값이 있다. 그걸
+  /// 두고도 '횟수 확인 중…'에 묶어 두고 단추를 막았다. 서버가 쉬다
+  /// 깨면 조회가 15초씩 두 번 걸려서, 아는 값을 들고 30초를 기다렸다.
+  late bool _usageChecked = _assist.dailyLimit != null;
 
   /// 아직 횟수를 묻는 중인지. 묻는 동안에는 채우기 단추를 막는다(5차 515).
   /// 한도를 모르는 채로 누르면 다 쓴 사람도 눌러 본 뒤에야 막혔다는 걸
   /// 알게 된다. 성공이든 실패든 한 번 끝나면 다시 열어 준다.
-  bool _usageLoading = true;
+  /// 이미 아는 값이 있으면 기다리지 않는다(5차 565).
+  late bool _usageLoading = _assist.dailyLimit == null;
 
   bool get _exhausted => _usageChecked &&
       assistExhausted(
@@ -438,6 +451,74 @@ class _WordEditSheetState extends State<WordEditSheet> {
     ));
   }
 
+  /// 예문 한 짝(원문 + 뜻)을 한 장에 담는다(5차 565). 추가 시트와 같은 꼴.
+  Widget _exampleCard(int index) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+      decoration: BoxDecoration(
+        color: context.tokens.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Text('${index + 1}',
+                    style:
+                        context.texts.labelSmall.copyWith(color: cs.primary)),
+              ),
+              const Spacer(),
+              IconButton(
+                key: ValueKey('edit-word-example-remove-$index'),
+                tooltip: '이 예문 빼기',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: () => _removeExampleField(index),
+                icon: Icon(Icons.close_rounded,
+                    size: 18, color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextField(
+            key: ValueKey('edit-word-example-$index'),
+            controller: _exampleTexts[index],
+            maxLength: 300,
+            minLines: 1,
+            maxLines: 3,
+            buildCounter: nearLimitCounter,
+            decoration: filledInputDecoration(context,
+                label: wordExampleLabel, showCounter: true),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            key: ValueKey('edit-word-example-meaning-$index'),
+            controller: _exampleMeanings[index],
+            maxLength: 300,
+            minLines: 1,
+            maxLines: 3,
+            buildCounter: nearLimitCounter,
+            decoration: filledInputDecoration(context,
+                label: wordExampleMeaningLabel, showCounter: true),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -446,216 +527,207 @@ class _WordEditSheetState extends State<WordEditSheet> {
     final notice = blocked ?? _notice;
     return SafeArea(
       top: false,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-            20, 8, 20, MediaQuery.viewInsetsOf(context).bottom + 16),
+      // 가운데만 구르고 저장은 바닥에 붙어 있는다. 추가 시트와 같다(5차 565).
+      child: Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(widget.word.word, style: context.texts.headlineSmall),
-            const SizedBox(height: 10),
-            TextField(
-              key: const ValueKey('edit-word-meaning-input'),
-              controller: _meaning,
-              maxLength: meaningMaxLength,
-              decoration: const InputDecoration(
-                labelText: meaningOptionalLabel,
-                border: OutlineInputBorder(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child:
+                    Text(widget.word.word, style: context.texts.headlineSmall),
               ),
             ),
-            TextField(
-              key: const ValueKey('edit-word-pronunciation-input'),
-              controller: _pronunciation,
-              maxLength: meaningMaxLength,
-              decoration: const InputDecoration(
-                labelText: pronunciationOptionalLabel,
-                hintText: '한글로 소리 나는 대로',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            // 문장 추가와 같은 차례로 둔다(5차 556, 사용자 요청).
-            // 단어 - 뜻 - 발음 - 단추. 전에는 낱말 옆에 있었다(470).
-            const SizedBox(height: 10),
-            FilledButton.tonalIcon(
-              key: const ValueKey('edit-word-fill'),
-              style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48)),
-              onPressed: _filling ||
-                      _saving ||
-                      _usageLoading ||
-                      _exhausted ||
-                      _basicsFilled
-                  ? null
-                  : _fillBasics,
-              icon: _filling
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const AssistIcon(AssistKind.meaning, size: 18),
-              label: const Text(wordFillBasicsLabel),
-            ),
-            // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
-            Text(
-              assistFillHint(
-                loading: _usageLoading,
-                whenReady: _basicsFilled
-                    ? wordFillBasicsDoneHint
-                    : _exhausted
-                        ? assistQuotaExhaustedMessage
-                        : wordFillBasicsHint,
-              ),
-              key: const ValueKey('edit-word-autofill-hint'),
-              style: context.texts.bodySmall
-                  .copyWith(color: colors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('edit-word-synonym-input'),
-                    controller: _synonymInput,
-                    onSubmitted: (_) => _addSynonym(),
-                    decoration: const InputDecoration(
-                      labelText: '유의어 (비워도 돼요)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  key: const ValueKey('edit-word-synonym-add'),
-                  onPressed: _addSynonym,
-                  child: const Text('추가'),
-                ),
-              ],
-            ),
-            if (_synonyms.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final (index, one) in _synonyms.indexed)
-                    InputChip(
-                      key: ValueKey('edit-word-synonym-$index'),
-                      label: Text(one),
-                      onDeleted: () => setState(
-                          () => _synonyms = [..._synonyms]..removeAt(index)),
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 16),
-            // 예문 단추는 예문 칸 옆에 둔다(5차 472, 사용자 요청).
-            Row(
-              children: [
-                Expanded(
-                  child: Text('예문', style: context.texts.titleMedium),
-                ),
-                TextButton.icon(
-                  key: const ValueKey('edit-word-fill-examples'),
-                  onPressed: _fillingExamples ||
-                          _saving ||
-                          _usageLoading ||
-                          _examplesBlocked != null
-                      ? null
-                      : _fillExamples,
-                  icon: _fillingExamples
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const AssistIcon(AssistKind.example, size: 18),
-                  label: const Text(wordFillExamplesLabel),
-                ),
-              ],
-            ),
-            Text(
-              assistFillHint(
-                loading: _usageLoading,
-                whenReady: _examplesBlocked ?? wordFillExamplesHint,
-              ),
-              key: const ValueKey('edit-word-examples-hint'),
-              style:
-                  context.texts.bodySmall.copyWith(color: colors.onSurfaceVariant),
-            ),
-            for (final (index, controller) in _exampleTexts.indexed) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                    20, AppSpacing.lg, 20, AppSpacing.sm),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    // 테두리를 없애고 면으로 그린다(5차 565, 사용자 요청).
+                    // 안 적어도 되는 칸에는 꼬리말을 붙이지 않는다.
+                    TextField(
+                      key: const ValueKey('edit-word-meaning-input'),
+                      controller: _meaning,
+                      maxLength: meaningMaxLength,
+                      decoration: filledInputDecoration(context,
+                          label: wordMeaningLabel),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      key: const ValueKey('edit-word-pronunciation-input'),
+                      controller: _pronunciation,
+                      maxLength: meaningMaxLength,
+                      decoration: filledInputDecoration(
+                        context,
+                        label: wordPronunciationLabel,
+                        hint: '한글로 소리 나는 대로',
+                      ),
+                    ),
+                    // 문장 추가와 같은 차례로 둔다(5차 556, 사용자 요청).
+                    // 단어 - 뜻 - 발음 - 단추. 전에는 낱말 옆에 있었다(470).
+                    const SizedBox(height: AppSpacing.xl),
+                    FilledButton.tonalIcon(
+                      key: const ValueKey('edit-word-fill'),
+                      style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48)),
+                      onPressed: _filling ||
+                              _saving ||
+                              _usageLoading ||
+                              _exhausted ||
+                              _basicsFilled
+                          ? null
+                          : _fillBasics,
+                      icon: _filling
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const AssistIcon(AssistKind.meaning, size: 18),
+                      label: const Text(wordFillBasicsLabel),
+                    ),
+                    // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
+                    const SizedBox(height: AppSpacing.xs + 2),
+                    Text(
+                      assistFillHint(
+                        loading: _usageLoading,
+                        whenReady: _basicsFilled
+                            ? wordFillBasicsDoneHint
+                            : _exhausted
+                                ? assistQuotaExhaustedMessage
+                                : wordFillBasicsHint,
+                      ),
+                      key: const ValueKey('edit-word-autofill-hint'),
+                      style: context.texts.bodySmall
+                          .copyWith(color: colors.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text(wordSynonymLabel, style: context.texts.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
-                            key: ValueKey('edit-word-example-$index'),
-                            controller: controller,
-                            maxLength: 300,
-                            maxLines: 2,
-                            minLines: 1,
-                            decoration: InputDecoration(
-                              labelText: '예문 ${index + 1}',
-                              border: const OutlineInputBorder(),
-                            ),
+                            key: const ValueKey('edit-word-synonym-input'),
+                            controller: _synonymInput,
+                            onSubmitted: (_) => _addSynonym(),
+                            decoration: filledInputDecoration(context,
+                                label: '하나씩 적고 추가'),
                           ),
                         ),
-                        IconButton(
-                          key: ValueKey('edit-word-example-remove-$index'),
-                          tooltip: '이 예문 빼기',
-                          onPressed: () => _removeExampleField(index),
-                          icon: const Icon(Icons.close_rounded, size: 18),
+                        const SizedBox(width: AppSpacing.sm),
+                        FilledButton(
+                          key: const ValueKey('edit-word-synonym-add'),
+                          onPressed: _addSynonym,
+                          child: const Text('추가'),
                         ),
                       ],
                     ),
-                    TextField(
-                      key: ValueKey('edit-word-example-meaning-$index'),
-                      controller: _exampleMeanings[index],
-                      maxLength: 300,
-                      maxLines: 2,
-                      minLines: 1,
-                      decoration: const InputDecoration(
-                        labelText: '예문 뜻 (비워도 돼요)',
-                        border: OutlineInputBorder(),
+                    if (_synonyms.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final (index, one) in _synonyms.indexed)
+                            InputChip(
+                              key: ValueKey('edit-word-synonym-$index'),
+                              label: Text(one),
+                              onDeleted: () => setState(() =>
+                                  _synonyms = [..._synonyms]..removeAt(index)),
+                            ),
+                        ],
                       ),
+                    ],
+                    const SizedBox(height: AppSpacing.xl),
+                    Text(wordExampleLabel, style: context.texts.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
+                    for (final (index, _) in _exampleTexts.indexed)
+                      _exampleCard(index),
+                    // 예문 단추는 예문 칸 아래에 둔다. 추가 시트와 같은
+                    // 자리다(5차 472·565).
+                    Row(
+                      children: [
+                        if (_exampleTexts.length < examplesMaxCount)
+                          TextButton.icon(
+                            key: const ValueKey('edit-word-example-add'),
+                            onPressed: _addExampleField,
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: const Text('예문 더 넣기'),
+                          ),
+                        const Spacer(),
+                        TextButton.icon(
+                          key: const ValueKey('edit-word-fill-examples'),
+                          onPressed: _fillingExamples ||
+                                  _saving ||
+                                  _usageLoading ||
+                                  _examplesBlocked != null
+                              ? null
+                              : _fillExamples,
+                          icon: _fillingExamples
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const AssistIcon(AssistKind.example, size: 18),
+                          label: const Text(wordFillExamplesLabel),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      assistFillHint(
+                        loading: _usageLoading,
+                        whenReady: _examplesBlocked ?? wordFillExamplesHint,
+                      ),
+                      key: const ValueKey('edit-word-examples-hint'),
+                      style: context.texts.bodySmall
+                          .copyWith(color: colors.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-            ],
-            if (_exampleTexts.length < examplesMaxCount)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  key: const ValueKey('edit-word-example-add'),
-                  onPressed: _addExampleField,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('예문 더 넣기'),
-                ),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.surface,
+                border: Border(
+                    top: BorderSide(color: context.tokens.dividerSubtle)),
               ),
-            if (notice != null) ...[
-              const SizedBox(height: 8),
-              Text(notice,
-                  key: const ValueKey('edit-word-notice'),
-                  style: context.texts.bodySmall
-                      .copyWith(color: colors.onSurfaceVariant)),
-            ],
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                key: const ValueKey('edit-word-save'),
-                onPressed: _saving || blocked != null ? null : _save,
-                child: Text(_saving ? '저장 중…' : '저장'),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        key: const ValueKey('edit-word-save'),
+                        onPressed: _saving || blocked != null ? null : _save,
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52)),
+                        child: Text(_saving ? '저장 중…' : '저장'),
+                      ),
+                    ),
+                    if (notice != null) ...[
+                      const SizedBox(height: AppSpacing.xs + 2),
+                      Text(notice,
+                          key: const ValueKey('edit-word-notice'),
+                          textAlign: TextAlign.center,
+                          style: context.texts.bodySmall
+                              .copyWith(color: colors.onSurfaceVariant)),
+                    ],
+                  ],
+                ),
               ),
             ),
           ],

@@ -164,8 +164,12 @@ class _ExampleQuotaAssist extends _FakeAssist {
 
 /// refreshUsage가 끝나지 않고 매달려 있는 가짜. '횟수 확인 중' 상태를
 /// 그대로 붙잡아 둔다.
+///
+/// 아무것도 모르는 채로 매달려 있어야 한다(5차 565). 아는 값이 있으면
+/// 그 값으로 바로 열어 주는 것이 맞다 - 아래 '아는 값이 있으면' 테스트.
 class _SlowAssist extends _FakeAssist {
-  _SlowAssist() : super(limit: 3, remaining: 3, examplesRemaining: 3);
+  _SlowAssist({super.limit})
+      : super(remaining: null, examplesRemaining: null);
 
   final Completer<void> _gate = Completer<void>();
 
@@ -354,6 +358,23 @@ void main() {
     final examples = tester.widget<ButtonStyleButton>(
         find.byKey(const ValueKey('edit-word-fill-examples')));
     expect(examples.onPressed, isNull);
+  });
+
+  // 한도 조회는 앱에 하나뿐이라 다른 화면이 받아 둔 값이 있다(5차 565).
+  // 그걸 두고도 '횟수 확인 중…'에 묶어 두고 단추를 막았다. 서버가 쉬다
+  // 깨면 15초씩 두 번 걸려서, 아는 값을 들고 30초를 기다렸다.
+  testWidgets('아는 값이 있으면 기다리지 않는다', (tester) async {
+    final word = await _addWord();
+    final assist = _SlowAssist(limit: 3);
+
+    await _openDetail(tester, word, assist);
+    await tester.tap(find.byKey(const ValueKey('edit-word')));
+    await tester.pump();
+
+    expect(find.text(assistUsageLoadingLabel), findsNothing);
+    final fill = tester.widget<ButtonStyleButton>(
+        find.byKey(const ValueKey('edit-word-fill')));
+    expect(fill.onPressed, isNotNull, reason: '아는 값이 있으면 열려 있어야 한다');
   });
 
   // 횟수를 묻는 동안에는 채우기 단추를 막는다(5차 515, 사용자 요청).
