@@ -5,11 +5,13 @@
 // 겁주지 않고 할 수 있는 일(백업 파일 만들기)을 함께 둔다.
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
 
 const String localOnlyNoticeTitle = '이 기기에만 있어요';
+const String localOnlyDismissTooltip = '오늘은 그만 보기';
 const String localOnlyBackupLabel = '백업 파일 만들기';
 const String localOnlySubscribeLabel = '구독 보기';
 
@@ -33,7 +35,43 @@ bool showsLocalOnlyNotice({
 }) =>
     tier == SubscriptionTier.free && localOnlyCount > 0;
 
-class LocalOnlyNotice extends StatelessWidget {
+/// 오늘 이 안내를 닫았는지 적어 두는 곳(5차 565, 사용자 요청).
+///
+/// 알리지 않으면 폰을 바꿀 때 클립이 사라지는 줄 모른다. 그렇다고 보관함을
+/// 열 때마다 같은 띠가 버티고 있으면 성가시다. 닫으면 그날은 쉬고 다음 날
+/// 다시 한 번 알린다.
+class LocalOnlyNoticeDismissal {
+  LocalOnlyNoticeDismissal._();
+
+  static const String key = 'parrokit.local_only_notice.dismissed_on.v1';
+
+  /// 날은 한국 자정으로 가른다. 앱의 다른 하루치(한도·연습)와 같은 기준이다.
+  static String dayOf(DateTime now) {
+    final kst = now.toUtc().add(const Duration(hours: 9));
+    return '${kst.year}-${kst.month}-${kst.day}';
+  }
+
+  static Future<bool> dismissedToday({DateTime? now}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(key) == dayOf(now ?? DateTime.now());
+    } catch (_) {
+      // 못 읽으면 보여 준다. 안 보여 주는 쪽이 더 나쁘다.
+      return false;
+    }
+  }
+
+  static Future<void> dismissToday({DateTime? now}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, dayOf(now ?? DateTime.now()));
+    } catch (_) {
+      // 못 적으면 다음에 또 보일 뿐이다.
+    }
+  }
+}
+
+class LocalOnlyNotice extends StatefulWidget {
   const LocalOnlyNotice({
     super.key,
     required this.tier,
@@ -50,54 +88,115 @@ class LocalOnlyNotice extends StatelessWidget {
   final VoidCallback onSubscribe;
 
   @override
+  State<LocalOnlyNotice> createState() => _LocalOnlyNoticeState();
+}
+
+class _LocalOnlyNoticeState extends State<LocalOnlyNotice> {
+  /// 오늘 닫았는지. 아직 모르면 null - 그동안은 그리지 않는다. 띄웠다가
+  /// 곧바로 지우면 깜빡인다.
+  bool? _dismissed;
+
+  @override
+  void initState() {
+    super.initState();
+    LocalOnlyNoticeDismissal.dismissedToday().then((hidden) {
+      if (mounted) setState(() => _dismissed = hidden);
+    });
+  }
+
+  Future<void> _dismiss() async {
+    setState(() => _dismissed = true);
+    await LocalOnlyNoticeDismissal.dismissToday();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!showsLocalOnlyNotice(tier: tier, localOnlyCount: localOnlyCount)) {
+    if (!showsLocalOnlyNotice(
+        tier: widget.tier, localOnlyCount: widget.localOnlyCount)) {
       return const SizedBox.shrink();
     }
+    if (_dismissed ?? true) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Container(
         key: const ValueKey('local-only-notice'),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHigh,
+          // 테두리를 걷고 면으로만 그린다(5차 565, 사용자 요청). 선 하나로
+          // 두른 상자는 폼 칸처럼 보였다.
+          color: cs.primaryContainer.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: cs.outlineVariant),
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(Icons.phone_iphone_rounded, size: 18, color: cs.primary),
-              const SizedBox(width: 6),
-              Text(localOnlyNoticeTitle,
-                  style: context.texts.labelLarge.copyWith(
-                      fontWeight: FontWeight.w800, color: cs.onSurface)),
-            ]),
-            const SizedBox(height: 6),
-            Text(localOnlyNoticeBody(localOnlyCount),
-                style: context.texts.bodySmall
-                    .copyWith(color: cs.onSurfaceVariant, height: 1.5)),
-            const SizedBox(height: 10),
-            Row(children: [
-              Expanded(
-                child: FilledButton.tonal(
-                  key: const ValueKey('local-only-backup'),
-                  onPressed: onBackup,
-                  child: const Text(localOnlyBackupLabel),
-                ),
+            // 아이콘을 동그란 면에 올려 제목 줄에서 떼어 낸다.
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: cs.surface,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  key: const ValueKey('local-only-subscribe'),
-                  onPressed: onSubscribe,
-                  child: const Text(localOnlySubscribeLabel),
-                ),
+              child: Icon(Icons.phone_iphone_rounded,
+                  size: 20, color: cs.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(localOnlyNoticeTitle,
+                            style: context.texts.labelLarge.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: cs.onSurface)),
+                      ),
+                      // 닫으면 오늘은 쉰다. 다음 날 한 번 더 알린다.
+                      IconButton(
+                        key: const ValueKey('local-only-dismiss'),
+                        tooltip: localOnlyDismissTooltip,
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints:
+                            const BoxConstraints(minWidth: 32, minHeight: 32),
+                        onPressed: _dismiss,
+                        icon: Icon(Icons.close_rounded,
+                            size: 18, color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(localOnlyNoticeBody(widget.localOnlyCount),
+                      style: context.texts.bodySmall
+                          .copyWith(color: cs.onSurfaceVariant, height: 1.5)),
+                  const SizedBox(height: 10),
+                  // 할 수 있는 일을 앞세우고, 구독은 한 단 낮춘다. 전에는
+                  // 둘이 같은 너비·같은 무게라 무엇을 먼저 할지 몰랐다.
+                  Row(
+                    children: [
+                      FilledButton.tonalIcon(
+                        key: const ValueKey('local-only-backup'),
+                        onPressed: widget.onBackup,
+                        icon: const Icon(Icons.download_rounded, size: 18),
+                        label: const Text(localOnlyBackupLabel),
+                      ),
+                      const SizedBox(width: 4),
+                      TextButton(
+                        key: const ValueKey('local-only-subscribe'),
+                        onPressed: widget.onSubscribe,
+                        child: const Text(localOnlySubscribeLabel),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ]),
+            ),
           ],
         ),
       ),

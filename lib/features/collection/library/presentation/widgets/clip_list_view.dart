@@ -72,18 +72,34 @@ class ClipListView extends StatelessWidget {
       _ => cs.onSecondaryContainer.withValues(alpha: 0.9),
     };
 
+    // 글자만 든 네모였는데, 줄마다 떠 있어 눈에 거슬렸다. 아이콘을 붙이고
+    // 면을 낮춰 상태 표시로 읽히게 한다(5차 565, 사용자 요청).
+    final icon = switch (storageMode) {
+      ClipStorageConstants.storageModeLocal => Icons.phone_iphone_rounded,
+      ClipStorageConstants.storageModeServer => Icons.cloud_done_rounded,
+      _ when isCloud => Icons.cloud_rounded,
+      _ => Icons.phone_iphone_rounded,
+    };
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.fromLTRB(6, 3, 8, 3),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: foreground),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: foreground,
+            ),
+          ),
+        ],
       ),
     );
   }
