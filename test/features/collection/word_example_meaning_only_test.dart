@@ -114,6 +114,11 @@ void main() {
             .onPressed,
         isNotNull);
 
+    // 단추가 세 칸 아래로 내려가며 시트가 길어졌다(5차 556). 칸이 화면
+    // 밖에 있으면 두드리지도 치지도 못한다.
+    await tester.ensureVisible(
+        find.byKey(const ValueKey('edit-word-example-add')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('edit-word-example-add')));
     await tester.pumpAndSettle();
     // 빈 칸만 더해도 막히지 않는다.
@@ -123,6 +128,9 @@ void main() {
             .onPressed,
         isNotNull);
 
+    await tester.ensureVisible(
+        find.byKey(const ValueKey('edit-word-example-meaning-1')));
+    await tester.pumpAndSettle();
     await tester.enterText(
         find.byKey(const ValueKey('edit-word-example-meaning-1')), '뜻만 적어 본 줄');
     await tester.pump();
@@ -135,6 +143,8 @@ void main() {
         isNull);
 
     // 예문을 적으면 다시 풀린다.
+    await tester.ensureVisible(find.byKey(const ValueKey('edit-word-example-1')));
+    await tester.pumpAndSettle();
     await tester.enterText(
         find.byKey(const ValueKey('edit-word-example-1')), 'A huge wave.');
     await tester.pump();

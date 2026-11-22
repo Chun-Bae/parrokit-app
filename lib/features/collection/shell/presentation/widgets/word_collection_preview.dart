@@ -1519,50 +1519,6 @@ class _AddWordSheetState extends State<AddWordSheet> {
                   decoration: const InputDecoration(
                       labelText: '단어나 표현', border: OutlineInputBorder()),
                 ),
-                // 단추를 단어 칸 바로 아래에 둔다(5차 471, 사용자 요청).
-                // 전에는 뜻·발음 칸 아래에 있어서 그 둘만 채우는 줄 알았다.
-                // 예문 칸은 유의어 다음이라 한참 밑에 있다.
-                Row(
-                  children: [
-                    FilledButton.tonalIcon(
-                      key: const ValueKey('fill-word-meaning'),
-                      onPressed: _word.text.trim().isEmpty ||
-                              filling ||
-                              _usageLoading ||
-                              _exhausted ||
-                              _basicsTyped
-                          ? null
-                          : fillMeaning,
-                      icon: filling
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const AssistIcon(AssistKind.meaning, size: 18),
-                      label: const Text(wordFillBasicsLabel),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        wordAssistUsageLabel(
-                          used: _assistUsed,
-                          limit: _assist.dailyLimit,
-                          failed: _usageFailed ||
-                              (_usageChecked && _assistUsed == null),
-                        ),
-                        key: const ValueKey('word-assist-usage'),
-                        style: context.texts.bodySmall.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  _fillHint(wordFillBasicsHint),
-                  key: const ValueKey('word-autofill-hint'),
-                  style: context.texts.bodySmall.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
                 const SizedBox(height: 8),
                 TextField(
                   key: const ValueKey('word-meaning'),
@@ -1583,6 +1539,55 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     hintText: '한글로 소리 나는 대로',
                     border: OutlineInputBorder(),
                   ),
+                ),
+                // 문장 추가와 같은 차례로 둔다(5차 556, 사용자 요청).
+                // 단어 - 뜻 - 발음 - 단추. 전에는 단추가 단어 칸 바로
+                // 아래였는데(471), 이름이 '뜻·발음 생성'이라 무엇을
+                // 만드는지는 이름이 말해 준다.
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        key: const ValueKey('fill-word-meaning'),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48)),
+                        onPressed: _word.text.trim().isEmpty ||
+                                filling ||
+                                _usageLoading ||
+                                _exhausted ||
+                                _basicsTyped
+                            ? null
+                            : fillMeaning,
+                        icon: filling
+                            ? const SizedBox.square(
+                                dimension: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
+                            : const AssistIcon(AssistKind.meaning, size: 18),
+                        label: const Text(wordFillBasicsLabel),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      wordAssistUsageLabel(
+                        used: _assistUsed,
+                        limit: _assist.dailyLimit,
+                        failed: _usageFailed ||
+                            (_usageChecked && _assistUsed == null),
+                      ),
+                      key: const ValueKey('word-assist-usage'),
+                      style: context.texts.bodySmall.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+                Text(
+                  _fillHint(wordFillBasicsHint),
+                  key: const ValueKey('word-autofill-hint'),
+                  style: context.texts.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 if (fillNote != null)
                   Padding(

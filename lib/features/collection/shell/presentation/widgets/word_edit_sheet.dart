@@ -451,48 +451,8 @@ class _WordEditSheetState extends State<WordEditSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(widget.word.word,
-                      style: context.texts.headlineSmall),
-                ),
-                // 예문을 손보러 들어온 자리에서 바로 받을 수 있게 한다(5차 470).
-                TextButton.icon(
-                  key: const ValueKey('edit-word-fill'),
-                  onPressed: _filling ||
-                          _saving ||
-                          _usageLoading ||
-                          _exhausted ||
-                          _basicsFilled
-                      ? null
-                      : _fillBasics,
-                  icon: _filling
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const AssistIcon(AssistKind.meaning, size: 18),
-                  label: const Text(wordFillBasicsLabel),
-                ),
-              ],
-            ),
-            // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
-            Text(
-              assistFillHint(
-                loading: _usageLoading,
-                whenReady: _basicsFilled
-                    ? wordFillBasicsDoneHint
-                    : _exhausted
-                        ? assistQuotaExhaustedMessage
-                        : wordFillBasicsHint,
-              ),
-              key: const ValueKey('edit-word-autofill-hint'),
-              style: context.texts.bodySmall
-                  .copyWith(color: colors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
+            Text(widget.word.word, style: context.texts.headlineSmall),
+            const SizedBox(height: 10),
             TextField(
               key: const ValueKey('edit-word-meaning-input'),
               controller: _meaning,
@@ -512,6 +472,44 @@ class _WordEditSheetState extends State<WordEditSheet> {
                 border: OutlineInputBorder(),
               ),
             ),
+            // 문장 추가와 같은 차례로 둔다(5차 556, 사용자 요청).
+            // 단어 - 뜻 - 발음 - 단추. 전에는 낱말 옆에 있었다(470).
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              key: const ValueKey('edit-word-fill'),
+              style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48)),
+              onPressed: _filling ||
+                      _saving ||
+                      _usageLoading ||
+                      _exhausted ||
+                      _basicsFilled
+                  ? null
+                  : _fillBasics,
+              icon: _filling
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const AssistIcon(AssistKind.meaning, size: 18),
+              label: const Text(wordFillBasicsLabel),
+            ),
+            // 무엇을 채우는지 적는다. 추가 시트와 같은 말이다(5차 472).
+            Text(
+              assistFillHint(
+                loading: _usageLoading,
+                whenReady: _basicsFilled
+                    ? wordFillBasicsDoneHint
+                    : _exhausted
+                        ? assistQuotaExhaustedMessage
+                        : wordFillBasicsHint,
+              ),
+              key: const ValueKey('edit-word-autofill-hint'),
+              style: context.texts.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(

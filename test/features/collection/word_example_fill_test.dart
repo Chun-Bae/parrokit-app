@@ -248,7 +248,7 @@ void main() {
 
     expect(
       tester
-          .widget<TextButton>(find.byKey(const ValueKey('edit-word-fill')))
+          .widget<FilledButton>(find.byKey(const ValueKey('edit-word-fill')))
           .onPressed,
       isNull,
       reason: '적어 둔 뜻이 낱말과 어긋나면 발음을 어디에 맞출지 모른다',
@@ -269,17 +269,22 @@ void main() {
     }
   });
 
-  test('단추가 저마다 제 자리에 있다(5차 472)', () {
-    // 뜻·발음 단추는 뜻 칸보다 앞, 예문 단추는 예문 칸 옆이다.
+  test('단추가 저마다 제 자리에 있다(5차 472, 556)', () {
+    // 문장 추가와 같은 차례다 - 단어, 뜻, 발음, 그 다음 단추(5차 556).
+    // 전에는 뜻·발음 단추가 단어 칸 바로 아래였다(472).
     final src = File(
             'lib/features/collection/shell/presentation/widgets/word_collection_preview.dart')
         .readAsStringSync();
-    final basics = src.indexOf("ValueKey('fill-word-meaning')");
+    final word = src.indexOf("ValueKey('word-input')");
     final meaning = src.indexOf("ValueKey('word-meaning')");
+    final pron = src.indexOf("ValueKey('word-pronunciation')");
+    final basics = src.indexOf("ValueKey('fill-word-meaning')");
     final example = src.indexOf("ValueKey('word-example-" r"$index')");
     final fillExamples = src.indexOf("ValueKey('fill-word-examples')");
     expect(basics, greaterThan(-1));
-    expect(basics, lessThan(meaning), reason: '뜻·발음 단추가 뜻 칸보다 앞');
+    expect(word, lessThan(meaning), reason: '단어가 맨 위');
+    expect(meaning, lessThan(pron), reason: '뜻 다음에 발음');
+    expect(pron, lessThan(basics), reason: '단추는 세 칸 아래');
     expect(fillExamples, greaterThan(example),
         reason: '예문 단추는 예문 칸 뒤에 와야 한다');
   });

@@ -93,7 +93,7 @@ void main() {
     await _open(tester, word, assist);
 
     expect(_hint(tester), wordFillBasicsDoneHint);
-    final button = tester.widget<TextButton>(
+    final button = tester.widget<FilledButton>(
         find.byKey(const ValueKey('edit-word-fill')));
     expect(button.onPressed, isNull, reason: '눌러도 할 일이 없으면 꺼 둔다');
 
@@ -114,7 +114,7 @@ void main() {
     expect(_hint(tester), wordFillBasicsDoneHint);
     expect(
       tester
-          .widget<TextButton>(find.byKey(const ValueKey('edit-word-fill')))
+          .widget<FilledButton>(find.byKey(const ValueKey('edit-word-fill')))
           .onPressed,
       isNull,
     );
@@ -127,7 +127,7 @@ void main() {
     expect(_hint(tester), wordFillBasicsHint);
     expect(
       tester
-          .widget<TextButton>(find.byKey(const ValueKey('edit-word-fill')))
+          .widget<FilledButton>(find.byKey(const ValueKey('edit-word-fill')))
           .onPressed,
       isNotNull,
     );
@@ -146,7 +146,7 @@ void main() {
     expect(_hint(tester), wordFillBasicsDoneHint);
     expect(
       tester
-          .widget<TextButton>(find.byKey(const ValueKey('edit-word-fill')))
+          .widget<FilledButton>(find.byKey(const ValueKey('edit-word-fill')))
           .onPressed,
       isNull,
       reason: '한 번 채우면 끝이다. 또 누르면 한도만 쓴다',
