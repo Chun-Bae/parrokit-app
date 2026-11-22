@@ -38,6 +38,7 @@ import 'package:parrokit/features/community/notification/domain/usecases/mark_no
 import 'package:parrokit/features/community/notification/domain/usecases/watch_notifications_usecase.dart';
 import 'package:parrokit/features/community/notification/presentation/providers/community_notification_provider.dart';
 import 'package:parrokit/features/community/shell/presentation/providers/community_provider.dart';
+import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_user_service.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_messaging_service.dart';
 
@@ -64,6 +65,12 @@ List<SingleChildWidget> buildProviders({
     // 새 플레이어를 쓸 때는 플레이어 자체를 앱이 들고 있는다(5차 4단계).
     ChangeNotifierProvider<ClipPlaybackHolder>(
       create: (_) => ClipPlaybackHolder(),
+    ),
+
+    // 하루 한도 조회는 앱에 하나만 둔다(5차 564, 사용자 요청). 화면마다
+    // 제 인스턴스를 만들면 서버가 쉬다 깨는 기다림을 화면마다 따로 맞는다.
+    ChangeNotifierProvider<CloudSentenceAssist>(
+      create: (_) => CloudSentenceAssist(),
     ),
 
     // ─────────────────────────────────────────────────────────────────

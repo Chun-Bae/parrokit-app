@@ -55,7 +55,10 @@ class AssistUsageSection extends StatefulWidget {
 }
 
 class _AssistUsageSectionState extends State<AssistUsageSection> {
-  late final SentenceAssist _assist = widget.assist ?? CloudSentenceAssist();
+  late final SentenceAssist _assist = widget.assist ??
+      // 앱에 하나 있는 것을 받는다(5차 564). 없는 곳(테스트)에서는 새로 만든다.
+      context.read<CloudSentenceAssist?>() ??
+      CloudSentenceAssist();
   late final ExampleCreditsService _credits =
       widget.credits ?? ExampleCreditsService();
   bool _loading = true;
@@ -90,6 +93,11 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
     } finally {
       // 갔는지 모르는 채로 끝났어도 서버 값을 다시 읽어 화면을 맞춘다.
       // 전에는 실패 경로에서 안 읽어서, 몫은 들어왔는데 화면에 안 보였다.
+      //
+      // 몫을 사는 것은 다른 함수라 받아 둔 숫자가 그대로다. 버리고 물어야
+      // 새 몫이 보인다(5차 564).
+      final assist = _assist;
+      if (assist is CloudSentenceAssist) assist.invalidateUsage();
       await _load();
       if (mounted) setState(() => _buying = false);
     }

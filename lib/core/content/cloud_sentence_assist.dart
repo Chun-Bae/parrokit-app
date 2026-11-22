@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:parrokit/core/shared/utils/remote_call_timeout.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 
 import 'sentence_assist.dart';
@@ -17,9 +18,16 @@ bool assistCallWantsExamples(Map<String, Object> data) {
   return data['mode'] == 'word' && (count is! num || count > 0);
 }
 
+/// 서버가 날을 가르는 기준(sentenceAssist.ts의 todayKst). 한도는 한국
+/// 자정에 새로 찬다.
+String _todayKst() {
+  final kst = DateTime.now().toUtc().add(const Duration(hours: 9));
+  return '${kst.year}-${kst.month}-${kst.day}';
+}
+
 /// 서버 함수 `suggestSentenceInfo`(Gemini 2.5 Flash-Lite)를 부르는 도우미.
 /// 두 기능이 같은 하루 횟수를 나눠 쓰고, 남은 횟수는 응답으로 받는다.
-class CloudSentenceAssist implements SentenceAssist {
+class CloudSentenceAssist extends ChangeNotifier implements SentenceAssist {
   CloudSentenceAssist({FirebaseFunctions? functions}) : _functions = functions;
 
   /// 서버가 대답하지 않을 때 기다릴 시간(5차 446).
@@ -64,8 +72,59 @@ class CloudSentenceAssist implements SentenceAssist {
   @override
   int? get assistCredits => _assistCredits;
 
+  /// 마지막으로 받아 둔 때. 같은 날 안에서 이만큼은 다시 묻지 않는다.
+  ///
+  /// 서버가 쉬다 깨는 첫 조회는 15초를 넘긴다(5차 454). 전에는 화면마다
+  /// 제 인스턴스를 만들어 그 기다림을 따로 맞았다 - 더보기에서 받아 놓고
+  /// 문장 추가를 열면 처음부터 다시 물었다. 이제 앱에 하나만 두고, 받아
+  /// 둔 것이 아직 싱싱하면 그냥 쓴다(5차 564, 사용자 요청).
+  static const usageFresh = Duration(minutes: 5);
+
+  String? _fetchedDate;
+  DateTime? _fetchedAt;
+
+  /// 누구 것으로 받아 둔 숫자인지. 계정이 바뀌면 남의 숫자를 보여 줄 수
+  /// 없으니 다시 묻는다.
+  String? _fetchedUid;
+
+  /// Firebase가 없는 곳(테스트)에서는 묻지 않는다. 거기서는 계정도 하나다.
+  String? get _uid {
+    try {
+      return fb.FirebaseAuth.instance.currentUser?.uid;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 지금 들고 있는 숫자를 믿어도 되는지.
+  ///
+  /// 날이 바뀌면 무조건 다시 묻는다. 서버는 한국 자정으로 날을 가르므로,
+  /// 자정을 넘겨 들고 있으면 어제 쓴 수를 보여 주게 된다.
+  bool get _usageFresh {
+    final at = _fetchedAt;
+    if (at == null || _fetchedDate != _todayKst()) return false;
+    if (_fetchedUid != _uid) return false;
+    return DateTime.now().difference(at) < usageFresh;
+  }
+
+  /// 받아 둔 숫자를 버린다. 다음 [refreshUsage]는 서버에 다시 묻는다.
+  ///
+  /// 패롯으로 몫을 사는 것은 다른 함수(exampleCredits)라 이 객체가 알 수
+  /// 없다. 산 직후에는 이것을 불러야 새 몫이 보인다.
+  void invalidateUsage() {
+    _fetchedAt = null;
+  }
+
+  /// 지금 받은 숫자가 누구 것이고 언제 것인지 적어 둔다.
+  void _mark() {
+    _fetchedDate = _todayKst();
+    _fetchedAt = DateTime.now();
+    _fetchedUid = _uid;
+  }
+
   @override
   Future<void> refreshUsage() async {
+    if (_usageFresh) return;
     // 한 번 접히면 조용히 한 번 더 묻는다(5차 454).
     //
     // 서버가 한동안 쉬다 깨는 첫 호출은 15초를 넘긴다. 기기에서 보니
@@ -74,6 +133,7 @@ class CloudSentenceAssist implements SentenceAssist {
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
         await _call({'mode': 'status'}, timeout: usageTimeout);
+        _mark();
         return;
       } on TimeoutException catch (e) {
         AppLogger.w('[assist] 남은 횟수 조회 실패: $e');
@@ -124,6 +184,10 @@ class CloudSentenceAssist implements SentenceAssist {
       final assistCredits = map['assistCredits'];
       if (assistCredits is num) _assistCredits = assistCredits.toInt();
       debugPrint('[assist] ${data['mode']} ok, remaining=$_remainingToday');
+      // 어느 부름이든 응답에 지금 숫자가 들어 있다. 받을 때마다 갱신하고
+      // 알리면, 한 화면에서 쓴 뒤 다른 화면이 옛 숫자를 들고 있지 않다.
+      _mark();
+      notifyListeners();
       return map;
     } on FirebaseFunctionsException catch (e) {
       // 아래에서 코드별로 typed exception으로 바꿔 화면까지 전달한다.
@@ -143,6 +207,7 @@ class CloudSentenceAssist implements SentenceAssist {
             _remainingToday = 0;
             _assistCredits = 0;
           }
+          notifyListeners();
           throw SentenceAssistQuotaExceeded(examples: wantsExamples);
         case 'unauthenticated':
           throw const SentenceAssistUnavailable('로그인하면 쓸 수 있어요.');
