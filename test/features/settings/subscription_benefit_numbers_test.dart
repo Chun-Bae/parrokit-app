@@ -18,23 +18,22 @@ void main() {
     int serverValue(String key) =>
         int.parse(RegExp('$key:\\s*(\\d+)').firstMatch(body)!.group(1)!);
 
-    expect(monthlyParrotsFor(SubscriptionTier.free), serverValue('free'));
-    expect(monthlyParrotsFor(SubscriptionTier.light), serverValue('light'));
-    expect(monthlyParrotsFor(SubscriptionTier.pro), serverValue('pro'));
+    // 단계를 하나씩 적어 두면 새 단계가 빠진다. 실제로 플러스·맥스를
+    // 더한 뒤에도 free·light·pro만 보고 있었다(5차 551).
+    for (final tier in SubscriptionTier.values) {
+      expect(monthlyParrotsFor(tier), serverValue(tier.name),
+          reason: tier.name);
+    }
   });
 
   test('혜택 줄은 박아 둔 숫자가 아니라 값에서 만든다', () {
-    final light = subscriptionTiers
-        .firstWhere((copy) => copy.tier == SubscriptionTier.light);
-    final pro =
-        subscriptionTiers.firstWhere((copy) => copy.tier == SubscriptionTier.pro);
-
-    expect(light.benefits, contains('매달 패롯 ${monthlyParrotsFor(SubscriptionTier.light)}개'));
-    expect(pro.benefits, contains('매달 패롯 ${monthlyParrotsFor(SubscriptionTier.pro)}개'));
-    expect(light.benefits,
-        contains('서버 백업 ${serverStorageQuotaLabel(SubscriptionTier.light)}'));
-    expect(pro.benefits,
-        contains('서버 백업 ${serverStorageQuotaLabel(SubscriptionTier.pro)}'));
+    for (final copy in subscriptionTiers) {
+      expect(copy.benefits, contains('매달 패롯 ${monthlyParrotsFor(copy.tier)}개'),
+          reason: copy.tier.name);
+      expect(copy.benefits,
+          contains('서버 백업 ${serverStorageQuotaLabel(copy.tier)}'),
+          reason: copy.tier.name);
+    }
 
     // 화면 글 파일에 숫자를 다시 적어 두지 않는다(주석은 뺀다).
     final code =
@@ -98,6 +97,7 @@ void main() {
 
   test('서버 저장 한도 표기는 바이트 값과 맞는다', () {
     expect(serverStorageQuotaLabel(SubscriptionTier.light), '10GB');
+    expect(serverStorageQuotaLabel(SubscriptionTier.plus), '20GB');
     expect(serverStorageQuotaLabel(SubscriptionTier.pro), '30GB');
     expect(serverStorageQuotaLabel(SubscriptionTier.max), '80GB');
   });
