@@ -47,11 +47,6 @@ void main() {
     });
   });
 
-  test('사 둔 몫이 있으면 짧은 말에도 적는다', () {
-    expect(assistUsageShortLabel(used: 3, limit: 3, credits: 1), '오늘 3/3회 +1');
-    expect(assistUsageShortLabel(used: 2, limit: 3), '오늘 2/3회');
-  });
-
   // 같은 셈을 화면마다 따로 적으면 또 갈라진다.
   test('세 화면이 모두 한 함수를 쓴다', () {
     const paths = [

@@ -1524,7 +1524,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                     Expanded(
                       child: Text('단어 추가', style: context.texts.titleLarge),
                     ),
-                    _UsagePair(
+                    AssistUsagePair(
                       kind: AssistKind.meaning,
                       used: _assistUsed,
                       limit: _assist.dailyLimit,
@@ -1532,7 +1532,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
                       key: const ValueKey('word-assist-usage'),
                     ),
                     const SizedBox(width: 10),
-                    _UsagePair(
+                    AssistUsagePair(
                       kind: AssistKind.example,
                       used: _examplesUsed,
                       limit: _assist.exampleDailyLimit,
@@ -2223,55 +2223,6 @@ const String wordFillExamplesHint = '겹치지 않는 예문을 받아요';
 /// 것처럼 보였다(506·515·519에서 고친 것과 같은 결함).
 /// 문장 추가 화면도 같은 말을 쓴다(526).
 const String wordFillBasicsDoneHint = assistBasicsDoneMessage;
-
-/// 머리에 다는 '그림 + 쓴 횟수 / 한도' 한 쌍(5차 558, 사용자 요청).
-class _UsagePair extends StatelessWidget {
-  const _UsagePair({
-    super.key,
-    required this.kind,
-    required this.used,
-    required this.limit,
-    this.credits = 0,
-  });
-
-  final AssistKind kind;
-  final int? used;
-  final int? limit;
-
-  /// 패롯으로 사 둔 몫(5차 559, 사용자 결정). 하루치를 다 써도 이것이
-  /// 남아 있으면 더 쓸 수 있다. 적지 않으면 '3/3'만 보고 끝난 줄 안다.
-  final int credits;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    // 아직 모르면 자리만 비워 둔다. '—/—'는 고장으로 읽힌다.
-    final label = used == null || limit == null
-        ? '—'
-        : credits > 0
-            ? '$used/$limit +$credits'
-            : '$used/$limit';
-    final full = credits <= 0 &&
-        used != null &&
-        limit != null &&
-        limit! > 0 &&
-        used! >= limit!;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AssistIcon(kind, size: 16),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: context.texts.bodySmall.copyWith(
-            fontWeight: FontWeight.w700,
-            color: full ? cs.error : cs.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 String wordAssistUsageLabel({
   required int? used,

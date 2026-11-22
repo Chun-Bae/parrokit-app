@@ -15,22 +15,6 @@ String? assistUsageLabel({required int? used, required int? limit}) {
   return '오늘 $used/$limit회 사용';
 }
 
-/// 앱바처럼 좁은 자리에 쓰는 짧은 꼴(5차 542).
-///
-/// '오늘 2/3회 사용'은 가운데 제목과 부딪힌다. 4.7인치 기기에서는 제목이
-/// 잘린다. '사용'을 떼어도 앞의 '오늘'이 쓴 횟수라는 것을 말해 준다.
-String? assistUsageShortLabel({
-  required int? used,
-  required int? limit,
-  int credits = 0,
-}) {
-  if (used == null || limit == null) return null;
-  // 사 둔 몫이 있으면 그것까지 적는다. 다음에 누르면 그 몫이 깎이므로
-  // 하루치만 보여 주면 거짓말이 된다(5차 546).
-  final head = '오늘 $used/$limit회';
-  return credits > 0 ? '$head +$credits' : head;
-}
-
 /// 오늘 하루치를 몇 번 썼는지(5차 546).
 ///
 /// 서버가 주는 remainingToday에는 패롯으로 사 둔 몫이 더해져 있다

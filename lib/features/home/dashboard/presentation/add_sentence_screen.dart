@@ -300,20 +300,20 @@ class _UsageAction extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final used = controller.usedToday;
     final limit = controller.dailyLimit;
-    final exhausted = controller.exhausted;
     return Padding(
       padding: const EdgeInsets.only(right: 12),
       child: Center(
         child: used != null && limit != null
             // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
-            ? Text(
-                assistUsageShortLabel(
-                    used: used,
-                    limit: limit,
-                    credits: controller.assistCredits ?? 0)!,
+            // 단어 추가 시트와 같은 꼴로 적는다(5차 560, 사용자 요청).
+            // 전에는 여기만 '오늘 2/3회 +1'이라고 말이 길었다.
+            ? AssistUsagePair(
                 key: const ValueKey('usage-count'),
-                style: context.texts.bodySmall.copyWith(
-                    color: exhausted ? colors.error : colors.onSurfaceVariant))
+                kind: AssistKind.meaning,
+                used: used,
+                limit: limit,
+                credits: controller.assistCredits ?? 0,
+              )
             : controller.usageStatus == UsageStatus.loading
                 ? Text(assistUsageLoadingLabel,
                     key: const ValueKey('usage-loading'),
