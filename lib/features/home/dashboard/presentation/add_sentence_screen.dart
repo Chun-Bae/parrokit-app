@@ -3,6 +3,10 @@ import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/core/shared/theme/components/inputs/app_input_theme.dart';
+import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
@@ -29,11 +33,13 @@ Future<({AddedSentence sentence, bool added})?> addSentenceFlow(
 }) async {
   // 내가 추가한 문장에는 내 닉네임을 남긴다.
   final author = context.read<UserProvider?>()?.currentUser?.displayName ?? '';
-  final sentence = await Navigator.of(context, rootNavigator: true)
-      .push<AddedSentence>(MaterialPageRoute(
-    builder: (_) =>
-        AddSentenceScreen(language: language, assist: CloudSentenceAssist()),
-  ));
+  // 한도 조회는 앱에 하나 있는 것을 쓴다(5차 564).
+  final assist = context.read<CloudSentenceAssist?>() ?? CloudSentenceAssist();
+  // 단어 추가와 같은 꼴로 바텀시트에 띄운다(5차 565, 사용자 요청).
+  final sentence = await showAppSheet<AddedSentence>(
+    context: context,
+    builder: (_) => AddSentenceScreen(language: language, assist: assist),
+  );
   if (sentence == null) return null;
   final added = await MySentenceStore.add(
     accountId,
@@ -88,7 +94,6 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final muted = HomeTokens.of(context).muted;
     // 원문·뜻·발음 중 하나라도 적었으면 나갈 때 묻는다(5차). 예전엔 뒤로 한 번에
     // 사라졌다. 추가에 성공하면 Navigator.pop으로 바로 닫혀 묻지 않는다.
     return ListenableBuilder(
@@ -105,126 +110,172 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
         ].any((c) => c.text.trim().isNotEmpty),
         child: child!,
       ),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('문장 추가'),
-          // 횟수는 단추 셋이 함께 쓰는 것이라 어느 한 단추 옆에 둘 수
-          // 없었다. 화면 머리로 올린다(5차 542, 사용자 요청).
-          actions: [
-            ListenableBuilder(
-              listenable: controller,
-              builder: (context, _) => _UsageAction(controller: controller),
-            ),
-          ],
-        ),
-        // 키보드가 올라와도 가려지지 않게 추가 버튼은 아래에 고정한다.
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-            child: ListenableBuilder(
-              listenable: Listenable.merge([
-                controller.text,
-                controller.translation,
-              ]),
-              builder: (context, _) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FilledButton(
-                    key: const ValueKey('save-sentence'),
-                    onPressed: controller.canSave ? save : null,
-                    style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52)),
-                    child: const Text('추가'),
-                  ),
-                  // 꺼진 버튼만 보고는 무엇이 빠졌는지 알 수 없었다(5차,
-                  // 커뮤니티 글쓰기와 같게).
-                  if (controller.blockedReason case final reason?) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      reason,
-                      key: const ValueKey('add-sentence-blocked-reason'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
+      // 바텀시트로 띄운다(5차 565, 사용자 요청). 단어 추가와 같은 꼴이다.
+      // 시트 밖(테스트)에서도 칸이 그려지게 Material을 하나 둔다. 색은
+      // 시트가 칠하므로 여기서는 비워 둔다.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _header(),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                        20, AppSpacing.lg, 20, AppSpacing.sm),
+                    child: ListenableBuilder(
+                      listenable: controller,
+                      builder: (context, _) => _body(),
                     ),
-                  ],
-                ],
-              ),
+                  ),
+                ),
+                _footer(),
+              ],
             ),
           ),
         ),
-        body: ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) => SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              children: [
-                LearningLanguagePicker(
-                  key: const ValueKey('sentence-language'),
-                  value: controller.language,
-                  onChanged: controller.setLanguage,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  key: const ValueKey('sentence-text'),
-                  controller: controller.text,
-                  style: context.texts.titleLarge,
-                  maxLength: sentenceMaxLength,
-                  maxLines: null,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: '원문',
-                    hintText: '연습할 문장을 적어 주세요',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                TextField(
-                  key: const ValueKey('sentence-translation'),
-                  controller: controller.translation,
-                  style: context.texts.titleMedium,
-                  maxLines: null,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: '뜻',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: controller.fillStatus == AssistStatus.loading
-                        ? const _LoadingDot()
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const ValueKey('sentence-pronunciation'),
-                  controller: controller.pronunciation,
-                  style: context.texts.bodyMedium,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: pronunciationOptionalLabel,
-                    border: const OutlineInputBorder(),
-                    suffixIcon: controller.fillStatus == AssistStatus.loading
-                        ? const _LoadingDot()
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // 단추 하나가 셋을 다 한다(5차 545, 사용자 요청). 어느 한
-                // 칸에 매이지 않으므로 세 칸 아래에 가로로 길게 둔다.
-                ListenableBuilder(
-                  listenable: Listenable.merge([
-                    controller.text,
-                    controller.translation,
-                    controller.pronunciation,
-                  ]),
-                  builder: (context, _) =>
-                      _AutoFillCard(controller: controller),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                    child: Text('원문과 뜻은 꼭 필요해요. 발음은 비워도 돼요.',
-                        style: context.texts.bodySmall.copyWith(color: muted))),
-              ],
+      ),
+    );
+  }
+
+  /// 머리. 제목과 오늘 쓴 횟수를 한 줄에 둔다(5차 542·565).
+  Widget _header() => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text('문장 추가', style: context.texts.titleLarge),
             ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: context.tokens.surfaceContainer,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+              ),
+              child: ListenableBuilder(
+                listenable: controller,
+                builder: (context, _) => _UsageAction(controller: controller),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _body() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LearningLanguagePicker(
+            key: const ValueKey('sentence-language'),
+            value: controller.language,
+            onChanged: controller.setLanguage,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          // 꼭 적어야 하는 칸만 별표를 단다(5차 565, 사용자 요청).
+          // 테두리는 없애고 면으로 그린다. 단어 추가와 같은 꼴이다.
+          TextField(
+            key: const ValueKey('sentence-text'),
+            controller: controller.text,
+            style: context.texts.titleMedium,
+            maxLength: sentenceMaxLength,
+            maxLines: null,
+            textInputAction: TextInputAction.next,
+            decoration: filledInputDecoration(
+              context,
+              label: requiredFieldLabel('원문'),
+              hint: '연습할 문장을 적어 주세요',
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            key: const ValueKey('sentence-translation'),
+            controller: controller.translation,
+            style: context.texts.bodyLarge,
+            maxLines: null,
+            textInputAction: TextInputAction.next,
+            decoration: filledInputDecoration(
+              context,
+              label: requiredFieldLabel('뜻'),
+              suffixIcon: controller.fillStatus == AssistStatus.loading
+                  ? const _LoadingDot()
+                  : null,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            key: const ValueKey('sentence-pronunciation'),
+            controller: controller.pronunciation,
+            style: context.texts.bodyMedium,
+            textInputAction: TextInputAction.done,
+            decoration: filledInputDecoration(
+              context,
+              label: wordPronunciationLabel,
+              hint: '한글로 소리 나는 대로',
+              suffixIcon: controller.fillStatus == AssistStatus.loading
+                  ? const _LoadingDot()
+                  : null,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          // 단추 하나가 셋을 다 한다(5차 545, 사용자 요청). 어느 한
+          // 칸에 매이지 않으므로 세 칸 아래에 가로로 길게 둔다.
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              controller.text,
+              controller.translation,
+              controller.pronunciation,
+            ]),
+            builder: (context, _) => _AutoFillCard(controller: controller),
+          ),
+        ],
+      );
+
+  /// 바닥. 키보드가 올라와도 추가 단추는 제자리에 있는다.
+  Widget _footer() {
+    final cs = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(top: BorderSide(color: context.tokens.dividerSubtle)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+        child: ListenableBuilder(
+          listenable: Listenable.merge([
+            controller.text,
+            controller.translation,
+          ]),
+          builder: (context, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const ValueKey('save-sentence'),
+                  onPressed: controller.canSave ? save : null,
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52)),
+                  child: const Text('추가'),
+                ),
+              ),
+              // 꺼진 버튼만 보고는 무엇이 빠졌는지 알 수 없었다(5차,
+              // 커뮤니티 글쓰기와 같게).
+              if (controller.blockedReason case final reason?) ...[
+                const SizedBox(height: AppSpacing.xs + 2),
+                Text(
+                  reason,
+                  key: const ValueKey('add-sentence-blocked-reason'),
+                  textAlign: TextAlign.center,
+                  style: context.texts.bodySmall
+                      .copyWith(color: cs.onSurfaceVariant),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -300,10 +351,10 @@ class _UsageAction extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final used = controller.usedToday;
     final limit = controller.dailyLimit;
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: Center(
-        child: used != null && limit != null
+    return Center(
+      widthFactor: 1,
+      child: Builder(
+        builder: (context) => used != null && limit != null
             // 숫자만 있으면("0 / 3") 쓴 횟수인지 남은 횟수인지 알 수 없었다.
             // 단어 추가 시트와 같은 꼴로 적는다(5차 560, 사용자 요청).
             // 전에는 여기만 '오늘 2/3회 +1'이라고 말이 길었다.

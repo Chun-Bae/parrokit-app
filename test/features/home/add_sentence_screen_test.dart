@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/settings/subscription/presentation/providers/subscription_provider.dart';
@@ -194,37 +195,40 @@ void main() {
         isNull);
   });
 
+  // 이제 바텀시트로 뜬다(5차 565). 기기의 뒤로 가기를 흉내 내어 연다·닫는다.
   testWidgets('원문을 적고 뒤로 가면 버릴지 묻고, 비어 있으면 바로 닫힌다', (tester) async {
     await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (context) => TextButton(
-          onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                  builder: (_) => const AddSentenceScreen(language: '영어'))),
-          child: const Text('열기'),
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showAppSheet<void>(
+              context: context,
+              builder: (_) => const AddSentenceScreen(language: '영어'),
+            ),
+            child: const Text('열기'),
+          ),
         ),
       ),
     ));
     await tester.tap(find.text('열기'));
     await tester.pumpAndSettle();
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('쓰던 내용을 버릴까요?'), findsNothing);
-    expect(find.text('열기'), findsOneWidget);
+    expect(find.byKey(const ValueKey('sentence-text')), findsNothing);
 
     await tester.tap(find.text('열기'));
     await tester.pumpAndSettle();
     await tester.enterText(
         find.byKey(const ValueKey('sentence-text')), 'Hello');
     await tester.pump();
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('쓰던 내용을 버릴까요?'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('draft-discard')));
     await tester.pumpAndSettle();
-    expect(find.text('열기'), findsOneWidget);
+    expect(find.byKey(const ValueKey('sentence-text')), findsNothing);
   });
 
   testWidgets('무료 사용자가 횟수를 다 쓰면 구독 길을 한 줄로 알린다', (tester) async {
