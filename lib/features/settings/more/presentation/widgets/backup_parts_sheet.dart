@@ -70,7 +70,7 @@ class _BackupPartsSheetState extends State<BackupPartsSheet> {
               keyValue: const ValueKey('backup-part-sentences'),
               icon: Icons.format_quote_rounded,
               title: '내 문장',
-              subtitle: '문장과 뜻·발음. 연습 기록은 담지 않아요',
+              subtitle: '문장과 뜻·발음, 친밀도와 연습 기록',
               value: parts.sentences,
               onChanged: (v) => setState(() => parts = parts.copyWith(
                     sentences: v,
@@ -80,7 +80,7 @@ class _BackupPartsSheetState extends State<BackupPartsSheet> {
               keyValue: const ValueKey('backup-part-words'),
               icon: Icons.spellcheck_rounded,
               title: '내 단어',
-              subtitle: '단어와 뜻·유의어·예문. 복습 진도는 담지 않아요',
+              subtitle: '단어와 뜻·유의어·예문, 복습 진도',
               value: parts.words,
               onChanged: (v) =>
                   setState(() => parts = parts.copyWith(words: v)),

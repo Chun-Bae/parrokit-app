@@ -15,6 +15,31 @@ void main() {
     MyWordStore.cloud = null;
   });
 
+  // 단어 발음이 빠져 있었다(5차 566). 문장은 담는데 단어만 빠뜨려서,
+  // 파일로 옮기거나 백업에서 되돌리면 적어 둔 발음이 사라졌다.
+  test('단어 발음도 함께 담고 되돌린다', () async {
+    await MyWordStore.add('me',
+        language: '영어', word: 'huge', meaning: '거대한', pronunciation: '휴지');
+
+    final json = await exportStudyData('me');
+    expect(json, contains('휴지'));
+
+    SharedPreferences.setMockInitialValues({});
+    await importStudyData('me', json);
+
+    final word = (await MyWordStore.loadFor('me', '영어')).single;
+    expect(word.pronunciation, '휴지');
+  });
+
+  test('발음이 없는 예전 파일도 읽는다', () async {
+    const old = '{"version":1,"words":[{"language":"영어","word":"huge"}]}';
+
+    final count = await importStudyData('me', old);
+
+    expect(count.words, 1);
+    expect((await MyWordStore.loadFor('me', '영어')).single.pronunciation, '');
+  });
+
   test('담았다가 그대로 되돌린다', () async {
     await MySentenceStore.add('me',
         language: '영어', text: 'Nice to meet you.', translation: '만나서 반가워요.');

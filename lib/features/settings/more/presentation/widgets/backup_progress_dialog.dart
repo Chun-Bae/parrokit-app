@@ -21,6 +21,7 @@
 // ============================================================================
 
 import 'package:parrokit/core/shared/utils/action_failed_text.dart';
+import 'package:parrokit/core/shared/utils/korean_josa.dart';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -59,6 +60,18 @@ bool _isUserFacingMessage(String message) {
   return true;
 }
 
+/// 되돌리기가 진도를 덮어쓴다는 안내. 고른 갈래에 맞춰 적는다.
+String backupProgressOverwriteNotice(BackupParts parts) {
+  final what = <String>[
+    if (parts.sentences) '친밀도와 연습 기록',
+    if (parts.words) '복습 진도',
+  ];
+  // eunNeun은 조사만이 아니라 말과 조사를 함께 돌려준다. 앞에 말을 또
+  // 붙이면 두 번 적힌다(기기에서 봤다, 5차 566).
+  final subject = eunNeun(what.join(', '));
+  return '$subject 백업 때의 것으로 바뀌어요. 그 뒤에 쌓은 것은 사라져요.';
+}
+
 /// 확인 창에 적을 안내. 고른 것만 말한다(5차 521).
 ///
 /// 순수 함수로 둬서 조합마다 글을 테스트로 지킬 수 있게 한다.
@@ -78,6 +91,10 @@ String backupDialogDescription({
   lines.add('백업해 둔 파일(.zip)에서 앞에서 고른 것만 불러와요.');
   if (parts.needsStudyFile) {
     lines.add('문장과 단어는 없는 것만 더해요(같은 것은 건너뛰어요).');
+    // 문장·단어는 더하지만 진도는 **덮어쓴다**. 둘이 다르게 움직이는데
+    // 한 줄로 뭉뚱그리면, 오늘 쌓은 기록이 백업 때로 되돌아간 것을
+    // 뒤늦게 알게 된다(5차 566).
+    lines.add(backupProgressOverwriteNotice(parts));
   }
   if (parts.clips) {
     lines.add('클립과 자막은 지금 기기의 것이 모두 지워지고 백업 때의 것으로 바뀌어요. '

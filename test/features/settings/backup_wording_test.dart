@@ -94,14 +94,81 @@ void main() {
     }
   });
 
-  test('문장·단어는 study.json 한 곳을 거쳐 담긴다', () {
-    // 설정(SharedPreferences)을 통째로 담지 않는다. 담는 것은 study_data_transfer가
-    // 만든 글 하나뿐이고, 예전 백업에는 그 파일이 없다.
+  test('문장·단어와 진도는 각자 한 곳을 거쳐 담긴다', () {
+    // 설정(SharedPreferences)을 통째로 담지 않는다. 담는 것은
+    // study_data_transfer가 만든 글과 progress_transfer가 고른 진도뿐이고,
+    // 예전 백업에는 두 파일이 없다.
     final code = File('lib/core/infrastructure/services/backup_service.dart')
         .readAsStringSync();
     expect(code.contains('SharedPreferences'), isFalse,
         reason: '설정까지 담게 되면 안내도 함께 고쳐야 한다');
     expect(code, contains('studyDataFileName'));
+    expect(code, contains('progressDataFileName'));
     expect(code, contains('BackupParts.fromManifest'));
+  });
+
+  // 문장·단어는 더하지만 진도는 덮어쓴다. 한 줄로 뭉뚱그리면 오늘 쌓은
+  // 기록이 백업 때로 되돌아간 것을 뒤늦게 알게 된다(5차 566).
+  group('불러오기가 진도를 덮어쓴다고 알린다', () {
+    String restoreText(BackupParts parts) => backupDialogDescription(
+          type: BackupDialogType.restore,
+          parts: parts,
+        );
+
+    test('문장과 단어를 다 고르면 둘 다 적는다', () {
+      final text = restoreText(
+          const BackupParts(sentences: true, words: true, clips: false));
+      expect(text, contains('친밀도와 연습 기록'));
+      expect(text, contains('복습 진도'));
+      expect(text, contains('그 뒤에 쌓은 것은 사라져요'));
+    });
+
+    test('문장만 고르면 복습 진도는 말하지 않는다', () {
+      final text = restoreText(
+          const BackupParts(sentences: true, words: false, clips: false));
+      expect(text, contains('친밀도와 연습 기록'));
+      expect(text, isNot(contains('복습 진도')));
+    });
+
+    test('단어만 고르면 친밀도는 말하지 않는다', () {
+      final text = restoreText(
+          const BackupParts(sentences: false, words: true, clips: false));
+      expect(text, contains('복습 진도'));
+      expect(text, isNot(contains('친밀도')));
+    });
+
+    // '복습 진도은(는)'처럼 적히면 앱의 다른 글과 어긋난다.
+    // 기기에서 '복습 진도친밀도와 연습 기록, 복습 진도는'처럼 두 번 적혔다.
+    test('말을 두 번 적지 않는다', () {
+      final text = restoreText(
+          const BackupParts(sentences: true, words: true, clips: false));
+      expect('복습 진도'.allMatches(text).length, 1);
+      expect('친밀도'.allMatches(text).length, 1);
+    });
+
+    test('조사를 끝 글자에 맞춘다', () {
+      expect(
+          restoreText(
+              const BackupParts(sentences: true, words: true, clips: false)),
+          contains('복습 진도는 백업 때의 것으로'));
+      expect(
+          restoreText(
+              const BackupParts(sentences: true, words: false, clips: false)),
+          contains('연습 기록은 백업 때의 것으로'));
+    });
+
+    test('클립만 고르면 진도 이야기는 없다', () {
+      final text = restoreText(
+          const BackupParts(sentences: false, words: false, clips: true));
+      expect(text, isNot(contains('사라져요')));
+    });
+
+    test('백업하는 쪽에는 이 경고가 없다', () {
+      final text = backupDialogDescription(
+        type: BackupDialogType.backup,
+        parts: const BackupParts(sentences: true, words: true, clips: true),
+      );
+      expect(text, isNot(contains('사라져요')));
+    });
   });
 }

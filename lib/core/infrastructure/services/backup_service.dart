@@ -25,6 +25,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:restart_app/restart_app.dart';
 
+import 'package:parrokit/core/content/progress_transfer.dart';
 import 'package:parrokit/core/content/study_data_transfer.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/core/infrastructure/services/backup_cancelled.dart';
@@ -69,6 +70,9 @@ class BackupCompressParams {
   /// 문장·단어를 담은 글(없으면 담지 않는다, 5차 345).
   final String? studyJson;
 
+  /// 친밀도·XP·복습 진도를 담은 글(없으면 담지 않는다, 5차 566).
+  final String? progressJson;
+
   /// 이 백업에 담은 것('clips', 'sentences', 'words').
   final List<String> parts;
 
@@ -81,6 +85,7 @@ class BackupCompressParams {
     required this.mediaRelativeDir,
     required this.timestamp,
     this.studyJson,
+    this.progressJson,
     this.parts = const ['clips'],
   });
 }
@@ -99,7 +104,21 @@ class BackupService {
   // Constants
   // ───────────────────────────────────────────────────────────────────────────
 
-  final String dbRelativePath = 'paro.db';
+  /// 실제 Drift 데이터베이스 파일 이름(app_database.dart가 여는 그 파일).
+  ///
+  /// 'paro.db'로 적혀 있었다(5차 566). 그 이름의 파일은 없으므로 백업은
+  /// DB 갈래를 한 번도 타지 않았고, manifest에는 담지도 않은 'paro.db'가
+  /// 적혔다. 클립이 살아남은 것은 미디어 훑기가 Documents 전체를 쓸어
+  /// 담으면서 app.db까지 따라 들어갔기 때문이다.
+  ///
+  /// 더 나쁜 것은 **되돌리기 안전망이 꺼져 있던 것**이다. 복원 전에
+  /// 지금 DB를 복사해 두는 코드가 'paro.db'를 찾다 없어서 그냥 넘어갔고,
+  /// 복원이 중간에 엎어지면 반쯤 섞인 자료로 돌아올 길이 없었다(5차 387에서
+  /// 넣은 보호가 이름이 바뀌며 조용히 죽어 있었다).
+  final String dbRelativePath = 'app.db';
+
+  /// 예전 백업이 쓰던 이름. 그 파일로 담긴 zip도 되돌릴 수 있어야 한다.
+  static const String legacyDbRelativePath = 'paro.db';
   final String mediaRelativeDir = '';
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -206,6 +225,13 @@ class BackupService {
             sentences: parts.sentences, words: parts.words)
         : null;
 
+    // 진도는 문장을 담을 때 함께 담는다. 문장 없이 친밀도만 있어도
+    // 쓸 데가 없다(5차 566).
+    final progressJson = parts.needsStudyFile
+        ? await exportProgress(
+            sentences: parts.sentences, words: parts.words)
+        : null;
+
     // compute()로 별도 Isolate에서 압축 실행
     await compute(
       compressBackup,
@@ -213,6 +239,7 @@ class BackupService {
         zipPath: backupZipPath,
         dbPath: parts.clips && await db.exists() ? db.path : null,
         studyJson: studyJson,
+        progressJson: progressJson,
         parts: parts.names,
         dbRelativePath: dbRelativePath,
         mediaPath: media.path,
@@ -330,6 +357,20 @@ class BackupService {
           a.ArchiveFile(studyDataFileName, bytes.length, bytes));
       entries.add({
         'path': studyDataFileName,
+        'sha256': sha256.convert(bytes).toString(),
+        'bytes': bytes.length,
+      });
+    }
+
+    // 학습 진도. 문장·단어와 함께 담는다 - 문장만 돌아오고 익힌 기록이
+    // 사라지면 되돌린 것이 아니다(5차 566).
+    final progressJson = params.progressJson;
+    if (progressJson != null) {
+      final bytes = utf8.encode(progressJson);
+      encoder.addArchiveFile(
+          a.ArchiveFile(progressDataFileName, bytes.length, bytes));
+      entries.add({
+        'path': progressDataFileName,
         'sha256': sha256.convert(bytes).toString(),
         'bytes': bytes.length,
       });
@@ -553,6 +594,22 @@ class BackupService {
       }
     }
 
+    // 진도 되돌리기. 백업에 없는 칸은 건드리지 않는다(5차 566).
+    if (restoring.needsStudyFile) {
+      final progressFile = File(p.join(manifestDir.path, progressDataFileName));
+      if (await progressFile.exists()) {
+        try {
+          await importProgress(
+            await progressFile.readAsString(),
+            sentences: restoring.sentences,
+            words: restoring.words,
+          );
+        } catch (_) {
+          // 진도를 못 읽어도 나머지 되돌리기는 이어 간다.
+        }
+      }
+    }
+
     // 클립을 고르지 않았으면 파일은 건드리지 않는다(앱도 다시 켜지 않는다).
     if (!restoring.clips) {
       try {
@@ -618,17 +675,21 @@ class BackupService {
         } catch (_) {}
       }
 
-      // paro.db 보장
+      // DB가 제자리에 놓였는지 본다. 예전 백업은 'paro.db'로 담겨 있어
+      // 그 이름도 함께 찾는다(5차 566).
       final dbRel = dbRelativePath;
       final dbSrc = File(p.join(tmpDir.path, dbRel));
       final dbDst = File(p.join(appDir.path, dbRel));
-      if (!await dbSrc.exists()) {
+      if (!await dbSrc.exists() && !await dbDst.exists()) {
         ArchiveFile? dbEntry;
-        for (final f in archive.files) {
-          if (f.isFile && f.name.replaceAll('\\', '/') == dbRel) {
-            dbEntry = f;
-            break;
+        for (final name in [dbRel, legacyDbRelativePath]) {
+          for (final f in archive.files) {
+            if (f.isFile && f.name.replaceAll('\\', '/') == name) {
+              dbEntry = f;
+              break;
+            }
           }
+          if (dbEntry != null) break;
         }
         if (dbEntry != null) {
           await dbDst.parent.create(recursive: true);
@@ -680,8 +741,9 @@ class BackupService {
           in appDir.list(recursive: false, followLinks: false)) {
         final name = p.basename(ent.path);
         final isTempDir = ent is Directory && name.startsWith('.restore_tmp_');
-        final isOldDbCopy =
-            ent is File && name.startsWith('$dbRelativePath.bak_');
+        final isOldDbCopy = ent is File &&
+            (name.startsWith('$dbRelativePath.bak_') ||
+                name.startsWith('$legacyDbRelativePath.bak_'));
         if (!isTempDir && !isOldDbCopy) continue;
         try {
           if (ent is Directory) {

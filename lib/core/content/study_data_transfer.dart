@@ -49,6 +49,10 @@ Future<String> exportStudyData(
           'language': w.language,
           'word': w.word,
           'meaning': w.meaning,
+          // 발음이 빠져 있었다(5차 566). 문장은 담는데 단어만 빠뜨려서,
+          // 파일로 옮기거나 백업에서 되돌리면 적어 둔 발음이 사라졌다.
+          // '뜻·발음 생성'으로 채운 것도 함께 사라진다.
+          'pronunciation': w.pronunciation,
           'topic': w.topic,
           'synonyms': w.synonyms,
           'examples': [
@@ -114,6 +118,8 @@ Future<StudyRestoreCount> importStudyData(
         language: language,
         word: word,
         meaning: item['meaning'] as String? ?? '',
+        // 예전 파일에는 이 칸이 없다. 없으면 빈 값으로 둔다.
+        pronunciation: item['pronunciation'] as String? ?? '',
         topic: item['topic'] as String? ?? '내 단어',
         synonyms: [
           for (final s in (item['synonyms'] as List? ?? const []))
