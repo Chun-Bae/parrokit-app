@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/shared/utils/app_logger.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
+import 'package:parrokit/core/shared/widgets/reward_celebration.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/core/infrastructure/services/ad_service.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
@@ -108,7 +110,8 @@ class _AdRewardButtonState extends State<AdRewardButton> {
         // 쿨다운 기록은 화면 수명과 상관없이 한다.
         if (AdService.serverCreditsReward) {
           // 서버가 AdMob 확인을 받고 지급한다. 잔액은 사용자 문서 구독으로
-          // 곧 바뀐다.
+          // 곧 바뀐다. 아직 안 들어온 것을 '짜잔'으로 띄우면 거짓이 되므로
+          // 이쪽은 글 한 줄로 둔다.
           showToast('패롯 $coins개를 곧 받아요!');
         } else {
           try {
@@ -118,7 +121,17 @@ class _AdRewardButtonState extends State<AdRewardButton> {
             showToast('광고 보상 지급에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
             return;
           }
-          showToast('패롯 $coins개를 받았어요!');
+          // 단어 복습을 마쳤을 때와 같은 덮개로 띄운다(5차 568, 사용자 요청).
+          // 토스트 한 줄은 광고가 닫히는 어수선한 순간에 묻혔다.
+          if (mounted) {
+            await showRewardCelebration(
+              context,
+              amount: coins,
+              currency: Currency.parrot,
+            );
+          } else {
+            showToast('패롯 $coins개를 받았어요!');
+          }
         }
 
         final prefs = await SharedPreferences.getInstance();

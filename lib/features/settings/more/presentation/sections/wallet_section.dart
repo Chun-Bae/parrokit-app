@@ -122,8 +122,11 @@ class WalletSection extends StatelessWidget {
                 Expanded(
                   child: FilledButton.icon(
                     style: buttonStyle,
-                    onPressed: () => Navigator.push(
-                      context,
+                    // 루트로 띄운다(5차 566, 사용자 지적). 탭 안쪽으로
+                    // 밀면 셸이 그리는 네이티브 탭 바가 환전소 위에
+                    // 그대로 남아, 돈을 다루는 화면에서 다른 탭이 눌렸다.
+                    onPressed: () => Navigator.of(context, rootNavigator: true)
+                        .push(
                       MaterialPageRoute(
                           builder: (context) => const ExchangeScreen()),
                     ),

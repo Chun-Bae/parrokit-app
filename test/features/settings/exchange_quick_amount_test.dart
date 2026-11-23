@@ -81,4 +81,40 @@ void _josaTests() {
       expect(code, contains("import 'package:parrokit/core/shared/utils/korean_josa.dart'"));
     });
   });
+
+  // 칩은 적어 둔 수에 더한다(5차 566, 사용자 요청). 막혔는지도 더한
+  // 뒤로 따져야 한다 - 5를 두 번 눌러 10이 되는데 가진 게 7이면 막는다.
+  group('칩을 더할 때', () {
+    test('더한 수가 가진 것보다 많으면 막는다', () {
+      expect(
+        quickStepBlockedReason(
+            unit: '패롯', balance: 7, step: 5, current: 5),
+        isNotNull,
+      );
+    });
+
+    test('더해도 가진 것 안이면 열어 둔다', () {
+      expect(
+        quickStepBlockedReason(
+            unit: '패롯', balance: 7, step: 5, current: 2),
+        isNull,
+      );
+    });
+
+    test('아직 아무것도 안 적었으면 전과 같다', () {
+      expect(
+        quickStepBlockedReason(unit: '패롯', balance: 3, step: 5),
+        quickStepBlockedReason(
+            unit: '패롯', balance: 3, step: 5, current: 0),
+      );
+    });
+
+    test('막힌 까닭에 더한 수를 적는다', () {
+      expect(
+        quickStepBlockedReason(
+            unit: '크래커', balance: 1000, step: 1000, current: 1000),
+        contains('2,000'),
+      );
+    });
+  });
 }

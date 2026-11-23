@@ -8,6 +8,8 @@ import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/sentence_history.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
+import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_collection_preview.dart'
+    show showSentenceDetails;
 
 /// 캐릭터 아래에서 내가 연습한 문장의 기록을 한눈에 보여주는 대시보드.
 class SentenceHistoryDashboard extends StatefulWidget {
@@ -154,13 +156,15 @@ class _SentenceHistoryDashboardState extends State<SentenceHistoryDashboard> {
                 in widget.compact ? data.recent.take(3) : data.recent)
               _HistoryRow(
                   item: item,
+                  accountId: widget.accountId,
                   bestScore: practice?.bestScores[item.sentence.id]),
           ],
           if (data.needsWork.isNotEmpty && !widget.compact) ...[
             const SizedBox(height: 16),
             const _SectionTitle('따라 말해보면 좋은 문장'),
             for (final item in data.needsWork)
-              _HistoryRow(item: item, showListen: true),
+              _HistoryRow(
+                  item: item, accountId: widget.accountId, showListen: true),
           ],
         ],
       ]),
@@ -305,8 +309,15 @@ class _AttemptLine extends StatelessWidget {
 
 class _HistoryRow extends StatelessWidget {
   const _HistoryRow(
-      {required this.item, this.showListen = false, this.bestScore});
+      {required this.item,
+      required this.accountId,
+      this.showListen = false,
+      this.bestScore});
   final SentenceHistoryItem item;
+
+  /// 줄을 누르면 보관함과 같은 문장 시트를 연다. 전에는 이 줄이 아무
+  /// 반응도 없어서 "눌러도 안 열린다"로 보였다(5차 566).
+  final String accountId;
   final bool showListen;
 
   /// 이 문장의 최고 인식 일치율(0~1). 기록이 없으면 null.
@@ -321,34 +332,38 @@ class _HistoryRow extends StatelessWidget {
         : '${last == null ? '' : '${relativeDayLabel(DateTime.now(), last)} · '}'
             '따라 말하기 ${item.activity.practiceCount}회'
             '${bestScoreLabel(bestScore)}';
-    return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(children: [
-          Container(
-              width: 4,
-              height: 34,
-              decoration: BoxDecoration(
-                  color: masteryColor(context, item.mastery),
-                  borderRadius: BorderRadius.circular(AppRadius.track))),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(item.sentence.text,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style:
-                        context.texts.bodyMedium.copyWith(color: palette.ink)),
-                const SizedBox(height: 2),
-                Text(detail,
-                    style: context.texts.labelSmall
-                        .copyWith(color: palette.muted)),
-              ])),
-          Text(item.mastery.label,
-              style: context.texts.labelSmall
-                  .copyWith(color: masteryTextColor(context, item.mastery))),
-        ]));
+    return InkWell(
+        onTap: () => showSentenceDetails(context,
+            sentence: item.sentence, accountId: accountId),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(children: [
+              Container(
+                  width: 4,
+                  height: 34,
+                  decoration: BoxDecoration(
+                      color: masteryColor(context, item.mastery),
+                      borderRadius: BorderRadius.circular(AppRadius.track))),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(item.sentence.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.texts.bodyMedium
+                            .copyWith(color: palette.ink)),
+                    const SizedBox(height: 2),
+                    Text(detail,
+                        style: context.texts.labelSmall
+                            .copyWith(color: palette.muted)),
+                  ])),
+              Text(item.mastery.label,
+                  style: context.texts.labelSmall.copyWith(
+                      color: masteryTextColor(context, item.mastery))),
+            ])));
   }
 }
 

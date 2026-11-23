@@ -238,8 +238,9 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
                         ? const SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(strokeWidth: 2))
-                        : _buyLabel(
-                            AssistKind.meaning, assistCreditBuyLabel(1)),
+                        : _buyLabel(AssistKind.meaning,
+                            assistCreditBuyLabel(1),
+                            semantics: assistCreditBuySemantics(1)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -252,8 +253,9 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
                         ? const SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(strokeWidth: 2))
-                        : _buyLabel(
-                            AssistKind.example, exampleCreditBuyLabel(1)),
+                        : _buyLabel(AssistKind.example,
+                            exampleCreditBuyLabel(1),
+                            semantics: exampleCreditBuySemantics(1)),
                   ),
                 ),
               ],
@@ -299,13 +301,20 @@ ButtonStyle _buyButtonStyle(BuildContext context, ColorScheme cs) =>
     );
 
 /// 사기 단추 속 그림 + 말. 두 단추가 좁게 나란히 서므로 그림은 작게 둔다.
-Widget _buyLabel(AssistKind kind, String text) => Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AssistIcon(kind, size: 16),
-        const SizedBox(width: 6),
-        Flexible(child: Text(text, overflow: TextOverflow.ellipsis)),
-      ],
+Widget _buyLabel(AssistKind kind, String text, {required String semantics}) =>
+    Semantics(
+      label: semantics,
+      // 글은 '+5'뿐이라 눈으로는 옆 그림이 무엇인지 말해 주지만,
+      // 읽어 주는 쪽에는 그 그림이 없다(5차 567).
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AssistIcon(kind, size: 16),
+          const SizedBox(width: 6),
+          Flexible(child: Text(text, overflow: TextOverflow.ellipsis)),
+        ],
+      ),
     );
 
 class _UsageRow extends StatelessWidget {

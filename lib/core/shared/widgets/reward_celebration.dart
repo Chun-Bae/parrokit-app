@@ -1,7 +1,10 @@
-// 크래커를 받았을 때 '짜잔' 하고 한 번 보여 주는 덮개(5차 509, 사용자 요청).
+// 무언가를 받았을 때 '짜잔' 하고 한 번 보여 주는 덮개(5차 509, 사용자 요청).
 //
 // 복습을 마치면 받은 크래커를 글 한 줄로만 적었다. 받은 것이 눈에 안 띄어서
 // 뭘 받았는지 모르고 닫는 일이 많았다. 마친 그 순간에 가운데로 크게 띄운다.
+//
+// 광고를 보고 받는 패롯도 토스트 한 줄이라 같은 처지였다. 재화를 가려
+// 받으므로 크래커와 패롯이 같은 꼴로 뜬다(5차 568, 사용자 요청).
 //
 // 애니메이션을 끈 기기(MediaQuery.disableAnimations)에서는 움직임 없이 바로
 // 제 크기로 보여 준다.
@@ -16,27 +19,35 @@ import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 /// 덮개가 저절로 사라지기까지. 누르면 바로 닫힌다.
 const Duration rewardCelebrationStay = Duration(seconds: 3);
 
-/// 받은 크래커를 가운데에 띄운다. [crackers]가 0 이하면 아무것도 하지 않는다.
+/// 받은 것을 가운데에 띄운다. [amount]가 0 이하면 아무것도 하지 않는다.
 ///
 /// 시트 위에 띄워야 해서 rootNavigator를 쓰지 않는다. 띄운 화면이 사라지면
 /// 함께 사라진다.
 Future<void> showRewardCelebration(
   BuildContext context, {
-  required int crackers,
+  required int amount,
+  Currency currency = Currency.cracker,
 }) {
-  if (crackers <= 0) return Future.value();
+  if (amount <= 0) return Future.value();
   return showDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierColor: Colors.black54,
-    builder: (_) => _RewardCelebration(crackers: crackers),
+    builder: (_) => _RewardCelebration(amount: amount, currency: currency),
   );
 }
 
-class _RewardCelebration extends StatefulWidget {
-  const _RewardCelebration({required this.crackers});
+/// 덮개 가운데에 적는 말. 크래커는 연습 보상과 같은 꼴을 쓴다.
+String rewardCelebrationAmount(Currency currency, int amount) =>
+    currency == Currency.cracker ?
+        practiceRewardEarned(amount) :
+        '${currency.label} +$amount';
 
-  final int crackers;
+class _RewardCelebration extends StatefulWidget {
+  const _RewardCelebration({required this.amount, required this.currency});
+
+  final int amount;
+  final Currency currency;
 
   @override
   State<_RewardCelebration> createState() => _RewardCelebrationState();
@@ -99,7 +110,7 @@ class _RewardCelebrationState extends State<_RewardCelebration>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CurrencyIcon(Currency.cracker, size: 56),
+                  CurrencyIcon(widget.currency, size: 56),
                   const SizedBox(height: 12),
                   Text('짜잔!',
                       key: const ValueKey('reward-celebration-title'),
@@ -109,7 +120,7 @@ class _RewardCelebrationState extends State<_RewardCelebration>
                       )),
                   const SizedBox(height: 4),
                   Text(
-                    practiceRewardEarned(widget.crackers),
+                    rewardCelebrationAmount(widget.currency, widget.amount),
                     key: const ValueKey('reward-celebration-amount'),
                     style: context.texts.headlineSmall.copyWith(
                       color: Colors.white,

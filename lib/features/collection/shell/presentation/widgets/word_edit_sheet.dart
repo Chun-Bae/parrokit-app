@@ -24,6 +24,7 @@ import 'package:parrokit/core/shared/utils/action_failed_text.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/optional_field_label.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
+import 'package:parrokit/core/shared/widgets/sheet_scroll_body.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/example_count_sheet.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/word_collection_preview.dart';
 
@@ -543,7 +544,7 @@ class _WordEditSheetState extends State<WordEditSheet> {
               ),
             ),
             Flexible(
-              child: SingleChildScrollView(
+              child: SheetScrollBody(
                 padding: const EdgeInsets.fromLTRB(
                     20, AppSpacing.lg, 20, AppSpacing.sm),
                 child: Column(

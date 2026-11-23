@@ -37,11 +37,14 @@ int exampleCreditGain(int packs) => exampleCreditPackCredits * packs;
 
 /// 사기 단추에 적을 말(5차 536).
 ///
-/// 두 단추를 가로로 나란히 두면서 줄였다(사용자 요청). 값은 둘 다 같은
-/// 3패롯이라 단추마다 되풀이하지 않고 카드 안내 줄에 한 번만 적는다.
-/// 단위는 '번'으로 맞춘다(5차 562, 사용자 요청). 한도를 적는 자리에서
-/// 뜻·발음·원문은 '번', 예문은 '개'로 갈려 있었다.
-String exampleCreditBuyLabel(int packs) =>
+/// 무엇을 사는지는 단추 안 그림이 말한다. 글은 **몇 번이 느는지**만
+/// 적는다(5차 567, 사용자 요청). 이름까지 넣으면 두 단추가 가로로
+/// 나란히 설 자리에 안 들어가, 실기기에서 글씨가 잘렸다.
+/// 값은 둘 다 같은 3패롯이라 카드 안내 줄에 한 번만 적는다.
+String exampleCreditBuyLabel(int packs) => '+${exampleCreditGain(packs)}';
+
+/// 그림만으로는 읽어 주지 못하는 곳(스크린 리더)에 쓸 말.
+String exampleCreditBuySemantics(int packs) =>
     '예문 +${exampleCreditGain(packs)}번';
 
 /// 한 묶음 값. 두 단추가 같은 값이라 안내 줄에 한 번만 적는다.
@@ -51,7 +54,10 @@ String creditPackPriceHint(int packs) =>
 int assistCreditCost(int packs) => assistCreditPackParrots * packs;
 int assistCreditGain(int packs) => assistCreditPackCredits * packs;
 
-String assistCreditBuyLabel(int packs) =>
+String assistCreditBuyLabel(int packs) => '+${assistCreditGain(packs)}';
+
+/// 그림만으로는 읽어 주지 못하는 곳에 쓸 말.
+String assistCreditBuySemantics(int packs) =>
     '$fillBasicsSubject +${assistCreditGain(packs)}번';
 
 /// 뜻·발음 몫을 살 수 없을 때. 살 수 있으면 null.

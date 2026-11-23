@@ -40,6 +40,14 @@ void main() {
     expect(find.text('카페에서'), findsOneWidget);
   });
 
+  // 멈췄는데 '듣는 중'이라 적으면 옆의 ▶ 단추와 말이 갈린다(5차 566).
+  testWidgets('멈추면 머리말도 멈췄다고 적는다', (tester) async {
+    await _open(tester, playing: false);
+
+    expect(find.text(listeningBarPausedHint), findsOneWidget);
+    expect(find.text(listeningBarHint), findsNothing);
+  });
+
   testWidgets('듣는 중이면 멈춤, 멈췄으면 이어 듣기', (tester) async {
     await _open(tester, playing: true);
     expect(

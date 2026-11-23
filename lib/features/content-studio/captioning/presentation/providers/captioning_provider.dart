@@ -1,3 +1,4 @@
+import 'package:parrokit/features/content-studio/captioning/domain/caption_draft_notice.dart';
 import 'package:parrokit/features/content-studio/captioning/data/constants/edit_strings.dart';
 import 'dart:async';
 // ============================================================================
@@ -279,16 +280,17 @@ class CaptioningProvider extends ChangeNotifier
 
         // 패롯은 서버(generateCaptions)가 자막을 만든 뒤 깎았다. 모자라면
         // 가진 만큼만 깎는다. 잔액은 사용자 문서 구독으로 반영된다.
+        //
+        // 해석·발음이 비어 오면 그 자리에서 함께 말한다. 안 그러면
+        // 패롯을 쓰고 '완료'를 본 뒤에야 저장이 막힌 것을 안다(5차 567).
         final charged = result.coinCost;
-        if (charged > 0) {
-          Future.delayed(const Duration(milliseconds: 400), () {
-            showToast('자막 생성 완료! ($charged패롯 소모)');
-          });
-        } else {
-          Future.delayed(const Duration(milliseconds: 400), () {
-            showToast('자막 생성 완료!');
-          });
-        }
+        final message = captionDraftToast(
+          charged: charged,
+          hasBlank: draftHasBlankFields(result.segments),
+        );
+        Future.delayed(const Duration(milliseconds: 400), () {
+          showToast(message);
+        });
       }
 
       _setSttState(SttProcessState.done);

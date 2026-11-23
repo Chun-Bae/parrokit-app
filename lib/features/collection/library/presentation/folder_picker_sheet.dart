@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/shared/theme/components/inputs/app_input_theme.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -229,13 +230,17 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
             maxLength: 40,
             onChanged: (_) => setState(() => _hint = null),
             onSubmitted: (_) => _submit(),
-            decoration: InputDecoration(
-              labelText: '폴더 이름',
-              errorText: _error,
+            // 다른 칸과 같은 꼴로 둔다(5차 566, 사용자 요청). 테두리를
+            // 걷고 면으로 그린다. 글자 수는 한도에 가까울 때만 적는다.
+            buildCounter: nearLimitCounter,
+            decoration: filledInputDecoration(
+              context,
+              label: '폴더 이름',
               // 글자 수 표시와 한 줄을 나눠 쓰므로 짧게.
-              helperText:
+              helper:
                   widget.createsNow || widget.renaming ? null : '첫 클립을 넣으면 생겨요',
-            ),
+              showCounter: true,
+            ).copyWith(errorText: _error),
           ),
           if (_hint case final hint?)
             Padding(

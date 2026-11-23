@@ -10,6 +10,16 @@ import 'package:parrokit/core/state/provider/background_playback_provider.dart';
 
 const String listeningBarHint = '듣는 중';
 
+/// 멈춰 둔 채로 줄만 남아 있을 때.
+///
+/// 전에는 멈춰도 '듣는 중'이라 적혀 있었다. 바로 옆 단추는 ▶(이어 듣기)
+/// 인데 글은 듣고 있다고 하니 한 줄 안에서 말이 갈렸다(5차 566).
+const String listeningBarPausedHint = '멈춰 있어요';
+
+/// 지금 상태에 맞는 줄 머리말.
+String listeningBarLabel(bool playing) =>
+    playing ? listeningBarHint : listeningBarPausedHint;
+
 class ListeningBar extends StatelessWidget {
   const ListeningBar({
     super.key,
@@ -52,7 +62,7 @@ class ListeningBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(listeningBarHint,
+                    Text(listeningBarLabel(playback.playing),
                         style: context.texts.labelSmall
                             .copyWith(color: cs.onSurfaceVariant)),
                     Text(

@@ -358,6 +358,9 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
 
   /// 빠른 수량 칩. 패롯은 1·5·10·전부, 크래커는 1,000 단위로 1,000·5,000·
   /// 10,000·전부(1,000 단위로 내림). 가진 것보다 많으면 누를 수 없다.
+  /// 지금 칸에 적혀 있는 수. 숫자가 아니면 0으로 본다.
+  int get _currentAmount => int.tryParse(_amountController.text.trim()) ?? 0;
+
   List<(String, int, String?)> _quickAmounts(int balance) {
     final format = NumberFormat.decimalPattern('ko');
     final steps =
@@ -365,13 +368,22 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     final unit = _isParrotsToCrackers ? '패롯' : '크래커';
     final unitSize = _isParrotsToCrackers ? 1 : 1000;
     final all = (balance ~/ unitSize) * unitSize;
+    final current = _currentAmount;
     return [
+      // 칩은 더한다(5차 566, 사용자 요청). '5'를 두 번 누르면 10이다.
+      // 전에는 갈아 끼워서 7을 만들려면 직접 쳐야 했다.
       for (final step in steps)
         (
-          format.format(step),
-          step,
-          quickStepBlockedReason(unit: unit, balance: balance, step: step),
+          '+${format.format(step)}',
+          current + step,
+          quickStepBlockedReason(
+            unit: unit,
+            balance: balance,
+            step: step,
+            current: current,
+          ),
         ),
+      // '전부'는 더하지 않고 가진 것을 그대로 채운다.
       (
         '전부',
         all,

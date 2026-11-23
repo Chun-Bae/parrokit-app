@@ -14,12 +14,20 @@ import 'package:parrokit/core/shared/utils/korean_josa.dart';
 String _n(int value) => NumberFormat.decimalPattern('ko').format(value);
 
 /// 정해진 수량 칩(1·5·10 또는 1,000·5,000·10,000).
+/// 칩은 적어 둔 수에 **더한다**(5차 566, 사용자 요청). 그래서 막혔는지는
+/// 지금 적힌 수([current])까지 더해 보고 따진다. 전에는 칩이 값을 통째로
+/// 갈아 끼워서 '1 + 5'처럼 쌓을 수 없었다.
 String? quickStepBlockedReason({
   required String unit,
   required int balance,
   required int step,
+  int current = 0,
 }) {
-  if (step <= balance) return null;
+  final next = current + step;
+  if (next <= balance) return null;
+  if (current > 0) {
+    return '${iGa(unit)} ${_n(balance)}개뿐이라 ${_n(next)}개는 못 바꿔요.';
+  }
   return '${iGa(unit)} ${_n(balance)}개뿐이라 ${_n(step)}개는 못 바꿔요.';
 }
 

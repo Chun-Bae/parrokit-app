@@ -21,6 +21,7 @@ import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/my_sentence_store.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/shared/widgets/draft_pop_scope.dart';
+import 'package:parrokit/core/shared/widgets/sheet_scroll_body.dart';
 import 'package:parrokit/core/shared/widgets/learning_language_picker.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -125,7 +126,7 @@ class _AddSentenceScreenState extends State<AddSentenceScreen> {
               children: [
                 _header(),
                 Flexible(
-                  child: SingleChildScrollView(
+                  child: SheetScrollBody(
                     padding: const EdgeInsets.fromLTRB(
                         20, AppSpacing.lg, 20, AppSpacing.sm),
                     child: ListenableBuilder(

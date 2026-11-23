@@ -9,6 +9,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/core/shared/widgets/reward_celebration.dart';
 
 void main() {
@@ -17,7 +18,7 @@ void main() {
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () => showRewardCelebration(context, crackers: 7),
+            onPressed: () => showRewardCelebration(context, amount: 7),
             child: const Text('열기'),
           ),
         ),
@@ -39,7 +40,7 @@ void main() {
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () => showRewardCelebration(context, crackers: 5),
+            onPressed: () => showRewardCelebration(context, amount: 5),
             child: const Text('열기'),
           ),
         ),
@@ -71,7 +72,7 @@ void main() {
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () => showRewardCelebration(context, crackers: 0),
+            onPressed: () => showRewardCelebration(context, amount: 0),
             child: const Text('열기'),
           ),
         ),
@@ -88,7 +89,7 @@ void main() {
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () => showRewardCelebration(context, crackers: 3),
+            onPressed: () => showRewardCelebration(context, amount: 3),
             child: const Text('열기'),
           ),
         ),
@@ -117,5 +118,42 @@ void main() {
     expect(code, contains('celebrated = true'));
     // '다시' 고른 것만 다시 돌 때는 지난 바퀴 결과를 비운다.
     expect(code, contains('answered.clear()'));
+  });
+
+
+  // 광고를 보고 받는 패롯도 같은 덮개로 띄운다(5차 568, 사용자 요청).
+  // 토스트 한 줄은 광고가 닫히는 어수선한 순간에 묻혔다.
+  testWidgets('재화에 맞는 그림과 말을 보여 준다', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showRewardCelebration(context,
+                amount: 3, currency: Currency.parrot),
+            child: const Text('열기'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('패롯 +3'), findsOneWidget);
+    final icon = tester.widget<CurrencyIcon>(find.byType(CurrencyIcon));
+    expect(icon.currency, Currency.parrot);
+  });
+
+  test('재화마다 적는 말이 다르다', () {
+    expect(rewardCelebrationAmount(Currency.parrot, 3), '패롯 +3');
+    // 크래커는 연습 보상과 같은 꼴을 그대로 쓴다.
+    expect(rewardCelebrationAmount(Currency.cracker, 7), contains('크래커'));
+  });
+
+  test('광고 보상이 이 덮개를 쓴다', () {
+    final source = File(
+      'lib/features/settings/more/presentation/sections/ad_reward_button.dart',
+    ).readAsStringSync();
+    expect(source, contains('showRewardCelebration('));
+    expect(source, contains('Currency.parrot'));
   });
 }

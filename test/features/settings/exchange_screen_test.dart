@@ -77,4 +77,34 @@ void main() {
 
     expect(find.byKey(const ValueKey('exchange-sub-parrots-note')), findsNothing);
   });
+
+  // 칩은 값을 갈아 끼우지 않고 더한다(5차 566, 사용자 요청).
+  testWidgets('칩을 두 번 누르면 쌓인다', (tester) async {
+    await _open(tester);
+
+    // 이 가짜 지갑은 패롯이 4개다. +5는 막혀 있으니 +1을 쌓아 본다.
+    await tester.tap(find.text('+1'));
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '1');
+
+    await tester.tap(find.text('+1'));
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, '2');
+  });
+
+  testWidgets("'전부'는 더하지 않고 가진 것을 채운다", (tester) async {
+    await _open(tester);
+
+    await tester.tap(find.text('+1'));
+    await tester.pump();
+    await tester.tap(find.text('전부'));
+    await tester.pump();
+
+    // 가진 패롯 4개를 그대로 채운다. 1 + 4가 아니다.
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, '4');
+  });
 }
