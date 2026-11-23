@@ -38,14 +38,6 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create, delete: if request.auth != null && request.auth.uid == userId;
-      // 두 번째 조건은 질문 답변 채택(acceptAnswer)이 답변자의 크래커를
-      // 올려 주기 위한 것이다. 전에는 값에 아무 제한이 없어서, 로그인한
-      // 사람이 남의 크래커를 0으로 만들 수도 있었다. 올리는 쪽만 둔다.
-      //
-      // 자기 문서는 여전히 통째로 쓸 수 있으므로, 본인이 자기 크래커와
-      // 패롯을 임의로 올리는 것은 이 규칙으로 막지 못한다. 그건 지급을
-      // 서버로 옮겨야 하는 문제다.
-      //
       // 서버만 쓰는 칸들. 앱이 자기 문서를 통째로 쓸 수 있으므로 따로 막는다.
       // 값은 Admin SDK를 쓰는 함수들이 정한다(이 규칙을 거치지 않는다).
       //
@@ -56,19 +48,32 @@ service cloud.firestore {
       // - exampleCredits, assistCredits: 패롯으로 산 AI 한도(5차 537).
       //   목록에 빠져 있어서 앱이 패롯 없이 무한히 올릴 수 있었다.
       //   buyExampleCredits·buyAssistCredits만 이 값을 올린다.
-      allow update: if request.auth != null && (
-        (request.auth.uid == userId
-          && !request.resource.data.diff(resource.data).affectedKeys()
-                .hasAny([
-                  'subscription',
-                  'subParrots',
-                  'storage',
-                  'exampleCredits',
-                  'assistCredits'
-                ].toSet())) ||
-        (changesOnly(['crackers'])
-          && request.resource.data.crackers > resource.data.crackers)
-      );
+      // - parrots, coins: 충전·광고로 얻는 재화(5차 568). 목록에 없어서
+      //   결제를 거치지 않고 자기 문서를 고치면 그대로 패롯이 됐다.
+      //   패롯은 Whisper·Gemini·R2를 쓰는 값이라 그만큼 서버 비용이 된다.
+      //   coins는 아주 옛 문서가 패롯을 두던 자리다(wallet.ts가 지운다).
+      //   onSubscriptionEvent(충전·환불)와 admobRewardCallback만 올린다.
+      // - crackers: 연습·복습 보상과 질문 채택으로 오간다(5차 568).
+      //   환전으로 패롯이 되므로 패롯과 같이 묶는다. grantPracticeReward와
+      //   acceptAnswer만 올린다.
+      //
+      // ※ 아직 배포하지 않았다. 지금 조이면 앱이 직접 넣는 세 곳이 깨진다:
+      //   광고 보상(AdService.serverCreditsReward가 false),
+      //   연습 보상·레벨 보따리(앱이 addCrackers를 부른다).
+      //   셋이 서버로 옮겨지고 그 앱이 퍼진 뒤에 배포한다.
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny([
+                'subscription',
+                'subParrots',
+                'storage',
+                'exampleCredits',
+                'assistCredits',
+                'parrots',
+                'coins',
+                'crackers'
+              ].toSet());
       
       // 내가 누른 추천·스크랩·댓글 좋아요·투표 기록.
       // 전에는 네 컬렉션 모두 read, write가 if true였다. 로그인하지 않아도

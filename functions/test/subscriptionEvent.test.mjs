@@ -11,6 +11,7 @@ const {
   subscriptionFromEvent,
   shouldSkipEvent,
   authorized,
+  SUBSCRIPTION_TYPES,
   LIGHT_ENTITLEMENT,
   PRO_ENTITLEMENT,
 } = require("../lib/subscriptionEvent.js");
@@ -183,3 +184,45 @@ test("진짜 이벤트는 그대로 받는다", () => {
   assert.equal(out.tier, "light");
 });
 
+// 구독자가 패롯을 충전하면 RevenueCat이 NON_RENEWING_PURCHASE를 보낸다.
+// 그 본문에는 구독 entitlement가 없어서, 가리지 않고 쓰면 tier가 "free"가
+// 되고 status가 "expired"가 되어 산 구독이 날아가고 subParrots까지
+// 지워졌다(5차 568).
+test("패롯 충전 같은 1회성 구매는 구독 상태를 건드리지 않는다", () => {
+  const state = subscriptionFromEvent(
+    event({type: "NON_RENEWING_PURCHASE", entitlement_ids: []})
+  );
+  assert.equal(state, null);
+});
+
+test("구독 entitlement를 달고 와도 1회성 구매는 무시한다", () => {
+  const state = subscriptionFromEvent(
+    event({type: "NON_RENEWING_PURCHASE", entitlement_ids: [LIGHT_ENTITLEMENT]})
+  );
+  assert.equal(state, null);
+});
+
+test("모르는 타입은 무시한다", () => {
+  assert.equal(
+    subscriptionFromEvent(event({type: "INVOICE_ISSUANCE"})),
+    null
+  );
+  assert.equal(
+    subscriptionFromEvent(event({type: "TEMPORARY_ENTITLEMENT_GRANT"})),
+    null
+  );
+});
+
+test("구독 이벤트는 그대로 지나간다", () => {
+  for (const type of SUBSCRIPTION_TYPES) {
+    const state = subscriptionFromEvent(event({type}));
+    assert.notEqual(state, null, type);
+    assert.equal(state.uid, "uid-1", type);
+  }
+});
+
+test("만료로 보는 구독 이벤트는 여전히 free로 내린다", () => {
+  const state = subscriptionFromEvent(event({type: "EXPIRATION"}));
+  assert.equal(state.tier, "free");
+  assert.equal(state.status, "expired");
+});

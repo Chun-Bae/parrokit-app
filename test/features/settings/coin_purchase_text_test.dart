@@ -30,8 +30,8 @@ void main() {
     final texts = [
       productLoadFailedMessage,
       paymentFailedMessage,
-      coinsNotGivenMessage,
       coinsAddedMessage(100),
+      coinsComingMessage(100),
     ];
     final offenders = <String>[];
     for (final file in _dartFiles()) {
@@ -49,27 +49,24 @@ void main() {
   test('두 곳이 같은 글귀를 쓴다', () {
     for (final path in [_store, _paywall]) {
       final code = _code(path);
-      expect(code, contains('coinsAddedMessage('), reason: path);
+      expect(code, contains('coinsComingMessage('), reason: path);
       expect(code, contains('paymentFailedMessage'), reason: path);
-      expect(code, contains('coinsNotGivenMessage'), reason: path);
     }
   });
 
-  test('코인이 들어간 뒤에만 충전됐다고 말한다', () {
-    // 전에는 페이월에서 '충전됐어요!'를 try 밖에서 띄웠다. 지급이 넘어지면
-    // '지급에 실패했어요'와 '충전됐어요!'가 함께 떠서, 돈을 낸 사람이
-    // 받았는지 못 받았는지 알 수 없었다.
-    final code = _code(_paywall);
-    final addIndex = code.indexOf('await widget.userProvider.addCoins(');
-    final okIndex = code.indexOf('showToast(coinsAddedMessage(');
-    final catchIndex = code.indexOf('} catch (e) {', addIndex);
-    expect(addIndex, greaterThan(-1));
-    expect(okIndex, greaterThan(addIndex));
-    expect(okIndex, lessThan(catchIndex));
+  // 앱이 직접 넣던 때는 영수증을 확인하는 곳이 없어서, 결제를 거치지 않고
+  // 자기 문서의 parrots를 올려도 그대로 패롯이 됐다. 패롯은 Whisper·Gemini·
+  // R2를 쓰는 값이라 그만큼 서버 비용이 나간다(5차 568).
+  test('결제 화면이 스스로 패롯을 넣지 않는다', () {
+    for (final path in [_store, _paywall]) {
+      final code = _code(path);
+      expect(code.contains('addCoins('), isFalse, reason: path);
+      expect(code.contains('addParrots('), isFalse, reason: path);
+    }
   });
 
-  test('돈만 나가는 경우를 사용자에게 말한다', () {
-    expect(coinsNotGivenMessage, contains('결제는 됐지만'));
-    expect(coinsNotGivenMessage, contains('문의'));
+  test('지급은 곧 들어온다고 말한다', () {
+    expect(coinsComingMessage(88), contains('88'));
+    expect(coinsComingMessage(88), contains('곧'));
   });
 }

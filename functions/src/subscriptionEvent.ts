@@ -16,6 +16,12 @@ import {
   grantedFrom,
   grantSubscriptionParrots,
 } from "./subscriptionGrant";
+import {
+  coinPurchaseFromEvent,
+  coinRefundFromEvent,
+  grantPurchasedParrots,
+  revokeRefundedParrots,
+} from "./coinGrant";
 import {onRequest} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
 
@@ -79,6 +85,33 @@ export const MAX_ENTITLEMENT = "parrokit_sub_max";
 /** 혜택이 끝났다고 보는 이벤트. */
 const ENDED_TYPES = new Set(["EXPIRATION", "REFUND", "SUBSCRIPTION_PAUSED"]);
 
+/**
+ * 구독 상태를 바꿔도 되는 이벤트. 여기 없는 것은 건드리지 않는다.
+ *
+ * 전에는 타입을 가리지 않고 모두 구독 상태로 썼다. 그래서 구독자가
+ * 패롯을 충전하면(NON_RENEWING_PURCHASE) entitlement_ids에 구독
+ * entitlement가 없어 tierOf가 "free"를 주고, statusOf가 "expired"가 되어
+ * **돈 내고 산 구독이 만료로 저장되고 남은 subParrots까지 지워졌다.**
+ * 아직 실제 웹훅 호출 기록이 없어 겪은 사람은 없다(5차 568).
+ *
+ * 모르는 타입은 무시한다. RevenueCat이 나중에 새 1회성 이벤트를 더해도
+ * 구독이 날아가지 않게, 막는 쪽이 아니라 **허용하는 쪽**을 적는다.
+ */
+export const SUBSCRIPTION_TYPES = new Set([
+  "INITIAL_PURCHASE",
+  "RENEWAL",
+  "PRODUCT_CHANGE",
+  "CANCELLATION",
+  "UNCANCELLATION",
+  "BILLING_ISSUE",
+  "SUBSCRIPTION_PAUSED",
+  "SUBSCRIPTION_EXTENDED",
+  "EXPIRATION",
+  "REFUND",
+  "REFUND_REVERSED",
+  "TRANSFER",
+]);
+
 function toInt(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ?
     Math.trunc(value) :
@@ -124,6 +157,9 @@ export function subscriptionFromEvent(body: unknown): SubscriptionState | null {
   // 지나간다. 그대로 두면 테스트를 누를 때마다 users/<그 UUID>에
   // subscription이 적혀 가짜 문서가 쌓인다.
   if (type === "TEST") return null;
+  // 구독과 상관없는 이벤트(패롯 충전 같은 1회성 구매)는 상태를 건드리지
+  // 않는다. 위 SUBSCRIPTION_TYPES의 설명을 본다.
+  if (!SUBSCRIPTION_TYPES.has(type)) return null;
 
   const tier = tierOf(data.entitlement_ids);
   const eventId = typeof data.id === "string" && data.id.length > 0 ?
@@ -184,6 +220,36 @@ export const onSubscriptionEvent = onRequest(
     }
     if (!authorized(req.get("authorization"), expected)) {
       res.status(401).send("unauthorized");
+      return;
+    }
+
+    // 패롯 충전(1회성 구매)은 구독 상태를 건드리지 않고 지급만 한다
+    // (5차 568). 영수증 확인은 RevenueCat이 했고, 우리는 이벤트 id로
+    // 한 번만 넣는다.
+    // 충전 환불이 먼저다. REFUND는 구독 쪽 allowlist에도 있어서, 가리지
+    // 않으면 충전을 무른 것이 구독 만료로 흘러간다(5차 568).
+    const refund = coinRefundFromEvent(req.body);
+    if (refund) {
+      try {
+        const taken = await revokeRefundedParrots(refund);
+        res.status(200).send(taken > 0 ? "revoked" : "nothing to revoke");
+      } catch (error) {
+        console.error("[Subscription] coin refund failed", error);
+        res.status(500).send("coin refund failed");
+      }
+      return;
+    }
+
+    const purchase = coinPurchaseFromEvent(req.body);
+    if (purchase) {
+      try {
+        const applied = await grantPurchasedParrots(purchase);
+        res.status(200).send(applied ? "granted" : "duplicate");
+      } catch (error) {
+        console.error("[Subscription] coin grant failed", error);
+        // 다시 보내 달라고 한다. 같은 이벤트 id라 두 번 들어오지 않는다.
+        res.status(500).send("coin grant failed");
+      }
       return;
     }
 

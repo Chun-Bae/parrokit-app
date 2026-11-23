@@ -7,8 +7,12 @@ import 'practice_reward.dart';
 
 /// 받은 크래커를 기기에 적어 두고 상한을 지킨다.
 ///
-/// 계정마다 따로 센다. 기기에만 두므로 앱을 지우면 상한도 같이 풀린다.
-/// 상한을 제대로 지키려면 서버로 옮겨야 한다.
+/// **더는 앱이 쓰지 않는다**(5차 568). 뽑기와 상한은 서버
+/// (functions/src/practiceReward.ts)가 쥐고, 앱은 RewardService로 청한다.
+/// 기기에만 두면 앱을 지울 때 상한이 풀리고, 마음먹으면 고쳐 쓸 수 있었다.
+///
+/// 지우지 않고 둔 것은 옛 기기에 남은 장부를 읽을 일이 생길 수 있어서다.
+/// 쓸 데가 없다고 확인되면 테스트와 함께 지운다.
 class PracticeRewardStore {
   PracticeRewardStore._();
 
@@ -44,22 +48,25 @@ class PracticeRewardStore {
   /// 상한에 걸리면 남은 만큼으로 깎는다. 0이면 [RewardGrant.isEmpty]다.
   /// 잔액에 더하는 데 실패했는데 장부에만 적히면 받지도 않고 상한이 깎인다.
   /// 그래서 뽑기와 적기를 나눴다([confirm]).
+  /// [dailyCap]을 주면 하루 상한만 그 값으로 본다. 레벨이 오르면 하루
+  /// 상한이 늘어난다(5차 566). 주·달 상한은 그대로다.
   static Future<RewardGrant> prepare(
     String accountId, {
     Random? random,
     DateTime? now,
+    int? dailyCap,
   }) async {
     final ledger = await load(accountId, now: now);
     final rolled = rollRewardCrackers(random);
-    final allowance = ledger.allowance;
+    final allowance = ledger.allowanceOf(dailyCap: dailyCap);
+    final tightest = ledger.tightestOf(dailyCap: dailyCap);
     if (allowance <= 0) {
-      return RewardGrant(crackers: 0, rolled: rolled, cap: ledger.tightest);
+      return RewardGrant(crackers: 0, rolled: rolled, cap: tightest);
     }
     if (rolled <= allowance) {
       return RewardGrant(crackers: rolled, rolled: rolled);
     }
-    return RewardGrant(
-        crackers: allowance, rolled: rolled, cap: ledger.tightest);
+    return RewardGrant(crackers: allowance, rolled: rolled, cap: tightest);
   }
 
   /// 실제로 준 크래커를 장부에 적는다. 잔액에 더한 뒤에 부른다.

@@ -163,20 +163,11 @@ class _CoinPaywallPageState extends State<_CoinPaywallPage> {
         final pkg =
             matched.isNotEmpty ? matched.first : CoinPackage.packages.first;
 
-        // 콜백이 동기라 await 할 수 없다. 대신 실패를 삼키지는 않는다.
-        // 충전됐다는 말은 코인이 실제로 들어간 뒤에만 한다. 전에는 이 말을
-        // try 밖에서 했다. 지급이 넘어지면 '지급에 실패했어요'와
-        // '충전됐어요!'가 함께 떠서, 돈을 낸 사람이 받았는지 못 받았는지
-        // 알 수 없었다(5차 425).
-        unawaited(() async {
-          try {
-            await widget.userProvider.addCoins(pkg.totalCoins);
-            showToast(coinsAddedMessage(pkg.totalCoins));
-          } catch (e) {
-            AppLogger.e('[Paywall] 코인 지급 실패 productId=$productId', error: e);
-            showToast(coinsNotGivenMessage);
-          }
-        }());
+        // 지급은 **서버가 한다**(5차 568). 앱이 직접 넣던 때는 영수증을
+        // 확인하는 곳이 없어서, 결제 없이 자기 문서의 parrots를 올려도
+        // 그대로 패롯이 됐다. 이제 RevenueCat 웹훅을 받은
+        // onSubscriptionEvent가 넣고, 잔액은 사용자 문서 구독으로 곧 바뀐다.
+        showToast(coinsComingMessage(pkg.totalCoins));
       },
       onDismiss: () {
         Navigator.of(context, rootNavigator: true).pop();

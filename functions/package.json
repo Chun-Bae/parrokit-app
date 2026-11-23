@@ -24,7 +24,10 @@
     "test:subwallet": "npm run build && npx -y firebase-tools@latest --project=demo-parrokit emulators:exec --only firestore \"node --test test/subscriptionWallet.test.mjs\"",
     "test:questioninput": "npm run build && node --test test/questionInput.test.mjs",
     "test:captions": "npm run build && node --test test/captionCleanup.test.mjs test/recountScript.test.mjs",
-    "test:all": "npm run build && FIREBASE_CONFIG='{\"storageBucket\":\"demo-parrokit.appspot.com\",\"projectId\":\"demo-parrokit\"}' GCLOUD_PROJECT=demo-parrokit npx -y firebase-tools@latest --project=demo-parrokit emulators:exec --only firestore \"node --test --test-concurrency=1 test/*.mjs\""
+    "test:all": "npm run build && FIREBASE_CONFIG='{\"storageBucket\":\"demo-parrokit.appspot.com\",\"projectId\":\"demo-parrokit\"}' GCLOUD_PROJECT=demo-parrokit npx -y firebase-tools@latest --project=demo-parrokit emulators:exec --only firestore \"node --test --test-concurrency=1 test/*.mjs\"",
+    "test:coins": "npm run build && node --test test/coinGrant.test.mjs",
+    "test:reward": "npm run build && node --test test/practiceReward.test.mjs",
+    "test:level": "npm run build && node --test test/levelReward.test.mjs"
   },
   "engines": {
     "node": "22"

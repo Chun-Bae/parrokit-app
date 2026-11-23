@@ -21,6 +21,8 @@ export * from "./exampleCredits";
 export * from "./wallet";
 export * from "./questions";
 export * from "./adReward";
+export * from "./levelReward";
+export * from "./practiceReward";
 export * from "./subscriptionEvent";
 export * from "./storageUsage";
 export * from "./r2";

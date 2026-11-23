@@ -43,12 +43,21 @@ void main() {
     });
   });
 
-  test('지급은 장부에 적기 전에 잔액을 먼저 바꾼다', () {
-    // 잔액에 더하지 못했는데 장부에만 적히면 받지도 않고 상한이 깎인다.
+  // 뽑기와 상한을 서버로 옮겼다(5차 568). 전에는 뽑기 표도 장부도 기기
+  // 안에 있어서 마음먹으면 올릴 수 있었고, 크래커는 환전으로 패롯이 된다.
+  test('지급은 서버에 청한다', () {
     final src = read('lib/core/state/practice_reward_grant.dart');
-    expect(src.indexOf('addCrackers('),
-        lessThan(src.indexOf('PracticeRewardStore.confirm(')));
-    expect(src, contains('PracticeRewardStore.prepare('));
+    expect(src, contains('practiceReward('));
+    // 앱이 스스로 더하지 않는다.
+    expect(src.contains('addCrackers('), isFalse);
+    // 기기 장부로 상한을 지키지 않는다.
+    expect(src.contains('PracticeRewardStore'), isFalse);
+  });
+
+  test('레벨 보따리도 서버에 청한다', () {
+    final src = read('lib/core/state/parrot_level_grant.dart');
+    expect(src, contains('levelReward('));
+    expect(src.contains('addCrackers('), isFalse);
   });
 
   test('상한 글귀는 한 곳에서만 만든다', () {
