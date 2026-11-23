@@ -16,7 +16,7 @@ enum SentenceMastery {
 const _familiarScore = 10;
 
 SentenceMastery masteryOf(SentenceActivity activity) {
-  final score = activity.listenCount + activity.practiceScore;
+  final score = activity.listenScore + activity.practiceScore;
   if (score <= 0) return SentenceMastery.fresh;
   if (score < _familiarScore) return SentenceMastery.learning;
   return SentenceMastery.familiar;
@@ -44,19 +44,66 @@ class SentenceAffinity {
   double get progress =>
       next == null ? 1 : ((points - floor) / (next! - floor)).clamp(0.0, 1.0);
 
+  /// 단계가 시작되는 점수와 이름.
+  ///
+  /// 앞의 다섯은 한 글자도 바꾸지 않는다 - 바꾸면 이미 올려 둔 사람의
+  /// 단계가 달라진다. 위로 둘만 얹는다(5차 566). 50점은 하루 상한
+  /// 6점으로 최소 9일, 90점은 거기서 7일, 150점은 다시 10일이 걸린다.
+  /// 최고 단계 뒤가 비어 있어 '하루 만에 끝'이던 것을 늘린 것이다.
   static const _steps = [
     (0, '낯선'),
     (3, '익숙한'),
     (10, '편안한'),
     (25, '자연스러운'),
     (50, '능숙한'),
+    (90, '몸에 붙은'),
+    (150, '내 말 같은'),
   ];
 
-  static const maxLevel = 5;
+  static const maxLevel = 7;
+
+  /// 뱃지 그림은 아직 다섯 개뿐이다(assets/badges/affinity_1~5).
+  int get badgeLevel => level > 5 ? 5 : level;
+}
+
+/// 이 단계부터 문장 카드에 금빛을 깐다.
+const int goldenAffinityLevel = 5;
+
+/// 단계가 오를 때 캐릭터가 받는 XP(5차 566).
+///
+/// XP는 **한 번만 생기는 일**에만 붙는다. 같은 문장을 500번 반복해도
+/// 받는 XP는 그 문장이 오른 단계 수만큼이다. 반복은 크래커가 맡는다.
+const List<int> affinityLevelXp = [0, 0, 2, 4, 8, 14, 20, 30];
+
+/// [from]단계에서 [to]단계로 올랐을 때 주는 XP.
+int affinityXpBetween(int from, int to) {
+  var sum = 0;
+  for (var level = from + 1; level <= to; level++) {
+    if (level < affinityLevelXp.length) sum += affinityLevelXp[level];
+  }
+  return sum;
+}
+
+/// 단계별 복습 주기(일). 낯선 단계는 아직 주기가 없다.
+///
+/// 단어 쪽 WordReviewStore.intervals(1·3·7·14·30)와 같은 결로 맞춘다.
+/// 점수를 깎는 대신 '다시 볼 때'만 알린다 - 쌓은 것을 빼앗지 않는다.
+const List<int?> affinityReviewDays = [null, null, 3, 7, 14, 30, 60, 90];
+
+/// 이 문장을 다시 볼 때가 됐는지. 한 번도 연습하지 않았으면 아니다.
+bool needsReview(SentenceActivity activity, {DateTime? now}) {
+  final last = activity.lastPracticedAt;
+  if (last == null) return false;
+  final level = affinityOf(activity).level;
+  final days = level < affinityReviewDays.length
+      ? affinityReviewDays[level]
+      : affinityReviewDays.last;
+  if (days == null) return false;
+  return (now ?? DateTime.now()).difference(last).inDays >= days;
 }
 
 SentenceAffinity affinityOf(SentenceActivity activity) {
-  final points = activity.listenCount + activity.practiceScore;
+  final points = activity.listenScore + activity.practiceScore;
   var index = 0;
   for (var i = 0; i < SentenceAffinity._steps.length; i++) {
     if (points >= SentenceAffinity._steps[i].$1) index = i;

@@ -43,6 +43,14 @@ int get rewardMaxCrackers =>
 /// 상한에 걸리지만, 연습 자체를 막지는 않는다.
 const int rewardDailyCap = 300;
 
+/// 레벨이 오르면 하루 상한만 늘린다(5차 566).
+///
+/// 주·달 상한은 그대로 둔다. 한 달 총량(5,000 = 패롯 5개)이 한 치도
+/// 움직이지 않으면서, 주말에만 공부하는 사람이 300에서 끊기지 않는다.
+/// 레벨이 **매일** 쓸모를 갖게 되는 가장 싼 방법이다.
+int rewardDailyCapFor(int level) =>
+    (rewardDailyCap + 20 * (level - 1)).clamp(rewardDailyCap, 600);
+
 /// 한 주(7일)에 받을 수 있는 크래커. 하루 상한을 닷새 채운 만큼이다.
 const int rewardWeeklyCap = 1500;
 
@@ -137,26 +145,33 @@ class RewardLedger {
   final String monthKey;
 
   /// [cap]까지 남은 크래커.
-  int remaining(RewardCap cap) => switch (cap) {
-        RewardCap.day => rewardDailyCap - day,
+  /// [dailyCap]을 주면 하루 상한만 그 값으로 본다(레벨 보상, 5차 566).
+  int remaining(RewardCap cap, {int? dailyCap}) => switch (cap) {
+        RewardCap.day => (dailyCap ?? rewardDailyCap) - day,
         RewardCap.week => rewardWeeklyCap - week,
         RewardCap.month => rewardMonthlyCap - month,
       };
 
   /// 가장 빡빡한 상한. 셋 다 여유가 있으면 남은 수가 가장 작은 것.
-  RewardCap get tightest {
+  RewardCap tightestOf({int? dailyCap}) {
     var pick = RewardCap.day;
     for (final cap in RewardCap.values) {
-      if (remaining(cap) < remaining(pick)) pick = cap;
+      if (remaining(cap, dailyCap: dailyCap) <
+          remaining(pick, dailyCap: dailyCap)) {
+        pick = cap;
+      }
     }
     return pick;
   }
 
   /// 지금 받을 수 있는 가장 큰 액수. 0이면 더 받을 수 없다.
-  int get allowance {
-    var left = remaining(RewardCap.day);
+  int get allowance => allowanceOf();
+
+  /// [dailyCap]을 주면 하루 상한만 그 값으로 본다.
+  int allowanceOf({int? dailyCap}) {
+    var left = remaining(RewardCap.day, dailyCap: dailyCap);
     for (final cap in RewardCap.values) {
-      final other = remaining(cap);
+      final other = remaining(cap, dailyCap: dailyCap);
       if (other < left) left = other;
     }
     return left < 0 ? 0 : left;

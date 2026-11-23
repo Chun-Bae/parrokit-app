@@ -30,6 +30,7 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/content/speaking_xp.dart';
+import 'package:parrokit/core/content/parrot_xp_day.dart';
 
 enum _SpeakingMode { automatic, repeat }
 
@@ -172,7 +173,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     };
   }
 
-  double totalXp = 0;
+  int totalXp = 0;
   bool xpReady = false;
   List<String> customPhrases = [];
   Set<String>? enabledRoutineIds;
@@ -186,14 +187,21 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
       'parrokit.speaking.auto_listen.v1.${widget.accountId}';
   String get phrasesKey =>
       'parrokit.speaking.phrases.v1.${widget.accountId}.${widget.language}';
-  int get level => speakingLevel(totalXp);
+  int get level => levelForXp(totalXp);
+
+  /// 다른 화면이 XP를 주면 머리의 막대도 따라 읽는다(5차 566).
+  void _onXpChanged() {
+    if (mounted) unawaited(loadXp());
+  }
 
   Future<void> loadXp() async {
     try {
+      // 새 자리(v2)에서 읽는다. 처음이면 옛 값에서 옮겨 적는다(5차 566).
+      final loadedXp = await loadParrotXp(widget.accountId);
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
       setState(() {
-        totalXp = math.max(0, (prefs.get(xpKey) as num?)?.toDouble() ?? 0);
+        totalXp = loadedXp;
         gapSeconds = (prefs.getDouble(gapKey) ?? _defaultGapSeconds).clamp(
             _SpeakingSettingsDialog.minGap, _SpeakingSettingsDialog.maxGap);
         countListen = prefs.getBool(countListenKey) ?? true;
@@ -229,37 +237,39 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     } catch (_) {/* 저장하지 못해도 이번 실행에서는 바뀐 설정을 쓴다. */}
   }
 
-  Future<bool> awardXp(double? score) async {
-    final key = xpKey;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final gain = xpGain(score);
-      final previous = (prefs.get(key) as num?)?.toDouble() ?? 0;
-      final next = nextXp(previous, gain);
-      if (!await prefs.setDouble(key, next)) {
-        throw StateError('XP save failed');
-      }
-      if (!mounted) return false;
-      setState(() {
-        totalXp = next;
-        xpReady = true;
-      });
-      final scoreText = score == null ? '' : '${(score * 100).round()}점 · ';
-      final gainText = '+${xpText(gain)} XP';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(next ~/ 10 > previous ~/ 10
-            ? '$scoreText$gainText · Lv.${next ~/ 10 + 1} 레벨 업!'
-            : '따라 말하기 완료 · $scoreText$gainText'),
-        duration: const Duration(seconds: 2),
-      ));
-      return true;
-    } catch (_) {
+  /// 성취 XP를 준다(5차 566).
+  ///
+  /// 전에는 따라 말하기 한 번마다 0.1~1 XP를 줬다. 레벨 하나에 100번이
+  /// 들어 막대가 움직이지 않았고, 같은 행동이 친밀도·크래커·XP를 한꺼번에
+  /// 받아 어느 주머니가 무엇을 세는지 알 수 없었다.
+  ///
+  /// 이제 XP는 한 번만 생기는 일에만 붙는다 - 하루 첫 연습, 하루 목표
+  /// 달성, 문장 단계 상승. 반복은 크래커가 맡는다.
+  Future<bool> awardXp(int gain, {String? reason}) async {
+    if (gain <= 0) return true;
+    final previous = totalXp;
+    final next = await addParrotXp(widget.accountId, gain);
+    if (next == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('XP를 저장하지 못했어요. 다시 시도해 주세요.')));
       }
       return false;
     }
+    if (!mounted) return false;
+    setState(() {
+      totalXp = next;
+      xpReady = true;
+    });
+    final leveled = levelForXp(next) > levelForXp(previous);
+    final head = reason == null ? '' : '$reason · ';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(leveled
+          ? '$head+$gain XP · 앵무새가 Lv.${levelForXp(next)} 이 됐어요'
+          : '$head+$gain XP'),
+      duration: const Duration(seconds: 2),
+    ));
+    return true;
   }
 
   /// 앵무새가 말할 수 있는 문장: 내가 저장·추가한 문장만(5차, 기본 문장 없앰).
@@ -344,6 +354,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     WidgetsBinding.instance.addObserver(this);
     SentenceActivityStore.revision.addListener(handleRoutineChanged);
     SentenceActivityStore.activityRevision.addListener(loadActivities);
+    parrotXpRevision.addListener(_onXpChanged);
     unawaited(loadActivities());
     unawaited(loadSprite());
     unawaited(loadXp());
@@ -599,13 +610,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     if (!mounted) return;
     gapWaiting = false;
     voiceTyping = false;
-    final spokenSentence = sentenceForPhrase(phrase);
-    if (spokenSentence != null) {
-      unawaited(SentenceActivityStore.incrementParrotSpeak(
-        widget.accountId,
-        spokenSentence.id,
-      ));
-    }
+    // parrotSpeakCount는 읽는 곳이 없어 적기를 멈춘다(5차 566).
     setState(() {
       if (mode == _SpeakingMode.repeat) {
         awaitingResponse = true;
@@ -770,16 +775,25 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     if (!awaitingResponse || completingResponse) return;
     setState(() => completingResponse = true);
     try {
-      final saved = await awardXp(score);
-      if (!saved) return;
       final practicedSentence = sentenceForPhrase(phrase);
+      var gain = 0;
+      final notes = <String>[];
       if (practicedSentence != null) {
-        await SentenceActivityStore.incrementPractice(
+        final result = await SentenceActivityStore.incrementPractice(
           widget.accountId,
           practicedSentence.id,
           score: score,
         );
+        gain += result.xp;
+        if (result.leveledTo != null) notes.add('문장 단계가 올랐어요');
+        if (result.dayFull) notes.add(sentenceDayFullMessage);
       }
+      // 하루 첫 연습에 한 번만 준다.
+      if (await markFirstPracticeToday(widget.accountId)) {
+        gain += firstPracticeXp;
+        notes.add('오늘 첫 연습');
+      }
+      await awardXp(gain, reason: notes.isEmpty ? null : notes.first);
       await widget.onPracticeCompleted?.call();
       if (!mounted) return;
       setState(() {
@@ -879,6 +893,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
     animation.dispose();
     birdAnimation.dispose();
     nestSprite?.dispose();
+    parrotXpRevision.removeListener(_onXpChanged);
     super.dispose();
   }
 
@@ -925,7 +940,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
             ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
-                    value: (totalXp % 10) / 10,
+                    value: xpInLevelOf(totalXp) / xpForLevel(level),
                     minHeight: 5,
                     color: palette.primary,
                     backgroundColor: palette.surfaceAlt)),
@@ -934,7 +949,7 @@ class _StagePreviewScreenState extends State<StagePreviewScreen>
                 alignment: Alignment.centerRight,
                 child: Text(
                     xpReady
-                        ? '${xpProgressText(totalXp)} / 10 XP'
+                        ? '${xpInLevelOf(totalXp)} / ${xpForLevel(level)} XP'
                         : 'XP 불러오는 중…',
                     style: context.texts.labelSmall.copyWith(color: muted))),
           ])),
@@ -1200,7 +1215,7 @@ class _SpeakingSettingsDialogState extends State<_SpeakingSettingsDialog> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('듣기 횟수 기록',
                     style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('끄면 앵무새 말을 끝까지 들어도 듣기 횟수가 오르지 않아요.',
+                subtitle: Text(countListenHint,
                     style: context.texts.bodySmall),
                 value: countListen,
                 onChanged: (value) => setState(() => countListen = value)),

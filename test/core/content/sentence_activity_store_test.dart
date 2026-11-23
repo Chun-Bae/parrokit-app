@@ -24,7 +24,9 @@ void main() {
     final activity = await SentenceActivityStore.load(accountId, sentenceId);
     expect(activity.parrotSpeakCount, 2);
     expect(activity.practiceCount, 1);
+    // 들은 횟수는 그대로 센다. 하루 상한은 친밀도 점수에만 건다(5차 566).
     expect(activity.listenCount, 3);
+    expect(activity.listenScore, 2, reason: '친밀도에 더하는 몫은 하루 2점까지');
     expect(activity.lastPracticedAt, isNotNull);
     expect(activity.routineEnabled, isFalse);
   });

@@ -116,7 +116,7 @@ void main() {
     await finishPhrase(tester);
     expect(currentPhrase('How was your day?'), findsOneWidget);
     expect(find.byKey(complete), findsNothing);
-    expect(find.text('0 / 10 XP'), findsOneWidget);
+    expect(find.text('0 / 15 XP'), findsOneWidget);
     expect(
         (await SharedPreferences.getInstance())
             .getInt('parrokit.speaking.xp.v1.guest'),
@@ -137,7 +137,7 @@ void main() {
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
     await tester.pump();
-    expect(find.text('0 / 10 XP'), findsOneWidget);
+    expect(find.text('0 / 15 XP'), findsOneWidget);
     await tester.ensureVisible(find.byKey(complete));
     await tester.tap(find.byKey(complete));
     await tester.pump();
@@ -175,34 +175,43 @@ void main() {
     expect(currentPhrase('Hello there!'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+  // XP는 성취에만 붙는다(5차 566). 한 번 연습해서 바로 레벨이 오르던
+  // 0.1 XP 적립은 없어졌다. 대신 하루 첫 연습(2)과 문장 단계 상승이
+  // 준다. 옛 XP는 '보이던 레벨'을 지키며 새 자리로 옮겨 온다.
   testWidgets('마이크 시안은 XP 없음, 체크 중복 지급 방지와 레벨 복원', (tester) async {
     SharedPreferences.setMockInitialValues({
+      // 옛 Lv.2의 턱밑. 옮기면 Lv.1 · 10/10이 아니라 Lv.1 그대로다.
       'parrokit.speaking.xp.v1.guest': 9.95,
       'parrokit.speaking.auto_listen.v1.guest': false,
     });
     await openPreview(tester);
     await tester.pump();
+    await tester.pump();
+    final prefs = await SharedPreferences.getInstance();
+    final movedXp = prefs.getInt('parrokit.parrot.xp.v2.guest');
+    expect(movedXp, 14, reason: '보이던 Lv.1 · 9.95/10을 그대로 옮긴다');
+
     await tapTooltip(tester, '따라 말하기 모드 켜기');
     await finishPhrase(tester);
     await tester.ensureVisible(find.byKey(microphone));
     await tester.tap(find.byKey(microphone));
     await tester.pump();
-    expect(
-        (await SharedPreferences.getInstance())
-            .getDouble('parrokit.speaking.xp.v1.guest'),
-        9.95);
+    expect(prefs.getInt('parrokit.parrot.xp.v2.guest'), movedXp,
+        reason: '마이크를 누른 것만으로는 주지 않는다');
+
     final confirm = tester.widget<IconButton>(find.byKey(complete)).onPressed!;
     confirm();
     confirm();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(
-        (await SharedPreferences.getInstance())
-            .getDouble('parrokit.speaking.xp.v1.guest'),
-        10.05);
+    // 하루 첫 연습 2 + 문장이 Lv.2가 되며 2. 두 번 눌러도 한 번만 센다.
+    final after = (await SharedPreferences.getInstance())
+        .getInt('parrokit.parrot.xp.v2.guest')!;
+    expect(after, greaterThan(movedXp!));
     expect(find.text('Lv.2'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await openPreview(tester);
+    await tester.pump();
     await tester.pump();
     expect(find.text('Lv.2'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -227,6 +236,8 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  // 앵무새가 말한 횟수(parrotSpeakCount)는 읽는 곳이 없어 적기를
+  // 멈췄다(5차 566). 사용자가 연습한 횟수만 센다.
   testWidgets('내 문장의 앵무새 말하기와 사용자 연습 횟수를 기록한다', (tester) async {
     await openPreview(tester);
     await tapTooltip(tester, '따라 말하기 모드 켜기');
@@ -234,7 +245,7 @@ void main() {
 
     var activity =
         await SentenceActivityStore.load('guest', sentenceId('Hello there!'));
-    expect(activity.parrotSpeakCount, 1);
+    expect(activity.parrotSpeakCount, 0);
     expect(activity.practiceCount, 0);
 
     await tester.tap(find.byKey(complete));
@@ -361,10 +372,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(currentPhrase('How was your day?'), findsOneWidget);
+    // 하루 첫 연습 2 + 100점이라 문장이 Lv.2가 되며 2.
     expect(
         (await SharedPreferences.getInstance())
-            .getDouble('parrokit.speaking.xp.v1.guest'),
-        1.0);
+            .getInt('parrokit.parrot.xp.v2.guest'),
+        4);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('인식이 끝났는데 비슷하지 않으면 다시 말하도록 안내한다', (tester) async {
@@ -512,6 +524,22 @@ void main() {
         (await SharedPreferences.getInstance())
             .getBool('parrokit.speaking.count_listen.v1.guest'),
         isFalse);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  // 이 스위치는 홈 무대 자동 재생에만 걸린다. 문장 창에서 직접 들은 것은
+  // 설정과 상관없이 센다. 그 범위를 설명이 말해야 한다(5차 567).
+  testWidgets('듣기 횟수 기록 설명이 어디까지 걸리는지 말한다', (tester) async {
+    await openPreview(tester);
+    await tester.pump();
+    await tapTooltip(tester, '말하기 설정');
+    await tester.pump();
+
+    expect(find.text(countListenHint), findsOneWidget);
+    expect(countListenHint, contains('친밀도'));
+    expect(countListenHint, contains('문장 창에서 직접'));
+
+    await tester.tap(find.text('취소'));
+    await tester.pump();
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets('재생 순서 버튼은 누를 때마다 순서대로, 하나 반복, 랜덤으로 바뀐다', (tester) async {

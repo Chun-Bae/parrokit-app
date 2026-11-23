@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 
@@ -11,8 +12,35 @@ import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme
     (Color(0xFFA8F0E6), Color(0xFF0B6B66)),
     (Color(0xFFB9C8FF), Color(0xFF2E32A8)),
     (Color(0xFFFFE7A0), Color(0xFF8A4B00)),
+    // Lv.6·7은 5차 566에서 얹었다. 뱃지 그림은 아직 5개라 칩 색만 는다.
+    (Color(0xFFFFD1B3), Color(0xFF8A3A00)),
+    (Color(0xFFE6C9FF), Color(0xFF5B2E8A)),
   ];
   return palette[(level - 1).clamp(0, palette.length - 1)];
+}
+
+/// 막대 아래 안내 한 줄.
+///
+/// [activity]를 주면 **오늘 남은 몫**을 함께 말한다. 몫을 다 쓴 뒤에도
+/// '들으면 1점'이라고 적어 두면, 열 번을 더 들어도 막대가 안 움직이니
+/// 고장난 것으로 보인다(5차 566).
+String affinityHint(
+  SentenceAffinity affinity, {
+  SentenceActivity? activity,
+  DateTime? now,
+}) {
+  if (affinity.isMax) return '최고 단계예요';
+  final remaining = affinity.next! - affinity.points;
+  const ways = '들으면 1점, 따라 말하면 1~3점';
+  if (activity == null) return '다음 단계까지 $remaining점 · $ways';
+  final at = now ?? DateTime.now();
+  if (sentenceRoomToday(activity, now: at) == 0) {
+    return '$sentenceDayFullMessage · 내일 다시 쌓여요';
+  }
+  if (sentenceListenRoomToday(activity, now: at) == 0) {
+    return '다음 단계까지 $remaining점 · 오늘 듣기 몫은 다 썼어요, 따라 말하면 1~3점';
+  }
+  return '다음 단계까지 $remaining점 · $ways';
 }
 
 /// 문장 친밀도 단계와 다음 단계까지 진행 막대. 상세 시트와 따라 말하기 화면에서 함께 쓴다.
@@ -23,9 +51,13 @@ class SentenceAffinityBar extends StatelessWidget {
     required this.affinity,
     this.loading = false,
     this.compact = false,
+    this.activity,
   });
 
   final SentenceAffinity affinity;
+
+  /// 이 문장의 오늘 기록. 주면 남은 몫을 안내에 함께 적는다.
+  final SentenceActivity? activity;
   final bool loading;
   final bool compact;
 
@@ -38,14 +70,13 @@ class SentenceAffinityBar extends StatelessWidget {
         : compact
             ? 'Lv.${affinity.level} ${affinity.name}'
             : '친밀도 Lv.${affinity.level} · ${affinity.name}';
-    final hint =
-        affinity.isMax ? '최고 단계예요' : '다음 단계까지 $remaining점 · 들으면 1점, 따라 말하면 2점';
+    final hint = affinityHint(affinity, activity: activity);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(children: [
           SvgPicture.asset(
-              'assets/badges/affinity_${affinity.level.clamp(1, SentenceAffinity.maxLevel)}.svg',
+              'assets/badges/affinity_${affinity.badgeLevel}.svg',
               width: compact ? 20 : 28,
               height: compact ? 20 : 28),
           SizedBox(width: compact ? 6 : 8),

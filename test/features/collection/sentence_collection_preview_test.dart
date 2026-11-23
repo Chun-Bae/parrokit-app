@@ -392,11 +392,17 @@ void main() {
 
   testWidgets('친밀도 최고 단계 문장 카드만 금색 테두리가 된다', (tester) async {
     await seedSentences();
-    // 50점(=1점)씩 50번이면 50점이 쌓여 최고 단계가 된다(5차: 점수에 비례).
-    for (var i = 0; i < 50; i++) {
+    // 한 문장은 하루 6점까지만 쌓인다(5차 566). 날을 바꿔 가며 쌓아
+    // 50점(Lv.5 능숙한)을 만든다. 0.5점은 한 번에 2점이다.
+    var day = DateTime(2026, 1, 1);
+    for (var i = 0; i < 25; i++) {
       await SentenceActivityStore.incrementPractice(
           'guest', seedId('Hello there!'),
-          score: 0.5);
+          score: 0.5, now: day);
+      await SentenceActivityStore.incrementPractice(
+          'guest', seedId('Hello there!'),
+          score: 0.5, now: day);
+      day = day.add(const Duration(days: 1));
     }
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();

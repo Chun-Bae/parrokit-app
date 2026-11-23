@@ -26,7 +26,9 @@ void main() {
     final sheet = _code(_sheet);
     expect(sheet, contains('SentenceActivityStore.incrementPractice('));
     expect(sheet, contains('PracticeLogStore.add('));
-    expect(sheet, contains('addSpeakingXp('));
+    // XP는 성취에만 붙는다(5차 566). 반복 적립은 크래커가 맡는다.
+    expect(sheet, contains('grantParrotXp('));
+    expect(sheet, contains('markFirstPracticeToday('));
   });
 
   test('말하기 전에는 듣던 소리를 멈춘다', () {

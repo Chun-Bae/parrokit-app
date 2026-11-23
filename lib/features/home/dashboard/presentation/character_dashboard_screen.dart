@@ -2,6 +2,8 @@ import 'package:parrokit/core/app/router/tab_reselect.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/state/parrot_level_grant.dart';
+import 'package:parrokit/core/content/parrot_xp_day.dart';
 import 'package:parrokit/features/collection/shell/presentation/collection_shell_screen.dart';
 import 'package:parrokit/features/collection/shell/presentation/open_shared_sentences.dart';
 import 'package:provider/provider.dart';
@@ -122,8 +124,21 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     // 적는 곳은 공용이다. 보관함 문장 창에서 따라 말해도 같은 자리에
     // 쌓인다(5차).
     final data = await PracticeCalendar.recordOne(accountId);
+    // 오늘 목표를 처음 채웠으면 성취 XP를 준다(5차 566). 하루에 한 번만
+    // 센다. 반복은 크래커가 맡고 XP는 성취에만 붙는다.
+    final todayCount = data.counts[PracticeCalendar.dateKey(DateTime.now())] ?? 0;
+    final goalXp = todayCount >= data.dailyGoal &&
+            await markDailyGoalToday(accountId)
+        ? dailyGoalXp
+        : 0;
+    if (goalXp > 0) await grantParrotXp(accountId, goalXp);
+    if (!mounted) return;
+    // 레벨이 올라 밀린 보따리가 있으면 잔액에 더한다.
+    final bundle = await grantLevelRewards(context, accountId);
     if (!mounted) return;
     if (!reward.isEmpty) showToast(practiceRewardEarned(reward.crackers));
+    if (goalXp > 0) showToast('오늘 목표를 채웠어요 · +$goalXp XP');
+    if (bundle > 0) showToast('레벨 보따리 · 크래커 $bundle개');
     setState(() {
       practiceCounts = data.counts;
       practiceGoals = data.goals;

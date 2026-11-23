@@ -5,16 +5,19 @@ import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/sentence_mastery.dart';
 
 void main() {
+  // 1/2/3으로 바꿨다(5차 566). 0점은 주지 않는다 - "했는데 아무것도 안
+  // 쌓였다"가 되는데, 같은 순간 홈 헤더는 XP가 올랐다고 적어 말이 갈렸다.
   test('잘 따라 할수록 많이 오른다', () {
-    expect(practiceGain(1.0), 2, reason: '100점');
-    expect(practiceGain(0.5), 1, reason: '50점');
-    expect(practiceGain(0.2), 0, reason: '거의 못 따라 했으면 안 오른다');
-    expect(practiceGain(null), 1, reason: '점수를 모르면 중간값');
+    expect(practiceGain(1.0), 3, reason: '100점');
+    expect(practiceGain(0.9), 3, reason: '85점 위는 세 점');
+    expect(practiceGain(0.7), 2, reason: '60~85점');
+    expect(practiceGain(0.2), 1, reason: '잘 못해도 한 점은 쌓인다');
+    expect(practiceGain(null), 1, reason: '점수를 모르면 하한');
   });
 
-  test('점수 범위를 벗어나도 0~2점 안에 든다', () {
-    expect(practiceGain(5), 2);
-    expect(practiceGain(-1), 0);
+  test('점수 범위를 벗어나도 1~3점 안에 든다', () {
+    expect(practiceGain(5), 3);
+    expect(practiceGain(-1), 1);
   });
 
   test('쌓인 점수로 친밀도가 오른다', () {

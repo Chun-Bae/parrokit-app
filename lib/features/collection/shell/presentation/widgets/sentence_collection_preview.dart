@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/parrot_xp_day.dart';
 import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/core/content/cloud_sentence_assist.dart';
 import 'package:parrokit/core/content/sentence_assist.dart';
@@ -26,7 +27,6 @@ import 'package:parrokit/core/content/sentence_mastery.dart';
 import 'package:parrokit/core/content/sentence_activity_store.dart';
 import 'package:parrokit/core/content/shared_sentence_repository.dart';
 import 'package:parrokit/core/content/practice_reward.dart';
-import 'package:parrokit/core/content/speaking_xp.dart';
 import 'package:parrokit/core/state/practice_reward_grant.dart';
 import 'package:parrokit/core/content/practice_calendar.dart';
 import 'package:parrokit/core/content/practice_log.dart';
@@ -1275,7 +1275,9 @@ class _MySentenceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final affinity = affinityOf(activity);
-    final maxed = affinity.isMax;
+    // Lv.5(능숙한)부터 금빛을 깐다. 전에는 '최고 단계'였는데 위에 두
+    // 단계를 얹으면서(5차 566) 이미 금빛이던 카드가 빛을 잃을 뻔했다.
+    final maxed = affinity.level >= goldenAffinityLevel;
     final (_, levelColor) = affinityChipColors(affinity.level);
     // 카드 테두리 없이 줄로 붙인다. 친밀도는 해석 옆의 작은 점과 글자로.
     // 최고 단계만 연한 황금빛 배경을 깐다.
@@ -2160,12 +2162,18 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     // 따라 말하기 자리는 내 문장일 때만 보이지만, 기록을 쌓는 쪽에서도
     // 한 번 더 따진다. 듣기도 같은 자리를 빠뜨려 새어 나갔다(5차 410).
     if (!widget.saved) return;
-    await SentenceActivityStore.incrementPractice(
+    // 두 경로가 같은 규칙을 써야 한다. 홈 무대도 이 값으로 움직인다
+    // (5차 566). 전에는 여기만 다른 XP를 줘서 캘린더가 어긋났다.
+    final result = await SentenceActivityStore.incrementPractice(
       widget.accountId,
       widget.sentence.id,
       score: score,
     );
-    final total = await addSpeakingXp(widget.accountId, score);
+    var gain = result.xp;
+    if (await markFirstPracticeToday(widget.accountId)) {
+      gain += firstPracticeXp;
+    }
+    final total = await grantParrotXp(widget.accountId, gain);
     // 홈 '학습 캘린더'에도 쌓는다. 전에는 홈 무대에서 한 것만 쌓여,
     // 바로 위 '내 문장 기록'과 어긋나 보였다(5차).
     await PracticeCalendar.recordOne(widget.accountId);
@@ -2177,9 +2185,13 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
     final scoreText = score == null ? '' : '${(score * 100).round()}점 · ';
     final rewardText =
         reward.isEmpty ? '' : ' · ${practiceRewardEarned(reward.crackers)}';
-    showNotice(total == null
-        ? '따라 말하기 완료 · $scoreText기록했어요$rewardText'
-        : '따라 말하기 완료 · $scoreText+${xpText(xpGain(score))} XP$rewardText');
+    final xpTextPart = gain > 0 ? '+$gain XP · ' : '';
+    final levelPart = total != null && result.leveledTo != null
+        ? '문장 단계가 올랐어요 · '
+        : '';
+    final fullPart = result.dayFull ? '$sentenceDayFullMessage · ' : '';
+    showNotice('따라 말하기 완료 · '
+        '$scoreText$levelPart$fullPart$xpTextPart기록했어요$rewardText');
     await loadActivity();
   }
 
@@ -2608,6 +2620,8 @@ class _SentenceDetailSheetState extends State<_SentenceDetailSheet> {
                 SentenceAffinityBar(
                   key: const ValueKey('sentence-affinity'),
                   affinity: affinityOf(activity),
+                  // 오늘 남은 몫까지 알려 준다(5차 566).
+                  activity: activity,
                   loading: loading,
                 ),
                 const SizedBox(height: 14),

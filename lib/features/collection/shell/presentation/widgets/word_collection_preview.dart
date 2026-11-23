@@ -7,6 +7,7 @@ import 'package:parrokit/features/collection/shell/presentation/widgets/word_edi
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/content/parrot_xp_day.dart';
 import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/features/settings/more/presentation/web_document_screen.dart';
 import 'package:parrokit/core/content/word_search_url.dart';
@@ -32,6 +33,7 @@ import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/core/app/config/app_config.dart';
 import 'package:parrokit/core/shared/widgets/reward_celebration.dart';
 import 'package:parrokit/core/shared/widgets/speak_controls.dart';
+import 'package:parrokit/core/shared/widgets/sheet_scroll_body.dart';
 import 'package:parrokit/core/shared/widgets/tiered_header.dart';
 import 'package:parrokit/features/collection/shell/presentation/widgets/sentence_filter_row.dart';
 import 'collection_header_slot.dart';
@@ -987,7 +989,12 @@ class _WordDetailSheetState extends State<_WordDetailSheet> {
                                 .withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
-                          child: Text(one, style: context.texts.bodySmall),
+                          // bodySmall 기본색은 onSurface 56%라 칩 바탕 위에서
+                          // 읽기 어려웠다(기기에서 확인, 5차 566). 유의어는
+                          // 설명이 아니라 내용이므로 본문색으로 적는다.
+                          child: Text(one,
+                              style: context.texts.bodySmall
+                                  .copyWith(color: colors.onSurface)),
                         ),
                     ],
                   ),
@@ -1896,7 +1903,7 @@ class _AddWordSheetState extends State<AddWordSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             _header(),
-            Flexible(child: SingleChildScrollView(child: _body())),
+            Flexible(child: SheetScrollBody(child: _body())),
             _footer(),
           ],
         ),
@@ -2036,6 +2043,20 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
     // 학습 캘린더에도 쌓는다(사용자 요청). 따라 말하기와 다른 자리에 세므로
     // 하루 목표와 칸 색은 그대로다. '다시'도 복습이라 센다(크래커와 같은 셈).
     unawaited(PracticeCalendar.recordWordReview(widget.accountId));
+    // 오늘 한 묶음을 처음 끝내면 성취 XP를 한 번 준다(5차 566).
+    //
+    // 열 개를 채워야 준다고 뒀더니, 복습 큐가 열 개보다 짧은 날에는
+    // 다 풀어도 영영 못 받았다. 간격 반복이라 하루에 서너 개만 뜨는
+    // 날이 보통이고, 단어가 여덟 개뿐인 사람은 전부 풀어도 0이었다.
+    // 열 개를 채우거나 오늘 것을 다 끝내거나, 먼저 오는 쪽에 준다.
+    final target = wordReviewXpCount < widget.words.length
+        ? wordReviewXpCount
+        : widget.words.length;
+    if (solvedCount + 1 == target) {
+      unawaited(markFirstWordsToday(widget.accountId).then((first) {
+        if (first) grantParrotXp(widget.accountId, firstWordsXp);
+      }));
+    }
     setState(() {
       answered.add((word: word, rating: rating));
       solvedCount++;
@@ -2059,7 +2080,7 @@ class _WordReviewSheetState extends State<WordReviewSheet> {
     // 한 바퀴에 한 번만 띄운다. '다시' 고른 것을 또 돌면 그 바퀴 끝에 또 뜬다.
     if (index >= queue.length && earnedCrackers > 0 && !celebrated) {
       celebrated = true;
-      await showRewardCelebration(context, crackers: earnedCrackers);
+      await showRewardCelebration(context, amount: earnedCrackers);
     }
   }
 

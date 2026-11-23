@@ -33,7 +33,12 @@ void main() {
     final mid = affinityOf(const SentenceActivity(listenCount: 6));
     expect(mid.level, 2);
     expect(mid.progress, closeTo(3 / 7, 1e-9));
-    final max = affinityOf(const SentenceActivity(practiceCount: 25));
+    // 예전 기록은 횟수당 2점으로 읽으므로 25번 = 50점 = Lv.5다. 위에
+    // 두 단계를 얹었으니(5차 566) 최고 단계는 아니다.
+    final grown = affinityOf(const SentenceActivity(practiceCount: 25));
+    expect(grown.level, 5);
+    expect(grown.isMax, isFalse);
+    final max = affinityOf(const SentenceActivity(practiceCount: 75));
     expect(max.level, SentenceAffinity.maxLevel);
     expect(max.isMax, isTrue);
     expect(max.progress, 1);
