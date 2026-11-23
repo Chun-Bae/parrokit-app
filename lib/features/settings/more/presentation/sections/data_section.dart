@@ -29,6 +29,13 @@ import '../widgets/nav_tile.dart';
 import 'remote_storage_section.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 
+/// 임시 파일을 다 지웠을 때.
+const String cacheClearedMessage = '임시 파일을 정리했어요.';
+
+/// 쓰는 중인 것이 남았을 때. 무엇도 안 지워졌는데 '정리했어요'만 뜨면
+/// 용량이 그대로인 것을 보고 고장으로 여긴다(5차 566).
+const String cacheClearPartialMessage = '쓰는 중인 파일은 남겨 뒀어요.';
+
 class DataSection extends StatefulWidget {
   const DataSection({super.key});
 
@@ -216,11 +223,13 @@ class _DataSectionState extends State<DataSection> {
     setState(() => _clearingCache = true);
     // UX: 너무 빨리 끝나면 어색하므로 최소 지연
     await Future.delayed(const Duration(milliseconds: 500));
-    await CacheService.instance.clearCache();
-    await _refreshCache();
+    // 지운 뒤 남은 양을 그대로 돌려준다. 안에서 이미 다시 쟀다.
+    final left = await CacheService.instance.clearCache();
     if (!mounted) return;
     setState(() => _clearingCache = false);
-    showToast('임시 파일을 정리했어요.');
+    // 다 못 지웠는데 '정리했어요'만 띄우면, 용량이 그대로인 것을 보고
+    // 고장으로 여긴다(5차 566).
+    showToast(left > 0 ? cacheClearPartialMessage : cacheClearedMessage);
   }
 
   void _openStorageSheet() {
