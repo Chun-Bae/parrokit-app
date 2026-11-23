@@ -97,8 +97,10 @@ class _QuestionWriteScreenState extends State<QuestionWriteScreen> {
     setState(() => _isSubmitting = false);
 
     if (success) {
-      // 내 로컬 유저 객체의 크래커도 깎아주기 (UI 갱신)
-      userProvider.updateUser(user.addCrackers(-_rewardCrackers));
+      // 잔액은 **서버가 이미 깎았다**(functions/src/questions.ts). 여기서
+      // 또 쓰면 서버 호출 전에 읽은 옛 값으로 사용자 문서를 통째로
+      // 덮어써, 그 사이 들어온 연습 보상·광고 보상이 날아간다(5차 568).
+      // 화면은 사용자 문서 구독(watchUserById)으로 곧 따라온다.
       Navigator.pop(context);
     } else {
       showWriteFailedMessage(
