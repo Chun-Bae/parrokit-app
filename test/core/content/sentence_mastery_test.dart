@@ -62,6 +62,28 @@ void main() {
     expect(level(0, 12), 3); // 24점은 아직 4단계(25점) 아래
   });
 
+  test('숙련도 이름이 친밀도 단계 이름과 엇갈리지 않는다', () {
+    // 홈 범례는 숙련도로, 문장 목록은 친밀도로 같은 문장을 부른다. 마지막
+    // 숙련도를 '익숙함'이라 적던 때는 'Lv.2 익숙한' 문장이 홈에서 '익히는
+    // 중'이고 범례는 '익숙함 0'이었다(5차).
+    // 마지막 숙련도가 시작되는 점수에서 친밀도도 같은 이름으로 올라선다.
+    expect(masteryOf(const SentenceActivity(listenCount: 10)),
+        SentenceMastery.familiar);
+    expect(affinityOf(const SentenceActivity(listenCount: 10)).name, '편안한');
+    expect(SentenceMastery.familiar.label, '편안함');
+
+    // 그 아래 단계의 친밀도 이름을 윗 묶음에 가져다 쓰지 않는다. '익숙한'은
+    // 3점부터(Lv.2)인데 숙련도는 10점부터를 '익숙함'이라 불렀다.
+    final below = <String>{
+      for (var points = 0; points < 10; points++)
+        affinityOf(SentenceActivity(listenCount: points)).name,
+    };
+    for (final mastery in SentenceMastery.values) {
+      final stem = mastery.label.replaceAll('함', '한');
+      expect(below.contains(stem), isFalse, reason: mastery.label);
+    }
+  });
+
   test('마지막 단계 뒤로는 진행률이 1이고 다음 목표가 없다', () {
     final max = affinityOf(const SentenceActivity(listenCount: 500));
     expect(max.isMax, isTrue);

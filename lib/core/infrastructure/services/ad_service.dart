@@ -54,12 +54,20 @@ class AdService {
 
   /// 광고 보상을 서버가 지급하는지.
   ///
-  /// false(지금): 광고에 uid와 "verify-only"를 실어 보내 서버가 AdMob 서명만
+  /// false: 광고에 uid와 "verify-only"를 실어 보내 서버가 AdMob 서명만
   /// 확인하고 기록한다. 지급은 앱이 한다.
-  /// true: "credit-v1"을 보내고 앱은 지급하지 않는다. 서버가 AdMob 확인을 받고
-  /// 지급한다. AdMob 콘솔에 콜백 URL을 넣고 로그로 콜백이 오는 것을 본 뒤에만
-  /// 켠다. 순서는 functions/src/adReward.ts 머리말에 있다.
-  static const bool serverCreditsReward = false;
+  /// true(지금): "credit-v1"을 보내고 앱은 지급하지 않는다. 서버가 AdMob
+  /// 확인을 받고 지급한다. 잔액은 사용자 문서 구독으로 따라온다.
+  ///
+  /// 켜기 전에 2단계("verify-only")로 콜백이 실제 기기에서 통과하는 것을
+  /// 봤다(5차 568). 그 전에는 AdMob이 user_id를 인코딩 전 글자로 서명해
+  /// 네이버 계정(uid가 `naver:<id>`)만 서명이 깨졌다. 자세한 것은
+  /// functions/src/adReward.ts 머리말과 admob-ssv 스킬에 있다.
+  ///
+  /// 릴리스에서만 켠다. 디버그 빌드는 Google 샘플 광고 단위를 쓰는데 그쪽은
+  /// 우리 콜백 URL이 꽂혀 있지 않아 SSV 콜백이 아예 안 온다 - 켜 두면
+  /// 시뮬레이터에서 광고를 봐도 패롯이 영영 안 들어온다.
+  static const bool serverCreditsReward = kReleaseMode;
 
   final _InterstitialAdController _interstitial = _InterstitialAdController();
   final _RewardedAdController _rewarded = _RewardedAdController();

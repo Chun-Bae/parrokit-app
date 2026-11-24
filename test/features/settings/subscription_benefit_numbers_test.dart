@@ -101,4 +101,29 @@ void main() {
     expect(serverStorageQuotaLabel(SubscriptionTier.pro), '30GB');
     expect(serverStorageQuotaLabel(SubscriptionTier.max), '80GB');
   });
+
+  test("'~에 더해' 카드에 아래 단계와 똑같은 줄은 없다", () {
+    // 프로·맥스 카드가 플러스와 똑같은 '한 낱말에 예문 10개까지'를 그대로
+    // 또 적고 있었다. 하나도 안 늘었는데 더 주는 것처럼 읽힌다(5차).
+    for (var i = 1; i < subscriptionTiers.length; i++) {
+      final lower = subscriptionTiers[i - 1].benefits.toSet();
+      final same = subscriptionTiers[i]
+          .benefits
+          .skip(1) // 첫 줄은 '플러스에 더해'처럼 그 단계만의 말이다.
+          .where(lower.contains)
+          .toList();
+      expect(same, isEmpty, reason: subscriptionTiers[i].tier.name);
+    }
+  });
+
+  test('값이 오르는 줄은 그대로 적는다', () {
+    // 겹치는 줄을 빼다가 다른 줄까지 사라지면 카드가 텅 빈다.
+    for (final copy in subscriptionTiers) {
+      expect(copy.benefits, contains('매달 패롯 ${monthlyParrotsFor(copy.tier)}개'),
+          reason: copy.tier.name);
+      expect(copy.benefits,
+          contains('예문 생성 하루 ${dailyExamplesFor(copy.tier)}번'),
+          reason: copy.tier.name);
+    }
+  });
 }

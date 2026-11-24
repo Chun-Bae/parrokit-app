@@ -64,7 +64,10 @@ class _ShortsPageControlSectionState extends State<ShortsPageControlSection> {
     final totalMs =
         dur.inMilliseconds > 0 ? dur.inMilliseconds : widget.durationMs;
     final shownMs = (uiProgress.isNaN ? 0.0 : uiProgress) * totalMs;
-    final clockLabel = '${clipClock(shownMs.round())} / ${clipClock(totalMs)}';
+    // 쇼츠 클립은 1~8초가 흔하다. 초로만 적으면 재생 내내 '0:01 / 0:01'로
+    // 멈춰 보여서, 2초보다 짧으면 0.1초까지 적는다(5차).
+    final clockLabel = '${clipPlayClock(shownMs.round(), totalMs: totalMs)}'
+        ' / ${clipPlayClock(totalMs, totalMs: totalMs)}';
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque, // 터치 영역 확보
@@ -113,7 +116,8 @@ class _ShortsPageControlSectionState extends State<ShortsPageControlSection> {
                   value: uiProgress.isNaN ? 0.0 : uiProgress,
                   // 화면 읽기가 '34%'라고만 읽던 것을 시각으로 읽어 준다.
                   semanticFormatterCallback: (value) =>
-                      '${clipClock((value * totalMs).round())} / ${clipClock(totalMs)}',
+                      '${clipPlayClock((value * totalMs).round(), totalMs: totalMs)}'
+                      ' / ${clipPlayClock(totalMs, totalMs: totalMs)}',
                   onChangeStart: (_) {
                     setState(() => _isDragging = true);
                     widget.onDragStart();

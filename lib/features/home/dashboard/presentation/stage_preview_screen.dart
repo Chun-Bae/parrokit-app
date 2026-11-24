@@ -1386,6 +1386,12 @@ class _HomeHelpDialog extends StatelessWidget {
   // 4차에서 무대 버튼을 정리한 뒤의 모양에 맞춘다. 예전에는 지운 준비 중
   // 버튼(캐릭터 정보, 꾸미기, 쇼츠 학습 등)까지 설명하고 있었다.
   // 도움말 버튼이 레벨 옆에 있는데 레벨·XP 설명이 없었다(5차). 맨 위에 둔다.
+  //
+  // XP 설명은 옛 규칙을 그대로 적고 있었다(5차) - '점수만큼 XP', '10 XP마다
+  // 레벨'. 둘 다 566에서 바뀐 값이다. 지금 XP는 한 번만 생기는 일에만 붙고
+  // (parrot_xp_day.dart), 한 단계에 드는 XP는 15에서 10씩 늘어난다
+  // (speaking_xp.dart). 머리의 막대가 '6 / 25 XP'인데 도움말은 10이라고
+  // 했다. 숫자는 바뀌면 또 어긋나므로 적지 않고 규칙만 적는다.
   static const _sections = <(String, List<(IconData, String, String)>)>[
     (
       '레벨',
@@ -1393,7 +1399,9 @@ class _HomeHelpDialog extends StatelessWidget {
         (
           Icons.trending_up_rounded,
           'XP와 레벨',
-          '따라 말하기를 하면 점수만큼 XP가 쌓여요(100점이면 1 XP). 10 XP마다 레벨이 올라요.'
+          'XP는 하루에 한 번 생기는 일에 쌓여요 - 오늘 첫 연습, 하루 목표 달성, '
+              '하루 첫 단어 복습, 문장 단계가 오를 때요. 한 단계에 드는 XP는 '
+              '레벨이 오를수록 늘어나요(막대 옆 숫자가 지금 단계의 몫이에요).'
         ),
       ]
     ),

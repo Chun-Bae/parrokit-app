@@ -198,7 +198,18 @@ class BackupService {
       await for (final ent in media.list(recursive: true, followLinks: false)) {
         if (ent is! File) continue;
         final base = p.basename(ent.path);
-        if (isBackupFileName(base) || base == 'manifest.json') continue;
+        // 앱 폴더를 훑어 담는데, 되돌리기가 거기에 남겨 둔 제 파일까지
+        // 같이 담겼다(5차). study.json·progress.json·manifest.json은
+        // 아래에서 지금 값으로 새로 만들어 넣으므로, 훑다 만난 것은
+        // 건너뛴다. 안 그러면 zip 안에 같은 이름이 둘 들어가고
+        // manifest에도 서로 다른 sha256이 둘 적혀, 되돌릴 때
+        // 'Hash mismatch for progress.json'으로 통째로 막혔다.
+        if (isBackupFileName(base) ||
+            base == 'manifest.json' ||
+            base == studyDataFileName ||
+            base == progressDataFileName) {
+          continue;
+        }
         filePaths.add(ent.path);
         totalBytes += await ent.length();
       }
@@ -318,6 +329,18 @@ class BackupService {
       });
     }
 
+    // 압축하는 쪽이 스스로 적는 이름. 훑어 담는 파일이 같은 이름으로
+    // 들어오면 건너뛴다. 되돌리기가 앱 폴더에 남긴 progress.json이 새로
+    // 만든 것과 함께 담겨, manifest에 sha256이 서로 다른 줄이 둘 적혔다.
+    // 그러면 방금 만든 백업도 'Hash mismatch for progress.json'으로
+    // 되돌릴 수 없다(5차).
+    final addedPaths = <String>{
+      ...entries.map((e) => e['path'] as String),
+      studyDataFileName,
+      progressDataFileName,
+      'manifest.json',
+    };
+
     // Media 추가
     for (final filePath in params.filePaths) {
       if (filePath == params.dbPath) continue;
@@ -328,6 +351,10 @@ class BackupService {
             p.relative(filePath, from: params.mediaPath).replaceAll('\\', '/');
         final inZip =
             p.join(params.mediaRelativeDir, rel).replaceAll('\\', '/');
+
+        // 같은 이름을 두 번 담지 않는다. manifest에 sha256이 둘 적히면
+        // 되돌릴 때 하나는 반드시 어긋나 전체가 막힌다(5차).
+        if (!addedPaths.add(inZip)) continue;
 
         if (!file.existsSync()) continue;
 
@@ -440,6 +467,11 @@ class BackupService {
     BackupParts only = const BackupParts.all(),
     String accountId = 'guest',
   }) async {
+    // 지난 되돌리기의 숫자를 지운다. 이 값을 안 비우면, 글을 못 읽고 넘어간
+    // 되돌리기 뒤에 화면이 '문장 3개를 불러왔어요' 같은 지난번 숫자를 그대로
+    // 보여 준다(5차).
+    lastStudyRestore = (sentences: 0, words: 0);
+
     // 1단계: 파일 분석
     onProgress?.call(BackupProgress(state: BackupProgressState.analyzing));
 
@@ -644,8 +676,10 @@ class BackupService {
         }
 
         final rel = e['path'] as String;
-        // 문장·단어 글은 위에서 이미 읽었다. 앱 폴더에 남기지 않는다.
-        if (rel == studyDataFileName) continue;
+        // 문장·단어 글과 진도는 위에서 이미 읽었다. 앱 폴더에 남기지
+        // 않는다. 전에는 progress.json만 남겨서, 다음 백업이 앱 폴더를
+        // 훑을 때 그 묵은 파일이 새로 만든 것과 함께 담겼다(5차).
+        if (rel == studyDataFileName || rel == progressDataFileName) continue;
         // manifest 디렉토리 기준으로 소스 파일 찾기
         final src = File(p.join(manifestDir.path, rel));
         final dst = File(p.join(appDir.path, rel));

@@ -144,6 +144,15 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
+Color? _rowColor(WidgetTester tester, String key) => tester
+    .widgetList<Text>(find.descendant(
+      of: find.byKey(ValueKey(key)),
+      matching: find.byType(Text),
+    ))
+    .last
+    .style
+    ?.color;
+
 String _rowValue(WidgetTester tester, String key) => tester
     .widgetList<Text>(find.descendant(
       of: find.byKey(ValueKey(key)),
@@ -186,6 +195,42 @@ void main() {
       expect(_rowValue(tester, 'assist-usage-basics'), '2 / 3번');
       // 단위는 '번'으로 맞췄다(5차 562, 사용자 요청).
       expect(_rowValue(tester, 'assist-usage-examples'), '0 / 5번');
+    });
+
+    testWidgets('하루치를 다 써도 사 둔 몫이 남았으면 빨갛게 적지 않는다', (tester) async {
+      // 사 둔 몫은 하루 한도가 바닥난 뒤부터 깎인다. 그대로 쓸 수 있는데
+      // 숫자가 빨가면 다 쓴 줄 안다 - 바로 아래 '+5' 단추로 방금 산 몫이다.
+      final assist = _FakeAssist(
+        dailyLimit: 3,
+        remainingToday: 5, // 하루치 0 + 사 둔 몫 5
+        exampleDailyLimit: 10,
+        examplesRemainingToday: 20,
+      )
+        ..assistCredits = 5
+        ..exampleCredits = 20;
+      await _pump(tester, assist);
+
+      expect(_rowValue(tester, 'assist-usage-basics'), '3 / 3번 +5');
+      expect(_rowValue(tester, 'assist-usage-examples'), '10 / 10번 +20');
+
+      final cs = ColorScheme.fromSeed(seedColor: Colors.blue);
+      expect(_rowColor(tester, 'assist-usage-basics'), isNot(cs.error));
+      expect(_rowColor(tester, 'assist-usage-examples'), isNot(cs.error));
+    });
+
+    testWidgets('사 둔 몫도 없이 다 쓰면 빨갛게 적는다', (tester) async {
+      final assist = _FakeAssist(
+        dailyLimit: 3,
+        remainingToday: 0,
+        exampleDailyLimit: 10,
+        examplesRemainingToday: 0,
+      );
+      await _pump(tester, assist);
+
+      final cs = ColorScheme.fromSeed(seedColor: Colors.blue);
+      expect(_rowValue(tester, 'assist-usage-basics'), '3 / 3번');
+      expect(_rowColor(tester, 'assist-usage-basics'), cs.error);
+      expect(_rowColor(tester, 'assist-usage-examples'), cs.error);
     });
 
     testWidgets('서버가 한도를 안 주면 단계 기본값으로 적는다', (tester) async {

@@ -118,12 +118,28 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
 
   Future<void> recordCompletedSentence() async {
     final accountId = loadedAccountId ?? 'guest';
-    // 따라 말하기 한 번에 크래커를 뽑아 준다. 보관함 문장 창과 같은 장부를
-    // 쓰므로 상한도 함께 센다(5차 505).
-    final reward = await grantPracticeReward(context, accountId);
+    // 적는 것과 숫자 올리는 것을 **먼저** 한다(5차).
+    //
+    // 전에는 크래커 뽑기(서버)를 먼저 기다렸다. 서버가 쉬다 깨면 그 한
+    // 번이 15초 타임아웃까지 가고, 레벨 보따리까지 또 기다린 뒤에야
+    // setState가 돌았다. 기기에는 이미 적혔는데 '오늘 목표'는 30초쯤
+    // 0/5에 머물러서, 방금 한 연습이 안 세어진 것처럼 보였다.
+    // 보상은 곁다리다. 숫자를 붙들고 있을 까닭이 없다.
+    //
     // 적는 곳은 공용이다. 보관함 문장 창에서 따라 말해도 같은 자리에
     // 쌓인다(5차).
     final data = await PracticeCalendar.recordOne(accountId);
+    if (!mounted) return;
+    setState(() {
+      practiceCounts = data.counts;
+      practiceGoals = data.goals;
+      wordReviewCounts = data.wordCounts;
+      totalPracticed = data.total;
+    });
+
+    // 따라 말하기 한 번에 크래커를 뽑아 준다. 보관함 문장 창과 같은 장부를
+    // 쓰므로 상한도 함께 센다(5차 505).
+    final reward = await grantPracticeReward(context, accountId);
     // 오늘 목표를 처음 채웠으면 성취 XP를 준다(5차 566). 하루에 한 번만
     // 센다. 반복은 크래커가 맡고 XP는 성취에만 붙는다.
     final todayCount = data.counts[PracticeCalendar.dateKey(DateTime.now())] ?? 0;
@@ -139,12 +155,6 @@ class _CharacterDashboardScreenState extends State<CharacterDashboardScreen> {
     if (!reward.isEmpty) showToast(practiceRewardEarned(reward.crackers));
     if (goalXp > 0) showToast('오늘 목표를 채웠어요 · +$goalXp XP');
     if (bundle > 0) showToast('레벨 보따리 · 크래커 $bundle개');
-    setState(() {
-      practiceCounts = data.counts;
-      practiceGoals = data.goals;
-      wordReviewCounts = data.wordCounts;
-      totalPracticed = data.total;
-    });
   }
 
   Future<void> editDailyGoal() async {

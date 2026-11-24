@@ -2,10 +2,17 @@ import 'package:parrokit/core/shared/utils/calendar_date_label.dart';
 import 'sentence_activity_store.dart';
 
 /// 문장별 숙련도 단계. 청취와 따라 말하기 횟수로 계산하며 따로 저장하지 않는다.
+///
+/// 이름은 아래 [SentenceAffinity]의 단계 이름과 어긋나지 않아야 한다. 둘은
+/// **같은 점수**를 보면서 묶는 굵기만 다르다. 마지막 단계를 '익숙함'이라
+/// 부르던 때는, 친밀도가 'Lv.2 익숙한'인 문장(3~9점)을 홈이 '익히는 중'으로
+/// 적고 범례는 '익숙함 0'이라고 적었다 - 한 화면 안에서 말이 엇갈렸다(5차).
+/// 마지막 단계의 경계(10점)는 친밀도 Lv.3 '편안한'이 시작되는 점수와 같으므로
+/// 그 이름을 따른다.
 enum SentenceMastery {
   fresh('새 문장'),
   learning('익히는 중'),
-  familiar('익숙함');
+  familiar('편안함');
 
   const SentenceMastery(this.label);
   final String label;

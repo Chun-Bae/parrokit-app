@@ -123,10 +123,72 @@ void main() {
     });
   });
 
+  // 서버에 못 올려 이 기기에만 저장한 단어도 '들어온 것'이다(5차).
+  //
+  // 규칙 배포 전이거나 오프라인이면 MyWordStore.add가 savedOnDevice를
+  // 돌려준다. 단어는 '내 단어'에 멀쩡히 보이는데, 전에는 added만 세서
+  // 숫자가 0이었고 화면은 '새로 들어온 문장과 단어는 없어요'라고 알렸다.
+  test('서버에 못 올린 단어도 들어온 것으로 센다', () async {
+    MyWordStore.cloud = _FailingWordCloud();
+    addTearDown(() => MyWordStore.cloud = null);
+
+    const file = '{"version":1,"words":['
+        '{"language":"영어","word":"brittle","meaning":"잘 부러지는"}]}';
+
+    final count = await importStudyData('me', file);
+
+    expect(count.words, 1);
+    expect(studyRestoreSummary(count), '단어 1개를 불러왔어요.');
+    // 실제로 기기에 들어와 있어야 센 것이 거짓말이 아니다.
+    expect((await MyWordStore.loadFor('me', '영어')).single.word, 'brittle');
+  });
+
+  test('이미 있는 단어는 서버가 막혀도 세지 않는다', () async {
+    await MyWordStore.add('me', language: '영어', word: 'brittle');
+    MyWordStore.cloud = _FailingWordCloud();
+    addTearDown(() => MyWordStore.cloud = null);
+
+    const file = '{"version":1,"words":[{"language":"영어","word":"brittle"}]}';
+
+    expect((await importStudyData('me', file)).words, 0);
+    expect((await MyWordStore.loadFor('me', '영어')).length, 1);
+  });
+
   test('되돌린 결과를 사람 말로 적는다', () {
     expect(studyRestoreSummary((sentences: 12, words: 3)),
         '문장 12개 · 단어 3개를 불러왔어요.');
     expect(
         studyRestoreSummary((sentences: 0, words: 0)), '새로 들어온 문장과 단어는 없어요.');
   });
+}
+
+/// 서버가 막힌 척한다(규칙 배포 전이거나 오프라인). 읽기는 비어 있고,
+/// 저장은 터진다 - MyWordStore는 이때 이 기기에만 저장한다.
+class _FailingWordCloud implements WordCloud {
+  @override
+  Future<List<MyWord>> load(String ownerId) async => const [];
+
+  @override
+  Future<bool> add(String ownerId, MyWord word) async =>
+      throw Exception('permission-denied');
+
+  @override
+  Future<void> setMeaning(String id, String meaning) async =>
+      throw Exception('permission-denied');
+
+  @override
+  Future<void> setPronunciation(String id, String pronunciation) async =>
+      throw Exception('permission-denied');
+
+  @override
+  Future<void> setSynonyms(String id, List<String> synonyms) async =>
+      throw Exception('permission-denied');
+
+  @override
+  Future<void> setExamples(String id, List<WordExample> examples) async =>
+      throw Exception('permission-denied');
+
+  @override
+  Future<void> remove(String id) async =>
+      throw Exception('permission-denied');
 }

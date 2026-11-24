@@ -1,6 +1,8 @@
 // 구독 줄과 미리보기 화면. 스토어 상품이 없어도 화면이 열리고, 심사가
 // 요구하는 안내가 빠지지 않아야 한다.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
@@ -96,10 +98,38 @@ void main() {
             find.byKey(ValueKey(key), skipOffstage: false));
         expect(button.onPressed, isNull, reason: key);
       }
+    });
+
+    // 복원은 눌린다(5차).
+    //
+    // 448에서는 '시작하기'와 함께 꺼 뒀다. 그런데 위 안내는 살 상품이
+    // 없다는 말이고 이 줄은 이미 산 사람에게 하는 말이다. 안내는 카드 넷
+    // 위에 있어 여기까지 내려오면 화면 밖이라, 눌러도 아무 일이 없으면
+    // 까닭을 알 수 없다. 복원은 상품 목록과 상관없이 부를 수 있고,
+    // 찾은 것이 없으면 '복원할 구독을 찾지 못했어요'라고 말해 준다.
+    testWidgets('구매 복원은 상품이 없어도 눌린다(5차)', (tester) async {
+      await tester.pumpWidget(_wrap(const SubscriptionPreviewSheet()));
+
       final restore = tester.widget<TextButton>(
           find.byKey(const ValueKey('subscription-restore'),
               skipOffstage: false));
-      expect(restore.onPressed, isNull);
+      expect(restore.onPressed, isNotNull);
+    });
+
+    // 토스트는 Scaffold 자리에 뜨는데 이 시트는 root navigator 위에 있다.
+    // 열어 둔 채로 띄우면 결과가 시트 뒤에 가려, 눌러도 아무 일이 없는
+    // 것처럼 보인다(시뮬레이터에서 로그만 남았다, 5차).
+    test('복원은 시트를 닫고 부른다', () {
+      final src = File(
+        'lib/features/settings/subscription/presentation/'
+        'subscription_preview_sheet.dart',
+      ).readAsStringSync();
+      final body = src.substring(src.indexOf('void _restore('));
+      final pop = body.indexOf('Navigator.of(context).pop()');
+      final call = body.indexOf('restorePurchases(');
+      expect(pop, greaterThan(-1));
+      expect(call, greaterThan(-1));
+      expect(pop, lessThan(call), reason: '닫기가 먼저다');
     });
 
     testWidgets('준비 중이라는 안내가 단계 카드보다 위에 있다(5차 448)', (tester) async {

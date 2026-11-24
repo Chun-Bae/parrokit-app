@@ -3,10 +3,12 @@
 // 한 줄이면 된다.
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/widgets/app_bottom_sheet.dart';
 import 'package:parrokit/features/settings/shared/store_badges.dart';
+import 'package:parrokit/features/settings/subscription/presentation/subscription_actions.dart';
 import 'package:parrokit/features/settings/subscription/presentation/subscription_texts.dart';
 
 Future<void> showSubscriptionPreviewSheet(BuildContext context) {
@@ -79,16 +81,43 @@ class _SubscriptionPreviewSheetState extends State<SubscriptionPreviewSheet> {
                   .copyWith(color: cs.onSurfaceVariant, height: 1.5),
             ),
             const SizedBox(height: 12),
-            // 복원할 구독도 아직 없다. 눌리지 않게 두고 까닭은 위에 적었다.
+            // 복원은 눌린다(5차).
+            //
+            // 전에는 '시작하기'와 함께 꺼 두고 '까닭은 위에 적었다'고 했다.
+            // 그런데 위 안내는 **살 상품이 없다**는 말이고, 이 줄은 **이미
+            // 산 사람**에게 하는 말이다. 게다가 안내는 카드 넷 위에 있어
+            // 여기까지 내려오면 화면 밖이다. 시뮬레이터에서 눌러 보니
+            // 아무 일도 일어나지 않았다 - 왜 안 되는지 알 길이 없다
+            // (프로필·환전소·플레이어는 이미 '눌리면 까닭을 말해 준다').
+            //
+            // 복원은 상품 목록과 상관없다. RevenueCat의 restorePurchases는
+            // 스토어의 구매 내역을 가져오는 것이라, 상품이 아직 없어도
+            // 부를 수 있다. 찾은 것이 없으면 '복원할 구독을 찾지 못했어요',
+            // 못 다녀오면 '구매를 복원하지 못했어요'라고 말해 준다.
             TextButton(
               key: const ValueKey('subscription-restore'),
-              onPressed: null,
+              onPressed: () => _restore(context),
               child: const Text(subscriptionRestoreLabel),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// 시트를 닫고 복원한다.
+  ///
+  /// 닫는 것이 먼저다. 토스트는 ScaffoldMessenger가 띄우는 SnackBar인데
+  /// 그 자리는 화면의 Scaffold다. 이 시트는 root navigator 위에 뜨므로
+  /// (showAppSheet, 탭 바가 있는 화면), 열어 둔 채로 띄우면 결과가 시트
+  /// 뒤에 가려 보이지 않는다 - 눌러도 아무 일이 없는 것과 같다.
+  /// 시뮬레이터에서 토스트 로그만 남고 화면에는 안 나왔다(5차).
+  void _restore(BuildContext context) {
+    Navigator.of(context).pop();
+    // 시트의 context는 방금 죽었다. 살아 있는 화면 쪽으로 부른다.
+    final root = rootNavigatorKey.currentContext;
+    if (root == null) return;
+    restorePurchases(root);
   }
 }
 

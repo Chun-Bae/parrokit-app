@@ -60,6 +60,28 @@ void main() {
     expect(src.contains('addCrackers('), isFalse);
   });
 
+  // 연습 숫자가 서버를 기다리지 않는다(5차).
+  //
+  // 전에는 홈이 크래커 뽑기(서버)를 먼저 기다리고 나서야 '오늘 목표'를
+  // 올렸다. 서버가 쉬다 깨면 그 한 번이 15초 타임아웃까지 가고 레벨
+  // 보따리까지 또 기다려서, 기기에 이미 적힌 연습이 30초쯤 0/5에
+  // 머물렀다. 방금 한 것이 안 세어진 것처럼 보인다.
+  test('홈은 적고 숫자부터 올린 뒤에 보상을 청한다', () {
+    final src = read(sites['홈 무대(따라 말하기)']!);
+    final body = src.substring(src.indexOf('Future<void> recordCompletedSentence'));
+    final record = body.indexOf('PracticeCalendar.recordOne(');
+    final paint = body.indexOf('practiceCounts = data.counts');
+    final reward = body.indexOf('grantPracticeReward(');
+    final bundle = body.indexOf('grantLevelRewards(');
+    expect(record, greaterThan(-1));
+    expect(paint, greaterThan(-1));
+    expect(reward, greaterThan(-1));
+    expect(bundle, greaterThan(-1));
+    expect(record, lessThan(paint), reason: '적기가 먼저다');
+    expect(paint, lessThan(reward), reason: '숫자가 크래커 뽑기보다 먼저다');
+    expect(paint, lessThan(bundle), reason: '숫자가 레벨 보따리보다 먼저다');
+  });
+
   test('상한 글귀는 한 곳에서만 만든다', () {
     // 화면이 각자 '하루 300개'라고 적으면 숫자를 고칠 때 갈라진다.
     for (final path in sites.values) {

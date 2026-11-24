@@ -8,6 +8,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/content/speaking_xp.dart';
 import 'package:parrokit/features/community/shared/presentation/write_blocked_reason.dart';
 import 'package:parrokit/features/content-studio/tts/domain/validators/tts_validator.dart';
 import 'package:parrokit/features/content-studio/captioning/domain/validators/clip_validator.dart';
@@ -57,5 +58,19 @@ void main() {
     expect(service, contains('ClipValidator.maxDurationMs'));
     expect(service, isNot(contains('5분')));
     expect(service, isNot(contains('처리할 수 있습니다')));
+  });
+
+  test('홈 도움말이 옛 XP 규칙을 적지 않는다', () {
+    // 566에서 XP를 '한 번만 생기는 일'로 바꾸고 한 단계 값도 15에서 10씩
+    // 늘게 했는데, 도움말만 '점수만큼 XP(100점이면 1 XP)'와 '10 XP마다
+    // 레벨'로 남아 있었다. 머리의 막대는 '6 / 25 XP'였다(5차).
+    expect(xpForLevel(1), 25 - levelXpStep);
+    expect(xpForLevel(2), 25);
+    expect(xpPerLevel, isNot(xpForLevel(2)));
+
+    final help = _code(
+        'lib/features/home/dashboard/presentation/stage_preview_screen.dart');
+    expect(help.contains('10 XP마다'), isFalse);
+    expect(help.contains('100점이면 1 XP'), isFalse);
   });
 }

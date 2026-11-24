@@ -44,4 +44,21 @@ void main() {
     );
     expect(label, '3일 뒤 마감');
   });
+
+  test('올린 직후에도 고른 날수 그대로 보인다', () {
+    // 마감 시각은 올리는 순간에 정해지므로, 카드를 그릴 때는 72시간에서 몇
+    // 초가 모자란다. 시각 차이로 세면 그 자리에서 '2일 뒤 마감'이 됐다(5차).
+    final now = DateTime(2026, 11, 18, 12, 0, 3);
+    final end = DateTime(2026, 11, 18, 12).add(const Duration(days: 3));
+    expect(communityDeadlineLabel(end, now), '3일 뒤 마감');
+  });
+
+  test('하루가 안 남으면 시간으로 적는다', () {
+    // 달력 날짜로만 세면 오늘 밤 11시에 내일 새벽 1시 마감이 '1일 뒤'가 된다.
+    final label = communityDeadlineLabel(
+      DateTime(2026, 11, 19, 1),
+      DateTime(2026, 11, 18, 23),
+    );
+    expect(label, '2시간 뒤 마감');
+  });
 }

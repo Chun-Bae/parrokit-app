@@ -184,7 +184,13 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
             kind: AssistKind.meaning,
             label: assistUsageBasicsLabel,
             value: assistUsageCount(basicsUsed, basicsLimit, '번', assistCredits),
-            exhausted: basicsUsed != null && basicsUsed >= basicsLimit,
+            // 사 둔 몫이 남아 있으면 다 쓴 것이 아니다(5차). 그냥
+            // used >= limit으로 보면 '3 / 3번 +5'가 빨갛게 떠서, 바로 아래
+            // 단추로 산 몫 5번이 못 쓰는 것처럼 보였다. 문장 추가·단어 쪽은
+            // 처음부터 assistExhausted를 썼으므로 같은 상태를 두 화면이
+            // 다르게 말했다.
+            exhausted: assistExhausted(
+                used: basicsUsed, limit: basicsLimit, credits: assistCredits),
             rowKey: const ValueKey('assist-usage-basics'),
           ),
           const SizedBox(height: 6),
@@ -193,7 +199,8 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
             label: assistUsageExamplesLabel,
             // 단위는 '번'으로 맞춘다(5차 562, 사용자 요청).
             value: assistUsageCount(examplesUsed, examplesLimit, '번', credits),
-            exhausted: examplesUsed != null && examplesUsed >= examplesLimit,
+            exhausted: assistExhausted(
+                used: examplesUsed, limit: examplesLimit, credits: credits),
             rowKey: const ValueKey('assist-usage-examples'),
           ),
           const SizedBox(height: 10),

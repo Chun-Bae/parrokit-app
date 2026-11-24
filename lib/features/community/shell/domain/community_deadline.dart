@@ -5,7 +5,15 @@
 String communityDeadlineLabel(DateTime end, DateTime now) {
   final left = end.difference(now);
   if (left.isNegative) return '마감 지남';
-  if (left.inDays > 0) return '${left.inDays}일 뒤 마감';
+  // 하루 넘게 남았으면 달력 날짜로 센다(5차). 시각 차이(inDays)로 세면 '3일 뒤'를
+  // 고르고 올린 투표가 그 자리에서 '2일 뒤 마감'이 됐다 - 72시간에서 올리는 데
+  // 걸린 몇 초가 모자라 2일로 깎였다. 단어 복습도 같은 까닭으로 달력 날짜를 쓴다.
+  if (left.inHours >= 24) {
+    final days = DateTime(end.year, end.month, end.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+    return '$days일 뒤 마감';
+  }
   if (left.inHours > 0) {
     final minutes = left.inMinutes % 60;
     return minutes == 0

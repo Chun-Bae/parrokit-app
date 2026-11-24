@@ -13,7 +13,7 @@
 import * as admin from "firebase-admin";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import {ENFORCE_APP_CHECK} from "./appCheck";
-import {applyLedger, requestIdOf} from "./wallet";
+import {applyLedger} from "./wallet";
 
 /** 레벨별 크래커 보따리. 앱의 levelCrackerRewards와 같은 값이다. */
 export const LEVEL_REWARDS: Readonly<Record<number, number>> = {
@@ -44,6 +44,21 @@ export function rewardBetween(from: number, to: number): number {
     if (level > from && level <= to) sum += crackers;
   }
   return sum;
+}
+
+/**
+ * 이 구간의 보따리를 가리키는 장부 키(5차).
+ *
+ * 전에는 앱이 보낸 requestId를 썼다. 앱은 부를 때마다 새 id를 만들므로
+ * 같은 구간을 두 번 불러도 키가 달라, 장부가 겹침을 막아 주지 못했다.
+ * 막아 준 것은 levelRewardClaimed 하나뿐이었다. 구간으로 키를 만들면
+ * 장부 자체가 '이 구간은 이미 줬다'를 안다.
+ * @param {number} from 이미 받은 레벨
+ * @param {number} to 지금 레벨
+ * @return {string} 장부 키
+ */
+export function levelRewardKey(from: number, to: number): string {
+  return `level_reward_${from}_${to}`;
 }
 
 /**
@@ -82,13 +97,15 @@ export const claimLevelReward = onCall(
       // 적힌 것이 없으면 지금 레벨까지 받은 것으로 보고 이번엔 주지 않는다.
       if (typeof saved !== "number") {
         tx.set(ref, {levelRewardClaimed: level}, {merge: true});
-        return {crackers: 0, claimed: level, first: true};
+        return {crackers: 0, from: level, claimed: level, first: true};
       }
       const claimed = Math.max(0, Math.trunc(saved));
-      if (level <= claimed) return {crackers: 0, claimed, first: false};
+      if (level <= claimed) {
+        return {crackers: 0, from: claimed, claimed, first: false};
+      }
       const crackers = rewardBetween(claimed, level);
       tx.set(ref, {levelRewardClaimed: level}, {merge: true});
-      return {crackers, claimed: level, first: false};
+      return {crackers, from: claimed, claimed: level, first: false};
     });
 
     if (decided.crackers <= 0) {
@@ -100,15 +117,32 @@ export const claimLevelReward = onCall(
       };
     }
 
-    const result = await applyLedger(
-      uid,
-      {crackers: decided.crackers},
-      {
-        key: `level_reward_${requestIdOf(request.data?.requestId)}`,
-        reason: "level_reward",
-        meta: {level, crackers: decided.crackers},
-      }
-    );
+    // 적어 두기와 지급이 다른 트랜잭션이라, 지급이 터지면 '받은 것'으로만
+    // 남고 크래커는 영영 안 들어온다(앱 쪽 parrot_level.dart도 같은 것을
+    // 경계한다: "잔액에 더하기 전에 적으면 받지도 못하고 표에서 지워질 수
+    // 있다"). 터지면 적어 둔 것을 되돌린다 - 그래야 다음 부름이 같은
+    // 구간을 다시 준다. 키가 구간으로 고정돼 있어 되돌린 뒤 다시 불러도
+    // 두 번 들어가지 않는다.
+    let result;
+    try {
+      result = await applyLedger(
+        uid,
+        {crackers: decided.crackers},
+        {
+          key: levelRewardKey(decided.from, decided.claimed),
+          reason: "level_reward",
+          meta: {level, crackers: decided.crackers},
+        }
+      );
+    } catch (error) {
+      await admin.firestore().runTransaction(async (tx) => {
+        const snapshot = await tx.get(ref);
+        // 그 사이 다른 부름이 더 올려 뒀으면 건드리지 않는다.
+        if (snapshot.data()?.levelRewardClaimed !== decided.claimed) return;
+        tx.set(ref, {levelRewardClaimed: decided.from}, {merge: true});
+      });
+      throw error;
+    }
 
     return {
       crackers: result.applied ? decided.crackers : 0,

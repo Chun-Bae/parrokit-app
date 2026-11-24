@@ -96,6 +96,14 @@ class _VoteScreenState extends State<VoteScreen> {
             '마감된 투표가 없어요.',
             '기간이 끝난 투표가 여기에 모여요.',
           ),
+        // '랜덤'은 아직 참여하지 않은 것만 쌓아 두므로, 다 참여하면 진행
+        // 중인 투표가 있는데도 빈다. 없다고 하면 거짓말이다(5차).
+        final f
+            when f == CommunityFilters.vote[0] && _hasOngoingVote(provider) =>
+          (
+            '참여할 투표를 다 했어요.',
+            "진행 중인 투표는 '전체'에서 다시 볼 수 있어요.",
+          ),
         _ => ('진행 중인 투표가 없어요.', '새 투표를 만들면 여기에 올라와요.'),
       };
       return AppEmptyState(
@@ -377,6 +385,14 @@ class _VoteScreenState extends State<VoteScreen> {
     );
   }
 
+  /// 진행 중인 투표가 하나라도 있는지. 빈 화면에 무어라 적을지 가른다.
+  bool _hasOngoingVote(CommunityProvider provider) {
+    final now = DateTime.now();
+    return provider.posts.any((post) =>
+        post.postType == 'vote' &&
+        !(post.voteEndTime?.isBefore(now) ?? false));
+  }
+
   List<Post> _visibleVotePosts(CommunityProvider provider) {
     final now = DateTime.now();
     return provider.posts.where((post) {
@@ -390,6 +406,11 @@ class _VoteScreenState extends State<VoteScreen> {
         return _votedOnlyPostIds.contains(post.id);
       }
       if (isExpired) return false;
+      // '전체'는 이름대로 진행 중인 투표를 다 보여 준다(5차). 참여한 것을
+      // 빼는 바람에, 한 번 참여하면 아직 진행 중인 투표가 '전체'에서도
+      // 사라져 '진행 중인 투표가 없어요'가 됐다. 참여한 것만 보는 자리는
+      // '참여함'으로 따로 있다.
+      if (widget.selectedFilter == CommunityFilters.vote[1]) return true;
       return !_votedOnlyPostIds.contains(post.id);
     }).toList();
   }

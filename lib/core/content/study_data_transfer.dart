@@ -134,7 +134,11 @@ Future<StudyRestoreCount> importStudyData(
               ),
         ],
       );
-      if (result == WordAddResult.added) addedWords++;
+      // savedOnDevice도 들어온 것이다. 서버에 못 올렸을 뿐(규칙 배포 전이거나
+      // 오프라인) 단어는 이 기기에 저장돼 '내 단어'에 보인다. 전에는 added만
+      // 세서, 단어가 멀쩡히 들어왔는데도 '새로 들어온 문장과 단어는 없어요'라고
+      // 알렸다(5차).
+      if (result != WordAddResult.duplicate) addedWords++;
     }
   }
 

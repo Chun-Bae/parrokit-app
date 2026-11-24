@@ -56,11 +56,10 @@ class SubscriptionTierCopy {
   String get name => subscriptionTierName(tier);
   String get startLabel => '$name 시작하기';
 
-  /// 혜택 줄. 패롯 수와 저장 용량은 적어 두지 않고 한 곳에서 가져온다.
-  /// 예전에는 여기 '매달 패롯 100개'처럼 박아 둬서, 서버 값을 바꾸면
-  /// 화면이 거짓말을 하게 돼 있었다(5차).
-  List<String> get benefits => [
-        firstLine,
+  /// 값에서 만드는 혜택 줄. 패롯 수와 저장 용량은 적어 두지 않고 한 곳에서
+  /// 가져온다. 예전에는 여기 '매달 패롯 100개'처럼 박아 둬서, 서버 값을
+  /// 바꾸면 화면이 거짓말을 하게 돼 있었다(5차).
+  List<String> get _valueLines => [
         '매달 패롯 ${monthlyParrotsFor(tier)}개',
         '서버 백업 ${serverStorageQuotaLabel(tier)}',
         // 뜻·발음과 예문은 **서로 다른 축**이다. 하나를 써도 다른 쪽이
@@ -71,6 +70,20 @@ class SubscriptionTierCopy {
         '예문 생성 하루 ${dailyExamplesFor(tier)}번',
         '한 낱말에 예문 ${examplesPerWordFor(tier)}개까지',
       ];
+
+  /// 카드에 적는 혜택 줄. 아래 단계와 **한 글자도 다르지 않은 줄은 뺀다**
+  /// (5차). 프로·맥스 카드가 '플러스에 더해'라고 해 놓고 플러스와 똑같은
+  /// '한 낱말에 예문 10개까지'를 그대로 또 적고 있었다. 한 개도 안 늘었는데
+  /// 더 주는 것처럼 읽힌다.
+  List<String> get benefits {
+    final index = subscriptionTiers.indexWhere((copy) => copy.tier == tier);
+    if (index <= 0) return [firstLine, ..._valueLines];
+    final lower = subscriptionTiers[index - 1]._valueLines.toSet();
+    return [
+      firstLine,
+      ..._valueLines.where((line) => !lower.contains(line)),
+    ];
+  }
 }
 
 const List<SubscriptionTierCopy> subscriptionTiers = [

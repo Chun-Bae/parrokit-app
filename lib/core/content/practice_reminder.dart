@@ -306,6 +306,15 @@ List<DateTime> reminderTimes(
   }
 
   final interval = Duration(minutes: intervalMinutes);
+  // 흔들림은 간격의 절반을 넘지 않는다(5차).
+  //
+  // 넘으면 흔든 시각이 앞 알림보다 뒤로 가지 못해 그 칸이 통째로 버려진다.
+  // 그래서 '1분마다'를 골라도 실제로는 평균 3분, '5분마다'는 8분 간격으로
+  // 왔다 - 화면이 적은 간격과 다르다. 절반까지면 어느 칸도 앞칸을 앞지르지
+  // 않아 간격이 그대로 지켜지면서 시각만 흔들린다.
+  final jitter = jitterMinutes <= 0
+      ? 0
+      : min(jitterMinutes, intervalMinutes ~/ 2);
   final times = <DateTime>[];
   for (var day = 0; day < days && times.length < maxCount; day++) {
     final start = DateTime(now.year, now.month, now.day + day, hour, minute);
@@ -324,8 +333,8 @@ List<DateTime> reminderTimes(
 
     var slot = 0;
     while (!at.isAfter(last) && times.length < maxCount) {
-      final shifted = at.add(Duration(
-          minutes: reminderJitterFor(seed, day, slot, jitterMinutes)));
+      final shifted =
+          at.add(Duration(minutes: reminderJitterFor(seed, day, slot, jitter)));
       // 흔들어도 그날 창 안에, 앞 알림보다 뒤에, 지금보다 뒤에 둔다.
       var kept = shifted;
       if (kept.isBefore(start)) kept = start;

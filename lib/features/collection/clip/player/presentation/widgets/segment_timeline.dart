@@ -8,15 +8,24 @@ class SegmentTimeline extends StatelessWidget {
   const SegmentTimeline({
     super.key,
     required this.engine,
-    required this.start, // ⬅️ 호출부 호환용 (미사용)
-    required this.end, // ⬅️ 호출부 호환용 (미사용)
+    required this.start,
+    required this.end,
     required this.onSeek,
+    this.segmentScope = false,
   });
 
   final ClipPlayerEngine engine;
-  final Duration start; // 미사용
-  final Duration end; // 미사용
+
+  /// 지금 구간의 시작·끝. 막대는 영상 전체를 그리지만(다른 구간으로 건너뛸
+  /// 수 있게), 시계의 잣대는 여기서 가져온다.
+  final Duration start;
+  final Duration end;
   final ValueChanged<Duration> onSeek;
+
+  /// 구간 재생인지. 구간 재생이면 시계가 0.1초까지 보일지를 영상 길이가
+  /// 아니라 지금 구간의 길이로 가른다 - 구간 칩과 같은 잣대라야 한 화면에서
+  /// 말이 엇갈리지 않는다(5차).
+  final bool segmentScope;
 
   @override
   Widget build(BuildContext context) {
@@ -127,5 +136,9 @@ class SegmentTimeline extends StatelessWidget {
     );
   }
 
-  String _fmt(Duration d) => clipClock(d.inMilliseconds);
+  String _fmt(Duration d) => clipPlayClock(
+        d.inMilliseconds,
+        totalMs: engine.duration.inMilliseconds,
+        segmentMs: segmentScope ? (end - start).inMilliseconds : null,
+      );
 }

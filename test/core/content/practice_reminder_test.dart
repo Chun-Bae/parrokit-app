@@ -212,6 +212,20 @@ void main() {
       expect(times.map((t) => t.minute).toSet().length, greaterThan(3));
     });
 
+    test('고른 간격보다 넓게 흔들지 않는다', () {
+      // 흔들림(기본 15분)이 간격보다 크면 흔든 시각이 앞 알림보다 뒤로
+      // 가지 못해 그 칸이 통째로 버려졌다. '1분마다'를 골라도 평균 3분,
+      // '5분마다'는 8분 간격으로 왔다 - 화면이 적은 간격과 달랐다(5차).
+      for (final interval in [1, 5, 10, 30, 60]) {
+        final times = reminderTimes(DateTime(2026, 11, 24, 9), 9, 0,
+            days: 1, intervalMinutes: interval, endHour: 22);
+        expect(times.length, greaterThan(2), reason: '$interval분');
+        final span =
+            times.last.difference(times.first).inMinutes / (times.length - 1);
+        expect(span, closeTo(interval, 1), reason: '$interval분마다인데 평균 $span분');
+      }
+    });
+
     test('흔들림을 0으로 주면 예전 격자 그대로다', () {
       final times = reminderTimes(DateTime(2026, 11, 14, 7), 9, 0,
           days: 2, intervalMinutes: 0, jitterMinutes: 0);

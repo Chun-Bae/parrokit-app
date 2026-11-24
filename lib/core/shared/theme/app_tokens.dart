@@ -429,7 +429,7 @@ class HomeTokens extends ThemeExtension<HomeTokens> {
   /// 학습 잔디 단계 색. 0단계(안 함)부터 4단계(목표 초과)까지.
   final List<Color> garden;
 
-  /// 문장 친밀도 단계 색. 처음, 익히는 중, 익숙함 순서.
+  /// 문장 친밀도 단계 색. 처음, 익히는 중, 편안함 순서.
   final List<Color> mastery;
 
   /// 둥지 그림 아래 바닥 그림자의 바깥 타원.
