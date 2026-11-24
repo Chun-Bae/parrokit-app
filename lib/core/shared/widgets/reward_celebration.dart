@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:parrokit/core/content/practice_reward.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 
 /// 덮개가 저절로 사라지기까지. 누르면 바로 닫힌다.
@@ -27,13 +28,140 @@ Future<void> showRewardCelebration(
   BuildContext context, {
   required int amount,
   Currency currency = Currency.cracker,
+}) =>
+    _celebrate(
+      context,
+      amount: amount,
+      icon: CurrencyIcon(currency, size: _celebrationIconSize),
+      text: rewardCelebrationAmount(currency, amount),
+    );
+
+/// 뜻·발음·원문과 예문 몫을 채웠을 때도 같은 덮개로 띄운다(5차, 사용자 요청).
+///
+/// 패롯·크래커와 달리 지갑에 쌓이는 재화는 아니지만, 사용자가 패롯을 내고
+/// 받는 것은 같다. 전에는 글 한 줄이라 산 것이 눈에 안 띄었다. 그림만 그
+/// 몫의 것([AssistKind])으로 바꾸고 꼴은 그대로 쓴다.
+Future<void> showAssistCelebration(
+  BuildContext context, {
+  required int amount,
+  required AssistKind kind,
+}) =>
+    _celebrate(
+      context,
+      amount: amount,
+      icon: AssistIcon(kind, size: _celebrationIconSize),
+      text: '${kind.label} +$amount',
+    );
+
+/// 덮개 가운데 그림 크기.
+const double _celebrationIconSize = 56;
+
+/// 서버가 넣어 줄 때까지 기다리는 덮개(5차, 사용자 요청).
+///
+/// 광고가 닫히고 잔액이 오르기까지 몇 초가 뜬다. 전에는 그 사이를 토스트
+/// 한 줄('곧 받아요')로 때웠는데, 광고가 닫히는 어수선한 순간이라 묻혔고
+/// 받은 건지 만 건지도 알 수 없었다. 같은 자리에 덮개를 띄워 두고, 들어오면
+/// 그대로 '짜잔'으로 바꾼다.
+///
+/// [until]이 끝나면 스스로 닫히고 그 값을 돌려준다. 누르거나 뒤로 가도
+/// 닫히지 않는다 - 기다리는 중에 닫히면 받은 것을 못 보여 준다.
+Future<T> showRewardPending<T>(
+  BuildContext context, {
+  required Future<T> until,
+  required Widget icon,
+  required String text,
+}) async {
+  BuildContext? sheet;
+  unawaited(showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: Colors.black54,
+    builder: (dialogContext) {
+      sheet = dialogContext;
+      return PopScope(
+        canPop: false,
+        child: _RewardPending(icon: icon, text: text),
+      );
+    },
+  ));
+  try {
+    return await until;
+  } finally {
+    // 띄운 그 창만 닫는다. 그 사이에 사용자가 다른 화면을 열었어도
+    // 엉뚱한 것을 닫지 않는다.
+    final open = sheet;
+    if (open != null && open.mounted) Navigator.of(open).pop();
+  }
+}
+
+/// 기다리는 동안 보여 주는 속. '짜잔'과 자리·크기를 맞춰 둬서, 바뀔 때
+/// 화면이 튀지 않는다.
+class _RewardPending extends StatelessWidget {
+  const _RewardPending({required this.icon, required this.text});
+
+  final Widget icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        key: const ValueKey('reward-pending'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: _celebrationIconSize,
+                height: _celebrationIconSize,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Opacity(opacity: 0.45, child: icon),
+                    const SizedBox(
+                      width: _celebrationIconSize,
+                      height: _celebrationIconSize,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('받는 중',
+                  key: const ValueKey('reward-pending-title'),
+                  style: context.texts.titleLarge.copyWith(
+                    color: Colors.white,
+                    shadows: _celebrationShadows,
+                  )),
+              const SizedBox(height: 4),
+              Text(
+                text,
+                key: const ValueKey('reward-pending-text'),
+                style: context.texts.headlineSmall.copyWith(
+                  color: Colors.white,
+                  shadows: _celebrationShadows,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+Future<void> _celebrate(
+  BuildContext context, {
+  required int amount,
+  required Widget icon,
+  required String text,
 }) {
   if (amount <= 0) return Future.value();
   return showDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierColor: Colors.black54,
-    builder: (_) => _RewardCelebration(amount: amount, currency: currency),
+    builder: (_) => _RewardCelebration(icon: icon, text: text),
   );
 }
 
@@ -44,10 +172,10 @@ String rewardCelebrationAmount(Currency currency, int amount) =>
         '${currency.label} +$amount';
 
 class _RewardCelebration extends StatefulWidget {
-  const _RewardCelebration({required this.amount, required this.currency});
+  const _RewardCelebration({required this.icon, required this.text});
 
-  final int amount;
-  final Currency currency;
+  final Widget icon;
+  final String text;
 
   @override
   State<_RewardCelebration> createState() => _RewardCelebrationState();
@@ -110,7 +238,7 @@ class _RewardCelebrationState extends State<_RewardCelebration>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CurrencyIcon(widget.currency, size: 56),
+                  widget.icon,
                   const SizedBox(height: 12),
                   Text('짜잔!',
                       key: const ValueKey('reward-celebration-title'),
@@ -120,7 +248,7 @@ class _RewardCelebrationState extends State<_RewardCelebration>
                       )),
                   const SizedBox(height: 4),
                   Text(
-                    rewardCelebrationAmount(widget.currency, widget.amount),
+                    widget.text,
                     key: const ValueKey('reward-celebration-amount'),
                     style: context.texts.headlineSmall.copyWith(
                       color: Colors.white,

@@ -5,10 +5,12 @@
 // 틀렸는지 보려면 목록으로 돌아가 하나씩 열어야 했고 받은 크래커도 눈에 잘
 // 띄지 않았다.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parrokit/core/shared/widgets/assist_icon.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/core/shared/widgets/reward_celebration.dart';
 
@@ -155,5 +157,100 @@ void main() {
     ).readAsStringSync();
     expect(source, contains('showRewardCelebration('));
     expect(source, contains('Currency.parrot'));
+  });
+
+  // 서버 지급으로 옮기면서 출시 빌드에서 덮개가 통째로 사라졌다(5차). 글
+  // 한 줄만 남아 '왜 안 나오냐'는 말이 나왔다. 덮개는 사용자가 원해서 넣은
+  // 것이다. 잔액이 실제로 오르기를 기다렸다가 띄운다.
+  test('서버가 지급해도 덮개를 띄운다', () {
+    final source = File(
+      'lib/features/settings/more/presentation/sections/ad_reward_button.dart',
+    ).readAsStringSync();
+    final branch = source.substring(source.indexOf('serverCreditsReward)'));
+    final waited = branch.indexOf('_waitForCoins(');
+    final shown = branch.indexOf('showRewardCelebration(');
+    expect(waited, greaterThan(-1), reason: '잔액이 오르기를 기다린다');
+    expect(shown, greaterThan(-1), reason: '기다린 뒤 덮개를 띄운다');
+    expect(waited, lessThan(shown), reason: '기다리기가 먼저다');
+  });
+
+  // 뜻·발음·원문과 예문 몫도 패롯을 내고 받는 것이라 같은 덮개로 띄운다
+  // (5차, 사용자 요청).
+  testWidgets('산 몫도 그 몫의 그림으로 띄운다', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showAssistCelebration(context,
+                amount: 10, kind: AssistKind.example),
+            child: const Text('열기'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('열기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('예문 +10'), findsOneWidget);
+    final icon = tester.widget<AssistIcon>(find.byType(AssistIcon));
+    expect(icon.kind, AssistKind.example);
+  });
+
+  test('몫 사기가 이 덮개를 쓴다', () {
+    final source = File(
+      'lib/features/settings/more/presentation/sections/assist_usage_section.dart',
+    ).readAsStringSync();
+    expect(source, contains('showAssistCelebration('));
+    expect(source, contains('AssistKind.meaning'));
+    expect(source, contains('AssistKind.example'));
+  });
+
+  // 기다리는 동안도 덮개로 보여 준다(5차, 사용자 요청). 토스트 한 줄은
+  // 광고가 닫히는 어수선한 순간에 묻혔다.
+  testWidgets('받는 중 덮개는 끝나면 스스로 닫히고 값을 돌려준다', (tester) async {
+    final gate = Completer<bool>();
+    Future<bool>? result;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => result = showRewardPending<bool>(
+              context,
+              until: gate.future,
+              icon: const CurrencyIcon(Currency.parrot, size: 56),
+              text: '패롯 +3',
+            ),
+            child: const Text('열기'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('열기'));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('reward-pending')), findsOneWidget);
+    expect(find.text('받는 중'), findsOneWidget);
+    expect(find.text('패롯 +3'), findsOneWidget);
+
+    gate.complete(true);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('reward-pending')), findsNothing);
+    expect(await result, isTrue);
+  });
+
+  // 광고를 틀 때 서버를 미리 깨우고, 끝나면 기다리는 덮개를 띄운 뒤
+  // 들어오면 '짜잔'으로 바꾼다.
+  test('광고 보상이 미리 깨우고 기다리는 덮개를 거친다', () {
+    final source = File(
+      'lib/features/settings/more/presentation/sections/ad_reward_button.dart',
+    ).readAsStringSync();
+    final warm = source.indexOf('warmUpRewardServer()');
+    final pending = source.indexOf('showRewardPending<bool>(');
+    final done = source.indexOf('showRewardCelebration(');
+    expect(warm, greaterThan(-1), reason: '광고 틀기 전에 깨운다');
+    expect(pending, greaterThan(-1), reason: '기다리는 덮개를 띄운다');
+    expect(warm, lessThan(pending), reason: '깨우기가 먼저다');
+    expect(pending, lessThan(done), reason: '기다린 뒤에 짜잔이다');
   });
 }

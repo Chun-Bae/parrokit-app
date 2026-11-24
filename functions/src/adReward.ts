@@ -297,6 +297,20 @@ export async function creditReward(reward: VerifiedReward): Promise<boolean> {
 const OPTIONS = {memory: "512MiB" as const};
 
 export const admobRewardCallback = onRequest(OPTIONS, async (req, res) => {
+  // 앱이 광고를 틀기 직전에 두드려 이 함수를 미리 깨운다(5차, 사용자 요청).
+  //
+  // 광고는 30초쯤 돈다. 그동안 컨테이너가 떠 있으면 광고가 끝나고 AdMob이
+  // 콜백을 칠 때 기다릴 일이 없다. 전에는 광고가 끝난 **뒤에야** 컨테이너가
+  // 깨기 시작해서, 패롯이 20초쯤 늦게 들어왔다(로그에서 잰 값:
+  // Starting new instance → STARTUP probe 20.0초).
+  //
+  // 아무것도 하지 않고 204만 돌려준다. 서명을 보지 않으니 이 길로는 지급도
+  // 기록도 일어나지 않는다. 진짜 콜백은 signature와 key_id를 달고 온다.
+  if (req.query.warmup === "1") {
+    res.status(204).send();
+    return;
+  }
+
   const url = req.originalUrl ?? req.url ?? "";
   const rawQuery = url.includes("?") ? url.slice(url.indexOf("?") + 1) : "";
   let detail: VerifyDetail;

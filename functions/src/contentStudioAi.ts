@@ -19,12 +19,32 @@ import {
 } from "./r2Client";
 import {genkit} from "genkit";
 import {vertexAI} from "@genkit-ai/google-genai";
-import {enableFirebaseTelemetry} from "@genkit-ai/firebase";
-import {ElevenLabsClient} from "@elevenlabs/elevenlabs-js";
-import textToSpeech from "@google-cloud/text-to-speech";
-import {GenerateVideosOperation, GoogleGenAI} from "@google/genai";
-import {WaveFile} from "wavefile";
 import * as Buffer from "buffer";
+
+// 무거운 SDK는 맨 위에서 불러오지 않는다(5차).
+//
+// index.ts가 `export *`로 함수 전부를 모으므로, 이 파일 맨 위의 import는
+// **광고 콜백 하나를 깨울 때도** 전부 읽힌다. 재 보니 이 파일 혼자
+// 6,608개를 끌고 왔고(ElevenLabs만 4,160개), 컨테이너가 깨는 데 20초가
+// 걸렸다. 240바이트짜리 서명 하나 검증하는 함수까지 그걸 지고 일어났다.
+// 전에 광고 콜백이 '256 MiB 초과'로 죽은 것도 같은 까닭이다.
+//
+// 쓰는 함수 안에서 불러오면 그 함수를 실제로 부를 때만 읽는다. 한 번
+// 읽은 것은 Node가 캐시하므로 두 번째부터는 공짜다.
+//
+// genkit은 여기서 빼지 않았다. 아래 ai.defineFlow가 모듈 최상위에서
+// 돌아야 해서 미루려면 구조를 바꿔야 한다. 그건 따로 본다.
+const loadElevenLabs = async () =>
+  (await import("@elevenlabs/elevenlabs-js")).ElevenLabsClient;
+const loadGoogleGenAI = async () => (await import("@google/genai")).GoogleGenAI;
+const loadVideosOperation = async () =>
+  (await import("@google/genai")).GenerateVideosOperation;
+const loadTextToSpeech = async () =>
+  (await import("@google-cloud/text-to-speech")).default.TextToSpeechClient;
+// wavefile은 CommonJS라 이름으로 안 나온다. 맨 위 `import {WaveFile}`은
+// 컴파일러가 맞춰 줬지만 await import()는 날것 그대로라 default 밑에 있다.
+// 이걸 놓쳐서 한 번 틀렸고, 로컬에서 하나씩 new 해 보고 잡았다(5차).
+const loadWaveFile = async () => (await import("wavefile")).default.WaveFile;
 
 // 파이어베이스 시크릿 매니저에서 API 키를 안전하게 불러옵니다.
 const elevenLabsApiKey = defineSecret("ELEVENLABS_API_KEY");
@@ -620,10 +640,29 @@ async function serializeVideoGenerationDocument(
 }
 
 // 1. 파이어베이스 콘솔(Genkit 탭)로 로그 전송 활성화 (콜드스타트 타임아웃 방지)
-enableFirebaseTelemetry({
-  metricExportTimeoutMillis: 180000,
-  metricExportIntervalMillis: 180000,
-});
+//
+// 흐름을 처음 돌릴 때 켠다(5차). @genkit-ai/firebase 하나가 1,097개를
+// 끌고 오는데, 켜는 일은 이 파일의 흐름(chatbotFlow·generateTtsFlow)을
+// 돌릴 때만 뜻이 있다. 맨 위에 두면 광고 콜백을 깨울 때도 읽힌다.
+//
+// Promise를 들고 있어서 두 번 켜지지 않는다. 요청이 한꺼번에 와도
+// 같은 Promise를 기다린다.
+let telemetry: Promise<void> | null = null;
+
+/**
+ * 흐름을 돌리기 전에 한 번 켠다. 두 번째부터는 같은 Promise를 돌려준다.
+ * @return {Promise<void>} 켜기가 끝나는 Promise
+ */
+function startTelemetry(): Promise<void> {
+  telemetry ??= import("@genkit-ai/firebase").then(
+    ({enableFirebaseTelemetry}) =>
+      enableFirebaseTelemetry({
+        metricExportTimeoutMillis: 180000,
+        metricExportIntervalMillis: 180000,
+      })
+  );
+  return telemetry;
+}
 
 // 2. 통합 AI 플러그인 초기화 (Vertex AI 백엔드 사용)
 const ai = genkit({
@@ -862,7 +901,7 @@ export const generateTtsFlow = ai.defineFlow(
 
     if (provider === "elevenlabs") {
       try {
-        const client = new ElevenLabsClient({
+        const client = new (await loadElevenLabs())({
           apiKey: elevenLabsApiKey.value(),
         });
 
@@ -888,7 +927,7 @@ export const generateTtsFlow = ai.defineFlow(
         }
         const pcmBuffer = Buffer.Buffer.concat(chunks);
 
-        const wav = new WaveFile();
+        const wav = new (await loadWaveFile())();
         const int16Array = new Int16Array(pcmBuffer.length / 2);
         for (let i = 0; i < int16Array.length; i++) {
           int16Array[i] = pcmBuffer.readInt16LE(i * 2);
@@ -907,7 +946,7 @@ export const generateTtsFlow = ai.defineFlow(
       }
     } else if (provider === "gemini") {
       try {
-        const client = new GoogleGenAI({
+        const client = new (await loadGoogleGenAI())({
           apiKey: geminiApiKey.value(),
         });
 
@@ -947,7 +986,7 @@ export const generateTtsFlow = ai.defineFlow(
         // We need a WAV header so the Flutter audio player can play it.
         const pcmBuffer = Buffer.Buffer.from(part.inlineData.data, "base64");
 
-        const wav = new WaveFile();
+        const wav = new (await loadWaveFile())();
 
         // Convert the raw byte buffer to an array of 16-bit LE samples
         const int16Array = new Int16Array(pcmBuffer.length / 2);
@@ -969,7 +1008,7 @@ export const generateTtsFlow = ai.defineFlow(
     } else {
       // Default to Google TTS
       try {
-        const client = new textToSpeech.TextToSpeechClient();
+        const client = new (await loadTextToSpeech())();
 
         // language is guaranteed to exist
         const languageCode = input.language;
@@ -1059,6 +1098,7 @@ export const generateChatbotResponse = onCall(
         );
       }
 
+      await startTelemetry();
       const result = await chatbotFlow(request.data);
       const usage = await checkAndIncrementChatbotUsage(uid);
 
@@ -1130,6 +1170,7 @@ export const generateTts = onCall(
     }
 
     try {
+      await startTelemetry();
       const result = await generateTtsFlow(request.data);
       return {...result, chargedParrots: charge};
     } catch (error: any) {
@@ -1165,7 +1206,7 @@ export const listTtsVoices = onCall(appCheckOptions, async (request) => {
   }
 
   try {
-    const client = new textToSpeech.TextToSpeechClient();
+    const client = new (await loadTextToSpeech())();
     const languageCode = request.data?.languageCode; // 선택적 파라미터
 
     const [result] = await client.listVoices({languageCode});
@@ -1192,7 +1233,9 @@ export const listElevenLabsVoices = onCall(
     }
 
     try {
-      const client = new ElevenLabsClient({apiKey: elevenLabsApiKey.value()});
+      const client = new (await loadElevenLabs())({
+        apiKey: elevenLabsApiKey.value(),
+      });
       const response = await client.voices.getAll();
       return {voices: response.voices};
     } catch (error: any) {
@@ -1236,7 +1279,7 @@ export const generateVideo = onCall(
       }
 
       // Vertex AI가 아닌 일반 제미나이 API 클라이언트
-      const client = new GoogleGenAI({
+      const client = new (await loadGoogleGenAI())({
         apiKey: geminiApiKey.value(),
       });
 
@@ -1418,11 +1461,11 @@ export const getVideoOperationStatus = onCall(
         }
       }
 
-      const client = new GoogleGenAI({
+      const client = new (await loadGoogleGenAI())({
         apiKey: geminiApiKey.value(),
       });
 
-      const operation = new GenerateVideosOperation();
+      const operation = new (await loadVideosOperation())();
       operation.name = operationName;
 
       const updatedOperation = await client.operations.getVideosOperation({

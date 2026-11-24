@@ -18,6 +18,7 @@ import 'package:parrokit/core/content/sentence_assist.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
 import 'package:parrokit/core/shared/theme/components/typography/app_texts_theme.dart';
 import 'package:parrokit/core/shared/utils/show_toast.dart';
+import 'package:parrokit/core/shared/widgets/reward_celebration.dart';
 import 'package:parrokit/core/state/provider/user_provider.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_quota.dart';
 import 'package:parrokit/features/settings/subscription/domain/subscription_tier.dart';
@@ -83,11 +84,17 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
       _pendingBuyIds.remove(assist);
       if (!mounted) return;
       // bought가 0이면 아까 타임아웃 난 그 요청이 이미 반영된 것이다.
-      showToast(result.bought <= 0
-          ? exampleCreditAlreadyMessage
-          : assist
-              ? assistCreditBoughtMessage(result.bought)
-              : exampleCreditBoughtMessage(result.bought));
+      if (result.bought <= 0) {
+        showToast(exampleCreditAlreadyMessage);
+      } else {
+        // 산 몫도 광고 패롯·복습 크래커와 같은 덮개로 띄운다(5차, 사용자
+        // 요청). 글 한 줄은 패롯을 내고 받은 것치고 눈에 안 띄었다.
+        await showAssistCelebration(
+          context,
+          amount: result.bought,
+          kind: assist ? AssistKind.meaning : AssistKind.example,
+        );
+      }
     } on ExampleCreditsFailed catch (e) {
       if (mounted) showToast(e.message);
     } finally {

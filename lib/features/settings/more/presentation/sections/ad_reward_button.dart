@@ -93,10 +93,44 @@ class _AdRewardButtonState extends State<AdRewardButton> {
     });
   }
 
+  /// 서버가 넣어 준 패롯이 잔액에 닿을 때까지 기다린다.
+  ///
+  /// 사용자 문서 구독(watchUserById)이 올려 주므로 그 알림을 듣는다.
+  /// [coins]만큼 다 오르기를 기다리지 않고 **오르기만 하면** 참이다 -
+  /// 그 사이 다른 보상이 함께 들어와 더 오를 수 있고, 적게 올랐다고
+  /// 덮개를 안 띄우면 받은 것을 안 받은 것처럼 보인다.
+  ///
+  /// 화면을 떠나도 계속 듣는다. 덮개를 띄울지는 부르는 쪽이 mounted로 가른다.
+  Future<bool> _waitForCoins(UserProvider provider, int coins) async {
+    final before = provider.coins;
+    if (provider.coins > before) return true;
+    final done = Completer<bool>();
+    void check() {
+      if (!done.isCompleted && provider.coins > before) done.complete(true);
+    }
+
+    provider.addListener(check);
+    // 찬 함수가 깨고 AdMob 콜백까지 오는 데 걸리는 시간이다. 넘기면
+    // 기다리기를 그만두되, 지급 자체는 서버에서 그대로 진행된다.
+    final timer = Timer(const Duration(seconds: 20), () {
+      if (!done.isCompleted) done.complete(false);
+    });
+    try {
+      return await done.future;
+    } finally {
+      timer.cancel();
+      provider.removeListener(check);
+    }
+  }
+
   void _onWatchAd() {
     // 광고는 전체 화면으로 30초쯤 돈다. 그 사이에 이 섹션이 사라질 수 있으니
     // Provider는 미리 잡아 둔다.
     final userProvider = context.read<UserProvider>();
+
+    // 광고를 트는 동안 보상 서버를 미리 깨운다(5차, 사용자 요청). 30초면
+    // 넉넉하다. 기다리지 않는다 - 못 깨워도 광고는 그대로 튼다.
+    unawaited(AdService.warmUpRewardServer());
 
     AdService().showRewardedAd(
       onRewarded: (coins) async {
@@ -110,9 +144,37 @@ class _AdRewardButtonState extends State<AdRewardButton> {
         // 쿨다운 기록은 화면 수명과 상관없이 한다.
         if (AdService.serverCreditsReward) {
           // 서버가 AdMob 확인을 받고 지급한다. 잔액은 사용자 문서 구독으로
-          // 곧 바뀐다. 아직 안 들어온 것을 '짜잔'으로 띄우면 거짓이 되므로
-          // 이쪽은 글 한 줄로 둔다.
-          showToast('패롯 $coins개를 곧 받아요!');
+          // 따라온다.
+          //
+          // 568에서는 '아직 안 들어온 것을 축하하지 않는다'며 글 한 줄로
+          // 바꿨다. 그 바람에 출시 빌드에서 덮개가 통째로 사라졌다 - 덮개는
+          // 사용자가 원해서 넣은 것이다(5차 568).
+          //
+          // 없애는 대신 **기다리는 것을 보여 준다**(5차, 사용자 요청).
+          // 광고가 닫히자마자 '받는 중' 덮개를 띄우고, 잔액이 실제로 오르면
+          // 같은 자리에서 '짜잔'으로 바꾼다. 토스트 한 줄은 광고가 닫히는
+          // 어수선한 순간에 묻혔고, 받은 건지 만 건지도 알 수 없었다.
+          final arrived = mounted
+              ? await showRewardPending<bool>(
+                  context,
+                  until: _waitForCoins(userProvider, coins),
+                  icon: const CurrencyIcon(Currency.parrot, size: 56),
+                  text: '패롯 +$coins',
+                )
+              : await _waitForCoins(userProvider, coins);
+          if (!arrived) {
+            // 못 기다렸다. 지급 자체는 서버에서 그대로 간다. 거짓으로
+            // 축하하느니 늦게 말한다.
+            showToast('패롯 $coins개를 곧 받아요!');
+          } else if (mounted) {
+            await showRewardCelebration(
+              context,
+              amount: coins,
+              currency: Currency.parrot,
+            );
+          } else {
+            showToast('패롯 $coins개를 받았어요!');
+          }
         } else {
           try {
             await userProvider.addCoins(coins);

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:http/http.dart' as http;
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 
 /// 환경에 따라 광고 ID를 반환한다.
@@ -68,6 +69,32 @@ class AdService {
   /// 우리 콜백 URL이 꽂혀 있지 않아 SSV 콜백이 아예 안 온다 - 켜 두면
   /// 시뮬레이터에서 광고를 봐도 패롯이 영영 안 들어온다.
   static const bool serverCreditsReward = kReleaseMode;
+
+  /// 보상 콜백 함수의 주소(비밀 아님). AdMob 콘솔에 꽂아 둔 것과 같다.
+  ///
+  /// Cloud Run 직접 주소를 쓴다. 앞단을 한 겹 덜 지나야 쿼리 문자열을
+  /// 다시 인코딩할 놈이 하나 줄어든다(admob-ssv 스킬).
+  static const String _rewardCallbackUrl =
+      'https://admobrewardcallback-my7jjzrohq-uc.a.run.app';
+
+  /// 광고를 틀기 직전에 보상 함수를 미리 깨운다(5차, 사용자 요청).
+  ///
+  /// 광고는 30초쯤 돈다. 그 사이에 서버가 떠 있으면, 광고가 끝나고 AdMob이
+  /// 콜백을 칠 때 기다릴 일이 없다. 전에는 광고가 끝난 **뒤에야** 컨테이너가
+  /// 깨기 시작해서 패롯이 20초쯤 늦게 들어왔다(로그에서 잰 값 20.0초).
+  ///
+  /// `warmup=1`은 서버가 아무것도 하지 않고 204만 돌려주는 길이다. 실패해도
+  /// 그냥 넘어간다 - 못 깨웠으면 예전처럼 조금 더 기다릴 뿐이다.
+  static Future<void> warmUpRewardServer() async {
+    if (!serverCreditsReward) return;
+    try {
+      await http
+          .get(Uri.parse('$_rewardCallbackUrl?warmup=1'))
+          .timeout(const Duration(seconds: 25));
+    } catch (e) {
+      AppLogger.d('[Ad] 보상 서버 미리 깨우기 실패(넘어간다): $e');
+    }
+  }
 
   final _InterstitialAdController _interstitial = _InterstitialAdController();
   final _RewardedAdController _rewarded = _RewardedAdController();

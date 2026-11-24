@@ -5,6 +5,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {createRequire} from "node:module";
+import {readFileSync} from "node:fs";
 import {generateKeyPairSync, sign, createPublicKey} from "node:crypto";
 
 const require = createRequire(import.meta.url);
@@ -228,4 +229,17 @@ test("성치 않은 퍼센트가 섞여 있어도 터지지 않는다", () => {
     {key: privateKey, dsaEncoding: "der"}
   ).toString("base64url");
   assert.equal(matchingVariant(message, signature, pem), "raw");
+});
+
+// 앱이 광고를 틀기 직전에 두드려 함수를 미리 깨운다(5차, 사용자 요청).
+// 이 길로는 서명을 보지 않으므로 지급도 기록도 일어나지 않아야 한다.
+test("warmup은 서명을 보지 않고 204만 돌려준다", () => {
+  const src = readFileSync("src/adReward.ts", "utf8");
+  const handler = src.slice(src.indexOf("export const admobRewardCallback"));
+  const warm = handler.indexOf('req.query.warmup === "1"');
+  const verify = handler.indexOf("verifyRewardDetail(");
+  assert.ok(warm > -1, "warmup 갈래가 있다");
+  assert.ok(verify > -1, "확인 갈래도 그대로 있다");
+  assert.ok(warm < verify, "warmup이 확인보다 먼저 빠져나간다");
+  assert.match(handler.slice(warm, verify), /res\.status\(204\)[\s\S]*return;/);
 });
