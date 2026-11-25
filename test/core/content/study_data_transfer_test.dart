@@ -91,12 +91,20 @@ void main() {
     expect(await MyWordStore.loadFor('me', '영어'), isEmpty);
   });
 
-  test('깨진 글이나 모르는 형식은 아무것도 넣지 않는다', () async {
-    expect(await importStudyData('me', '{'), (sentences: 0, words: 0));
-    expect(
-        await importStudyData(
-            'me', jsonEncode({'version': 99, 'sentences': []})),
-        (sentences: 0, words: 0));
+  test('깨진 글이나 모르는 형식은 아무것도 넣지 않고 못 읽었다고 한다', () async {
+    // 전에는 0을 돌려줬다. 그러면 '이미 다 있다'와 구별되지 않아서, 엉뚱한
+    // 파일을 골라도 '새로 들어온 문장과 단어는 없어요.'가 떴다(5차).
+    await expectLater(
+      importStudyData('me', '{'),
+      throwsA(predicate(
+          (e) => e.toString().contains(studyFileUnreadableMessage))),
+    );
+    await expectLater(
+      importStudyData('me', jsonEncode({'version': 99, 'sentences': []})),
+      throwsA(predicate(
+          (e) => e.toString().contains(studyFileUnreadableMessage))),
+    );
+    // 던지더라도 쓰다 만 것이 남으면 안 된다.
     expect(await MySentenceStore.load('me'), isEmpty);
   });
 

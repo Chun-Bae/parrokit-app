@@ -64,26 +64,38 @@ Future<String> exportStudyData(
   });
 }
 
+/// 읽을 수 없는 파일을 골랐을 때(5차).
+///
+/// 전에는 못 읽어도 0을 돌려줘서, 엉뚱한 파일을 골랐을 때도 '새로 들어온
+/// 문장과 단어는 없어요.'가 떴다. 사용자 눈에는 **이미 다 들어 있는 파일**을
+/// 고른 것과 똑같이 보인다. 그래서 잘못 골랐다는 것을 모르고 넘어간다.
+const String studyFileUnreadableMessage = '이 파일에서 문장과 단어를 찾지 못했어요. 내보내기로 만든 파일이 맞는지 봐 주세요.';
+
 /// 백업에서 읽은 글을 내 문장·단어로 되돌린다. 이미 있는 것은 건너뛴다.
 ///
-/// 모르는 형식이거나 글이 깨졌으면 아무것도 넣지 않고 0을 돌려준다.
+/// 모르는 형식이거나 글이 깨졌으면 [studyFileUnreadableMessage]를 담아 던진다.
+/// 0을 돌려주는 것은 **제대로 읽었는데 더할 것이 없을 때**뿐이다. 둘을
+/// 가르지 않으면 "못 읽었다"와 "이미 다 있다"가 같은 말로 나온다.
 Future<StudyRestoreCount> importStudyData(
   String accountId,
   String source, {
   bool sentences = true,
   bool words = true,
 }) async {
-  Map<String, dynamic> data;
+  final Object? decoded;
   try {
-    final decoded = jsonDecode(source);
-    if (decoded is! Map<String, dynamic>) return (sentences: 0, words: 0);
-    data = decoded;
+    decoded = jsonDecode(source);
   } catch (_) {
-    return (sentences: 0, words: 0);
+    throw Exception(studyFileUnreadableMessage);
   }
+  if (decoded is! Map<String, dynamic>) {
+    throw Exception(studyFileUnreadableMessage);
+  }
+  final data = decoded;
+
   final version = (data['version'] as num?)?.toInt() ?? 0;
   if (version <= 0 || version > studyDataVersion) {
-    return (sentences: 0, words: 0);
+    throw Exception(studyFileUnreadableMessage);
   }
 
   var addedSentences = 0;

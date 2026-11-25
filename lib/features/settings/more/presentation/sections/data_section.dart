@@ -194,8 +194,14 @@ class _DataSectionState extends State<DataSection> {
       final count = await importStudyData(_accountId, source);
       if (!mounted) return;
       showToast(studyRestoreSummary(count));
-    } catch (_) {
-      if (mounted) showToast('문장·단어를 불러오지 못했어요. 다시 시도해 주세요.');
+    } catch (e) {
+      if (!mounted) return;
+      // 읽을 수 없는 파일은 까닭을 그대로 알린다(5차). 전에는 '다시 시도해
+      // 주세요'만 떴는데, 엉뚱한 파일을 고른 것이라 다시 해도 똑같다.
+      final unreadable = e.toString().contains(studyFileUnreadableMessage);
+      showToast(unreadable
+          ? studyFileUnreadableMessage
+          : '문장·단어를 불러오지 못했어요. 다시 시도해 주세요.');
     }
   }
 
