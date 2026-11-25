@@ -3,7 +3,6 @@
 // firebase_auth accessed via FirebaseAuthService
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'package:parrokit/data/local/prefs/user_prefs.dart';
-import 'package:parrokit/core/infrastructure/repositories/account_delete_guard.dart';
 import 'package:parrokit/core/infrastructure/repositories/app_user_merge.dart';
 import 'package:parrokit/data/models/user.dart';
 import 'package:parrokit/core/infrastructure/services/firebase/firebase_auth_service.dart';
@@ -574,34 +573,28 @@ class UserRepository {
   /// - Firebase Auth 계정 삭제
   /// - 로컬 캐시 삭제
   Future<void> deleteAccount() async {
-    final fbUser = _authService.currentUser;
-    final uid = fbUser?.uid;
-    final nickname = _userPrefs.loadUser()?.displayName;
+    // 지우는 일은 전부 서버가 한다(5차).
+    //
+    // 전에는 여기서 ①문서 삭제 → ②Auth 계정 삭제를 했다. ②는 로그인한 지
+    // 오래되면 'requires-recent-login'으로 거절되는데, 그러면 문서는 없고
+    // 계정은 살아 있는 상태가 남았다 - 다시 들어가면 온보딩이고 학습 기록은
+    // 이미 사라진 뒤다. 그걸 막으려고 "최근에 로그인했나"를 미리 재서 아예
+    // 시작을 막았지만, 그 가드는 오래 켜 둔 사람의 탈퇴를 막아 버렸다.
+    //
+    // 서버는 Admin SDK를 쓰므로 재로그인을 요구하지 않는다. 게다가 계정을
+    // **맨 마지막에** 지우므로, 중간에 끊겨도 계정이 남아 다시 부를 수 있다.
+    // 그래서 여기서는 실패를 그대로 올려 보내기만 하면 된다 - 다시 누르면
+    // 서버가 이어서 끝낸다.
+    await _firebaseUserService.deleteAccount();
 
-    // 지우기 전에 멈출 수 있을 때 멈춘다(5차 386). 계정 삭제가 거절되면
-    // 사용자 문서만 사라지고 계정은 남아 자료를 잃는다.
-    if (needsRecentLoginToDelete(
-        fbUser?.metadata.lastSignInTime, DateTime.now())) {
-      throw Exception(recentLoginNeededMessage);
-    }
-
-    if (uid != null) {
-      await _firebaseUserService.deleteUserDocument(uid: uid);
-    }
-
-    // Auth 계정 삭제가 먼저다. 여기서 던지면(흔한 건 requires-recent-login)
-    // 아래로 내려가지 않으므로 닉네임 선점은 그대로 남는다. 계정이 살아 있는데
-    // 닉네임만 빼앗기는 일은 생기지 않는다.
-    await _authService.deleteAccount();
-
-    if (uid != null) {
-      try {
-        await _firebaseUserService.releaseNickname(
-            uid: uid, nickname: nickname);
-      } catch (e) {
-        // 여기서 실패해도 탈퇴 자체는 끝났다. 닉네임만 남는다.
-        AppLogger.w('[UserRepository] 닉네임 선점 해제 실패 nickname=$nickname: $e');
-      }
+    // 서버가 계정을 지웠으니 이 기기에 남은 세션과 저장분만 치운다.
+    // 토큰은 이미 쓸 수 없지만, 지우지 않으면 다음에 켤 때 지워진 계정으로
+    // 로그인한 척한다.
+    try {
+      await _authService.signOut();
+    } catch (e) {
+      // 세션 정리가 안 돼도 탈퇴 자체는 끝났다.
+      AppLogger.w('[UserRepository] 탈퇴 뒤 로그아웃 실패: $e');
     }
 
     await _userPrefs.clear();

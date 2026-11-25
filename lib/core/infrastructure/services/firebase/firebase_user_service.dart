@@ -300,6 +300,20 @@ class FirebaseUserService {
     await _firestore.collection('users').doc(uid).delete();
   }
 
+  /// 탈퇴를 서버에 맡긴다(5차).
+  ///
+  /// 서버가 닉네임 → 문서와 하위 컬렉션 → Auth 계정 순으로 지운다. 계정이
+  /// 맨 마지막이라 중간에 끊겨도 계정은 살아 있고, 다시 부르면 이미 지워진
+  /// 것은 건너뛰고 이어서 끝낸다. 그래서 실패하면 **그냥 다시 부르면 된다.**
+  ///
+  /// 기다림은 generateCallTimeout(60초)을 쓴다. 하위 문서가 많으면
+  /// shortCallTimeout(15초)으로는 멀쩡한 삭제가 접힌다.
+  Future<void> deleteAccount() async {
+    await _callables
+        .httpsCallable('deleteAccount')
+        .call(<String, dynamic>{}).timeout(generateCallTimeout);
+  }
+
   /// 닉네임 선점을 푼다. 내가 쓰던 것일 때만 지운다.
   ///
   /// 탈퇴할 때 이걸 안 하면 nicknames 문서가 영영 남는다. isNicknameAvailable은

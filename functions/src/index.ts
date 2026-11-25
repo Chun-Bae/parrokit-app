@@ -27,3 +27,4 @@ export * from "./subscriptionEvent";
 export * from "./storageUsage";
 export * from "./r2";
 export * from "./r2Legacy";
+export * from "./accountDelete";
