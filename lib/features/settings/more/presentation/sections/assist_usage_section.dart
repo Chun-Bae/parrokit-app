@@ -63,7 +63,16 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
   late final ExampleCreditsService _credits =
       widget.credits ?? ExampleCreditsService();
   bool _loading = true;
-  bool _buying = false;
+
+  /// 지금 사는 중인 쪽. null이면 아무것도 안 산다. true는 뜻·발음, false는
+  /// 예문으로, _buy의 `assist`와 같은 값이다.
+  ///
+  /// 전에는 그냥 bool이라 **두 단추가 함께 돌았다**(5차). 한쪽만 눌렀는데
+  /// 둘 다 빙글빙글 도니 두 묶음(패롯 6개)이 나간 것처럼 보였다. 이 카드는
+  /// 무엇을 얼마 받았는지 말해 주는 자리라 그 사이에 틀린 말을 하면 안 된다.
+  bool? _buyingKind;
+
+  bool get _buying => _buyingKind != null;
 
   /// 아직 끝나지 않은 구매의 요청 id(5차 534). 예문·뜻발음 따로 센다.
   ///
@@ -75,7 +84,7 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
   /// 패롯으로 한 묶음 산다. 끝나면 성공이든 아니든 남은 수를 다시 읽는다.
   Future<void> _buy({bool assist = false}) async {
     if (_buying) return;
-    setState(() => _buying = true);
+    setState(() => _buyingKind = assist);
     final requestId =
         _pendingBuyIds[assist] ??= ExampleCreditsService.newRequestId();
     try {
@@ -106,7 +115,7 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
       final assist = _assist;
       if (assist is CloudSentenceAssist) assist.invalidateUsage();
       await _load();
-      if (mounted) setState(() => _buying = false);
+      if (mounted) setState(() => _buyingKind = null);
     }
   }
 
@@ -248,7 +257,7 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
                     onPressed: _buying || cantBuyAssist != null
                         ? null
                         : () => _buy(assist: true),
-                    child: _buying
+                    child: _buyingKind == true
                         ? const SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(strokeWidth: 2))
@@ -263,7 +272,7 @@ class _AssistUsageSectionState extends State<AssistUsageSection> {
                     key: const ValueKey('assist-usage-buy'),
                     style: _buyButtonStyle(context, cs),
                     onPressed: _buying || cantBuy != null ? null : () => _buy(),
-                    child: _buying
+                    child: _buyingKind == false
                         ? const SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(strokeWidth: 2))

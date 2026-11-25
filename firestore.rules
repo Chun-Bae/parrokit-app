@@ -52,15 +52,20 @@ service cloud.firestore {
       //   결제를 거치지 않고 자기 문서를 고치면 그대로 패롯이 됐다.
       //   패롯은 Whisper·Gemini·R2를 쓰는 값이라 그만큼 서버 비용이 된다.
       //   coins는 아주 옛 문서가 패롯을 두던 자리다(wallet.ts가 지운다).
-      //   onSubscriptionEvent(충전·환불)와 admobRewardCallback만 올린다.
+      //   올리는 곳: onSubscriptionEvent(충전·환불), admobRewardCallback,
+      //   exchangeCurrency. 깎는 곳: buyExampleCredits·buyAssistCredits,
+      //   generateCaptions·generateChatbotResponse(실패하면 되돌린다).
       // - crackers: 연습·복습 보상과 질문 채택으로 오간다(5차 568).
-      //   환전으로 패롯이 되므로 패롯과 같이 묶는다. grantPracticeReward와
-      //   acceptAnswer만 올린다.
+      //   환전으로 패롯이 되므로 패롯과 같이 묶는다. grantPracticeReward,
+      //   acceptAnswer, claimLevelReward, exchangeCurrency,
+      //   createQuestion(질문을 걸 때 깎고 만료되면 돌려준다)가 쓴다.
       //
-      // ※ 아직 배포하지 않았다. 지금 조이면 앱이 직접 넣는 세 곳이 깨진다:
-      //   광고 보상(AdService.serverCreditsReward가 false),
-      //   연습 보상·레벨 보따리(앱이 addCrackers를 부른다).
-      //   셋이 서버로 옮겨지고 그 앱이 퍼진 뒤에 배포한다.
+      // ※ 2026-11-25에 배포했다(첫 출시 전이라 퍼져 있는 옛 앱이 없다).
+      //   세 곳 모두 서버로 옮긴 뒤다: 광고 보상은 admobRewardCallback,
+      //   연습 보상은 grantPracticeReward, 레벨 보따리는 claimLevelReward.
+      //   앱에 남은 직접 쓰기는 AdService.serverCreditsReward가 false일 때,
+      //   즉 debug 빌드의 광고 보상 하나뿐이다. 시뮬레이터에서 광고 보상이
+      //   permission-denied로 끝나는 것은 이 때문이고, 출시 빌드는 겪지 않는다.
       allow update: if request.auth != null
         && request.auth.uid == userId
         && !request.resource.data.diff(resource.data).affectedKeys()

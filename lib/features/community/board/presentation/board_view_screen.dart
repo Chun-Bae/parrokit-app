@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:parrokit/core/shared/theme/app_tokens.dart';
 import 'package:flutter/services.dart';
@@ -157,10 +158,9 @@ class _BoardViewScreenState extends State<BoardViewScreen> {
       post: post,
       isMyPost: isMyPost,
       onEdit: () async {
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => BoardWriteScreen(editPost: post),
-          ),
+        await pushAppScreen(
+          context,
+          BoardWriteScreen(editPost: post),
         );
       },
       onDelete: () async {

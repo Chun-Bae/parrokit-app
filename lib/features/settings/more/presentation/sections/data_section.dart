@@ -99,10 +99,17 @@ class _DataSectionState extends State<DataSection> {
       ),
     );
     if (!mounted || !restoring) return;
-    // 클립만 되돌리면 앱이 다시 켜진다. 문장·단어만 되돌린 경우에만 알린다.
-    final count = BackupService.instance.lastStudyRestore;
-    if (count.sentences > 0 || count.words > 0) {
-      showToast(studyRestoreSummary(count));
+    // 클립만 되돌리면 앱이 다시 켜져서 토스트가 보이지 않는다. 그래서
+    // 문장·단어를 고른 경우에만 알린다.
+    //
+    // 하나도 안 들어왔을 때도 말한다(5차). 전에는 0개면 입을 다물어서
+    // 화면에 '다 불러왔어요.'만 남았다 - 백업에 있던 문장이 모두 이미
+    // 있는 것이라 한 개도 더해지지 않았는데, 사용자는 다 들어온 줄 알고
+    // 백업 파일을 지운다. studyRestoreSummary는 그 말('새로 들어온 문장과
+    // 단어는 없어요.')을 이미 갖고 있고, 문장·단어 파일 불러오기 쪽은
+    // 조건 없이 그대로 보여 준다. 한 흐름이 두 가지로 굴지 않게 맞춘다.
+    if (parts.sentences || parts.words) {
+      showToast(studyRestoreSummary(BackupService.instance.lastStudyRestore));
     }
   }
 

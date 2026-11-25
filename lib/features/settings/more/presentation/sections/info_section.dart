@@ -7,6 +7,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:parrokit/core/shared/widgets/tip_dialog.dart';
 
@@ -63,13 +64,11 @@ class _InfoSectionState extends State<InfoSection> {
             icon: Icons.privacy_tip_outlined,
             title: '개인정보 처리방침',
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const WebDocumentScreen(
-                    title: '개인정보 처리방침',
-                    url:
-                        'https://www.notion.so/2025-11-20-2b1b6c6245ad80b38685e5b20cc4be73?source=copy_link',
-                  ),
+              pushAppScreen(
+                context,
+                const WebDocumentScreen(
+                  title: '개인정보 처리방침',
+                  url: 'https://www.notion.so/421b6c6245ad813f8060ce2b10735561',
                 ),
               );
             },
@@ -79,13 +78,11 @@ class _InfoSectionState extends State<InfoSection> {
             icon: Icons.description_outlined,
             title: '이용 약관',
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const WebDocumentScreen(
-                    title: '이용 약관',
-                    url:
-                        'https://www.notion.so/2025-11-20-2b1b6c6245ad80d2b741e496571298be?source=copy_link',
-                  ),
+              pushAppScreen(
+                context,
+                const WebDocumentScreen(
+                  title: '이용 약관',
+                  url: 'https://www.notion.so/421b6c6245ad81c48b1ed73a4c6ed4a7',
                 ),
               );
             },

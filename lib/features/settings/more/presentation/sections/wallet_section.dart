@@ -7,6 +7,7 @@
 import 'package:parrokit/features/settings/more/presentation/sections/store_paywall.dart';
 import 'package:parrokit/features/settings/shared/store_badges.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -125,10 +126,9 @@ class WalletSection extends StatelessWidget {
                     // 루트로 띄운다(5차 566, 사용자 지적). 탭 안쪽으로
                     // 밀면 셸이 그리는 네이티브 탭 바가 환전소 위에
                     // 그대로 남아, 돈을 다루는 화면에서 다른 탭이 눌렸다.
-                    onPressed: () => Navigator.of(context, rootNavigator: true)
-                        .push(
-                      MaterialPageRoute(
-                          builder: (context) => const ExchangeScreen()),
+                    onPressed: () => pushAppScreen(
+                      context,
+                      const ExchangeScreen(),
                     ),
                     icon: const Icon(Icons.currency_exchange_rounded, size: 18),
                     label: const Text('환전'),

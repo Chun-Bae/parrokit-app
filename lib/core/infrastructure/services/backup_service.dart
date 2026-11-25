@@ -609,6 +609,19 @@ class BackupService {
     final inFile = BackupParts.fromManifest(manifestMap['parts']);
     final restoring = only.intersect(inFile);
 
+    // 고른 것이 이 파일에 하나도 없으면 여기서 멈춘다(5차).
+    //
+    // 전에는 그대로 끝까지 가서 '다 됐어요 / 다 불러왔어요.'를 띄웠다.
+    // 클립만 고르고 문장·단어만 담긴 파일을 고르면 아무것도 안 들어오는데
+    // 다 들어온 것처럼 말했다. 되찾는 자리라 더 나쁘다 - 다 돌아온 줄 알고
+    // 진짜 백업 파일을 지운다.
+    if (restoring.isEmpty) {
+      try {
+        await _deleteDir(tmpDir);
+      } catch (_) {}
+      throw Exception(backupNothingRestoredMessage);
+    }
+
     // 문장·단어 되돌리기. 파일 옮기기 전에 해 둔다(앱이 다시 켜지기 때문).
     if (restoring.needsStudyFile) {
       final studyFile = File(p.join(manifestDir.path, studyDataFileName));

@@ -54,6 +54,19 @@ class SubscriptionStatusSheet extends StatelessWidget {
   final VoidCallback? onRestore;
   final VoidCallback? onUpgrade;
 
+  /// 시트를 닫고 [action]을 한다(5차).
+  ///
+  /// 복원도 관리도 결과를 토스트로 알린다. 토스트는 화면의 Scaffold가 그리는
+  /// SnackBar라 시트 뒤 맨 아래에 깔린다 - 시트를 열어 둔 채로 띄우면
+  /// '복원할 구독을 찾지 못했어요'가 보이지 않고, 눌러도 아무 일이 없는
+  /// 것처럼 보인다. [action]은 이 시트를 연 화면의 context를 들고 있으므로
+  /// 시트를 닫은 뒤에 불러도 된다.
+  void _close(BuildContext context, VoidCallback action) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) navigator.pop();
+    action();
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -123,19 +136,22 @@ class SubscriptionStatusSheet extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: FilledButton(
                   key: const ValueKey('status-upgrade'),
-                  onPressed: onUpgrade,
+                  onPressed:
+                      onUpgrade == null ? null : () => _close(context, onUpgrade!),
                   child: const Text(subscriptionUpgradeLabel),
                 ),
               ),
             OutlinedButton(
               key: const ValueKey('status-manage'),
-              onPressed: onManage,
+              onPressed:
+                  onManage == null ? null : () => _close(context, onManage!),
               child: const Text(subscriptionManageLabel),
             ),
             const SizedBox(height: 8),
             TextButton(
               key: const ValueKey('status-restore'),
-              onPressed: onRestore,
+              onPressed:
+                  onRestore == null ? null : () => _close(context, onRestore!),
               child: const Text(subscriptionRestoreButtonLabel),
             ),
             const SizedBox(height: 4),

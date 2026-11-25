@@ -13,6 +13,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:parrokit/core/app/router/app_router.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:parrokit/core/state/provider/clip_provider.dart';
 import 'package:parrokit/core/shared/theme/app_radius.dart';
@@ -292,6 +293,27 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
     );
   }
 
+  /// 구독 화면으로 간다. 이 칸이 시트 안에 있으면 시트를 먼저 닫는다(5차).
+  ///
+  /// 구독 화면이 안 열릴 때 그 까닭('아직 구독 상품을 준비하는 중이에요' 등)은
+  /// 토스트로 알린다. 토스트는 화면의 Scaffold가 그리는 SnackBar라서, 시트가
+  /// 떠 있으면 시트 뒤 맨 아래에 그려져 보이지 않는다. 저장 용량 시트에서
+  /// 눌러 보니 아무 일도 안 일어난 것처럼 보였다 - 로그에만 남았다.
+  void _openSubscription(BuildContext context) {
+    final presenter = widget.presenter ?? resolvePaywallPresenter();
+    final navigator = Navigator.of(context);
+    // 시트가 아니라 화면에 바로 박혀 있으면 닫을 것이 없다.
+    if (!navigator.canPop()) {
+      presenter.show(context);
+      return;
+    }
+    navigator.pop();
+    // 이 칸의 context는 방금 죽었다. 살아 있는 쪽으로 연다.
+    final root = rootNavigatorKey.currentContext;
+    if (root == null) return;
+    presenter.show(root);
+  }
+
   @override
   Widget build(BuildContext context) {
     final clipProvider = context.watch<ClipProvider>();
@@ -361,9 +383,7 @@ class _RemoteStorageDetailsState extends State<RemoteStorageDetails> {
           action: serverTotal == 0
               ? TextButton(
                   key: const ValueKey('storage-open-subscription'),
-                  onPressed: () =>
-                      (widget.presenter ?? resolvePaywallPresenter())
-                          .show(context),
+                  onPressed: () => _openSubscription(context),
                   child: const Text(subscriptionOpenButtonLabel),
                 )
               : null,

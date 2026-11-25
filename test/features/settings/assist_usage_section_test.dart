@@ -5,6 +5,8 @@
 //
 // 뜻·발음과 예문은 서로 다른 축이라 나눠 적는다.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -115,6 +117,26 @@ class _FakeCredits implements ExampleCreditsService {
       throw const ExampleCreditsFailed(exampleCreditSlowMessage);
     }
     return const ExampleCreditsResult(credits: 10, bought: 10, spent: 3);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// 끝나지 않는 구매. 사는 동안의 화면을 본다.
+class _SlowCredits implements ExampleCreditsService {
+  final gate = Completer<void>();
+  final seen = <bool>[];
+
+  @override
+  Future<ExampleCreditsResult> buy({
+    int packs = 1,
+    String? requestId,
+    bool assist = false,
+  }) async {
+    seen.add(assist);
+    await gate.future;
+    throw const ExampleCreditsFailed('그만');
   }
 
   @override
@@ -450,6 +472,63 @@ void main() {
 
       expect(assist.refreshCalls, before + 1,
           reason: '안 읽으면 들어온 몫이 화면에 안 보인다');
+    });
+  });
+
+  // 한쪽만 눌렀는데 두 단추가 함께 돌았다(5차). 둘 다 빙글빙글 도니 두
+  // 묶음(패롯 6개)이 나간 것처럼 보인다. 무엇을 얼마 받았는지 말해 주는
+  // 카드라 사는 동안에도 틀린 말을 하면 안 된다.
+  group('사는 동안', () {
+    Future<_SlowCredits> start(WidgetTester tester, String key) async {
+      final credits = _SlowCredits();
+      await _pump(
+        tester,
+        _FakeAssist(
+          dailyLimit: 3,
+          remainingToday: 3,
+          exampleDailyLimit: 10,
+          examplesRemainingToday: 10,
+        ),
+        parrots: 10,
+        credits: credits,
+      );
+      await tester.tap(find.byKey(ValueKey(key)));
+      await tester.pump();
+      return credits;
+    }
+
+    Finder spinnerIn(String key) => find.descendant(
+          of: find.byKey(ValueKey(key)),
+          matching: find.byType(CircularProgressIndicator),
+        );
+
+    testWidgets('예문을 누르면 예문 단추만 돈다', (tester) async {
+      final credits = await start(tester, 'assist-usage-buy');
+
+      expect(credits.seen, [false], reason: '예문 쪽으로 간다');
+      expect(spinnerIn('assist-usage-buy'), findsOneWidget);
+      expect(spinnerIn('assist-usage-buy-assist'), findsNothing);
+      // 그래도 둘 다 눌리지는 않는다. 한 번에 하나만 산다.
+      expect(
+          tester
+              .widget<FilledButton>(
+                  find.byKey(const ValueKey('assist-usage-buy-assist')))
+              .onPressed,
+          isNull);
+
+      credits.gate.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('뜻·발음을 누르면 뜻·발음 단추만 돈다', (tester) async {
+      final credits = await start(tester, 'assist-usage-buy-assist');
+
+      expect(credits.seen, [true], reason: '뜻·발음 쪽으로 간다');
+      expect(spinnerIn('assist-usage-buy-assist'), findsOneWidget);
+      expect(spinnerIn('assist-usage-buy'), findsNothing);
+
+      credits.gate.complete();
+      await tester.pumpAndSettle();
     });
   });
 }

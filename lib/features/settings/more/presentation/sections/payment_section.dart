@@ -11,6 +11,7 @@ import 'package:parrokit/features/settings/more/presentation/sections/coin_purch
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
@@ -111,14 +112,13 @@ class PaymentSection extends StatelessWidget {
     }
     if (!context.mounted) return;
 
-    await Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => _CoinPaywallPage(
-          offering: offering!,
-          userProvider: context.read<UserProvider>(),
-        ),
+    await pushAppScreen(
+      context,
+      _CoinPaywallPage(
+        offering: offering,
+        userProvider: context.read<UserProvider>(),
       ),
+      fullscreenDialog: true,
     );
   }
 }

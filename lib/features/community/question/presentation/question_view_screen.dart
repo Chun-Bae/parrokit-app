@@ -1,5 +1,6 @@
 import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:parrokit/features/community/question/presentation/question_filter.dart';
 import 'package:parrokit/core/shared/widgets/currency_icon.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
@@ -189,10 +190,9 @@ class _QuestionViewScreenState extends State<QuestionViewScreen> {
             label: '수정',
             onTap: () async {
               if (!mounted) return;
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => BoardWriteScreen(editPost: question),
-                ),
+              await pushAppScreen(
+                context,
+                BoardWriteScreen(editPost: question),
               );
             },
           ),

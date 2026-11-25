@@ -12,6 +12,7 @@
 import 'package:parrokit/features/community/vote/presentation/vote_confirm_text.dart';
 import 'package:parrokit/features/community/shared/presentation/widgets/community_report_actions.dart';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:parrokit/features/community/shell/presentation/utils/community_post_ui_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:parrokit/features/community/board/presentation/board_write_screen.dart';
@@ -541,10 +542,9 @@ class _VoteViewScreenState extends State<VoteViewScreen> {
             label: '수정',
             onTap: () async {
               if (!mounted) return;
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => BoardWriteScreen(editPost: vote),
-                ),
+              await pushAppScreen(
+                context,
+                BoardWriteScreen(editPost: vote),
               );
             },
           ),

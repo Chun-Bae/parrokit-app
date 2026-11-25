@@ -168,6 +168,13 @@ String studyRestoreSummary(StudyRestoreCount count) {
 /// 글을 적어 주세요.')도 흐린 글씨를 쓴다(5차 475의 규칙).
 const String backupNoPartsMessage = '하나는 골라 주세요.';
 
+/// 고른 것이 그 백업 파일에는 없어서 하나도 못 불러왔을 때(5차).
+///
+/// 전에는 이때도 '다 됐어요 / 다 불러왔어요.'가 떴다. 클립만 고르고 문장·단어만
+/// 담긴 파일을 고르면 아무것도 안 들어오는데 다 들어온 것처럼 말했다.
+/// 되찾는 자리에서 거짓말을 하면, 사용자는 제대로 된 백업 파일을 지운다.
+const String backupNothingRestoredMessage = '고른 것이 이 백업 파일에 없어요.';
+
 /// 백업에 담을 것들(5차 345, 사용자 요청: 문장·단어·클립을 고르게).
 class BackupParts {
   const BackupParts({

@@ -18,6 +18,7 @@
 import 'package:parrokit/core/shared/utils/app_logger.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:parrokit/core/app/navigation/push_screen.dart';
 import 'package:parrokit/core/shared/theme/app_spacing.dart';
 import 'package:provider/provider.dart';
 
@@ -75,12 +76,11 @@ class _RecentScreenState extends State<RecentScreen> {
   // ─────────────────────────────────────────────────────────────────
 
   void _openPlayer(int clipId) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ClipPlayerScreen(
-          clipId: clipId,
-          initialIndex: 0,
-        ),
+    pushAppScreen(
+      context,
+      ClipPlayerScreen(
+        clipId: clipId,
+        initialIndex: 0,
       ),
     );
   }

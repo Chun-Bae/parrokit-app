@@ -24,6 +24,18 @@ class FirebaseUserService {
   /// 테스트에서 Firestore만 넣어 만들 때 Functions를 미리 잡지 않도록 늦게 연다.
   FirebaseFunctions get _callables => _functions ?? FirebaseFunctions.instance;
 
+  /// 처음 들어온 사람의 문서를 만든다. **이미 있으면 아무것도 쓰지 않는다.**
+  ///
+  /// 전에는 merge set으로 늘 썼다. 그런데 이 값들은 merge로도 덮어쓰는
+  /// 값이다 - 있는 문서에 닿으면 `parrots`가 0이 되고, `blockedUserIds`와
+  /// `fcmTokens`가 빈 배열이 되고, 안 읽은 알림 수가 0으로 돌아간다.
+  /// 부르는 쪽은 모두 '문서를 못 읽었으면'에서 부르는데, 그 읽기는
+  /// `catch (_)`로 묶여 있어서 **잠깐 네트워크가 끊긴 것도 문서가 없는
+  /// 것으로 보였다.** 그 길로 들어오면 가진 패롯과 차단 목록이 날아갔다.
+  ///
+  /// 서버 전용 칸(parrots 등)은 2026-11-25에 firestore.rules로 막혔으므로
+  /// 지금은 저 길이 permission-denied로 끝난다. 날아가지는 않지만 로그인이
+  /// 깨진다. 만들 때만 쓰면 둘 다 안 생긴다.
   Future<void> initUserDocument({
     required String uid,
     required String email,
@@ -31,18 +43,20 @@ class FirebaseUserService {
   }) async {
     final docRef = _firestore.collection('users').doc(uid);
 
+    final snapshot = await docRef.get();
+    if (snapshot.exists) return;
+
     await docRef.set({
       'email': email,
       if (photoUrl != null) 'photoUrl': photoUrl,
       'createdAt': FieldValue.serverTimestamp(),
       'parrots': 0,
-      'coins': FieldValue.delete(),
       'unreadNotificationCount': 0,
       'blockedUserIds': <String>[],
       'fcmTokens': <String>[],
       'isPremium': false,
       'lastPurchaseAt': null,
-    }, SetOptions(merge: true)); // 이미 있으면 덮어쓰지 않고 병합
+    });
   }
 
   Future<Map<String, dynamic>?> getUserMeta(String uid) async {
