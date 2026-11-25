@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   ffmpeg_kit_flutter_new
   file_saver
   file_selector_windows
+  firebase_app_check
   firebase_auth
   firebase_core
   flutter_inappwebview_windows
