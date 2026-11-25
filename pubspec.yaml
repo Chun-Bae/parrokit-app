@@ -191,13 +191,27 @@ flutter:
 # -----------------------------------------------------------
 
 # 앱 아이콘 설정
+#
+# iOS와 Android 기본 아이콘은 배경까지 들어간 꽉 찬 사각형을 쓴다.
+# Android 적응형 아이콘은 다른 그림이 필요하다 - 런처가 바깥 25%를 잘라
+# 동그라미·네모 등 제 모양으로 깎기 때문이다. 꽉 찬 그림을 그대로 전경으로
+# 주면 새의 발과 꼬리가 잘린다. 그래서 배경 없는 new_app_icon.png를
+# 안전 영역에 맞춰 줄인 전경을 따로 둔다. 그 파일은 손으로 만들지 말고
+# `python3 tool/make_adaptive_foreground.py`로 다시 만든다.
+# 배경색은 꽉 찬 그림 바깥 띠의 평균이다.
 flutter_launcher_icons:
   ios: true
   android: true
   remove_alpha_ios: true
-  image_path: "assets/icons/pa_icon.png"
-  adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "assets/icons/pa_icon.png"
+  image_path: "assets/icons/new_app_icon_gradient_background.png"
+  # iOS 18부터 홈 화면이 어두울 때 쓰는 아이콘을 따로 둘 수 있다.
+  # 설정 이름은 transparent지만 투명을 강요하지 않는다 - 투명하게 주면
+  # iOS가 제 어두운 바탕을 깔고, 이렇게 배경까지 준 그림은 그대로 쓴다.
+  # 우리 남색 배경이 더 어울려서 그대로 둔다. remove_alpha_ios는 기본
+  # 아이콘에만 걸리므로 이 그림은 건드리지 않는다.
+  image_path_ios_dark_transparent: "assets/icons/new_app_icon_gradient_background_dark.png"
+  adaptive_icon_background: "#F2F7FD"
+  adaptive_icon_foreground: "assets/icons/new_app_icon_foreground.png"
 
 # 스플래시 스크린 설정
 flutter_native_splash:

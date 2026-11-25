@@ -160,8 +160,17 @@ class _SignInScreenState extends State<SignInScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset('assets/logos/pa_logo.png',
-                          width: 64, height: 64),
+                      // 화면 안에서는 배경 없는 그림을 쓴다(사용자 요청).
+                      // 앱 아이콘은 배경까지 들어간 것을 쓰지만, 글자 옆에
+                      // 놓을 때는 네모 배경이 보여서 어울리지 않는다.
+                      //
+                      // 원본이 1254px이라 64px 자리에 그대로 풀면 메모리를
+                      // 6MB 넘게 쓴다. 3배 화면에 맞춰 192px로만 푼다.
+                      Image.asset('assets/icons/new_app_icon.png',
+                          width: 64,
+                          height: 64,
+                          cacheWidth: 192,
+                          cacheHeight: 192),
                       const SizedBox(width: 8),
                       Text(
                         '패로킷',
